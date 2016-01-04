@@ -24,8 +24,9 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.nio.file.Paths;
-import java.util.Objects;
-import java.util.logging.Level;
+import java.util.concurrent.ExecutionException;
+import javafx.beans.Observable;
+import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
 import javafx.scene.media.Media;
@@ -33,7 +34,6 @@ import javafx.scene.media.MediaException;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.VideoUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -51,16 +51,43 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
     }
 
     @Override
-    public Image getFullSizeImage() {
-        Image image = (null == imageRef) ? null : imageRef.get();
+    public Task<Image> getReadFullSizeImageTask() {
+        Image image = (imageRef != null) ? imageRef.get() : null;
+        if (image == null || image.isError()) {
+            Task<Image> newReadImageTask = new Task<Image>() {
 
-        if (image == null) {
-            final BufferedImage bufferedImage = (BufferedImage) ImageUtils.getThumbnail(getAbstractFile(), 1024);
-            image = (bufferedImage == ImageUtils.getDefaultThumbnail()) ? null : SwingFXUtils.toFXImage(bufferedImage, null);
-            imageRef = new SoftReference<>(image);
+                @Override
+                protected Image call() throws Exception {
+                    final BufferedImage bufferedImage = ImageUtils.getThumbnail(getAbstractFile(), 1024);
+                    return (bufferedImage == ImageUtils.getDefaultThumbnail())
+                            ? null
+                            : SwingFXUtils.toFXImage(bufferedImage, null);
+                }
+            };
+
+            newReadImageTask.stateProperty().addListener((Observable observable) -> {
+                switch (newReadImageTask.getState()) {
+                    case CANCELLED:
+                        break;
+                    case FAILED:
+                        break;
+                    case SUCCEEDED:
+                        try {
+                            imageRef = new SoftReference<>(newReadImageTask.get());
+                        } catch (InterruptedException | ExecutionException interruptedException) {
+                        }
+                        break;
+                }
+            });
+            return newReadImageTask;
+        } else {
+            return new Task<Image>() {
+                @Override
+                protected Image call() throws Exception {
+                    return image;
+                }
+            };
         }
-
-        return image;
     }
 
     private SoftReference<Media> mediaRef;
@@ -74,31 +101,17 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
         final File cacheFile = VideoUtils.getTempVideoFile(this.getAbstractFile());
 
         if (cacheFile.exists() == false || cacheFile.length() < getAbstractFile().getSize()) {
-
             Files.createParentDirs(cacheFile);
             ProgressHandle progressHandle = ProgressHandleFactory.createHandle("writing temporary file to disk");
             progressHandle.start(100);
             ContentUtils.writeToFile(this.getAbstractFile(), cacheFile, progressHandle, null, true);
             progressHandle.finish();
-
         }
 
         media = new Media(Paths.get(cacheFile.getAbsolutePath()).toUri().toString());
         mediaRef = new SoftReference<>(media);
         return media;
 
-    }
-
-    public boolean isDisplayableAsMedia() {
-        try {
-            Media media = getMedia();
-            return Objects.nonNull(media) && Objects.isNull(media.getError());
-        } catch (IOException ex) {
-            Logger.getLogger(VideoFile.class.getName()).log(Level.SEVERE, "failed to write video to cache for playback.", ex);
-            return false;
-        } catch (MediaException ex) {
-            return false;
-        }
     }
 
     @Override

@@ -19,10 +19,9 @@
 package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
 import java.io.IOException;
-import java.lang.ref.SoftReference;
-import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.Observable;
@@ -32,6 +31,8 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.ProgressBar;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.Image;
 import static javafx.scene.input.KeyCode.LEFT;
 import static javafx.scene.input.KeyCode.RIGHT;
@@ -40,7 +41,9 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
 import javafx.scene.media.MediaPlayer;
-import javafx.scene.text.Text;
+import org.controlsfx.control.MaskerPane;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
@@ -50,6 +53,7 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.VideoFile;
 import org.sleuthkit.autopsy.imagegallery.gui.VideoPlayer;
+import static org.sleuthkit.autopsy.imagegallery.gui.drawableviews.DrawableUIBase.exec;
 import static org.sleuthkit.autopsy.imagegallery.gui.drawableviews.DrawableView.CAT_BORDER_WIDTH;
 
 /**
@@ -69,7 +73,8 @@ public class SlideShowView extends DrawableTileBase {
 
     @FXML
     private BorderPane footer;
-    private Task<Node> mediaTask;
+
+    private volatile MediaLoadTask mediaTask;
 
     SlideShowView(GroupPane gp, ImageGalleryController controller) {
         super(gp, controller);
@@ -155,44 +160,92 @@ public class SlideShowView extends DrawableTileBase {
     }
 
     @Override
-    protected void disposeContent() {
+    synchronized protected void disposeContent() {
         stopVideo();
 
-        super.disposeContent();
         if (mediaTask != null) {
             mediaTask.cancel(true);
         }
         mediaTask = null;
-        mediaCache = null;
+        super.disposeContent();
     }
-    private SoftReference<Node> mediaCache;
 
-    /**
-     * {@inheritDoc }
-     */
     @Override
-    Node getContentNode() {
-        if (getFile().isPresent() == false) {
-            mediaCache = null;
-            return super.getContentNode();
-        } else {
+    synchronized protected void updateContent() {
+        disposeContent();
+        if (getFile().isPresent()) {
             DrawableFile<?> file = getFile().get();
             if (file.isVideo()) {
-                Node mediaNode = (isNull(mediaCache)) ? null : mediaCache.get();
-                if (nonNull(mediaNode)) {
-                    return mediaNode;
-                } else {
-                    if (isNull(mediaTask)) {
-                        mediaTask = new MediaLoadTask(((VideoFile<?>) file));
-                        new Thread(mediaTask).start();
-                    } else if (mediaTask.isDone()) {
-                        return null;
-                    }
-                    return getLoadingProgressIndicator();
-                }
+                doMediaLoadTask((VideoFile<?>) file);
+            } else {
+                doReadImageTask(file);
             }
-            return super.getContentNode();
         }
+    }
+
+    synchronized private Node doMediaLoadTask(VideoFile<?> file) {
+
+        //specially handling for videos
+        MediaLoadTask myTask = new MediaLoadTask(file);
+        mediaTask = myTask;
+        Node progressNode = newProgressIndicator(myTask);
+        Platform.runLater(() -> imageBorder.setCenter(progressNode));
+
+        //called on fx thread
+        mediaTask.setOnSucceeded(succeedded -> {
+            showMedia(file, myTask);
+            synchronized (SlideShowView.this) {
+                mediaTask = null;
+            }
+        });
+        mediaTask.setOnFailed(failed -> {
+            showErrorNode(getMediaLoadErrorLabel(myTask), file);
+            synchronized (SlideShowView.this) {
+                mediaTask = null;
+            }
+        });
+        mediaTask.setOnCancelled(cancelled -> {
+            disposeContent();
+        });
+
+        exec.execute(myTask);
+        return progressNode;
+    }
+
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private void showMedia(DrawableFile<?> file, Task<Node> mediaTask) {
+        //Note that all error conditions are allready logged in readImageTask.succeeded()
+        try {
+            Node mediaNode = mediaTask.get();
+            if (nonNull(mediaNode)) {
+                //we have non-null media node show it
+                imageBorder.setCenter(mediaNode);
+            } else {
+                showErrorNode(getMediaLoadErrorLabel(mediaTask), file);
+            }
+        } catch (InterruptedException | ExecutionException ex) {
+            showErrorNode(getMediaLoadErrorLabel(mediaTask), file);
+        }
+    }
+
+    private String getMediaLoadErrorLabel(Task<Node> mediaTask) {
+        return Bundle.MediaViewImagePanel_errorLabel_text() + ": " + mediaTask.getException().getLocalizedMessage();
+    }
+
+    /**
+     *
+     * @param file      the value of file
+     * @param imageTask the value of imageTask
+     */
+    @Override
+    Node newProgressIndicator(final Task<?> imageTask) {
+        MaskerPane maskerPane = new MaskerPane();
+        ProgressIndicator loadingProgressIndicator = new ProgressBar(-1);
+        maskerPane.setProgressNode(loadingProgressIndicator);
+
+        maskerPane.textProperty().bind(imageTask.messageProperty());
+        loadingProgressIndicator.progressProperty().bind(imageTask.progressProperty());
+        return maskerPane;
     }
 
     /**
@@ -250,46 +303,30 @@ public class SlideShowView extends DrawableTileBase {
     }
 
     @Override
-    CachedLoaderTask<Image, DrawableFile<?>> getNewImageLoadTask(DrawableFile<?> file) {
+    Task<Image> newReadImageTask(DrawableFile<?> file) {
+        return file.getReadFullSizeImageTask();
 
-        return new ImageLoaderTask(file) {
-
-            @Override
-            Image load() {
-                return isCancelled() ? null : file.getFullSizeImage();
-            }
-        };
     }
 
-    private class MediaLoadTask extends CachedLoaderTask<Node, VideoFile<?>> {
+    @NbBundle.Messages({"# {0} - file name",
+        "MediaLoadTask.messageText=Reading video: {0}"})
+    private class MediaLoadTask extends Task<Node> {
 
-        public MediaLoadTask(VideoFile<?> file) {
-            super(file);
+        private final VideoFile<?> file;
+
+        MediaLoadTask(VideoFile<?> file) {
+            updateMessage(Bundle.MediaLoadTask_messageText(file.getName()));
+            this.file = file;
         }
 
         @Override
-        void saveToCache(Node result) {
-            synchronized (SlideShowView.this) {
-                mediaCache = new SoftReference<>(result);
-            }
-        }
-
-        @Override
-        Node load() {
+        protected Node call() throws Exception {
             try {
                 final Media media = file.getMedia();
                 return new VideoPlayer(new MediaPlayer(media), file);
             } catch (MediaException | IOException | OutOfMemoryError ex) {
-                Logger.getLogger(VideoFile.class.getName()).log(Level.WARNING, "failed to initialize MediaControl for file " + file.getName(), ex);
-
-                if (file.isDisplayableAsImage()) {
-                    Image fullSizeImage = file.getFullSizeImage();
-                    Platform.runLater(() -> {
-                        imageView.setImage(fullSizeImage);
-                    });
-                    return imageView;
-                }
-                return new Text(ex.getLocalizedMessage() + "\nSee the logs for details.\n\nTry the \"Open In External Viewer\" action.");
+                ImageUtils.logContentError(LOGGER, Level.WARNING, "Failed to initialize VideoPlayer for {0} : " + ex.toString(), file);
+                return doReadImageTask(file);
             }
         }
     }
