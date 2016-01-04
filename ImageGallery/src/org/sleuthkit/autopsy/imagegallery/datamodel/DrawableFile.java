@@ -36,7 +36,6 @@ import javax.annotation.Nonnull;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
 import org.sleuthkit.autopsy.imagegallery.ThumbnailCache;
@@ -293,7 +292,7 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
                         try {
                             imageRef = new SoftReference<>(readImageTask.get());
                         } catch (InterruptedException | ExecutionException exception) {
-                            ImageUtils.logContentError(LOGGER, Level.WARNING, getMessageTemplate(exception), this);
+                            LOGGER.log(Level.WARNING, getMessageTemplate(exception), getContentPathSafe());
                         }
                         break;
                 }
