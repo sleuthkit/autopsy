@@ -43,7 +43,6 @@ import javafx.scene.media.MediaException;
 import javafx.scene.media.MediaPlayer;
 import org.controlsfx.control.MaskerPane;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
@@ -325,7 +324,7 @@ public class SlideShowView extends DrawableTileBase {
                 final Media media = file.getMedia();
                 return new VideoPlayer(new MediaPlayer(media), file);
             } catch (MediaException | IOException | OutOfMemoryError ex) {
-                ImageUtils.logContentError(LOGGER, Level.WARNING, "Failed to initialize VideoPlayer for {0} : " + ex.toString(), file);
+                LOGGER.log(Level.WARNING, "Failed to initialize VideoPlayer for {0} : " + ex.toString(), file.getContentPathSafe());
                 return doReadImageTask(file);
             }
         }

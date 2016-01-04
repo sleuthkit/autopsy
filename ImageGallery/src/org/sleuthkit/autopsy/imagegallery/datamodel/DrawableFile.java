@@ -322,4 +322,22 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
             return Collections.emptySet();
         }
     }
+
+    /**
+     * Get the unique path for this DrawableFile, or if that fails, just return
+     * the name.
+     *
+     * @param content
+     *
+     * @return
+     */
+    public String getContentPathSafe() {
+        try {
+            return this.getUniquePath();
+        } catch (TskCoreException tskCoreException) {
+            String contentName = this.getName();
+            LOGGER.log(Level.SEVERE, "Failed to get unique path for " + contentName, tskCoreException); //NOI18N
+            return contentName;
+        }
+    }
 }
