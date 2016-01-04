@@ -35,7 +35,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
-import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -353,7 +352,7 @@ public class ImageUtils {
             try {
                 return SwingFXUtils.fromFXImage(thumbnailTask.get(), null);
             } catch (InterruptedException | ExecutionException ex) {
-                logContentError(logger, Level.WARNING, "Failed to get thumbnail for {0}: " + ex.toString(), content);
+                LOGGER.log(Level.WARNING, "Failed to get thumbnail for {0}: " + ex.toString(), getContentPathSafe(content));
                 return DEFAULT_THUMBNAIL;
             }
         } else {
@@ -703,8 +702,8 @@ public class ImageUtils {
      *
      * @return a new Task that returns a thumbnail as its result.
      */
-    public static Task<javafx.scene.image.Image> newGetThumbnailTask(AbstractFile file, int iconSize) {
-        return new GetThumbnailTask(file, iconSize);
+    public static Task<javafx.scene.image.Image> newGetThumbnailTask(AbstractFile file, int iconSize, boolean defaultOnFailure) {
+        return new GetThumbnailTask(file, iconSize, defaultOnFailure);
     }
 
     /**
@@ -721,7 +720,7 @@ public class ImageUtils {
         @NbBundle.Messages({"# {0} - file name",
             "GetOrGenerateThumbnailTask.loadingThumbnailFor=Loading thumbnail for {0}", "# {0} - file name",
             "GetOrGenerateThumbnailTask.generatingPreviewFor=Generating preview for {0}"})
-        private GetThumbnailTask(AbstractFile file, int iconSize) {
+        private GetThumbnailTask(AbstractFile file, int iconSize, boolean defaultOnFailure) {
             super(file);
             updateMessage(Bundle.GetOrGenerateThumbnailTask_loadingThumbnailFor(file.getName()));
             this.iconSize = iconSize;
