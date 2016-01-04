@@ -181,7 +181,7 @@ public class FileUtil {
      *
      * @return True if we have both read and write access, false otherwise.
      */
-    public static boolean arePermissionsAppropriate(Path path) {
+    public static boolean hasReadWriteAccess(Path path) {
         Path p = null;
         try {
             p = Files.createTempFile(path, TEMP_FILE_PREFIX, null);

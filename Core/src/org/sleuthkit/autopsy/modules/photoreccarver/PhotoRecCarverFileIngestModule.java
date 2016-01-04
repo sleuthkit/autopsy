@@ -386,7 +386,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 if (path == null) {
                     throw new IngestModule.IngestModuleException(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.nonHostnameUNCPathUsed"));
                 }
-                if (false == FileUtil.arePermissionsAppropriate(path)) {
+                if (false == FileUtil.hasReadWriteAccess(path)) {
                     throw new IngestModule.IngestModuleException(
                             NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.PermissionsNotSufficient")
                             + SEP + path.toString() + SEP // SEP is line breaks to make the dialog display nicely.
