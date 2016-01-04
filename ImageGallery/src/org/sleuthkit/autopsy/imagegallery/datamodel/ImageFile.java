@@ -80,7 +80,7 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
     @Override
     Double getWidth() {
         try {
-            return (double) ImageUtils.getWidth(this.getAbstractFile());
+            return (double) ImageUtils.getImageWidth(this.getAbstractFile());
         } catch (IOException ex) {
             return -1.0;
         }
@@ -89,7 +89,7 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
     @Override
     Double getHeight() {
         try {
-            return (double) ImageUtils.getHeight(this.getAbstractFile());
+            return (double) ImageUtils.getImageHeight(this.getAbstractFile());
         } catch (IOException ex) {
             return -1.0;
         }
