@@ -29,6 +29,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javax.swing.JOptionPane;
+import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
@@ -51,10 +52,12 @@ public class CategorizeAction extends AddTagAction {
     private static final Logger LOGGER = Logger.getLogger(CategorizeAction.class.getName());
 
     private final ImageGalleryController controller;
+    private final History<CategorizationChangeSet> undoHistory;
 
     public CategorizeAction(ImageGalleryController controller) {
         super();
         this.controller = controller;
+        undoHistory = controller.getUndoHistory();
     }
 
     public Menu getPopupMenu() {
@@ -73,16 +76,13 @@ public class CategorizeAction extends AddTagAction {
     }
 
     @Override
-    public void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles) {
-        Logger.getAnonymousLogger().log(Level.INFO, "categorizing{0} as {1}", new Object[]{selectedFiles.toString(), tagName.getDisplayName()});
-
-        for (Long fileID : selectedFiles) {
-            controller.queueDBWorkerTask(new CategorizeTask(fileID, tagName, comment));
-        }
+    protected void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles) {
+        addTagsToFiles(tagName, comment, selectedFiles, true);
     }
 
-    public void enforceOneCat(TagName name, String string) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles, boolean createUndo) {
+        Logger.getAnonymousLogger().log(Level.INFO, "categorizing{0} as {1}", new Object[]{selectedFiles.toString(), tagName.getDisplayName()});
+        controller.queueDBWorkerTask(new CategorizeTask(selectedFiles, tagName, comment, createUndo));
     }
 
     /**
@@ -111,52 +111,66 @@ public class CategorizeAction extends AddTagAction {
 
     private class CategorizeTask extends ImageGalleryController.InnerTask {
 
-        private final long fileID;
+        private final Set<Long> fileIDs;
         private final TagName tagName;
         private final String comment;
+        private final CategorizationChangeSet categorizationChangeSet;
+        private final boolean createUndo;
 
-        public CategorizeTask(long fileID, TagName tagName, String comment) {
+        public CategorizeTask(Set<Long> fileIDs, TagName tagName, String comment, boolean createUndo) {
             super();
-            this.fileID = fileID;
+            this.fileIDs = fileIDs;
             this.tagName = tagName;
             this.comment = comment;
+            this.createUndo = createUndo;
+
+            categorizationChangeSet = new CategorizationChangeSet(tagName);
         }
 
         @Override
         public void run() {
-            final CategoryManager categoryManager = controller.getCategoryManager();
             final DrawableTagsManager tagsManager = controller.getTagsManager();
+            final CategoryManager categoryManager = controller.getCategoryManager();
 
-            try {
-                DrawableFile<?> file = controller.getFileFromId(fileID);   //drawable db
-                final List<ContentTag> fileTags = tagsManager.getContentTagsByContent(file);
-                if (tagName == categoryManager.getTagName(Category.ZERO)) {
-                    // delete all cat tags for cat-0
-                    fileTags.stream()
-                            .filter(tag -> CategoryManager.isCategoryTagName(tag.getName()))
-                            .forEach((ct) -> {
-                                try {
-                                    tagsManager.deleteContentTag(ct);
-                                } catch (TskCoreException ex) {
-                                    LOGGER.log(Level.SEVERE, "Error removing old categories result", ex);
-                                }
-                            });
-                } else {
-                    //add cat tag if no existing cat tag for that cat
-                    if (fileTags.stream()
-                            .map(Tag::getName)
-                            .filter(tagName::equals)
-                            .collect(Collectors.toList()).isEmpty()) {
-                        tagsManager.addContentTag(file, tagName, comment);
+            for (long fileID : fileIDs) {
+                try {
+                    DrawableFile<?> file = controller.getFileFromId(fileID);   //drawable db
+                    if (createUndo) {
+                        Category oldCat = file.getCategory();
+                        TagName oldCatTagName = categoryManager.getTagName(oldCat);
+                        categorizationChangeSet.add(fileID, oldCatTagName);
                     }
-                }
 
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Error categorizing result", ex);
-                JOptionPane.showMessageDialog(null, "Unable to categorize " + fileID + ".", "Categorizing Error", JOptionPane.ERROR_MESSAGE);
+                    final List<ContentTag> fileTags = tagsManager.getContentTagsByContent(file);
+                    if (tagName == categoryManager.getTagName(Category.ZERO)) {
+                        // delete all cat tags for cat-0
+                        fileTags.stream()
+                                .filter(tag -> CategoryManager.isCategoryTagName(tag.getName()))
+                                .forEach((ct) -> {
+                                    try {
+                                        tagsManager.deleteContentTag(ct);
+                                    } catch (TskCoreException ex) {
+                                        LOGGER.log(Level.SEVERE, "Error removing old categories result", ex);
+                                    }
+                                });
+                    } else {
+                        //add cat tag if no existing cat tag for that cat
+                        if (fileTags.stream()
+                                .map(Tag::getName)
+                                .filter(tagName::equals)
+                                .collect(Collectors.toList()).isEmpty()) {
+                            tagsManager.addContentTag(file, tagName, comment);
+                        }
+                    }
+                } catch (TskCoreException ex) {
+                    LOGGER.log(Level.SEVERE, "Error categorizing result", ex);
+                    JOptionPane.showMessageDialog(null, "Unable to categorize " + fileID + ".", "Categorizing Error", JOptionPane.ERROR_MESSAGE);
+                }
             }
 
+            if (createUndo) {
+                undoHistory.advance(categorizationChangeSet);
+            }
         }
     }
-
 }

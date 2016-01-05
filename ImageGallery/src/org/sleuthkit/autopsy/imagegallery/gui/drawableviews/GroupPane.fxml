@@ -8,7 +8,7 @@
 <?import javafx.scene.text.*?>
 <?import org.controlsfx.control.*?>
 
-<fx:root type="BorderPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+<fx:root type="BorderPane" xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1">
    
     <center>
         <GridView fx:id="gridView" BorderPane.alignment="CENTER" />
@@ -136,6 +136,7 @@
                   </HBox>
                         <Region fx:id="spacer" prefHeight="-1.0" prefWidth="-1.0" />
                         <Separator prefWidth="30.0" />
+                  <Button fx:id="undoButton" mnemonicParsing="false" text="Undo" />
                         <SegmentedButton fx:id="segButton">
                             <buttons>
                                 <ToggleButton id="" fx:id="tileToggle" alignment="CENTER" contentDisplay="GRAPHIC_ONLY" graphicTextGap="0.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="32.0" mnemonicParsing="false" prefWidth="-1.0" scaleX="1.0" selected="true" text="" textAlignment="CENTER">
