@@ -191,7 +191,7 @@ public enum ThumbnailCache {
                 }
             };
         }
-        final Task<Image> newGetThumbnailTask = ImageUtils.newGetThumbnailTask(file.getAbstractFile(), MAX_THUMBNAIL_SIZE);
+        final Task<Image> newGetThumbnailTask = ImageUtils.newGetThumbnailTask(file.getAbstractFile(), MAX_THUMBNAIL_SIZE, false);
         newGetThumbnailTask.stateProperty().addListener((Observable observable) -> {
             switch (newGetThumbnailTask.getState()) {
                 case SUCCEEDED:

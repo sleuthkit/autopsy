@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
 import org.sleuthkit.autopsy.imagegallery.ThumbnailCache;
+import org.sleuthkit.autopsy.imagegallery.utils.TaskUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -281,7 +282,30 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
         }
     }
 
-    public abstract Task<Image> getReadFullSizeImageTask();
+    public Task<Image> getReadFullSizeImageTask() {
+        Image image = (imageRef != null) ? imageRef.get() : null;
+        if (image == null || image.isError()) {
+            Task<Image> readImageTask = getReadFullSizeImageTaskHelper();
+            readImageTask.stateProperty().addListener(stateProperty -> {
+                switch (readImageTask.getState()) {
+                    case SUCCEEDED:
+                        try {
+                            imageRef = new SoftReference<>(readImageTask.get());
+                        } catch (InterruptedException | ExecutionException exception) {
+                            LOGGER.log(Level.WARNING, getMessageTemplate(exception), getContentPathSafe());
+                        }
+                        break;
+                }
+            });
+            return readImageTask;
+        } else {
+            return TaskUtils.taskFrom(() -> image);
+        }
+    }
+
+    abstract String getMessageTemplate(Exception exception);
+
+    abstract Task<Image> getReadFullSizeImageTaskHelper();
 
     public void setAnalyzed(Boolean analyzed) {
         this.analyzed.set(analyzed);

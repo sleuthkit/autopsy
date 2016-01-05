@@ -35,7 +35,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
-import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -347,22 +346,14 @@ public class ImageUtils {
     public static BufferedImage getThumbnail(Content content, int iconSize) {
         if (content instanceof AbstractFile) {
             AbstractFile file = (AbstractFile) content;
-            // If a thumbnail file is already saved locally
-            File cacheFile = getCachedThumbnailLocation(content.getId());
-            if (cacheFile.exists()) {
-                try {
-                    BufferedImage thumbnail = ImageIO.read(cacheFile);
-                    if (isNull(thumbnail) || thumbnail.getWidth() != iconSize) {
-                        return generateAndSaveThumbnail(file, iconSize, cacheFile);
-                    } else {
-                        return thumbnail;
-                    }
-                } catch (Exception ex) {
-                    LOGGER.log(Level.WARNING, "ImageIO had a problem reading thumbnail for image {0}: {1}", new Object[]{content.getName(), ex.getLocalizedMessage()}); //NON-NLS //NOI18N
-                    return generateAndSaveThumbnail(file, iconSize, cacheFile);
-                }
-            } else {
-                return generateAndSaveThumbnail(file, iconSize, cacheFile);
+
+            Task<javafx.scene.image.Image> thumbnailTask = newGetThumbnailTask(file, iconSize, true);
+            thumbnailTask.run();
+            try {
+                return SwingFXUtils.fromFXImage(thumbnailTask.get(), null);
+            } catch (InterruptedException | ExecutionException ex) {
+                LOGGER.log(Level.WARNING, "Failed to get thumbnail for {0}: " + ex.toString(), getContentPathSafe(content));
+                return DEFAULT_THUMBNAIL;
             }
         } else {
             return DEFAULT_THUMBNAIL;
@@ -514,87 +505,6 @@ public class ImageUtils {
     }
 
     /**
-     * Generate an icon and save it to specified location.
-     *
-     * @param file      File to generate icon for
-     * @param iconSize  size in pixels of the thumbnail
-     * @param cacheFile Location to save thumbnail to
-     *
-     * @return Generated icon or null on error
-     */
-    private static BufferedImage generateAndSaveThumbnail(AbstractFile file, int iconSize, File cacheFile) {
-        BufferedImage thumbnail = null;
-        try {
-            if (VideoUtils.isVideoThumbnailSupported(file)) {
-                if (openCVLoaded) {
-                    thumbnail = VideoUtils.generateVideoThumbnail(file, iconSize);
-                } else {
-                    return DEFAULT_THUMBNAIL;
-                }
-            } else {
-                thumbnail = generateImageThumbnail(file, iconSize);
-            }
-
-            if (thumbnail == null) {
-                return DEFAULT_THUMBNAIL;
-
-            } else {
-                BufferedImage toSave = thumbnail;
-                imageSaver.execute(() -> {
-                    try {
-                        Files.createParentDirs(cacheFile);
-                        if (cacheFile.exists()) {
-                            cacheFile.delete();
-                        }
-                        ImageIO.write(toSave, FORMAT, cacheFile);
-                    } catch (IllegalArgumentException | IOException ex1) {
-                        LOGGER.log(Level.WARNING, COULD_NOT_WRITE_CACHE_THUMBNAIL + file, ex1);
-                    }
-                });
-            }
-        } catch (NullPointerException ex) {
-            LOGGER.log(Level.WARNING, COULD_NOT_WRITE_CACHE_THUMBNAIL + file, ex);
-        }
-        return thumbnail;
-    }
-
-    /**
-     * Generate and return a scaled image
-     *
-     * @param content
-     * @param iconSize
-     *
-     * @return a Thumbnail of the given content at the given size, or null if
-     *         there was a problem.
-     */
-    @Nullable
-    private static BufferedImage generateImageThumbnail(AbstractFile content, int iconSize) {
-
-        try {
-            final ReadImageTask readImageTask = new ReadImageTask(content);
-
-            readImageTask.run();
-            BufferedImage bi = SwingFXUtils.fromFXImage(readImageTask.get(), null);
-
-            if (bi == null) {
-                return null;
-            }
-            try {
-                return ScalrWrapper.resizeFast(bi, iconSize);
-            } catch (IllegalArgumentException e) {
-                // if resizing does not work due to extreme aspect ratio,
-                // crop the image instead.
-                return ScalrWrapper.cropImage(bi, Math.min(iconSize, bi.getWidth()), Math.min(iconSize, bi.getHeight()));
-            }
-        } catch (OutOfMemoryError e) {
-            LOGGER.log(Level.WARNING, "Could not scale image (too large) " + content.getName() + ": " + e.toString()); //NON-NLS //NOI18N
-        } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "ImageIO could not load image " + content.getName() + ": " + e.toString()); //NON-NLS //NOI18N
-        }
-        return null;
-    }
-
-    /**
      * Get the width of the given image, in pixels.
      *
      * @param file
@@ -711,8 +621,8 @@ public class ImageUtils {
      *
      * @return a new Task that returns a thumbnail as its result.
      */
-    public static Task<javafx.scene.image.Image> newGetThumbnailTask(AbstractFile file, int iconSize) {
-        return new GetThumbnailTask(file, iconSize);
+    public static Task<javafx.scene.image.Image> newGetThumbnailTask(AbstractFile file, int iconSize, boolean defaultOnFailure) {
+        return new GetThumbnailTask(file, iconSize, defaultOnFailure);
     }
 
     /**
@@ -724,15 +634,17 @@ public class ImageUtils {
 
         private final int iconSize;
         private final File cacheFile;
+        private final boolean defaultOnFailure;
 
         @NbBundle.Messages({"# {0} - file name",
             "GetOrGenerateThumbnailTask.loadingThumbnailFor=Loading thumbnail for {0}", "# {0} - file name",
             "GetOrGenerateThumbnailTask.generatingPreviewFor=Generating preview for {0}"})
-        private GetThumbnailTask(AbstractFile file, int iconSize) {
+        private GetThumbnailTask(AbstractFile file, int iconSize, boolean defaultOnFailure) {
             super(file);
             updateMessage(Bundle.GetOrGenerateThumbnailTask_loadingThumbnailFor(file.getName()));
             this.iconSize = iconSize;
-            cacheFile = getCachedThumbnailLocation(file.getId());
+            this.defaultOnFailure = defaultOnFailure;
+            this.cacheFile = getCachedThumbnailLocation(file.getId());
         }
 
         @Override
@@ -755,8 +667,10 @@ public class ImageUtils {
                 if (openCVLoaded) {
                     updateMessage(Bundle.GetOrGenerateThumbnailTask_generatingPreviewFor(file.getName()));
                     thumbnail = VideoUtils.generateVideoThumbnail(file, iconSize);
-                } else {
+                } else if (defaultOnFailure) {
                     thumbnail = DEFAULT_THUMBNAIL;
+                } else {
+                    throw new IIOException("Failed to read image for thumbnail generation.");
                 }
 
             } else {
