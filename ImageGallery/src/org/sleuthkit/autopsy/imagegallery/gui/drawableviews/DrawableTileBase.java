@@ -47,6 +47,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
+import org.controlsfx.control.action.ActionUtils;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter;
@@ -58,7 +59,6 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.ContextMenuActionsProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.FileNode;
-import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
@@ -67,10 +67,10 @@ import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
 import org.sleuthkit.autopsy.imagegallery.actions.AddDrawableTagAction;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
 import org.sleuthkit.autopsy.imagegallery.actions.DeleteFollowUpTagAction;
+import org.sleuthkit.autopsy.imagegallery.actions.OpenExternalViewerAction;
 import org.sleuthkit.autopsy.imagegallery.actions.SwingMenuItemAdapter;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
-import org.sleuthkit.autopsy.imagegallery.datamodel.VideoFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewMode;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
@@ -111,8 +111,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     @FXML
     private ImageView hashHitImageView;
 
-    @FXML
-    protected ImageView undisplayableImageView;
+
     /**
      * displays the icon representing follow up tag
      */
@@ -221,15 +220,10 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                 });
                 menuItems.add(contentViewer);
 
-                MenuItem externalViewer = new MenuItem(Bundle.DrawableTileBase_externalViewerAction_text());
-                final ExternalViewerAction externalViewerAction = new ExternalViewerAction(Bundle.DrawableTileBase_externalViewerAction_text(), new FileNode(file.getAbstractFile()));
-
-                externalViewer.setDisable(externalViewerAction.isEnabled() == false);
-                externalViewer.setOnAction((ActionEvent t) -> {
-                    SwingUtilities.invokeLater(() -> {
-                        externalViewerAction.actionPerformed(null);
-                    });
-                });
+                OpenExternalViewerAction openExternalViewerAction = new OpenExternalViewerAction(file.getAbstractFile());
+                MenuItem externalViewer = ActionUtils.createMenuItem(openExternalViewerAction);
+                externalViewer.textProperty().unbind();
+                externalViewer.textProperty().bind(openExternalViewerAction.longTextProperty());
                 menuItems.add(externalViewer);
 
                 Collection<? extends ContextMenuActionsProvider> menuProviders = Lookup.getDefault().lookupAll(ContextMenuActionsProvider.class);
@@ -311,16 +305,16 @@ public abstract class DrawableTileBase extends DrawableUIBase {
             updateSelectionState();
             updateCategory();
             updateFollowUpIcon();
-            updateUI();
             updateContent();
+            updateMetaData();
         }
     }
 
-    private void updateUI() {
+    private void updateMetaData() {
         getFile().ifPresent(file -> {
             final boolean isVideo = file.isVideo();
             final boolean hasHashSetHits = hasHashHit();
-            final boolean isUndisplayable = (isVideo ? ((VideoFile<?>) file).isDisplayableAsMedia() : file.isDisplayableAsImage()) == false;
+     
             final String text = getTextForLabel();
 
             Platform.runLater(() -> {
@@ -328,8 +322,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                 fileTypeImageView.setVisible(isVideo);
                 hashHitImageView.setManaged(hasHashSetHits);
                 hashHitImageView.setVisible(hasHashSetHits);
-                undisplayableImageView.setManaged(isUndisplayable);
-                undisplayableImageView.setVisible(isUndisplayable);
+        
                 nameLabel.setText(text);
                 nameLabel.setTooltip(new Tooltip(text));
             });

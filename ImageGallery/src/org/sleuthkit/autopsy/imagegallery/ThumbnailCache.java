@@ -30,14 +30,16 @@ import java.net.MalformedURLException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.logging.Level;
+import javafx.beans.Observable;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
@@ -64,7 +66,7 @@ public enum ThumbnailCache {
      * in memory cache. keeps at most 1000 items each for up to 10 minutes.
      * items may be garbage collected if there are no strong references to them.
      */
-    private final Cache<Long, Optional<Image>> cache = CacheBuilder.newBuilder()
+    private final Cache<Long, Image> cache = CacheBuilder.newBuilder()
             .maximumSize(1000)
             .softValues()
             .expireAfterAccess(10, TimeUnit.MINUTES).build();
@@ -97,9 +99,9 @@ public enum ThumbnailCache {
     @Nullable
     public Image get(DrawableFile<?> file) {
         try {
-            return cache.get(file.getId(), () -> load(file)).orElse(null);
+            return cache.get(file.getId(), () -> load(file));
         } catch (UncheckedExecutionException | CacheLoader.InvalidCacheLoadException | ExecutionException ex) {
-            LOGGER.log(Level.WARNING, "failed to load icon for file: " + file.getName(), ex.getCause());
+            LOGGER.log(Level.WARNING, "Failed to load thumbnail for file: " + file.getName(), ex.getCause());
             return null;
         }
     }
@@ -109,7 +111,7 @@ public enum ThumbnailCache {
         try {
             return get(ImageGalleryController.getDefault().getFileFromId(fileID));
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "failed to load icon for file id : " + fileID, ex.getCause());
+            LOGGER.log(Level.WARNING, "Failed to load thumbnail for file: " + fileID, ex.getCause());
             return null;
         }
     }
@@ -122,35 +124,32 @@ public enum ThumbnailCache {
      *
      * @return an (possibly empty) optional containing a thumbnail
      */
-    private Optional<Image> load(DrawableFile<?> file) {
+    private Image load(DrawableFile<?> file) {
 
         if (FileTypeUtils.isGIF(file)) {
             //directly read gif to preserve potential animation,
             //NOTE: not saved to disk!
-            return Optional.of(new Image(new BufferedInputStream(new ReadContentInputStream(file.getAbstractFile())), MAX_THUMBNAIL_SIZE, MAX_THUMBNAIL_SIZE, true, true));
+            return new Image(new BufferedInputStream(new ReadContentInputStream(file.getAbstractFile())), MAX_THUMBNAIL_SIZE, MAX_THUMBNAIL_SIZE, true, true);
         }
 
-        BufferedImage thumbnail = getCacheFile(file).map(new Function<File, BufferedImage>() {
-            @Override
-            public BufferedImage apply(File cachFile) {
-                if (cachFile.exists()) {
-                    // If a thumbnail file is already saved locally, load it
-                    try {
-                        BufferedImage cachedThumbnail = ImageIO.read(cachFile);
+        BufferedImage thumbnail = getCacheFile(file).map(cachFile -> {
+            if (cachFile.exists()) {
+                // If a thumbnail file is already saved locally, load it
+                try {
+                    BufferedImage cachedThumbnail = ImageIO.read(cachFile);
 
-                        if (cachedThumbnail.getWidth() < MAX_THUMBNAIL_SIZE) {
-                            return cachedThumbnail;
-                        }
-                    } catch (MalformedURLException ex) {
-                        LOGGER.log(Level.WARNING, "Unable to parse cache file path: " + cachFile.getPath(), ex);
-                    } catch (IOException ex) {
-                        LOGGER.log(Level.WARNING, "Unable to read cache file " + cachFile.getPath(), ex);
+                    if (cachedThumbnail.getWidth() < MAX_THUMBNAIL_SIZE) {
+                        return cachedThumbnail;
                     }
+                } catch (MalformedURLException ex) {
+                    LOGGER.log(Level.WARNING, "Unable to parse cache file path: " + cachFile.getPath(), ex);
+                } catch (IOException ex) {
+                    LOGGER.log(Level.WARNING, "Unable to read cache file " + cachFile.getPath(), ex);
                 }
-                return null;
             }
+            return null;
         }).orElseGet(() -> {
-            return (BufferedImage) ImageUtils.getThumbnail(file.getAbstractFile(), MAX_THUMBNAIL_SIZE);
+            return ImageUtils.getThumbnail(file.getAbstractFile(), MAX_THUMBNAIL_SIZE);
         });
 
         WritableImage jfxthumbnail;
@@ -161,7 +160,7 @@ public enum ThumbnailCache {
             jfxthumbnail = SwingFXUtils.toFXImage(thumbnail, null);
         }
 
-        return Optional.ofNullable(jfxthumbnail); //return icon, or null if generation failed
+        return jfxthumbnail; //return icon, or null if generation failed
     }
 
     /**
@@ -169,16 +168,40 @@ public enum ThumbnailCache {
      *
      * @param id the obj id of the file to get a cache file for
      *
-     * @return a Optional containing a File to store the cahced icon in or an
+     * @return a Optional containing a File to store the cached icon in or an
      *         empty optional if there was a problem.
      */
     private static Optional<File> getCacheFile(DrawableFile<?> file) {
         try {
             return Optional.of(ImageUtils.getCachedThumbnailFile(file.getAbstractFile(), MAX_THUMBNAIL_SIZE));
 
-        } catch (IllegalStateException e) {
+        } catch (Exception e) {
             LOGGER.log(Level.WARNING, "Failed to create cache file.{0}", e.getLocalizedMessage());
             return Optional.empty();
         }
+    }
+
+    public Task<Image> getThumbnailTask(DrawableFile<?> file) {
+        final Image thumbnail = cache.getIfPresent(file.getId());
+        if (thumbnail != null) {
+            return new Task<Image>() {
+                @Override
+                protected Image call() throws Exception {
+                    return thumbnail;
+                }
+            };
+        }
+        final Task<Image> newGetThumbnailTask = ImageUtils.newGetThumbnailTask(file.getAbstractFile(), MAX_THUMBNAIL_SIZE, false);
+        newGetThumbnailTask.stateProperty().addListener((Observable observable) -> {
+            switch (newGetThumbnailTask.getState()) {
+                case SUCCEEDED:
+                    try {
+                        cache.put(Long.MIN_VALUE, newGetThumbnailTask.get());
+                    } catch (InterruptedException | ExecutionException ex) {
+                        Exceptions.printStackTrace(ex);
+                    }
+            }
+        });
+        return newGetThumbnailTask;
     }
 }
