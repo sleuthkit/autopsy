@@ -62,7 +62,7 @@ public class UndoRedoManager {
         this.controller = controller;
     }
 
-    synchronized public void reset() {
+    synchronized public void clear() {
         redoStack.clear();
         undoStack.clear();
     }

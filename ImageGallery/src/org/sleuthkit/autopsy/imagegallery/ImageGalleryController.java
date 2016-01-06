@@ -230,7 +230,9 @@ public final class ImageGalleryController {
         });
 
         viewState().addListener((Observable observable) -> {
+            //when the viewed group changes, clear the selection and the undo/redo history
             selectionModel.clearSelection();
+            categoryUndoHistory.clear();
         });
 
         regroupDisabled.addListener((Observable observable) -> {
