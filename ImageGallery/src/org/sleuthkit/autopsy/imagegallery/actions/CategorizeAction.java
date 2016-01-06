@@ -28,8 +28,8 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
+import javax.annotation.Nonnull;
 import javax.swing.JOptionPane;
-import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
@@ -52,12 +52,12 @@ public class CategorizeAction extends AddTagAction {
     private static final Logger LOGGER = Logger.getLogger(CategorizeAction.class.getName());
 
     private final ImageGalleryController controller;
-    private final History<CategorizationChangeSet> undoHistory;
+    private final UndoRedoManager undoManager;
 
     public CategorizeAction(ImageGalleryController controller) {
         super();
         this.controller = controller;
-        undoHistory = controller.getUndoHistory();
+        undoManager = controller.getUndoManager();
     }
 
     public Menu getPopupMenu() {
@@ -112,14 +112,16 @@ public class CategorizeAction extends AddTagAction {
     private class CategorizeTask extends ImageGalleryController.InnerTask {
 
         private final Set<Long> fileIDs;
+        @Nonnull
         private final TagName tagName;
         private final String comment;
         private final CategorizationChangeSet categorizationChangeSet;
         private final boolean createUndo;
 
-        public CategorizeTask(Set<Long> fileIDs, TagName tagName, String comment, boolean createUndo) {
+        public CategorizeTask(Set<Long> fileIDs, @Nonnull TagName tagName, String comment, boolean createUndo) {
             super();
             this.fileIDs = fileIDs;
+            java.util.Objects.requireNonNull(tagName);
             this.tagName = tagName;
             this.comment = comment;
             this.createUndo = createUndo;
@@ -138,7 +140,9 @@ public class CategorizeAction extends AddTagAction {
                     if (createUndo) {
                         Category oldCat = file.getCategory();
                         TagName oldCatTagName = categoryManager.getTagName(oldCat);
-                        categorizationChangeSet.add(fileID, oldCatTagName);
+                        if (false == tagName.equals(oldCatTagName)) {
+                            categorizationChangeSet.add(fileID, oldCatTagName);
+                        }
                     }
 
                     final List<ContentTag> fileTags = tagsManager.getContentTagsByContent(file);
@@ -168,8 +172,8 @@ public class CategorizeAction extends AddTagAction {
                 }
             }
 
-            if (createUndo) {
-                undoHistory.advance(categorizationChangeSet);
+            if (createUndo && categorizationChangeSet.getOldCategories().isEmpty() == false) {
+                undoManager.addToUndo(categorizationChangeSet);
             }
         }
     }

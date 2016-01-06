@@ -63,7 +63,7 @@ import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.imagegallery.actions.CategorizationChangeSet;
+import org.sleuthkit.autopsy.imagegallery.actions.UndoRedoManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
@@ -110,7 +110,7 @@ public final class ImageGalleryController {
     }
 
     private final History<GroupViewState> historyManager = new History<>();
-    private final History<CategorizationChangeSet> categoryUndoHistory = new History<>();
+    private final UndoRedoManager categoryUndoHistory = new UndoRedoManager(this);
 
     /**
      * true if Image Gallery should listen to ingest events, false if it should
@@ -475,7 +475,7 @@ public final class ImageGalleryController {
         this.navPanel = navPanel;
     }
 
-    public History<CategorizationChangeSet> getUndoHistory() {
+    public UndoRedoManager getUndoManager() {
         return categoryUndoHistory;
     }
 

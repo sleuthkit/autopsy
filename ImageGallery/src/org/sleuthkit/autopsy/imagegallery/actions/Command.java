@@ -18,25 +18,22 @@
  */
 package org.sleuthkit.autopsy.imagegallery.actions;
 
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyCodeCombination;
-import org.controlsfx.control.action.Action;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 
 /**
- *
  */
-public class Undo extends Action {
-    
-    private static final Image UNDO_IMAGE = new Image("/org/sleuthkit/autopsy/imagegallery/images/undo.png", 16, 16, true, true, true);
-    
-    public Undo(ImageGalleryController controller) {
-        super("Undo");
-        setGraphic(new ImageView(UNDO_IMAGE));
-        setAccelerator(new KeyCodeCombination(KeyCode.Z, KeyCodeCombination.CONTROL_DOWN));
-        setEventHandler(actionEvent -> controller.getUndoManager().undo());
-        disabledProperty().bind(controller.getUndoManager().undosAvailableProperty().lessThanOrEqualTo(0));
-    }
+public interface Command {
+
+    /**
+     *
+     * @param controller the value of controller
+     */
+    void apply(final ImageGalleryController controller);
+
+    /**
+     *
+     * @param controller the value of controller
+     */
+    void undo(final ImageGalleryController controller);
+
 }

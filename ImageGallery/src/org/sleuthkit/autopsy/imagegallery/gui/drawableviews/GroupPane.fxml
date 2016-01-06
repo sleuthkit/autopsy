@@ -134,9 +134,11 @@
                         <Insets left="5.0" />
                      </padding>
                   </HBox>
+                  <Separator prefWidth="30.0" />
+                  <Button fx:id="undoButton" mnemonicParsing="false" text="Undo" />
+                  <Button fx:id="redoButton" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" text="Redo" />
                         <Region fx:id="spacer" prefHeight="-1.0" prefWidth="-1.0" />
                         <Separator prefWidth="30.0" />
-                  <Button fx:id="undoButton" mnemonicParsing="false" text="Undo" />
                         <SegmentedButton fx:id="segButton">
                             <buttons>
                                 <ToggleButton id="" fx:id="tileToggle" alignment="CENTER" contentDisplay="GRAPHIC_ONLY" graphicTextGap="0.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="32.0" mnemonicParsing="false" prefWidth="-1.0" scaleX="1.0" selected="true" text="" textAlignment="CENTER">

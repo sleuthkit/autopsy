@@ -19,14 +19,16 @@
 package org.sleuthkit.autopsy.imagegallery.actions;
 
 import com.google.common.collect.ImmutableMap;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.datamodel.TagName;
 
 /**
  *
  */
-final public class CategorizationChangeSet {
+final  class CategorizationChangeSet implements Command {
 
     private final TagName newCategory;
     final private Map<Long, TagName> oldCategories = new HashMap<>();
@@ -45,5 +47,26 @@ final public class CategorizationChangeSet {
 
     Map<Long, TagName> getOldCategories() {
         return ImmutableMap.copyOf(oldCategories);
+    }
+
+    /**
+     *
+     * @param controller the value of controller
+     */
+    public void apply(final ImageGalleryController controller) {
+        CategorizeAction categorizeAction = new CategorizeAction(controller);
+        categorizeAction.addTagsToFiles(newCategory, "", this.oldCategories.keySet(), false);
+
+    }
+
+    /**
+     *
+     * @param controller the value of controller
+     */
+    public void undo(final ImageGalleryController controller) {
+        CategorizeAction categorizeAction = new CategorizeAction(controller);
+        for (Map.Entry<Long, TagName> entry : this.getOldCategories().entrySet()) {
+            categorizeAction.addTagsToFiles(entry.getValue(), "", Collections.singleton(entry.getKey()), false);
+        }
     }
 }

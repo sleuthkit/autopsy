@@ -116,6 +116,7 @@ import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeSelectedFilesAction;
 import org.sleuthkit.autopsy.imagegallery.actions.Forward;
 import org.sleuthkit.autopsy.imagegallery.actions.NextUnseenGroup;
+import org.sleuthkit.autopsy.imagegallery.actions.Redo;
 import org.sleuthkit.autopsy.imagegallery.actions.SwingMenuItemAdapter;
 import org.sleuthkit.autopsy.imagegallery.actions.TagSelectedFilesAction;
 import org.sleuthkit.autopsy.imagegallery.actions.Undo;
@@ -162,6 +163,8 @@ public class GroupPane extends BorderPane {
 
     @FXML
     private Button undoButton;
+    @FXML
+    private Button redoButton;
 
     @FXML
     private SplitMenuButton catSelectedSplitMenu;
@@ -224,6 +227,7 @@ public class GroupPane extends BorderPane {
 
     private Integer selectionAnchorIndex;
     private final Undo undoAction;
+    private final Redo redoAction;
 
     GroupViewMode getGroupViewMode() {
         return groupViewMode.get();
@@ -267,6 +271,7 @@ public class GroupPane extends BorderPane {
         backAction = new Back(controller);
         forwardAction = new Forward(controller);
         undoAction = new Undo(controller);
+        redoAction = new Redo(controller);
 
         FXMLConstructor.construct(this, "GroupPane.fxml");
     }
@@ -576,6 +581,7 @@ public class GroupPane extends BorderPane {
         });
 
         ActionUtils.configureButton(undoAction, undoButton);
+        ActionUtils.configureButton(redoAction, redoButton);
         ActionUtils.configureButton(forwardAction, forwardButton);
         ActionUtils.configureButton(backAction, backButton);
 

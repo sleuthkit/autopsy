@@ -28,15 +28,15 @@ import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 /**
  *
  */
-public class Undo extends Action {
-    
-    private static final Image UNDO_IMAGE = new Image("/org/sleuthkit/autopsy/imagegallery/images/undo.png", 16, 16, true, true, true);
-    
-    public Undo(ImageGalleryController controller) {
-        super("Undo");
-        setGraphic(new ImageView(UNDO_IMAGE));
-        setAccelerator(new KeyCodeCombination(KeyCode.Z, KeyCodeCombination.CONTROL_DOWN));
-        setEventHandler(actionEvent -> controller.getUndoManager().undo());
-        disabledProperty().bind(controller.getUndoManager().undosAvailableProperty().lessThanOrEqualTo(0));
+public class Redo extends Action {
+
+    private static final Image REDO_IMAGE = new Image("/org/sleuthkit/autopsy/imagegallery/images/redo.png", 16, 16, true, true, true);
+
+    public Redo(ImageGalleryController controller) {
+        super("Redo");
+        setGraphic(new ImageView(REDO_IMAGE));
+        setAccelerator(new KeyCodeCombination(KeyCode.Y, KeyCodeCombination.CONTROL_DOWN));
+        setEventHandler(actionEvent -> controller.getUndoManager().redo());
+        disabledProperty().bind(controller.getUndoManager().redosAvailableProporty().lessThanOrEqualTo(0));
     }
 }
