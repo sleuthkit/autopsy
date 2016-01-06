@@ -264,7 +264,7 @@ class TikaTextExtractor implements TextExtractor {
      * @return Returns true if the character is valid UTF-8, false if not.
      */
     private static boolean isValidSolrUTF8(char ch) {
-        return ((ch <= 0xFDD0 || ch >= 0xFDEF) && (ch > 0x1F || ch == 0x9 || ch == 0xA || ch == 0xD));
+        return ((ch <= 0xFDD0 || ch >= 0xFDEF) && (ch > 0x1F || ch == 0x9 || ch == 0xA || ch == 0xD) && (ch != 0xFFFF) && (ch != 0xFFFE));
     }
 
     @Override
