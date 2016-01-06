@@ -928,7 +928,15 @@ public final class DrawableDB {
                 try (Statement stmt = con.createStatement();
                         ResultSet valsResults = stmt.executeQuery(query.toString())) {
                     while (valsResults.next()) {
-                        vals.add((A) valsResults.getObject(groupBy.attrName.toString()));
+                        /*
+                         * I don't like that we have to do this cast here, but
+                         * can't think of a better alternative at the momment
+                         * unless something has gone seriously wrong, we know
+                         * this should be of type A even if JAVA doesn't
+                         */
+                        @SuppressWarnings("unchecked")
+                        A value = (A) valsResults.getObject(groupBy.attrName.toString());
+                        vals.add(value);
                     }
                 } catch (SQLException ex) {
                     LOGGER.log(Level.WARNING, "Unable to get values for attribute", ex);
@@ -1209,8 +1217,7 @@ public final class DrawableDB {
      * @param f check if this file is a video. will return false for null file.
      *
      * @return returns true if this file is a video as determined by {@link ImageGalleryModule#isVideoFile(org.sleuthkit.datamodel.AbstractFile)
-     *         } but caches the result.
-     *         returns false if passed a null AbstractFile
+     *         } but caches the result. returns false if passed a null AbstractFile
      */
     public boolean isVideoFile(AbstractFile f) {
         return isNull(f) ? false
