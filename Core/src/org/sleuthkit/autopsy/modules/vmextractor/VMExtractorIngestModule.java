@@ -134,6 +134,9 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
      * @param vmFile A virtual machine file.
      */
     private void ingestVirtualMachineImage(AbstractFile vmFile) throws InterruptedException, IOException {
+        
+        // TODO: check available disk space first
+        
         /*
          * Write the virtual machine file to disk.
          */
