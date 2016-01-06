@@ -26,13 +26,13 @@ import org.controlsfx.control.action.Action;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 
 /**
- *
+ * Action that undoes the last undoable command
  */
-public class Undo extends Action {
-    
+public class UndoAction extends Action {
+
     private static final Image UNDO_IMAGE = new Image("/org/sleuthkit/autopsy/imagegallery/images/undo.png", 16, 16, true, true, true);
-    
-    public Undo(ImageGalleryController controller) {
+
+    public UndoAction(ImageGalleryController controller) {
         super("Undo");
         setGraphic(new ImageView(UNDO_IMAGE));
         setAccelerator(new KeyCodeCombination(KeyCode.Z, KeyCodeCombination.CONTROL_DOWN));

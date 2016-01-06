@@ -116,10 +116,10 @@ import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeSelectedFilesAction;
 import org.sleuthkit.autopsy.imagegallery.actions.Forward;
 import org.sleuthkit.autopsy.imagegallery.actions.NextUnseenGroup;
-import org.sleuthkit.autopsy.imagegallery.actions.Redo;
+import org.sleuthkit.autopsy.imagegallery.actions.RedoAction;
 import org.sleuthkit.autopsy.imagegallery.actions.SwingMenuItemAdapter;
 import org.sleuthkit.autopsy.imagegallery.actions.TagSelectedFilesAction;
-import org.sleuthkit.autopsy.imagegallery.actions.Undo;
+import org.sleuthkit.autopsy.imagegallery.actions.UndoAction;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
@@ -226,8 +226,8 @@ public class GroupPane extends BorderPane {
     private ContextMenu contextMenu;
 
     private Integer selectionAnchorIndex;
-    private final Undo undoAction;
-    private final Redo redoAction;
+    private final UndoAction undoAction;
+    private final RedoAction redoAction;
 
     GroupViewMode getGroupViewMode() {
         return groupViewMode.get();
@@ -270,8 +270,8 @@ public class GroupPane extends BorderPane {
         nextGroupAction = new NextUnseenGroup(controller);
         backAction = new Back(controller);
         forwardAction = new Forward(controller);
-        undoAction = new Undo(controller);
-        redoAction = new Redo(controller);
+        undoAction = new UndoAction(controller);
+        redoAction = new RedoAction(controller);
 
         FXMLConstructor.construct(this, "GroupPane.fxml");
     }

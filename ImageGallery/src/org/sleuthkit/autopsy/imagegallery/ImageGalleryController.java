@@ -110,7 +110,7 @@ public final class ImageGalleryController {
     }
 
     private final History<GroupViewState> historyManager = new History<>();
-    private final UndoRedoManager categoryUndoHistory = new UndoRedoManager(this);
+    private final UndoRedoManager undoManager = new UndoRedoManager();
 
     /**
      * true if Image Gallery should listen to ingest events, false if it should
@@ -232,7 +232,7 @@ public final class ImageGalleryController {
         viewState().addListener((Observable observable) -> {
             //when the viewed group changes, clear the selection and the undo/redo history
             selectionModel.clearSelection();
-            categoryUndoHistory.clear();
+            undoManager.clear();
         });
 
         regroupDisabled.addListener((Observable observable) -> {
@@ -478,7 +478,7 @@ public final class ImageGalleryController {
     }
 
     public UndoRedoManager getUndoManager() {
-        return categoryUndoHistory;
+        return undoManager;
     }
 
     // @@@ REVIEW IF THIS SHOLD BE STATIC...

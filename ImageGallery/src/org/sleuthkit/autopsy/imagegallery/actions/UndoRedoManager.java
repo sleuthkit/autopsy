@@ -26,7 +26,6 @@ import javafx.collections.FXCollections;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
-import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 
 /**
  *
@@ -35,12 +34,10 @@ import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 public class UndoRedoManager {
 
     @GuardedBy("this")
-    private final ObservableStack<Command> undoStack = new ObservableStack<>();
+    private final ObservableStack<UndoableCommand> undoStack = new ObservableStack<>();
 
     @GuardedBy("this")
-    private final ObservableStack<Command> redoStack = new ObservableStack<>();
-
-    private final ImageGalleryController controller;
+    private final ObservableStack<UndoableCommand> redoStack = new ObservableStack<>();
 
     synchronized public int getRedosAvaialable() {
         return redoStack.getSize();
@@ -58,54 +55,53 @@ public class UndoRedoManager {
         return undoStack.sizeProperty();
     }
 
-    public UndoRedoManager(ImageGalleryController controller) {
-        this.controller = controller;
-    }
-
     synchronized public void clear() {
         redoStack.clear();
         undoStack.clear();
     }
 
     /**
-     * Flip the top redo command over to the undo stack
+     * Flip the top redo command over to the undo stack, after applying it
      *
      * @return the redone command or null if there are no redos available
      */
-    synchronized public Optional<Command> redo() {
+    synchronized Optional<UndoableCommand> redo() {
         if (redoStack.isEmpty()) {
             return Optional.empty();
         } else {
-            Command pop = redoStack.pop();
+            UndoableCommand pop = redoStack.pop();
             undoStack.push(pop);
-            pop.apply(controller);
+            pop.run();
             return Optional.of(pop);
         }
 
     }
 
     /**
-     * Flip the top undo command over to the redo stack
+     * Flip the top undo command over to the redo stack, after undoing it
      *
      * @return the undone command or null if there there are no undos available.
      */
-    synchronized public Optional<Command> undo() {
+    synchronized Optional<UndoableCommand> undo() {
         if (undoStack.isEmpty()) {
             return Optional.empty();
         } else {
-            final Command pop = undoStack.pop();
+            final UndoableCommand pop = undoStack.pop();
             redoStack.push(pop);
-            pop.undo(controller);
+            pop.undo();
             return Optional.of(pop);
         }
     }
 
     /**
-     * push a new command onto the undo stack and clear the redo stack
+     * push a new command onto the undo stack and clear the redo stack.
+     *
+     * Note: this method does not actually apply/execute the given command, only
+     * record it in the undo stack.
      *
      * @param command the command to add to the undo stack
      */
-    synchronized public void addToUndo(@Nonnull Command command) {
+    synchronized void addToUndo(@Nonnull UndoableCommand command) {
         Objects.requireNonNull(command);
         undoStack.push(command);
         redoStack.clear();
@@ -149,5 +145,23 @@ public class UndoRedoManager {
                 }
             }
         }
+    }
+
+    /**
+     * Encapulates an operation and its inverse.
+     *
+     */
+    public static interface UndoableCommand extends Runnable {
+
+        /**
+         * Execute this command
+         */
+        @Override
+        void run();
+
+        /**
+         * Undo this command
+         */
+        void undo();
     }
 }

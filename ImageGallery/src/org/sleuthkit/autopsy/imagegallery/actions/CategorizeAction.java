@@ -18,8 +18,12 @@
  */
 package org.sleuthkit.autopsy.imagegallery.actions;
 
+import com.google.common.collect.ImmutableMap;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -29,6 +33,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javax.annotation.Nonnull;
+import javax.annotation.concurrent.Immutable;
 import javax.swing.JOptionPane;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
@@ -115,10 +120,9 @@ public class CategorizeAction extends AddTagAction {
         @Nonnull
         private final TagName tagName;
         private final String comment;
-        private final CategorizationChangeSet categorizationChangeSet;
         private final boolean createUndo;
 
-        public CategorizeTask(Set<Long> fileIDs, @Nonnull TagName tagName, String comment, boolean createUndo) {
+        CategorizeTask(Set<Long> fileIDs, @Nonnull TagName tagName, String comment, boolean createUndo) {
             super();
             this.fileIDs = fileIDs;
             java.util.Objects.requireNonNull(tagName);
@@ -126,22 +130,21 @@ public class CategorizeAction extends AddTagAction {
             this.comment = comment;
             this.createUndo = createUndo;
 
-            categorizationChangeSet = new CategorizationChangeSet(tagName);
         }
 
         @Override
         public void run() {
             final DrawableTagsManager tagsManager = controller.getTagsManager();
             final CategoryManager categoryManager = controller.getCategoryManager();
-
+            Map<Long, TagName> oldCats = new HashMap<>();
             for (long fileID : fileIDs) {
                 try {
-                    DrawableFile<?> file = controller.getFileFromId(fileID);   //drawable db
+                    DrawableFile<?> file = controller.getFileFromId(fileID);   //drawable db access
                     if (createUndo) {
-                        Category oldCat = file.getCategory();
+                        Category oldCat = file.getCategory();  //drawable db access
                         TagName oldCatTagName = categoryManager.getTagName(oldCat);
                         if (false == tagName.equals(oldCatTagName)) {
-                            categorizationChangeSet.add(fileID, oldCatTagName);
+                            oldCats.put(fileID, oldCatTagName);
                         }
                     }
 
@@ -172,8 +175,47 @@ public class CategorizeAction extends AddTagAction {
                 }
             }
 
-            if (createUndo && categorizationChangeSet.getOldCategories().isEmpty() == false) {
-                undoManager.addToUndo(categorizationChangeSet);
+            if (createUndo && oldCats.isEmpty() == false) {
+                undoManager.addToUndo(new CategorizationChange(controller, tagName, oldCats));
+            }
+        }
+    }
+
+    /**
+     *
+     */
+    @Immutable
+    private final class CategorizationChange implements UndoRedoManager.UndoableCommand {
+
+        private final TagName newCategory;
+        private final ImmutableMap<Long, TagName> oldCategories;
+        private final ImageGalleryController controller;
+
+        CategorizationChange(ImageGalleryController controller, TagName newCategory, Map<Long, TagName> oldCategories) {
+            this.controller = controller;
+            this.newCategory = newCategory;
+            this.oldCategories = ImmutableMap.copyOf(oldCategories);
+        }
+
+        /**
+         *
+         * @param controller the controller to apply the changes with
+         */
+        @Override
+        public void run() {
+            CategorizeAction categorizeAction = new CategorizeAction(controller);
+            categorizeAction.addTagsToFiles(newCategory, "", this.oldCategories.keySet(), false);
+        }
+
+        /**
+         *
+         * @param controller the value of controller
+         */
+        @Override
+        public void undo() {
+            CategorizeAction categorizeAction = new CategorizeAction(controller);
+            for (Map.Entry<Long, TagName> entry : oldCategories.entrySet()) {
+                categorizeAction.addTagsToFiles(entry.getValue(), "", Collections.singleton(entry.getKey()), false);
             }
         }
     }
