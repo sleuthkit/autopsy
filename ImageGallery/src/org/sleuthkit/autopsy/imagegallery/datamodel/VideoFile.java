@@ -19,14 +19,11 @@
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
 import com.google.common.io.Files;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.nio.file.Paths;
-import java.util.Objects;
-import java.util.logging.Level;
-import javafx.embed.swing.SwingFXUtils;
+import javafx.concurrent.Task;
 import javafx.scene.image.Image;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
@@ -40,6 +37,8 @@ import org.sleuthkit.datamodel.AbstractFile;
 
 public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
 
+    private static final Logger LOGGER = Logger.getLogger(VideoFile.class.getName());
+
     private static final Image VIDEO_ICON = new Image("org/sleuthkit/autopsy/imagegallery/images/Clapperboard.png");
 
     VideoFile(T file, Boolean analyzed) {
@@ -50,17 +49,16 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
         return VIDEO_ICON;
     }
 
+    
+
     @Override
-    public Image getFullSizeImage() {
-        Image image = (null == imageRef) ? null : imageRef.get();
+    String getMessageTemplate(final Exception exception) {
+        return "Failed to get image preview for video {0}: " + exception.toString();
+    }
 
-        if (image == null) {
-            final BufferedImage bufferedImage = (BufferedImage) ImageUtils.getThumbnail(getAbstractFile(), 1024);
-            image = (bufferedImage == ImageUtils.getDefaultThumbnail()) ? null : SwingFXUtils.toFXImage(bufferedImage, null);
-            imageRef = new SoftReference<>(image);
-        }
-
-        return image;
+    @Override
+    Task<Image> getReadFullSizeImageTaskHelper() {
+        return ImageUtils.newGetThumbnailTask(getAbstractFile(), 1024, false);
     }
 
     private SoftReference<Media> mediaRef;
@@ -74,31 +72,17 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
         final File cacheFile = VideoUtils.getTempVideoFile(this.getAbstractFile());
 
         if (cacheFile.exists() == false || cacheFile.length() < getAbstractFile().getSize()) {
-
             Files.createParentDirs(cacheFile);
             ProgressHandle progressHandle = ProgressHandleFactory.createHandle("writing temporary file to disk");
             progressHandle.start(100);
             ContentUtils.writeToFile(this.getAbstractFile(), cacheFile, progressHandle, null, true);
             progressHandle.finish();
-
         }
 
         media = new Media(Paths.get(cacheFile.getAbsolutePath()).toUri().toString());
         mediaRef = new SoftReference<>(media);
         return media;
 
-    }
-
-    public boolean isDisplayableAsMedia() {
-        try {
-            Media media = getMedia();
-            return Objects.nonNull(media) && Objects.isNull(media.getError());
-        } catch (IOException ex) {
-            Logger.getLogger(VideoFile.class.getName()).log(Level.SEVERE, "failed to write video to cache for playback.", ex);
-            return false;
-        } catch (MediaException ex) {
-            return false;
-        }
     }
 
     @Override
