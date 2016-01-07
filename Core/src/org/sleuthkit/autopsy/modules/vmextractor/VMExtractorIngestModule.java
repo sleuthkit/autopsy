@@ -79,6 +79,8 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         try {
+            // look for all VM files, not just VMDK
+            
             List<AbstractFile> vmFiles = findVirtualMachineFiles(dataSource);
             /*
              * TODO: Configure and start progress bar
@@ -88,6 +90,17 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
                     break;
                 }
                 try {
+                    // get path to the folder where VM is located 
+                    String path = vmFile.getParentPath();
+                    
+                    // check if the path is already in hashmap
+                    
+                    // if it is then we have already created output folder to write out VM files
+                    
+                    // if not - add path to hashmap, create output folder to write out VM files
+                    
+                    // write the vm fole to output folder
+                    
                     ingestVirtualMachineImage(vmFile);
                     /*
                      * TODO: Update progress bar
@@ -99,6 +112,13 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
                     MessageNotifyUtil.Notify.error("Failed to extract virtual machine file", String.format("Failed to write virtual machine file %s to disk", vmFile.getName()));
                 }
             }
+            
+            // start processing output folders after we are done writing out all vm files
+            
+            // call VirtualMachineFinderUtility.identifyVirtualMachines(imageFolderPath) on each folder to get data sources
+            
+            // ingest the data sources
+            
             return ProcessResult.OK;
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error querying case database", ex);
@@ -124,7 +144,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
         /*
          * TODO: Adapt this code as necessary to actual VM files
          */
-        return Case.getCurrentCase().getServices().getFileManager().findFiles(dataSource, "%.img");
+        return Case.getCurrentCase().getServices().getFileManager().findFiles(dataSource, "%.vmdk");
     }
 
     /**
