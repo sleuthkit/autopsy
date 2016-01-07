@@ -191,19 +191,19 @@ public class SlideShowView extends DrawableTileBase {
         Platform.runLater(() -> imageBorder.setCenter(progressNode));
 
         //called on fx thread
-        mediaTask.setOnSucceeded(succeedded -> {
+        myTask.setOnSucceeded(succeedded -> {
             showMedia(file, myTask);
             synchronized (SlideShowView.this) {
                 mediaTask = null;
             }
         });
-        mediaTask.setOnFailed(failed -> {
+        myTask.setOnFailed(failed -> {
             showErrorNode(getMediaLoadErrorLabel(myTask), file);
             synchronized (SlideShowView.this) {
                 mediaTask = null;
             }
         });
-        mediaTask.setOnCancelled(cancelled -> {
+        myTask.setOnCancelled(cancelled -> {
             disposeContent();
         });
 
@@ -228,7 +228,7 @@ public class SlideShowView extends DrawableTileBase {
     }
 
     private String getMediaLoadErrorLabel(Task<Node> mediaTask) {
-        return Bundle.MediaViewImagePanel_errorLabel_text() + ": " + mediaTask.getException().getLocalizedMessage();
+        return Bundle.DrawableUIBase_errorLabel_text() + ": " + mediaTask.getException().getLocalizedMessage();
     }
 
     /**
