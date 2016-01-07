@@ -247,11 +247,11 @@ public class FileTypeDetector {
                         // index the artifact for keyword search
                         Case.getCurrentCase().getServices().getBlackboard().indexArtifact(artifact);
                     } catch (Blackboard.BlackboardException ex) {
-                        logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", artifact.getDisplayName()), ex); //NON-NLS
+                        logger.log(Level.SEVERE, String.format("Unable to index blackboard artifact %d", artifact.getArtifactID()), ex); //NON-NLS
                         MessageNotifyUtil.Notify.error(
                                 NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), artifact.getDisplayName());
                     } catch (IllegalStateException ex) {
-                        logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", artifact.getDisplayName()), ex); //NON-NLS
+                        logger.log(Level.SEVERE, String.format("Unable to index blackboard artifact %d", artifact.getArtifactID()), ex);
                         MessageNotifyUtil.Notify.error(
                                 NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), artifact.getDisplayName());
                     }
