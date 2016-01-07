@@ -1,14 +1,14 @@
 /*! \page mod_report_page Developing Report Modules
 
 \section report_summary Overview
-Report modules allow Autopsy users to create different report types.  Autopsy comes with modules to generate HTML and Excel artifact reports, a tab delimited File report, a Keyhole Markup Language (KML) report for Google Earth data, and a body file for timeline creation.  You can made additional modules to create custom output formats. 
+Report modules allow Autopsy users to create different report types.  Autopsy comes with modules to generate HTML and Excel artifact reports, a tab delimited File report, a Keyhole Markup Language (KML) report for Google Earth data, and a body file for timeline creation.  You can make additional modules to create custom output formats. 
 
 There are three types of reporting modules that differ in how the data is organized. 
+- Table report modules organize the data into tables.  If your output is in table format, this type of module will be easier to make because Autopsy does a lot of the organizing work for you. 
+- File report modules are also table-based, but they specifically deal with reporting on the Files in the case, not artifacts.
 - General report modules are free form and you are allowed to organize the output however you want.  
-- Table report modules organize the data into tables.  If your output is in table format, this type of module will be easier to make the module because Autopsy does a lot of the organizing work for you. 
-- File report modules are also table based, but they specifically deal with reporting on the Files in the case, not artifacts.
 
-Table report modules require their sub-classes to override methods to start and end tables, and add rows to those tables. These methods are provided data, generated from a default configuration panel, for the module to report on. Because of this, when creating a table report module one only needs to focus on how to display the data, not how to find it.
+Table report modules require their subclasses to override methods to start and end tables, and add rows to those tables. These methods are provided data, generated from a default configuration panel, for the module to report on. Because of this, when creating a table report module one only needs to focus on how to display the data, not how to find it.
 
 File report modules are similar to table report modules, but only require their sub-classes to start and end a single table, and add rows to that table. The methods are given an AbstractFile and a list of FileReportDataTypes, which specify what information about the file should be added to the report. The data can be extracted from the file by calling the FileReportDataTypes getValue method with the file as it's argument.
 
@@ -17,7 +17,10 @@ On the other hand, general report modules have a single method to generate the r
 General modules are also given the responsibility of updating their report's progress bar and processing label in the UI. A progress panel is given to every general report module. It contains basic API to start, stop, and add to the progress bar, as well as update the processing label. The module is also expected to check the progress bar's status occasionally to see if the user has manually canceled the report.
 
 \section report_create_module Creating a Report Module
-To create a report module, start off by creating a new Java or Python (Jython) class and implementing (Java) or inheriting (Jython) one of the org.sleuthkit.autopsy.report.TableReportModule interface, the org.sleuthkit.autopsy.report.FileReportModule interface, or the org.sleuthkit.autopsy.report.GeneralReportModule interface. 
+To create a report module, start off by creating a new Java or Python (Jython) class and implementing (Java) or inheriting (Jython) the appropriate interface:
+- org.sleuthkit.autopsy.report.TableReportModule 
+- org.sleuthkit.autopsy.report.FileReportModule 
+- org.sleuthkit.autopsy.report.GeneralReportModule 
 
 All three of these interfaces extend the org.sleuthkit.autopsy.report.ReportModule interface that defines the following methods:
 - org.sleuthkit.autopsy.report.ReportModule.getName()
