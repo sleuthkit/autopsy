@@ -215,7 +215,11 @@ public class ExtractedContent implements AutopsyVisitableItem {
         protected boolean createKeys(List<BlackboardArtifact.ARTIFACT_TYPE> list) {
             if (skCase != null) {
                 try {
-                    List<BlackboardArtifact.ARTIFACT_TYPE> inUse = skCase.getBlackboardArtifactTypesInUse();
+                    List<BlackboardArtifact.ARTIFACT_TYPE> inUse = new ArrayList<>();
+                    List<Integer> types = skCase.getArtifactTypesInUse();
+                    for (Integer i: types) {
+                        inUse.add(BlackboardArtifact.ARTIFACT_TYPE.fromID(i));
+                    }                    
                     inUse.removeAll(doNotShow);
                     Collections.sort(inUse,
                             new Comparator<BlackboardArtifact.ARTIFACT_TYPE>() {
