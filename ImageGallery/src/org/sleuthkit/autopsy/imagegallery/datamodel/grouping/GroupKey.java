@@ -51,7 +51,7 @@ public class GroupKey<T extends Comparable<T>> implements Comparable<GroupKey<T>
     public String getValueDisplayName() {
         return Objects.equals(attr, DrawableAttribute.TAGS)
                 ? ((TagName) getValue()).getDisplayName()
-                : getValue().toString();
+                : Objects.toString(getValue(), "unknown");
     }
 
     @Override

@@ -41,6 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
+import javax.annotation.Nonnull;
 import java.util.stream.Collectors;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
@@ -102,7 +103,7 @@ public final class DrawableDB {
     private final PreparedStatement insertHashHitStmt;
 
     private final PreparedStatement updateFileStmt;
-    private PreparedStatement insertFileStmt;
+    private final PreparedStatement insertFileStmt;
 
     private final PreparedStatement pathGroupStmt;
 
@@ -349,7 +350,7 @@ public final class DrawableDB {
             setPragmas();
 
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "problem accessing  database", ex);
+            LOGGER.log(Level.SEVERE, "problem accessing database", ex);
             return false;
         }
         try (Statement stmt = con.createStatement()) {
@@ -729,17 +730,6 @@ public final class DrawableDB {
             } catch (SQLException ex) {
                 LOGGER.log(Level.WARNING, "problem counting analyzed files: ", ex);
             }
-
-            //// Old method
-            //try (Statement stmt = con.createStatement();
-            //        //Can't make this a preprared statement because of the IN ( ... )
-            //        ResultSet analyzedQuery = stmt.executeQuery("select count(analyzed) as analyzed from drawable_files where analyzed = 1 and obj_id in (" + StringUtils.join(fileIDsInGroup, ", ") + ")")) {
-            //    while (analyzedQuery.next()) {
-            //        return analyzedQuery.getInt(ANALYZED) == fileIDsInGroup.size();
-            //    }
-            //} catch (SQLException ex) {
-            //    LOGGER.log(Level.WARNING, "problem counting analyzed files: ", ex);
-            //}
         } catch (TskCoreException tskCoreException) {
             LOGGER.log(Level.WARNING, "problem counting analyzed files: ", tskCoreException);
         } finally {
@@ -1008,8 +998,10 @@ public final class DrawableDB {
 
     public Set<Long> getFileIDsInGroup(GroupKey<?> groupKey) throws TskCoreException {
 
-        if (groupKey.getAttribute().isDBColumn) {
+        if (groupKey.getAttribute().isDBColumn == false) {
             switch (groupKey.getAttribute().attrName) {
+                case MIME_TYPE:
+                    return groupManager.getFileIDsWithMimeType((String) groupKey.getValue());
                 case CATEGORY:
                     return groupManager.getFileIDsWithCategory((Category) groupKey.getValue());
                 case TAGS:
@@ -1048,6 +1040,8 @@ public final class DrawableDB {
              * but they shouldn't be coupled like that -jm
              */
             switch (key.getAttribute().attrName) {
+                case MIME_TYPE:
+                    return getFilesWithMimeType((String) key.getValue());
                 case CATEGORY:
                     return getFilesWithCategory((Category) key.getValue());
                 default:
@@ -1147,6 +1141,11 @@ public final class DrawableDB {
 
         //indicates succesfull removal of 1 file
         return valsResults == 1;
+
+    }
+
+    private List<DrawableFile<?>> getFilesWithMimeType(String string) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     public class MultipleTransactionException extends IllegalStateException {
@@ -1299,6 +1298,7 @@ public final class DrawableDB {
             LOGGER.log(Level.SEVERE, "Error getting category count.", ex);
         }
         return -1;
+
     }
 
     /**

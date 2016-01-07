@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.imagegallery.datamodel.grouping;
 
 import com.google.common.eventbus.Subscribe;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -58,6 +60,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
@@ -341,6 +344,17 @@ public class GroupManager {
                     TreeSet<A> names = new TreeSet<>((Collection<? extends A>) db.getHashSetNames());
                     values = new ArrayList<>(names);
                     break;
+                case MIME_TYPE:
+                    try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery("select distinct mime_type from tsk_files");
+                            ResultSet resultSet = executeQuery.getResultSet();) {
+                        values = new ArrayList<>();
+                        while (resultSet.next()) {
+
+                            values.add((A) resultSet.getString("mime_type"));
+                        }
+                    } catch (SQLException | TskCoreException ex) {
+                        Exceptions.printStackTrace(ex);
+                    }
                 default:
                     //otherwise do straight db query 
                     return db.findValuesForAttribute(groupBy, sortBy, sortOrder);
@@ -663,6 +677,10 @@ public class GroupManager {
             }
         }
         return null;
+    }
+
+    public Set<Long> getFileIDsWithMimeType(String string) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     /**

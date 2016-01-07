@@ -40,6 +40,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
 import org.sleuthkit.autopsy.imagegallery.ThumbnailCache;
 import org.sleuthkit.autopsy.imagegallery.utils.TaskUtils;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -325,6 +326,14 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
     abstract Double getWidth();
 
     abstract Double getHeight();
+
+    public String getMIMEType() {
+        try {
+            return new FileTypeDetector().getFileType(file);
+        } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
+            return null;
+        }
+    }
 
     public String getDrawablePath() {
         if (drawablePath != null) {
