@@ -251,7 +251,9 @@ public class FileTypeDetector {
                         MessageNotifyUtil.Notify.error(
                                 NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), artifact.getDisplayName());
                     } catch (IllegalStateException ex) {
-                        throw new TskCoreException("There is no current case.");
+                        logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", artifact.getDisplayName()), ex); //NON-NLS
+                        MessageNotifyUtil.Notify.error(
+                                NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), artifact.getDisplayName());
                     }
                 }
                 return fileType.getMimeType();
