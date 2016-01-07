@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * Virtual machine file finder utility
  */
-public class VirtualMachineFinderUtility {
+public final class VirtualMachineFinderUtility {
 
     private static final Logger logger = Logger.getLogger(VirtualMachineFinderUtility.class.getName());
 
@@ -67,10 +67,9 @@ public class VirtualMachineFinderUtility {
     }
 
     /**
-     * Identifies virtual machine files for ingest given a list of files in a
-     * folder.
+     * Identifies virtual machine files for ingest.
      *
-     * @param imageFolderPath Absolute path to the folder containing the files
+     * @param imageFolderPath Absolute path to the folder to be analyzed
      *
      * @return List of VM files to be ingested
      */
