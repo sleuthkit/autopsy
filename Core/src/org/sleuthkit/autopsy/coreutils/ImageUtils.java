@@ -421,10 +421,17 @@ public class ImageUtils {
      * @param fileID
      *
      * @return a File object representing the location of the cached thumbnail.
-     *         This file may not actually exist(yet).
+     *         This file may not actually exist(yet). Returns null if there was
+     *         any problem getting the file, such as no case was open.
      */
     private static File getCachedThumbnailLocation(long fileID) {
-        return Paths.get(Case.getCurrentCase().getCacheDirectory(), "thumbnails", fileID + ".png").toFile(); //NOI18N
+        try {
+            String cacheDirectory = Case.getCurrentCase().getCacheDirectory();
+            return Paths.get(cacheDirectory, "thumbnails", fileID + ".png").toFile(); //NOI18N
+        } catch (IllegalStateException e) {
+            return null;
+        }
+
     }
 
     /**
@@ -650,7 +657,7 @@ public class ImageUtils {
         @Override
         protected javafx.scene.image.Image call() throws Exception {
             // If a thumbnail file is already saved locally, just read that.
-            if (cacheFile.exists()) {
+            if (cacheFile != null && cacheFile.exists()) {
                 try {
                     BufferedImage cachedThumbnail = ImageIO.read(cacheFile);
                     if (nonNull(cachedThumbnail) && cachedThumbnail.getWidth() == iconSize) {
@@ -710,7 +717,7 @@ public class ImageUtils {
             updateProgress(-1, 1);
 
             //if we got a valid thumbnail save it
-            if (nonNull(thumbnail) && DEFAULT_THUMBNAIL != thumbnail) {
+            if (cacheFile != null && nonNull(thumbnail) && DEFAULT_THUMBNAIL != thumbnail) {
                 saveThumbnail(thumbnail);
             }
             return SwingFXUtils.toFXImage(thumbnail, null);
