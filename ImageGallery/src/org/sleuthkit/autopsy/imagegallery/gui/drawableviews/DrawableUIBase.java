@@ -151,7 +151,7 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
                     && exception.getMessage().contains("Java heap space")) {
                 showErrorNode(Bundle.DrawableUIBase_errorLabel_OOMText(), file);
             } else {
-                showErrorNode(Bundle.DrawableUIBase_errorLabel_OOMText(), file);
+                showErrorNode(Bundle.DrawableUIBase_errorLabel_text(), file);
             }
             synchronized (DrawableUIBase.this) {
                 imageTask = null;
