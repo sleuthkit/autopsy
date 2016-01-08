@@ -102,7 +102,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
 
         if (vmFiles.isEmpty()) {
             // no VM files found
-            logger.log(Level.INFO, "No virtual machine files found");
+            logger.log(Level.INFO, "No virtual machine files found in data source %s", dataSource.getName());
             return ProcessResult.OK;
         }
         // display progress for saving each VM file to disk
@@ -188,7 +188,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
 
     private void writeVirtualMachineToDisk(AbstractFile vmFile, String outputFolderForThisVM) throws IOException {
 
-        // TODO: check available disk space first
+        // TODO: check available disk space first? See IngestMonitor.getFreeSpace()
         
         // check if output folder exists
         File destinationFolder = Paths.get(outputFolderForThisVM).toFile();
