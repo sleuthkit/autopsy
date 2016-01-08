@@ -26,6 +26,7 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -59,6 +60,9 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
     private IngestJobContext context;
     private Path ingestJobOutputDir;
 
+    private final HashMap<String, String> imageFolderToOutputFolder = new HashMap<>();
+    private int folderId = 0;
+
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
@@ -78,56 +82,88 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
      */
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
+
+        String outputFolderForThisVM;
+        List<AbstractFile> vmFiles;
+        /*
+         * TODO: Configure and start progress bar - looking for VM files
+         */
         try {
-            // look for all VM files, not just VMDK
-            
-            List<AbstractFile> vmFiles = findVirtualMachineFiles(dataSource);
-            /*
-             * TODO: Configure and start progress bar
-             */
-            for (AbstractFile vmFile : vmFiles) {
-                if (context.dataSourceIngestIsCancelled()) {
-                    break;
-                }
-                try {
-                    // get path to the folder where VM is located 
-                    String path = vmFile.getParentPath();
-                    
-                    // check if the path is already in hashmap
-                    
-                    // if it is then we have already created output folder to write out VM files
-                    
-                    // if not - add path to hashmap, create output folder to write out VM files
-                    
-                    // write the vm fole to output folder
-                    
-                    ingestVirtualMachineImage(vmFile);
-                    /*
-                     * TODO: Update progress bar
-                     */
-                } catch (InterruptedException ex) {
-                    logger.log(Level.INFO, String.format("Interrupted while adding virtual machine file %s (id=%d)", vmFile.getName(), vmFile.getId()), ex);
-                } catch (IOException ex) {
-                    logger.log(Level.SEVERE, String.format("Failed to write virtual machine file %s (id=%d) to disk", vmFile.getName(), vmFile.getId()), ex);
-                    MessageNotifyUtil.Notify.error("Failed to extract virtual machine file", String.format("Failed to write virtual machine file %s to disk", vmFile.getName()));
-                }
-            }
-            
-            // start processing output folders after we are done writing out all vm files
-            
-            // call VirtualMachineFinderUtility.identifyVirtualMachines(imageFolderPath) on each folder to get data sources
-            
-            // ingest the data sources
-            
-            return ProcessResult.OK;
+            // TODO: look for all VM files, not just VMDK
+
+            vmFiles = findVirtualMachineFiles(dataSource);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error querying case database", ex);
             return ProcessResult.ERROR;
-        } finally {
+        }
+
+        if (vmFiles.isEmpty()) {
+            // no VM files found
+            logger.log(Level.INFO, "No virtual machine files found");
             /*
              * TODO: Finish progress bar
              */
+            return ProcessResult.OK;
         }
+        /*
+         * TODO: Configure and start progress bar - display progress for saving each VM file to disk
+         */
+        for (AbstractFile vmFile : vmFiles) {
+            if (context.dataSourceIngestIsCancelled()) {
+                break;
+            }
+            // get vmFolderPathInsideTheImage to the folder where VM is located 
+            String vmFolderPathInsideTheImage = vmFile.getParentPath();
+
+            // check if the vmFolderPathInsideTheImage is already in hashmap
+            if (imageFolderToOutputFolder.containsKey(vmFolderPathInsideTheImage)) {
+                // if it is then we have already created output folder to write out VM files
+                outputFolderForThisVM = imageFolderToOutputFolder.get(vmFolderPathInsideTheImage);
+            } else {
+                // if not - create output folder to write out VM files (can use any unique ID or number for folder name)
+                folderId++;
+                outputFolderForThisVM = Paths.get(ingestJobOutputDir.toString(), Integer.toString(folderId)).toString();
+
+                // add vmFolderPathInsideTheImage to hashmap
+                imageFolderToOutputFolder.put(vmFolderPathInsideTheImage, outputFolderForThisVM);
+            }
+
+            // write the vm file to output folder
+            try {
+                writeVirtualMachineToDisk(vmFile, outputFolderForThisVM);
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, String.format("Failed to write virtual machine file %s (id=%d) to disk", vmFile.getName(), vmFile.getId()), ex);
+                MessageNotifyUtil.Notify.error("Failed to extract virtual machine file", String.format("Failed to write virtual machine file %s to disk", vmFile.getName()));
+            }
+
+            /*
+             * TODO: Update progress bar
+             */
+        }
+
+        /*
+         * TODO: Configure and start progress bar - display progress for processing each VM folder? 
+         */
+        // start processing output folders after we are done writing out all vm files
+        for (String folder : imageFolderToOutputFolder.values()) {
+            List<String> vmFilesToIngest = VirtualMachineFinderUtility.identifyVirtualMachines(Paths.get(folder));
+            for (String file : vmFilesToIngest) {
+                try {
+                    // ingest the data sources                
+                    ingestVirtualMachineImage(Paths.get(folder, file));
+                } catch (InterruptedException ex) {
+                    logger.log(Level.INFO, String.format("Interrupted while adding virtual machine file %s in folder %s", file, folder), ex);
+                } catch (IOException ex) {
+                    logger.log(Level.SEVERE, String.format("Failed to write virtual machine file %s to disk", file), ex);
+                    MessageNotifyUtil.Notify.error("Failed to extract virtual machine file", String.format("Failed to write virtual machine file %s to disk", file));
+                }
+            }
+        }
+
+        /*
+         * TODO: Finish progress bar
+         */
+        return ProcessResult.OK;
     }
 
     /**
@@ -147,23 +183,23 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
         return Case.getCurrentCase().getServices().getFileManager().findFiles(dataSource, "%.vmdk");
     }
 
+    private void writeVirtualMachineToDisk(AbstractFile vmFile, String outputFolderForThisVM) throws IOException {
+
+        // TODO: check available disk space first
+        /*
+         * Write the virtual machine file to disk.
+         */
+        File localFile = Paths.get(outputFolderForThisVM, vmFile.getName()).toFile();
+        ContentUtils.writeToFile(vmFile, localFile);
+    }
+
     /**
      * Add a virtual machine file to the case as a data source and analyze it
      * with the ingest modules.
      *
      * @param vmFile A virtual machine file.
      */
-    private void ingestVirtualMachineImage(AbstractFile vmFile) throws InterruptedException, IOException {
-        
-        // TODO: check available disk space first
-        
-        /*
-         * Write the virtual machine file to disk.
-         */
-        String localFileName = vmFile.getName() + "_" + vmFile.getId();
-        Path localFilePath = Paths.get(ingestJobOutputDir.toString(), localFileName);
-        File localFile = localFilePath.toFile();
-        ContentUtils.writeToFile(vmFile, localFile);
+    private void ingestVirtualMachineImage(Path vmFile) throws InterruptedException, IOException {
 
         /*
          * Try to add the virtual machine file to the case as a data source.
@@ -171,7 +207,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
         UUID taskId = UUID.randomUUID();
         Case.getCurrentCase().notifyAddingDataSource(taskId);
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
-        dataSourceProcessor.setDataSourceOptions(localFile.getAbsolutePath(), "", false);
+        dataSourceProcessor.setDataSourceOptions(vmFile.toString(), "", false);
         AddDataSourceCallback dspCallback = new AddDataSourceCallback(vmFile);
         synchronized (this) {
             dataSourceProcessor.run(new AddDataSourceProgressMonitor(), dspCallback);
@@ -190,11 +226,11 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
             List<Content> dataSourceContent = new ArrayList<>(dspCallback.vmDataSources);
             IngestJobSettings ingestJobSettings = new IngestJobSettings(context.getExecutionContext());
             for (String warning : ingestJobSettings.getWarnings()) {
-                logger.log(Level.WARNING, String.format("Ingest job settings warning for virtual machine file %s (id=%d): %s", vmFile.getName(), vmFile.getId(), warning));
+                logger.log(Level.WARNING, String.format("Ingest job settings warning for virtual machine file %s : %s", vmFile.toString(), warning));
             }
             IngestServices.getInstance().postMessage(IngestMessage.createMessage(IngestMessage.MessageType.INFO,
                     VMExtractorIngestModuleFactory.getModuleName(),
-                    NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.addedVirtualMachineImage.message", localFileName)));
+                    NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.addedVirtualMachineImage.message", vmFile.toString())));
             IngestManager.getInstance().queueIngestJob(dataSourceContent, ingestJobSettings);
         } else {
             Case.getCurrentCase().notifyFailedAddingDataSource(taskId);
@@ -226,7 +262,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
      */
     private final class AddDataSourceCallback extends DataSourceProcessorCallback {
 
-        private final AbstractFile vmFile;
+        private final Path vmFile;
         private final List<Content> vmDataSources;
 
         /**
@@ -234,7 +270,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
          *
          * @param vmFile The virtual machine file to be added as a data source.
          */
-        private AddDataSourceCallback(AbstractFile vmFile) {
+        private AddDataSourceCallback(Path vmFile) {
             this.vmFile = vmFile;
             vmDataSources = new ArrayList<>();
         }
@@ -245,7 +281,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
         @Override
         public void done(DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errList, List<Content> content) {
             for (String error : errList) {
-                String logMessage = String.format("Data source processor error for virtual machine file %s (id=%d): %s", vmFile.getName(), vmFile.getId(), error);
+                String logMessage = String.format("Data source processor error for virtual machine file %s: %s", vmFile.toString(), error);
                 if (DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS == result) {
                     logger.log(Level.SEVERE, logMessage);
                 } else {
