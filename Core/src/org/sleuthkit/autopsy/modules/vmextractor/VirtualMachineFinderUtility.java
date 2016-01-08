@@ -193,6 +193,10 @@ public final class VirtualMachineFinderUtility {
         // only returns files, skips folders
         File file = new File(path);
         String[] files = file.list((File current, String name) -> new File(current, name).isFile());
+        if (files == null) {
+            // null is returned when folder doesn't exist. need to check this condition, otherwise there is NullPointerException when converting to List
+            return Collections.emptyList();
+        }
         return new ArrayList<>(Arrays.asList(files));
     }
 }

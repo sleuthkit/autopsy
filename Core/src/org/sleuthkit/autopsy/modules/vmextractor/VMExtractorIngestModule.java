@@ -131,7 +131,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
             // write the vm file to output folder
             try {
                 writeVirtualMachineToDisk(vmFile, outputFolderForThisVM);
-            } catch (IOException ex) {
+            } catch (Exception ex) {
                 logger.log(Level.SEVERE, String.format("Failed to write virtual machine file %s (id=%d) to disk", vmFile.getName(), vmFile.getId()), ex);
                 MessageNotifyUtil.Notify.error("Failed to extract virtual machine file", String.format("Failed to write virtual machine file %s to disk", vmFile.getName()));
             }
@@ -186,6 +186,12 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
     private void writeVirtualMachineToDisk(AbstractFile vmFile, String outputFolderForThisVM) throws IOException {
 
         // TODO: check available disk space first
+        
+        // check if output folder exists
+        File destinationFolder = Paths.get(outputFolderForThisVM).toFile();
+        if (!destinationFolder.exists()) {
+            destinationFolder.mkdirs();
+        }
         /*
          * Write the virtual machine file to disk.
          */
