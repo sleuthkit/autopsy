@@ -50,27 +50,58 @@ public class ModuleDataEvent extends ChangeEvent {
 
     private String moduleName;
     private ARTIFACT_TYPE artifactType;
-    private Collection<BlackboardArtifact> artifactIDs;
+    private int artifactTypeId;
+    private Collection<BlackboardArtifact> artifacts;
 
     /**
-     * @param moduleName   Module name
+     * @param moduleName Module name
      * @param artifactType Type of artifact that was posted to blackboard
      */
     public ModuleDataEvent(String moduleName, ARTIFACT_TYPE artifactType) {
         super(artifactType);
+        this.artifactTypeId = artifactType.getTypeID();
         this.moduleName = moduleName;
         this.artifactType = artifactType;
     }
 
     /**
-     * @param moduleName   Module name
-     * @param artifactType Type of artifact that was posted to blackboard
-     * @param artifactIDs  List of specific artifact ID values that were added
-     *                     to blackboard
+     * @param moduleName Module name
+     * @param artifactTypeId ID of the type of artifact posted to the blackboard
      */
-    public ModuleDataEvent(String moduleName, ARTIFACT_TYPE artifactType, Collection<BlackboardArtifact> artifactIDs) {
+    public ModuleDataEvent(String moduleName, int artifactTypeId) {
+        super(ARTIFACT_TYPE.fromID(artifactTypeId));
+        this.artifactTypeId = artifactTypeId;
+        this.moduleName = moduleName;
+    }
+
+    /**
+     * @param moduleName Module name
+     * @param artifactTypeId ID of the type of artifact posted to the blackboard
+     * @param artifacts List of specific artifact ID values that were added to
+     * blackboard
+     */
+    public ModuleDataEvent(String moduleName, int artifactTypeId, Collection<BlackboardArtifact> artifacts) {
+        this(moduleName, artifactTypeId);
+        this.artifacts = artifacts;
+    }
+
+    /**
+     * @param moduleName Module name
+     * @param artifactType Type of artifact that was posted to blackboard
+     * @param artifacts List of specific artifact values that were added to
+     * blackboard
+     */
+    public ModuleDataEvent(String moduleName, ARTIFACT_TYPE artifactType, Collection<BlackboardArtifact> artifacts) {
         this(moduleName, artifactType);
-        this.artifactIDs = artifactIDs;
+        this.artifacts = artifacts;
+    }
+    
+    /**
+     * Gets the Artifact Type ID of this event
+     * @return The artifact ID
+     */
+    public int getArtifactTypeId() {
+        return this.artifactTypeId;
     }
 
     /**
@@ -79,13 +110,13 @@ public class ModuleDataEvent extends ChangeEvent {
      * @return Collection of artifact ids or null if not provided
      */
     public Collection<BlackboardArtifact> getArtifacts() {
-        return artifactIDs;
+        return artifacts;
     }
 
     /**
      * get artifact type of the new artifacts associated with the event
-     *
-     * @return
+     * If it is a user defined artifact, it will return null
+     * @return the artifact type
      */
     public ARTIFACT_TYPE getArtifactType() {
         return artifactType;

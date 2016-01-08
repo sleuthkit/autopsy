@@ -164,8 +164,16 @@ public class ExtractedContent implements AutopsyVisitableItem {
                      * the event is a remote event.
                      */
                     final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
-                    if (null != event && doNotShow.contains(event.getArtifactType()) == false) {
-                        refresh(true);
+                    if (null != event) {
+                        boolean passed = true;
+                        for(BlackboardArtifact.ARTIFACT_TYPE type: doNotShow) {
+                            if(type.getTypeID() == event.getArtifactTypeId()) {
+                                passed = false;
+                            }
+                        }
+                        if(passed) {
+                            refresh(true);
+                        }
                     }
                 } catch (IllegalStateException notUsed) {
                     /**
@@ -416,7 +424,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
                          * for the event to have a null oldValue.
                          */
                         final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
-                        if (null != event && event.getArtifactType() == type) {
+                        if (null != event && event.getArtifactTypeId() == type.getTypeID()) {
                             refresh(true);
                         }
                     } catch (IllegalStateException notUsed) {
