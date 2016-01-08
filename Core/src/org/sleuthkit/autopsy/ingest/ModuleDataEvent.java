@@ -50,7 +50,7 @@ public class ModuleDataEvent extends ChangeEvent {
 
     private String moduleName;
     private ARTIFACT_TYPE artifactType;
-    private int artifactTypeId;
+    private BlackboardArtifact.Type artifactTypeId;
     private Collection<BlackboardArtifact> artifacts;
 
     /**
@@ -59,7 +59,7 @@ public class ModuleDataEvent extends ChangeEvent {
      */
     public ModuleDataEvent(String moduleName, ARTIFACT_TYPE artifactType) {
         super(artifactType);
-        this.artifactTypeId = artifactType.getTypeID();
+        this.artifactTypeId = BlackboardArtifact.typeFactory(artifactType);
         this.moduleName = moduleName;
         this.artifactType = artifactType;
     }
@@ -68,8 +68,8 @@ public class ModuleDataEvent extends ChangeEvent {
      * @param moduleName Module name
      * @param artifactTypeId ID of the type of artifact posted to the blackboard
      */
-    public ModuleDataEvent(String moduleName, int artifactTypeId) {
-        super(ARTIFACT_TYPE.fromID(artifactTypeId));
+    public ModuleDataEvent(String moduleName, BlackboardArtifact.Type artifactTypeId) {
+        super(ARTIFACT_TYPE.fromID(artifactTypeId.getTypeID()));
         this.artifactTypeId = artifactTypeId;
         this.moduleName = moduleName;
     }
@@ -80,7 +80,7 @@ public class ModuleDataEvent extends ChangeEvent {
      * @param artifacts List of specific artifact ID values that were added to
      * blackboard
      */
-    public ModuleDataEvent(String moduleName, int artifactTypeId, Collection<BlackboardArtifact> artifacts) {
+    public ModuleDataEvent(String moduleName, BlackboardArtifact.Type artifactTypeId, Collection<BlackboardArtifact> artifacts) {
         this(moduleName, artifactTypeId);
         this.artifacts = artifacts;
     }
@@ -100,7 +100,7 @@ public class ModuleDataEvent extends ChangeEvent {
      * Gets the ID of the new artifacts associated with the event
      * @return The artifact ID
      */
-    public int getArtifactTypeId() {
+    public BlackboardArtifact.Type getArtifactTypeId() {
         return this.artifactTypeId;
     }
 
