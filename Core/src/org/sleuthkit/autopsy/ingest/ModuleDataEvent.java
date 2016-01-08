@@ -97,7 +97,7 @@ public class ModuleDataEvent extends ChangeEvent {
     }
     
     /**
-     * Gets the ID of the new artifacts associated with the event
+     * Gets the artifactTypeId of this event
      * @return The artifact ID
      */
     public int getArtifactTypeId() {
