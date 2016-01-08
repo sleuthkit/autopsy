@@ -86,9 +86,12 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
 
         String outputFolderForThisVM;
         List<AbstractFile> vmFiles;
-        /*
-         * TODO: Configure and start progress bar - looking for VM files
-         */
+        
+        // Configure and start progress bar - looking for VM files
+        progressBar.progress(NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.searchingImage.message"));
+        // Not sure how long it will take for search to complete.
+        progressBar.switchToIndeterminate();
+        
         try {
             // look for all VM files
             vmFiles = findVirtualMachineFiles(dataSource);
@@ -100,14 +103,12 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
         if (vmFiles.isEmpty()) {
             // no VM files found
             logger.log(Level.INFO, "No virtual machine files found");
-            /*
-             * TODO: Finish progress bar
-             */
             return ProcessResult.OK;
         }
-        /*
-         * TODO: Configure and start progress bar - display progress for saving each VM file to disk
-         */
+        // display progress for saving each VM file to disk
+        progressBar.switchToDeterminate(vmFiles.size());
+        progressBar.progress(NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.exportingToDisk.message"));
+        int numFilesSaved = 0;
         for (AbstractFile vmFile : vmFiles) {
             if (context.dataSourceIngestIsCancelled()) {
                 break;
@@ -117,7 +118,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
 
             // check if the vmFolderPathInsideTheImage is already in hashmap
             if (imageFolderToOutputFolder.containsKey(vmFolderPathInsideTheImage)) {
-                // if it is then we have already created output folder to write out VM files
+                // if it is then we have already created output folder to write out all VM files in this parent folder
                 outputFolderForThisVM = imageFolderToOutputFolder.get(vmFolderPathInsideTheImage);
             } else {
                 // if not - create output folder to write out VM files (can use any unique ID or number for folder name)
@@ -136,14 +137,15 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
                 MessageNotifyUtil.Notify.error("Failed to extract virtual machine file", String.format("Failed to write virtual machine file %s to disk", vmFile.getName()));
             }
 
-            /*
-             * TODO: Update progress bar
-             */
+            // Update progress bar
+            numFilesSaved++;
+            progressBar.progress(NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.exportingToDisk.message"), numFilesSaved);
         }
 
-        /*
-         * TODO: Configure and start progress bar - display progress for processing each VM folder? 
-         */
+        // update progress bar
+        progressBar.switchToDeterminate(imageFolderToOutputFolder.size());
+        progressBar.progress(NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.queuingIngestJobs.message"));
+        int numJobsQueued = 0;
         // start processing output folders after we are done writing out all vm files
         for (String folder : imageFolderToOutputFolder.values()) {
             List<String> vmFilesToIngest = VirtualMachineFinderUtility.identifyVirtualMachines(Paths.get(folder));
@@ -158,11 +160,10 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
                     MessageNotifyUtil.Notify.error("Failed to extract virtual machine file", String.format("Failed to write virtual machine file %s to disk", file));
                 }
             }
+            // Update progress bar
+            numJobsQueued++;
+            progressBar.progress(NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.queuingIngestJobs.message"), numJobsQueued);
         }
-
-        /*
-         * TODO: Finish progress bar
-         */
         return ProcessResult.OK;
     }
 
