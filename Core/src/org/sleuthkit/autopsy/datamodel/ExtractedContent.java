@@ -213,6 +213,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<BlackboardArtifact.ARTIFACT_TYPE> list) {
+            //TEST COMMENT
             if (skCase != null) {
                 try {
                     List<BlackboardArtifact.ARTIFACT_TYPE> inUse = new ArrayList<>();
