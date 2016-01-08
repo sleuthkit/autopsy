@@ -23,18 +23,23 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.logging.Level;
 import javax.annotation.concurrent.Immutable;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -77,14 +82,14 @@ public class CategoryManager {
      * the count related methods go through this cache, which loads initial
      * values from the database if needed.
      */
-    private final LoadingCache<Category, LongAdder> categoryCounts
-            = CacheBuilder.newBuilder().build(CacheLoader.from(this::getCategoryCountHelper));
+    private final LoadingCache<Category, LongAdder> categoryCounts =
+            CacheBuilder.newBuilder().build(CacheLoader.from(this::getCategoryCountHelper));
     /**
      * cached TagNames corresponding to Categories, looked up from
      * autopsyTagManager at initial request or if invalidated by case change.
      */
-    private final LoadingCache<Category, TagName> catTagNameMap = CacheBuilder.newBuilder().build(CacheLoader.from(cat
-            -> getController().getTagsManager().getTagName(cat)));
+    private final LoadingCache<Category, TagName> catTagNameMap = CacheBuilder.newBuilder().build(CacheLoader.from(cat ->
+            getController().getTagsManager().getTagName(cat)));
 
     public CategoryManager(ImageGalleryController controller) {
         this.controller = controller;
@@ -113,6 +118,32 @@ public class CategoryManager {
         categoryCounts.invalidateAll();
         catTagNameMap.invalidateAll();
         fireChange(Collections.emptyList(), null);
+    }
+
+    public long getCategoryCount(Category cat, Collection<Long> fileIDs) {
+        String name = "select count(obj_id) from tsk_files "
+                + " where "
+                + "         obj_id in (" + StringUtils.join(fileIDs, ",") + " ) "
+                + "     and obj_id not in ( "
+                + "         select obj_id from  content_tags where "
+                + "             content_tags.tag_name_id in ("
+                + getTagName(Category.FIVE).getId() + " ,"
+                + getTagName(Category.FOUR).getId() + " ,"
+                + getTagName(Category.THREE).getId() + " ,"
+                + getTagName(Category.TWO).getId() + " ,"
+                + getTagName(Category.ONE).getId()
+                + " ))";
+        try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery(name);
+                ResultSet resultSet = executeQuery.getResultSet();) {
+            while (resultSet.next()) {
+                return resultSet.getLong("count(obj_id)");
+            }
+        } catch (SQLException sQLException) {
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+
+        }
+        return -1;
     }
 
     /**
@@ -194,7 +225,7 @@ public class CategoryManager {
      *
      * @param listner
      */
-    public void registerListener(Object listner) {
+    synchronized public void registerListener(Object listner) {
         categoryEventBus.register(listner);
     }
 
@@ -203,7 +234,7 @@ public class CategoryManager {
      *
      * @param listener
      */
-    public void unregisterListener(Object listener) {
+    synchronized public void unregisterListener(Object listener) {
 
         try {
             categoryEventBus.unregister(listener);
@@ -284,8 +315,7 @@ public class CategoryManager {
 
     /**
      * Event broadcast to various UI componenets when one or more files'
-     * category
-     * has been changed
+     * category has been changed
      */
     @Immutable
     public static class CategoryChangeEvent {

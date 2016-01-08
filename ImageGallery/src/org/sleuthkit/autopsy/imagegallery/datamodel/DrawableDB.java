@@ -41,6 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
 import org.apache.commons.lang3.StringUtils;
@@ -1256,6 +1257,38 @@ public final class DrawableDB {
             LOGGER.log(Level.SEVERE, "Failed to get content tags by tag name.", ex1);
         }
         return -1;
+    }
+    /**
+     * get the id s of files with the given category.
+     *
+     * NOTE: although the category data is stored in autopsy as Tags, this
+     * method is provided on DrawableDb to provide a single point of access for
+     * ImageGallery data.
+     *
+     * //TODO: think about moving this and similar methods that don't actually
+     * get their data form the drawabledb to a layer wrapping the drawable db:
+     * something like ImageGalleryCaseData?
+     *
+     * @param cat the category to count the number of files for
+     *
+     * @return the number of the with the given category
+     */
+    public Set<Long> getCategoryFileIds(Category cat) {
+        try {
+            TagName tagName = controller.getTagsManager().getTagName(cat);
+            if (nonNull(tagName)) {
+                return tskCase.getContentTagsByTagName(tagName).stream()
+                        .map(ContentTag::getContent)
+                        .map(Content::getId)
+                        .filter(this::isInDB)
+                        .collect(Collectors.toSet());
+            }
+        } catch (IllegalStateException ex) {
+            LOGGER.log(Level.WARNING, "Case closed while getting files");
+        } catch (TskCoreException ex1) {
+            LOGGER.log(Level.SEVERE, "Failed to get content tags by tag name.", ex1);
+        }
+        return Collections.emptySet();
     }
 
     /**

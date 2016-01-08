@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui.navpanel;
 
+import com.google.common.eventbus.Subscribe;
 import java.util.Arrays;
 import java.util.List;
 import javafx.application.Platform;
@@ -41,6 +42,7 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
+import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
@@ -92,6 +94,11 @@ final public class NavPanel extends TabPane {
         FXMLConstructor.construct(this, "NavPanel.fxml");
     }
 
+    @Subscribe
+    public void handleCategoryChange(CategoryManager.CategoryChangeEvent event) {
+        resortHashTree();
+    }
+
     @FXML
     void initialize() {
         assert hashTab != null : "fx:id=\"hashTab\" was not injected: check your FXML file 'NavPanel.fxml'.";
@@ -108,6 +115,11 @@ final public class NavPanel extends TabPane {
         sortByBox.setItems(FXCollections.observableArrayList(FXCollections.observableArrayList(TreeNodeComparators.values())));
         sortByBox.getSelectionModel().select(TreeNodeComparators.HIT_COUNT);
         sortByBox.getSelectionModel().selectedItemProperty().addListener(o -> resortHashTree());
+            if (sortByBox.getSelectionModel().getSelectedItem() == TreeNodeComparators.UNCATEGORIZED_COUNT) {
+                controller.getCategoryManager().registerListener(NavPanel.this);
+            } else {
+                controller.getCategoryManager().unregisterListener(NavPanel.this);
+            }
 
         configureTree(navTree, navTreeRoot);
         configureTree(hashTree, hashTreeRoot);

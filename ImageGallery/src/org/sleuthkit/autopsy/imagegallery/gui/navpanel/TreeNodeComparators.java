@@ -27,6 +27,12 @@ import javafx.scene.control.TreeItem;
  */
 enum TreeNodeComparators implements Comparator<TreeItem<TreeNode>>, NonNullCompareable {
 
+    UNCATEGORIZED_COUNT("Uncategorized Count") {
+                @Override
+                public int nonNullCompare(TreeItem<TreeNode> o1, TreeItem<TreeNode> o2) {
+                    return -Long.compare(o1.getValue().getGroup().getUncategorizedCount(), o2.getValue().getGroup().getUncategorizedCount());
+                }
+            },
     ALPHABETICAL("Group Name") {
                 @Override
                 public int nonNullCompare(TreeItem<TreeNode> o1, TreeItem<TreeNode> o2) {

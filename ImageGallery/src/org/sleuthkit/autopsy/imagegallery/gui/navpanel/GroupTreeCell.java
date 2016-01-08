@@ -94,7 +94,9 @@ class GroupTreeCell extends TreeCell<TreeNode> {
                 .map(TreeNode::getGroup)
                 .ifPresent(group -> {
                     group.fileIds().removeListener(fileCountListener);
-                    group.seenProperty().removeListener(seenListener);
+            group.seenProperty().removeListener(seenListener);
+            group.uncatCountProperty().removeListener(fileCountListener);
+
                 });
 
         super.updateItem(treeNode, empty);
@@ -123,6 +125,9 @@ class GroupTreeCell extends TreeCell<TreeNode> {
 
                 //if the seen state of this group changes update its style
                 treeNode.getGroup().seenProperty().addListener(seenListener);
+
+                treeNode.getGroup().uncatCountProperty().addListener(fileCountListener);
+
 
                 //and use icon corresponding to group type
                 final Image icon = treeNode.getGroup().groupKey.getAttribute().getIcon();
@@ -170,8 +175,8 @@ class GroupTreeCell extends TreeCell<TreeNode> {
                 .map(TreeNode::getGroup)
                 .map(group -> " ("
                         + ((group.getGroupByAttribute() == DrawableAttribute.HASHSET)
-                                ? Integer.toString(group.getSize())
-                                : group.getHashSetHitsCount() + "/" + group.getSize())
+                                ? group.getSize() + "/" + group.getUncategorizedCount()
+                                : group.getHashSetHitsCount() + "/" + group.getSize() + "/" + group.getUncategorizedCount())
                         + ")"
                 ).orElse(""); //if item is null or group is null
     }
