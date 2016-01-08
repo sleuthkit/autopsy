@@ -89,8 +89,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
          * TODO: Configure and start progress bar - looking for VM files
          */
         try {
-            // TODO: look for all VM files, not just VMDK
-
+            // look for all VM files
             vmFiles = findVirtualMachineFiles(dataSource);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error querying case database", ex);
@@ -180,7 +179,9 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
         /*
          * TODO: Adapt this code as necessary to actual VM files
          */
-        return Case.getCurrentCase().getServices().getFileManager().findFiles(dataSource, "%.vmdk");
+        List<AbstractFile> vmFiles = Case.getCurrentCase().getServices().getFileManager().findFiles(dataSource, "%.vhd");
+        vmFiles.addAll(Case.getCurrentCase().getServices().getFileManager().findFiles(dataSource, "%.vmdk"));
+        return vmFiles;
     }
 
     private void writeVirtualMachineToDisk(AbstractFile vmFile, String outputFolderForThisVM) throws IOException {
