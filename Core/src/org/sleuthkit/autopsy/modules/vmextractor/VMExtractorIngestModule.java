@@ -32,6 +32,7 @@ import java.util.UUID;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.GeneralFilter;
 import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
@@ -166,7 +167,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
     }
 
     /**
-     * Locate the virtual machine file, if any, contained in a data source.
+     * Locate all supported virtual machine files, if any, contained in a data source.
      *
      * @param dataSource The data source.
      *
@@ -176,11 +177,11 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
      *                          database.
      */
     private static List<AbstractFile> findVirtualMachineFiles(Content dataSource) throws TskCoreException {
-        /*
-         * TODO: Adapt this code as necessary to actual VM files
-         */
-        List<AbstractFile> vmFiles = Case.getCurrentCase().getServices().getFileManager().findFiles(dataSource, "%.vhd");
-        vmFiles.addAll(Case.getCurrentCase().getServices().getFileManager().findFiles(dataSource, "%.vmdk"));
+        List<AbstractFile> vmFiles = new ArrayList<>();
+        for (String vmExtension : GeneralFilter.VIRTUAL_MACHINE_EXTS) {
+            String searchString = "%" + vmExtension;    // want a search string that looks like this "%.vmdk"
+            vmFiles.addAll(Case.getCurrentCase().getServices().getFileManager().findFiles(dataSource, searchString));
+        }
         return vmFiles;
     }
 
