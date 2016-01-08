@@ -63,6 +63,7 @@ import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.imagegallery.actions.UndoRedoManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
@@ -92,8 +93,6 @@ public final class ImageGalleryController {
 
     private static final Logger LOGGER = Logger.getLogger(ImageGalleryController.class.getName());
 
-    private static final String IMAGEGALLERY = "ImageGallery";
-
     private final Region infoOverLayBackground = new Region() {
         {
             setBackground(new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY)));
@@ -111,6 +110,7 @@ public final class ImageGalleryController {
     }
 
     private final History<GroupViewState> historyManager = new History<>();
+    private final UndoRedoManager undoManager = new UndoRedoManager();
 
     /**
      * true if Image Gallery should listen to ingest events, false if it should
@@ -230,7 +230,9 @@ public final class ImageGalleryController {
         });
 
         viewState().addListener((Observable observable) -> {
+            //when the viewed group changes, clear the selection and the undo/redo history
             selectionModel.clearSelection();
+            undoManager.clear();
         });
 
         regroupDisabled.addListener((Observable observable) -> {
@@ -475,6 +477,10 @@ public final class ImageGalleryController {
         this.navPanel = navPanel;
     }
 
+    public UndoRedoManager getUndoManager() {
+        return undoManager;
+    }
+
     // @@@ REVIEW IF THIS SHOLD BE STATIC...
     //TODO: concept seems like  the controller deal with how much work to do at a given time
     // @@@ review this class for synchronization issues (i.e. reset and cancel being called, add, etc.)
@@ -702,8 +708,8 @@ public final class ImageGalleryController {
                 + StringUtils.join(FileTypeUtils.getAllSupportedExtensions(),
                         "' or name LIKE '%.")
                 + "')";
-        static private final String MIMETYPE_CLAUSE
-                = "blackboard_attributes.value_text LIKE '"
+        static private final String MIMETYPE_CLAUSE =
+                "blackboard_attributes.value_text LIKE '"
                 + StringUtils.join(FileTypeUtils.getAllSupportedMimeTypes(),
                         "' OR blackboard_attributes.value_text LIKE '") + "' ";
 
