@@ -45,7 +45,6 @@ import java.util.stream.Collectors;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
 import org.apache.commons.lang3.StringUtils;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
@@ -1260,6 +1259,22 @@ public final class DrawableDB {
         return -1;
     }
 
+    /**
+     * get the number of files in the given set that have the given category.
+     *
+     * NOTE: although the category data is stored in autopsy as Tags, this
+     * method is provided on DrawableDb to provide a single point of access for
+     * ImageGallery data.
+     *
+     * //TODO: think about moving this and similar methods that don't actually
+     * get their data form the drawabledb to a layer wrapping the drawable db:
+     * something like ImageGalleryCaseData?
+     *
+     * @param cat     the category to count the number of files for
+     * @param fileIDs the the files ids to count within
+     *
+     * @return the number of the with the given category
+     */
     public long getCategoryCount(Category cat, Collection<Long> fileIDs) {
         DrawableTagsManager tagsManager = controller.getTagsManager();
 
@@ -1271,6 +1286,7 @@ public final class DrawableDB {
 
         String fileIdsList = "(" + StringUtils.join(fileIDs, ",") + " )";
 
+        //count the fileids that are in the given list and don't have a non-zero category assigned to them.
         String name =
                 "SELECT COUNT(obj_id) FROM tsk_files where obj_id IN " + fileIdsList
                 + " AND obj_id NOT IN (SELECT obj_id FROM content_tags WHERE content_tags.tag_name_id IN " + catTagNameIDs + ")";
@@ -1279,45 +1295,10 @@ public final class DrawableDB {
             while (resultSet.next()) {
                 return resultSet.getLong("count(obj_id)");
             }
-        } catch (SQLException sQLException) {
-        } catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex);
-
+        } catch (SQLException | TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting category count.", ex);
         }
         return -1;
-    }
-
-    /**
-     * get the id s of files with the given category.
-     *
-     * NOTE: although the category data is stored in autopsy as Tags, this
-     * method is provided on DrawableDb to provide a single point of access for
-     * ImageGallery data.
-     *
-     * //TODO: think about moving this and similar methods that don't actually
-     * get their data form the drawabledb to a layer wrapping the drawable db:
-     * something like ImageGalleryCaseData?
-     *
-     * @param cat the category to count the number of files for
-     *
-     * @return the number of the with the given category
-     */
-    public Set<Long> getCategoryFileIds(Category cat) {
-        try {
-            TagName tagName = controller.getTagsManager().getTagName(cat);
-            if (nonNull(tagName)) {
-                return tskCase.getContentTagsByTagName(tagName).stream()
-                        .map(ContentTag::getContent)
-                        .map(Content::getId)
-                        .filter(this::isInDB)
-                        .collect(Collectors.toSet());
-            }
-        } catch (IllegalStateException ex) {
-            LOGGER.log(Level.WARNING, "Case closed while getting files");
-        } catch (TskCoreException ex1) {
-            LOGGER.log(Level.SEVERE, "Failed to get content tags by tag name.", ex1);
-        }
-        return Collections.emptySet();
     }
 
     /**
