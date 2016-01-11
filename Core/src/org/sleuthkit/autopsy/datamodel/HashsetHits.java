@@ -204,7 +204,7 @@ public class HashsetHits implements AutopsyVisitableItem {
                          * oldValue if the event is a remote event.
                          */
                         ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
-                        if (null != eventData && eventData.getArtifactTypeId() == ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
+                        if (null != eventData && eventData.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
                             hashsetResults.update();
                         }
                     } catch (IllegalStateException notUsed) {

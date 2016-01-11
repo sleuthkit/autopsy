@@ -167,7 +167,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
                     if (null != event) {
                         boolean passed = true;
                         for(BlackboardArtifact.ARTIFACT_TYPE type: doNotShow) {
-                            if(type.getTypeID() == event.getArtifactTypeId()) {
+                            if(type.getTypeID() == event.getBlackboardArtifactType().getTypeID()) {
                                 passed = false;
                             }
                         }
@@ -225,9 +225,9 @@ public class ExtractedContent implements AutopsyVisitableItem {
             if (skCase != null) {
                 try {
                     List<BlackboardArtifact.ARTIFACT_TYPE> inUse = new ArrayList<>();
-                    List<Integer> types = skCase.getArtifactTypesInUse();
-                    for (Integer i: types) {
-                        inUse.add(BlackboardArtifact.ARTIFACT_TYPE.fromID(i));
+                    List<BlackboardArtifact.Type> types = skCase.getArtifactTypesInUse();
+                    for (BlackboardArtifact.Type type: types) {
+                        inUse.add(BlackboardArtifact.ARTIFACT_TYPE.fromID(type.getTypeID()));
                     }                    
                     inUse.removeAll(doNotShow);
                     Collections.sort(inUse,
@@ -424,7 +424,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
                          * for the event to have a null oldValue.
                          */
                         final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
-                        if (null != event && event.getArtifactTypeId() == type.getTypeID()) {
+                        if (null != event && event.getBlackboardArtifactType().getTypeID() == type.getTypeID()) {
                             refresh(true);
                         }
                     } catch (IllegalStateException notUsed) {
