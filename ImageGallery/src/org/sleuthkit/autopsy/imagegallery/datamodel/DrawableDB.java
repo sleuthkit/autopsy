@@ -45,6 +45,7 @@ import java.util.stream.Collectors;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
@@ -1258,6 +1259,34 @@ public final class DrawableDB {
         }
         return -1;
     }
+
+    public long getCategoryCount(Category cat, Collection<Long> fileIDs) {
+        DrawableTagsManager tagsManager = controller.getTagsManager();
+
+        String catTagNameIDs = Category.getNonZeroCategories().stream()
+                .map(tagsManager::getTagName)
+                .map(TagName::getId)
+                .map(Object::toString)
+                .collect(Collectors.joining(",", "(", ")"));
+
+        String fileIdsList = "(" + StringUtils.join(fileIDs, ",") + " )";
+
+        String name =
+                "SELECT COUNT(obj_id) FROM tsk_files where obj_id IN " + fileIdsList
+                + " AND obj_id NOT IN (SELECT obj_id FROM content_tags WHERE content_tags.tag_name_id IN " + catTagNameIDs + ")";
+        try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery(name);
+                ResultSet resultSet = executeQuery.getResultSet();) {
+            while (resultSet.next()) {
+                return resultSet.getLong("count(obj_id)");
+            }
+        } catch (SQLException sQLException) {
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+
+        }
+        return -1;
+    }
+
     /**
      * get the id s of files with the given category.
      *

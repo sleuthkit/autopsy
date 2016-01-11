@@ -126,7 +126,7 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
     final synchronized public long getUncategorizedCount() {
         if (uncatCount.get() < 0) {
             try {
-                uncatCount.set(ImageGalleryController.getDefault().getCategoryManager().getCategoryCount(Category.ZERO, fileIDs));
+                uncatCount.set(ImageGalleryController.getDefault().getDatabase().getCategoryCount(Category.ZERO, fileIDs));
 
             } catch (IllegalStateException | NullPointerException ex) {
                 LOGGER.log(Level.WARNING, "could not access case during getFilesWithHashSetHitsCount()");

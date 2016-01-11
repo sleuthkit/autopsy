@@ -671,7 +671,6 @@ public class ImageUtils {
             if (isCancelled()) {
                 return null;
             }
-
             // If a thumbnail file is already saved locally, just read that.
             if (cacheFile != null && cacheFile.exists()) {
                 try {
@@ -702,6 +701,7 @@ public class ImageUtils {
                         throw new IIOException("Failed to generate thumbnail for video file.");
                     }
                 }
+
             } else {
                 //read the image into a buffered image.
                 BufferedImage bufferedImage = SwingFXUtils.fromFXImage(readImage(), null);
@@ -749,7 +749,6 @@ public class ImageUtils {
             }
 
             return SwingFXUtils.toFXImage(thumbnail, null);
-
         }
 
         /**

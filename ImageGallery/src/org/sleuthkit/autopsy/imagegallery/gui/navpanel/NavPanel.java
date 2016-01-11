@@ -195,7 +195,9 @@ final public class NavPanel extends TabPane {
 
     @ThreadConfined(type = ThreadType.JFX)
     private void resortHashTree() {
+        TreeItem<TreeNode> selectedItem = hashTree.getSelectionModel().getSelectedItem();
         hashTreeRoot.resortChildren(sortByBox.getSelectionModel().getSelectedItem());
+        hashTree.getSelectionModel().select(selectedItem);
     }
 
     /**

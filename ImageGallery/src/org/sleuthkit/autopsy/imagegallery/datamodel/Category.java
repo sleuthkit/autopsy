@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -29,9 +31,11 @@ import javafx.scene.paint.Color;
  */
 public enum Category {
 
-    /* This order of declaration is required so that Enum's compareTo method
+    /*
+     * This order of declaration is required so that Enum's compareTo method
      * preserves the fact that lower category numbers are first/most sever,
-     * except 0 which is last */
+     * except 0 which is last
+     */
     ONE(Color.RED, 1, "CAT-1:  Child Exploitation (Illegal)"),
     TWO(Color.ORANGE, 2, "CAT-2: Child Exploitation (Non-Illegal/Age Difficult)"),
     THREE(Color.YELLOW, 3, "CAT-3: CGI/Animation (Child Exploitive)"),
@@ -39,9 +43,17 @@ public enum Category {
     FIVE(Color.GREEN, 5, "CAT-5: Non-pertinent"),
     ZERO(Color.LIGHTGREY, 0, "CAT-0: Uncategorized");
 
-    /** map from displayName to enum value */
-    private static final Map<String, Category> nameMap
-            = Stream.of(values()).collect(Collectors.toMap(
+    public static List<Category> getNonZeroCategories() {
+        return nonZeroCategories;
+    }
+
+    private static final List<Category> nonZeroCategories = Arrays.asList(Category.FIVE, Category.FOUR, Category.THREE, Category.TWO, Category.ONE);
+
+    /**
+     * map from displayName to enum value
+     */
+    private static final Map<String, Category> nameMap =
+            Stream.of(values()).collect(Collectors.toMap(
                             Category::getDisplayName,
                             Function.identity()));
 
