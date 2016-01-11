@@ -86,12 +86,12 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
 
         String outputFolderForThisVM;
         List<AbstractFile> vmFiles;
-        
+
         // Configure and start progress bar - looking for VM files
         progressBar.progress(NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.searchingImage.message"));
         // Not sure how long it will take for search to complete.
         progressBar.switchToIndeterminate();
-        
+
         try {
             // look for all VM files
             vmFiles = findVirtualMachineFiles(dataSource);
@@ -168,7 +168,8 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
     }
 
     /**
-     * Locate all supported virtual machine files, if any, contained in a data source.
+     * Locate all supported virtual machine files, if any, contained in a data
+     * source.
      *
      * @param dataSource The data source.
      *
@@ -186,10 +187,17 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
         return vmFiles;
     }
 
+    /**
+     * Writes out an abstract file to a specified output folder.
+     *
+     * @param vmFile                Abstract file to write to disk.
+     * @param outputFolderForThisVM Absolute path to output folder.
+     *
+     * @throws IOException
+     */
     private void writeVirtualMachineToDisk(AbstractFile vmFile, String outputFolderForThisVM) throws IOException {
 
         // TODO: check available disk space first? See IngestMonitor.getFreeSpace()
-        
         // check if output folder exists
         File destinationFolder = Paths.get(outputFolderForThisVM).toFile();
         if (!destinationFolder.exists()) {

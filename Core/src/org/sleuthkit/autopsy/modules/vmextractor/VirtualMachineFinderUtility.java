@@ -189,6 +189,14 @@ public final class VirtualMachineFinderUtility {
         return false;
     }
 
+    /**
+     * Returns a list of all file names in the folder of interest. Sub-folders
+     * are excluded.
+     *
+     * @param path Absolute path of the folder of interest
+     *
+     * @return List of all file names in the folder of interest
+     */
     private static List<String> getAllFilesInFolder(String path) {
         // only returns files, skips folders
         File file = new File(path);
