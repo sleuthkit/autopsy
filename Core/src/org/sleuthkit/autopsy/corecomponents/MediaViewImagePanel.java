@@ -29,9 +29,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
-import javafx.concurrent.WorkerStateEvent;
 import javafx.embed.swing.JFXPanel;
-import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Scene;
@@ -58,7 +56,12 @@ import org.sleuthkit.datamodel.AbstractFile;
  * Image viewer part of the Media View layered pane. Uses JavaFX to display the
  * image.
  */
+@NbBundle.Messages({"MediaViewImagePanel.externalViewerButton.text=Open in External Viewer",
+    "MediaViewImagePanel.errorLabel.text=Could not load file into Media View.",
+    "MediaViewImagePanel.errorLabel.OOMText=Could not load file into Media View: insufficent memory."})
 public class MediaViewImagePanel extends JPanel implements DataContentViewerMedia.MediaViewPanel {
+
+    private static final Image EXTERNAL = new Image(MediaViewImagePanel.class.getResource("/org/sleuthkit/autopsy/images/external.png").toExternalForm());
 
     private static final Logger LOGGER = Logger.getLogger(MediaViewImagePanel.class.getName());
 
@@ -69,17 +72,6 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
     private BorderPane borderpane;
     private final ProgressBar progressBar = new ProgressBar();
     private final MaskerPane maskerPane = new MaskerPane();
-
-    @NbBundle.Messages({"MediaViewImagePanel.errorLabel.text=Could not load file into Media view."})
-    private final Label errorLabel = new Label(Bundle.MediaViewImagePanel_errorLabel_text());
-
-    /**
-     * TODO: why is this passed to the action? it means we duplciate this string
-     * all over the place -jm
-     */
-    @NbBundle.Messages({"MediaViewImagePanel.externalViewerButton.text=Open in External Viewer"})
-    private final Button externalViewerButton = new Button(Bundle.MediaViewImagePanel_externalViewerButton_text());
-    private final VBox errorNode = new VBox(10, errorLabel, externalViewerButton);
 
     static {
         ImageIO.scanForPlugins();
@@ -108,8 +100,6 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
         fxInited = org.sleuthkit.autopsy.core.Installer.isJavaFxInited();
         if (fxInited) {
             Platform.runLater(() -> {
-
-                errorNode.setAlignment(Pos.CENTER);
 
                 // build jfx ui (we could do this in FXML?)
                 fxImageView = new ImageView();  // will hold image
@@ -148,11 +138,19 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
         });
     }
 
-    private void showErrorNode(AbstractFile file) {
+    private void showErrorNode(String errorMessage, AbstractFile file) {
+        final Button externalViewerButton = new Button(Bundle.MediaViewImagePanel_externalViewerButton_text(), new ImageView(EXTERNAL));
         externalViewerButton.setOnAction(actionEvent -> //fx ActionEvent
+                /*
+                 * TODO: why is the name passed into the action constructor? it
+                 * means we duplicate this string all over the place -jm
+                 */
                 new ExternalViewerAction(Bundle.MediaViewImagePanel_externalViewerButton_text(), new FileNode(file))
-                .actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "")) //Swing ActionEvent //NOI18N
+                .actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "")) //Swing ActionEvent 
         );
+
+        final VBox errorNode = new VBox(10, new Label(errorMessage), externalViewerButton);
+        errorNode.setAlignment(Pos.CENTER);
         borderpane.setCenter(errorNode);
     }
 
@@ -172,12 +170,14 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
                 readImageTask.cancel();
             }
             readImageTask = ImageUtils.newReadImageTask(file);
-            readImageTask.setOnSucceeded((WorkerStateEvent event) -> {
+            readImageTask.setOnSucceeded(succeeded -> {
                 //Note that all error conditions are allready logged in readImageTask.succeeded()
                 if (!Case.isCaseOpen()) {
                     /*
                      * handle in-between condition when case is being closed and
                      * an image was previously selected
+                     *
+                     * NOTE: I think this is unnecessary -jm
                      */
                     reset();
                     return;
@@ -190,29 +190,33 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
                         fxImageView.setImage(fxImage);
                         borderpane.setCenter(fxImageView);
                     } else {
-                        showErrorNode(file);
+                        showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), file);
                     }
                 } catch (InterruptedException | ExecutionException ex) {
-                    showErrorNode(file);
+                    showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), file);
                 }
                 borderpane.setCursor(Cursor.DEFAULT);
             });
-            readImageTask.setOnFailed(new EventHandler<WorkerStateEvent>() {
-
-                @Override
-                public void handle(WorkerStateEvent event) {
-                    if (!Case.isCaseOpen()) {
-                        /*
-                         * handle in-between condition when case is being closed
-                         * and an image was previously selected
-                         */
-                        reset();
-                        return;
-                    }
-
-                    showErrorNode(file);
-                    borderpane.setCursor(Cursor.DEFAULT);
+            readImageTask.setOnFailed(failed -> {
+                if (!Case.isCaseOpen()) {
+                    /*
+                     * handle in-between condition when case is being closed and
+                     * an image was previously selected
+                     *
+                     * NOTE: I think this is unnecessary -jm
+                     */
+                    reset();
+                    return;
                 }
+                Throwable exception = readImageTask.getException();
+                if (exception instanceof OutOfMemoryError
+                        && exception.getMessage().contains("Java heap space")) {
+                    showErrorNode(Bundle.MediaViewImagePanel_errorLabel_OOMText(), file);
+                } else {
+                    showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), file);
+                }
+
+                borderpane.setCursor(Cursor.DEFAULT);
             });
 
             maskerPane.setProgressNode(progressBar);

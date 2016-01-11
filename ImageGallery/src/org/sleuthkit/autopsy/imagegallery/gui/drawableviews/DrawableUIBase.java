@@ -50,12 +50,13 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
+ * Abstract base class for views of a single drawable file.
  */
-@NbBundle.Messages({"MediaViewImagePanel.errorLabel.text=Could not read file."})
+@NbBundle.Messages({"DrawableUIBase.errorLabel.text=Could not read file",
+    "DrawableUIBase.errorLabel.OOMText=Insufficent memory"})
 abstract public class DrawableUIBase extends AnchorPane implements DrawableView {
 
-    static final Executor exec = Executors.newWorkStealingPool();
+    static final Executor exec = Executors.newSingleThreadExecutor();
 
     private static final Logger LOGGER = Logger.getLogger(DrawableUIBase.class.getName());
 
@@ -145,7 +146,13 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
             }
         });
         myTask.setOnFailed(failed -> {
-            showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), file);
+            Throwable exception = myTask.getException();
+            if (exception instanceof OutOfMemoryError
+                    && exception.getMessage().contains("Java heap space")) {
+                showErrorNode(Bundle.DrawableUIBase_errorLabel_OOMText(), file);
+            } else {
+                showErrorNode(Bundle.DrawableUIBase_errorLabel_text(), file);
+            }
             synchronized (DrawableUIBase.this) {
                 imageTask = null;
             }
@@ -190,12 +197,12 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
                 imageView.setImage(fxImage);
                 imageBorder.setCenter(imageView);
             } else {
-                showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), file);
+                showErrorNode(Bundle.DrawableUIBase_errorLabel_text(), file);
             }
         } catch (CancellationException ex) {
 
         } catch (InterruptedException | ExecutionException ex) {
-            showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), file);
+            showErrorNode(Bundle.DrawableUIBase_errorLabel_text(), file);
         }
     }
 
@@ -203,9 +210,7 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
     void showErrorNode(String errorMessage, AbstractFile file) {
         Button createButton = ActionUtils.createButton(new OpenExternalViewerAction(file));
 
-        VBox vBox = new VBox(10,
-                new Label(errorMessage), createButton);
-
+        VBox vBox = new VBox(10, new Label(errorMessage), createButton);
         vBox.setAlignment(Pos.CENTER);
         imageBorder.setCenter(vBox);
     }
