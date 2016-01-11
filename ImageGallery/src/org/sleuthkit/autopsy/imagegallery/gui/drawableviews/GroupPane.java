@@ -116,8 +116,10 @@ import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeSelectedFilesAction;
 import org.sleuthkit.autopsy.imagegallery.actions.Forward;
 import org.sleuthkit.autopsy.imagegallery.actions.NextUnseenGroup;
+import org.sleuthkit.autopsy.imagegallery.actions.RedoAction;
 import org.sleuthkit.autopsy.imagegallery.actions.SwingMenuItemAdapter;
 import org.sleuthkit.autopsy.imagegallery.actions.TagSelectedFilesAction;
+import org.sleuthkit.autopsy.imagegallery.actions.UndoAction;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
@@ -158,6 +160,11 @@ public class GroupPane extends BorderPane {
     private final Back backAction;
 
     private final Forward forwardAction;
+
+    @FXML
+    private Button undoButton;
+    @FXML
+    private Button redoButton;
 
     @FXML
     private SplitMenuButton catSelectedSplitMenu;
@@ -219,6 +226,8 @@ public class GroupPane extends BorderPane {
     private ContextMenu contextMenu;
 
     private Integer selectionAnchorIndex;
+    private final UndoAction undoAction;
+    private final RedoAction redoAction;
 
     GroupViewMode getGroupViewMode() {
         return groupViewMode.get();
@@ -261,6 +270,9 @@ public class GroupPane extends BorderPane {
         nextGroupAction = new NextUnseenGroup(controller);
         backAction = new Back(controller);
         forwardAction = new Forward(controller);
+        undoAction = new UndoAction(controller);
+        redoAction = new RedoAction(controller);
+
         FXMLConstructor.construct(this, "GroupPane.fxml");
     }
 
@@ -478,9 +490,7 @@ public class GroupPane extends BorderPane {
         };
         syncMode.run();
         //make togle states match view state
-        groupViewMode.addListener((o) -> {
-            syncMode.run();
-        });
+        groupViewMode.addListener(o -> syncMode.run());
 
         slideShowToggle.toggleGroupProperty().addListener((o) -> {
             slideShowToggle.getToggleGroup().selectedToggleProperty().addListener((observable, oldToggle, newToggle) -> {
@@ -491,16 +501,12 @@ public class GroupPane extends BorderPane {
         });
 
         //listen to toggles and update view state
-        slideShowToggle.setOnAction((ActionEvent t) -> {
-            activateSlideShowViewer(selectionModel.lastSelectedProperty().get());
-        });
+        slideShowToggle.setOnAction(onAction -> activateSlideShowViewer(selectionModel.lastSelectedProperty().get()));
 
-        tileToggle.setOnAction((ActionEvent t) -> {
-            activateTileViewer();
-        });
+        tileToggle.setOnAction(onAction -> activateTileViewer());
 
-        controller.viewState().addListener((ObservableValue<? extends GroupViewState> observable, GroupViewState oldValue, GroupViewState newValue) -> {
-            setViewState(newValue);
+        controller.viewState().addListener((observable, oldViewState, newViewState) -> {
+            setViewState(newViewState);
         });
 
         addEventFilter(KeyEvent.KEY_PRESSED, tileKeyboardNavigationHandler);
@@ -515,12 +521,9 @@ public class GroupPane extends BorderPane {
                 Collection<? extends ContextMenuActionsProvider> menuProviders = Lookup.getDefault().lookupAll(ContextMenuActionsProvider.class);
 
                 for (ContextMenuActionsProvider provider : menuProviders) {
-
                     for (final Action act : provider.getActions()) {
-
                         if (act instanceof Presenter.Popup) {
                             Presenter.Popup aact = (Presenter.Popup) act;
-
                             menuItems.add(SwingMenuItemAdapter.create(aact.getPopupPresenter()));
                         }
                     }
@@ -571,12 +574,14 @@ public class GroupPane extends BorderPane {
 
         ActionUtils.configureButton(nextGroupAction, nextButton);
         final EventHandler<ActionEvent> onAction = nextButton.getOnAction();
-        nextButton.setOnAction((ActionEvent event) -> {
+        nextButton.setOnAction(actionEvent -> {
             flashAnimation.stop();
             nextButton.setEffect(null);
-            onAction.handle(event);
+            onAction.handle(actionEvent);
         });
 
+        ActionUtils.configureButton(undoAction, undoButton);
+        ActionUtils.configureButton(redoAction, redoButton);
         ActionUtils.configureButton(forwardAction, forwardButton);
         ActionUtils.configureButton(backAction, backButton);
 

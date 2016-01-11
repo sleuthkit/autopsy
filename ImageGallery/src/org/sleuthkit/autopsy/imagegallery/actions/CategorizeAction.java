@@ -18,8 +18,12 @@
  */
 package org.sleuthkit.autopsy.imagegallery.actions;
 
+import com.google.common.collect.ImmutableMap;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -28,6 +32,8 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
+import javax.annotation.Nonnull;
+import javax.annotation.concurrent.Immutable;
 import javax.swing.JOptionPane;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
@@ -51,10 +57,12 @@ public class CategorizeAction extends AddTagAction {
     private static final Logger LOGGER = Logger.getLogger(CategorizeAction.class.getName());
 
     private final ImageGalleryController controller;
+    private final UndoRedoManager undoManager;
 
     public CategorizeAction(ImageGalleryController controller) {
         super();
         this.controller = controller;
+        undoManager = controller.getUndoManager();
     }
 
     public Menu getPopupMenu() {
@@ -73,16 +81,13 @@ public class CategorizeAction extends AddTagAction {
     }
 
     @Override
-    public void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles) {
-        Logger.getAnonymousLogger().log(Level.INFO, "categorizing{0} as {1}", new Object[]{selectedFiles.toString(), tagName.getDisplayName()});
-
-        for (Long fileID : selectedFiles) {
-            controller.queueDBWorkerTask(new CategorizeTask(fileID, tagName, comment));
-        }
+    protected void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles) {
+        addTagsToFiles(tagName, comment, selectedFiles, true);
     }
 
-    public void enforceOneCat(TagName name, String string) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles, boolean createUndo) {
+        Logger.getAnonymousLogger().log(Level.INFO, "categorizing{0} as {1}", new Object[]{selectedFiles.toString(), tagName.getDisplayName()});
+        controller.queueDBWorkerTask(new CategorizeTask(selectedFiles, tagName, comment, createUndo));
     }
 
     /**
@@ -111,52 +116,107 @@ public class CategorizeAction extends AddTagAction {
 
     private class CategorizeTask extends ImageGalleryController.InnerTask {
 
-        private final long fileID;
+        private final Set<Long> fileIDs;
+        @Nonnull
         private final TagName tagName;
         private final String comment;
+        private final boolean createUndo;
 
-        public CategorizeTask(long fileID, TagName tagName, String comment) {
+        CategorizeTask(Set<Long> fileIDs, @Nonnull TagName tagName, String comment, boolean createUndo) {
             super();
-            this.fileID = fileID;
+            this.fileIDs = fileIDs;
+            java.util.Objects.requireNonNull(tagName);
             this.tagName = tagName;
             this.comment = comment;
+            this.createUndo = createUndo;
+
         }
 
         @Override
         public void run() {
-            final CategoryManager categoryManager = controller.getCategoryManager();
             final DrawableTagsManager tagsManager = controller.getTagsManager();
-
-            try {
-                DrawableFile<?> file = controller.getFileFromId(fileID);   //drawable db
-                final List<ContentTag> fileTags = tagsManager.getContentTagsByContent(file);
-                if (tagName == categoryManager.getTagName(Category.ZERO)) {
-                    // delete all cat tags for cat-0
-                    fileTags.stream()
-                            .filter(tag -> CategoryManager.isCategoryTagName(tag.getName()))
-                            .forEach((ct) -> {
-                                try {
-                                    tagsManager.deleteContentTag(ct);
-                                } catch (TskCoreException ex) {
-                                    LOGGER.log(Level.SEVERE, "Error removing old categories result", ex);
-                                }
-                            });
-                } else {
-                    //add cat tag if no existing cat tag for that cat
-                    if (fileTags.stream()
-                            .map(Tag::getName)
-                            .filter(tagName::equals)
-                            .collect(Collectors.toList()).isEmpty()) {
-                        tagsManager.addContentTag(file, tagName, comment);
+            final CategoryManager categoryManager = controller.getCategoryManager();
+            Map<Long, TagName> oldCats = new HashMap<>();
+            for (long fileID : fileIDs) {
+                try {
+                    DrawableFile<?> file = controller.getFileFromId(fileID);   //drawable db access
+                    if (createUndo) {
+                        Category oldCat = file.getCategory();  //drawable db access
+                        TagName oldCatTagName = categoryManager.getTagName(oldCat);
+                        if (false == tagName.equals(oldCatTagName)) {
+                            oldCats.put(fileID, oldCatTagName);
+                        }
                     }
-                }
 
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Error categorizing result", ex);
-                JOptionPane.showMessageDialog(null, "Unable to categorize " + fileID + ".", "Categorizing Error", JOptionPane.ERROR_MESSAGE);
+                    final List<ContentTag> fileTags = tagsManager.getContentTagsByContent(file);
+                    if (tagName == categoryManager.getTagName(Category.ZERO)) {
+                        // delete all cat tags for cat-0
+                        fileTags.stream()
+                                .filter(tag -> CategoryManager.isCategoryTagName(tag.getName()))
+                                .forEach((ct) -> {
+                                    try {
+                                        tagsManager.deleteContentTag(ct);
+                                    } catch (TskCoreException ex) {
+                                        LOGGER.log(Level.SEVERE, "Error removing old categories result", ex);
+                                    }
+                                });
+                    } else {
+                        //add cat tag if no existing cat tag for that cat
+                        if (fileTags.stream()
+                                .map(Tag::getName)
+                                .filter(tagName::equals)
+                                .collect(Collectors.toList()).isEmpty()) {
+                            tagsManager.addContentTag(file, tagName, comment);
+                        }
+                    }
+                } catch (TskCoreException ex) {
+                    LOGGER.log(Level.SEVERE, "Error categorizing result", ex);
+                    JOptionPane.showMessageDialog(null, "Unable to categorize " + fileID + ".", "Categorizing Error", JOptionPane.ERROR_MESSAGE);
+                }
             }
 
+            if (createUndo && oldCats.isEmpty() == false) {
+                undoManager.addToUndo(new CategorizationChange(controller, tagName, oldCats));
+            }
         }
     }
 
+    /**
+     *
+     */
+    @Immutable
+    private final class CategorizationChange implements UndoRedoManager.UndoableCommand {
+
+        private final TagName newCategory;
+        private final ImmutableMap<Long, TagName> oldCategories;
+        private final ImageGalleryController controller;
+
+        CategorizationChange(ImageGalleryController controller, TagName newCategory, Map<Long, TagName> oldCategories) {
+            this.controller = controller;
+            this.newCategory = newCategory;
+            this.oldCategories = ImmutableMap.copyOf(oldCategories);
+        }
+
+        /**
+         *
+         * @param controller the controller to apply the changes with
+         */
+        @Override
+        public void run() {
+            CategorizeAction categorizeAction = new CategorizeAction(controller);
+            categorizeAction.addTagsToFiles(newCategory, "", this.oldCategories.keySet(), false);
+        }
+
+        /**
+         *
+         * @param controller the value of controller
+         */
+        @Override
+        public void undo() {
+            CategorizeAction categorizeAction = new CategorizeAction(controller);
+            for (Map.Entry<Long, TagName> entry : oldCategories.entrySet()) {
+                categorizeAction.addTagsToFiles(entry.getValue(), "", Collections.singleton(entry.getKey()), false);
+            }
+        }
+    }
 }
