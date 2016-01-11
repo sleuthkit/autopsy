@@ -84,6 +84,83 @@ public class ExtractedContent implements AutopsyVisitableItem {
         return skCase;
     }
 
+    static String getIcon(BlackboardArtifact.Type type) {
+        int typeID = type.getTypeID();
+        if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()) {
+            return "bookmarks.png"; //NON-NLS
+        }
+        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()) {
+            return "cookies.png"; //NON-NLS
+        }
+        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()) {
+            return "history.png"; //NON-NLS
+        }
+        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()) {
+            return "downloads.png"; //NON-NLS
+        }
+        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID()) {
+            return "programs.png"; //NON-NLS
+        }
+        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID()) {
+            return "recent_docs.png"; //NON-NLS
+        }
+        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()) {
+            return "usb_devices.png"; //NON-NLS
+        }
+        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID()) {
+            return "searchquery.png"; //NON-NLS
+        }
+        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()) {
+            return "camera-icon-16.png"; //NON-NLS
+        }
+        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
+            return "mail-icon-16.png"; //NON-NLS
+        }
+        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT.getTypeID()) {
+            return "contact.png"; //NON-NLS
+        }
+        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()) {
+            return "message.png"; //NON-NLS
+        }
+        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG.getTypeID()) {
+            return "calllog.png"; //NON-NLS
+        }
+        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALENDAR_ENTRY.getTypeID()) {
+            return "calendar.png"; //NON-NLS
+        }
+        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_SPEED_DIAL_ENTRY.getTypeID()) {
+            return "speeddialentry.png"; //NON-NLS
+        }
+        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_BLUETOOTH_PAIRING.getTypeID()) {
+            return "bluetooth.png"; //NON-NLS
+        }
+        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK.getTypeID()) {
+            return "gpsfav.png"; //NON-NLS
+        }
+        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION.getTypeID()) {
+            return "gps-lastlocation.png"; //NON-NLS
+        }
+        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_SEARCH.getTypeID()) {
+            return "gps-search.png"; //NON-NLS
+        }
+        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_SERVICE_ACCOUNT.getTypeID()) {
+            return "account-icon-16.png"; //NON-NLS
+        }
+        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID()) {
+            return "encrypted-file.png"; //NON-NLS
+        }
+        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID()) {
+            return "mismatch-16.png"; //NON-NLS
+        }
+        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_INFO.getTypeID()) {
+            return "computer.png"; //NON-NLS
+        }
+        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_FACE_DETECTED.getTypeID()) {
+            return "face.png"; //NON-NLS
+        }
+        return "artifact-icon.png"; //NON-NLS
+    }
+
     public class RootNode extends DisplayableItemNode {
 
         public RootNode(SleuthkitCase skCase) {
@@ -130,22 +207,40 @@ public class ExtractedContent implements AutopsyVisitableItem {
      * This area has all of the blackboard artifacts that are not displayed in a
      * more specific form elsewhere in the tree.
      */
-    private class TypeFactory extends ChildFactory.Detachable<BlackboardArtifact.ARTIFACT_TYPE> {
+    private class TypeFactory extends ChildFactory.Detachable<BlackboardArtifact.Type> {
 
-        private final ArrayList<BlackboardArtifact.ARTIFACT_TYPE> doNotShow = new ArrayList<>();
+        private final ArrayList<BlackboardArtifact.Type> doNotShow = new ArrayList<>();
         // maps the artifact type to its child node 
-        private final HashMap<BlackboardArtifact.ARTIFACT_TYPE, TypeNode> typeNodeList = new HashMap<>();
+        private final HashMap<BlackboardArtifact.Type, TypeNode> typeNodeList = new HashMap<>();
 
         public TypeFactory() {
             super();
 
             // these are shown in other parts of the UI tree
-            doNotShow.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO);
-            doNotShow.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG);
-            doNotShow.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT);
-            doNotShow.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT);
-            doNotShow.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
-            doNotShow.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
+            doNotShow.add(new BlackboardArtifact.Type(
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID(),
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getLabel(),
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getDisplayName()));
+            doNotShow.add(new BlackboardArtifact.Type(
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getLabel(),
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getDisplayName()));
+            doNotShow.add(new BlackboardArtifact.Type(
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID(),
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getLabel(),
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName()));
+            doNotShow.add(new BlackboardArtifact.Type(
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID(),
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getLabel(),
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName()));
+            doNotShow.add(new BlackboardArtifact.Type(
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getLabel(),
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getDisplayName()));
+            doNotShow.add(new BlackboardArtifact.Type(
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID(),
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getLabel(),
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getDisplayName()));
         }
 
         private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
@@ -166,12 +261,12 @@ public class ExtractedContent implements AutopsyVisitableItem {
                     final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
                     if (null != event) {
                         boolean passed = true;
-                        for(BlackboardArtifact.ARTIFACT_TYPE type: doNotShow) {
-                            if(type.getTypeID() == event.getBlackboardArtifactType().getTypeID()) {
+                        for (BlackboardArtifact.Type type : doNotShow) {
+                            if (type.getTypeID() == event.getBlackboardArtifactType().getTypeID()) {
                                 passed = false;
                             }
                         }
-                        if(passed) {
+                        if (passed) {
                             refresh(true);
                         }
                     }
@@ -220,28 +315,24 @@ public class ExtractedContent implements AutopsyVisitableItem {
         }
 
         @Override
-        protected boolean createKeys(List<BlackboardArtifact.ARTIFACT_TYPE> list) {
+        protected boolean createKeys(List<BlackboardArtifact.Type> list) {
             //TEST COMMENT
             if (skCase != null) {
                 try {
-                    List<BlackboardArtifact.ARTIFACT_TYPE> inUse = new ArrayList<>();
                     List<BlackboardArtifact.Type> types = skCase.getArtifactTypesInUse();
-                    for (BlackboardArtifact.Type type: types) {
-                        inUse.add(BlackboardArtifact.ARTIFACT_TYPE.fromID(type.getTypeID()));
-                    }                    
-                    inUse.removeAll(doNotShow);
-                    Collections.sort(inUse,
-                            new Comparator<BlackboardArtifact.ARTIFACT_TYPE>() {
+                    types.removeAll(doNotShow);
+                    Collections.sort(types,
+                            new Comparator<BlackboardArtifact.Type>() {
                                 @Override
-                                public int compare(BlackboardArtifact.ARTIFACT_TYPE a, BlackboardArtifact.ARTIFACT_TYPE b) {
+                                public int compare(BlackboardArtifact.Type a, BlackboardArtifact.Type b) {
                                     return a.getDisplayName().compareTo(b.getDisplayName());
                                 }
                             });
-                    list.addAll(inUse);
+                    list.addAll(types);
 
                     // the create node method will get called only for new types
                     // refresh the counts if we already created them from a previous update
-                    for (BlackboardArtifact.ARTIFACT_TYPE art : inUse) {
+                    for (BlackboardArtifact.Type art : types) {
                         TypeNode node = typeNodeList.get(art);
                         if (node != null) {
                             node.updateDisplayName();
@@ -255,7 +346,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
         }
 
         @Override
-        protected Node createNodeForKey(BlackboardArtifact.ARTIFACT_TYPE key) {
+        protected Node createNodeForKey(BlackboardArtifact.Type key) {
             TypeNode node = new TypeNode(key);
             typeNodeList.put(key, node);
             return node;
@@ -270,14 +361,14 @@ public class ExtractedContent implements AutopsyVisitableItem {
      */
     public class TypeNode extends DisplayableItemNode {
 
-        private BlackboardArtifact.ARTIFACT_TYPE type;
+        private BlackboardArtifact.Type type;
         private long childCount = 0;
 
-        TypeNode(BlackboardArtifact.ARTIFACT_TYPE type) {
+        TypeNode(BlackboardArtifact.Type type) {
             super(Children.create(new ArtifactFactory(type), true), Lookups.singleton(type.getDisplayName()));
-            super.setName(type.getLabel());
+            super.setName(type.getTypeName());
             this.type = type;
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/" + getIcon(type)); //NON-NLS
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/" + ExtractedContent.getIcon(type)); //NON-NLS
             updateDisplayName();
         }
 
@@ -397,9 +488,9 @@ public class ExtractedContent implements AutopsyVisitableItem {
      */
     private class ArtifactFactory extends ChildFactory.Detachable<BlackboardArtifact> {
 
-        private BlackboardArtifact.ARTIFACT_TYPE type;
+        private BlackboardArtifact.Type type;
 
-        public ArtifactFactory(BlackboardArtifact.ARTIFACT_TYPE type) {
+        public ArtifactFactory(BlackboardArtifact.Type type) {
             super();
             this.type = type;
         }
@@ -424,7 +515,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
                          * for the event to have a null oldValue.
                          */
                         final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
-                        if (null != event && event.getBlackboardArtifactType().getTypeID() == type.getTypeID()) {
+                        if (null != event && event.getBlackboardArtifactType().equals(type)) {
                             refresh(true);
                         }
                     } catch (IllegalStateException notUsed) {
@@ -482,4 +573,5 @@ public class ExtractedContent implements AutopsyVisitableItem {
             return new BlackboardArtifactNode(key);
         }
     }
+
 }
