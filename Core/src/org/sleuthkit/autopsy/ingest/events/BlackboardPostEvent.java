@@ -61,7 +61,7 @@ public final class BlackboardPostEvent extends AutopsyEvent implements Serializa
          */
         super(
                 IngestManager.IngestModuleEvent.DATA_ADDED.toString(),
-                new SerializableEventData(eventData.getModuleName(), eventData.getArtifactTypeId() , eventData.getArtifacts() != null
+                new SerializableEventData(eventData.getModuleName(), eventData.getBlackboardArtifactType() , eventData.getArtifacts() != null
                                 ? eventData.getArtifacts()
                                 .stream()
                                 .map(BlackboardArtifact::getArtifactID)

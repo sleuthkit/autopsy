@@ -167,7 +167,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
                     if (null != event) {
                         boolean passed = true;
                         for(BlackboardArtifact.ARTIFACT_TYPE type: doNotShow) {
-                            if(type.getTypeID() == event.getArtifactTypeId().getTypeID()) {
+                            if(type.getTypeID() == event.getBlackboardArtifactType().getTypeID()) {
                                 passed = false;
                             }
                         }
@@ -424,7 +424,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
                          * for the event to have a null oldValue.
                          */
                         final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
-                        if (null != event && event.getArtifactTypeId().getTypeID() == type.getTypeID()) {
+                        if (null != event && event.getBlackboardArtifactType().getTypeID() == type.getTypeID()) {
                             refresh(true);
                         }
                     } catch (IllegalStateException notUsed) {

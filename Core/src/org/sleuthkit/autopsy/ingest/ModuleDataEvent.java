@@ -50,7 +50,7 @@ public class ModuleDataEvent extends ChangeEvent {
 
     private String moduleName;
     private ARTIFACT_TYPE artifactType;
-    private BlackboardArtifact.Type artifactTypeId;
+    private BlackboardArtifact.Type blackboardArtifactType;
     private Collection<BlackboardArtifact> artifacts;
 
     /**
@@ -59,7 +59,7 @@ public class ModuleDataEvent extends ChangeEvent {
      */
     public ModuleDataEvent(String moduleName, ARTIFACT_TYPE artifactType) {
         super(artifactType);
-        this.artifactTypeId = BlackboardArtifact.typeFactory(artifactType);
+        this.blackboardArtifactType = new BlackboardArtifact.Type(artifactType);
         this.moduleName = moduleName;
         this.artifactType = artifactType;
     }
@@ -68,9 +68,9 @@ public class ModuleDataEvent extends ChangeEvent {
      * @param moduleName Module name
      * @param artifactTypeId ID of the type of artifact posted to the blackboard
      */
-    public ModuleDataEvent(String moduleName, BlackboardArtifact.Type artifactTypeId) {
-        super(ARTIFACT_TYPE.fromID(artifactTypeId.getTypeID()));
-        this.artifactTypeId = artifactTypeId;
+    public ModuleDataEvent(String moduleName, BlackboardArtifact.Type blackboardArtifactType) {
+        super(ARTIFACT_TYPE.fromID(blackboardArtifactType.getTypeID()));
+        this.blackboardArtifactType = blackboardArtifactType;
         this.moduleName = moduleName;
     }
 
@@ -80,8 +80,8 @@ public class ModuleDataEvent extends ChangeEvent {
      * @param artifacts List of specific artifact ID values that were added to
      * blackboard
      */
-    public ModuleDataEvent(String moduleName, BlackboardArtifact.Type artifactTypeId, Collection<BlackboardArtifact> artifacts) {
-        this(moduleName, artifactTypeId);
+    public ModuleDataEvent(String moduleName, BlackboardArtifact.Type blackboardArtifactType, Collection<BlackboardArtifact> artifacts) {
+        this(moduleName, blackboardArtifactType);
         this.artifacts = artifacts;
     }
 
@@ -95,13 +95,15 @@ public class ModuleDataEvent extends ChangeEvent {
         this(moduleName, artifactType);
         this.artifacts = artifacts;
     }
-    
+
     /**
-     * Gets the ID of the new artifacts associated with the event
-     * @return The artifact ID
+     * Gets the blackboard artifact type of the new artifacts associated with
+     * the event
+     *
+     * @return The blackboard artifact type
      */
-    public BlackboardArtifact.Type getArtifactTypeId() {
-        return this.artifactTypeId;
+    public BlackboardArtifact.Type getBlackboardArtifactType() {
+        return this.blackboardArtifactType;
     }
 
     /**
@@ -114,8 +116,9 @@ public class ModuleDataEvent extends ChangeEvent {
     }
 
     /**
-     * get artifact type of the new artifacts associated with the event
-     * If it is a user defined artifact, it will return null
+     * get artifact type of the new artifacts associated with the event If it is
+     * a user defined artifact, it will return null
+     *
      * @return the artifact type
      */
     public ARTIFACT_TYPE getArtifactType() {
