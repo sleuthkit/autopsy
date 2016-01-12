@@ -117,10 +117,12 @@ public class ModuleDataEvent extends ChangeEvent {
     /**
      * get artifact type of the new artifacts associated with the event
      *
-     * @return
+     * @throws IllegalArgumentException if the type is user defined
+     * @return the artifact type
      */
+    @Deprecated
     public ARTIFACT_TYPE getArtifactType() {
-        return this.blackboardArtifactType.getArtifactType();
+        return BlackboardArtifact.ARTIFACT_TYPE.fromID(this.blackboardArtifactType.getTypeID());
     }
 
     /**
