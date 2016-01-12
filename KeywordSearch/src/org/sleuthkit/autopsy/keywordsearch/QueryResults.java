@@ -96,12 +96,12 @@ class QueryResults {
      * artifact), i.e., if a keyword is found several times in the object, only
      * one artifact is created.
      *
-     * @param progress    Can be null.
+     * @param progress Can be null.
      * @param subProgress Can be null.
-     * @param worker      The Swing worker that is writing the hits, needed to
-     *                    support cancellation.
+     * @param worker The Swing worker that is writing the hits, needed to
+     * support cancellation.
      * @param notifyInbox Whether or not write a message to the ingest messages
-     *                    inbox.
+     * inbox.
      *
      * @return The artifacts that were created.
      */
@@ -161,10 +161,10 @@ class QueryResults {
 
         // Update artifact browser
         if (!newArtifacts.isEmpty()) {
-            IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(KeywordSearchModuleFactory.getModuleName(), 
+            IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(KeywordSearchModuleFactory.getModuleName(),
                     new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID(),
-                        BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getLabel(),
-                        BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName()), newArtifacts));
+                            BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getLabel(),
+                            BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName()), newArtifacts));
         }
 
         return newArtifacts;
@@ -176,7 +176,7 @@ class QueryResults {
      * @param keyword
      *
      * @return Collection<KeywordHit> containing KeywordHits with lowest
-     *         SolrObjectID-ChunkID pairs.
+     * SolrObjectID-ChunkID pairs.
      */
     private Collection<KeywordHit> getOneHitPerObject(Keyword keyword) {
 

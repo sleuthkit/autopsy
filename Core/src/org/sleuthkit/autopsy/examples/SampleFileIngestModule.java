@@ -142,10 +142,9 @@ class SampleFileIngestModule implements FileIngestModule {
             addToBlackboardPostCount(context.getJobId(), 1L);
 
             // Fire an event to notify any listeners for blackboard postings.
-            ModuleDataEvent event = new ModuleDataEvent(SampleIngestModuleFactory.getModuleName(), 
+            ModuleDataEvent event = new ModuleDataEvent(SampleIngestModuleFactory.getModuleName(),
                     new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID(), ARTIFACT_TYPE.TSK_GEN_INFO.getLabel(), ARTIFACT_TYPE.TSK_GEN_INFO.getDisplayName()));
             IngestServices.getInstance().fireModuleDataEvent(event);
-
             return IngestModule.ProcessResult.OK;
 
         } catch (TskCoreException ex) {
