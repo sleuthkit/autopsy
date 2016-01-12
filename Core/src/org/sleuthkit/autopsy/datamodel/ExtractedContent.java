@@ -573,5 +573,4 @@ public class ExtractedContent implements AutopsyVisitableItem {
             return new BlackboardArtifactNode(key);
         }
     }
-
 }
