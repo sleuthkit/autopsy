@@ -98,7 +98,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     @Override
     public ProcessResult process(AbstractFile content) {
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
-        
+
         //skip unalloc
         if (content.getType().equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
             return ProcessResult.OK;
@@ -117,7 +117,10 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
         final int filesProcessedValue = filesProcessed.incrementAndGet();
         if ((filesProcessedValue % 1000 == 0)) {
             if (filesToFire) {
-                services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
+                services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(),
+                        new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID(),
+                                BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getLabel(),
+                                BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getDisplayName())));
                 filesToFire = false;
             }
         }
@@ -198,14 +201,14 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             if (!attributes.isEmpty()) {
                 BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF);
                 bba.addAttributes(attributes);
-                
+
                 try {
                     // index the artifact for keyword search
                     blackboard.indexArtifact(bba);
                 } catch (Blackboard.BlackboardException ex) {
                     logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", bba.getDisplayName()), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(
-                        NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), bba.getDisplayName());
+                            NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), bba.getDisplayName());
                 }
                 filesToFire = true;
             }
@@ -264,7 +267,10 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             timeZone = null;
             if (filesToFire) {
                 //send the final new data event
-                services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
+                services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(),
+                        new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID(),
+                                BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getLabel(),
+                                BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getDisplayName())));
             }
         }
     }

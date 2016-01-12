@@ -345,7 +345,10 @@ public class HashDbIngestModule implements FileIngestModule {
                         abstractFile.getName() + md5Hash,
                         badFile));
             }
-            services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_HASHSET_HIT, Collections.singletonList(badFile)));
+            services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, 
+                    new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID(),
+                        BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getLabel(),
+                        BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName()), Collections.singletonList(badFile)));
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Error creating blackboard artifact", ex); //NON-NLS
         }

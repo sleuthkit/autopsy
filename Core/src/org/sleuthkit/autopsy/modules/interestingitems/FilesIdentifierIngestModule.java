@@ -93,7 +93,7 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
     @Override
     public ProcessResult process(AbstractFile file) {
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
-        
+
         // See if the file belongs to any defined interesting files set.
         List<FilesSet> filesSets = FilesIdentifierIngestModule.interestingFileSetsByJob.get(this.context.getJobId());
         for (FilesSet filesSet : filesSets) {
@@ -117,7 +117,7 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
                     // interesting files set membership rule that was satisfied.
                     BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID(), moduleName, ruleSatisfied);
                     artifact.addAttribute(ruleNameAttribute);
-                    
+
                     try {
                         // index the artifact for keyword search
                         blackboard.indexArtifact(artifact);
@@ -126,9 +126,11 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
                         MessageNotifyUtil.Notify.error(
                                 NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), artifact.getDisplayName());
                     }
-                    
-                    IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, Collections.singletonList(artifact)));
 
+                    IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(moduleName,
+                            new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
+                                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getLabel(),
+                                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getDisplayName()), Collections.singletonList(artifact)));
                 } catch (TskCoreException ex) {
                     FilesIdentifierIngestModule.logger.log(Level.SEVERE, "Error posting to the blackboard", ex); //NOI18N
                 }
