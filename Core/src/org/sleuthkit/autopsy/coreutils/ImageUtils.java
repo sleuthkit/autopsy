@@ -429,6 +429,7 @@ public class ImageUtils {
             String cacheDirectory = Case.getCurrentCase().getCacheDirectory();
             return Paths.get(cacheDirectory, "thumbnails", fileID + ".png").toFile(); //NOI18N
         } catch (IllegalStateException e) {
+            LOGGER.log(Level.WARNING, "Could not get cached thumbnail location.  No case is open.");
             return null;
         }
 
@@ -656,6 +657,10 @@ public class ImageUtils {
 
         @Override
         protected javafx.scene.image.Image call() throws Exception {
+            if (isGIF(file)) {
+                return readImage();
+            }
+
             // If a thumbnail file is already saved locally, just read that.
             if (cacheFile != null && cacheFile.exists()) {
                 try {
@@ -670,18 +675,21 @@ public class ImageUtils {
 
             //There was no correctly-sized cached thumbnail so make one.
             BufferedImage thumbnail = null;
+
             if (VideoUtils.isVideoThumbnailSupported(file)) {
                 if (openCVLoaded) {
                     updateMessage(Bundle.GetOrGenerateThumbnailTask_generatingPreviewFor(file.getName()));
                     thumbnail = VideoUtils.generateVideoThumbnail(file, iconSize);
-                } else if (defaultOnFailure) {
-                    thumbnail = DEFAULT_THUMBNAIL;
-                } else {
-                    throw new IIOException("Failed to read image for thumbnail generation.");
                 }
-
+                if (null == thumbnail) {
+                    if (defaultOnFailure) {
+                        thumbnail = DEFAULT_THUMBNAIL;
+                    } else {
+                        throw new IIOException("Failed to read image for thumbnail generation.");
+                    }
+                }
             } else {
-                //read the image into abuffered image.
+                //read the image into a buffered image.
                 BufferedImage bufferedImage = SwingFXUtils.fromFXImage(readImage(), null);
                 if (null == bufferedImage) {
                     LOGGER.log(Level.WARNING, FAILED_TO_READ_IMAGE_FOR_THUMBNAIL_GENERATION);
@@ -717,9 +725,10 @@ public class ImageUtils {
             updateProgress(-1, 1);
 
             //if we got a valid thumbnail save it
-            if (cacheFile != null && nonNull(thumbnail) && DEFAULT_THUMBNAIL != thumbnail) {
+            if ((cacheFile != null) && nonNull(thumbnail) && DEFAULT_THUMBNAIL != thumbnail) {
                 saveThumbnail(thumbnail);
             }
+
             return SwingFXUtils.toFXImage(thumbnail, null);
         }
 
@@ -875,6 +884,7 @@ public class ImageUtils {
         protected void failed() {
             super.failed();
             LOGGER.log(Level.WARNING, IMAGE_IO_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT + ": " + ObjectUtils.toString(getException()), ImageUtils.getContentPathSafe(file));
+//            Exceptions.printStackTrace(getException());
         }
 
         @Override
