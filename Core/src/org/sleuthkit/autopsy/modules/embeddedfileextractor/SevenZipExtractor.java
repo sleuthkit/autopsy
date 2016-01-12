@@ -613,7 +613,10 @@ class SevenZipExtractor {
                             NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), artifact.getDisplayName());
                 }
 
-                services.fireModuleDataEvent(new ModuleDataEvent(EmbeddedFileExtractorModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED));
+                services.fireModuleDataEvent(new ModuleDataEvent(EmbeddedFileExtractorModuleFactory.getModuleName(), 
+                        new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID(),
+                        BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getLabel(),
+                        BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getDisplayName())));
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error creating blackboard artifact for encryption detected for file: " + archiveFilePath, ex); //NON-NLS
             }

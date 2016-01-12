@@ -131,7 +131,10 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
                         NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), bart.getDisplayName());
                 }
 
-                services.fireModuleDataEvent(new ModuleDataEvent(FileExtMismatchDetectorModuleFactory.getModuleName(), ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED, Collections.singletonList(bart)));
+                services.fireModuleDataEvent(new ModuleDataEvent(FileExtMismatchDetectorModuleFactory.getModuleName(), 
+                        new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID(),
+                        BlackboardArtifact.ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getLabel(),
+                        BlackboardArtifact.ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getDisplayName()), Collections.singletonList(bart)));
             }
             return ProcessResult.OK;
         } catch (TskException ex) {

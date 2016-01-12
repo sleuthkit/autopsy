@@ -186,7 +186,9 @@ public final class ExternalResultsImporter {
                     }
 
                     if (standardArtifactTypeIds.contains(artifactTypeId)) {
-                        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(this.getClass().getSimpleName(), BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactTypeId)));
+                        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(this.getClass().getSimpleName(), 
+                                new BlackboardArtifact.Type(artifactTypeId, BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactTypeId).getLabel(), 
+                                BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactTypeId).getDisplayName())));
                     }
                 } else {
                     String errorMessage = NbBundle.getMessage(this.getClass(),

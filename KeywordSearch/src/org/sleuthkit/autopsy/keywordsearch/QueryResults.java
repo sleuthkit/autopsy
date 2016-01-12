@@ -161,7 +161,10 @@ class QueryResults {
 
         // Update artifact browser
         if (!newArtifacts.isEmpty()) {
-            IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(KeywordSearchModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
+            IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(KeywordSearchModuleFactory.getModuleName(), 
+                    new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID(),
+                        BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getLabel(),
+                        BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName()), newArtifacts));
         }
 
         return newArtifacts;

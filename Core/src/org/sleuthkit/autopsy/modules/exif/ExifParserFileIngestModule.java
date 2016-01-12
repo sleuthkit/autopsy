@@ -117,7 +117,10 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
         final int filesProcessedValue = filesProcessed.incrementAndGet();
         if ((filesProcessedValue % 1000 == 0)) {
             if (filesToFire) {
-                services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
+                services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), 
+                        new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID(),
+                        BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getLabel(),
+                        BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getDisplayName())));
                 filesToFire = false;
             }
         }
@@ -264,7 +267,10 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             timeZone = null;
             if (filesToFire) {
                 //send the final new data event
-                services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
+                services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), 
+                        new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID(),
+                        BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getLabel(),
+                        BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getDisplayName())));
             }
         }
     }

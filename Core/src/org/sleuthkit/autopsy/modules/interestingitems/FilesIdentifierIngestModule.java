@@ -127,7 +127,10 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
                                 NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), artifact.getDisplayName());
                     }
                     
-                    IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, Collections.singletonList(artifact)));
+                    IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(moduleName, 
+                            new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
+                            BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getLabel(),
+                            BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getDisplayName()), Collections.singletonList(artifact)));
 
                 } catch (TskCoreException ex) {
                     FilesIdentifierIngestModule.logger.log(Level.SEVERE, "Error posting to the blackboard", ex); //NOI18N
