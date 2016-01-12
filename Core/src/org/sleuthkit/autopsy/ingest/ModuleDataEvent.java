@@ -56,7 +56,6 @@ public class ModuleDataEvent extends ChangeEvent {
      * @param moduleName Module name
      * @param artifactType Type of artifact that was posted to blackboard
      */
-    @Deprecated
     public ModuleDataEvent(String moduleName, ARTIFACT_TYPE artifactType) {
         super(artifactType);
         this.blackboardArtifactType = new BlackboardArtifact.Type(artifactType.getTypeID(), artifactType.getLabel(), artifactType.getDisplayName());
@@ -91,7 +90,6 @@ public class ModuleDataEvent extends ChangeEvent {
      * @param artifacts List of specific artifact values that were added to
      * blackboard
      */
-    @Deprecated
     public ModuleDataEvent(String moduleName, ARTIFACT_TYPE artifactType, Collection<BlackboardArtifact> artifacts) {
         this(moduleName, artifactType);
         this.artifacts = artifacts;
@@ -115,6 +113,18 @@ public class ModuleDataEvent extends ChangeEvent {
     public Collection<BlackboardArtifact> getArtifacts() {
         return artifacts;
     }
+
+    /**
+     * get artifact type of the new artifacts associated with the event
+     *
+     * @throws IllegalArgumentException if the type is user defined
+     * @return the artifact type
+     */
+    @Deprecated
+    public ARTIFACT_TYPE getArtifactType() {
+        return BlackboardArtifact.ARTIFACT_TYPE.fromID(this.blackboardArtifactType.getTypeID());
+    }
+
     /**
      * get module name that created the artifacts and fired the event
      *
