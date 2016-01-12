@@ -86,76 +86,53 @@ public class ExtractedContent implements AutopsyVisitableItem {
 
     static String getIcon(BlackboardArtifact.Type type) {
         int typeID = type.getTypeID();
-        if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()) {
+        if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()) {
             return "bookmarks.png"; //NON-NLS
-        }
-        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()) {
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()) {
             return "cookies.png"; //NON-NLS
-        }
-        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()) {
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()) {
             return "history.png"; //NON-NLS
-        }
-        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()) {
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()) {
             return "downloads.png"; //NON-NLS
-        }
-        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID()) {
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID()) {
             return "programs.png"; //NON-NLS
-        }
-        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID()) {
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID()) {
             return "recent_docs.png"; //NON-NLS
-        }
-        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()) {
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()) {
             return "usb_devices.png"; //NON-NLS
-        }
-        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID()) {
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID()) {
             return "searchquery.png"; //NON-NLS
-        }
-        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()) {
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()) {
             return "camera-icon-16.png"; //NON-NLS
-        }
-        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
             return "mail-icon-16.png"; //NON-NLS
-        }
-        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT.getTypeID()) {
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT.getTypeID()) {
             return "contact.png"; //NON-NLS
-        }
-        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()) {
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()) {
             return "message.png"; //NON-NLS
-        }
-        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG.getTypeID()) {
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG.getTypeID()) {
             return "calllog.png"; //NON-NLS
-        }
-        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALENDAR_ENTRY.getTypeID()) {
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALENDAR_ENTRY.getTypeID()) {
             return "calendar.png"; //NON-NLS
-        }
-        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_SPEED_DIAL_ENTRY.getTypeID()) {
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_SPEED_DIAL_ENTRY.getTypeID()) {
             return "speeddialentry.png"; //NON-NLS
-        }
-        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_BLUETOOTH_PAIRING.getTypeID()) {
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_BLUETOOTH_PAIRING.getTypeID()) {
             return "bluetooth.png"; //NON-NLS
-        }
-        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK.getTypeID()) {
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK.getTypeID()) {
             return "gpsfav.png"; //NON-NLS
-        }
-        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION.getTypeID()) {
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION.getTypeID()) {
             return "gps-lastlocation.png"; //NON-NLS
-        }
-        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_SEARCH.getTypeID()) {
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_SEARCH.getTypeID()) {
             return "gps-search.png"; //NON-NLS
-        }
-        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_SERVICE_ACCOUNT.getTypeID()) {
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_SERVICE_ACCOUNT.getTypeID()) {
             return "account-icon-16.png"; //NON-NLS
-        }
-        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID()) {
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID()) {
             return "encrypted-file.png"; //NON-NLS
-        }
-        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID()) {
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID()) {
             return "mismatch-16.png"; //NON-NLS
-        }
-        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_INFO.getTypeID()) {
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_INFO.getTypeID()) {
             return "computer.png"; //NON-NLS
-        }
-        else if(typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_FACE_DETECTED.getTypeID()) {
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_FACE_DETECTED.getTypeID()) {
             return "face.png"; //NON-NLS
         }
         return "artifact-icon.png"; //NON-NLS
@@ -259,16 +236,8 @@ public class ExtractedContent implements AutopsyVisitableItem {
                      * the event is a remote event.
                      */
                     final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
-                    if (null != event) {
-                        boolean passed = true;
-                        for (BlackboardArtifact.Type type : doNotShow) {
-                            if (type.getTypeID() == event.getBlackboardArtifactType().getTypeID()) {
-                                passed = false;
-                            }
-                        }
-                        if (passed) {
-                            refresh(true);
-                        }
+                    if (null != event && !(this.doNotShow.contains(event.getBlackboardArtifactType()))) {
+                        refresh(true);
                     }
                 } catch (IllegalStateException notUsed) {
                     /**
@@ -414,62 +383,6 @@ public class ExtractedContent implements AutopsyVisitableItem {
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
-        }
-
-        // @@@ TODO: Merge with BlackboartArtifactNode.getIcon()
-        private String getIcon(BlackboardArtifact.ARTIFACT_TYPE type) {
-            switch (type) {
-                case TSK_WEB_BOOKMARK:
-                    return "bookmarks.png"; //NON-NLS
-                case TSK_WEB_COOKIE:
-                    return "cookies.png"; //NON-NLS
-                case TSK_WEB_HISTORY:
-                    return "history.png"; //NON-NLS
-                case TSK_WEB_DOWNLOAD:
-                    return "downloads.png"; //NON-NLS
-                case TSK_INSTALLED_PROG:
-                    return "programs.png"; //NON-NLS
-                case TSK_RECENT_OBJECT:
-                    return "recent_docs.png"; //NON-NLS
-                case TSK_DEVICE_ATTACHED:
-                    return "usb_devices.png"; //NON-NLS
-                case TSK_WEB_SEARCH_QUERY:
-                    return "searchquery.png"; //NON-NLS
-                case TSK_METADATA_EXIF:
-                    return "camera-icon-16.png"; //NON-NLS
-                case TSK_EMAIL_MSG:
-                    return "mail-icon-16.png"; //NON-NLS
-                case TSK_CONTACT:
-                    return "contact.png"; //NON-NLS
-                case TSK_MESSAGE:
-                    return "message.png"; //NON-NLS
-                case TSK_CALLLOG:
-                    return "calllog.png"; //NON-NLS
-                case TSK_CALENDAR_ENTRY:
-                    return "calendar.png"; //NON-NLS
-                case TSK_SPEED_DIAL_ENTRY:
-                    return "speeddialentry.png"; //NON-NLS
-                case TSK_BLUETOOTH_PAIRING:
-                    return "bluetooth.png"; //NON-NLS
-                case TSK_GPS_BOOKMARK:
-                    return "gpsfav.png"; //NON-NLS
-                case TSK_GPS_LAST_KNOWN_LOCATION:
-                    return "gps-lastlocation.png"; //NON-NLS
-                case TSK_GPS_SEARCH:
-                    return "gps-search.png"; //NON-NLS
-                case TSK_SERVICE_ACCOUNT:
-                    return "account-icon-16.png"; //NON-NLS
-                case TSK_ENCRYPTION_DETECTED:
-                    return "encrypted-file.png"; //NON-NLS
-                case TSK_EXT_MISMATCH_DETECTED:
-                    return "mismatch-16.png"; //NON-NLS
-                case TSK_OS_INFO:
-                    return "computer.png"; //NON-NLS
-                case TSK_FACE_DETECTED:
-                    return "face.png"; //NON-NLS
-
-            }
-            return "artifact-icon.png"; //NON-NLS
         }
 
         @Override
