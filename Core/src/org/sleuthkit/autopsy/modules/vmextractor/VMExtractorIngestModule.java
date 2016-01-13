@@ -155,6 +155,9 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
         int numJobsQueued = 0;
         // start processing output folders after we are done writing out all vm files
         for (String folder : imageFolderToOutputFolder.values()) {
+            if (context.dataSourceIngestIsCancelled()) {
+                break;
+            }
             List<String> vmFilesToIngest = VirtualMachineFinderUtility.identifyVirtualMachines(Paths.get(folder));
             for (String file : vmFilesToIngest) {
                 try {
