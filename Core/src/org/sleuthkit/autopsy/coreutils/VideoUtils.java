@@ -43,8 +43,8 @@ import org.sleuthkit.datamodel.AbstractFile;
  */
 public class VideoUtils {
 
-    private static final List<String> SUPPORTED_VIDEO_EXTENSIONS
-            = Arrays.asList("mov", "m4v", "flv", "mp4", "3gp", "avi", "mpg",
+    private static final List<String> SUPPORTED_VIDEO_EXTENSIONS =
+            Arrays.asList("mov", "m4v", "flv", "mp4", "3gp", "avi", "mpg",
                     "mpeg", "asf", "divx", "rm", "moov", "wmv", "vob", "dat",
                     "m1v", "m2v", "m4v", "mkv", "mpe", "yop", "vqa", "xmv",
                     "mve", "wtv", "webm", "vivo", "vc1", "seq", "thp", "san",
@@ -58,7 +58,7 @@ public class VideoUtils {
                     "flm", "tmv", "4xm");  //NON-NLS
 
     private static final SortedSet<String> SUPPORTED_VIDEO_MIME_TYPES = new TreeSet<>(
-            Arrays.asList("application/x-shockwave-flash", "video/x-m4v", "video/quicktime", "video/avi", "video/msvideo", "video/x-msvideo",
+            Arrays.asList("application/x-shockwave-flash", "video/x-m4v", "video/x-flv", "video/quicktime", "video/avi", "video/msvideo", "video/x-msvideo",
                     "video/mp4", "video/x-ms-wmv", "video/mpeg", "video/asf")); //NON-NLS
 
     private static final List<String> CONDITIONAL_MIME_TYPES = Arrays.asList("application/octet-stream");
@@ -160,6 +160,6 @@ public class VideoUtils {
 
         videoFile.release(); // close the file
 
-        return bufferedImage == null ? bufferedImage : ScalrWrapper.resizeFast(bufferedImage, iconSize);
+        return bufferedImage == null ? null : ScalrWrapper.resizeFast(bufferedImage, iconSize);
     }
 }
