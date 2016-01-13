@@ -5,6 +5,8 @@
  */
 package org.sleuthkit.autopsy.modules.UserArtifacts;
 
+import com.sun.media.jfxmedia.logging.Logger;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
@@ -20,12 +22,16 @@ public class UserArtifactIngestModule implements DataSourceIngestModule {
 
     private IngestJobContext context = null;
     private BlackboardArtifact.Type type1, type2;
+    int type1ID, type2ID;
 
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
+        progressBar.switchToDeterminate(2);
         try {
-            dataSource.newArtifact(type1.getTypeID());
-            dataSource.newArtifact(type2.getTypeID());
+            dataSource.newArtifact(type1ID);
+            progressBar.progress(1);
+            dataSource.newArtifact(type2ID);
+            progressBar.progress(1);
             return ProcessResult.OK;
         }
         catch (TskCoreException ex) {
@@ -36,8 +42,14 @@ public class UserArtifactIngestModule implements DataSourceIngestModule {
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
-        type1 = new BlackboardArtifact.Type(40, "TSK_TEST1", "Test 1");
-        type2 = new BlackboardArtifact.Type(41, "TSK_TEST2", "Test 2");
+        type1 = new BlackboardArtifact.Type(39, "TSK_TEST1", "Test 1");
+        type2 = new BlackboardArtifact.Type(40, "TSK_TEST2", "Test 2");
+        try {
+            type1ID = Case.getCurrentCase().getSleuthkitCase().addArtifactType(type1.getTypeName(), type1.getDisplayName());
+            type2ID = Case.getCurrentCase().getSleuthkitCase().addArtifactType(type2.getTypeName(), type2.getDisplayName());
+        }
+        catch (TskCoreException ex) {
+            Logger.logMsg(Logger.ERROR, "Startup failed");
+        } 
     }
-
 }
