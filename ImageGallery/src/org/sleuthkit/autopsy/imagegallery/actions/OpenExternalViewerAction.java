@@ -26,7 +26,7 @@ import org.controlsfx.control.action.Action;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
-import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 
 /**
  * Wraps {@link ExternalViewerAction} in a ControlsFX {@link Action} with
@@ -38,14 +38,14 @@ public class OpenExternalViewerAction extends Action {
     private static final Image EXTERNAL = new Image(OpenExternalViewerAction.class.getResource("/org/sleuthkit/autopsy/imagegallery/images/external.png").toExternalForm());
     private static final ActionEvent ACTION_EVENT = new ActionEvent(OpenExternalViewerAction.class, ActionEvent.ACTION_PERFORMED, ""); //Swing ActionEvent //NOI18N
 
-    public OpenExternalViewerAction(AbstractFile file) {
+    public OpenExternalViewerAction(DrawableFile<?> file) {
         super("External Viewer");
 
         /**
          * TODO: why is the name passed to the action? it means we duplicate
          * this string all over the place -jm
          */
-        ExternalViewerAction externalViewerAction = new ExternalViewerAction(Bundle.MediaViewImagePanel_externalViewerButton_text(), new FileNode(file));
+        ExternalViewerAction externalViewerAction = new ExternalViewerAction(Bundle.MediaViewImagePanel_externalViewerButton_text(), new FileNode(file.getAbstractFile()));
 
         setLongText(Bundle.MediaViewImagePanel_externalViewerButton_text());
         setEventHandler(actionEvent -> //fx ActionEvent
