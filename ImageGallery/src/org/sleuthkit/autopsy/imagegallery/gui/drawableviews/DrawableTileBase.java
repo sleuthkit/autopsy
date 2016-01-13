@@ -220,7 +220,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                 });
                 menuItems.add(contentViewer);
 
-                OpenExternalViewerAction openExternalViewerAction = new OpenExternalViewerAction(file.getAbstractFile());
+                OpenExternalViewerAction openExternalViewerAction = new OpenExternalViewerAction(file);
                 MenuItem externalViewer = ActionUtils.createMenuItem(openExternalViewerAction);
                 externalViewer.textProperty().unbind();
                 externalViewer.textProperty().bind(openExternalViewerAction.longTextProperty());
