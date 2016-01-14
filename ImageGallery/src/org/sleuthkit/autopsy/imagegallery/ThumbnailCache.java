@@ -39,7 +39,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
@@ -198,7 +197,7 @@ public enum ThumbnailCache {
                     try {
                         cache.put(Long.MIN_VALUE, newGetThumbnailTask.get());
                     } catch (InterruptedException | ExecutionException ex) {
-                        Exceptions.printStackTrace(ex);
+                        LOGGER.log(Level.SEVERE, "There was an exception even though thumbnail task succedded for.  This should not be possible.", ex);
                     }
             }
         });

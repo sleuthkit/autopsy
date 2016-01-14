@@ -234,22 +234,29 @@ public class ImageUtils {
      */
     public static boolean isGIF(AbstractFile file) {
         try {
-            final FileTypeDetector fileTypeDetector = getFileTypeDetector();
-            if (nonNull(fileTypeDetector)) {
-                String fileType = fileTypeDetector.getFileType(file);
+            final FileTypeDetector myFileTypeDetector = getFileTypeDetector();
+            if (nonNull(myFileTypeDetector)) {
+                String fileType = myFileTypeDetector.getFileType(file);
                 return IMAGE_GIF_MIME.equalsIgnoreCase(fileType);
             }
-        } catch (TskCoreException | FileTypeDetectorInitException ex) {
-            LOGGER.log(Level.WARNING, "Failed to get mime type with FileTypeDetector.", ex); //NOI18N
+        } catch (FileTypeDetectorInitException ex) {
+            LOGGER.log(Level.WARNING, "Failed to initialize FileTypeDetector.", ex); //NOI18N
+        } catch (TskCoreException ex) {
+            if (ex.getMessage().contains("An SQLException was provoked by the following failure: java.lang.InterruptedException")) {
+                LOGGER.log(Level.WARNING, "Mime type look up with FileTypeDetector was interupted."); //NOI18N}
+                return "gif".equalsIgnoreCase(file.getNameExtension()); //NOI18N
+            } else {
+                LOGGER.log(Level.SEVERE, "Failed to get mime type of " + getContentPathSafe(file) + " with FileTypeDetector.", ex); //NOI18N}
+            }
         }
-        LOGGER.log(Level.WARNING, "Falling back on direct mime type check."); //NOI18N
+        LOGGER.log(Level.WARNING, "Falling back on direct mime type check for {0}.", getContentPathSafe(file)); //NOI18N
         switch (file.isMimeType(GIF_MIME_SET)) {
 
             case TRUE:
                 return true;
             case UNDEFINED:
                 LOGGER.log(Level.WARNING, "Falling back on extension check."); //NOI18N
-                return "gif".equals(file.getNameExtension()); //NOI18N
+                return "gif".equalsIgnoreCase(file.getNameExtension()); //NOI18N
             case FALSE:
             default:
                 return false;
@@ -660,6 +667,9 @@ public class ImageUtils {
             if (isGIF(file)) {
                 return readImage();
             }
+            if (isCancelled()) {
+                return null;
+            }
 
             // If a thumbnail file is already saved locally, just read that.
             if (cacheFile != null && cacheFile.exists()) {
@@ -673,6 +683,9 @@ public class ImageUtils {
                 }
             }
 
+            if (isCancelled()) {
+                return null;
+            }
             //There was no correctly-sized cached thumbnail so make one.
             BufferedImage thumbnail = null;
 
@@ -722,6 +735,11 @@ public class ImageUtils {
                     throw e;
                 }
             }
+
+            if (isCancelled()) {
+                return null;
+            }
+
             updateProgress(-1, 1);
 
             //if we got a valid thumbnail save it
@@ -810,7 +828,9 @@ public class ImageUtils {
                     }
                     //fall through to default image reading code if there was an error
                 }
-
+                if (isCancelled()) {
+                    return null;
+                }
                 try (ImageInputStream input = ImageIO.createImageInputStream(inputStream)) {
                     if (input == null) {
                         throw new IIOException(COULD_NOT_CREATE_IMAGE_INPUT_STREAM);
@@ -834,15 +854,15 @@ public class ImageUtils {
                         param.setDestination(bufferedImage);
                         try {
                             bufferedImage = reader.read(0, param); //should always be same bufferedImage object
-                            if (isCancelled()) {
-                                return null;
-                            }
                         } catch (IOException iOException) {
                             // Ignore this exception or display a warning or similar, for exceptions happening during decoding
                             LOGGER.log(Level.WARNING, IMAGE_UTILS_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT + ": " + iOException.toString(), ImageUtils.getContentPathSafe(file)); //NOI18N
                         } finally {
                             reader.removeIIOReadProgressListener(this);
                             reader.dispose();
+                        }
+                        if (isCancelled()) {
+                            return null;
                         }
                         return SwingFXUtils.toFXImage(bufferedImage, null);
                     } else {
@@ -857,6 +877,7 @@ public class ImageUtils {
             //update this task with the progress reported by ImageReader.read
             updateProgress(percentageDone, 100);
             if (isCancelled()) {
+                reader.removeIIOReadProgressListener(this);
                 reader.abort();
                 reader.dispose();
             }
