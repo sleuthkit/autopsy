@@ -7,11 +7,16 @@ package org.sleuthkit.autopsy.modules.UserArtifacts;
 
 import com.sun.media.jfxmedia.logging.Logger;
 import java.util.List;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
+import org.sleuthkit.autopsy.ingest.IngestMessage;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbIngestModule;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupModuleFactory;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -55,6 +60,12 @@ public class UserArtifactIngestModule implements DataSourceIngestModule {
             art2.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_MIN_COUNT,
                     UserArtifactIngestModuleFactory.getModuleName(), 4));
             progressBar.progress(1);
+            IngestServices.getInstance().postMessage(IngestMessage.createDataMessage(
+                    "name",
+                    UserArtifactIngestModuleFactory.getModuleName(),
+                    "Test Results",
+                    "Test",
+                    art1));
             return ProcessResult.OK;
         } catch (TskCoreException ex) {
             return ProcessResult.ERROR;
