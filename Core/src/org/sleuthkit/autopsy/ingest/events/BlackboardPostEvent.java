@@ -61,7 +61,7 @@ public final class BlackboardPostEvent extends AutopsyEvent implements Serializa
          */
         super(
                 IngestManager.IngestModuleEvent.DATA_ADDED.toString(),
-                new SerializableEventData(eventData.getModuleName(), eventData.getArtifactType(), eventData.getArtifacts() != null
+                new SerializableEventData(eventData.getModuleName(), eventData.getBlackboardArtifactType() , eventData.getArtifacts() != null
                                 ? eventData.getArtifacts()
                                 .stream()
                                 .map(BlackboardArtifact::getArtifactID)
@@ -96,7 +96,7 @@ public final class BlackboardPostEvent extends AutopsyEvent implements Serializa
             for (Long id : data.artifactIds) {
                 artifacts.add(Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(id));
             }
-            eventData = new ModuleDataEvent(data.moduleName, data.artifactType, !artifacts.isEmpty() ? artifacts : null);
+            eventData = new ModuleDataEvent(data.moduleName, data.artifactTypeId, !artifacts.isEmpty() ? artifacts : null);
             return eventData;
         } catch (IllegalStateException | TskCoreException ex) {
             logger.log(Level.SEVERE, "Error doing lazy load for remote event", ex);
@@ -112,12 +112,12 @@ public final class BlackboardPostEvent extends AutopsyEvent implements Serializa
 
         private static final long serialVersionUID = 1L;
         private final String moduleName;
-        private ARTIFACT_TYPE artifactType;
+        private BlackboardArtifact.Type artifactTypeId;
         private Collection<Long> artifactIds;
 
-        private SerializableEventData(String moduleName, ARTIFACT_TYPE artifactType, Collection<Long> artifactIds) {
+        private SerializableEventData(String moduleName, BlackboardArtifact.Type artifactTypeId, Collection<Long> artifactIds) {
             this.moduleName = moduleName;
-            this.artifactType = artifactType;
+            this.artifactTypeId = artifactTypeId;
             this.artifactIds = new ArrayList<>(artifactIds);
         }
 
