@@ -11,6 +11,8 @@ import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -28,9 +30,13 @@ public class UserArtifactIngestModule implements DataSourceIngestModule {
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         progressBar.switchToDeterminate(2);
         try {
-            dataSource.newArtifact(type1ID);
+            BlackboardArtifact art1 = dataSource.newArtifact(type1ID);
+            art1.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW, 
+            UserArtifactIngestModuleFactory.getModuleName(), 4));
             progressBar.progress(1);
-            dataSource.newArtifact(type2ID);
+            BlackboardArtifact art2 = dataSource.newArtifact(type2ID);
+            art2.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_MIN_COUNT, 
+            UserArtifactIngestModuleFactory.getModuleName(), 4));
             progressBar.progress(1);
             return ProcessResult.OK;
         }
