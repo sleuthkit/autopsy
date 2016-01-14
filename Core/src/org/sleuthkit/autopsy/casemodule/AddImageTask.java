@@ -168,7 +168,7 @@ class AddImageTask implements Runnable {
         try {
             imageId = addImageProcess.commit();
         } catch (TskCoreException e) {
-            logger.log(Level.WARNING, "Errors occurred while committing the image", e); //NON-NLS
+            logger.log(Level.WARNING, "Errors occurred while committing the image " + imagePath, e); //NON-NLS
             errorList.add(e.getMessage());
         } finally {
             if (imageId != 0) {
@@ -201,12 +201,12 @@ class AddImageTask implements Runnable {
         dirFetcher.interrupt();
 
         if (cancelRequested() || hasCritError) {
-            logger.log(Level.WARNING, "Critical errors or interruption in add image process. Image will not be committed."); //NON-NLS
+            logger.log(Level.WARNING, "Critical errors or interruption in add image process on {0}. Image will not be committed.", imagePath); //NON-NLS
             revert();
         }
 
         if (!errorList.isEmpty()) {
-            logger.log(Level.INFO, "There were errors that occurred in add image process"); //NON-NLS
+            logger.log(Level.INFO, "There were errors that occurred in add image process for {0}", imagePath); //NON-NLS
         }
 
         // When everything happens without an error:
@@ -219,7 +219,7 @@ class AddImageTask implements Runnable {
                     } catch (Exception ex) {
                         errorList.add(ex.getMessage());
                         // Log error/display warning
-                        logger.log(Level.SEVERE, "Error adding image to case.", ex); //NON-NLS
+                        logger.log(Level.SEVERE, "Error adding image " + imagePath + " to case.", ex); //NON-NLS
                     }
                 } else {
                     logger.log(Level.SEVERE, "Missing image process object"); //NON-NLS
@@ -231,8 +231,8 @@ class AddImageTask implements Runnable {
                 //handle unchecked exceptions post image add
                 errorList.add(ex.getMessage());
 
-                logger.log(Level.WARNING, "Unexpected errors occurred while running post add image cleanup. ", ex); //NON-NLS
-                logger.log(Level.SEVERE, "Error adding image to case", ex); //NON-NLS
+                logger.log(Level.WARNING, "Unexpected errors occurred while running post add image cleanup for " + imagePath, ex); //NON-NLS
+                logger.log(Level.SEVERE, "Error adding image " + imagePath + " to case", ex); //NON-NLS
             }
         }
 
