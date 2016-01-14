@@ -6,10 +6,13 @@
 package org.sleuthkit.autopsy.modules.UserArtifacts;
 
 import com.sun.media.jfxmedia.logging.Logger;
+import java.util.List;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
@@ -30,17 +33,30 @@ public class UserArtifactIngestModule implements DataSourceIngestModule {
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         progressBar.switchToDeterminate(2);
         try {
-            BlackboardArtifact art1 = dataSource.newArtifact(type1ID);
-            art1.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT, 
-            UserArtifactIngestModuleFactory.getModuleName(), 5));
+            FileManager manager = Case.getCurrentCase().getServices().getFileManager();
+            List<AbstractFile> file1 = manager.findFiles("Sunset.jpg");
+            List<AbstractFile> file2 = manager.findFiles("Winter.jpg");
+            BlackboardArtifact art1;
+            BlackboardArtifact art2;
+            if (!file1.isEmpty()) {
+                art1 = file1.get(0).newArtifact(type1ID);
+            } else {
+                art1 = dataSource.newArtifact(type1ID);
+            }
+            if (!file2.isEmpty()) {
+                art2 = file2.get(0).newArtifact(type2ID);
+            } else {
+                art2 = dataSource.newArtifact(type2ID);
+            }
+
+            art1.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT,
+                    UserArtifactIngestModuleFactory.getModuleName(), 5));
             progressBar.progress(1);
-            BlackboardArtifact art2 = dataSource.newArtifact(type2ID);
-            art2.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_MIN_COUNT, 
-            UserArtifactIngestModuleFactory.getModuleName(), 4));
+            art2.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_MIN_COUNT,
+                    UserArtifactIngestModuleFactory.getModuleName(), 4));
             progressBar.progress(1);
             return ProcessResult.OK;
-        }
-        catch (TskCoreException ex) {
+        } catch (TskCoreException ex) {
             return ProcessResult.ERROR;
         }
     }
