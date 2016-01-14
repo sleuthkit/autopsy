@@ -97,7 +97,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         this.associated = this.getLookup().lookup(Content.class);
         this.setName(Long.toString(artifact.getArtifactID()));
         this.setDisplayName();
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/" + getIcon(BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID()))); //NON-NLS
+        this.setIconBaseWithExtension(ExtractedContent.getIconFilePath(artifact.getArtifactTypeID())); //NON-NLS
     }
 
     /**
@@ -423,65 +423,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         }
         return null;
     }
-
-    // @@@ TODO: Merge with ArtifactTypeNode.getIcon()
-    private String getIcon(BlackboardArtifact.ARTIFACT_TYPE type) {
-        switch (type) {
-            case TSK_WEB_BOOKMARK:
-                return "bookmarks.png"; //NON-NLS
-            case TSK_WEB_COOKIE:
-                return "cookies.png"; //NON-NLS
-            case TSK_WEB_HISTORY:
-                return "history.png"; //NON-NLS
-            case TSK_WEB_DOWNLOAD:
-                return "downloads.png"; //NON-NLS
-            case TSK_INSTALLED_PROG:
-                return "programs.png"; //NON-NLS
-            case TSK_RECENT_OBJECT:
-                return "recent_docs.png"; //NON-NLS
-            case TSK_DEVICE_ATTACHED:
-                return "usb_devices.png"; //NON-NLS
-            case TSK_WEB_SEARCH_QUERY:
-                return "searchquery.png"; //NON-NLS
-            case TSK_TAG_FILE:
-                return "blue-tag-icon-16.png"; //NON-NLS
-            case TSK_TAG_ARTIFACT:
-                return "green-tag-icon-16.png"; //NON-NLS
-            case TSK_METADATA_EXIF:
-                return "camera-icon-16.png"; //NON-NLS
-            case TSK_EMAIL_MSG:
-                return "mail-icon-16.png"; //NON-NLS
-            case TSK_CONTACT:
-                return "contact.png"; //NON-NLS
-            case TSK_MESSAGE:
-                return "message.png"; //NON-NLS
-            case TSK_CALLLOG:
-                return "calllog.png"; //NON-NLS
-            case TSK_CALENDAR_ENTRY:
-                return "calendar.png"; //NON-NLS
-            case TSK_SPEED_DIAL_ENTRY:
-                return "speeddialentry.png"; //NON-NLS
-            case TSK_BLUETOOTH_PAIRING:
-                return "bluetooth.png"; //NON-NLS
-            case TSK_GPS_BOOKMARK:
-                return "gpsfav.png"; //NON-NLS
-            case TSK_GPS_LAST_KNOWN_LOCATION:
-                return "gps-lastlocation.png"; //NON-NLS
-            case TSK_GPS_SEARCH:
-                return "gps-search.png"; //NON-NLS
-            case TSK_SERVICE_ACCOUNT:
-                return "account-icon-16.png"; //NON-NLS
-            case TSK_ENCRYPTION_DETECTED:
-                return "encrypted-file.png"; //NON-NLS
-            case TSK_EXT_MISMATCH_DETECTED:
-                return "mismatch-16.png"; //NON-NLS
-            case TSK_OS_INFO:
-                return "computer.png"; //NON-NLS
-            default:
-                return "artifact-icon.png"; //NON-NLS                
-        }
-    }
-
+    
     @Override
     public boolean isLeafTypeNode() {
         return true;
