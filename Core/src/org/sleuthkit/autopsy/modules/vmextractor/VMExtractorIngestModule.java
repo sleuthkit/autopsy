@@ -92,7 +92,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
         // Not sure how long it will take for search to complete.
         progressBar.switchToIndeterminate();
 
-        logger.log(Level.INFO, "Looking for virtual machine files in data source %s", dataSource.getName());
+        logger.log(Level.INFO, "Looking for virtual machine files in data source {0}", dataSource.getName());
         
         try {
             // look for all VM files
@@ -104,7 +104,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
 
         if (vmFiles.isEmpty()) {
             // no VM files found
-            logger.log(Level.INFO, "No virtual machine files found in data source %s", dataSource.getName());
+            logger.log(Level.INFO, "No virtual machine files found in data source {0}", dataSource.getName());
             return ProcessResult.OK;
         }
         // display progress for saving each VM file to disk
@@ -117,7 +117,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
                 break;
             }
             
-            logger.log(Level.INFO, "Saving virtual machine file %s to disk", vmFile.getName());
+            logger.log(Level.INFO, "Saving virtual machine file {0} to disk", vmFile.getName());
 
             // get vmFolderPathInsideTheImage to the folder where VM is located 
             String vmFolderPathInsideTheImage = vmFile.getParentPath();
@@ -139,7 +139,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
             try {
                 writeVirtualMachineToDisk(vmFile, outputFolderForThisVM);
             } catch (Exception ex) {
-                logger.log(Level.SEVERE, String.format("Failed to write virtual machine file %s (id=%d) to disk", vmFile.getName(), vmFile.getId()), ex);
+                logger.log(Level.SEVERE, "Failed to write virtual machine file "+vmFile.getName()+" to folder "+outputFolderForThisVM, ex);
                 MessageNotifyUtil.Notify.error("Failed to extract virtual machine file", String.format("Failed to write virtual machine file %s to disk", vmFile.getName()));
             }
 
@@ -161,22 +161,23 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
             List<String> vmFilesToIngest = VirtualMachineFinderUtility.identifyVirtualMachines(Paths.get(folder));
             for (String file : vmFilesToIngest) {
                 try {
-                    logger.log(Level.INFO, String.format("Ingesting virtual machine file %s in folder %s", file, folder));
+                    logger.log(Level.INFO, "Ingesting virtual machine file {0} in folder {1}", new Object[]{file, folder});
+                
                     // ingest the data sources                
                     ingestVirtualMachineImage(Paths.get(folder, file));
-                    logger.log(Level.INFO, String.format("Ingest complete for virtual machine file %s in folder %s", file, folder));
+                    logger.log(Level.INFO, "Ingest complete for virtual machine file {0} in folder {1}", new Object[]{file, folder});
                 } catch (InterruptedException ex) {
-                    logger.log(Level.INFO, String.format("Interrupted while adding virtual machine file %s in folder %s", file, folder), ex);
+                    logger.log(Level.INFO, "Interrupted while ingesting virtual machine file "+file+" in folder "+folder, ex);
                 } catch (IOException ex) {
-                    logger.log(Level.SEVERE, String.format("Failed to write virtual machine file %s to disk", file), ex);
-                    MessageNotifyUtil.Notify.error("Failed to extract virtual machine file", String.format("Failed to write virtual machine file %s to disk", file));
+                    logger.log(Level.SEVERE, "Failed to ingest virtual machine file "+file+" in folder "+folder, ex);
+                    MessageNotifyUtil.Notify.error("Failed to ingest virtual machine", String.format("Failed to ingest virtual machine file %s", file));
                 }
             }
             // Update progress bar
             numJobsQueued++;
             progressBar.progress(NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.queuingIngestJobs.message"), numJobsQueued);
         }
-        logger.log(Level.INFO, "VMExtractorIngestModule completed processing of data source %s", dataSource.getName());
+        logger.log(Level.INFO, "VMExtractorIngestModule completed processing of data source {0}", dataSource.getName());
         return ProcessResult.OK;
     }
 
