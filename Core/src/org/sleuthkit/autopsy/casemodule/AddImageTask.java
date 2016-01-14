@@ -143,11 +143,11 @@ class AddImageTask implements Runnable {
                 dirFetcher.start();
                 addImageProcess.run(new String[]{this.imagePath});
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Core errors occurred while running add image. ", ex); //NON-NLS
+                logger.log(Level.SEVERE, "Core errors occurred while running add image on " + imagePath, ex); //NON-NLS
                 hasCritError = true;
                 errorList.add(ex.getMessage());
             } catch (TskDataException ex) {
-                logger.log(Level.WARNING, "Data errors occurred while running add image. ", ex); //NON-NLS
+                logger.log(Level.WARNING, "Data errors occurred while running add image " + imagePath, ex); //NON-NLS
                 errorList.add(ex.getMessage());
             }
             postProcess();
