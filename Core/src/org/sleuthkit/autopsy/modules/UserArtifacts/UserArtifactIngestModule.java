@@ -31,8 +31,8 @@ public class UserArtifactIngestModule implements DataSourceIngestModule {
         progressBar.switchToDeterminate(2);
         try {
             BlackboardArtifact art1 = dataSource.newArtifact(type1ID);
-            art1.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW, 
-            UserArtifactIngestModuleFactory.getModuleName(), 4));
+            art1.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT, 
+            UserArtifactIngestModuleFactory.getModuleName(), 5));
             progressBar.progress(1);
             BlackboardArtifact art2 = dataSource.newArtifact(type2ID);
             art2.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_MIN_COUNT, 
