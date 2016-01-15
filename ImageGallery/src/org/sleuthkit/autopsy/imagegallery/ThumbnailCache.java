@@ -43,6 +43,7 @@ import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
+import org.sleuthkit.autopsy.imagegallery.utils.TaskUtils;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -183,12 +184,7 @@ public enum ThumbnailCache {
     public Task<Image> getThumbnailTask(DrawableFile<?> file) {
         final Image thumbnail = cache.getIfPresent(file.getId());
         if (thumbnail != null) {
-            return new Task<Image>() {
-                @Override
-                protected Image call() throws Exception {
-                    return thumbnail;
-                }
-            };
+            return TaskUtils.taskFrom(() -> thumbnail);
         }
         final Task<Image> newGetThumbnailTask = ImageUtils.newGetThumbnailTask(file.getAbstractFile(), MAX_THUMBNAIL_SIZE, false);
         newGetThumbnailTask.stateProperty().addListener((Observable observable) -> {

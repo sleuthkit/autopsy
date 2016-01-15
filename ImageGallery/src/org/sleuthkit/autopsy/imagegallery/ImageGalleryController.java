@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -89,7 +91,14 @@ import org.sleuthkit.datamodel.TskData;
  * Connects different parts of ImageGallery together and is hub for flow of
  * control.
  */
-public final class ImageGalleryController {
+public final class ImageGalleryController implements Executor {
+
+    private final Executor execDelegate = Executors.newSingleThreadExecutor();
+
+    @Override
+    public void execute(Runnable command) {
+        execDelegate.execute(command);
+    }
 
     private static final Logger LOGGER = Logger.getLogger(ImageGalleryController.class.getName());
 
