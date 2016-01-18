@@ -157,7 +157,11 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
             }
         });
         myTask.setOnCancelled(cancelled -> {
-            disposeContent();
+            synchronized (DrawableUIBase.this) {
+                imageTask = null;
+            }
+            imageView.setImage(null);
+            imageBorder.setCenter(null);
         });
 
         exec.execute(myTask);

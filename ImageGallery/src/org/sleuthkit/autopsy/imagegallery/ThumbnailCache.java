@@ -39,11 +39,11 @@ import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
+import org.sleuthkit.autopsy.imagegallery.utils.TaskUtils;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -184,12 +184,7 @@ public enum ThumbnailCache {
     public Task<Image> getThumbnailTask(DrawableFile<?> file) {
         final Image thumbnail = cache.getIfPresent(file.getId());
         if (thumbnail != null) {
-            return new Task<Image>() {
-                @Override
-                protected Image call() throws Exception {
-                    return thumbnail;
-                }
-            };
+            return TaskUtils.taskFrom(() -> thumbnail);
         }
         final Task<Image> newGetThumbnailTask = ImageUtils.newGetThumbnailTask(file.getAbstractFile(), MAX_THUMBNAIL_SIZE, false);
         newGetThumbnailTask.stateProperty().addListener((Observable observable) -> {
@@ -198,7 +193,7 @@ public enum ThumbnailCache {
                     try {
                         cache.put(Long.MIN_VALUE, newGetThumbnailTask.get());
                     } catch (InterruptedException | ExecutionException ex) {
-                        Exceptions.printStackTrace(ex);
+                        LOGGER.log(Level.SEVERE, "There was an exception even though thumbnail task succedded for.  This should not be possible.", ex);
                     }
             }
         });

@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 import java.util.Objects;
 import java.util.logging.Level;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.WeakChangeListener;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.CacheHint;
@@ -48,6 +50,13 @@ public class DrawableTile extends DrawableTileBase {
     private static final DropShadow LAST_SELECTED_EFFECT = new DropShadow(10, Color.BLUE);
 
     private static final Logger LOGGER = Logger.getLogger(DrawableTile.class.getName());
+    private final ChangeListener<? super Long> lastSelectionListener = (observable, oldValue, newValue) -> {
+        try {
+            setEffect(Objects.equals(newValue, getFileID()) ? LAST_SELECTED_EFFECT : null);
+        } catch (java.lang.IllegalStateException ex) {
+            Logger.getLogger(DrawableTile.class.getName()).log(Level.WARNING, "Error displaying tile");
+        }
+    };
 
     @FXML
     @Override
@@ -63,13 +72,7 @@ public class DrawableTile extends DrawableTileBase {
         imageView.fitHeightProperty().bind(Toolbar.getDefault(getController()).sizeSliderValue());
         imageView.fitWidthProperty().bind(Toolbar.getDefault(getController()).sizeSliderValue());
 
-        selectionModel.lastSelectedProperty().addListener((observable, oldValue, newValue) -> {
-            try {
-                setEffect(Objects.equals(newValue, getFileID()) ? LAST_SELECTED_EFFECT : null);
-            } catch (java.lang.IllegalStateException ex) {
-                Logger.getLogger(DrawableTile.class.getName()).log(Level.WARNING, "Error displaying tile");
-            }
-        });
+        selectionModel.lastSelectedProperty().addListener(new WeakChangeListener<>(lastSelectionListener));
     }
 
     public DrawableTile(GroupPane gp, ImageGalleryController controller) {
@@ -99,7 +102,5 @@ public class DrawableTile extends DrawableTileBase {
     protected String getTextForLabel() {
         return getFile().map(AbstractContent::getName).orElse("");
     }
-
-
 
 }
