@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.imagegallery.gui.navpanel;
 import java.util.Arrays;
 import java.util.List;
 import javafx.application.Platform;
-import javafx.beans.Observable;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -108,32 +107,12 @@ final public class NavPanel extends TabPane {
         sortByBox.setButtonCell(new TreeNodeComparators.ComparatorListCell());
         sortByBox.setItems(FXCollections.observableArrayList(FXCollections.observableArrayList(TreeNodeComparators.values())));
         sortByBox.getSelectionModel().select(TreeNodeComparators.HIT_COUNT);
-        sortByBox.getSelectionModel().selectedItemProperty().addListener((Observable o) -> {
-            //user action ->jfx thread
-            resortHashTree();
-        });
+        sortByBox.getSelectionModel().selectedItemProperty().addListener(o -> resortHashTree());
 
-        navTree.setRoot(navTreeRoot);
-        navTreeRoot.setExpanded(true);
-        navTree.setCellFactory((TreeView<TreeNode> p) -> new GroupTreeCell());
-        navTree.setShowRoot(false);
-        navTree.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+        configureTree(navTree, navTreeRoot);
+        configureTree(hashTree, hashTreeRoot);
 
-        hashTree.setRoot(hashTreeRoot);
-        hashTreeRoot.setExpanded(true);
-        hashTree.setCellFactory((TreeView<TreeNode> p) -> new GroupTreeCell());
-        hashTree.setShowRoot(false);
-        hashTree.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-
-        activeTreeProperty.addListener((Observable o) -> {
-            updateControllersGroup();
-            activeTreeProperty.get().getSelectionModel().selectedItemProperty().addListener((Observable o1) -> {
-                updateControllersGroup();
-            });
-        });
-
-        this.activeTreeProperty.set(navTree);
-
+        activeTreeProperty.set(navTree);
         navTabPane.getSelectionModel().selectedItemProperty().addListener((ObservableValue<? extends Tab> ov, Tab t, Tab t1) -> {
             if (t1 == hashTab) {
                 activeTreeProperty.set(hashTree);
@@ -143,7 +122,6 @@ final public class NavPanel extends TabPane {
         });
 
         controller.getGroupManager().getAnalyzedGroups().addListener((ListChangeListener.Change<? extends DrawableGroup> change) -> {
-
             while (change.next()) {
                 for (DrawableGroup g : change.getAddedSubList()) {
                     insertIntoNavTree(g);
@@ -158,15 +136,23 @@ final public class NavPanel extends TabPane {
             }
         });
 
-        rebuildTrees();
-
         controller.viewState().addListener((ObservableValue<? extends GroupViewState> observable, GroupViewState oldValue, GroupViewState newValue) -> {
             if (newValue != null && newValue.getGroup() != null) {
-                Platform.runLater(() -> {
-                    setFocusedGroup(newValue.getGroup());
-                });
+                setFocusedGroup(newValue.getGroup());
             }
         });
+
+        rebuildTrees();
+    }
+
+    @ThreadConfined(type = ThreadType.JFX)
+    private void configureTree(final TreeView<TreeNode> navTree1, final GroupTreeItem navTreeRoot1) {
+        navTree1.setRoot(navTreeRoot1);
+        navTreeRoot1.setExpanded(true);
+        navTree1.setCellFactory(treeView -> new GroupTreeCell());
+        navTree1.setShowRoot(false);
+        navTree1.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+        navTree1.getSelectionModel().selectedItemProperty().addListener(o -> updateControllersGroup());
     }
 
     private void rebuildTrees() {
@@ -207,38 +193,28 @@ final public class NavPanel extends TabPane {
      */
     @ThreadConfined(type = ThreadType.JFX)
     private void setFocusedGroup(DrawableGroup grouping) {
-
         final GroupTreeItem treeItemForGroup = ((GroupTreeItem) activeTreeProperty.get().getRoot()).getTreeItemForPath(groupingToPath(grouping));
 
         if (treeItemForGroup != null) {
-            /*
-             * When we used to run the below code on the FX thread, it would get
-             * into infinite loops when the next group button was pressed
-             * quickly because the udpates became out of order and History could
-             * not keep track of what was current.
-             *
-             * Currently (4/2/15), this method is already on the FX thread, so
-             * it is OK.
-             */
-            //Platform.runLater(() -> {
             activeTreeProperty.get().getSelectionModel().select(treeItemForGroup);
-            int row = activeTreeProperty.get().getRow(treeItemForGroup);
-            if (row != -1) {
-                activeTreeProperty.get().scrollTo(row - 2); //put newly selected row 3 from the top
-            }
-            //});   //end Platform.runLater
+            Platform.runLater(() -> {
+                int row = activeTreeProperty.get().getRow(treeItemForGroup);
+                if (row != -1) {
+                    activeTreeProperty.get().scrollTo(row - 2); //put newly selected row 3 from the top
+                }
+            });
         }
     }
 
-    private static List<String> groupingToPath(DrawableGroup g) {
-        if (g.groupKey.getAttribute() == DrawableAttribute.PATH) {
-            String path = g.groupKey.getValueDisplayName();
-
-            String[] cleanPathTokens = StringUtils.stripStart(path, "/").split("/");
-
-            return Arrays.asList(cleanPathTokens);
+    private List<String> groupingToPath(DrawableGroup g) {
+        if (g.groupKey.getAttribute() != DrawableAttribute.PATH
+                || activeTreeProperty.get() == hashTree) {
+            String stripStart = StringUtils.strip(g.groupKey.getValueDisplayName(), "/");
+            return Arrays.asList(stripStart);
         } else {
-            return Arrays.asList(g.groupKey.getValueDisplayName());
+            String path = g.groupKey.getValueDisplayName();
+            String[] cleanPathTokens = StringUtils.stripStart(path, "/").split("/");
+            return Arrays.asList(cleanPathTokens);
         }
     }
 
