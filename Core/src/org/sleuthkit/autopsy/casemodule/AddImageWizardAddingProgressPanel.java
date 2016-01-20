@@ -38,7 +38,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgress
 final class AddImageWizardAddingProgressPanel implements WizardDescriptor.FinishablePanel<WizardDescriptor> {
 
     private final ChangeSupport changeSupport;
-    private final DSPProgressMonitorImpl dspProgressMonitor = new DSPProgressMonitorImpl();
+    private final DSPProgressMonitorImpl dspProgressMonitor;
     private AddImageWizardAddingProgressVisual component;
     private boolean dataSourceAdded = false;
 
@@ -48,6 +48,7 @@ final class AddImageWizardAddingProgressPanel implements WizardDescriptor.Finish
      */
     AddImageWizardAddingProgressPanel() {
         changeSupport = new ChangeSupport(this);
+        dspProgressMonitor = new DSPProgressMonitorImpl();
     }
 
     /**
