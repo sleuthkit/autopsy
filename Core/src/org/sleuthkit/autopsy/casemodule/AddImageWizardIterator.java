@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,52 +28,52 @@ import org.openide.WizardDescriptor;
 import org.openide.util.NbBundle;
 
 /**
- * The iterator class for the "Add Image" wizard panel. This class is used to
- * iterate on the sequence of panels of the "Add Image" wizard panel.
+ * The iterator for the add data source wizard panels.
  */
-class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescriptor> {
+final class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescriptor> {
 
     private int index = 0;
     private List<WizardDescriptor.Panel<WizardDescriptor>> panels;
-    private AddImageAction action;
-
-    AddImageWizardIterator(AddImageAction action) {
-        this.action = action;
-    }
 
     /**
-     * Initialize panels representing individual wizard's steps and sets various
-     * properties for them influencing wizard appearance.
+     * Lazily create the panels for the add data source wizard.
      */
     private List<WizardDescriptor.Panel<WizardDescriptor>> getPanels() {
-        if (panels == null) {
-            panels = new ArrayList<WizardDescriptor.Panel<WizardDescriptor>>();
+        if (null == panels) {
+            panels = new ArrayList<>();
 
+            /*
+             * Create the wizard panels. The first panel is used to select a
+             * data source. The second panel is used to configure the ingest
+             * modules. The third panel has a progress bar that tracks progress
+             * as the Sleuthkit layer adds the data source to the case database.
+             */
+            AddImageWizardChooseDataSourcePanel dsPanel = new AddImageWizardChooseDataSourcePanel();
             AddImageWizardAddingProgressPanel progressPanel = new AddImageWizardAddingProgressPanel();
-
-            AddImageWizardChooseDataSourcePanel dsPanel = new AddImageWizardChooseDataSourcePanel(progressPanel);
-            AddImageWizardIngestConfigPanel ingestConfigPanel = new AddImageWizardIngestConfigPanel(dsPanel, action, progressPanel);
-
+            AddImageWizardIngestConfigPanel ingestConfigPanel = new AddImageWizardIngestConfigPanel(dsPanel, progressPanel);
             panels.add(dsPanel);
             panels.add(ingestConfigPanel);
             panels.add(progressPanel);
 
+            /*
+             * Set the appearance of the visual components of the panels.
+             */
             String[] steps = new String[panels.size()];
             for (int i = 0; i < panels.size(); i++) {
-                Component c = panels.get(i).getComponent();
-                // Default step name to component name of panel.
-                steps[i] = c.getName();
-                if (c instanceof JComponent) { // assume Swing components
-                    JComponent jc = (JComponent) c;
-                    // Sets step number of a component
-                    jc.putClientProperty("WizardPanel_contentSelectedIndex", new Integer(i));
-                    // Sets steps names for a panel
+                Component visualComponent = panels.get(i).getComponent();
+                // Default step name to component name.
+                steps[i] = visualComponent.getName();
+                if (visualComponent instanceof JComponent) {
+                    JComponent jc = (JComponent) visualComponent;
+                    // Set step number.
+                    jc.putClientProperty("WizardPanel_contentSelectedIndex", i);
+                    // Sets step name.
                     jc.putClientProperty("WizardPanel_contentData", steps);
-                    // Turn on subtitle creation on each step
+                    // Turn on subtitle creation.
                     jc.putClientProperty("WizardPanel_autoWizardStyle", Boolean.TRUE);
-                    // Show steps on the left side with the image on the background
+                    // Show steps on the left side, with image in the background.
                     jc.putClientProperty("WizardPanel_contentDisplayed", Boolean.TRUE);
-                    // Turn on numbering of all steps
+                    // Turn on step numbering.
                     jc.putClientProperty("WizardPanel_contentNumbered", Boolean.TRUE);
                 }
             }
@@ -82,19 +82,9 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
     }
 
     /**
-     * Returns the index of the current panel. Note: 0 = panel 1, 1 = panel 2,
-     * etc
-     *
-     * @return index the current panel index
-     */
-    public int getIndex() {
-        return index;
-    }
-
-    /**
      * Gets the current panel.
      *
-     * @return panel the current panel
+     * @return The current panel.
      */
     @Override
     public WizardDescriptor.Panel<WizardDescriptor> current() {
@@ -108,18 +98,17 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
     /**
      * Gets the name of the current panel.
      *
-     * @return name the name of the current panel
+     * @return The name of the current panel.
      */
     @Override
     public String name() {
-        return NbBundle.getMessage(this.getClass(), "AddImageWizardIterator.stepXofN", Integer.toString(index + 1),
-                getPanels().size());
+        return NbBundle.getMessage(this.getClass(), "AddImageWizardIterator.stepXofN", Integer.toString(index + 1), getPanels().size());
     }
 
     /**
      * Tests whether there is a next panel.
      *
-     * @return boolean true if it has next panel, false if not
+     * @return True or false.
      */
     @Override
     public boolean hasNext() {
@@ -129,17 +118,18 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
     /**
      * Tests whether there is a previous panel.
      *
-     * @return boolean true if it has previous panel, false if not
+     * @return True or false.
      */
     @Override
-    // disable the previous button on all panels
     public boolean hasPrevious() {
+        /*
+         * Disable the back buttons for the add data source wizard.
+         */
         return false;
     }
 
     /**
-     * Moves to the next panel. I.e. increment its index, need not actually
-     * change any GUI itself.
+     * Moves to the next panel.
      */
     @Override
     public void nextPanel() {
@@ -150,8 +140,7 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
     }
 
     /**
-     * Moves to the previous panel. I.e. decrement its index, need not actually
-     * change any GUI itself.
+     * Moves to the previous panel.
      */
     @Override
     public void previousPanel() {
@@ -164,12 +153,18 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
         index--;
     }
 
-    // If nothing unusual changes in the middle of the wizard, simply:
+    /**
+     * @inheritDoc
+     */
     @Override
     public void addChangeListener(ChangeListener l) {
     }
 
+    /**
+     * @inheritDoc
+     */
     @Override
     public void removeChangeListener(ChangeListener l) {
     }
+
 }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,13 +21,11 @@ package org.sleuthkit.autopsy.casemodule;
 import java.awt.Component;
 import java.awt.Dialog;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.logging.Level;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.DialogDisplayer;
@@ -37,139 +35,86 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
-import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.Image;
 
 /**
- * The action to add an image to the current Case. This action should be
- * disabled on creation and it will be enabled on new case creation or case
- * opened.
- *
- * @author jantonius
+ * An action that adds a data source to the current case. This action needs to
+ * be enabled and disabled as cases are opened and closed. Use
+ * CallableSystemAction.get(AddImageAction.class).setEnabled() to do so.
  */
-// TODO: need annotation because there's a "Lookup.getDefault().lookup(AddImageAction.class)"
-// used in AddImageWizardPanel1 (among other places). It really shouldn't be done like that.
-@ServiceProvider(service = AddImageAction.class)
 public final class AddImageAction extends CallableSystemAction implements Presenter.Toolbar {
 
-    // Keys into the WizardDescriptor properties that pass information between stages of the wizard
-    // <TYPE>: <DESCRIPTION>
-    // String: time zone that the image is from
-    static final String TIMEZONE_PROP = "timeZone"; //NON-NLS
-    // String[]: array of paths to each data source selected
-    static final String DATASOURCEPATH_PROP = "dataSrcPath"; //NON-NLS
-    // String data source type selected
-    static final String DATASOURCETYPE_PROP = "dataSrcType"; //NON-NLS
-    // CleanupTask: task to clean up the database file if wizard errors/is cancelled after it is created
-    static final String IMAGECLEANUPTASK_PROP = "finalFileCleanup"; //NON-NLS
-    // int: the next availble id for a new image
-    static final String IMAGEID_PROP = "imageId"; //NON-NLS
-    // AddImageProcess: the next availble id for a new image
-    static final String PROCESS_PROP = "process"; //NON-NLS
-    // boolean: whether or not to lookup files in the hashDB
-    static final String LOOKUPFILES_PROP = "lookupFiles"; //NON-NLS
-    // boolean: whether or not to skip processing orphan files on FAT filesystems
-    static final String NOFATORPHANS_PROP = "nofatorphans"; //NON-NLS
-
-    static final Logger logger = Logger.getLogger(AddImageAction.class.getName());
-
+    private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(AddImageAction.class.getName());
+    private final ChangeSupport cleanupSupport;
+    private final JButton toolbarButton;
     private WizardDescriptor wizardDescriptor;
     private WizardDescriptor.Iterator<WizardDescriptor> iterator;
-    private Dialog dialog;
-    private JButton toolbarButton = new JButton();
 
     /**
-     * The constructor for AddImageAction class
+     * Constructs an action that adds a data source to the current case.
      */
     public AddImageAction() {
-        putValue(Action.NAME, NbBundle.getMessage(AddImageAction.class, "CTL_AddImage")); // set the action Name
-
-        // set the action for the toolbar button
-        toolbarButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                AddImageAction.this.actionPerformed(e);
-            }
-        });
-
-        this.setEnabled(false); // disable this action class
+        putValue(Action.NAME, NbBundle.getMessage(AddImageAction.class, "CTL_AddImage"));
+        cleanupSupport = new ChangeSupport(this);
+        toolbarButton = new JButton();
+        toolbarButton.addActionListener(AddImageAction.this::actionPerformed);
+        setEnabled(false);
     }
 
     /**
-     * Pop-up the "Add Image" wizard panel.
+     * Displays the first panel of the add data source wizard.
      *
-     * @param e
+     * @param notUsed An action event, may be null.
      */
     @Override
-    public void actionPerformed(ActionEvent e) {
+    public void actionPerformed(ActionEvent notUsed) {
+        /*
+         * If ingest is running, confirm that the user wants to add another data
+         * source at this time, instead of waiting for the current ingest job to
+         * complete.
+         */
         if (IngestManager.getInstance().isIngestRunning()) {
-            final String msg = NbBundle.getMessage(this.getClass(), "AddImageAction.ingestConfig.ongoingIngest.msg");
-            if (JOptionPane.showConfirmDialog(null, msg,
-                    NbBundle.getMessage(this.getClass(),
-                            "AddImageAction.ingestConfig.ongoingIngest.title"),
+            if (JOptionPane.showConfirmDialog(null,
+                    NbBundle.getMessage(this.getClass(), "AddImageAction.ingestConfig.ongoingIngest.msg"),
+                    NbBundle.getMessage(this.getClass(), "AddImageAction.ingestConfig.ongoingIngest.title"),
                     JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.NO_OPTION) {
                 return;
             }
         }
 
-        iterator = new AddImageWizardIterator(this);
+        /*
+         * Construct and display the wizard.
+         */
+        iterator = new AddImageWizardIterator();
         wizardDescriptor = new WizardDescriptor(iterator);
         wizardDescriptor.setTitle(NbBundle.getMessage(this.getClass(), "AddImageAction.wizard.title"));
-        wizardDescriptor.putProperty(NAME, e);
-
-        if (dialog != null) {
-            dialog.setVisible(false); // hide the old one
-        }
-        dialog = DialogDisplayer.getDefault().createDialog(wizardDescriptor);
+        Dialog dialog = DialogDisplayer.getDefault().createDialog(wizardDescriptor);
         dialog.setVisible(true);
         dialog.toFront();
 
-        // Do any cleanup that needs to happen (potentially: stopping the
-        //add-image process, reverting an image)
-        runCleanupTasks();
+        /*
+         * Run any registered cleanup tasks by firing a change event. This will
+         * cause the stateChanged method of any implementations of the inner,
+         * abstract CleanupTask class to call their cleanup methods (assuming
+         * they have not done an override of stateChanged), after which the
+         * CleanupTasks are unregistered.
+         */
+        cleanupSupport.fireChange();
     }
 
     /**
-     * Closes the current dialog and wizard, and opens a new one. Used in the
-     * "Add another image" action on the last panel
-     */
-    void restart() {
-        // Simulate clicking finish for the current dialog
-        wizardDescriptor.setValue(WizardDescriptor.FINISH_OPTION);
-        dialog.setVisible(false);
-
-        // let the previous call to AddImageAction.actionPerformed() finish up
-        // after the wizard, this will run when its it's done
-        final Runnable r = new Runnable() {
-            @Override
-            public void run() {
-                actionPerformed(null);
-            }
-        };
-
-        SwingUtilities.invokeLater(r);
-    }
-
-    public interface IndexImageTask {
-
-        void runTask(Image newImage);
-    }
-
-    /**
-     * This method does nothing. Use the "actionPerformed(ActionEvent e)"
-     * instead of this method.
+     * @inheritDoc
      */
     @Override
     public void performAction() {
+        actionPerformed(null);
     }
 
     /**
-     * Gets the name of this action. This may be presented as an item in a menu.
-     *
-     * @return actionName
+     * @inheritDoc
      */
     @Override
     public String getName() {
@@ -177,9 +122,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     }
 
     /**
-     * Gets the HelpCtx associated with implementing object
-     *
-     * @return HelpCtx or HelpCtx.DEFAULT_HELP
+     * @inheritDoc
      */
     @Override
     public HelpCtx getHelpCtx() {
@@ -187,9 +130,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     }
 
     /**
-     * Returns the toolbar component of this action
-     *
-     * @return component the toolbar button
+     * @inheritDoc
      */
     @Override
     public Component getToolbarPresenter() {
@@ -200,9 +141,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     }
 
     /**
-     * Set this action to be enabled/disabled
-     *
-     * @param value whether to enable this action or not
+     * @inheritDoc
      */
     @Override
     public void setEnabled(boolean value) {
@@ -211,66 +150,73 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     }
 
     /**
-     * Set the focus to the button of the given name on this wizard dialog.
+     * Does nothing, do not use.
      *
-     * Note: the name of the buttons that available are "Next >", "< Back",
-     * "Cancel", and "Finish". If you change the name of any of those buttons,
-     * use the latest name instead.
-     *
-     * @param buttonText the text of the button
+     * @deprecated Classes in this package may call requestFocusForWizardButton
+     * instead.
      */
+    @Deprecated
     public void requestFocusButton(String buttonText) {
-        // get all buttons on this wizard panel
-        Object[] wizardButtons = wizardDescriptor.getOptions();
-        for (int i = 0; i < wizardButtons.length; i++) {
-            JButton tempButton = (JButton) wizardButtons[i];
-            if (tempButton.getText().equals(buttonText)) {
-                tempButton.setDefaultCapable(true);
-                tempButton.requestFocus();
+    }
+
+    /**
+     * Requests focus for an add data source wizard button.
+     *
+     * @param buttonText The text of the button.
+     */
+    void requestFocusForWizardButton(String buttonText) {
+        for (Object wizardButton : wizardDescriptor.getOptions()) {
+            JButton button = (JButton) wizardButton;
+            if (button.getText().equals(buttonText)) {
+                button.setDefaultCapable(true);
+                button.requestFocus();
             }
         }
     }
 
     /**
-     * Run and clear any cleanup tasks for wizard closing that might be
-     * registered. This should be run even when the wizard exits cleanly, so
-     * that no cleanup actions remain the next time the wizard is run.
-     */
-    private void runCleanupTasks() {
-        cleanupSupport.fireChange();
-    }
-
-    ChangeSupport cleanupSupport = new ChangeSupport(this);
-
-    /**
-     * Instances of this class implement the cleanup() method to run cleanup
-     * code when the wizard exits.
-     *
-     * After enable() has been called on an instance it will run once after the
-     * wizard closes (on both a cancel and a normal finish).
-     *
-     * If disable() is called before the wizard exits, the task will not run.
+     * Enabled instances of this class are called to do clean up after the add
+     * data source wizard is closed. The instances are disabled after the
+     * cleanUp method is called. Implementations should not override
+     * stateChanged, and should not re-enable themselves after cleanUp is
+     * called. To stop cleanUp being called, call disable before the wizard is
+     * dismissed. Also, instances must be constructed using a reference to an
+     * AddImageAction object because this is a non-static inner class.
      */
     abstract class CleanupTask implements ChangeListener {
 
         @Override
         public void stateChanged(ChangeEvent e) {
-            // fired by AddImageAction.runCleanupTasks() after the wizard closes 
+            /*
+             * actionPerformed fires this event after the add data source wizard
+             * is closed.
+             */
             try {
                 cleanup();
             } catch (Exception ex) {
-                Logger logger = Logger.getLogger(this.getClass().getName());
-                logger.log(Level.WARNING, "Error cleaning up from wizard.", ex); //NON-NLS
+                logger.log(Level.SEVERE, "Error cleaning in add data source wizard clean up task", ex); //NON-NLS
             } finally {
-                disable(); // cleanup tasks should only run once.
+                /*
+                 * Clean up tasks should only be done exactly once.
+                 */
+                disable();
             }
         }
 
         /**
-         * Add task to the enabled list to run when the wizard closes.
+         * Adds this task to the list of tasks to be done when the wizard
+         * closes.
          */
-        public void enable() {
+        void enable() {
             cleanupSupport.addChangeListener(this);
+        }
+
+        /**
+         * Removes this task from the list of tasks to be done when the wizard
+         * closes.
+         */
+        void disable() {
+            cleanupSupport.removeChangeListener(this);
         }
 
         /**
@@ -280,11 +226,17 @@ public final class AddImageAction extends CallableSystemAction implements Presen
          */
         abstract void cleanup() throws Exception;
 
-        /**
-         * Remove task from the enabled list.
-         */
-        public void disable() {
-            cleanupSupport.removeChangeListener(this);
-        }
     }
+
+    /**
+     * Is not used by Autopsy.
+     *
+     * @deprecated
+     */
+    @Deprecated
+    public interface IndexImageTask {
+
+        void runTask(Image newImage);
+    }
+
 }
