@@ -7,6 +7,7 @@ package org.sleuthkit.autopsy.modules.UserArtifacts;
 
 import com.sun.media.jfxmedia.logging.Logger;
 import java.util.List;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
@@ -21,8 +22,10 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskDataException;
 
 /**
  *
@@ -53,9 +56,9 @@ public class UserArtifactIngestModule implements DataSourceIngestModule {
             } else {
                 art2 = dataSource.newArtifact(type2ID);
             }
-
-            art1.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT,
-                    UserArtifactIngestModuleFactory.getModuleName(), 5));
+            BlackboardAttribute.Type type = Case.getCurrentCase().getSleuthkitCase().addArtifactAttributeType("TEST1", TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.INTEGER, "TEST2");
+            art1.addAttribute(new BlackboardAttribute(type,
+                    UserArtifactIngestModuleFactory.getModuleName(), -1));
             progressBar.progress(1);
             art2.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_MIN_COUNT,
                     UserArtifactIngestModuleFactory.getModuleName(), 4));
@@ -68,6 +71,8 @@ public class UserArtifactIngestModule implements DataSourceIngestModule {
                     art1));
             return ProcessResult.OK;
         } catch (TskCoreException ex) {
+            return ProcessResult.ERROR;
+        } catch (TskDataException ex) {
             return ProcessResult.ERROR;
         }
     }
