@@ -114,6 +114,10 @@ public class ArtifactStringContent implements StringContent {
                             case BYTE:
                                 buffer.append(Arrays.toString(attr.getValueBytes()));
                                 break;
+                            case DATETIME:
+                                buffer.append(attr.getValueLong());
+                                break;
+                                
                         }
                     }
                     if (!"".equals(attr.getContext())) {

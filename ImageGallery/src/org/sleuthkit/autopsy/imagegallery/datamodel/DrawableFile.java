@@ -215,6 +215,8 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
                                     return attr.getValueLong();
                                 case STRING:
                                     return attr.getValueString();
+                                case DATETIME:
+                                    return attr.getValueLong();
                             }
                         }
                     }
