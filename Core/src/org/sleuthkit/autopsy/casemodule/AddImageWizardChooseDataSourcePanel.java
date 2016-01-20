@@ -37,7 +37,7 @@ final class AddImageWizardChooseDataSourcePanel implements WizardDescriptor.Pane
 
     private AddImageWizardChooseDataSourceVisual component;
     private final ChangeSupport changeSupport;
-    private boolean nextButtonIsEnabled;
+    private boolean nextButtonIsEnabled = false;
 
     /**
      * Constructs an instance of the first panel of the add data source wizard.

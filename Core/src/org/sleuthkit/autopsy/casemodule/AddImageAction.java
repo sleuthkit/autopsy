@@ -40,9 +40,11 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.Image;
 
 /**
- * An action that adds a data source to the current case. This action needs to
- * be enabled and disabled as cases are opened and closed. Use
- * CallableSystemAction.get(AddImageAction.class).setEnabled() to do so.
+ * An action that adds a data source to the current case.
+ *
+ * RC: This action needs to be enabled and disabled as cases are opened and
+ * closed. Currently this is done using
+ * CallableSystemAction.get(AddImageAction.class).setEnabled().
  */
 public final class AddImageAction extends CallableSystemAction implements Presenter.Toolbar {
 
@@ -57,8 +59,8 @@ public final class AddImageAction extends CallableSystemAction implements Presen
      * Constructs an action that adds a data source to the current case.
      */
     public AddImageAction() {
-        putValue(Action.NAME, NbBundle.getMessage(AddImageAction.class, "CTL_AddImage"));
         cleanupSupport = new ChangeSupport(this);
+        putValue(Action.NAME, NbBundle.getMessage(AddImageAction.class, "CTL_AddImage"));
         toolbarButton = new JButton();
         toolbarButton.addActionListener(AddImageAction.this::actionPerformed);
         setEnabled(false);
@@ -101,6 +103,9 @@ public final class AddImageAction extends CallableSystemAction implements Presen
          * abstract CleanupTask class to call their cleanup methods (assuming
          * they have not done an override of stateChanged), after which the
          * CleanupTasks are unregistered.
+         *
+         * RC: This is a convoluted and error-prone way to implement clean up.
+         * Fortunately, it is confined to this package.
          */
         cleanupSupport.fireChange();
     }
@@ -180,8 +185,13 @@ public final class AddImageAction extends CallableSystemAction implements Presen
      * cleanUp method is called. Implementations should not override
      * stateChanged, and should not re-enable themselves after cleanUp is
      * called. To stop cleanUp being called, call disable before the wizard is
-     * dismissed. Also, instances must be constructed using a reference to an
-     * AddImageAction object because this is a non-static inner class.
+     * dismissed.
+     *
+     * Instances must be constructed using a reference to an AddImageAction
+     * object because this is a non-static inner class.
+     *
+     * RC: This is a convoluted and error-prone way to implement clean up.
+     * Fortunately, it is confined to this package.
      */
     abstract class CleanupTask implements ChangeListener {
 
@@ -228,11 +238,6 @@ public final class AddImageAction extends CallableSystemAction implements Presen
 
     }
 
-    /**
-     * Is not used by Autopsy.
-     *
-     * @deprecated
-     */
     @Deprecated
     public interface IndexImageTask {
 

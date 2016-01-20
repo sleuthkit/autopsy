@@ -194,6 +194,8 @@ final class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<Wi
          * while the user is doing the ingest module configuration. It is ok to
          * do this now because the back button is disabled for this wizard - the
          * user cannot go back to choose a different data source.
+         *
+         * RC: Not sure why the cancel button is disabled.
          */
         JButton cancel = new JButton(NbBundle.getMessage(this.getClass(), "AddImageWizardIngestConfigPanel.CANCEL_BUTTON.text"));
         cancel.setEnabled(false);
