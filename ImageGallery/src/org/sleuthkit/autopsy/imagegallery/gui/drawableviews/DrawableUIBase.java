@@ -46,7 +46,6 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.actions.OpenExternalViewerAction;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -207,7 +206,7 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    void showErrorNode(String errorMessage, AbstractFile file) {
+    void showErrorNode(String errorMessage, DrawableFile<?> file) {
         Button createButton = ActionUtils.createButton(new OpenExternalViewerAction(file));
 
         VBox vBox = new VBox(10, new Label(errorMessage), createButton);

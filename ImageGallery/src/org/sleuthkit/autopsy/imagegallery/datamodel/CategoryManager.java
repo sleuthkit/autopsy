@@ -204,7 +204,16 @@ public class CategoryManager {
      * @param listener
      */
     public void unregisterListener(Object listener) {
-        categoryEventBus.unregister(listener);
+
+        try {
+            categoryEventBus.unregister(listener);
+        } catch (IllegalArgumentException e) {
+            if (e.getMessage().contains("missing event subscriber for an annotated method. Is " + listener + " registered?")) {
+                LOGGER.log(Level.WARNING, "Attempted to unregister {0} for category change events, but it was not registered.", listener.toString());
+            } else {
+                throw e;
+            }
+        }
     }
 
     /**
