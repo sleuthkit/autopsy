@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,98 +20,105 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Color;
 import java.awt.EventQueue;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
-import org.openide.util.ChangeSupport;
 import org.openide.util.HelpCtx;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 
 /**
- * The third and final panel of the add data source wizard. The visual component
- * of this panel displays a progress bar that is managed by the previous panel
- * and the data source processor.
+ * The final panel of the add image wizard. It displays a progress bar and
+ * status updates.
+ *
+ * All the real work is kicked off in the previous panel:
+ * {@link AddImageWizardIngestConfigPanel} (which is a bit weird if you ask m
+ * -jm)
  */
-// All the real work is kicked off in the previous panel:
-// {@link AddImageWizardIngestConfigPanel} (which is a bit weird if you ask m
-// -jm) 
-final class AddImageWizardAddingProgressPanel implements WizardDescriptor.FinishablePanel<WizardDescriptor> {
+class AddImageWizardAddingProgressPanel implements WizardDescriptor.FinishablePanel<WizardDescriptor> {
 
-    private final ChangeSupport changeSupport;
-    private final DSPProgressMonitorImpl dspProgressMonitor;
+    /**
+     * flag to indicate that the image adding process is finished and this panel
+     * is completed(valid)
+     */
+    private boolean imgAdded = false;
+    /**
+     * The visual component that displays this panel. If you need to access the
+     * component from this class, just use getComponent().
+     */
     private AddImageWizardAddingProgressVisual component;
-    private boolean dataSourceAdded = false;
+    private final Set<ChangeListener> listeners = new HashSet<>(1); // or can use ChangeSupport in NB 6.0
 
-    /**
-     * Constructs an instance of the third and final panel of the add data
-     * source wizard.
-     */
-    AddImageWizardAddingProgressPanel() {
-        changeSupport = new ChangeSupport(this);
-        dspProgressMonitor = new DSPProgressMonitorImpl();
+    private DSPProgressMonitorImpl dspProgressMonitorImpl = new DSPProgressMonitorImpl();
+
+    public DSPProgressMonitorImpl getDSPProgressMonitorImpl() {
+        return dspProgressMonitorImpl;
     }
 
-    /**
-     * Gets the data source progress monitor. Allows the previous panel to hand
-     * off the progress monitor to the data source processor.
-     */
-    DSPProgressMonitorImpl getDSPProgressMonitor() {
-        return dspProgressMonitor;
-    }
-
-    /**
-     * A data source processor progress monitor that acts as a bridge between
-     * the data source processor started by the previous panel and the progress
-     * bar displayed by the visual component of this panel.
-     */
     private class DSPProgressMonitorImpl implements DataSourceProcessorProgressMonitor {
 
         @Override
         public void setIndeterminate(final boolean indeterminate) {
-            EventQueue.invokeLater(() -> {
-                getComponent().getProgressBar().setIndeterminate(indeterminate);
+            // update the progress bar asynchronously
+            EventQueue.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    getComponent().getProgressBar().setIndeterminate(indeterminate);
+                }
             });
         }
 
         @Override
         public void setProgress(final int progress) {
             // update the progress bar asynchronously
-            EventQueue.invokeLater(() -> {
-                getComponent().getProgressBar().setValue(progress);
+            EventQueue.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    getComponent().getProgressBar().setValue(progress);
+                }
             });
         }
 
         @Override
         public void setProgressText(final String text) {
             // update the progress UI asynchronously
-            EventQueue.invokeLater(() -> {
-                getComponent().setProgressMsgText(text);
+            EventQueue.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    getComponent().setProgressMsgText(text);
+                }
             });
         }
 
     }
 
     /**
-     * Gets the visual component for the panel. In this template, the component
+     * Get the visual component for the panel. In this template, the component
      * is kept separate. This can be more efficient: if the wizard is created
      * but never displayed, or not all panels are displayed, it is better to
      * create only those which really need to be visible.
      *
-     * @return The UI component of this wizard panel.
+     * It also separates the view from the control - jm
+     *
+     * @return component the UI component of this wizard panel
      */
     @Override
     public AddImageWizardAddingProgressVisual getComponent() {
-        if (null == component) {
+        if (component == null) {
             component = new AddImageWizardAddingProgressVisual();
         }
         return component;
     }
 
     /**
-     * Gets the help for this panel. When the panel is active, this is used as
-     * the help for the wizard dialog.
+     * Help for this panel. When the panel is active, this is used as the help
+     * for the wizard dialog.
      *
-     * @return The help for this panel
+     * @return HelpCtx.DEFAULT_HELP the help for this panel
      */
     @Override
     public HelpCtx getHelp() {
@@ -127,12 +134,17 @@ final class AddImageWizardAddingProgressPanel implements WizardDescriptor.Finish
      */
     @Override
     public boolean isValid() {
-        return dataSourceAdded;
+        // set the focus to the next button of the wizard dialog if it's enabled
+        if (imgAdded) {
+            Lookup.getDefault().lookup(AddImageAction.class).requestFocusButton(
+                    NbBundle.getMessage(this.getClass(), "AddImageWizardAddingProgressPanel.isValid.focusNext"));
+        }
+
+        return imgAdded;
     }
 
     /**
-     * Makes the progress bar of the visual component of this panel indicate
-     * that the data source processor is running.
+     * Updates the UI to display the add image process has begun.
      */
     void setStateStarted() {
         component.getProgressBar().setIndeterminate(true);
@@ -141,85 +153,94 @@ final class AddImageWizardAddingProgressPanel implements WizardDescriptor.Finish
     }
 
     /**
-     * Makes the progress bar of the visual component of this panel indicate
-     * that the data source processor is not running.
+     * Updates the UI to display the add image process is over.
      */
     void setStateFinished() {
-        dataSourceAdded = true;
+        imgAdded = true;
         getComponent().setStateFinished();
         fireChangeEvent();
     }
 
     /**
-     * @inheritDoc5
+     * Adds a listener to changes of the panel's validity.
+     *
+     * @param l the change listener to add
      */
     @Override
-    public final void addChangeListener(ChangeListener listener) {
-        changeSupport.addChangeListener(listener);
+    public final void addChangeListener(ChangeListener l) {
+        synchronized (listeners) {
+            listeners.add(l);
+        }
     }
 
     /**
-     * @inheritDoc
+     * Removes a listener to changes of the panel's validity.
+     *
+     * @param l the change listener to move
      */
     @Override
-    public final void removeChangeListener(ChangeListener listener) {
-        changeSupport.removeChangeListener(listener);
+    public final void removeChangeListener(ChangeListener l) {
+        synchronized (listeners) {
+            listeners.remove(l);
+        }
     }
 
     /**
-     * @inheritDoc
+     * This method is auto-generated. It seems that this method is used to
+     * listen to any change in this wizard panel.
      */
     protected final void fireChangeEvent() {
-        changeSupport.fireChange();
+        Iterator<ChangeListener> it;
+        synchronized (listeners) {
+            it = new HashSet<ChangeListener>(listeners).iterator();
+        }
+        ChangeEvent ev = new ChangeEvent(this);
+        while (it.hasNext()) {
+            it.next().stateChanged(ev);
+        }
     }
 
     /**
-     * Provides the wizard panel with the current data--either the default data
-     * or already-modified settings, if the user used the previous and/or next
-     * buttons. This method can be called multiple times on one instance of
-     * WizardDescriptor.Panel.
+     * Load the image locations from the WizardDescriptor settings object, and
+     * the
      *
-     * @param settings The settings.
+     * @param settings the setting to be read from
      */
     @Override
     public void readSettings(WizardDescriptor settings) {
         settings.setOptions(new Object[]{WizardDescriptor.PREVIOUS_OPTION, WizardDescriptor.NEXT_OPTION, WizardDescriptor.FINISH_OPTION, WizardDescriptor.CANCEL_OPTION});
-        if (dataSourceAdded) {
+        if (imgAdded) {
             getComponent().setStateFinished();
         }
     }
 
     /**
-     * Provides the wizard panel with the opportunity to update the settings
-     * with its current customized state. Rather than updating its settings with
-     * every change in the GUI, it should collect them, and then only save them
-     * when requested to by this method. This method can be called multiple
-     * times on one instance of WizardDescriptor.Panel.
+     * this doesn't appear to store anything? plus, there are no settings in
+     * this panel -jm
      *
      * @param settings the setting to be stored to
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
+        //why did we do this? -jm
+        //  getComponent().resetInfoPanel();
     }
 
     /**
-     * Displays an error message from the data source processor for the data
-     * source being added.
+     * forward errors to visual component
      *
-     * @param errorString The error message to be displayed
-     * @param critical    True if this is a critical error
+     * should this be modified to handle a list of errors? -jm
+     *
+     *
+     * @param errorString the error string to be displayed
+     * @param critical    true if this is a critical error
      */
-    // Should this be modified to handle a list of errors? -jm
-    void displayDataSourceProcessorError(String errorString, boolean critical) {
+    void addErrors(String errorString, boolean critical) {
         getComponent().showErrors(errorString, critical);
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public boolean isFinishPanel() {
         return true;
     }
-
 }
