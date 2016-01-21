@@ -71,10 +71,13 @@ public class ImageDSProcessor implements DataSourceProcessor {
     /**
      * Constructs an image data source processor.
      *
-     * @param dataSourceId
-     * @param imagePath
-     * @param timeZone
-     * @param ignoreFatOrphanFiles
+     * @param dataSourceId         A identifier for the data source that is
+     *                             unique across multiple cases (e.g., a UUID).
+     * @param imagePath            Path to the image file.
+     * @param timeZone             The time zone to use when processing dates
+     *                             and times for the image.
+     * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
+     *                             FAT filesystem.
      */
     public ImageDSProcessor(String dataSourceId, String imagePath, String timeZone, boolean ignoreFatOrphanFiles) {
         this.dataSourceId = dataSourceId;

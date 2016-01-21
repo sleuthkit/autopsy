@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.util.UUID;
 import javax.swing.JPanel;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
@@ -35,6 +36,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
     static final Logger logger = Logger.getLogger(ImageDSProcessor.class.getName());
     private static final String dsType = NbBundle.getMessage(LocalDiskDSProcessor.class, "LocalDiskDSProcessor.dsType.text");
     private final LocalDiskPanel configPanel;
+    private String dataSourceId;
     private String drivePath;
     private String timeZone;
     private boolean ignoreFatOrphanFiles;
@@ -48,6 +50,23 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
      * (AUT-1867) not currently enforced).
      */
     public LocalDiskDSProcessor() {
+        configPanel = LocalDiskPanel.getDefault();
+    }
+
+    /*
+     * Constructs a local drive data source processor. @param dataSourceId A
+     * identifier for the data source that is unique across multiple cases
+     * (e.g., a UUID). @param imagePath Path to the image file. @param timeZone
+     * The time zone to use when processing dates and times for the image.
+     * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
+     * FAT filesystem.
+     */
+    public LocalDiskDSProcessor(String dataSourceId, String drivePath, String timeZone, boolean ignoreFatOrphanFiles) {
+        this.dataSourceId = dataSourceId;
+        this.drivePath = drivePath;
+        this.timeZone = timeZone;
+        this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
+        configured = true;
         configPanel = LocalDiskPanel.getDefault();
     }
 
@@ -105,6 +124,9 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback cbObj) {
         if (!configured) {
+            if (null == dataSourceId) {
+                dataSourceId = UUID.randomUUID().toString();
+            }            
             drivePath = configPanel.getContentPaths();
             timeZone = configPanel.getTimeZone();
             ignoreFatOrphanFiles = configPanel.getNoFatOrphans();
@@ -129,6 +151,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
     @Override
     public void reset() {
         configPanel.reset();
+        dataSourceId = null;        
         drivePath = null;
         timeZone = null;
         ignoreFatOrphanFiles = false;
