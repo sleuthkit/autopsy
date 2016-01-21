@@ -47,9 +47,8 @@ public class ImageDSProcessor implements DataSourceProcessor {
     private String imagePath;
     private String timeZone;
     private boolean ignoreFatOrphanFiles;
-    private boolean imageOptionsSet = false;
+    private boolean configured;
     private AddImageTask addImageTask;
-    DataSourceProcessorCallback callbackObj = null;
 
     static {
         filtersList.add(allFilter);
@@ -59,13 +58,14 @@ public class ImageDSProcessor implements DataSourceProcessor {
         allExt.addAll(GeneralFilter.ENCASE_IMAGE_EXTS);
     }
 
-    /*
+    /**
      * Constructs an uninitialized image data source processor with a
-     * configuration panel. The data source processor will not run if the
-     * configuration panel inputs have not been completed and validated.
+     * configuration panel. The data source processor should not be run if the
+     * configuration panel inputs have not been completed and validated (TODO
+     * (AUT-1867) not currently enforced).
      */
     public ImageDSProcessor() {
-        this.dataSourceId = UUID.randomUUID().toString();        
+        this.dataSourceId = UUID.randomUUID().toString();
         imageFilePanel = ImageFilePanel.createInstance(ImageDSProcessor.class.getName(), filtersList);
     }
 
@@ -86,8 +86,8 @@ public class ImageDSProcessor implements DataSourceProcessor {
     }
 
     /**
-     * Gets the display names of the types of data sources this type of data
-     * source processor is able to process.
+     * Gets the display name of the type of data source this type of data source
+     * processor is able to process.
      *
      * @return The data source type display name.
      */
@@ -96,7 +96,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
     }
 
     /**
-     * Gets the display names of the types of data sources this data source
+     * Gets the display name of the type of data source this data source
      * processor is able to process.
      *
      * @return The data source type display name.
@@ -110,7 +110,6 @@ public class ImageDSProcessor implements DataSourceProcessor {
      * Gets the a configuration panel for this data source processor.
      *
      * @return JPanel The configuration panel.
-     *
      */
     @Override
     public JPanel getPanel() {
@@ -140,8 +139,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
      */
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback cbObj) {
-        callbackObj = cbObj;
-        if (!imageOptionsSet) {
+        if (!configured) {
             imageFilePanel.storeSettings();
             imagePath = imageFilePanel.getContentPaths();
             timeZone = imageFilePanel.getTimeZone();
@@ -152,8 +150,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
     }
 
     /**
-     * Cancel the processing of the data source.
-     *
+     * Cancels the processing of the data source.
      */
     @Override
     public void cancel() {
@@ -161,16 +158,17 @@ public class ImageDSProcessor implements DataSourceProcessor {
     }
 
     /**
-     * Reset the configuration of this data source processor, including its
+     * Resets the configuration of this data source processor, including its
      * configuration panel.
      */
     @Override
     public void reset() {
-        imageFilePanel.reset();
-        imageOptionsSet = false;
+        dataSourceId = null;
         imagePath = null;
         timeZone = null;
         ignoreFatOrphanFiles = false;
+        imageFilePanel.reset();
+        configured = false;
     }
 
     /**
@@ -183,15 +181,15 @@ public class ImageDSProcessor implements DataSourceProcessor {
      * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
      *                             FAT filesystem.
      *
-     * @deprecated Use the construcotr that takes arguments instead.
+     * @deprecated Use the constructor that takes arguments instead.
      */
     @Deprecated
     public void setDataSourceOptions(String imagePath, String timeZone, boolean ignoreFatOrphanFiles) {
-        this.dataSourceId = UUID.randomUUID().toString();
+        dataSourceId = UUID.randomUUID().toString();
         this.imagePath = imagePath;
         this.timeZone = timeZone;
         this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
-        imageOptionsSet = true;
+        configured = true;
     }
 
 }
