@@ -594,7 +594,7 @@ class SevenZipExtractor {
             String encryptionType = fullEncryption ? ENCRYPTION_FULL : ENCRYPTION_FILE_LEVEL;
             try {
                 BlackboardArtifact artifact = archiveFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED);
-                artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), EmbeddedFileExtractorModuleFactory.getModuleName(), encryptionType));
+                artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, EmbeddedFileExtractorModuleFactory.getModuleName(), encryptionType));
 
                 try {
                     // index the artifact for keyword search

@@ -55,7 +55,7 @@ class EvalFileObj extends EvaluatableObject {
         spacing = a_spacing;
     }
 
-    @Override
+    @Override @SuppressWarnings("deprecation")
     public synchronized ObservableResult evaluate() {
 
         Case case1 = Case.getCurrentCase();

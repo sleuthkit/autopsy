@@ -44,7 +44,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 @ServiceProvider(service = ContextMenuActionsProvider.class)
 public class FileExtMismatchContextMenuActionsProvider implements ContextMenuActionsProvider {
 
-    @Override
+    @Override @SuppressWarnings("deprecation")
     public List<Action> getActions() {
         ArrayList<Action> actions = new ArrayList<>();
 

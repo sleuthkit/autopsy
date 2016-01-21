@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
@@ -35,6 +36,7 @@ import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -158,6 +160,16 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
             // find file_sig value.
         // check the blackboard for a file type attribute
         String currActualSigType = abstractFile.getMIMEType();
+        if(currActualSigType == null) {
+            try {
+                FileTypeDetector fileTypeDetector = new FileTypeDetector();
+                currActualSigType = fileTypeDetector.detect(abstractFile);
+            } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+                Logger.getLogger(FileExtMismatchIngestModule.class.getName()).log(Level.WARNING, "Could not create File Type Detector to register mime type of file.");
+            } catch (TskCoreException ex) {
+                Logger.getLogger(FileExtMismatchIngestModule.class.getName()).log(Level.WARNING, "Could not detect mime type of given file.");
+            }
+        }
         if (settings.skipFilesWithTextPlainMimeType()) {
             if (!currActualExt.isEmpty() && currActualSigType.equals("text/plain")) { //NON-NLS
                 return false;

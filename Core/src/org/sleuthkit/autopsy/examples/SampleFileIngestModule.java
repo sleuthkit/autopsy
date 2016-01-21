@@ -56,7 +56,7 @@ import org.sleuthkit.datamodel.TskData;
 class SampleFileIngestModule implements FileIngestModule {
 
     private static final HashMap<Long, Long> artifactCountsForIngestJobs = new HashMap<>();
-    private static int attrId = -1;
+    private static BlackboardAttribute.ATTRIBUTE_TYPE attrType = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COUNT;
     private final boolean skipKnownFiles;
     private IngestJobContext context = null;
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
@@ -73,7 +73,7 @@ class SampleFileIngestModule implements FileIngestModule {
 
     @Override
     public IngestModule.ProcessResult process(AbstractFile file) {
-        if (attrId == -1) {
+        if (false) {
             return IngestModule.ProcessResult.ERROR;
         }
 
@@ -102,9 +102,9 @@ class SampleFileIngestModule implements FileIngestModule {
                 }
             }
 
-            // Make an attribute using the ID for the attribute type that 
+            // Make an attribute using the ID for the attribute attrType that 
             // was previously created.
-            BlackboardAttribute attr = new BlackboardAttribute(attrId, SampleIngestModuleFactory.getModuleName(), count);
+            BlackboardAttribute attr = new BlackboardAttribute(attrType, SampleIngestModuleFactory.getModuleName(), count);
 
             // Add the to the general info artifact for the file. In a
             // real module, you would likely have more complex data types 

@@ -1841,6 +1841,10 @@ class ReportGenerator {
                     AbstractFile file = skCase.getAbstractFileById(getObjectID());
                     if (file != null) {
                         orderedRowData.add(file.getName());
+                        String mimeType = file.getMIMEType();
+                        if(mimeType == null) {
+                            orderedRowData.add("");
+                        }
                         orderedRowData.add(file.getMIMEType());
                         orderedRowData.add(file.getUniquePath());
                     } else {

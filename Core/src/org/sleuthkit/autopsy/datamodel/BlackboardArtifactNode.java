@@ -131,7 +131,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         this.setDisplayName(displayName);
     }
 
-    @Override
+    @Override @SuppressWarnings("deprecation")
     protected Sheet createSheet() {
         Sheet s = super.createSheet();
         Sheet.Set ss = s.get(Sheet.PROPERTIES);

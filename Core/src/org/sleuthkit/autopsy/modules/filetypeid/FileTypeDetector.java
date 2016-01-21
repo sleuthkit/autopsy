@@ -25,6 +25,7 @@ import java.util.logging.Level;
 import org.apache.tika.Tika;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MimeTypes;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
@@ -35,12 +36,13 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * Detects the type of a file by an inspection of its contents.
  */
 public class FileTypeDetector {
-
+    
     private static final Tika tika = new Tika();
     private static final int BUFFER_SIZE = 64 * 1024;
     private final byte buffer[] = new byte[BUFFER_SIZE];
@@ -123,7 +125,7 @@ public class FileTypeDetector {
      */
     public String getFileType(AbstractFile file) throws TskCoreException {
         String fileType = file.getMIMEType();
-        if(null != fileType) {
+        if (null != fileType) {
             return fileType;
         }
         return detectAndPostToBlackboard(file);
@@ -140,6 +142,7 @@ public class FileTypeDetector {
      *
      * @throws TskCoreException
      */
+    @SuppressWarnings("deprecation")
     public String detectAndPostToBlackboard(AbstractFile file) throws TskCoreException {
         String mimeType = detect(file);
         if (null != mimeType) {
@@ -150,8 +153,12 @@ public class FileTypeDetector {
              * artifacts, e.g., they are not displayed in the results tree.
              */
             BlackboardArtifact getInfoArt = file.getGenInfoArtifact();
-            BlackboardAttribute batt = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID(), FileTypeIdModuleFactory.getModuleName(), mimeType);
-            file.setMIMEType(mimeType);
+            BlackboardAttribute batt = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG, FileTypeIdModuleFactory.getModuleName(), mimeType);
+            try {
+                file.setMIMEType(mimeType);
+            } catch (TskDataException ex) {
+                Logger.getLogger(FileTypeDetector.class.getName()).log(Level.WARNING, "MIME type was attempted to be added even though there is already a MIME type for the file.");
+            }
             getInfoArt.addAttribute(batt);
         }
         return mimeType;
@@ -176,7 +183,7 @@ public class FileTypeDetector {
                 || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)) {
             return MimeTypes.OCTET_STREAM;
         }
-
+        
         String fileType = detectUserDefinedType(file);
         if (null == fileType) {
             try {
@@ -188,7 +195,7 @@ public class FileTypeDetector {
                 } else {
                     buf = buffer;
                 }
-
+                
                 String mimetype = tika.detect(buf, file.getName());
 
                 /**
@@ -226,7 +233,7 @@ public class FileTypeDetector {
                 if (fileType.alertOnMatch()) {
                     BlackboardArtifact artifact;
                     artifact = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
-                    BlackboardAttribute setNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), FileTypeIdModuleFactory.getModuleName(), fileType.getFilesSetName());
+                    BlackboardAttribute setNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, FileTypeIdModuleFactory.getModuleName(), fileType.getFilesSetName());
                     artifact.addAttribute(setNameAttribute);
 
                     /**
@@ -234,9 +241,9 @@ public class FileTypeDetector {
                      * determined this file belongs to the interesting files
                      * set.
                      */
-                    BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID(), FileTypeIdModuleFactory.getModuleName(), fileType.getMimeType());
+                    BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, FileTypeIdModuleFactory.getModuleName(), fileType.getMimeType());
                     artifact.addAttribute(ruleNameAttribute);
-
+                    
                     try {
                         // index the artifact for keyword search
                         Case.getCurrentCase().getServices().getBlackboard().indexArtifact(artifact);
@@ -255,16 +262,16 @@ public class FileTypeDetector {
         }
         return null;
     }
-
+    
     public static class FileTypeDetectorInitException extends Exception {
-
+        
         FileTypeDetectorInitException(String message) {
             super(message);
         }
-
+        
         FileTypeDetectorInitException(String message, Throwable throwable) {
             super(message, throwable);
         }
     }
-
+    
 }
