@@ -65,7 +65,6 @@ public class ImageDSProcessor implements DataSourceProcessor {
      * (AUT-1867) not currently enforced).
      */
     public ImageDSProcessor() {
-        this.dataSourceId = UUID.randomUUID().toString();
         imageFilePanel = ImageFilePanel.createInstance(ImageDSProcessor.class.getName(), filtersList);
     }
 
@@ -82,6 +81,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
         this.imagePath = imagePath;
         this.timeZone = timeZone;
         this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
+        configured = true;
         imageFilePanel = ImageFilePanel.createInstance(ImageDSProcessor.class.getName(), filtersList);
     }
 
@@ -141,6 +141,9 @@ public class ImageDSProcessor implements DataSourceProcessor {
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback cbObj) {
         if (!configured) {
             imageFilePanel.storeSettings();
+            if (null == dataSourceId) {
+                dataSourceId = UUID.randomUUID().toString();
+            }
             imagePath = imageFilePanel.getContentPaths();
             timeZone = imageFilePanel.getTimeZone();
             ignoreFatOrphanFiles = imageFilePanel.getNoFatOrphans();
