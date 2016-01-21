@@ -57,9 +57,8 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
      * @param dataSourceId         A identifier for the data source that is
      *                             unique across multiple cases (e.g., a UUID).
      * @param imagePath            Path to the image file.
-     * @param timeZone The time zone to use when processing dates
+     * @param timeZone             The time zone to use when processing dates
      *                             and times for the image.
-     *
      * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
      *                             FAT filesystem.
      */
