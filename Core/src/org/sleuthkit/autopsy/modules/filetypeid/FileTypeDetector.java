@@ -42,7 +42,7 @@ import org.sleuthkit.datamodel.TskDataException;
  * Detects the type of a file by an inspection of its contents.
  */
 public class FileTypeDetector {
-    
+
     private static final Tika tika = new Tika();
     private static final int BUFFER_SIZE = 64 * 1024;
     private final byte buffer[] = new byte[BUFFER_SIZE];
@@ -157,7 +157,7 @@ public class FileTypeDetector {
             try {
                 file.setMIMEType(mimeType);
             } catch (TskDataException ex) {
-                Logger.getLogger(FileTypeDetector.class.getName()).log(Level.WARNING, "MIME type was attempted to be added even though there is already a MIME type for the file.");
+                //Swallowing exception so that the logs aren't clogged in the case that ingest is run multiple times.
             }
             getInfoArt.addAttribute(batt);
         }
@@ -183,7 +183,7 @@ public class FileTypeDetector {
                 || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)) {
             return MimeTypes.OCTET_STREAM;
         }
-        
+
         String fileType = detectUserDefinedType(file);
         if (null == fileType) {
             try {
@@ -195,7 +195,7 @@ public class FileTypeDetector {
                 } else {
                     buf = buffer;
                 }
-                
+
                 String mimetype = tika.detect(buf, file.getName());
 
                 /**
@@ -243,7 +243,7 @@ public class FileTypeDetector {
                      */
                     BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, FileTypeIdModuleFactory.getModuleName(), fileType.getMimeType());
                     artifact.addAttribute(ruleNameAttribute);
-                    
+
                     try {
                         // index the artifact for keyword search
                         Case.getCurrentCase().getServices().getBlackboard().indexArtifact(artifact);
@@ -262,16 +262,16 @@ public class FileTypeDetector {
         }
         return null;
     }
-    
+
     public static class FileTypeDetectorInitException extends Exception {
-        
+
         FileTypeDetectorInitException(String message) {
             super(message);
         }
-        
+
         FileTypeDetectorInitException(String message, Throwable throwable) {
             super(message, throwable);
         }
     }
-    
+
 }
