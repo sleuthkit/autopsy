@@ -122,16 +122,9 @@ public class FileTypeDetector {
      * @throws TskCoreException
      */
     public String getFileType(AbstractFile file) throws TskCoreException {
-        String fileType;
-        ArrayList<BlackboardAttribute> attributes = file.getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
-        for (BlackboardAttribute attribute : attributes) {
-            /**
-             * Get the first TSK_FILE_TYPE_SIG attribute.
-             */
-            fileType = attribute.getValueString();
-            if (null != fileType && !fileType.isEmpty()) {
-                return fileType;
-            }
+        String fileType = file.getMIMEType();
+        if(null != fileType) {
+            return fileType;
         }
         return detectAndPostToBlackboard(file);
     }
@@ -158,6 +151,7 @@ public class FileTypeDetector {
              */
             BlackboardArtifact getInfoArt = file.getGenInfoArtifact();
             BlackboardAttribute batt = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID(), FileTypeIdModuleFactory.getModuleName(), mimeType);
+            file.setMIMEType(mimeType);
             getInfoArt.addAttribute(batt);
         }
         return mimeType;

@@ -69,31 +69,6 @@ class SampleFileIngestModule implements FileIngestModule {
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
         refCounter.incrementAndGet(context.getJobId());
-
-        synchronized (SampleFileIngestModule.class) {
-            if (attrId == -1) {
-                // For this sample, make a new attribute type to use to post 
-                // results to the blackboard. There are many standard blackboard 
-                // artifact and attribute types and you should use them instead
-                // creating new ones to facilitate use of your results by other
-                // modules.
-                Case autopsyCase = Case.getCurrentCase();
-                SleuthkitCase sleuthkitCase = autopsyCase.getSleuthkitCase();
-                try {
-                    // See if the attribute type has already been defined.
-                    attrId = sleuthkitCase.getAttrTypeID("ATTR_SAMPLE");
-                    if (attrId == -1) {
-                        attrId = sleuthkitCase.addAttrType("ATTR_SAMPLE", "Sample Attribute");
-                    }
-                } catch (TskCoreException ex) {
-                    IngestServices ingestServices = IngestServices.getInstance();
-                    Logger logger = ingestServices.getLogger(SampleIngestModuleFactory.getModuleName());
-                    logger.log(Level.SEVERE, "Failed to create blackboard attribute", ex);
-                    attrId = -1;
-                    throw new IngestModuleException(ex.getLocalizedMessage());
-                }
-            }
-        }
     }
 
     @Override

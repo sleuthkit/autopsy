@@ -151,7 +151,7 @@ class SevenZipExtractor {
      * @param abstractFile The AbstractFilw whose mimetype is to be determined.
      *
      * @return This method returns true if the file format is currently
-     *         supported. Else it returns false.
+     * supported. Else it returns false.
      */
     boolean isSevenZipExtractionSupported(AbstractFile abstractFile) {
         try {
@@ -185,7 +185,7 @@ class SevenZipExtractor {
      *
      * More heuristics to be added here
      *
-     * @param archiveName     the parent archive
+     * @param archiveName the parent archive
      * @param archiveFileItem the archive item
      *
      * @return true if potential zip bomb, false otherwise
@@ -245,15 +245,7 @@ class SevenZipExtractor {
     private ArchiveFormat get7ZipOptions(AbstractFile archiveFile) {
         // try to get the file type from the BB
         String detectedFormat = null;
-        try {
-            ArrayList<BlackboardAttribute> attributes = archiveFile.getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
-            for (BlackboardAttribute attribute : attributes) {
-                detectedFormat = attribute.getValueString();
-                break;
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Couldn't obtain file attributes for file: " + archiveFile.toString(), ex); //NON-NLS
-        }
+        detectedFormat = archiveFile.getMIMEType();
 
         if (detectedFormat == null) {
             logger.log(Level.WARNING, "Could not detect format for file: {0}", archiveFile); //NON-NLS
@@ -284,7 +276,7 @@ class SevenZipExtractor {
      * Unpack the file to local folder and return a list of derived files
      *
      * @param pipelineContext current ingest context
-     * @param archiveFile     file to unpack
+     * @param archiveFile file to unpack
      *
      * @return list of unpacked derived files
      */
@@ -781,8 +773,8 @@ class SevenZipExtractor {
         /**
          *
          * @param localPathRoot Path in module output folder that files will be
-         *                      saved to
-         * @param archiveFile   Archive file being extracted
+         * saved to
+         * @param archiveFile Archive file being extracted
          * @param fileManager
          */
         UnpackedTree(String localPathRoot, AbstractFile archiveFile) {
@@ -1041,7 +1033,7 @@ class SevenZipExtractor {
         /**
          * Add a new archive to track of depth
          *
-         * @param parent   parent archive or null
+         * @param parent parent archive or null
          * @param objectId object id of the new archive
          *
          * @return the archive added

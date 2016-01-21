@@ -123,7 +123,8 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
                 file.getGid(),
                 file.getMd5Hash(),
                 file.getKnown(),
-                file.getParentPath());
+                file.getParentPath(),
+                null);
         this.analyzed = new SimpleBooleanProperty(analyzed);
         this.file = file;
     }
