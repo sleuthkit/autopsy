@@ -20,11 +20,15 @@ package org.sleuthkit.autopsy.casemodule.services;
 
 import java.io.Closeable;
 import java.io.IOException;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * Provides utility methods for blackboard artifact indexing.
@@ -44,11 +48,47 @@ public final class Blackboard implements Closeable {
         if (null == searchService) {
             throw new BlackboardException(NbBundle.getMessage(this.getClass(), "Blackboard.keywordSearchNotFound.exception.msg"));
         }
-        
+
         try {
             searchService.indexArtifact(artifact);
         } catch (TskCoreException ex) {
             throw new BlackboardException(NbBundle.getMessage(this.getClass(), "Blackboard.unableToIndexArtifact.exception.msg"), ex);
+        }
+    }
+
+    /**
+     * Adds a new artifact type based upon the parameters given
+     *
+     * @param typeName The name of the new artifact type
+     * @param displayName The name displayed for the new attribute type
+     * @return A type object representing the artifact type added
+     * @throws
+     * org.sleuthkit.autopsy.casemodule.services.Blackboard.BlackboardException
+     */
+    public BlackboardArtifact.Type addArtifactType(String typeName, String displayName) throws BlackboardException {
+        try {
+            return Case.getCurrentCase().getSleuthkitCase().addBlackboardArtifactType(typeName, displayName);
+        } catch (TskCoreException ex) {
+            throw new BlackboardException("New artifact type could not be added", ex);
+        }
+    }
+
+    /**
+     * Adds a new attribute type based upon the parameters given
+     *
+     * @param attrTypeString The type name of the attribute type
+     * @param valueType The type of any attribute of this type's value
+     * @param displayName The name displayed for the new attribute type
+     * @throws
+     * org.sleuthkit.autopsy.casemodule.services.Blackboard.BlackboardException
+     */
+    public BlackboardAttribute.Type addAttributeType(String attrTypeString, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE valueType, String displayName) throws BlackboardException {
+        try {
+            return Case.getCurrentCase().getSleuthkitCase().addArtifactAttributeType(attrTypeString, valueType, displayName);
+        } catch (TskDataException ex) {
+            throw new BlackboardException("New artifact type could not be added", ex);
+        } catch (TskCoreException ex) {
+            throw new BlackboardException("New artifact type could not be added", ex);
         }
     }
 
@@ -83,7 +123,7 @@ public final class Blackboard implements Closeable {
          * Constructs a new exception with the specified message and cause.
          *
          * @param message The message.
-         * @param cause   The cause.
+         * @param cause The cause.
          */
         public BlackboardException(String message, Throwable cause) {
             super(message, cause);
