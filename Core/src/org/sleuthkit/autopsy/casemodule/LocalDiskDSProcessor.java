@@ -25,7 +25,6 @@ import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Local drive data source processor.
@@ -33,7 +32,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 @ServiceProvider(service = DataSourceProcessor.class)
 public class LocalDiskDSProcessor implements DataSourceProcessor {
 
-    static final Logger logger = Logger.getLogger(ImageDSProcessor.class.getName());
     private static final String dsType = NbBundle.getMessage(LocalDiskDSProcessor.class, "LocalDiskDSProcessor.dsType.text");
     private final LocalDiskPanel configPanel;
     private String dataSourceId;
