@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.util.Calendar;
 import java.util.UUID;
 import javax.swing.JPanel;
 import org.openide.util.NbBundle;
@@ -43,31 +44,13 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
 
     /**
      * Constructs an uninitialized local drive data source processor with a
-     * configuration panel. The data source processor should not be run if the
-     * configuration panel inputs have not been completed and validated (TODO
-     * (AUT-1867) not currently enforced).
+     * configuration panel. The data source processor should not be run until
+     * further initialization using the configuration panel has been completed
+     * and validated or the setDataSourceOptions method has been called.
+     *
+     * TODO (AUT-1867): Configuration is not currently enforced.
      */
     public LocalDiskDSProcessor() {
-        configPanel = LocalDiskPanel.getDefault();
-    }
-
-    /**
-     * Constructs a local drive data source processor.
-     *
-     * @param dataSourceId         A identifier for the data source that is
-     *                             unique across multiple cases (e.g., a UUID).
-     * @param imagePath            Path to the image file.
-     * @param timeZone             The time zone to use when processing dates
-     *                             and times for the image.
-     * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
-     *                             FAT filesystem.
-     */
-    public LocalDiskDSProcessor(String dataSourceId, String drivePath, String timeZone, boolean ignoreFatOrphanFiles) {
-        this.dataSourceId = dataSourceId;
-        this.drivePath = drivePath;
-        this.timeZone = timeZone;
-        this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
-        configured = true;
         configPanel = LocalDiskPanel.getDefault();
     }
 
@@ -161,21 +144,53 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
 
     /**
      * Sets the configuration of the data source processor without using the
-     * configuration panel.
+     * configuration panel. The data source processor will assign a UUID to the
+     * data source and will use the time zone of the machine executing this code
+     * when when processing dates and times for the image.
+     *
+     * @param drivePath            Path to the local drive.
+     * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
+     *                             FAT filesystem.
+     */
+    public void setDataSourceOptions(String drivePath, boolean ignoreFatOrphanFiles) {
+        setDataSourceOptions(drivePath, Calendar.getInstance().getTimeZone().getID(), ignoreFatOrphanFiles);
+    }
+
+    /**
+     * Sets the configuration of the data source processor without using the
+     * configuration panel. The data source processor will assign a UUID to the
+     * data source.
      *
      * @param drivePath            Path to the local drive.
      * @param timeZone             The time zone to use when processing dates
-     *                             and times for the image.
+     *                             and times for the image, obtained from
+     *                             java.util.TimeZone.getID.
      * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
      *                             FAT filesystem.
-     *
-     * @deprecated Use the constructor that takes arguments instead.
      */
-    @Deprecated
     public void setDataSourceOptions(String drivePath, String timeZone, boolean ignoreFatOrphanFiles) {
+        setDataSourceOptions(UUID.randomUUID().toString(), drivePath, timeZone, ignoreFatOrphanFiles);
+    }
+
+    /**
+     * Sets the configuration of the data source processor without using the
+     * configuration panel.
+     *
+     * @param dataSourceId         A identifier for the data source that is
+     *                             unique across multiple cases (e.g., a UUID).
+     * @param drivePath            Path to the local drive.
+     * @param timeZone             The time zone to use when processing dates
+     *                             and times for the image, obtained from
+     *                             java.util.TimeZone.getID.
+     * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
+     *                             FAT filesystem.
+     */
+    public void setDataSourceOptions(String dataSourceId, String drivePath, String timeZone, boolean ignoreFatOrphanFiles) {
+        this.dataSourceId = dataSourceId;
         this.drivePath = drivePath;
         this.timeZone = timeZone;
         this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
         configured = true;
     }
+
 }

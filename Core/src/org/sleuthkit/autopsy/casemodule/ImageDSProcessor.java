@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.casemodule;
 
 import javax.swing.JPanel;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
 import javax.swing.filechooser.FileFilter;
@@ -60,31 +61,13 @@ public class ImageDSProcessor implements DataSourceProcessor {
 
     /**
      * Constructs an uninitialized image data source processor with a
-     * configuration panel. The data source processor should not be run if the
-     * configuration panel inputs have not been completed and validated (TODO
-     * (AUT-1867) not currently enforced).
+     * configuration panel. The data source processor should not be run until
+     * further initialization using the configuration panel has been completed
+     * and validated or the setDataSourceOptions method has been called.
+     *
+     * TODO (AUT-1867): Configuration is not currently enforced.
      */
     public ImageDSProcessor() {
-        imageFilePanel = ImageFilePanel.createInstance(ImageDSProcessor.class.getName(), filtersList);
-    }
-
-    /**
-     * Constructs an image data source processor.
-     *
-     * @param dataSourceId         A identifier for the data source that is
-     *                             unique across multiple cases (e.g., a UUID).
-     * @param imagePath            Path to the image file.
-     * @param timeZone             The time zone to use when processing dates
-     *                             and times for the image.
-     * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
-     *                             FAT filesystem.
-     */
-    public ImageDSProcessor(String dataSourceId, String imagePath, String timeZone, boolean ignoreFatOrphanFiles) {
-        this.dataSourceId = dataSourceId;
-        this.imagePath = imagePath;
-        this.timeZone = timeZone;
-        this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
-        configured = true;
         imageFilePanel = ImageFilePanel.createInstance(ImageDSProcessor.class.getName(), filtersList);
     }
 
@@ -177,19 +160,49 @@ public class ImageDSProcessor implements DataSourceProcessor {
 
     /**
      * Sets the configuration of the data source processor without using the
-     * configuration panel.
+     * configuration panel. The data source processor will assign a UUID to the
+     * data source and will use the time zone of the machine executing this code
+     * when when processing dates and times for the image.
+     *
+     * @param imagePath            Path to the image file.
+     * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
+     *                             FAT filesystem.
+     */
+    public void setDataSourceOptions(String imagePath, boolean ignoreFatOrphanFiles) {
+        setDataSourceOptions(imagePath, Calendar.getInstance().getTimeZone().getID(), ignoreFatOrphanFiles);
+    }
+
+    /**
+     * Sets the configuration of the data source processor without using the
+     * configuration panel. The data source processor will assign a UUID to the
+     * data source.
      *
      * @param imagePath            Path to the image file.
      * @param timeZone             The time zone to use when processing dates
-     *                             and times for the image.
+     *                             and times for the image, obtained from
+     *                             java.util.TimeZone.getID.
      * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
      *                             FAT filesystem.
-     *
-     * @deprecated Use the constructor that takes arguments instead.
      */
-    @Deprecated
     public void setDataSourceOptions(String imagePath, String timeZone, boolean ignoreFatOrphanFiles) {
-        dataSourceId = UUID.randomUUID().toString();
+        setDataSourceOptions(UUID.randomUUID().toString(), imagePath, timeZone, ignoreFatOrphanFiles);
+    }
+
+    /**
+     * Sets the configuration of the data source processor without using the
+     * configuration panel.
+     *
+     * @param dataSourceId         A identifier for the data source that is
+     *                             unique across multiple cases (e.g., a UUID).
+     * @param imagePath            Path to the image file.
+     * @param timeZone             The time zone to use when processing dates
+     *                             and times for the image, obtained from
+     *                             java.util.TimeZone.getID.
+     * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
+     *                             FAT filesystem.
+     */
+    public void setDataSourceOptions(String dataSourceId, String imagePath, String timeZone, boolean ignoreFatOrphanFiles) {
+        this.dataSourceId = dataSourceId;
         this.imagePath = imagePath;
         this.timeZone = timeZone;
         this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
