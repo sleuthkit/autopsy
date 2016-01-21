@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.casemodule;
 import javax.swing.JPanel;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import javax.swing.filechooser.FileFilter;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
@@ -42,9 +43,10 @@ public class ImageDSProcessor implements DataSourceProcessor {
     private static final GeneralFilter allFilter = new GeneralFilter(allExt, allDesc);
     private static final List<FileFilter> filtersList = new ArrayList<>();
     private final ImageFilePanel imageFilePanel;
+    private String dataSourceId;
     private String imagePath;
     private String timeZone;
-    private boolean noFatOrphans;
+    private boolean ignoreFatOrphanFiles;
     private boolean imageOptionsSet = false;
     private AddImageTask addImageTask;
     DataSourceProcessorCallback callbackObj = null;
@@ -58,11 +60,28 @@ public class ImageDSProcessor implements DataSourceProcessor {
     }
 
     /*
-     * Constructs an uninitialized data source processor with a configuration
-     * panel. The data source processor will not run if the configuration panel
-     * inputs have not been completed and validated.
+     * Constructs an uninitialized image data source processor with a
+     * configuration panel. The data source processor will not run if the
+     * configuration panel inputs have not been completed and validated.
      */
     public ImageDSProcessor() {
+        this.dataSourceId = UUID.randomUUID().toString();        
+        imageFilePanel = ImageFilePanel.createInstance(ImageDSProcessor.class.getName(), filtersList);
+    }
+
+    /**
+     * Constructs an image data source processor.
+     *
+     * @param dataSourceId
+     * @param imagePath
+     * @param timeZone
+     * @param ignoreFatOrphanFiles
+     */
+    public ImageDSProcessor(String dataSourceId, String imagePath, String timeZone, boolean ignoreFatOrphanFiles) {
+        this.dataSourceId = dataSourceId;
+        this.imagePath = imagePath;
+        this.timeZone = timeZone;
+        this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
         imageFilePanel = ImageFilePanel.createInstance(ImageDSProcessor.class.getName(), filtersList);
     }
 
@@ -126,9 +145,9 @@ public class ImageDSProcessor implements DataSourceProcessor {
             imageFilePanel.storeSettings();
             imagePath = imageFilePanel.getContentPaths();
             timeZone = imageFilePanel.getTimeZone();
-            noFatOrphans = imageFilePanel.getNoFatOrphans();
+            ignoreFatOrphanFiles = imageFilePanel.getNoFatOrphans();
         }
-        addImageTask = new AddImageTask(imagePath, timeZone, noFatOrphans, progressMonitor, cbObj);
+        addImageTask = new AddImageTask(imagePath, timeZone, ignoreFatOrphanFiles, progressMonitor, cbObj);
         new Thread(addImageTask).start();
     }
 
@@ -151,22 +170,27 @@ public class ImageDSProcessor implements DataSourceProcessor {
         imageOptionsSet = false;
         imagePath = null;
         timeZone = null;
-        noFatOrphans = false;
+        ignoreFatOrphanFiles = false;
     }
 
     /**
      * Sets the configuration of the data source processor without using the
      * configuration panel.
      *
-     * @param imgPath Path to the image file.
-     * @param tz      The time zone to use when processing dates and times for
-     *                the image.
-     * @param noFat   Whether to parse orphans if the image has a FAT filesystem.
+     * @param imagePath            Path to the image file.
+     * @param timeZone             The time zone to use when processing dates
+     *                             and times for the image.
+     * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
+     *                             FAT filesystem.
+     *
+     * @deprecated Use the construcotr that takes arguments instead.
      */
-    public void setDataSourceOptions(String imgPath, String tz, boolean noFat) {
-        this.imagePath = imgPath;
-        this.timeZone = tz;
-        this.noFatOrphans = noFat;
+    @Deprecated
+    public void setDataSourceOptions(String imagePath, String timeZone, boolean ignoreFatOrphanFiles) {
+        this.dataSourceId = UUID.randomUUID().toString();
+        this.imagePath = imagePath;
+        this.timeZone = timeZone;
+        this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
         imageOptionsSet = true;
     }
 
