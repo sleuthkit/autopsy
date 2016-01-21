@@ -10,6 +10,7 @@ import java.util.List;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.Blackboard.BlackboardException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
@@ -35,7 +36,6 @@ public class UserArtifactIngestModule implements DataSourceIngestModule {
 
     private IngestJobContext context = null;
     private BlackboardArtifact.Type type1, type2;
-    int type1ID, type2ID;
 
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
@@ -47,21 +47,22 @@ public class UserArtifactIngestModule implements DataSourceIngestModule {
             BlackboardArtifact art1;
             BlackboardArtifact art2;
             if (!file1.isEmpty()) {
-                art1 = file1.get(0).newArtifact(type1ID);
+                art1 = file1.get(0).newArtifact(type1.getTypeID());
             } else {
-                art1 = dataSource.newArtifact(type1ID);
+                art1 = dataSource.newArtifact(type1.getTypeID());
             }
             if (!file2.isEmpty()) {
-                art2 = file2.get(0).newArtifact(type2ID);
+                art2 = file2.get(0).newArtifact(type2.getTypeID());
             } else {
-                art2 = dataSource.newArtifact(type2ID);
+                art2 = dataSource.newArtifact(type2.getTypeID());
             }
-            BlackboardAttribute.Type type = Case.getCurrentCase().getSleuthkitCase().addArtifactAttributeType("TEST1", TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.INTEGER, "TEST2");
-            art1.addAttribute(new BlackboardAttribute(type,
-                    UserArtifactIngestModuleFactory.getModuleName(), -1));
+            BlackboardAttribute.Type attributeType = Case.getCurrentCase().getServices().getBlackboard().addAttributeType("Test", TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.LONG, "2");
+            BlackboardAttribute.Type attributeType2 = Case.getCurrentCase().getServices().getBlackboard().addAttributeType("Test2", TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.BYTE, "3");
+            art1.addAttribute(new BlackboardAttribute(attributeType,
+                    UserArtifactIngestModuleFactory.getModuleName(), -1L));
             progressBar.progress(1);
-            art2.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_MIN_COUNT,
-                    UserArtifactIngestModuleFactory.getModuleName(), 4));
+            art2.addAttribute(new BlackboardAttribute(attributeType2,
+                    UserArtifactIngestModuleFactory.getModuleName(), new byte[7]));
             progressBar.progress(1);
             IngestServices.getInstance().postMessage(IngestMessage.createDataMessage(
                     "name",
@@ -72,6 +73,8 @@ public class UserArtifactIngestModule implements DataSourceIngestModule {
             return ProcessResult.OK;
         } catch (TskCoreException ex) {
             return ProcessResult.ERROR;
+        } catch (BlackboardException ex) {
+            return ProcessResult.ERROR;
         } catch (TskDataException ex) {
             return ProcessResult.ERROR;
         }
@@ -80,14 +83,11 @@ public class UserArtifactIngestModule implements DataSourceIngestModule {
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
-        type1 = new BlackboardArtifact.Type(39, "TSK_TEST1", "Test 1");
-        type2 = new BlackboardArtifact.Type(40, "TSK_TEST2", "Test 2");
         try {
-            type1ID = Case.getCurrentCase().getSleuthkitCase().addArtifactType(type1.getTypeName(), type1.getDisplayName());
-            type2ID = Case.getCurrentCase().getSleuthkitCase().addArtifactType(type2.getTypeName(), type2.getDisplayName());
-        }
-        catch (TskCoreException ex) {
+            type1 = Case.getCurrentCase().getServices().getBlackboard().addArtifactType("This is", "a test");
+            type2 = Case.getCurrentCase().getServices().getBlackboard().addArtifactType("Another", "kinda test");
+        } catch (BlackboardException ex) {
             Logger.logMsg(Logger.ERROR, "Startup failed");
-        } 
+        }
     }
 }
