@@ -52,12 +52,16 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
     }
 
     /**
-     * Constructs a local drive data source processor. @param dataSourceId A
-     * identifier for the data source that is unique across multiple cases
-     * (e.g., a UUID). @param imagePath Path to the image file. @param timeZone
-     * The time zone to use when processing dates and times for the image.
+     * Constructs a local drive data source processor.
+     *
+     * @param dataSourceId         A identifier for the data source that is
+     *                             unique across multiple cases (e.g., a UUID).
+     * @param imagePath            Path to the image file.
+     * @param timeZone The time zone to use when processing dates
+     *                             and times for the image.
+     *
      * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
-     * FAT filesystem.
+     *                             FAT filesystem.
      */
     public LocalDiskDSProcessor(String dataSourceId, String drivePath, String timeZone, boolean ignoreFatOrphanFiles) {
         this.dataSourceId = dataSourceId;
@@ -124,7 +128,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
         if (!configured) {
             if (null == dataSourceId) {
                 dataSourceId = UUID.randomUUID().toString();
-            }            
+            }
             drivePath = configPanel.getContentPaths();
             timeZone = configPanel.getTimeZone();
             ignoreFatOrphanFiles = configPanel.getNoFatOrphans();
@@ -149,7 +153,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
     @Override
     public void reset() {
         configPanel.reset();
-        dataSourceId = null;        
+        dataSourceId = null;
         drivePath = null;
         timeZone = null;
         ignoreFatOrphanFiles = false;
