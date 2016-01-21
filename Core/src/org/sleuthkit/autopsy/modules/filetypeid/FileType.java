@@ -31,7 +31,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * <p>
  * Thread-safe (immutable).
  */
-class FileType {
+public class FileType {
 
     private final String mimeType;
     private final Signature signature;
@@ -49,7 +49,7 @@ class FileType {
      * @param alert        Whether the user wishes to be alerted when a file
      *                     matching this type is encountered.
      */
-    FileType(String mimeType, final Signature signature, String filesSetName, boolean alert) {
+    public FileType(String mimeType, final Signature signature, String filesSetName, boolean alert) {
         this.mimeType = mimeType;
         this.signature = new Signature(signature.getSignatureBytes(), signature.getOffset(), signature.getType(), signature.isRelativeToStart());
         this.interestingFilesSetName = filesSetName;
@@ -114,8 +114,9 @@ class FileType {
     public boolean equals(Object other) {
         if(other != null && other instanceof FileType) {
             FileType that = (FileType) other;
-            if(this.getMimeType().equals(that.getMimeType()) && this.getSignature().equals(that.getSignature()))
+            if(this.getMimeType().equals(that.getMimeType()) && this.getSignature().equals(that.getSignature())) {
                 return true;
+            }
         }        
         return false;
     }

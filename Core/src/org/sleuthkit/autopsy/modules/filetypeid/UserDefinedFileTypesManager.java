@@ -56,7 +56,7 @@ import org.xml.sax.SAXException;
  * <p>
  * Thread-safe.
  */
-final class UserDefinedFileTypesManager {
+public final class UserDefinedFileTypesManager {
 
     private static final Logger logger = Logger.getLogger(UserDefinedFileTypesManager.class.getName());
     private static final String FILE_TYPE_DEFINITIONS_SCHEMA_FILE = "FileTypes.xsd"; //NON-NLS
@@ -99,7 +99,7 @@ final class UserDefinedFileTypesManager {
      *
      * @return The user-defined file types manager singleton.
      */
-    synchronized static UserDefinedFileTypesManager getInstance() {
+    public synchronized static UserDefinedFileTypesManager getInstance() {
         if (instance == null) {
             instance = new UserDefinedFileTypesManager();
         }
@@ -121,7 +121,7 @@ final class UserDefinedFileTypesManager {
      * @throws
      * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException
      */
-    synchronized List<FileType> getFileTypes() throws UserDefinedFileTypesException {
+    public synchronized List<FileType> getFileTypes() throws UserDefinedFileTypesException {
         loadFileTypes();
 
         /**
@@ -576,7 +576,7 @@ final class UserDefinedFileTypesManager {
      * are logged by this class) into more generic exceptions for propagation to
      * clients of the user-defined file types manager.
      */
-    static class UserDefinedFileTypesException extends Exception {
+    public static class UserDefinedFileTypesException extends Exception {
 
         UserDefinedFileTypesException(String message) {
             super(message);
