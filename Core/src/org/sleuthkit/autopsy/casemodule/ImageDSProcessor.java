@@ -125,7 +125,6 @@ public class ImageDSProcessor implements DataSourceProcessor {
      * Indicates whether or not the inputs to the configuration panel are valid.
      *
      * @return True or false.
-     *
      */
     @Override
     public boolean isPanelValid() {
@@ -138,7 +137,6 @@ public class ImageDSProcessor implements DataSourceProcessor {
      * @param progressMonitor Progress monitor to report progress during
      *                        processing.
      * @param cbObj           Callback to call when processing is done.
-     *
      */
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback cbObj) {

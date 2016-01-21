@@ -41,7 +41,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
     private boolean configured;
     private AddImageTask addDiskTask;
 
-    /*
+    /**
      * Constructs an uninitialized local drive data source processor with a
      * configuration panel. The data source processor should not be run if the
      * configuration panel inputs have not been completed and validated (TODO
@@ -51,7 +51,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
         configPanel = LocalDiskPanel.getDefault();
     }
 
-    /*
+    /**
      * Constructs a local drive data source processor. @param dataSourceId A
      * identifier for the data source that is unique across multiple cases
      * (e.g., a UUID). @param imagePath Path to the image file. @param timeZone
