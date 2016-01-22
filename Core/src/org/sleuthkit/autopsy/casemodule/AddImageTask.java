@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2014 Basis Technology Corp.
+ * Copyright 2013-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,11 +30,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
-import org.sleuthkit.datamodel.TskException;
 
 /*
  * A background task that adds the given image to database using the Sleuthkit
@@ -72,6 +70,8 @@ class AddImageTask implements Runnable {
     private final String imagePath;
     String timeZone;
     boolean noFatOrphans;
+    
+    private final String dataSourceId;
 
     /*
      * A thread that updates the progressMonitor with the name of the directory
@@ -113,18 +113,16 @@ class AddImageTask implements Runnable {
         }
     }
 
-    public AddImageTask(String imgPath, String tz, boolean noOrphans, DataSourceProcessorProgressMonitor aProgressMonitor, DataSourceProcessorCallback cbObj) {
-
+    AddImageTask(String dataSourceId, String imgPath, String tz, boolean noOrphans, DataSourceProcessorProgressMonitor aProgressMonitor, DataSourceProcessorCallback cbObj) {
         currentCase = Case.getCurrentCase();
-
+        this.dataSourceId = dataSourceId;
         this.imagePath = imgPath;
         this.timeZone = tz;
         this.noFatOrphans = noOrphans;
-
         this.callbackObj = cbObj;
         this.progressMonitor = aProgressMonitor;
     }
-
+    
     /**
      * Starts the addImage process, but does not commit the results.
      *

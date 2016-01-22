@@ -122,7 +122,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
             ignoreFatOrphanFiles = configPanel.getNoFatOrphans();
             configured = true;
         }
-        addDiskTask = new AddImageTask(drivePath, timeZone, ignoreFatOrphanFiles, progressMonitor, cbObj);
+        addDiskTask = new AddImageTask(dataSourceId, drivePath, timeZone, ignoreFatOrphanFiles, progressMonitor, cbObj);
         new Thread(addDiskTask).start();
     }
 

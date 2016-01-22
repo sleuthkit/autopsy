@@ -139,7 +139,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
             ignoreFatOrphanFiles = configPanel.getNoFatOrphans();
             configured = true;
         }
-        addImageTask = new AddImageTask(imagePath, timeZone, ignoreFatOrphanFiles, monitor, cbObj);
+        addImageTask = new AddImageTask(dataSourceId, imagePath, timeZone, ignoreFatOrphanFiles, monitor, cbObj);
         new Thread(addImageTask).start();
     }
 
