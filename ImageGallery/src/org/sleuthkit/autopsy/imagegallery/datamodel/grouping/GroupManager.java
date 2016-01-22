@@ -345,16 +345,19 @@ public class GroupManager {
                     values = new ArrayList<>(names);
                     break;
                 case MIME_TYPE:
-                    try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery("select distinct mime_type from tsk_files");
+                    HashSet<String> types = new HashSet<>();
+                    try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery("select obj_id, mime_type from tsk_files");
                             ResultSet resultSet = executeQuery.getResultSet();) {
-                        values = new ArrayList<>();
                         while (resultSet.next()) {
-
-                            values.add((A) resultSet.getString("mime_type"));
+                            if (db.isInDB(resultSet.getLong("obj_id"))) {
+                                types.add(resultSet.getString("mime_type"));
+                            }
                         }
                     } catch (SQLException | TskCoreException ex) {
                         Exceptions.printStackTrace(ex);
                     }
+                    values = new ArrayList<A>((Collection<? extends A>) types);
+                    break;
                 default:
                     //otherwise do straight db query 
                     return db.findValuesForAttribute(groupBy, sortBy, sortOrder);
@@ -375,6 +378,8 @@ public class GroupManager {
                 return getFileIDsWithCategory((Category) groupKey.getValue());
             case TAGS:
                 return getFileIDsWithTag((TagName) groupKey.getValue());
+            case MIME_TYPE:
+                return getFileIDsWithMimeType((String) groupKey.getValue());
 //            case HASHSET: //comment out this case to use db functionality for hashsets
 //                return getFileIDsWithHashSetName((String) groupKey.getValue());
             default:
@@ -679,8 +684,23 @@ public class GroupManager {
         return null;
     }
 
-    public Set<Long> getFileIDsWithMimeType(String string) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public Set<Long> getFileIDsWithMimeType(String mimeType) throws TskCoreException {
+
+        HashSet<Long> hashSet = new HashSet<>();
+        try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery("select obj_id from tsk_files where mime_type = '" + mimeType + "'");) {
+            ResultSet resultSet = executeQuery.getResultSet();
+            while (resultSet.next()) {
+                final long fileID = resultSet.getLong("obj_id");
+                if (db.isInDB(fileID)) {
+                    hashSet.add(fileID);
+                }
+            }
+            return hashSet;
+
+        } catch (Exception ex) {
+            Exceptions.printStackTrace(ex);
+            throw new TskCoreException("Failed to get file ids with mime type " + mimeType, ex);
+        }
     }
 
     /**

@@ -830,6 +830,7 @@ public final class DrawableDB {
      *
      * @throws TskCoreException
      */
+    @Deprecated
     public long countFiles() throws TskCoreException {
         Statement statement = null;
         ResultSet rs = null;
