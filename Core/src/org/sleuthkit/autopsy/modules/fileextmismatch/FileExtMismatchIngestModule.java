@@ -100,7 +100,7 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
 
         FileExtMismatchXML xmlLoader = FileExtMismatchXML.getDefault();
         SigTypeToExtMap = xmlLoader.load();
-        
+
     }
 
     @Override
@@ -164,15 +164,11 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
             return false;
         }
 
-            // find file_sig value.
+        // find file_sig value.
         // check the blackboard for a file type attribute
         String currActualSigType = abstractFile.getMIMEType();
-        if(currActualSigType == null) {
-            try {
-                currActualSigType = fileTypeDetector.detect(abstractFile);
-            } catch (TskCoreException ex) {
-                Logger.getLogger(FileExtMismatchIngestModule.class.getName()).log(Level.SEVERE, "Could not detect mime type of given file.");
-            }
+        if (currActualSigType == null) {
+            currActualSigType = fileTypeDetector.detect(abstractFile);
         }
         if (settings.skipFilesWithTextPlainMimeType()) {
             if (!currActualExt.isEmpty() && currActualSigType.equals("text/plain")) { //NON-NLS

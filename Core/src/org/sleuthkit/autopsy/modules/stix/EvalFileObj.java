@@ -260,25 +260,21 @@ class EvalFileObj extends EvaluatableObject {
                             if (obj.getFileFormat() != null) {
 
                                 String formatsFound = file.getMIMEType();
-                                if (formatsFound == null) {
-                                    formatsFound = "";
+                                if (formatsFound != null) {
+                                    if (!(formatsFound.equalsIgnoreCase(obj.getFileFormat().getValue().toString()))) {
+                                        addWarning("Warning: Did not match File_Format field " + obj.getFileFormat().getValue().toString() //NON-NLS
+                                                + " against " + formatsFound); //NON-NLS
+                                    }
+                                } else {
+                                    addWarning("Warning: Did not match File_Format field " + obj.getFileFormat().getValue().toString() //NON-NLS
+                                            + " (no file formats found)"); //NON-NLS
                                 }
                                 // It looks like the STIX file formats can be different than what Autopsy stores
                                 // (mime vs. unix file), so don't kill a file based on this field not matching.
                                 //if (!foundMatch) {
                                 //    passedTests = false;
                                 //}
-                                if (formatsFound.isEmpty()) {
-                                    addWarning("Warning: Did not match File_Format field " + obj.getFileFormat().getValue().toString() //NON-NLS
-                                            + " (no file formats found)"); //NON-NLS
-                                } else {
-                                    if (formatsFound.equalsIgnoreCase(obj.getFileFormat().getValue().toString())) {
-                                        addWarning("Warning: Did not match File_Format field " + obj.getFileFormat().getValue().toString() //NON-NLS
-                                                + " against " + formatsFound); //NON-NLS
-                                    }
-                                }
                             }
-
                             if (passedTests) {
                                 secondaryHits.add(file);
                             }
