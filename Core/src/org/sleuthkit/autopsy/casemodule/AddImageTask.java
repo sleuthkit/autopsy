@@ -141,7 +141,7 @@ class AddImageTask implements Runnable {
                 progressMonitor.setIndeterminate(true);
                 progressMonitor.setProgress(0);
                 dirFetcher.start();
-                addImageProcess.run(new String[]{this.imagePath});
+                addImageProcess.run(dataSourceId, imagePath);
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Core errors occurred while running add image. ", ex); //NON-NLS
                 hasCritError = true;
