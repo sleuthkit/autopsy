@@ -238,10 +238,9 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
         UUID taskId = UUID.randomUUID();
         Case.getCurrentCase().notifyAddingDataSource(taskId);
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
-        dataSourceProcessor.setDataSourceOptions(vmFile.toString(), "", false);
         AddDataSourceCallback dspCallback = new AddDataSourceCallback(vmFile);
         synchronized (this) {
-            dataSourceProcessor.run(new AddDataSourceProgressMonitor(), dspCallback);
+            dataSourceProcessor.run(taskId.toString(), vmFile.toString(), "", false, new AddDataSourceProgressMonitor(), dspCallback);
             /*
              * Block the ingest thread until the data source processor finishes.
              */
