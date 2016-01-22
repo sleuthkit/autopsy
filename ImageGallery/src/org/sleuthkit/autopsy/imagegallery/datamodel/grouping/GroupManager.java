@@ -35,7 +35,9 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 import java.util.logging.Level;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javafx.application.Platform;
@@ -346,12 +348,21 @@ public class GroupManager {
                     break;
                 case MIME_TYPE:
                     HashSet<String> types = new HashSet<>();
-                    try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery("select obj_id, mime_type from tsk_files");
+                    try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery("select group_concat(obj_id), mime_type from tsk_files group by mime_type ");
                             ResultSet resultSet = executeQuery.getResultSet();) {
                         while (resultSet.next()) {
-                            if (db.isInDB(resultSet.getLong("obj_id"))) {
-                                types.add(resultSet.getString("mime_type"));
-                            }
+                            final String mimeType = resultSet.getString("mime_type");
+                            String objIds = resultSet.getString("group_concat(obj_id)");
+
+                            Pattern.compile(",").splitAsStream(objIds)
+                                    .map(Long::valueOf)
+                                    .filter(db::isInDB)
+                                    .findAny().ifPresent(new Consumer<Long>() {
+
+                                        public void accept(Long obj_id) {
+                                            types.add(mimeType);
+                                        }
+                                    });
                         }
                     } catch (SQLException | TskCoreException ex) {
                         Exceptions.printStackTrace(ex);
@@ -687,7 +698,11 @@ public class GroupManager {
     public Set<Long> getFileIDsWithMimeType(String mimeType) throws TskCoreException {
 
         HashSet<Long> hashSet = new HashSet<>();
-        try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery("select obj_id from tsk_files where mime_type = '" + mimeType + "'");) {
+        String query = (null == mimeType)
+                ? "SELECT obj_id FROM tsk_files WHERE mime_type IS NULL"
+                : "SELECT obj_id FROM tsk_files WHERE mime_type = '" + mimeType + "'";
+
+        try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery(query);) {
             ResultSet resultSet = executeQuery.getResultSet();
             while (resultSet.next()) {
                 final long fileID = resultSet.getLong("obj_id");

@@ -23,6 +23,9 @@ import com.google.common.eventbus.Subscribe;
 import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
+import javafx.beans.Observable;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.IntegerBinding;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyLongProperty;
 import javafx.beans.property.ReadOnlyLongWrapper;
@@ -50,8 +53,11 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
     private final ObservableList<Long> unmodifiableFileIDS = FXCollections.unmodifiableObservableList(fileIDs);
 
     //cache the number of files in this groups with hashset hits
-    private long hashSetHitsCount = -1;
+    private final ReadOnlyLongWrapper hashSetHitsCount = new ReadOnlyLongWrapper(-1);
 
+    public ReadOnlyLongProperty hashSetHitsCountProperty() {
+        return hashSetHitsCount.getReadOnlyProperty();
+    }
     private final ReadOnlyBooleanWrapper seen = new ReadOnlyBooleanWrapper(false);
     private final ReadOnlyLongWrapper uncatCount = new ReadOnlyLongWrapper(-1);
 
@@ -81,6 +87,10 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
     DrawableGroup(GroupKey<?> groupKey, Set<Long> filesInGroup, boolean seen) {
         this.groupKey = groupKey;
         this.fileIDs.setAll(filesInGroup);
+        fileIDs.addListener((Observable observable) -> {
+            hashSetHitsCount.set(-1);
+            DrawableGroup.this.seen.set(false);
+        });
         this.seen.set(seen);
         getUncategorizedCount();
     }
@@ -89,16 +99,12 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
         return fileIDs.size();
     }
 
-    public double getHashHitDensity() {
-        return 100d * getHashSetHitsCount() / (double) getSize();
+    public IntegerBinding sizeProperty() {
+        return Bindings.size(fileIDs);
     }
 
-    /**
-     * Call to indicate that an file has been added or removed from the group,
-     * so the hash counts may no longer be accurate.
-     */
-    synchronized private void invalidateHashSetHitsCount() {
-        hashSetHitsCount = -1;
+    public double getHashHitDensity() {
+        return hashSetHitsCountProperty().divide((double) getSize()).get();
     }
 
     synchronized private void invalidateUncatCount() {
@@ -109,18 +115,18 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
      * @return the number of files in this group that have hash set hits
      */
     synchronized public long getHashSetHitsCount() {
-        if (hashSetHitsCount < 0) {
+        if (hashSetHitsCount.get() < 0) {
             try {
-                hashSetHitsCount = fileIDs.stream()
+                hashSetHitsCount.set(fileIDs.stream()
                         .map(fileID -> ImageGalleryController.getDefault().getHashSetManager().isInAnyHashSet(fileID))
                         .filter(Boolean::booleanValue)
-                        .count();
+                        .count());
             } catch (IllegalStateException | NullPointerException ex) {
                 LOGGER.log(Level.WARNING, "could not access case during getFilesWithHashSetHitsCount()");
             }
         }
 
-        return hashSetHitsCount;
+        return hashSetHitsCount.get();
     }
 
     final synchronized public long getUncategorizedCount() {
@@ -165,21 +171,15 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
     }
 
     synchronized void addFile(Long f) {
-        invalidateHashSetHitsCount();
         invalidateUncatCount();
         if (fileIDs.contains(f) == false) {
             fileIDs.add(f);
-            seen.set(false);
         }
     }
 
     synchronized void setFiles(Set<? extends Long> newFileIds) {
-        invalidateHashSetHitsCount();
-        invalidateUncatCount();
-        boolean filesRemoved = fileIDs.removeIf((Long t) -> newFileIds.contains(t) == false);
-        if (filesRemoved) {
-            seen.set(false);
-        }
+        fileIDs.removeIf((Long t) -> newFileIds.contains(t) == false);
+
         for (Long f : newFileIds) {
             if (fileIDs.contains(f) == false) {
                 fileIDs.add(f);
@@ -189,11 +189,8 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
     }
 
     synchronized void removeFile(Long f) {
-        invalidateHashSetHitsCount();
+        fileIDs.removeAll(f);
         invalidateUncatCount();
-        if (fileIDs.removeAll(f)) {
-            seen.set(false);
-        }
     }
 
     // By default, sort by group key name
@@ -213,7 +210,6 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
     public boolean isSeen() {
         return seen.get();
     }
-
     @Subscribe
     synchronized public void handleCatChange(CategoryManager.CategoryChangeEvent event) {
         if (Iterables.any(event.getFileIDs(), fileIDs::contains)) {
