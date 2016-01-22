@@ -124,7 +124,7 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
                 file.getMd5Hash(),
                 file.getKnown(),
                 file.getParentPath(),
-                null);
+                file.getMIMEType());
         this.analyzed = new SimpleBooleanProperty(analyzed);
         this.file = file;
     }

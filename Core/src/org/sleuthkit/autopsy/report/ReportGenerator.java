@@ -1845,7 +1845,9 @@ class ReportGenerator {
                         if(mimeType == null) {
                             orderedRowData.add("");
                         }
-                        orderedRowData.add(file.getMIMEType());
+                        else {
+                            orderedRowData.add(mimeType);
+                        }
                         orderedRowData.add(file.getUniquePath());
                     } else {
                         // Make empty rows to make sure the formatting is correct

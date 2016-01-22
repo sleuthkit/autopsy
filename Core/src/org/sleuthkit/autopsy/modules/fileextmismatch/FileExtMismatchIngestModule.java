@@ -58,6 +58,7 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
     private static final HashMap<Long, IngestJobTotals> totalsForIngestJobs = new HashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private static Blackboard blackboard;
+    private FileTypeDetector fileTypeDetector;
 
     private static class IngestJobTotals {
 
@@ -89,11 +90,17 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
 
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
+        try {
+            fileTypeDetector = new FileTypeDetector();
+        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+            throw new IngestModuleException("File type detector could not be created", ex);
+        }
         jobId = context.getJobId();
         refCounter.incrementAndGet(jobId);
 
         FileExtMismatchXML xmlLoader = FileExtMismatchXML.getDefault();
         SigTypeToExtMap = xmlLoader.load();
+        
     }
 
     @Override
@@ -149,7 +156,7 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
      *
      * @return false if the two match. True if there is a mismatch.
      */
-    private boolean compareSigTypeToExt(AbstractFile abstractFile) {
+    private boolean compareSigTypeToExt(AbstractFile abstractFile) throws TskCoreException {
         String currActualExt = abstractFile.getNameExtension();
 
         // If we are skipping names with no extension
@@ -162,12 +169,9 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
         String currActualSigType = abstractFile.getMIMEType();
         if(currActualSigType == null) {
             try {
-                FileTypeDetector fileTypeDetector = new FileTypeDetector();
                 currActualSigType = fileTypeDetector.detect(abstractFile);
-            } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-                Logger.getLogger(FileExtMismatchIngestModule.class.getName()).log(Level.WARNING, "Could not create File Type Detector to register mime type of file.");
             } catch (TskCoreException ex) {
-                Logger.getLogger(FileExtMismatchIngestModule.class.getName()).log(Level.WARNING, "Could not detect mime type of given file.");
+                Logger.getLogger(FileExtMismatchIngestModule.class.getName()).log(Level.SEVERE, "Could not detect mime type of given file.");
             }
         }
         if (settings.skipFilesWithTextPlainMimeType()) {

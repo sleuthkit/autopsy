@@ -131,7 +131,6 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         this.setDisplayName(displayName);
     }
 
-    @Override @SuppressWarnings("deprecation")
     protected Sheet createSheet() {
         Sheet s = super.createSheet();
         Sheet.Set ss = s.get(Sheet.PROPERTIES);
@@ -167,37 +166,25 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         // If mismatch, add props for extension and file type
         if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID()) {
             String ext = "";
+            String actualMimeType = "";
             if (associated instanceof AbstractFile) {
                 AbstractFile af = (AbstractFile) associated;
                 ext = af.getNameExtension();
+                actualMimeType = af.getMIMEType();
             }
             ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.ext.name"),
                     NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.ext.displayName"),
                     NO_DESCR,
                     ext));
 
-            try {
-                String actualMimeType = "";
-                ArrayList<BlackboardArtifact> artList = associated.getAllArtifacts();
-                for (BlackboardArtifact art : artList) {
-                    List<BlackboardAttribute> atrList = art.getAttributes();
-                    for (BlackboardAttribute att : atrList) {
-                        if (att.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID()) {
-                            actualMimeType = att.getValueString();
-                        }
-                    }
-                }
-                if (actualMimeType.isEmpty()) {
-                    logger.log(Level.WARNING, "Could not find expected TSK_FILE_TYPE_SIG attribute."); //NON-NLS
-                } else {
-                    ss.put(new NodeProperty<>(
-                            NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.mimeType.name"),
-                            NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.mimeType.displayName"),
-                            NO_DESCR,
-                            actualMimeType));
-                }
-            } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Error while searching for TSK_FILE_TYPE_SIG attribute: ", ex); //NON-NLS
+            if (actualMimeType.isEmpty()) {
+                logger.log(Level.WARNING, "Could not find expected TSK_FILE_TYPE_SIG attribute."); //NON-NLS
+            } else {
+                ss.put(new NodeProperty<>(
+                        NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.mimeType.name"),
+                        NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.mimeType.displayName"),
+                        NO_DESCR,
+                        actualMimeType));
             }
         }
 
@@ -297,8 +284,8 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
     /**
      * Fill map with Artifact properties
      *
-     * @param map      map with preserved ordering, where property names/values
-     *                 are put
+     * @param map map with preserved ordering, where property names/values are
+     * put
      * @param artifact to extract properties from
      */
     @SuppressWarnings("deprecation") // TODO: Remove this when TSK_TAGGED_ARTIFACT rows are removed in a database upgrade.
@@ -423,7 +410,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         }
         return null;
     }
-    
+
     @Override
     public boolean isLeafTypeNode() {
         return true;
