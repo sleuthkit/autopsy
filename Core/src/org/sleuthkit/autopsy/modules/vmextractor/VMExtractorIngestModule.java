@@ -240,6 +240,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         AddDataSourceCallback dspCallback = new AddDataSourceCallback(vmFile);
         synchronized (this) {
+            // for extracted virtual machines we use UUID as data source ID because there is no manifest XML file
             dataSourceProcessor.run(taskId.toString(), vmFile.toString(), "", false, new AddDataSourceProgressMonitor(), dspCallback);
             /*
              * Block the ingest thread until the data source processor finishes.
