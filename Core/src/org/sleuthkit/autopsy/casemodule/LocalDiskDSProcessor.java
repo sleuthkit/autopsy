@@ -28,7 +28,11 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgress
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 
 /**
- * Local drive data source processor.
+ * A local drive data source processor with a configuration panel. This data
+ * source processor implements the DataSourceProcessor service provider
+ * interface to allow integration with the add data source wizard. It also
+ * provides a run method overload to allow it to be used independently of the
+ * configuration UI.
  */
 @ServiceProvider(service = DataSourceProcessor.class)
 public class LocalDiskDSProcessor implements DataSourceProcessor {
@@ -43,12 +47,11 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
     private AddImageTask addDiskTask;
 
     /**
-     * Constructs an uninitialized local drive data source processor with a
-     * configuration panel. The data source processor should not be run until
-     * further initialization using the configuration panel has been completed
-     * and validated or the setDataSourceOptions method has been called.
-     *
-     * TODO (AUT-1867): Configuration is not currently enforced.
+     * Constructs an image data source processor with a configuration panel.
+     * This data source processor implements the DataSourceProcessor service
+     * provider interface to allow integration with the add data source wizard.
+     * It also provides a run method overload to allow it to be used
+     * independently of the configuration UI.
      */
     public LocalDiskDSProcessor() {
         configPanel = LocalDiskPanel.getDefault();
@@ -103,10 +106,13 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
      * @param progressMonitor Progress monitor to report progress during
      *                        processing.
      * @param cbObj           Callback to call when processing is done.
-     *
      */
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback cbObj) {
+        /*
+         * TODO (AUT-1867): Configuration is not currently enforced. This code
+         * assumes that the ingest panel is providing validated inputs.
+         */
         if (!configured) {
             if (null == dataSourceId) {
                 dataSourceId = UUID.randomUUID().toString();
@@ -118,6 +124,31 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
         }
         addDiskTask = new AddImageTask(drivePath, timeZone, ignoreFatOrphanFiles, progressMonitor, cbObj);
         new Thread(addDiskTask).start();
+    }
+
+    /**
+     * Runs the data source processor in a separate thread without requiring use
+     * the configuration panel.
+     *
+     * @param dataSourceId         A identifier for the data source that is
+     *                             unique across multiple cases (e.g., a UUID).
+     * @param drivePath            Path to the local drive.
+     * @param timeZone             The time zone to use when processing dates
+     *                             and times for the image, obtained from
+     *                             java.util.TimeZone.getID.
+     * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
+     *                             FAT filesystem.
+     * @param monitor              Progress monitor to report progress during
+     *                             processing.
+     * @param cbObj                Callback to call when processing is done.
+     */
+    public void run(String dataSourceId, String drivePath, String timeZone, boolean ignoreFatOrphanFiles, DataSourceProcessorProgressMonitor monitor, DataSourceProcessorCallback cbObj) {
+        this.dataSourceId = dataSourceId;
+        this.drivePath = drivePath;
+        this.timeZone = timeZone;
+        this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
+        configured = true;
+        run(monitor, cbObj);
     }
 
     /**
@@ -151,44 +182,14 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
      * @param drivePath            Path to the local drive.
      * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
      *                             FAT filesystem.
+     *
+     * @deprecated Use the run method instead.
      */
+    @Deprecated
     public void setDataSourceOptions(String drivePath, boolean ignoreFatOrphanFiles) {
-        setDataSourceOptions(drivePath, Calendar.getInstance().getTimeZone().getID(), ignoreFatOrphanFiles);
-    }
-
-    /**
-     * Sets the configuration of the data source processor without using the
-     * configuration panel. The data source processor will assign a UUID to the
-     * data source.
-     *
-     * @param drivePath            Path to the local drive.
-     * @param timeZone             The time zone to use when processing dates
-     *                             and times for the image, obtained from
-     *                             java.util.TimeZone.getID.
-     * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
-     *                             FAT filesystem.
-     */
-    public void setDataSourceOptions(String drivePath, String timeZone, boolean ignoreFatOrphanFiles) {
-        setDataSourceOptions(UUID.randomUUID().toString(), drivePath, timeZone, ignoreFatOrphanFiles);
-    }
-
-    /**
-     * Sets the configuration of the data source processor without using the
-     * configuration panel.
-     *
-     * @param dataSourceId         A identifier for the data source that is
-     *                             unique across multiple cases (e.g., a UUID).
-     * @param drivePath            Path to the local drive.
-     * @param timeZone             The time zone to use when processing dates
-     *                             and times for the image, obtained from
-     *                             java.util.TimeZone.getID.
-     * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
-     *                             FAT filesystem.
-     */
-    public void setDataSourceOptions(String dataSourceId, String drivePath, String timeZone, boolean ignoreFatOrphanFiles) {
-        this.dataSourceId = dataSourceId;
+        this.dataSourceId = UUID.randomUUID().toString();
         this.drivePath = drivePath;
-        this.timeZone = timeZone;
+        this.timeZone = Calendar.getInstance().getTimeZone().getID();
         this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
         configured = true;
     }
