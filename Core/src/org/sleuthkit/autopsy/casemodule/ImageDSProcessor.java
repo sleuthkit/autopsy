@@ -46,7 +46,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
     private static final String allDesc = NbBundle.getMessage(ImageDSProcessor.class, "ImageDSProcessor.allDesc.text");
     private static final GeneralFilter allFilter = new GeneralFilter(allExt, allDesc);
     private static final List<FileFilter> filtersList = new ArrayList<>();
-    private final ImageFilePanel imageFilePanel;
+    private final ImageFilePanel configPanel;
     private String dataSourceId;
     private String imagePath;
     private String timeZone;
@@ -70,7 +70,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
      * independently of the configuration UI.
      */
     public ImageDSProcessor() {
-        imageFilePanel = ImageFilePanel.createInstance(ImageDSProcessor.class.getName(), filtersList);
+        configPanel = ImageFilePanel.createInstance(ImageDSProcessor.class.getName(), filtersList);
     }
 
     /**
@@ -101,9 +101,9 @@ public class ImageDSProcessor implements DataSourceProcessor {
      */
     @Override
     public JPanel getPanel() {
-        imageFilePanel.readSettings();
-        imageFilePanel.select();
-        return imageFilePanel;
+        configPanel.readSettings();
+        configPanel.select();
+        return configPanel;
     }
 
     /**
@@ -113,7 +113,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
      */
     @Override
     public boolean isPanelValid() {
-        return imageFilePanel.validatePanel();
+        return configPanel.validatePanel();
     }
 
     /**
@@ -130,13 +130,14 @@ public class ImageDSProcessor implements DataSourceProcessor {
          * assumes that the ingest panel is providing validated inputs.
          */
         if (!configured) {
-            imageFilePanel.storeSettings();
+            configPanel.storeSettings();
             if (null == dataSourceId) {
                 dataSourceId = UUID.randomUUID().toString();
             }
-            imagePath = imageFilePanel.getContentPaths();
-            timeZone = imageFilePanel.getTimeZone();
-            ignoreFatOrphanFiles = imageFilePanel.getNoFatOrphans();
+            imagePath = configPanel.getContentPaths();
+            timeZone = configPanel.getTimeZone();
+            ignoreFatOrphanFiles = configPanel.getNoFatOrphans();
+            configured = true;
         }
         addImageTask = new AddImageTask(imagePath, timeZone, ignoreFatOrphanFiles, monitor, cbObj);
         new Thread(addImageTask).start();
@@ -185,7 +186,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
         imagePath = null;
         timeZone = null;
         ignoreFatOrphanFiles = false;
-        imageFilePanel.reset();
+        configPanel.reset();
         configured = false;
     }
 
