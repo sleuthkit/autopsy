@@ -70,7 +70,7 @@ class AddImageTask implements Runnable {
     private final String imagePath;
     String timeZone;
     boolean noFatOrphans;
-    
+
     private final String dataSourceId;
 
     /*
@@ -102,12 +102,12 @@ class AddImageTask implements Runnable {
                                             currDir));
                         }
                     }
-                        // this sleep here prevents the UI from locking up 
+                    // this sleep here prevents the UI from locking up 
                     // due to too frequent updates to the progressMonitor above
                     Thread.sleep(500);
                 }
             } catch (InterruptedException ie) {
-                    // nothing to do, thread was interrupted externally  
+                // nothing to do, thread was interrupted externally  
                 // signaling the end of AddImageProcess 
             }
         }
@@ -122,7 +122,7 @@ class AddImageTask implements Runnable {
         this.callbackObj = cbObj;
         this.progressMonitor = aProgressMonitor;
     }
-    
+
     /**
      * Starts the addImage process, but does not commit the results.
      *
