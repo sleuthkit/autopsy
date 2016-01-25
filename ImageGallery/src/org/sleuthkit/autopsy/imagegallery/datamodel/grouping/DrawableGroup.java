@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -90,7 +90,7 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
     }
 
     public double getHashHitDensity() {
-        return getHashSetHitsCount() / (double) getSize();
+        return 100d * getHashSetHitsCount() / (double) getSize();
     }
 
     /**
@@ -139,7 +139,6 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
     public ReadOnlyLongProperty uncatCountProperty() {
         return uncatCount.getReadOnlyProperty();
     }
-
 
     @Override
     public String toString() {

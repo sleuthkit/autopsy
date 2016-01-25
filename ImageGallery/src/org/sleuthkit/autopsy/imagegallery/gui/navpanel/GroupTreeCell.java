@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +23,7 @@ import java.util.Optional;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeCell;
@@ -30,7 +31,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javax.annotation.Nonnull;
 import org.apache.commons.lang3.StringUtils;
-import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 
 /**
@@ -46,8 +46,8 @@ class GroupTreeCell extends TreeCell<TreeNode> {
      * icon to use if this cell's TreeNode doesn't represent a group but just a
      * folder(with no DrawableFiles) in the file system hierarchy.
      */
-    private static final Image EMPTY_FOLDER_ICON
-            = new Image(GroupTreeCell.class.getResourceAsStream("/org/sleuthkit/autopsy/imagegallery/images/folder.png"));
+    private static final Image EMPTY_FOLDER_ICON =
+            new Image(GroupTreeCell.class.getResourceAsStream("/org/sleuthkit/autopsy/imagegallery/images/folder.png"));
 
     /**
      * reference to group files listener that allows us to remove it from a
@@ -72,7 +72,11 @@ class GroupTreeCell extends TreeCell<TreeNode> {
         });
     };
 
-    public GroupTreeCell() {
+    private final ReadOnlyObjectProperty<TreeNodeComparator<?>> sortOrder;
+
+    GroupTreeCell(ReadOnlyObjectProperty<TreeNodeComparator<?>> sortOrderProperty) {
+
+        this.sortOrder = sortOrderProperty;
         getStylesheets().add(GroupTreeCell.class.getResource("GroupTreeCell.css").toExternalForm());
         getStyleClass().add("groupTreeCell");        //reduce  indent to 5, default is 10 which uses up a lot of space.
 
@@ -93,10 +97,10 @@ class GroupTreeCell extends TreeCell<TreeNode> {
         Optional.ofNullable(getItem())
                 .map(TreeNode::getGroup)
                 .ifPresent(group -> {
+                    sortOrder.removeListener(fileCountListener);
                     group.fileIds().removeListener(fileCountListener);
             group.seenProperty().removeListener(seenListener);
             group.uncatCountProperty().removeListener(fileCountListener);
-
                 });
 
         super.updateItem(treeNode, empty);
@@ -110,11 +114,11 @@ class GroupTreeCell extends TreeCell<TreeNode> {
             });
         } else {
             if (isNull(treeNode.getGroup())) {
-                final String groupName = getGroupName();
+                final String text = getGroupName();
                 //"dummy" group in file system tree <=>  a folder with no drawables
                 Platform.runLater(() -> {
-                    setTooltip(new Tooltip(groupName));
-                    setText(groupName);
+                    setTooltip(new Tooltip(text));
+                    setText(text);
                     setGraphic(new ImageView(EMPTY_FOLDER_ICON));
                     setStyle("");
                 });
@@ -122,12 +126,11 @@ class GroupTreeCell extends TreeCell<TreeNode> {
             } else {
                 //if number of files in this group changes (eg a file is recategorized), update counts via listener
                 treeNode.getGroup().fileIds().addListener(fileCountListener);
-
+                sortOrder.addListener(fileCountListener);
                 //if the seen state of this group changes update its style
                 treeNode.getGroup().seenProperty().addListener(seenListener);
 
                 treeNode.getGroup().uncatCountProperty().addListener(fileCountListener);
-
 
                 //and use icon corresponding to group type
                 final Image icon = treeNode.getGroup().groupKey.getAttribute().getIcon();
@@ -171,13 +174,13 @@ class GroupTreeCell extends TreeCell<TreeNode> {
      */
     @Nonnull
     private String getCountsText() {
+
         return Optional.ofNullable(getItem())
-                .map(TreeNode::getGroup)
-                .map(group -> " ("
-                        + ((group.getGroupByAttribute() == DrawableAttribute.HASHSET)
-                                ? group.getSize() + "/" + group.getUncategorizedCount()
-                                : group.getHashSetHitsCount() + "/" + group.getSize() + "/" + group.getUncategorizedCount())
-                        + ")"
-                ).orElse(""); //if item is null or group is null
+                .filter(treeNode -> treeNode.getGroup() != null)
+                .map(item ->
+                        sortOrder.get() == TreeNodeComparator.ALPHABETICAL
+                                ? " (" + item.getSize() + ")"
+                                : " (" + sortOrder.get().getFormattedValueOfTreeNode(item) + ")")
+                .orElse(""); //if item is null or group is null
     }
 }
