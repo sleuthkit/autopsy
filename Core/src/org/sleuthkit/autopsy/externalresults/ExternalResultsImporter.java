@@ -145,7 +145,7 @@ public final class ExternalResultsImporter {
                     for (ExternalResults.ArtifactAttribute attributeData : artifactData.getAttributes()) {
                         int attributeTypeId = caseDb.getAttrTypeID(attributeData.getType());
                         if (attributeTypeId == -1) {
-                            attributeTypeId = caseDb.addAttrType(attributeData.getType(), attributeData.getType());
+                            attributeTypeId = caseDb.addArtifactAttributeType(attributeData.getType(), BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.fromLabel(attributeData.getValueType()), attributeData.getType()).getTypeID();
                         }
                         switch (attributeData.getValueType()) {
                             case "text": //NON-NLS
