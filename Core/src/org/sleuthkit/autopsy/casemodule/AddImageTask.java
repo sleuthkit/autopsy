@@ -113,14 +113,44 @@ class AddImageTask implements Runnable {
         }
     }
 
-    AddImageTask(String dataSourceId, String imgPath, String tz, boolean noOrphans, DataSourceProcessorProgressMonitor aProgressMonitor, DataSourceProcessorCallback cbObj) {
+    /**
+     * Runs the data source processor in a separate thread without requiring use
+     * the configuration panel.
+     *
+     * @param dataSourceId         An ASCII-printable identifier for the data
+     *                             source that is unique across multiple cases
+     *                             (e.g., a UUID).
+     * @param imagePath            Path to the image file.
+     * @param timeZone             The time zone to use when processing dates
+     *                             and times for the image, obtained from
+     *                             java.util.TimeZone.getID.
+     * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
+     *                             FAT filesystem.
+     * @param monitor              Progress monitor to report progress during
+     *                             processing.
+     * @param cbObj                Callback to call when processing is done.
+     */
+    /**
+     * Constructs a runnable task that adds an image to the case database.
+     *
+     * @param imagePath            Path to the image file.
+     * @param timeZone             The time zone to use when processing dates
+     *                             and times for the image, obtained from
+     *                             java.util.TimeZone.getID.
+     * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
+     *                             FAT filesystem.
+     * @param monitor              Progress monitor to report progress during
+     *                             processing.
+     * @param cbObj                Callback to call when processing is done.
+     */
+    AddImageTask(String dataSourceId, String imagePath, String timeZone, boolean ignoreFatOrphanFiles, DataSourceProcessorProgressMonitor monitor, DataSourceProcessorCallback cbObj) {
         currentCase = Case.getCurrentCase();
         this.dataSourceId = dataSourceId;
-        this.imagePath = imgPath;
-        this.timeZone = tz;
-        this.noFatOrphans = noOrphans;
+        this.imagePath = imagePath;
+        this.timeZone = timeZone;
+        this.noFatOrphans = ignoreFatOrphanFiles;
         this.callbackObj = cbObj;
-        this.progressMonitor = aProgressMonitor;
+        this.progressMonitor = monitor;
     }
 
     /**
@@ -141,7 +171,7 @@ class AddImageTask implements Runnable {
                 progressMonitor.setIndeterminate(true);
                 progressMonitor.setProgress(0);
                 dirFetcher.start();
-                addImageProcess.run(dataSourceId, imagePath);
+                addImageProcess.run(dataSourceId, new String[]{imagePath});
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Core errors occurred while running add image. ", ex); //NON-NLS
                 hasCritError = true;

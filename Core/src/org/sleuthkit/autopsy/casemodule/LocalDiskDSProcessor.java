@@ -130,8 +130,9 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
      * Runs the data source processor in a separate thread without requiring use
      * the configuration panel.
      *
-     * @param dataSourceId         A identifier for the data source that is
-     *                             unique across multiple cases (e.g., a UUID).
+     * @param dataSourceId         An ASCII-printable identifier for the data
+     *                             source that is unique across multiple cases
+     *                             (e.g., a UUID).
      * @param drivePath            Path to the local drive.
      * @param timeZone             The time zone to use when processing dates
      *                             and times for the image, obtained from
