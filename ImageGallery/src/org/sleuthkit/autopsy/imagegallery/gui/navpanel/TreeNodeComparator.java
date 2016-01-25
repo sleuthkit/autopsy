@@ -25,27 +25,33 @@ import java.util.function.Function;
 /**
  *
  */
-class TreeNodeComparator<T extends Comparable<T>> implements Comparator<TreeNode> {
+final class TreeNodeComparator<T extends Comparable<T>> implements Comparator<TreeNode> {
 
-    static final TreeNodeComparator<Long> UNCATEGORIZED_COUNT = new TreeNodeComparator<>("Uncategorized Count", TreeNode::getUncategorizedCount, String::valueOf, false);
-    static final TreeNodeComparator<String> ALPHABETICAL = new TreeNodeComparator<>("Group Name", TreeNode::getGroupByValueDislpayName, Function.identity(), false);
-    static final TreeNodeComparator<Long> HIT_COUNT = new TreeNodeComparator<>("Hit Count", TreeNode::getHashSetHitsCount, String::valueOf, true);
-    static final TreeNodeComparator<Integer> FILE_COUNT = new TreeNodeComparator<>("Group Size", TreeNode::getSize, String::valueOf, true);
-    static final TreeNodeComparator<Double> HIT_FILE_RATIO = new TreeNodeComparator<>("Hit Density", (treeNode) -> treeNode.getHashHitDensity(), (obj) -> {
-        return String.format("%.2f", obj);
-    }, true);
+    static final TreeNodeComparator<Long> UNCATEGORIZED_COUNT =
+            new TreeNodeComparator<>("Uncategorized Count", TreeNode::getUncategorizedCount, String::valueOf, false);
 
-    final static ImmutableList<TreeNodeComparator<?>> values = ImmutableList.of(UNCATEGORIZED_COUNT, ALPHABETICAL, HIT_COUNT, FILE_COUNT, HIT_FILE_RATIO);
+    static final TreeNodeComparator<String> ALPHABETICAL =
+            new TreeNodeComparator<>("Group Name", TreeNode::getGroupByValueDislpayName, String::valueOf, false);
+
+    static final TreeNodeComparator<Long> HIT_COUNT =
+            new TreeNodeComparator<>("Hit Count", TreeNode::getHashSetHitsCount, String::valueOf, true);
+
+    static final TreeNodeComparator<Integer> FILE_COUNT =
+            new TreeNodeComparator<>("Group Size", TreeNode::getSize, String::valueOf, true);
+
+    static final TreeNodeComparator<Double> HIT_FILE_RATIO =
+            new TreeNodeComparator<>("Hit Density", (treeNode) -> treeNode.getHashHitDensity(), density -> String.format("%.2f", density), true);
+
+    private final static ImmutableList<TreeNodeComparator<?>> values = ImmutableList.of(UNCATEGORIZED_COUNT, ALPHABETICAL, HIT_COUNT, FILE_COUNT, HIT_FILE_RATIO);
 
     public static ImmutableList<TreeNodeComparator<?>> getValues() {
         return values;
     }
 
     private final Function<TreeNode, T> extractor;
-
-    final private String displayName;
-    private final boolean orderReveresed;
     private final Function<T, String> valueFormatter;
+    private final boolean orderReveresed;
+    private final String displayName;
 
     private TreeNodeComparator(String displayName, Function<TreeNode, T> extractor, Function<T, String> formatter, boolean defaultOrderReversed) {
         this.displayName = displayName;
@@ -61,6 +67,11 @@ class TreeNodeComparator<T extends Comparable<T>> implements Comparator<TreeNode
     }
 
     public String getDisplayName() {
+        return displayName;
+    }
+
+    @Override
+    public String toString() {
         return displayName;
     }
 

@@ -126,11 +126,10 @@ class GroupTreeCell extends TreeCell<TreeNode> {
             } else {
                 //if number of files in this group changes (eg a file is recategorized), update counts via listener
                 treeNode.getGroup().fileIds().addListener(fileCountListener);
+                treeNode.getGroup().uncatCountProperty().addListener(fileCountListener);
                 sortOrder.addListener(fileCountListener);
                 //if the seen state of this group changes update its style
                 treeNode.getGroup().seenProperty().addListener(seenListener);
-
-                treeNode.getGroup().uncatCountProperty().addListener(fileCountListener);
 
                 //and use icon corresponding to group type
                 final Image icon = treeNode.getGroup().groupKey.getAttribute().getIcon();

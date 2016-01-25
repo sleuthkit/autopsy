@@ -27,7 +27,6 @@ import javafx.application.Platform;
 import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.Tab;
@@ -111,18 +110,18 @@ final public class NavPanel extends VBox {
 
         VBox.setVgrow(this, Priority.ALWAYS);
 
-        sortByBox.setCellFactory(p -> new ComparatorListCell());
-        sortByBox.setButtonCell(new ComparatorListCell());
         sortByBox.getItems().setAll(TreeNodeComparator.getValues());
         sortByBox.getSelectionModel().select(TreeNodeComparator.ALPHABETICAL);
 
-        if (sortByBox.getSelectionModel().getSelectedItem() == TreeNodeComparator.UNCATEGORIZED_COUNT) {
-            controller.getCategoryManager().registerListener(NavPanel.this);
-        } else {
-            controller.getCategoryManager().unregisterListener(NavPanel.this);
-        }
+        sortByBox.getSelectionModel().selectedItemProperty().addListener(observable -> {
 
-        sortByBox.getSelectionModel().selectedItemProperty().addListener(observable -> resortHashTree());
+            if (sortByBox.getSelectionModel().getSelectedItem() == TreeNodeComparator.UNCATEGORIZED_COUNT) {
+                controller.getCategoryManager().registerListener(NavPanel.this);
+            } else {
+                controller.getCategoryManager().unregisterListener(NavPanel.this);
+            }
+            resortHashTree();
+        });
         orderGroup.selectedToggleProperty().addListener(observable -> resortHashTree());
 
         navTree.setCellFactory(treeView -> new GroupTreeCell(sortByBox.getSelectionModel().selectedItemProperty()));
@@ -204,7 +203,7 @@ final public class NavPanel extends VBox {
             navTree.getSelectionModel().select(treeItemForGroup);
             Platform.runLater(() -> {
                 int row = navTree.getRow(treeItemForGroup);
-                if (row == -1) {
+                if (row != -1) {
                     navTree.scrollTo(row - 2); //put newly selected row 3 from the top
                 }
             });
@@ -244,16 +243,5 @@ final public class NavPanel extends VBox {
         Platform.runLater(() -> {
             navTabPane.getSelectionModel().select(navTab);
         });
-    }
-
-    private static class ComparatorListCell extends ListCell<TreeNodeComparator<?>> {
-
-        @Override
-        protected void updateItem(TreeNodeComparator<?> t, boolean bln) {
-            super.updateItem(t, bln);
-            if (t != null) {
-                setText(t.getDisplayName());
-            }
-        }
     }
 }
