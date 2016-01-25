@@ -197,13 +197,16 @@ public class ImageDSProcessor implements DataSourceProcessor {
      * when when processing dates and times for the image.
      *
      * @param imagePath            Path to the image file.
+     * @param timeZone             The time zone to use when processing dates
+     *                             and times for the image, obtained from
+     *                             java.util.TimeZone.getID.
      * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
      *                             FAT filesystem.
      *
      * @deprecated Use the run method instead.
      */
     @Deprecated
-    public void setDataSourceOptions(String imagePath, boolean ignoreFatOrphanFiles) {
+    public void setDataSourceOptions(String imagePath, String timeZone, boolean ignoreFatOrphanFiles) {
         this.dataSourceId = UUID.randomUUID().toString();
         this.imagePath = imagePath;
         this.timeZone = Calendar.getInstance().getTimeZone().getID();
