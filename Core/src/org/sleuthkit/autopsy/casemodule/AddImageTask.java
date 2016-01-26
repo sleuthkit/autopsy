@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2014 Basis Technology Corp.
+ * Copyright 2013-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,11 +30,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
-import org.sleuthkit.datamodel.TskException;
 
 /*
  * A background task that adds the given image to database using the Sleuthkit
@@ -73,6 +71,8 @@ class AddImageTask implements Runnable {
     String timeZone;
     boolean noFatOrphans;
 
+    private final String dataSourceId;
+
     /*
      * A thread that updates the progressMonitor with the name of the directory
      * currently being processed by the AddImageTask
@@ -102,27 +102,41 @@ class AddImageTask implements Runnable {
                                             currDir));
                         }
                     }
-                        // this sleep here prevents the UI from locking up 
+                    // this sleep here prevents the UI from locking up 
                     // due to too frequent updates to the progressMonitor above
                     Thread.sleep(500);
                 }
             } catch (InterruptedException ie) {
-                    // nothing to do, thread was interrupted externally  
+                // nothing to do, thread was interrupted externally  
                 // signaling the end of AddImageProcess 
             }
         }
     }
 
-    public AddImageTask(String imgPath, String tz, boolean noOrphans, DataSourceProcessorProgressMonitor aProgressMonitor, DataSourceProcessorCallback cbObj) {
-
+    /**
+     * Constructs a runnable task that adds an image to the case database.
+     *
+     * @param dataSourceId         An ASCII-printable identifier for the data
+     *                             source that is intended to be unique across
+     *                             multiple cases (e.g., a UUID).
+     * @param imagePath            Path to the image file.
+     * @param timeZone             The time zone to use when processing dates
+     *                             and times for the image, obtained from
+     *                             java.util.TimeZone.getID.
+     * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
+     *                             FAT filesystem.
+     * @param monitor              Progress monitor to report progress during
+     *                             processing.
+     * @param cbObj                Callback to call when processing is done.
+     */
+    AddImageTask(String dataSourceId, String imagePath, String timeZone, boolean ignoreFatOrphanFiles, DataSourceProcessorProgressMonitor monitor, DataSourceProcessorCallback cbObj) {
         currentCase = Case.getCurrentCase();
-
-        this.imagePath = imgPath;
-        this.timeZone = tz;
-        this.noFatOrphans = noOrphans;
-
+        this.dataSourceId = dataSourceId;
+        this.imagePath = imagePath;
+        this.timeZone = timeZone;
+        this.noFatOrphans = ignoreFatOrphanFiles;
         this.callbackObj = cbObj;
-        this.progressMonitor = aProgressMonitor;
+        this.progressMonitor = monitor;
     }
 
     /**
@@ -143,7 +157,7 @@ class AddImageTask implements Runnable {
                 progressMonitor.setIndeterminate(true);
                 progressMonitor.setProgress(0);
                 dirFetcher.start();
-                addImageProcess.run(new String[]{this.imagePath});
+                addImageProcess.run(dataSourceId, new String[]{imagePath});
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Core errors occurred while running add image. ", ex); //NON-NLS
                 hasCritError = true;
