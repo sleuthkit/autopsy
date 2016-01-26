@@ -122,7 +122,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
             ignoreFatOrphanFiles = configPanel.getNoFatOrphans();
             configured = true;
         }
-        addDiskTask = new AddImageTask(drivePath, timeZone, ignoreFatOrphanFiles, progressMonitor, cbObj);
+        addDiskTask = new AddImageTask(dataSourceId, drivePath, timeZone, ignoreFatOrphanFiles, progressMonitor, cbObj);
         new Thread(addDiskTask).start();
     }
 
@@ -130,8 +130,9 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
      * Runs the data source processor in a separate thread without requiring use
      * the configuration panel.
      *
-     * @param dataSourceId         A identifier for the data source that is
-     *                             unique across multiple cases (e.g., a UUID).
+     * @param dataSourceId         An ASCII-printable identifier for the data
+     *                             source that is intended to be unique across
+     *                             multiple cases (e.g., a UUID).
      * @param drivePath            Path to the local drive.
      * @param timeZone             The time zone to use when processing dates
      *                             and times for the image, obtained from
@@ -180,13 +181,16 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
      * when when processing dates and times for the image.
      *
      * @param drivePath            Path to the local drive.
+     * @param timeZone             The time zone to use when processing dates
+     *                             and times for the image, obtained from
+     *                             java.util.TimeZone.getID.
      * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
      *                             FAT filesystem.
      *
      * @deprecated Use the run method instead.
      */
     @Deprecated
-    public void setDataSourceOptions(String drivePath, boolean ignoreFatOrphanFiles) {
+    public void setDataSourceOptions(String drivePath, String timeZone, boolean ignoreFatOrphanFiles) {
         this.dataSourceId = UUID.randomUUID().toString();
         this.drivePath = drivePath;
         this.timeZone = Calendar.getInstance().getTimeZone().getID();
