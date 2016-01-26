@@ -143,8 +143,8 @@ final class IngestModuleFactoryLoader {
     private static void addFactory(IngestModuleFactory factory, HashSet<String> moduleDisplayNames, HashMap<String, IngestModuleFactory> javaFactoriesByClass) {
         // Ignore the sample ingest module factories implemented in Java.        
         String className = factory.getClass().getCanonicalName();
-        if (className.equals(IngestModuleFactoryLoader.SAMPLE_MODULE_FACTORY_CLASS_NAME)
-                || className.equals(IngestModuleFactoryLoader.SAMPLE_EXECUTABLE_MODULE_FACTORY_CLASS_NAME)) {
+        if (className.equals(IngestModuleFactoryLoader.SAMPLE_MODULE_FACTORY_CLASS_NAME)) {
+                //|| className.equals(IngestModuleFactoryLoader.SAMPLE_EXECUTABLE_MODULE_FACTORY_CLASS_NAME)) {
             return;
         }
 

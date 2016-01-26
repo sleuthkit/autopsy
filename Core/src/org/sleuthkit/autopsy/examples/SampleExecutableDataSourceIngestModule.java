@@ -327,7 +327,7 @@ public class SampleExecutableDataSourceIngestModule implements DataSourceIngestM
 
         // Add artifact attribute elements with user-defined types to the 
         // artifact element, adding value elements of assorted types.
-        for (int i = 0; i < 4; ++i) {
+        for (int i = 0; i < 5; ++i) {
             artifactAttrElement = doc.createElement(ExternalResultsXMLParser.TagNames.ATTRIBUTE_ELEM.toString());
             artifactAttrElement.setAttribute(ExternalResultsXMLParser.AttributeNames.TYPE_ATTR.toString(), "SampleArtifactAttributeType");
             artifactElement.appendChild(artifactAttrElement);
@@ -348,6 +348,10 @@ public class SampleExecutableDataSourceIngestModule implements DataSourceIngestM
                 case 3:
                     artifactAttributeValueElement.setAttribute(ExternalResultsXMLParser.AttributeNames.TYPE_ATTR.toString(), ExternalResultsXMLParser.AttributeValues.VALUE_TYPE_DOUBLE.toString());
                     artifactAttributeValueElement.setTextContent("4.0");
+                    break;
+                case 4:
+                    artifactAttributeValueElement.setAttribute(ExternalResultsXMLParser.AttributeNames.TYPE_ATTR.toString(), ExternalResultsXMLParser.AttributeValues.VALUE_TYPE_DATETIME.toString());
+                    artifactAttributeValueElement.setTextContent("7023372036854775839");
                     break;
             }
             artifactAttrElement.appendChild(artifactAttributeValueElement);
