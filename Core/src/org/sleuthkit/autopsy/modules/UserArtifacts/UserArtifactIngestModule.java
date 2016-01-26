@@ -75,8 +75,6 @@ public class UserArtifactIngestModule implements DataSourceIngestModule {
             return ProcessResult.ERROR;
         } catch (BlackboardException ex) {
             return ProcessResult.ERROR;
-        } catch (TskDataException ex) {
-            return ProcessResult.ERROR;
         }
     }
 

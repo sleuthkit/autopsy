@@ -153,7 +153,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             // encrypted pst: Add encrypted file artifact
             try {
                 BlackboardArtifact artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED);
-                artifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), EmailParserModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.encryptionFileLevel")));
+                artifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, EmailParserModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.encryptionFileLevel")));
 
                 try {
                     // index the artifact for keyword search
@@ -370,39 +370,39 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         String localPath = email.getLocalPath();
 
         if (to.isEmpty() == false) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_TO.getTypeID(), EmailParserModuleFactory.getModuleName(), to));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_TO, EmailParserModuleFactory.getModuleName(), to));
         }
         if (cc.isEmpty() == false) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CC.getTypeID(), EmailParserModuleFactory.getModuleName(), cc));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CC, EmailParserModuleFactory.getModuleName(), cc));
         }
         if (bcc.isEmpty() == false) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getTypeID(), EmailParserModuleFactory.getModuleName(), bcc));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_BCC, EmailParserModuleFactory.getModuleName(), bcc));
         }
         if (from.isEmpty() == false) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getTypeID(), EmailParserModuleFactory.getModuleName(), from));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_FROM, EmailParserModuleFactory.getModuleName(), from));
         }
         if (dateL > 0) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID(), EmailParserModuleFactory.getModuleName(), dateL));
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID(), EmailParserModuleFactory.getModuleName(), dateL));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_RCVD, EmailParserModuleFactory.getModuleName(), dateL));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_SENT, EmailParserModuleFactory.getModuleName(), dateL));
         }
         if (body.isEmpty() == false) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_PLAIN.getTypeID(), EmailParserModuleFactory.getModuleName(), body));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_PLAIN, EmailParserModuleFactory.getModuleName(), body));
         }
         if (bodyHTML.isEmpty() == false) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_HTML.getTypeID(), EmailParserModuleFactory.getModuleName(), bodyHTML));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_HTML, EmailParserModuleFactory.getModuleName(), bodyHTML));
         }
         if (rtf.isEmpty() == false) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_RTF.getTypeID(), EmailParserModuleFactory.getModuleName(), rtf));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_RTF, EmailParserModuleFactory.getModuleName(), rtf));
         }
-        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_MSG_ID.getTypeID(), EmailParserModuleFactory.getModuleName(), ((id < 0L) ? NbBundle
+        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_MSG_ID, EmailParserModuleFactory.getModuleName(), ((id < 0L) ? NbBundle
                 .getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.notAvail") : String.valueOf(id))));
         if (subject.isEmpty() == false) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID(), EmailParserModuleFactory.getModuleName(), subject));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SUBJECT, EmailParserModuleFactory.getModuleName(), subject));
         }
         if (localPath.isEmpty() == false) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), EmailParserModuleFactory.getModuleName(), localPath));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH, EmailParserModuleFactory.getModuleName(), localPath));
         } else {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), EmailParserModuleFactory.getModuleName(), "/foo/bar")); //NON-NLS
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH, EmailParserModuleFactory.getModuleName(), "/foo/bar")); //NON-NLS
         }
 
         try {

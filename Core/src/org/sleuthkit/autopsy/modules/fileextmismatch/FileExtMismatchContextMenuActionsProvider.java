@@ -71,28 +71,14 @@ public class FileExtMismatchContextMenuActionsProvider implements ContextMenuAct
                         }
 
                         if (af != null) {
-                            try {
                                 int i = af.getName().lastIndexOf(".");
                                 if ((i > -1) && ((i + 1) < af.getName().length())) {
                                     extStr = af.getName().substring(i + 1).toLowerCase();
                                 }
-
-                                ArrayList<BlackboardArtifact> artList = af.getAllArtifacts();
-                                for (BlackboardArtifact art : artList) {
-                                    List<BlackboardAttribute> atrList = art.getAttributes();
-                                    for (BlackboardAttribute att : atrList) {
-                                        if (att.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID()) {
-                                            mimeTypeStr = att.getValueString();
-                                            break;
-                                        }
-                                    }
-                                    if (!mimeTypeStr.isEmpty()) {
-                                        break;
-                                    }
+                                mimeTypeStr = af.getMIMEType();
+                                if(mimeTypeStr == null) {
+                                    mimeTypeStr = "";
                                 }
-                            } catch (TskCoreException ex) {
-                                Logger.getLogger(FileExtMismatchContextMenuActionsProvider.class.getName()).log(Level.SEVERE, "Error looking up blackboard attributes", ex); //NON-NLS
-                            }
 
                             if (!extStr.isEmpty() && !mimeTypeStr.isEmpty()) {
                                 // Limit max size so the context window doesn't get ridiculously wide

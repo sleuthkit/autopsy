@@ -138,12 +138,12 @@ class ReportGenerator {
      * Create a ReportProgressPanel for each report generation module selected
      * by the user.
      *
-     * @param tableModuleStates    The enabled/disabled state of each
-     *                             TableReportModule
-     * @param generalModuleStates  The enabled/disabled state of each
-     *                             GeneralReportModule
+     * @param tableModuleStates The enabled/disabled state of each
+     * TableReportModule
+     * @param generalModuleStates The enabled/disabled state of each
+     * GeneralReportModule
      * @param fileListModuleStates The enabled/disabled state of each
-     *                             FileReportModule
+     * FileReportModule
      */
     private void setupProgressPanels(Map<TableReportModule, Boolean> tableModuleStates, Map<GeneralReportModule, Boolean> generalModuleStates, Map<FileReportModule, Boolean> fileListModuleStates) {
         if (null != tableModuleStates) {
@@ -235,9 +235,9 @@ class ReportGenerator {
      * Run the TableReportModules using a SwingWorker.
      *
      * @param artifactTypeSelections the enabled/disabled state of the artifact
-     *                               types to be included in the report
-     * @param tagSelections          the enabled/disabled state of the tag names
-     *                               to be included in the report
+     * types to be included in the report
+     * @param tagSelections the enabled/disabled state of the tag names to be
+     * included in the report
      */
     public void generateTableReports(Map<ARTIFACT_TYPE, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) {
         if (!tableProgress.isEmpty() && null != artifactTypeSelections) {
@@ -250,7 +250,7 @@ class ReportGenerator {
      * Run the FileReportModules using a SwingWorker.
      *
      * @param enabledInfo the Information that should be included about each
-     *                    file in the report.
+     * file in the report.
      */
     public void generateFileListReports(Map<FileReportDataTypes, Boolean> enabledInfo) {
         if (!fileProgress.isEmpty() && null != enabledInfo) {
@@ -870,7 +870,7 @@ class ReportGenerator {
      * Get a List of the artifacts and data of the given type that pass the
      * given Tag Filter.
      *
-     * @param type           The artifact type to get
+     * @param type The artifact type to get
      * @param tagNamesFilter The tag names that should be included.
      *
      * @return a list of the filtered tags.
@@ -1493,10 +1493,10 @@ class ReportGenerator {
      * for date/time conversions if a module is supplied.
      *
      * @param attList list of BlackboardAttributes to be mapped
-     * @param module  the TableReportModule the mapping is for
+     * @param module the TableReportModule the mapping is for
      *
      * @return Map<Integer, String> of the BlackboardAttributes mapped to their
-     *         attribute type ID
+     * attribute type ID
      */
     public Map<Integer, String> getMappedAttributes(List<BlackboardAttribute> attList, TableReportModule... module) {
         Map<Integer, String> attributes = new HashMap<>();
@@ -1659,7 +1659,7 @@ class ReportGenerator {
          * correct order to be written to the report.
          *
          * @return List<String> row values. Values could be null if attribute is
-         *         not defined in artifact
+         * not defined in artifact
          *
          * @throws TskCoreException
          */
@@ -1841,12 +1841,12 @@ class ReportGenerator {
                     AbstractFile file = skCase.getAbstractFileById(getObjectID());
                     if (file != null) {
                         orderedRowData.add(file.getName());
-                        orderedRowData.add(file.getNameExtension());
-                        List<BlackboardAttribute> attrs = file.getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
-                        if (!attrs.isEmpty()) {
-                            orderedRowData.add(attrs.get(0).getValueString());
-                        } else {
+                        String mimeType = file.getMIMEType();
+                        if(mimeType == null) {
                             orderedRowData.add("");
+                        }
+                        else {
+                            orderedRowData.add(mimeType);
                         }
                         orderedRowData.add(file.getUniquePath());
                     } else {

@@ -159,7 +159,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                 }
                 Date date = exifDir.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL, timeZone);
                 if (date != null) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(), ExifParserModuleFactory.getModuleName(), date.getTime() / 1000));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED, ExifParserModuleFactory.getModuleName(), date.getTime() / 1000));
                 }
             }
 
@@ -170,13 +170,13 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                 if (loc != null) {
                     double latitude = loc.getLatitude();
                     double longitude = loc.getLongitude();
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(), ExifParserModuleFactory.getModuleName(), latitude));
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(), ExifParserModuleFactory.getModuleName(), longitude));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE, ExifParserModuleFactory.getModuleName(), latitude));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE, ExifParserModuleFactory.getModuleName(), longitude));
                 }
 
                 Rational altitude = gpsDir.getRational(GpsDirectory.TAG_ALTITUDE);
                 if (altitude != null) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID(), ExifParserModuleFactory.getModuleName(), altitude.doubleValue()));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE, ExifParserModuleFactory.getModuleName(), altitude.doubleValue()));
                 }
             }
 
@@ -185,12 +185,12 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             if (devDir != null) {
                 String model = devDir.getString(ExifIFD0Directory.TAG_MODEL);
                 if (model != null && !model.isEmpty()) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), ExifParserModuleFactory.getModuleName(), model));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL, ExifParserModuleFactory.getModuleName(), model));
                 }
 
                 String make = devDir.getString(ExifIFD0Directory.TAG_MAKE);
                 if (make != null && !make.isEmpty()) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID(), ExifParserModuleFactory.getModuleName(), make));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE, ExifParserModuleFactory.getModuleName(), make));
                 }
             }
 
