@@ -75,7 +75,6 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 import org.sleuthkit.autopsy.imagegallery.gui.NoGroupsDialog;
 import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
-import org.sleuthkit.autopsy.imagegallery.gui.navpanel.NavPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -94,6 +93,7 @@ import org.sleuthkit.datamodel.TskData;
 public final class ImageGalleryController implements Executor {
 
     private final Executor execDelegate = Executors.newSingleThreadExecutor();
+    private Runnable showTree;
 
     @Override
     public void execute(Runnable command) {
@@ -153,7 +153,7 @@ public final class ImageGalleryController implements Executor {
 
     private Node infoOverlay;
     private SleuthkitCase sleuthKitCase;
-    private NavPanel navPanel;
+//    private NavPanel navPanel;
 
     public ReadOnlyBooleanProperty getMetaDataCollapsed() {
         return metaDataCollapsed.getReadOnlyProperty();
@@ -266,8 +266,9 @@ public final class ImageGalleryController implements Executor {
 
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
     public void advance(GroupViewState newState, boolean forceShowTree) {
-        if (Objects.nonNull(navPanel) && forceShowTree) {
-            navPanel.showTree();
+        if (forceShowTree) {
+            showTree.run();
+
         }
         historyManager.advance(newState);
     }
@@ -482,8 +483,8 @@ public final class ImageGalleryController implements Executor {
         return tagsManager;
     }
 
-    public void setNavPanel(NavPanel navPanel) {
-        this.navPanel = navPanel;
+    public void setShowTree(Runnable showTree) {
+        this.showTree = showTree;
     }
 
     public UndoRedoManager getUndoManager() {

@@ -21,39 +21,40 @@ package org.sleuthkit.autopsy.imagegallery.gui.navpanel;
 import com.google.common.collect.ImmutableList;
 import java.util.Comparator;
 import java.util.function.Function;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 
 /**
  *
  */
-final class TreeNodeComparator<T extends Comparable<T>> implements Comparator<TreeNode> {
+final class GroupComparators<T extends Comparable<T>> implements Comparator<DrawableGroup> {
 
-    static final TreeNodeComparator<Long> UNCATEGORIZED_COUNT =
-            new TreeNodeComparator<>("Uncategorized Count", TreeNode::getUncategorizedCount, String::valueOf, false);
+    static final GroupComparators<Long> UNCATEGORIZED_COUNT =
+            new GroupComparators<>("Uncategorized Count", DrawableGroup::getUncategorizedCount, String::valueOf, false);
 
-    static final TreeNodeComparator<String> ALPHABETICAL =
-            new TreeNodeComparator<>("Group Name", TreeNode::getGroupByValueDislpayName, String::valueOf, false);
+    static final GroupComparators<String> ALPHABETICAL =
+            new GroupComparators<>("Group Name", DrawableGroup::getGroupByValueDislpayName, String::valueOf, false);
 
-    static final TreeNodeComparator<Long> HIT_COUNT =
-            new TreeNodeComparator<>("Hit Count", TreeNode::getHashSetHitsCount, String::valueOf, true);
+    static final GroupComparators<Long> HIT_COUNT =
+            new GroupComparators<>("Hit Count", DrawableGroup::getHashSetHitsCount, String::valueOf, true);
 
-    static final TreeNodeComparator<Integer> FILE_COUNT =
-            new TreeNodeComparator<>("Group Size", TreeNode::getSize, String::valueOf, true);
+    static final GroupComparators<Integer> FILE_COUNT =
+            new GroupComparators<>("Group Size", DrawableGroup::getSize, String::valueOf, true);
 
-    static final TreeNodeComparator<Double> HIT_FILE_RATIO =
-            new TreeNodeComparator<>("Hit Density", (treeNode) -> treeNode.getHashHitDensity(), density -> String.format("%.2f", density), true);
+    static final GroupComparators<Double> HIT_FILE_RATIO =
+            new GroupComparators<>("Hit Density", DrawableGroup::getHashHitDensity, density -> String.format("%.2f", density), true);
 
-    private final static ImmutableList<TreeNodeComparator<?>> values = ImmutableList.of(UNCATEGORIZED_COUNT, ALPHABETICAL, HIT_COUNT, FILE_COUNT, HIT_FILE_RATIO);
+    private final static ImmutableList<GroupComparators<?>> values = ImmutableList.of(UNCATEGORIZED_COUNT, ALPHABETICAL, HIT_COUNT, FILE_COUNT, HIT_FILE_RATIO);
 
-    public static ImmutableList<TreeNodeComparator<?>> getValues() {
+    public static ImmutableList<GroupComparators<?>> getValues() {
         return values;
     }
 
-    private final Function<TreeNode, T> extractor;
+    private final Function<DrawableGroup, T> extractor;
     private final Function<T, String> valueFormatter;
     private final boolean orderReveresed;
     private final String displayName;
 
-    private TreeNodeComparator(String displayName, Function<TreeNode, T> extractor, Function<T, String> formatter, boolean defaultOrderReversed) {
+    private GroupComparators(String displayName, Function<DrawableGroup, T> extractor, Function<T, String> formatter, boolean defaultOrderReversed) {
         this.displayName = displayName;
         this.extractor = extractor;
         this.orderReveresed = defaultOrderReversed;
@@ -61,7 +62,7 @@ final class TreeNodeComparator<T extends Comparable<T>> implements Comparator<Tr
     }
 
     @Override
-    public int compare(TreeNode o1, TreeNode o2) {
+    public int compare(DrawableGroup o1, DrawableGroup o2) {
         int compareTo = extractor.apply(o1).compareTo(extractor.apply(o2));
         return orderReveresed ? -compareTo : compareTo;
     }
@@ -75,8 +76,7 @@ final class TreeNodeComparator<T extends Comparable<T>> implements Comparator<Tr
         return displayName;
     }
 
-    String getFormattedValueOfTreeNode(TreeNode group) {
+    String getFormattedValueOfGroup(DrawableGroup group) {
         return valueFormatter.apply(extractor.apply(group));
     }
-
 }
