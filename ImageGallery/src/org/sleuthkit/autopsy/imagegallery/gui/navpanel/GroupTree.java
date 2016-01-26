@@ -30,12 +30,13 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.ToolBar;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.BorderPane;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
@@ -45,7 +46,10 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 /**
  *
  */
-public class GroupTree extends TreeView<GroupTreeNode> {
+public class GroupTree extends BorderPane {
+
+    @FXML
+    private ToolBar toolBar;
 
     @FXML
     private ComboBox<GroupComparators<?>> sortByBox;
@@ -56,15 +60,29 @@ public class GroupTree extends TreeView<GroupTreeNode> {
     @FXML
     private RadioButton descRadio;
 
-    private final GroupTreeItem navTreeRoot = new GroupTreeItem("", null, true);
+    private final GroupTreeItem groupTreeRoot = new GroupTreeItem("", null, true);
+    private final TreeView<GroupTreeNode> groupTree = new TreeView<>(groupTreeRoot);
 
     private final ImageGalleryController controller;
 
     public GroupTree(ImageGalleryController controller) {
         this.controller = controller;
+        FXMLConstructor.construct(this, "NavPanel.fxml");
+    }
 
-        VBox.setVgrow(this, Priority.ALWAYS);
+    @FXML
+    void initialize() {
 
+        assert sortByBox != null : "fx:id=\"sortByBox\" was not injected: check your FXML file 'GroupTree.fxml'.";
+        assert ascRadio != null : "fx:id=\"ascRadio\" was not injected: check your FXML file 'GroupTree.fxml'.";
+        assert orderGroup != null : "fx:id=\"orderGroup\" was not injected: check your FXML file 'GroupTree.fxml'.";
+        assert descRadio != null : "fx:id=\"descRadio\" was not injected: check your FXML file 'GroupTree.fxml'.";
+        assert groupTree != null : "fx:id=\"groupTree\" was not injected: check your FXML file 'GroupTree.fxml'.";
+
+        setCenter(groupTree);
+
+        toolBar.setVisible(false);
+        toolBar.setManaged(false);
         sortByBox.getItems().setAll(GroupComparators.getValues());
         sortByBox.getSelectionModel().select(GroupComparators.ALPHABETICAL);
 
@@ -78,12 +96,10 @@ public class GroupTree extends TreeView<GroupTreeNode> {
         });
         orderGroup.selectedToggleProperty().addListener(observable -> resortTree());
 
-        setCellFactory(treeView -> new GroupTreeCell(sortByBox.getSelectionModel().selectedItemProperty()));
-        setShowRoot(false);
-        getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-        getSelectionModel().selectedItemProperty().addListener(o -> updateControllersGroup());
-
-        setRoot(navTreeRoot);
+        groupTree.setCellFactory(treeView -> new GroupTreeCell(sortByBox.getSelectionModel().selectedItemProperty()));
+        groupTree.setShowRoot(false);
+        groupTree.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+        groupTree.getSelectionModel().selectedItemProperty().addListener(o -> updateControllersGroup());
 
         controller.getGroupManager().getAnalyzedGroups().addListener((ListChangeListener.Change<? extends DrawableGroup> change) -> {
             while (change.next()) {
@@ -104,7 +120,7 @@ public class GroupTree extends TreeView<GroupTreeNode> {
     }
 
     private void insertGroup(DrawableGroup g) {
-        navTreeRoot.insert(groupingToPath(g), g, true);
+        groupTreeRoot.insert(groupingToPath(g), g, true);
     }
 
     /**
@@ -114,14 +130,14 @@ public class GroupTree extends TreeView<GroupTreeNode> {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void setFocusedGroup(DrawableGroup grouping) {
-        final GroupTreeItem treeItemForGroup = navTreeRoot.getTreeItemForPath(groupingToPath(grouping));
+        final GroupTreeItem treeItemForGroup = groupTreeRoot.getTreeItemForPath(groupingToPath(grouping));
 
         if (treeItemForGroup != null) {
-            getSelectionModel().select(treeItemForGroup);
+            groupTree.getSelectionModel().select(treeItemForGroup);
             Platform.runLater(() -> {
-                int row = getRow(treeItemForGroup);
+                int row = groupTree.getRow(treeItemForGroup);
                 if (row != -1) {
-                    scrollTo(row - 2); //put newly selected row 3 from the top
+                    groupTree.scrollTo(row - 2); //put newly selected row 3 from the top
                 }
             });
         }
@@ -133,7 +149,7 @@ public class GroupTree extends TreeView<GroupTreeNode> {
      * @param treeRoot the value of treeRoot
      */
     private void removeFromTree(DrawableGroup g) {
-        Optional.ofNullable(navTreeRoot.getTreeItemForGroup(g))
+        Optional.ofNullable(groupTreeRoot.getTreeItemForGroup(g))
                 .ifPresent(GroupTreeItem::removeFromParent);
     }
 
@@ -149,7 +165,7 @@ public class GroupTree extends TreeView<GroupTreeNode> {
     }
 
     private void updateControllersGroup() {
-        Optional.ofNullable(getSelectionModel().getSelectedItem())
+        Optional.ofNullable(groupTree.getSelectionModel().getSelectedItem())
                 .map(TreeItem::getValue)
                 .map(GroupTreeNode::getGroup)
                 .ifPresent(group -> controller.advance(GroupViewState.tile(group), false));
@@ -166,8 +182,8 @@ public class GroupTree extends TreeView<GroupTreeNode> {
         if (orderGroup.getSelectedToggle() == descRadio) {
             groupComparator = groupComparator.reversed();
         }
-        TreeItem<GroupTreeNode> selectedItem = getSelectionModel().getSelectedItem();
-        navTreeRoot.resortChildren(groupComparator);
-        getSelectionModel().select(selectedItem);
+        TreeItem<GroupTreeNode> selectedItem = groupTree.getSelectionModel().getSelectedItem();
+        groupTreeRoot.resortChildren(groupComparator);
+        groupTree.getSelectionModel().select(selectedItem);
     }
 }

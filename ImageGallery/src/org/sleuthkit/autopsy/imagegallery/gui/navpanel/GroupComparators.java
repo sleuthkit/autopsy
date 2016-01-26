@@ -41,7 +41,7 @@ final class GroupComparators<T extends Comparable<T>> implements Comparator<Draw
             new GroupComparators<>("Group Size", DrawableGroup::getSize, String::valueOf, true);
 
     static final GroupComparators<Double> HIT_FILE_RATIO =
-            new GroupComparators<>("Hit Density", DrawableGroup::getHashHitDensity, density -> String.format("%.2f", density), true);
+            new GroupComparators<>("Hit Density", DrawableGroup::getHashHitDensity, density -> String.format("%.2f", density) + "%", true);
 
     private final static ImmutableList<GroupComparators<?>> values = ImmutableList.of(UNCATEGORIZED_COUNT, ALPHABETICAL, HIT_COUNT, FILE_COUNT, HIT_FILE_RATIO);
 

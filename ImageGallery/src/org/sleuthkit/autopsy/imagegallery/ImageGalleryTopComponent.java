@@ -69,11 +69,11 @@ import org.sleuthkit.autopsy.imagegallery.gui.navpanel.HashHitGroupList;
     "HINT_ImageGalleryTopComponent=This is a Image/Video Gallery window"
 })
 public final class ImageGalleryTopComponent extends TopComponent implements ExplorerManager.Provider, Lookup.Provider {
-    
+
     public final static String PREFERRED_ID = "ImageGalleryTopComponent";
     private static final Logger LOGGER = Logger.getLogger(ImageGalleryTopComponent.class.getName());
     private static boolean topComponentInitialized = false;
-    
+
     public static void openTopComponent() {
         //TODO:eventually move to this model, throwing away everything and rebuilding controller groupmanager etc for each case.
         //        synchronized (OpenTimelineAction.class) {
@@ -95,7 +95,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             tc.requestActive();
         }
     }
-    
+
     public static void closeTopComponent() {
         if (topComponentInitialized) {
             final TopComponent etc = WindowManager.getDefault().findTopComponent("ImageGalleryTopComponent");
@@ -108,39 +108,39 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             }
         }
     }
-    
+
     private final ExplorerManager em = new ExplorerManager();
-    
+
     private final Lookup lookup = (ExplorerUtils.createLookup(em, getActionMap()));
-    
+
     private final ImageGalleryController controller = ImageGalleryController.getDefault();
-    
+
     private SplitPane splitPane;
-    
+
     private StackPane centralStack;
-    
+
     private BorderPane borderPane = new BorderPane();
-    
+
     private StackPane fullUIStack;
-    
+
     private MetaDataPane metaDataTable;
-    
+
     private GroupPane groupPane;
-    
+
     private GroupTree groupTree;
     private HashHitGroupList hashHitList;
-    
+
     private VBox leftPane;
-    
+
     private Scene myScene;
-    
+
     public ImageGalleryTopComponent() {
-        
+
         setName(Bundle.CTL_ImageGalleryTopComponent());
         setToolTipText(Bundle.HINT_ImageGalleryTopComponent());
-        
+
         initComponents();
-        
+
         Platform.runLater(() -> {//initialize jfx ui
             fullUIStack = new StackPane(); //this is passed into controller
             myScene = new Scene(fullUIStack);
@@ -152,20 +152,20 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             borderPane.setCenter(splitPane);
             borderPane.setTop(Toolbar.getDefault(controller));
             borderPane.setBottom(new StatusBar(controller));
-            
+
             metaDataTable = new MetaDataPane(controller);
-            
+
             groupTree = new GroupTree(controller);
             hashHitList = new HashHitGroupList(controller);
-            
+
             Tab groupTreeTab = new Tab("All Groups", groupTree);
             groupTreeTab.setGraphic(new ImageView("org/sleuthkit/autopsy/imagegallery/images/Folder-icon.png"));
-            
-            Tab hashHitsTab = new Tab("Groups with Hash Hits", hashHitList);
+
+            Tab hashHitsTab = new Tab("Hash Hits", hashHitList);
             hashHitsTab.setGraphic(new ImageView("org/sleuthkit/autopsy/imagegallery/images/hashset_hits.png"));
-            
+
             TabPane tabPane = new TabPane(groupTreeTab, hashHitsTab);
-            
+
             VBox.setVgrow(tabPane, Priority.ALWAYS);
             leftPane = new VBox(tabPane, new SummaryTablePane(controller));
             SplitPane.setResizableWithParent(leftPane, Boolean.FALSE);
@@ -173,7 +173,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             SplitPane.setResizableWithParent(metaDataTable, Boolean.FALSE);
             splitPane.getItems().addAll(leftPane, centralStack, metaDataTable);
             splitPane.setDividerPositions(0.0, 1.0);
-            
+
             ImageGalleryController.getDefault().setStacks(fullUIStack, centralStack);
             ImageGalleryController.getDefault().setShowTree(() -> tabPane.getSelectionModel().select(groupTreeTab));
         });
@@ -208,29 +208,29 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
     public void componentOpened() {
 
     }
-    
+
     @Override
     public void componentClosed() {
         //TODO: we could do some cleanup here
     }
-    
+
     void writeProperties(java.util.Properties p) {
         // better to version settings since initial version as advocated at
         // http://wiki.apidesign.org/wiki/PropertyFiles
         p.setProperty("version", "1.0");
         // TODO store your settings
     }
-    
+
     void readProperties(java.util.Properties p) {
         String version = p.getProperty("version");
         // TODO read your settings according to their version
     }
-    
+
     @Override
     public ExplorerManager getExplorerManager() {
         return em;
     }
-    
+
     @Override
     public Lookup getLookup() {
         return lookup;

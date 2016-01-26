@@ -4,17 +4,17 @@
 <?import javafx.collections.FXCollections?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.RadioButton?>
 <?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.control.ToolBar?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.VBox?>
 
-<fx:root maxHeight="1.7976931348623157E308" type="VBox" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1">
-   <children>
-  <ToolBar>
+<fx:root prefHeight="200.0" prefWidth="200.0" type="BorderPane" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1">
+   <top>
+  <ToolBar fx:id="toolBar" BorderPane.alignment="CENTER">
     <items>
       <Label text="Sort By:" />
       <ComboBox fx:id="sortByBox" maxWidth="-Infinity" minWidth="-Infinity">
@@ -53,6 +53,5 @@
             </VBox>
     </items>
   </ToolBar>
-      <ListView fx:id="groupList" prefHeight="200.0" prefWidth="200.0" />
-   </children>
+   </top>
 </fx:root>

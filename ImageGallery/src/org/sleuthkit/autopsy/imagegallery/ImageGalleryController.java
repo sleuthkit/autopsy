@@ -266,9 +266,8 @@ public final class ImageGalleryController implements Executor {
 
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
     public void advance(GroupViewState newState, boolean forceShowTree) {
-        if (forceShowTree) {
+        if (forceShowTree && showTree != null) {
             showTree.run();
-
         }
         historyManager.advance(newState);
     }
