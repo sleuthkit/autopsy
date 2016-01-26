@@ -18,124 +18,79 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui.navpanel;
 
-import com.google.common.eventbus.Subscribe;
-import java.util.Comparator;
-import java.util.Optional;
+import java.util.function.Function;
 import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListView;
-import javafx.scene.control.RadioButton;
-import javafx.scene.control.SelectionMode;
-import javafx.scene.control.Tab;
-import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.SelectionModel;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
-import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 
 /**
- *
+ * Shows only groups with hash hits in a flat list, with controls to adjust
+ * sorting of list.
  */
-public class HashHitGroupList extends Tab {
+final public class HashHitGroupList extends NavPanel<DrawableGroup> {
 
-    @FXML
-    private BorderPane borderPane;
-    @FXML
-    private ComboBox<GroupComparators<?>> sortByBox;
-    @FXML
-    private ToggleGroup orderGroup;
-    @FXML
-    private RadioButton ascRadio;
-    @FXML
-    private RadioButton descRadio;
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private final ListView<DrawableGroup> groupList = new ListView<>();
 
-    ListView<DrawableGroup> groupList = new ListView<>();
-
-    private final ImageGalleryController controller;
+    /**
+     * sorted list of groups, setting a new comparator on this changes the
+     * sorting in the ListView.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private SortedList<DrawableGroup> sorted;
 
-    @Subscribe
-    public void handleCategoryChange(CategoryManager.CategoryChangeEvent event) {
-        resortGroupList();
-    }
-
     public HashHitGroupList(ImageGalleryController controller) {
-        this.controller = controller;
+        super(controller);
         FXMLConstructor.construct(this, "NavPanel.fxml");
     }
 
-    private void updateControllersGroup() {
-        Optional.ofNullable(groupList.getSelectionModel().getSelectedItem())
-                .ifPresent(group -> controller.advance(GroupViewState.tile(group), false));
-    }
-
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private void resortGroupList() {
-//        DrawableGroup selectedItem = groupList.getSelectionModel().getSelectedItem();
-//        hashTreeRoot.resortChildren(comparator);
-        sorted.setComparator(getComparator());
-//        groupList.getSelectionModel().select(selectedItem);
+    @Override
+    SelectionModel<DrawableGroup> getSelectionModel() {
+        return groupList.getSelectionModel();
     }
 
-    private Comparator<DrawableGroup> getComparator() {
-        Comparator<DrawableGroup> treeNodeComparator = sortByBox.getSelectionModel().getSelectedItem();
-        return (orderGroup.getSelectedToggle() == ascRadio)
-                ? treeNodeComparator
-                : treeNodeComparator.reversed();
+    @Override
+    Function< DrawableGroup, DrawableGroup> getDataItemMapper() {
+        return Function.identity(); // this view already works with groups, so do nothing
+    }
+
+    @Override
+    void applyGroupComparator() {
+        sorted.setComparator(getComparator());
     }
 
     @FXML
+    @Override
     void initialize() {
-        assert sortByBox != null : "fx:id=\"sortByBox\" was not injected: check your FXML file 'HashHitGroupList.fxml'.";
-        assert ascRadio != null : "fx:id=\"ascRadio\" was not injected: check your FXML file 'HashHitGroupList.fxml'.";
-        assert orderGroup != null : "fx:id=\"orderGroup\" was not injected: check your FXML file 'HashHitGroupList.fxml'.";
-        assert descRadio != null : "fx:id=\"descRadio\" was not injected: check your FXML file 'HashHitGroupList.fxml'.";
-        assert groupList != null : "fx:id=\"groupList\" was not injected: check your FXML file 'HashHitGroupList.fxml'.";
+        super.initialize();
 
         setText("Only Hash Hits");
         setGraphic(new ImageView("org/sleuthkit/autopsy/imagegallery/images/hashset_hits.png"));
 
-        borderPane.setCenter(groupList);
-        sorted = controller.getGroupManager().getAnalyzedGroups().filtered((DrawableGroup t) -> t.getHashSetHitsCount() > 0).sorted();
+        getBorderPane().setCenter(groupList);
+        sorted = getController().getGroupManager().getAnalyzedGroups().filtered((DrawableGroup t) -> t.getHashSetHitsCount() > 0).sorted();
 
-        sortByBox.getItems().setAll(GroupComparators.getValues());
-        sortByBox.getSelectionModel().select(GroupComparators.ALPHABETICAL);
+        groupList.setCellFactory(treeView -> new GroupListCell(getSortByBox().getSelectionModel().selectedItemProperty()));
 
-        sortByBox.getSelectionModel().selectedItemProperty().addListener(observable -> {
-            if (sortByBox.getSelectionModel().getSelectedItem() == GroupComparators.UNCATEGORIZED_COUNT) {
-                controller.getCategoryManager().registerListener(HashHitGroupList.this);
-            } else {
-                controller.getCategoryManager().unregisterListener(HashHitGroupList.this);
-            }
-
-            sorted.setComparator(getComparator());
-        });
-        orderGroup.selectedToggleProperty().addListener(observable -> resortGroupList());
-
-        groupList.setCellFactory(treeView -> new GroupListCell(sortByBox.getSelectionModel().selectedItemProperty()));
-        groupList.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-        groupList.getSelectionModel().selectedItemProperty().addListener(o -> updateControllersGroup());
         groupList.setItems(sorted);
-        controller.viewState().addListener(observable -> {
-            Optional.ofNullable(controller.viewState().get())
-                    .map(GroupViewState::getGroup)
-                    .ifPresent(this::setFocusedGroup);
-        });
-
+       
     }
 
-    /**
-     * Set the tree to the passed in group
-     *
-     * @param grouping
-     */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private void setFocusedGroup(DrawableGroup grouping) {
+    @Override
+    void setFocusedGroup(DrawableGroup grouping) {
         groupList.getSelectionModel().select(grouping);
+    }
+
+    @Override
+    GroupComparators<Long> getDefaultComparator() {
+        return GroupComparators.HIT_COUNT;
     }
 }
