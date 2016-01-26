@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
@@ -35,6 +36,7 @@ import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -92,12 +94,13 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
 
         FileExtMismatchXML xmlLoader = FileExtMismatchXML.getDefault();
         SigTypeToExtMap = xmlLoader.load();
+
     }
 
     @Override
     public ProcessResult process(AbstractFile abstractFile) {
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
-        
+
         // skip non-files
         if ((abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
                 || (abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
@@ -121,14 +124,14 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
             if (mismatchDetected) {
                 // add artifact               
                 BlackboardArtifact bart = abstractFile.newArtifact(ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED);
-                
+
                 try {
                     // index the artifact for keyword search
                     blackboard.indexArtifact(bart);
                 } catch (Blackboard.BlackboardException ex) {
                     logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", bart.getDisplayName()), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(
-                        NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), bart.getDisplayName());
+                            NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), bart.getDisplayName());
                 }
 
                 services.fireModuleDataEvent(new ModuleDataEvent(FileExtMismatchDetectorModuleFactory.getModuleName(), ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED, Collections.singletonList(bart)));
@@ -147,44 +150,37 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
      *
      * @return false if the two match. True if there is a mismatch.
      */
-    private boolean compareSigTypeToExt(AbstractFile abstractFile) {
-        try {
-            String currActualExt = abstractFile.getNameExtension();
+    private boolean compareSigTypeToExt(AbstractFile abstractFile) throws TskCoreException {
+        String currActualExt = abstractFile.getNameExtension();
 
-            // If we are skipping names with no extension
-            if (settings.skipFilesWithNoExtension() && currActualExt.isEmpty()) {
+        // If we are skipping names with no extension
+        if (settings.skipFilesWithNoExtension() && currActualExt.isEmpty()) {
+            return false;
+        }
+        String currActualSigType = abstractFile.getMIMEType();
+        if (currActualSigType == null) {
+            return false;
+        }
+        if (settings.skipFilesWithTextPlainMimeType()) {
+            if (!currActualExt.isEmpty() && currActualSigType.equals("text/plain")) { //NON-NLS
                 return false;
             }
+        }
 
-            // find file_sig value.
-            // check the blackboard for a file type attribute
-            ArrayList<BlackboardAttribute> attributes = abstractFile.getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
-            for (BlackboardAttribute attribute : attributes) {
-                String currActualSigType = attribute.getValueString();
-                if (settings.skipFilesWithTextPlainMimeType()) {
-                    if (!currActualExt.isEmpty() && currActualSigType.equals("text/plain")) { //NON-NLS
+        //get known allowed values from the map for this type
+        String[] allowedExtArray = SigTypeToExtMap.get(currActualSigType);
+        if (allowedExtArray != null) {
+            List<String> allowedExtList = Arrays.asList(allowedExtArray);
+
+            // see if the filename ext is in the allowed list
+            if (allowedExtList != null) {
+                for (String e : allowedExtList) {
+                    if (e.equals(currActualExt)) {
                         return false;
                     }
                 }
-
-                //get known allowed values from the map for this type
-                String[] allowedExtArray = SigTypeToExtMap.get(currActualSigType);
-                if (allowedExtArray != null) {
-                    List<String> allowedExtList = Arrays.asList(allowedExtArray);
-
-                    // see if the filename ext is in the allowed list
-                    if (allowedExtList != null) {
-                        for (String e : allowedExtList) {
-                            if (e.equals(currActualExt)) {
-                                return false;
-                            }
-                        }
-                        return true; //potential mismatch
-                    }
-                }
+                return true; //potential mismatch
             }
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error while getting file signature from blackboard.", ex); //NON-NLS
         }
 
         return false;
