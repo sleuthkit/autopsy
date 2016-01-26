@@ -20,7 +20,9 @@ package org.sleuthkit.autopsy.casemodule;
 
 import javax.swing.JPanel;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.UUID;
 import javax.swing.filechooser.FileFilter;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
@@ -29,7 +31,10 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 
 /**
- * Image data source processor.
+ * An image data source processor with a configuration panel. This data source
+ * processor implements the DataSourceProcessor service provider interface to
+ * allow integration with the add data source wizard. It also provides a run
+ * method overload to allow it to be used independently of the configuration UI.
  */
 @ServiceProvider(service = DataSourceProcessor.class)
 public class ImageDSProcessor implements DataSourceProcessor {
@@ -41,13 +46,13 @@ public class ImageDSProcessor implements DataSourceProcessor {
     private static final String allDesc = NbBundle.getMessage(ImageDSProcessor.class, "ImageDSProcessor.allDesc.text");
     private static final GeneralFilter allFilter = new GeneralFilter(allExt, allDesc);
     private static final List<FileFilter> filtersList = new ArrayList<>();
-    private final ImageFilePanel imageFilePanel;
+    private final ImageFilePanel configPanel;
+    private String dataSourceId;
     private String imagePath;
     private String timeZone;
-    private boolean noFatOrphans;
-    private boolean imageOptionsSet = false;
+    private boolean ignoreFatOrphanFiles;
+    private boolean configured;
     private AddImageTask addImageTask;
-    DataSourceProcessorCallback callbackObj = null;
 
     static {
         filtersList.add(allFilter);
@@ -57,18 +62,20 @@ public class ImageDSProcessor implements DataSourceProcessor {
         allExt.addAll(GeneralFilter.ENCASE_IMAGE_EXTS);
     }
 
-    /*
-     * Constructs an uninitialized data source processor with a configuration
-     * panel. The data source processor will not run if the configuration panel
-     * inputs have not been completed and validated.
+    /**
+     * Constructs a local drive data source processor with a configuration
+     * panel. This data source processor implements the DataSourceProcessor
+     * service provider interface to allow integration with the add data source
+     * wizard. It also provides a run method overload to allow it to be used
+     * independently of the configuration UI.
      */
     public ImageDSProcessor() {
-        imageFilePanel = ImageFilePanel.createInstance(ImageDSProcessor.class.getName(), filtersList);
+        configPanel = ImageFilePanel.createInstance(ImageDSProcessor.class.getName(), filtersList);
     }
 
     /**
-     * Gets the display names of the types of data sources this type of data
-     * source processor is able to process.
+     * Gets the display name of the type of data source this type of data source
+     * processor is able to process.
      *
      * @return The data source type display name.
      */
@@ -77,7 +84,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
     }
 
     /**
-     * Gets the display names of the types of data sources this data source
+     * Gets the display name of the type of data source this data source
      * processor is able to process.
      *
      * @return The data source type display name.
@@ -91,50 +98,79 @@ public class ImageDSProcessor implements DataSourceProcessor {
      * Gets the a configuration panel for this data source processor.
      *
      * @return JPanel The configuration panel.
-     *
      */
     @Override
     public JPanel getPanel() {
-        imageFilePanel.readSettings();
-        imageFilePanel.select();
-        return imageFilePanel;
+        configPanel.readSettings();
+        configPanel.select();
+        return configPanel;
     }
 
     /**
      * Indicates whether or not the inputs to the configuration panel are valid.
      *
      * @return True or false.
-     *
      */
     @Override
     public boolean isPanelValid() {
-        return imageFilePanel.validatePanel();
+        return configPanel.validatePanel();
     }
 
     /**
-     * Runs the data source processor in a separate thread.
+     * Runs the data source processor in a separate thread. Should only be
+     * called after further configuration has been completed.
      *
-     * @param progressMonitor Progress monitor to report progress during
-     *                        processing.
-     * @param cbObj           Callback to call when processing is done.
-     *
+     * @param monitor Progress monitor to report progress during processing.
+     * @param cbObj   Callback to call when processing is done.
      */
     @Override
-    public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback cbObj) {
-        callbackObj = cbObj;
-        if (!imageOptionsSet) {
-            imageFilePanel.storeSettings();
-            imagePath = imageFilePanel.getContentPaths();
-            timeZone = imageFilePanel.getTimeZone();
-            noFatOrphans = imageFilePanel.getNoFatOrphans();
+    public void run(DataSourceProcessorProgressMonitor monitor, DataSourceProcessorCallback cbObj) {
+        /*
+         * TODO (AUT-1867): Configuration is not currently enforced. This code
+         * assumes that the ingest panel is providing validated inputs.
+         */
+        if (!configured) {
+            configPanel.storeSettings();
+            if (null == dataSourceId) {
+                dataSourceId = UUID.randomUUID().toString();
+            }
+            imagePath = configPanel.getContentPaths();
+            timeZone = configPanel.getTimeZone();
+            ignoreFatOrphanFiles = configPanel.getNoFatOrphans();
+            configured = true;
         }
-        addImageTask = new AddImageTask(imagePath, timeZone, noFatOrphans, progressMonitor, cbObj);
+        addImageTask = new AddImageTask(dataSourceId, imagePath, timeZone, ignoreFatOrphanFiles, monitor, cbObj);
         new Thread(addImageTask).start();
     }
 
     /**
-     * Cancel the processing of the data source.
+     * Runs the data source processor in a separate thread without requiring use
+     * the configuration panel.
      *
+     * @param dataSourceId         An ASCII-printable identifier for the data
+     *                             source that is intended to be unique across
+     *                             multiple cases (e.g., a UUID).
+     * @param imagePath            Path to the image file.
+     * @param timeZone             The time zone to use when processing dates
+     *                             and times for the image, obtained from
+     *                             java.util.TimeZone.getID.
+     * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
+     *                             FAT filesystem.
+     * @param monitor              Progress monitor to report progress during
+     *                             processing.
+     * @param cbObj                Callback to call when processing is done.
+     */
+    public void run(String dataSourceId, String imagePath, String timeZone, boolean ignoreFatOrphanFiles, DataSourceProcessorProgressMonitor monitor, DataSourceProcessorCallback cbObj) {
+        this.dataSourceId = dataSourceId;
+        this.imagePath = imagePath;
+        this.timeZone = timeZone;
+        this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
+        configured = true;
+        run(monitor, cbObj);
+    }
+
+    /**
+     * Cancels the processing of the data source.
      */
     @Override
     public void cancel() {
@@ -142,32 +178,41 @@ public class ImageDSProcessor implements DataSourceProcessor {
     }
 
     /**
-     * Reset the configuration of this data source processor, including its
+     * Resets the configuration of this data source processor, including its
      * configuration panel.
      */
     @Override
     public void reset() {
-        imageFilePanel.reset();
-        imageOptionsSet = false;
+        dataSourceId = null;
         imagePath = null;
         timeZone = null;
-        noFatOrphans = false;
+        ignoreFatOrphanFiles = false;
+        configPanel.reset();
+        configured = false;
     }
 
     /**
      * Sets the configuration of the data source processor without using the
-     * configuration panel.
+     * configuration panel. The data source processor will assign a UUID to the
+     * data source and will use the time zone of the machine executing this code
+     * when when processing dates and times for the image.
      *
-     * @param imgPath Path to the image file.
-     * @param tz      The time zone to use when processing dates and times for
-     *                the image.
-     * @param noFat   Whether to parse orphans if the image has a FAT filesystem.
+     * @param imagePath            Path to the image file.
+     * @param timeZone             The time zone to use when processing dates
+     *                             and times for the image, obtained from
+     *                             java.util.TimeZone.getID.
+     * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
+     *                             FAT filesystem.
+     *
+     * @deprecated Use the run method instead.
      */
-    public void setDataSourceOptions(String imgPath, String tz, boolean noFat) {
-        this.imagePath = imgPath;
-        this.timeZone = tz;
-        this.noFatOrphans = noFat;
-        imageOptionsSet = true;
+    @Deprecated
+    public void setDataSourceOptions(String imagePath, String timeZone, boolean ignoreFatOrphanFiles) {
+        this.dataSourceId = UUID.randomUUID().toString();
+        this.imagePath = imagePath;
+        this.timeZone = Calendar.getInstance().getTimeZone().getID();
+        this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
+        this.configured = true;
     }
 
 }

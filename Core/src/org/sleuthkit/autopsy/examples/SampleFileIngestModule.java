@@ -73,9 +73,6 @@ class SampleFileIngestModule implements FileIngestModule {
 
     @Override
     public IngestModule.ProcessResult process(AbstractFile file) {
-        if (false) {
-            return IngestModule.ProcessResult.ERROR;
-        }
 
         // Skip anything other than actual file system files.
         if ((file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)

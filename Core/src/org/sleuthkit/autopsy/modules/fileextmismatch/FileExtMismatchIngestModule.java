@@ -58,7 +58,6 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
     private static final HashMap<Long, IngestJobTotals> totalsForIngestJobs = new HashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private static Blackboard blackboard;
-    private FileTypeDetector fileTypeDetector;
 
     private static class IngestJobTotals {
 
@@ -90,11 +89,6 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
 
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
-        try {
-            fileTypeDetector = new FileTypeDetector();
-        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            throw new IngestModuleException("File type detector could not be created", ex);
-        }
         jobId = context.getJobId();
         refCounter.incrementAndGet(jobId);
 
@@ -163,9 +157,6 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
         if (settings.skipFilesWithNoExtension() && currActualExt.isEmpty()) {
             return false;
         }
-
-        // find file_sig value.
-        // check the blackboard for a file type attribute
         String currActualSigType = abstractFile.getMIMEType();
         if (currActualSigType == null) {
             return false;

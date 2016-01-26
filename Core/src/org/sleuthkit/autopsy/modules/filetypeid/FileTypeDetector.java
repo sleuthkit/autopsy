@@ -157,10 +157,10 @@ public class FileTypeDetector {
             getInfoArt.addAttribute(batt);
             try {
                 file.setMIMEType(mimeType);
+                getInfoArt.addAttribute(batt);
             } catch (TskDataException ex) {
                 //Swallowing exception so that the logs aren't clogged in the case that ingest is run multiple times.
             }
-            
         }
         return mimeType;
     }
@@ -275,4 +275,18 @@ public class FileTypeDetector {
         }
     }
 
+    /**
+     * Gets the list of user defined file types (MIME types)
+     *
+     * @return the List<String> of user defined file types
+     */
+    public List<String> getUserDefinedTypes() {
+        List<String> list = new ArrayList<>();
+        if (userDefinedFileTypes != null) {
+            for (FileType fileType : userDefinedFileTypes) {
+                list.add(fileType.getMimeType());
+            }
+        }
+        return list;
+    }
 }
