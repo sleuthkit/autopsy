@@ -180,13 +180,16 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
      * when when processing dates and times for the image.
      *
      * @param drivePath            Path to the local drive.
+     * @param timeZone             The time zone to use when processing dates
+     *                             and times for the image, obtained from
+     *                             java.util.TimeZone.getID.
      * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
      *                             FAT filesystem.
      *
      * @deprecated Use the run method instead.
      */
     @Deprecated
-    public void setDataSourceOptions(String drivePath, boolean ignoreFatOrphanFiles) {
+    public void setDataSourceOptions(String drivePath, String timeZone, boolean ignoreFatOrphanFiles) {
         this.dataSourceId = UUID.randomUUID().toString();
         this.drivePath = drivePath;
         this.timeZone = Calendar.getInstance().getTimeZone().getID();
