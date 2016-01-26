@@ -156,10 +156,10 @@ public class FileTypeDetector {
             BlackboardAttribute batt = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG, FileTypeIdModuleFactory.getModuleName(), mimeType);
             try {
                 file.setMIMEType(mimeType);
+                getInfoArt.addAttribute(batt);
             } catch (TskDataException ex) {
                 //Swallowing exception so that the logs aren't clogged in the case that ingest is run multiple times.
             }
-            getInfoArt.addAttribute(batt);
         }
         return mimeType;
     }

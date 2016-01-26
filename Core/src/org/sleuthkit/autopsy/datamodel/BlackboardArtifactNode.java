@@ -179,16 +179,11 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                     NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.ext.displayName"),
                     NO_DESCR,
                     ext));
-
-            if (actualMimeType.isEmpty()) {
-                logger.log(Level.WARNING, "Could not find expected TSK_FILE_TYPE_SIG attribute."); //NON-NLS
-            } else {
                 ss.put(new NodeProperty<>(
                         NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.mimeType.name"),
                         NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.mimeType.displayName"),
                         NO_DESCR,
                         actualMimeType));
-            }
         }
 
         if (Arrays.asList(SHOW_UNIQUE_PATH).contains(artifactTypeId)) {
