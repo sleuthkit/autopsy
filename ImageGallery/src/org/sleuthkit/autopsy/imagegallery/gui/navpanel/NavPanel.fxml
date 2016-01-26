@@ -4,54 +4,61 @@
 <?import javafx.collections.FXCollections?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.RadioButton?>
 <?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.control.ToolBar?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.VBox?>
 
-<fx:root prefHeight="200.0" prefWidth="200.0" type="BorderPane" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1">
-   <top>
-  <ToolBar fx:id="toolBar" BorderPane.alignment="CENTER">
-    <items>
-      <Label text="Sort By:" />
-      <ComboBox fx:id="sortByBox" maxWidth="-Infinity" minWidth="-Infinity">
-        <items>
-          <FXCollections fx:factory="observableArrayList">
-            <String fx:value="Item 1" />
-            <String fx:value="Item 2" />
-            <String fx:value="Item 3" />
-          </FXCollections>
-        </items>
-      </ComboBox>
-            <VBox alignment="CENTER_LEFT" prefHeight="-1.0" prefWidth="-1.0" spacing="2.0">
-               <children>
-                  <RadioButton fx:id="ascRadio" contentDisplay="LEFT" mnemonicParsing="false" selected="true" text="Ascending">
-                     <graphic>
-                        <ImageView fitHeight="0.0" fitWidth="0.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true">
-                           <image>
-                              <Image url="@../../images/arrow_up.png" />
-                           </image>
-                        </ImageView>
-                     </graphic>
-                     <toggleGroup>
-                        <ToggleGroup fx:id="orderGroup" />
-                     </toggleGroup>
-                  </RadioButton>
-                  <RadioButton fx:id="descRadio" contentDisplay="LEFT" mnemonicParsing="false" selected="false" text="Descending" toggleGroup="$orderGroup">
-                     <graphic>
-                        <ImageView fitHeight="0.0" fitWidth="0.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true">
-                           <image>
-                              <Image url="@../../images/arrow_down.png" />
-                           </image>
-                        </ImageView>
-                     </graphic>
-                  </RadioButton>
-               </children>
-            </VBox>
-    </items>
-  </ToolBar>
-   </top>
+
+<fx:root type="Tab" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" closable="false" >
+    <content>
+        <BorderPane prefHeight="200.0" prefWidth="200.0" fx:id="borderPane">
+            <top>
+                <ToolBar fx:id="toolBar" BorderPane.alignment="CENTER">
+                    <items>
+                        <Label text="Sort By:" />
+                        <ComboBox fx:id="sortByBox" maxWidth="-Infinity" minWidth="-Infinity">
+                            <items>
+                                <FXCollections fx:factory="observableArrayList">
+                                    <String fx:value="Item 1" />
+                                    <String fx:value="Item 2" />
+                                    <String fx:value="Item 3" />
+                                </FXCollections>
+                            </items>
+                        </ComboBox>
+                        <VBox alignment="CENTER_LEFT" prefHeight="-1.0" prefWidth="-1.0" spacing="2.0">
+                            <children>
+                                <RadioButton fx:id="ascRadio" contentDisplay="LEFT" mnemonicParsing="false" selected="true" text="Ascending">
+                                    <graphic>
+                                        <ImageView fitHeight="0.0" fitWidth="0.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true">
+                                            <image>
+                                                <Image url="@../../images/arrow_up.png" />
+                                            </image>
+                                        </ImageView>
+                                    </graphic>
+                                    <toggleGroup>
+                                        <ToggleGroup fx:id="orderGroup" />
+                                    </toggleGroup>
+                                </RadioButton>
+                                <RadioButton fx:id="descRadio" contentDisplay="LEFT" mnemonicParsing="false" selected="false" text="Descending" toggleGroup="$orderGroup">
+                                    <graphic>
+                                        <ImageView fitHeight="0.0" fitWidth="0.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true">
+                                            <image>
+                                                <Image url="@../../images/arrow_down.png" />
+                                            </image>
+                                        </ImageView>
+                                    </graphic>
+                                </RadioButton>
+                            </children>
+                        </VBox>
+                    </items>
+                </ToolBar>
+            </top>
+        </BorderPane>
+    </content>
 </fx:root>

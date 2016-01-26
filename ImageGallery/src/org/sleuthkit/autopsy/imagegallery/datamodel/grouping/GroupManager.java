@@ -424,7 +424,7 @@ public class GroupManager {
         return sortBy;
     }
 
-    public void setSortBy(GroupSortBy sortBy) {
+     void setSortBy(GroupSortBy sortBy) {
         this.sortBy = sortBy;
     }
 
@@ -432,7 +432,7 @@ public class GroupManager {
         return groupBy;
     }
 
-    public void setGroupBy(DrawableAttribute<?> groupBy) {
+     void setGroupBy(DrawableAttribute<?> groupBy) {
         this.groupBy = groupBy;
     }
 
@@ -440,7 +440,7 @@ public class GroupManager {
         return sortOrder;
     }
 
-    public void setSortOrder(SortOrder sortOrder) {
+     void setSortOrder(SortOrder sortOrder) {
         this.sortOrder = sortOrder;
     }
 

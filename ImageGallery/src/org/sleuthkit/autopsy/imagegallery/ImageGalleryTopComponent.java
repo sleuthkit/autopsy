@@ -23,9 +23,7 @@ import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.control.SplitPane;
-import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
@@ -158,13 +156,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             groupTree = new GroupTree(controller);
             hashHitList = new HashHitGroupList(controller);
 
-            Tab groupTreeTab = new Tab("All Groups", groupTree);
-            groupTreeTab.setGraphic(new ImageView("org/sleuthkit/autopsy/imagegallery/images/Folder-icon.png"));
-
-            Tab hashHitsTab = new Tab("Hash Hits", hashHitList);
-            hashHitsTab.setGraphic(new ImageView("org/sleuthkit/autopsy/imagegallery/images/hashset_hits.png"));
-
-            TabPane tabPane = new TabPane(groupTreeTab, hashHitsTab);
+            TabPane tabPane = new TabPane(groupTree, hashHitList);
 
             VBox.setVgrow(tabPane, Priority.ALWAYS);
             leftPane = new VBox(tabPane, new SummaryTablePane(controller));
@@ -175,7 +167,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             splitPane.setDividerPositions(0.0, 1.0);
 
             ImageGalleryController.getDefault().setStacks(fullUIStack, centralStack);
-            ImageGalleryController.getDefault().setShowTree(() -> tabPane.getSelectionModel().select(groupTreeTab));
+            ImageGalleryController.getDefault().setShowTree(() -> tabPane.getSelectionModel().select(groupTree));
         });
     }
 

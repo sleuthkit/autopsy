@@ -27,7 +27,9 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListView;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.SelectionMode;
+import javafx.scene.control.Tab;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
@@ -39,8 +41,10 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 /**
  *
  */
-public class HashHitGroupList extends BorderPane {
+public class HashHitGroupList extends Tab {
 
+    @FXML
+    private BorderPane borderPane;
     @FXML
     private ComboBox<GroupComparators<?>> sortByBox;
     @FXML
@@ -92,7 +96,11 @@ public class HashHitGroupList extends BorderPane {
         assert orderGroup != null : "fx:id=\"orderGroup\" was not injected: check your FXML file 'HashHitGroupList.fxml'.";
         assert descRadio != null : "fx:id=\"descRadio\" was not injected: check your FXML file 'HashHitGroupList.fxml'.";
         assert groupList != null : "fx:id=\"groupList\" was not injected: check your FXML file 'HashHitGroupList.fxml'.";
-        setCenter(groupList);
+
+        setText("Only Hash Hits");
+        setGraphic(new ImageView("org/sleuthkit/autopsy/imagegallery/images/hashset_hits.png"));
+
+        borderPane.setCenter(groupList);
         sorted = controller.getGroupManager().getAnalyzedGroups().filtered((DrawableGroup t) -> t.getHashSetHitsCount() > 0).sorted();
 
         sortByBox.getItems().setAll(GroupComparators.getValues());

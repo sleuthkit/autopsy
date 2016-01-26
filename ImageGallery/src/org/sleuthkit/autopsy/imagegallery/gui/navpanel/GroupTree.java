@@ -29,10 +29,12 @@ import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.SelectionMode;
+import javafx.scene.control.Tab;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.ToolBar;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -46,8 +48,10 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 /**
  *
  */
-public class GroupTree extends BorderPane {
+public class GroupTree extends Tab {
 
+    @FXML
+    private BorderPane borderPane;
     @FXML
     private ToolBar toolBar;
 
@@ -78,8 +82,10 @@ public class GroupTree extends BorderPane {
         assert orderGroup != null : "fx:id=\"orderGroup\" was not injected: check your FXML file 'GroupTree.fxml'.";
         assert descRadio != null : "fx:id=\"descRadio\" was not injected: check your FXML file 'GroupTree.fxml'.";
         assert groupTree != null : "fx:id=\"groupTree\" was not injected: check your FXML file 'GroupTree.fxml'.";
+        setText("All Groups");
+        setGraphic(new ImageView("org/sleuthkit/autopsy/imagegallery/images/Folder-icon.png"));
 
-        setCenter(groupTree);
+        borderPane.setCenter(groupTree);
 
         toolBar.setVisible(false);
         toolBar.setManaged(false);
@@ -107,6 +113,7 @@ public class GroupTree extends BorderPane {
                 change.getRemoved().stream().forEach(this::removeFromTree);
             }
         });
+
 
         controller.viewState().addListener(observable -> {
             Optional.ofNullable(controller.viewState().get())
