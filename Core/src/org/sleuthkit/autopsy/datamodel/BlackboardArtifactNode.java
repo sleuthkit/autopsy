@@ -171,6 +171,9 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 AbstractFile af = (AbstractFile) associated;
                 ext = af.getNameExtension();
                 actualMimeType = af.getMIMEType();
+                if(actualMimeType == null) {
+                    actualMimeType = "";
+                }
             }
             ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.ext.name"),
                     NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.ext.displayName"),
