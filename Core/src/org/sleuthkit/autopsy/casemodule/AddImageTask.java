@@ -114,25 +114,11 @@ class AddImageTask implements Runnable {
     }
 
     /**
-     * Runs the data source processor in a separate thread without requiring use
-     * the configuration panel.
+     * Constructs a runnable task that adds an image to the case database.
      *
      * @param dataSourceId         An ASCII-printable identifier for the data
      *                             source that is unique across multiple cases
      *                             (e.g., a UUID).
-     * @param imagePath            Path to the image file.
-     * @param timeZone             The time zone to use when processing dates
-     *                             and times for the image, obtained from
-     *                             java.util.TimeZone.getID.
-     * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
-     *                             FAT filesystem.
-     * @param monitor              Progress monitor to report progress during
-     *                             processing.
-     * @param cbObj                Callback to call when processing is done.
-     */
-    /**
-     * Constructs a runnable task that adds an image to the case database.
-     *
      * @param imagePath            Path to the image file.
      * @param timeZone             The time zone to use when processing dates
      *                             and times for the image, obtained from
