@@ -168,7 +168,7 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
         // check the blackboard for a file type attribute
         String currActualSigType = abstractFile.getMIMEType();
         if (currActualSigType == null) {
-            currActualSigType = fileTypeDetector.detect(abstractFile);
+            return false;
         }
         if (settings.skipFilesWithTextPlainMimeType()) {
             if (!currActualExt.isEmpty() && currActualSigType.equals("text/plain")) { //NON-NLS

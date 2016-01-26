@@ -76,6 +76,9 @@ public class FileExtMismatchContextMenuActionsProvider implements ContextMenuAct
                                     extStr = af.getName().substring(i + 1).toLowerCase();
                                 }
                                 mimeTypeStr = af.getMIMEType();
+                                if(mimeTypeStr == null) {
+                                    mimeTypeStr = "";
+                                }
 
                             if (!extStr.isEmpty() && !mimeTypeStr.isEmpty()) {
                                 // Limit max size so the context window doesn't get ridiculously wide
