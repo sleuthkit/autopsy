@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,29 +18,31 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui.navpanel;
 
+import com.google.common.eventbus.Subscribe;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import javafx.application.Platform;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
-import javafx.scene.control.ListView;
+import javafx.scene.control.RadioButton;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import javax.annotation.Nonnull;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
+import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
@@ -49,53 +51,58 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
  * Display two trees. one shows all folders (groups) and calls out folders with
  * images. the user can select folders with images to see them in the main
  * GroupPane The other shows folders with hash set hits.
- *
- * //TODO: there is too much code duplication between the navTree and the
- * hashTree. Extract the common code to some new class.
  */
-final public class NavPanel extends TabPane {
+final public class NavPanel extends VBox {
 
     @FXML
-    private ComboBox<TreeNodeComparators> sortByBox;
+    private ComboBox<TreeNodeComparator<?>> sortByBox;
+
     @FXML
     private TabPane navTabPane;
-    /**
-     * TreeView for folders with hash hits
-     */
-    @FXML
-    private TreeView<TreeNode> hashTree;
-    /**
-     * TreeView for all folders
-     */
+
     @FXML
     private TreeView<TreeNode> navTree;
 
+    @FXML
+    private AnchorPane hashAnchor;
+
+    @FXML
+    private AnchorPane navAnchor;
     @FXML
     private Tab hashTab;
 
     @FXML
     private Tab navTab;
 
-    private GroupTreeItem hashTreeRoot = new GroupTreeItem("", null, null);
+    private final GroupTreeItem navTreeRoot = new GroupTreeItem("", null, TreeNodeComparator.ALPHABETICAL, true);
+    private final GroupTreeItem hashTreeRoot = new GroupTreeItem("", null, TreeNodeComparator.HIT_COUNT, true);
 
-    private GroupTreeItem navTreeRoot = new GroupTreeItem("", null, null);
+    @FXML
+    private RadioButton ascRadio;
 
-    /**
-     * contains the 'active tree', three in the selected Tab.
-     */
-    private final SimpleObjectProperty<TreeView<TreeNode>> activeTreeProperty = new SimpleObjectProperty<>();
+    @FXML
+    private ToggleGroup orderGroup;
+
+    @FXML
+    private RadioButton descRadio;
 
     private final ImageGalleryController controller;
+
+    private TreeNodeComparator<?> hashSortOrder = TreeNodeComparator.HIT_COUNT;
 
     public NavPanel(ImageGalleryController controller) {
         this.controller = controller;
         FXMLConstructor.construct(this, "NavPanel.fxml");
     }
 
+    @Subscribe
+    public void handleCategoryChange(CategoryManager.CategoryChangeEvent event) {
+        resortHashTree();
+    }
+
     @FXML
     void initialize() {
         assert hashTab != null : "fx:id=\"hashTab\" was not injected: check your FXML file 'NavPanel.fxml'.";
-        assert hashTree != null : "fx:id=\"hashTree\" was not injected: check your FXML file 'NavPanel.fxml'.";
         assert navTab != null : "fx:id=\"navTab\" was not injected: check your FXML file 'NavPanel.fxml'.";
         assert navTabPane != null : "fx:id=\"navTabPane\" was not injected: check your FXML file 'NavPanel.fxml'.";
         assert navTree != null : "fx:id=\"navTree\" was not injected: check your FXML file 'NavPanel.fxml'.";
@@ -103,87 +110,84 @@ final public class NavPanel extends TabPane {
 
         VBox.setVgrow(this, Priority.ALWAYS);
 
-        sortByBox.setCellFactory((ListView<TreeNodeComparators> p) -> new TreeNodeComparators.ComparatorListCell());
-        sortByBox.setButtonCell(new TreeNodeComparators.ComparatorListCell());
-        sortByBox.setItems(FXCollections.observableArrayList(FXCollections.observableArrayList(TreeNodeComparators.values())));
-        sortByBox.getSelectionModel().select(TreeNodeComparators.HIT_COUNT);
-        sortByBox.getSelectionModel().selectedItemProperty().addListener(o -> resortHashTree());
+        sortByBox.getItems().setAll(TreeNodeComparator.getValues());
+        sortByBox.getSelectionModel().select(TreeNodeComparator.ALPHABETICAL);
 
-        configureTree(navTree, navTreeRoot);
-        configureTree(hashTree, hashTreeRoot);
+        sortByBox.getSelectionModel().selectedItemProperty().addListener(observable -> {
 
-        activeTreeProperty.set(navTree);
-        navTabPane.getSelectionModel().selectedItemProperty().addListener((ObservableValue<? extends Tab> ov, Tab t, Tab t1) -> {
-            if (t1 == hashTab) {
-                activeTreeProperty.set(hashTree);
-            } else if (t1 == navTab) {
-                activeTreeProperty.set(navTree);
+            if (sortByBox.getSelectionModel().getSelectedItem() == TreeNodeComparator.UNCATEGORIZED_COUNT) {
+                controller.getCategoryManager().registerListener(NavPanel.this);
+            } else {
+                controller.getCategoryManager().unregisterListener(NavPanel.this);
+            }
+            resortHashTree();
+        });
+        orderGroup.selectedToggleProperty().addListener(observable -> resortHashTree());
+
+        navTree.setCellFactory(treeView -> new GroupTreeCell(sortByBox.getSelectionModel().selectedItemProperty()));
+        navTree.setShowRoot(false);
+        navTree.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+        navTree.getSelectionModel().selectedItemProperty().addListener(o -> updateControllersGroup());
+
+        navTree.setRoot(navTreeRoot);
+        navTabPane.getSelectionModel().selectedItemProperty().addListener(observable -> {
+            Tab selectedTab = navTabPane.getSelectionModel().getSelectedItem();
+            if (selectedTab == navTab) {
+                hashSortOrder = sortByBox.getSelectionModel().getSelectedItem();
+                sortByBox.getSelectionModel().select(TreeNodeComparator.ALPHABETICAL);
+                navTree.setRoot(navTreeRoot);
+                hashAnchor.getChildren().clear();
+                navAnchor.getChildren().add(navTree);
+            } else if (selectedTab == hashTab) {
+                sortByBox.getSelectionModel().select(hashSortOrder);
+                navTree.setRoot(hashTreeRoot);
+                navAnchor.getChildren().clear();
+                hashAnchor.getChildren().add(navTree);
+                resortHashTree();
             }
         });
 
         controller.getGroupManager().getAnalyzedGroups().addListener((ListChangeListener.Change<? extends DrawableGroup> change) -> {
             while (change.next()) {
-                for (DrawableGroup g : change.getAddedSubList()) {
-                    insertIntoNavTree(g);
-                    if (g.getHashSetHitsCount() > 0) {
-                        insertIntoHashTree(g);
-                    }
-                }
-                for (DrawableGroup g : change.getRemoved()) {
-                    removeFromTree(g, navTreeRoot);
-                    removeFromTree(g, hashTreeRoot);
-                }
+                change.getAddedSubList().stream().forEach(this::insertGroup);
+                change.getRemoved().stream().forEach(this::removeFromTree);
             }
         });
 
-        controller.viewState().addListener((ObservableValue<? extends GroupViewState> observable, GroupViewState oldValue, GroupViewState newValue) -> {
-            if (newValue != null && newValue.getGroup() != null) {
-                setFocusedGroup(newValue.getGroup());
-            }
-        });
-
-        rebuildTrees();
-    }
-
-    @ThreadConfined(type = ThreadType.JFX)
-    private void configureTree(final TreeView<TreeNode> navTree1, final GroupTreeItem navTreeRoot1) {
-        navTree1.setRoot(navTreeRoot1);
-        navTreeRoot1.setExpanded(true);
-        navTree1.setCellFactory(treeView -> new GroupTreeCell());
-        navTree1.setShowRoot(false);
-        navTree1.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-        navTree1.getSelectionModel().selectedItemProperty().addListener(o -> updateControllersGroup());
-    }
-
-    private void rebuildTrees() {
-        navTreeRoot = new GroupTreeItem("", null, sortByBox.getSelectionModel().selectedItemProperty().get());
-        hashTreeRoot = new GroupTreeItem("", null, sortByBox.getSelectionModel().selectedItemProperty().get());
-
-        Platform.runLater(() -> {
-            navTree.setRoot(navTreeRoot);
-            navTreeRoot.setExpanded(true);
-            hashTree.setRoot(hashTreeRoot);
-            hashTreeRoot.setExpanded(true);
+        controller.viewState().addListener(observable -> {
+            Optional.ofNullable(controller.viewState().get())
+                    .map(GroupViewState::getGroup)
+                    .ifPresent(this::setFocusedGroup);
         });
 
         for (DrawableGroup g : controller.getGroupManager().getAnalyzedGroups()) {
-            insertIntoNavTree(g);
-            if (g.getHashSetHitsCount() > 0) {
-                insertIntoHashTree(g);
-            }
+            insertGroup(g);
+        }
+    }
+
+    private void insertGroup(DrawableGroup g) {
+        navTreeRoot.insert(groupingToPath(g), g, true);
+        if (g.getHashSetHitsCount() > 0) {
+            hashTreeRoot.insert(groupingToPath(g), g, false);
         }
     }
 
     private void updateControllersGroup() {
-        final TreeItem<TreeNode> selectedItem = activeTreeProperty.get().getSelectionModel().getSelectedItem();
-        if (selectedItem != null && selectedItem.getValue() != null && selectedItem.getValue().getGroup() != null) {
-            controller.advance(GroupViewState.tile(selectedItem.getValue().getGroup()), false);
-        }
+        Optional.ofNullable(navTree.getSelectionModel().getSelectedItem())
+                .map(TreeItem::getValue)
+                .map(TreeNode::getGroup)
+                .ifPresent(group -> controller.advance(GroupViewState.tile(group), false));
     }
 
     @ThreadConfined(type = ThreadType.JFX)
     private void resortHashTree() {
-        hashTreeRoot.resortChildren(sortByBox.getSelectionModel().getSelectedItem());
+        Comparator<TreeNode> treeNodeComparator = sortByBox.getSelectionModel().getSelectedItem();
+        if (orderGroup.getSelectedToggle() == descRadio) {
+            treeNodeComparator = treeNodeComparator.reversed();
+        }
+        TreeItem<TreeNode> selectedItem = navTree.getSelectionModel().getSelectedItem();
+        hashTreeRoot.resortChildren(treeNodeComparator);
+        navTree.getSelectionModel().select(selectedItem);
     }
 
     /**
@@ -193,37 +197,29 @@ final public class NavPanel extends TabPane {
      */
     @ThreadConfined(type = ThreadType.JFX)
     private void setFocusedGroup(DrawableGroup grouping) {
-        final GroupTreeItem treeItemForGroup = ((GroupTreeItem) activeTreeProperty.get().getRoot()).getTreeItemForPath(groupingToPath(grouping));
+        final GroupTreeItem treeItemForGroup = ((GroupTreeItem) navTree.getRoot()).getTreeItemForPath(groupingToPath(grouping));
 
         if (treeItemForGroup != null) {
-            activeTreeProperty.get().getSelectionModel().select(treeItemForGroup);
+            navTree.getSelectionModel().select(treeItemForGroup);
             Platform.runLater(() -> {
-                int row = activeTreeProperty.get().getRow(treeItemForGroup);
+                int row = navTree.getRow(treeItemForGroup);
                 if (row != -1) {
-                    activeTreeProperty.get().scrollTo(row - 2); //put newly selected row 3 from the top
+                    navTree.scrollTo(row - 2); //put newly selected row 3 from the top
                 }
             });
         }
     }
 
     private List<String> groupingToPath(DrawableGroup g) {
+        String path = g.groupKey.getValueDisplayName();
         if (g.groupKey.getAttribute() != DrawableAttribute.PATH
-                || activeTreeProperty.get() == hashTree) {
-            String stripStart = StringUtils.strip(g.groupKey.getValueDisplayName(), "/");
+                || navTabPane.getSelectionModel().getSelectedItem() == hashTab) {
+            String stripStart = StringUtils.strip(path, "/");
             return Arrays.asList(stripStart);
         } else {
-            String path = g.groupKey.getValueDisplayName();
             String[] cleanPathTokens = StringUtils.stripStart(path, "/").split("/");
             return Arrays.asList(cleanPathTokens);
         }
-    }
-
-    private void insertIntoHashTree(DrawableGroup g) {
-        hashTreeRoot.insert(groupingToPath(g), g, false);
-    }
-
-    private void insertIntoNavTree(DrawableGroup g) {
-        navTreeRoot.insert(groupingToPath(g), g, true);
     }
 
     /**
@@ -231,8 +227,13 @@ final public class NavPanel extends TabPane {
      * @param g        the value of g
      * @param treeRoot the value of treeRoot
      */
-    private void removeFromTree(DrawableGroup g, @Nonnull final GroupTreeItem treeRoot) {
-        final GroupTreeItem treeItemForGroup = treeRoot.getTreeItemForGroup(g);
+    private void removeFromTree(DrawableGroup g) {
+        GroupTreeItem treeItemForGroup = navTreeRoot.getTreeItemForGroup(g);
+        if (treeItemForGroup != null) {
+            treeItemForGroup.removeFromParent();
+        }
+
+        treeItemForGroup = hashTreeRoot.getTreeItemForGroup(g);
         if (treeItemForGroup != null) {
             treeItemForGroup.removeFromParent();
         }
@@ -240,7 +241,7 @@ final public class NavPanel extends TabPane {
 
     public void showTree() {
         Platform.runLater(() -> {
-            getSelectionModel().select(navTab);
+            navTabPane.getSelectionModel().select(navTab);
         });
     }
 }

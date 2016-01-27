@@ -216,10 +216,14 @@ public class GroupManager {
         groupBy = DrawableAttribute.PATH;
         sortOrder = SortOrder.ASCENDING;
         Platform.runLater(() -> {
+            unSeenGroups.forEach(controller.getCategoryManager()::unregisterListener);
             unSeenGroups.clear();
+            analyzedGroups.forEach(controller.getCategoryManager()::unregisterListener);
             analyzedGroups.clear();
+
         });
         synchronized (groupMap) {
+            groupMap.values().forEach(controller.getCategoryManager()::unregisterListener);
             groupMap.clear();
         }
         db = null;
@@ -611,9 +615,11 @@ public class GroupManager {
                         synchronized (groupMap) {
                             if (groupMap.containsKey(groupKey)) {
                                 group = groupMap.get(groupKey);
+
                                 group.setFiles(ObjectUtils.defaultIfNull(fileIDs, Collections.emptySet()));
                             } else {
                                 group = new DrawableGroup(groupKey, fileIDs, groupSeen);
+                                controller.getCategoryManager().registerListener(group);
                                 group.seenProperty().addListener((o, oldSeen, newSeen) -> {
                                     markGroupSeen(group, newSeen);
                                 });

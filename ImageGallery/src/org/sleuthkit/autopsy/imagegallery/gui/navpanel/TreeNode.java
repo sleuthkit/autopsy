@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,10 +23,10 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 /**
  *
  */
- class TreeNode {
+class TreeNode {
 
-   private  String path;
-   private DrawableGroup group;
+    private final String path;
+    private DrawableGroup group;
 
     public String getPath() {
         return path;
@@ -36,12 +36,32 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
         return group;
     }
 
-    public TreeNode(String path, DrawableGroup group) {
+    TreeNode(String path, DrawableGroup group) {
         this.path = path;
         this.group = group;
     }
 
     void setGroup(DrawableGroup g) {
-    group = g;
+        group = g;
+    }
+
+    public String getGroupByValueDislpayName() {
+        return (group == null) ? "" : group.getGroupByValueDislpayName();
+    }
+
+    public synchronized int getSize() {
+        return (group == null) ? 0 : group.getSize();
+    }
+
+    public double getHashHitDensity() {
+        return (group == null) ? 0 : group.getHashHitDensity();
+    }
+
+    public synchronized long getHashSetHitsCount() {
+        return (group == null) ? 0 : group.getHashSetHitsCount();
+    }
+
+    public final synchronized long getUncategorizedCount() {
+        return (group == null) ? 0 : group.getUncategorizedCount();
     }
 }

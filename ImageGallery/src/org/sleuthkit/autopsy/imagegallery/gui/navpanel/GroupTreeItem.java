@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-14 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.imagegallery.gui.navpanel;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +27,6 @@ import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import javafx.application.Platform;
-import javafx.collections.FXCollections;
 import javafx.scene.control.TreeItem;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -64,11 +64,12 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
     /**
      * the comparator if any used to sort the children of this item
      */
-    private TreeNodeComparators comp;
+    private Comparator<TreeNode> comp;
 
-    public GroupTreeItem(String t, DrawableGroup g, TreeNodeComparators comp) {
+    GroupTreeItem(String t, DrawableGroup g, Comparator<TreeNode> comp, boolean expanded) {
         super(new TreeNode(t, g));
         this.comp = comp;
+        setExpanded(expanded);
     }
 
     /**
@@ -100,7 +101,7 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
                 String prefix = path.get(0);
 
                 GroupTreeItem prefixTreeItem = childMap.computeIfAbsent(prefix, (String t) -> {
-                    final GroupTreeItem newTreeItem = new GroupTreeItem(t, null, comp);
+                    final GroupTreeItem newTreeItem = new GroupTreeItem(t, null, comp, false);
 
                     Platform.runLater(() -> {
                         getChildren().add(newTreeItem);
@@ -118,13 +119,13 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
             String join = StringUtils.join(path, "/");
             //flat list
             childMap.computeIfAbsent(join, (String t) -> {
-                final GroupTreeItem newTreeItem = new GroupTreeItem(t, g, comp);
+                final GroupTreeItem newTreeItem = new GroupTreeItem(t, g, comp, false);
                 newTreeItem.setExpanded(true);
 
                 Platform.runLater(() -> {
                     getChildren().add(newTreeItem);
                     if (comp != null) {
-                        FXCollections.sort(getChildren(), comp);
+                        getChildren().sort(Comparator.comparing(TreeItem::getValue, comp));
                     }
                 });
                 return newTreeItem;
@@ -134,7 +135,7 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
 
     @Override
     public int compareTo(GroupTreeItem o) {
-        return comp.compare(this, o);
+        return comp.compare(this.getValue(), o.getValue());
     }
 
     synchronized GroupTreeItem getTreeItemForPath(List<String> path) {
@@ -177,9 +178,9 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
      * @param newComp
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    synchronized void resortChildren(TreeNodeComparators newComp) {
+    synchronized void resortChildren(Comparator<TreeNode> newComp) {
         this.comp = newComp;
-        FXCollections.sort(getChildren(), comp);
+        getChildren().sort(Comparator.comparing(TreeItem::getValue, comp));
         for (GroupTreeItem ti : childMap.values()) {
             ti.resortChildren(comp);
         }
