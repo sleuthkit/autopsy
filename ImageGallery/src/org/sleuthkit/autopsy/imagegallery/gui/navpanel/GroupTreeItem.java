@@ -38,7 +38,7 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
  * {@link GroupTreeCell}. Each GroupTreeItem has a TreeNode which has a path
  * segment and may or may not have a group
  */
-class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeItem> {
+class GroupTreeItem extends TreeItem<GroupTreeNode> {
 
     static final Executor treeInsertTread = Executors.newSingleThreadExecutor();
 
@@ -64,12 +64,12 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
     /**
      * the comparator if any used to sort the children of this item
      */
-    private Comparator<TreeNode> comp;
+    private Comparator<DrawableGroup> comp;
 
-    GroupTreeItem(String t, DrawableGroup g, Comparator<TreeNode> comp, boolean expanded) {
-        super(new TreeNode(t, g));
-        this.comp = comp;
+    GroupTreeItem(String t, DrawableGroup g, boolean expanded) {
+        super(new GroupTreeNode(t, g));
         setExpanded(expanded);
+        comp = GroupComparators.ALPHABETICAL;
     }
 
     /**
@@ -92,7 +92,7 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
      * @param g    Group to add
      * @param tree True if it is part of a tree (versus a list)
      */
-    synchronized void insert(List<String> path, DrawableGroup g, Boolean tree) {
+    synchronized void insert(List<String> path, DrawableGroup g, boolean tree) {
         if (tree) {
             // Are we at the end of the recursion?
             if (path.isEmpty()) {
@@ -101,7 +101,7 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
                 String prefix = path.get(0);
 
                 GroupTreeItem prefixTreeItem = childMap.computeIfAbsent(prefix, (String t) -> {
-                    final GroupTreeItem newTreeItem = new GroupTreeItem(t, null, comp, false);
+                    final GroupTreeItem newTreeItem = new GroupTreeItem(t, null, false);
 
                     Platform.runLater(() -> {
                         getChildren().add(newTreeItem);
@@ -111,7 +111,7 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
 
                 // recursively go into the path
                 treeInsertTread.execute(() -> {
-                    prefixTreeItem.insert(path.subList(1, path.size()), g, tree);
+                    prefixTreeItem.insert(path.subList(1, path.size()), g, true);
                 });
 
             }
@@ -119,23 +119,14 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
             String join = StringUtils.join(path, "/");
             //flat list
             childMap.computeIfAbsent(join, (String t) -> {
-                final GroupTreeItem newTreeItem = new GroupTreeItem(t, g, comp, false);
-                newTreeItem.setExpanded(true);
-
+                final GroupTreeItem newTreeItem = new GroupTreeItem(t, g, true);
                 Platform.runLater(() -> {
                     getChildren().add(newTreeItem);
-                    if (comp != null) {
-                        getChildren().sort(Comparator.comparing(TreeItem::getValue, comp));
-                    }
+                    getChildren().sort(Comparator.comparing(treeItem -> treeItem.getValue().getGroup(), comp));
                 });
                 return newTreeItem;
             });
         }
-    }
-
-    @Override
-    public int compareTo(GroupTreeItem o) {
-        return comp.compare(this.getValue(), o.getValue());
     }
 
     synchronized GroupTreeItem getTreeItemForPath(List<String> path) {
@@ -178,9 +169,9 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
      * @param newComp
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    synchronized void resortChildren(Comparator<TreeNode> newComp) {
+    synchronized void resortChildren(Comparator<DrawableGroup> newComp) {
         this.comp = newComp;
-        getChildren().sort(Comparator.comparing(TreeItem::getValue, comp));
+        getChildren().sort(Comparator.comparing(treeItem -> treeItem.getValue().getGroup(), comp));
         for (GroupTreeItem ti : childMap.values()) {
             ti.resortChildren(comp);
         }
