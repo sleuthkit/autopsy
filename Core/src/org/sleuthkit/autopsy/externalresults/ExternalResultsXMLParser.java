@@ -100,7 +100,8 @@ public final class ExternalResultsXMLParser implements ExternalResultsParser {
         VALUE_TYPE_TEXT("text"), //NON-NLS
         VALUE_TYPE_INT32("int32"), //NON-NLS
         VALUE_TYPE_INT64("int64"), //NON-NLS
-        VALUE_TYPE_DOUBLE("double"); //NON-NLS
+        VALUE_TYPE_DOUBLE("double"), //NON-NLS
+        VALUE_TYPE_DATETIME("datetime");
         private final String text;
 
         private AttributeValues(final String text) {
@@ -249,7 +250,8 @@ public final class ExternalResultsXMLParser implements ExternalResultsParser {
         } else if (!valueType.equals(AttributeValues.VALUE_TYPE_TEXT.toString())
                 && !valueType.equals(AttributeValues.VALUE_TYPE_DOUBLE.toString())
                 && !valueType.equals(AttributeValues.VALUE_TYPE_INT32.toString())
-                && !valueType.equals(AttributeValues.VALUE_TYPE_INT64.toString())) {
+                && !valueType.equals(AttributeValues.VALUE_TYPE_INT64.toString())
+                && !valueType.equals(AttributeValues.VALUE_TYPE_DATETIME.toString())) {
             String errorMessage = NbBundle.getMessage(this.getClass(),
                     "ExternalResultsXMLParser.parseAttributeValueType.errMsg1.text",
                     valueType,

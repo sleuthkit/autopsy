@@ -152,10 +152,10 @@ public class FileTypeDetector {
              * because general info artifacts are different from other
              * artifacts, e.g., they are not displayed in the results tree.
              */
-            BlackboardArtifact getInfoArt = file.getGenInfoArtifact();
-            BlackboardAttribute batt = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG, FileTypeIdModuleFactory.getModuleName(), mimeType);
             try {
                 file.setMIMEType(mimeType);
+                BlackboardArtifact getInfoArt = file.getGenInfoArtifact();
+                BlackboardAttribute batt = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG, FileTypeIdModuleFactory.getModuleName(), mimeType);
                 getInfoArt.addAttribute(batt);
             } catch (TskDataException ex) {
                 //Swallowing exception so that the logs aren't clogged in the case that ingest is run multiple times.
