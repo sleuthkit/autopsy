@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.imagegallery.datamodel.grouping;
 
 import java.util.Map;
 import java.util.Objects;
+import javafx.scene.image.Image;
 import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.datamodel.TagName;
@@ -88,4 +89,7 @@ public class GroupKey<T extends Comparable<T>> implements Comparable<GroupKey<T>
         return val.compareTo(o.val);
     }
 
+    public Image getIcon() {
+        return attr.getIconForValue(val);
+    }
 }

@@ -64,6 +64,7 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.actions.UndoRedoManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
@@ -695,9 +696,8 @@ public final class ImageGalleryController implements Executor {
      * Task that runs when image gallery listening is (re) enabled.
      *
      * Grabs all files with supported image/video mime types or extensions, and
-     * adds them to the Drawable DB. Uses the presence of TSK_FILE_TYPE_SIG
-     * attributes as a approximation to 'analyzed'.
-     *
+     * adds them to the Drawable DB. Uses the presence of a mimetype as an
+     * approximation to 'analyzed'.
      */
     static private class CopyAnalyzedFiles extends InnerTask {
 
@@ -747,7 +747,7 @@ public final class ImageGalleryController implements Executor {
                 int units = 0;
                 for (final AbstractFile f : files) {
                     if (isCancelled()) {
-                        LOGGER.log(Level.WARNING, "task cancelled: not all contents may be transfered to database");
+                        LOGGER.log(Level.WARNING, "Task cancelled: not all contents may be transfered to drawable database.");
                         progressHandle.finish();
                         break;
                     }
@@ -759,7 +759,7 @@ public final class ImageGalleryController implements Executor {
                     } else {
                         final Optional<Boolean> hasMimeType = FileTypeUtils.hasDrawableMimeType(f);
                         if (hasMimeType.isPresent()) {
-                            if (hasMimeType.get()) {  // supported mimetype => analyzed
+                            if (hasMimeType.get()) {  //supported mimetype => analyzed
                                 taskDB.updateFile(DrawableFile.create(f, true, false), tr);
                             } else { //unsupported mimtype => analyzed but shouldn't include
                                 taskDB.removeFile(f.getId(), tr);
@@ -794,6 +794,7 @@ public final class ImageGalleryController implements Executor {
             } catch (TskCoreException ex) {
                 progressHandle.progress("Stopping copy to drawable db task.");
                 Logger.getLogger(CopyAnalyzedFiles.class.getName()).log(Level.WARNING, "Stopping copy to drawable db task.  Failed to transfer all database contents: " + ex.getMessage());
+                MessageNotifyUtil.Notify.warn("There was an error populating Image Gallery database.", ex.getMessage());
                 progressHandle.finish();
                 updateMessage("");
                 updateProgress(-1.0);
@@ -810,7 +811,7 @@ public final class ImageGalleryController implements Executor {
 
     /**
      * task that does pre-ingest copy over of files from a new datasource (uses
-     * fs_obj_id to identify files from new datasource) *
+     * fs_obj_id to identify files from new datasources)
      *
      * TODO: create methods to simplify progress value/text updates to both
      * netbeans and ImageGallery progress/status

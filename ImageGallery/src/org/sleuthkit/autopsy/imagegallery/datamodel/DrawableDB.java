@@ -41,7 +41,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
-import javax.annotation.Nonnull;
 import java.util.stream.Collectors;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
@@ -127,7 +126,7 @@ public final class DrawableDB {
      */
     private final Map<DrawableAttribute<?>, PreparedStatement> groupStatementMap = new HashMap<>();
 
-    private GroupManager groupManager;
+    private final GroupManager groupManager;
 
     private final Path dbPath;
 
@@ -1200,6 +1199,7 @@ public final class DrawableDB {
             LOGGER.log(Level.SEVERE, "Failed to get content tags by tag name.", ex1);
         }
         return -1;
+
     }
 
     /**

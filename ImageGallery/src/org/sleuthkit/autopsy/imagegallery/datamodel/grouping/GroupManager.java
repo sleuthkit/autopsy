@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,7 +35,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -295,7 +294,7 @@ public class GroupManager {
 
             // If we're grouping by category, we don't want to remove empty groups.
             if (groupKey.getAttribute() != DrawableAttribute.CATEGORY) {
-                if (group.fileIds().isEmpty()) {
+                if (group.getFileIDs().isEmpty()) {
                     Platform.runLater(() -> {
                         if (analyzedGroups.contains(group)) {
                             analyzedGroups.remove(group);
@@ -357,12 +356,7 @@ public class GroupManager {
                             Pattern.compile(",").splitAsStream(objIds)
                                     .map(Long::valueOf)
                                     .filter(db::isInDB)
-                                    .findAny().ifPresent(new Consumer<Long>() {
-
-                                        public void accept(Long obj_id) {
-                                            types.add(mimeType);
-                                        }
-                                    });
+                                    .findAny().ifPresent(obj_id -> types.add(mimeType));
                         }
                     } catch (SQLException | TskCoreException ex) {
                         Exceptions.printStackTrace(ex);
@@ -702,8 +696,8 @@ public class GroupManager {
                 ? "SELECT obj_id FROM tsk_files WHERE mime_type IS NULL"
                 : "SELECT obj_id FROM tsk_files WHERE mime_type = '" + mimeType + "'";
 
-        try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery(query);) {
-            ResultSet resultSet = executeQuery.getResultSet();
+        try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery(query);
+                ResultSet resultSet = executeQuery.getResultSet();) {
             while (resultSet.next()) {
                 final long fileID = resultSet.getLong("obj_id");
                 if (db.isInDB(fileID)) {
