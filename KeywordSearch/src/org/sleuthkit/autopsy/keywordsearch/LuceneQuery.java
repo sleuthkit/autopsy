@@ -158,11 +158,11 @@ class LuceneQuery implements KeywordSearchQuery {
         }
 
         if (snippet != null) {
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, snippet));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW, MODULE_NAME, snippet));
         }
-        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, termHit));
+        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, termHit));
         if ((listName != null) && (listName.equals("") == false)) {
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), MODULE_NAME, listName));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
         }
 
         //bogus - workaround the dir tree table issue
@@ -171,12 +171,12 @@ class LuceneQuery implements KeywordSearchQuery {
         if (keywordQuery != null) {
             BlackboardAttribute.ATTRIBUTE_TYPE selType = keywordQuery.getType();
             if (selType != null) {
-                attributes.add(new BlackboardAttribute(selType.getTypeID(), MODULE_NAME, termHit));
+                attributes.add(new BlackboardAttribute(selType, MODULE_NAME, termHit));
             }
         }
 
         if (hit.isArtifactHit()) {
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID(), MODULE_NAME, hit.getArtifact().getArtifactID()));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, hit.getArtifact().getArtifactID()));
         }
 
         try {

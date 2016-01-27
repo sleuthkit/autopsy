@@ -108,15 +108,15 @@ class RecentDocumentsByLnk extends Extract {
 
             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
             String path = lnk.getBestPath();
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(),
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
                     NbBundle.getMessage(this.getClass(),
                             "RecentDocumentsByLnk.parentModuleName.noSpace"),
                     path));
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(),
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID,
                     NbBundle.getMessage(this.getClass(),
                             "RecentDocumentsByLnk.parentModuleName.noSpace"),
                     Util.findID(dataSource, path)));
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME,
                     NbBundle.getMessage(this.getClass(),
                             "RecentDocumentsByLnk.parentModuleName.noSpace"),
                     recentFile.getCrtime()));
