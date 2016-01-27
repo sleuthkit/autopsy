@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-16 Basis Technology Corp.
+ * Copyright 2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,23 +24,18 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.Tooltip;
-import javafx.scene.control.TreeCell;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javax.annotation.Nonnull;
-import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 
 /**
- * A cell in the NavPanel tree that listens to its associated group's fileids
- * and seen status,and updates GUI to reflect them.
  *
- * TODO: we should use getStyleClass().add() rather than setStyle but it didn't
- * seem to work properly
  */
-class GroupTreeCell extends TreeCell<GroupTreeNode> {
+class GroupListCell extends ListCell<DrawableGroup> {
 
     /**
      * icon to use if this cell's TreeNode doesn't represent a group but just a
@@ -71,9 +66,11 @@ class GroupTreeCell extends TreeCell<GroupTreeNode> {
             setStyle(style);
         });
     };
+
     private final ReadOnlyObjectProperty<GroupComparators<?>> sortOrder;
 
-    GroupTreeCell(ReadOnlyObjectProperty<GroupComparators<?>> sortOrderProperty) {
+    GroupListCell(ReadOnlyObjectProperty<GroupComparators<?>> sortOrderProperty) {
+
         this.sortOrder = sortOrderProperty;
         getStylesheets().add(GroupTreeCell.class.getResource("GroupTreeCell.css").toExternalForm());
         getStyleClass().add("groupTreeCell");        //reduce  indent to 5, default is 10 which uses up a lot of space.
@@ -81,7 +78,7 @@ class GroupTreeCell extends TreeCell<GroupTreeNode> {
         //since end of path is probably more interesting put ellipsis at front
         setTextOverrun(OverrunStyle.LEADING_ELLIPSIS);
         Platform.runLater(() -> {
-            prefWidthProperty().bind(getTreeView().widthProperty().subtract(15));
+            prefWidthProperty().bind(getListView().widthProperty().subtract(15));
         });
 
     }
@@ -90,20 +87,19 @@ class GroupTreeCell extends TreeCell<GroupTreeNode> {
      * {@inheritDoc }
      */
     @Override
-    protected synchronized void updateItem(final GroupTreeNode treeNode, boolean empty) {
+    protected synchronized void updateItem(final DrawableGroup group, boolean empty) {
         //if there was a previous group, remove the listeners
         Optional.ofNullable(getItem())
-                .map(GroupTreeNode::getGroup)
-                .ifPresent(group -> {
-            sortOrder.addListener(fileCountListener);
-                    group.fileIds().removeListener(fileCountListener);
-            group.seenProperty().removeListener(seenListener);
-            group.uncatCountProperty().removeListener(fileCountListener);
+                .ifPresent(oldGroup -> {
+                    sortOrder.removeListener(fileCountListener);
+                    oldGroup.fileIds().removeListener(fileCountListener);
+                    oldGroup.seenProperty().removeListener(seenListener);
+                    oldGroup.uncatCountProperty().removeListener(fileCountListener);
                 });
 
-        super.updateItem(treeNode, empty);
+        super.updateItem(group, empty);
 
-        if (isNull(treeNode) || empty) {
+        if (isNull(group) || empty) {
             Platform.runLater(() -> {
                 setTooltip(null);
                 setText(null);
@@ -111,7 +107,7 @@ class GroupTreeCell extends TreeCell<GroupTreeNode> {
                 setStyle("");
             });
         } else {
-            if (isNull(treeNode.getGroup())) {
+            if (isNull(group)) {
                 final String text = getGroupName();
                 //"dummy" group in file system tree <=>  a folder with no drawables
                 Platform.runLater(() -> {
@@ -123,14 +119,14 @@ class GroupTreeCell extends TreeCell<GroupTreeNode> {
 
             } else {
                 //if number of files in this group changes (eg a file is recategorized), update counts via listener
-                treeNode.getGroup().fileIds().addListener(fileCountListener);
-                treeNode.getGroup().uncatCountProperty().addListener(fileCountListener);
+                group.fileIds().addListener(fileCountListener);
+                group.uncatCountProperty().addListener(fileCountListener);
                 sortOrder.addListener(fileCountListener);
                 //if the seen state of this group changes update its style
-                treeNode.getGroup().seenProperty().addListener(seenListener);
+                group.seenProperty().addListener(seenListener);
 
                 //and use icon corresponding to group type
-                final Image icon = treeNode.getGroup().groupKey.getAttribute().getIcon();
+                final Image icon = group.groupKey.getAttribute().getIcon();
                 final String text = getGroupName() + getCountsText();
                 final String style = getSeenStyleClass();
                 Platform.runLater(() -> {
@@ -145,7 +141,7 @@ class GroupTreeCell extends TreeCell<GroupTreeNode> {
 
     private String getGroupName() {
         return Optional.ofNullable(getItem())
-                .map(treeNode -> StringUtils.defaultIfBlank(treeNode.getPath(), DrawableGroup.getBlankGroupName()))
+                .map(group -> group.getGroupByValueDislpayName())
                 .orElse("");
     }
 
@@ -157,7 +153,6 @@ class GroupTreeCell extends TreeCell<GroupTreeNode> {
     @Nonnull
     private String getSeenStyleClass() {
         return Optional.ofNullable(getItem())
-                .map(GroupTreeNode::getGroup)
                 .map(DrawableGroup::isSeen)
                 .map(seen -> seen ? "" : "-fx-font-weight:bold;")
                 .orElse(""); //if item is null or group is null
@@ -171,8 +166,8 @@ class GroupTreeCell extends TreeCell<GroupTreeNode> {
      */
     @Nonnull
     private String getCountsText() {
+
         return Optional.ofNullable(getItem())
-                .map(GroupTreeNode::getGroup)
                 .map(group ->
                         " (" + (sortOrder.get() == GroupComparators.ALPHABETICAL
                                 ? group.getSize()

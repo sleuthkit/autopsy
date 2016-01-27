@@ -23,7 +23,7 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 /**
  *
  */
-class TreeNode {
+class GroupTreeNode {
 
     private final String path;
     private DrawableGroup group;
@@ -36,32 +36,12 @@ class TreeNode {
         return group;
     }
 
-    TreeNode(String path, DrawableGroup group) {
+    GroupTreeNode(String path, DrawableGroup group) {
         this.path = path;
         this.group = group;
     }
 
     void setGroup(DrawableGroup g) {
         group = g;
-    }
-
-    public String getGroupByValueDislpayName() {
-        return (group == null) ? "" : group.getGroupByValueDislpayName();
-    }
-
-    public synchronized int getSize() {
-        return (group == null) ? 0 : group.getSize();
-    }
-
-    public double getHashHitDensity() {
-        return (group == null) ? 0 : group.getHashHitDensity();
-    }
-
-    public synchronized long getHashSetHitsCount() {
-        return (group == null) ? 0 : group.getHashSetHitsCount();
-    }
-
-    public final synchronized long getUncategorizedCount() {
-        return (group == null) ? 0 : group.getUncategorizedCount();
     }
 }

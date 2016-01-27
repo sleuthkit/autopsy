@@ -39,6 +39,8 @@ import java.util.stream.Stream;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleWrapper;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import static javafx.concurrent.Worker.State.CANCELLED;
@@ -116,10 +118,13 @@ public class GroupManager {
      * --- current grouping/sorting attributes ---
      */
     private volatile GroupSortBy sortBy = GroupSortBy.NONE;
-
     private volatile DrawableAttribute<?> groupBy = DrawableAttribute.PATH;
-
     private volatile SortOrder sortOrder = SortOrder.ASCENDING;
+
+    private final ReadOnlyObjectWrapper<GroupSortBy> sortByProp = new ReadOnlyObjectWrapper<>(sortBy);
+    private final ReadOnlyObjectWrapper< DrawableAttribute<?>> groupByProp = new ReadOnlyObjectWrapper<>(groupBy);
+    private final ReadOnlyObjectWrapper<SortOrder> sortOrderProp = new ReadOnlyObjectWrapper<>(sortOrder);
+
     private final ReadOnlyDoubleWrapper regroupProgress = new ReadOnlyDoubleWrapper();
 
     public void setDB(DrawableDB db) {
@@ -424,24 +429,39 @@ public class GroupManager {
         return sortBy;
     }
 
-    public void setSortBy(GroupSortBy sortBy) {
+    void setSortBy(GroupSortBy sortBy) {
         this.sortBy = sortBy;
+        Platform.runLater(() -> sortByProp.set(sortBy));
+    }
+
+    public ReadOnlyObjectProperty<GroupSortBy> getSortByProperty() {
+        return sortByProp.getReadOnlyProperty();
     }
 
     public DrawableAttribute<?> getGroupBy() {
         return groupBy;
     }
 
-    public void setGroupBy(DrawableAttribute<?> groupBy) {
+    void setGroupBy(DrawableAttribute<?> groupBy) {
         this.groupBy = groupBy;
+        Platform.runLater(() -> groupByProp.set(groupBy));
+    }
+
+    public ReadOnlyObjectProperty<DrawableAttribute<?>> getGroupByProperty() {
+        return groupByProp.getReadOnlyProperty();
     }
 
     public SortOrder getSortOrder() {
         return sortOrder;
     }
 
-    public void setSortOrder(SortOrder sortOrder) {
+    void setSortOrder(SortOrder sortOrder) {
         this.sortOrder = sortOrder;
+        Platform.runLater(() -> sortOrderProp.set(sortOrder));
+    }
+
+    public ReadOnlyObjectProperty<SortOrder> getSortOrderProperty() {
+        return sortOrderProp.getReadOnlyProperty();
     }
 
     /**
