@@ -294,7 +294,8 @@ public class ImageUtils {
                         || (conditionalMimes.contains(mimeType.toLowerCase()) && supportedExtension.contains(extension));
             }
         } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "Failed to look up mimetype for " + getContentPathSafe(file) + " using FileTypeDetector.  Fallingback on AbstractFile.isMimeType", ex); //NOI18N
+            LOGGER.log(Level.WARNING, "Failed to look up mimetype for {0} using FileTypeDetector:{1}", new Object[]{getContentPathSafe(file), ex.toString()}); //NOI18N
+            LOGGER.log(Level.INFO, "Falling back on AbstractFile.isMimeType"); //NOI18N
             AbstractFile.MimeMatchEnum mimeMatch = file.isMimeType(supportedMimeTypes);
             if (mimeMatch == AbstractFile.MimeMatchEnum.TRUE) {
                 return true;
@@ -670,7 +671,6 @@ public class ImageUtils {
             if (isCancelled()) {
                 return null;
             }
-
             // If a thumbnail file is already saved locally, just read that.
             if (cacheFile != null && cacheFile.exists()) {
                 try {
@@ -701,6 +701,7 @@ public class ImageUtils {
                         throw new IIOException("Failed to generate thumbnail for video file.");
                     }
                 }
+
             } else {
                 //read the image into a buffered image.
                 BufferedImage bufferedImage = SwingFXUtils.fromFXImage(readImage(), null);
