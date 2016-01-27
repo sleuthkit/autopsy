@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1029,62 +1029,9 @@ public final class DrawableDB {
         return files;
     }
 
-    public List<DrawableFile<?>> getFilesInGroup(GroupKey<?> key) throws TskCoreException {
-        List<DrawableFile<?>> files = new ArrayList<>();
-        dbReadLock();
-        try {
-            PreparedStatement statement = null;
-
-            /*
-             * I hate this! not flexible/generic/maintainable we could have the
-             * DrawableAttribute provide/create/configure the correct statement
-             * but they shouldn't be coupled like that -jm
-             */
-            switch (key.getAttribute().attrName) {
-                case MIME_TYPE:
-                    return getFilesWithMimeType((String) key.getValue());
-                case CATEGORY:
-                    return getFilesWithCategory((Category) key.getValue());
-                default:
-                    statement = getGroupStatment(key.getAttribute());
-            }
-
-            statement.setObject(1, key.getValue());
-
-            try (ResultSet valsResults = statement.executeQuery()) {
-                while (valsResults.next()) {
-                    files.add(getFileFromID(valsResults.getLong(OBJ_ID), valsResults.getBoolean(ANALYZED)));
-                }
-            }
-        } catch (SQLException ex) {
-            LOGGER.log(Level.WARNING, "failed to get file for group:" + key.getAttribute() + " == " + key.getValue(), ex);
-        } finally {
-            dbReadUnlock();
-        }
-
-        return files;
-    }
-
     private void closeStatements() throws SQLException {
         for (PreparedStatement pStmt : preparedStatements) {
             pStmt.close();
-        }
-    }
-
-    public List<DrawableFile<?>> getFilesWithCategory(Category cat) throws TskCoreException, IllegalArgumentException {
-        try {
-            List<DrawableFile<?>> files = new ArrayList<>();
-            List<ContentTag> contentTags = controller.getTagsManager().getContentTagsByTagName(controller.getTagsManager().getTagName(cat));
-            for (ContentTag ct : contentTags) {
-                if (ct.getContent() instanceof AbstractFile) {
-                    files.add(DrawableFile.create((AbstractFile) ct.getContent(), isFileAnalyzed(ct.getContent().getId()),
-                            isVideoFile((AbstractFile) ct.getContent())));
-                }
-            }
-            return files;
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "TSK error getting files in Category:" + cat.getDisplayName(), ex);
-            throw ex;
         }
     }
 
@@ -1143,10 +1090,6 @@ public final class DrawableDB {
         //indicates succesfull removal of 1 file
         return valsResults == 1;
 
-    }
-
-    private List<DrawableFile<?>> getFilesWithMimeType(String string) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     public class MultipleTransactionException extends IllegalStateException {
