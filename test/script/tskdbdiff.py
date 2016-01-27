@@ -245,10 +245,6 @@ class TskDbDiff(object):
                                 attr_value_as_string = str(attr["value_int64"])                        
                             if attr["display_name"] == "Associated Artifact":
                                 attr_value_as_string = getAssociatedArtifactType(db_file, attr_value_as_string)                            
-                            if attr["display_name"] == "Associated Artifact":
-                                attr_value_as_string = getAssociatedArtifactType(db_file, attr_value_as_string)
-                            #if((type(attr_value_as_string) != 'unicode') or (type(attr_value_as_string) != 'str')):
-                            #    attr_value_as_string = str(attr_value_as_string)
                             patrn = re.compile("[\n\0\a\b\r\f]")
                             attr_value_as_string = re.sub(patrn, ' ', attr_value_as_string)
                             database_log.write('<attribute source="' + attr["source"] + '" type="' + attr["display_name"] + '" value="' + attr_value_as_string + '" />')
