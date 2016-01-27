@@ -77,8 +77,6 @@ import org.sleuthkit.autopsy.imagegallery.gui.NoGroupsDialog;
 import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
@@ -713,27 +711,23 @@ public final class ImageGalleryController implements Executor {
             this.tskCase = tskCase;
         }
 
-        static private final String FILE_EXTESNION_CLAUSE = "(name LIKE '%."
-                + StringUtils.join(FileTypeUtils.getAllSupportedExtensions(),
-                        "' or name LIKE '%.")
+        static private final String FILE_EXTENSION_CLAUSE =
+                "(name LIKE '%."
+                + StringUtils.join(FileTypeUtils.getAllSupportedExtensions(), "' OR name LIKE '%.")
                 + "')";
+
         static private final String MIMETYPE_CLAUSE =
-                "blackboard_attributes.value_text LIKE '"
-                + StringUtils.join(FileTypeUtils.getAllSupportedMimeTypes(),
-                        "' OR blackboard_attributes.value_text LIKE '") + "' ";
+                "(mime_type LIKE '"
+                + StringUtils.join(FileTypeUtils.getAllSupportedMimeTypes(), "' OR mime_type LIKE '")
+                + "') ";
 
-        static private final String DRAWABLE_QUERY = FILE_EXTESNION_CLAUSE + " OR tsk_files.obj_id IN ("
-                + "SELECT tsk_files.obj_id from tsk_files , blackboard_artifacts,  blackboard_attributes"
-                + " WHERE  blackboard_artifacts.obj_id = tsk_files.obj_id"
-                + " AND blackboard_attributes.artifact_id = blackboard_artifacts.artifact_id"
-                + " AND blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID()
-                + " AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID()
-                + " AND (blackboard_attributes.value_text LIKE 'video/%'"
-                + "     OR blackboard_attributes.value_text LIKE 'image/%'"
-                + "     OR " + MIMETYPE_CLAUSE
-                + "     )"
-                + ")";
-
+        static private final String DRAWABLE_QUERY =
+                //grab files with supported extension
+                FILE_EXTENSION_CLAUSE
+                //grab files with supported mime-types
+                + " OR " + MIMETYPE_CLAUSE
+                //grab files with image or video mime-types even if we don't officially support them
+                + " OR mime_type LIKE 'video/%' OR mime_type LIKE 'image/%'";
         private ProgressHandle progressHandle = ProgressHandleFactory.createHandle("populating analyzed image/video database");
 
         @Override
