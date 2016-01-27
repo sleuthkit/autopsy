@@ -411,14 +411,14 @@ class ExtractRegistry extends Extract {
 
                     try {
                         Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), parentModuleName, version));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME, parentModuleName, version));
                         if (installtime != null) {
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), parentModuleName, installtime));
+                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, parentModuleName, installtime));
                         }
-                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), parentModuleName, systemRoot));
-                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PRODUCT_ID.getTypeID(), parentModuleName, productId));
-                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_OWNER.getTypeID(), parentModuleName, regOwner));
-                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ORGANIZATION.getTypeID(), parentModuleName, regOrg));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH, parentModuleName, systemRoot));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PRODUCT_ID, parentModuleName, productId));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_OWNER, parentModuleName, regOwner));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ORGANIZATION, parentModuleName, regOrg));
 
                         // Check if there is already an OS_INFO artifact for this file, and add to that if possible.
                         ArrayList<BlackboardArtifact> results = tempDb.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_INFO, regFile.getId());
@@ -465,9 +465,9 @@ class ExtractRegistry extends Extract {
 
                     try {
                         Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VERSION.getTypeID(), parentModuleName, os));
-                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROCESSOR_ARCHITECTURE.getTypeID(), parentModuleName, procArch));
-                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEMP_DIR.getTypeID(), parentModuleName, tempDir));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VERSION, parentModuleName, os));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROCESSOR_ARCHITECTURE, parentModuleName, procArch));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEMP_DIR, parentModuleName, tempDir));
 
                         // Check if there is already an OS_INFO artifact for this file and add to that if possible
                         ArrayList<BlackboardArtifact> results = tempDb.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_INFO, regFile.getId());
@@ -507,8 +507,8 @@ class ExtractRegistry extends Extract {
 
                     try {
                         Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), parentModuleName, compName));
-                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), parentModuleName, domain));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, parentModuleName, compName));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN, parentModuleName, domain));
 
                         // Check if there is already an OS_INFO artifact for this file and add to that if possible
                         ArrayList<BlackboardArtifact> results = tempDb.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_INFO, regFile.getId());
@@ -549,7 +549,7 @@ class ExtractRegistry extends Extract {
                                         usbMtime = Long.valueOf(usbMtime.toString());
 
                                         BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED);
-                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), parentModuleName, usbMtime));
+                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, parentModuleName, usbMtime));
                                         String dev = artnode.getAttribute("dev"); //NON-NLS
                                         String make = "";
                                         String model = dev;
@@ -562,9 +562,9 @@ class ExtractRegistry extends Extract {
                                                 model = info.getProduct();
                                             }
                                         }
-                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID(), parentModuleName, make));
-                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), parentModuleName, model));
-                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID(), parentModuleName, value));
+                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE, parentModuleName, make));
+                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL, parentModuleName, model));
+                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID, parentModuleName, value));
                                         bbart.addAttributes(bbattributes);
                                                             
                                         // index the artifact for keyword search
@@ -584,8 +584,8 @@ class ExtractRegistry extends Extract {
                                     }
 
                                     try {
-                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), parentModuleName, value));
-                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), parentModuleName, itemMtime));
+                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME, parentModuleName, value));
+                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, parentModuleName, itemMtime));
                                         BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
                                         bbart.addAttributes(bbattributes);
                                                             
@@ -602,11 +602,11 @@ class ExtractRegistry extends Extract {
                                         BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
                                         // @@@ BC: Consider removing this after some more testing. It looks like an Mtime associated with the root key and not the individual item
                                         if (mtime != null) {
-                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), parentModuleName, mtime));
+                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED, parentModuleName, mtime));
                                         }
-                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), parentModuleName, officeName));
-                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), parentModuleName, value));
-                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), parentModuleName, artnode.getNodeName()));
+                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, parentModuleName, officeName));
+                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE, parentModuleName, value));
+                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME, parentModuleName, artnode.getNodeName()));
                                         bbart.addAttributes(bbattributes);
                                                             
                                         // index the artifact for keyword search
@@ -639,11 +639,11 @@ class ExtractRegistry extends Extract {
                                         String username = artnode.getAttribute("username"); //NON-NLS
 
                                         BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
-                                        bbart.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME.getTypeID(),
+                                        bbart.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
                                                 parentModuleName, username));
-                                        bbart.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_ID.getTypeID(),
+                                        bbart.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_ID,
                                                 parentModuleName, sid));
-                                        bbart.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(),
+                                        bbart.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
                                                 parentModuleName, homeDir));
                                         // index the artifact for keyword search
                                         this.indexArtifact(bbart);
@@ -657,9 +657,9 @@ class ExtractRegistry extends Extract {
                                         String localPath = artnode.getAttribute("localPath"); //NON-NLS
                                         String remoteName = value;
                                         BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_REMOTE_DRIVE);
-                                        bbart.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LOCAL_PATH.getTypeID(),
+                                        bbart.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LOCAL_PATH,
                                                 parentModuleName, localPath));
-                                        bbart.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REMOTE_PATH.getTypeID(),
+                                        bbart.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REMOTE_PATH,
                                                 parentModuleName, remoteName));
                                         // index the artifact for keyword search
                                         this.indexArtifact(bbart);
