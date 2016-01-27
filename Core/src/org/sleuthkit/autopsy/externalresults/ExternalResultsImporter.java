@@ -144,7 +144,7 @@ public final class ExternalResultsImporter {
                     // Add the artifact's attributes to the case database.
                     Collection<BlackboardAttribute> attributes = new ArrayList<>();
                     for (ExternalResults.ArtifactAttribute attributeData : artifactData.getAttributes()) {
-                        BlackboardAttribute.Type attributeType = caseDb.getAttrType(attributeData.getType());
+                        BlackboardAttribute.Type attributeType = caseDb.getAttributeType(attributeData.getType());
                         if (attributeType == null) {
                             switch (attributeData.getValueType()) {
                             case "text": //NON-NLS
