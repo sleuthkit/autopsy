@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
+import com.google.common.collect.ImmutableList;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -25,23 +26,34 @@ import java.util.stream.Stream;
 import javafx.scene.paint.Color;
 
 /**
- * Enum to represent the six categories in the DHs image categorization scheme.
+ * Enum to represent the six categories in the DHS image categorization scheme.
  */
 public enum Category {
 
-    /* This order of declaration is required so that Enum's compareTo method
+    /*
+     * This order of declaration is required so that Enum's compareTo method
      * preserves the fact that lower category numbers are first/most sever,
-     * except 0 which is last */
-    ONE(Color.RED, 1, "CAT-1:  Child Exploitation (Illegal)"),
+     * except 0 which is last
+     */
+    ONE(Color.RED, 1, "CAT-1: Child Exploitation (Illegal)"),
     TWO(Color.ORANGE, 2, "CAT-2: Child Exploitation (Non-Illegal/Age Difficult)"),
     THREE(Color.YELLOW, 3, "CAT-3: CGI/Animation (Child Exploitive)"),
-    FOUR(Color.BISQUE, 4, "CAT-4:  Exemplar/Comparison (Internal Use Only)"),
+    FOUR(Color.BISQUE, 4, "CAT-4: Exemplar/Comparison (Internal Use Only)"),
     FIVE(Color.GREEN, 5, "CAT-5: Non-pertinent"),
     ZERO(Color.LIGHTGREY, 0, "CAT-0: Uncategorized");
 
-    /** map from displayName to enum value */
-    private static final Map<String, Category> nameMap
-            = Stream.of(values()).collect(Collectors.toMap(
+    public static ImmutableList<Category> getNonZeroCategories() {
+        return nonZeroCategories;
+    }
+
+    private static final ImmutableList<Category> nonZeroCategories =
+            ImmutableList.of(Category.FIVE, Category.FOUR, Category.THREE, Category.TWO, Category.ONE);
+
+    /**
+     * map from displayName to enum value
+     */
+    private static final Map<String, Category> nameMap =
+            Stream.of(values()).collect(Collectors.toMap(
                             Category::getDisplayName,
                             Function.identity()));
 
@@ -85,5 +97,4 @@ public enum Category {
     public String toString() {
         return displayName;
     }
-
 }

@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import org.netbeans.api.progress.ProgressHandle;
-
 /**
  * Used by data source ingest modules to report progress.
  */

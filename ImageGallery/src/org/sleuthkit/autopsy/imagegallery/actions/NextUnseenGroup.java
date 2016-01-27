@@ -19,9 +19,9 @@
 package org.sleuthkit.autopsy.imagegallery.actions;
 
 import java.util.Optional;
-import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.binding.ObjectExpression;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -36,10 +36,10 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
  */
 public class NextUnseenGroup extends Action {
 
-    private static final Image END
-            = new Image(NextUnseenGroup.class.getResourceAsStream("/org/sleuthkit/autopsy/imagegallery/images/control-stop.png"));
-    private static final Image ADVANCE
-            = new Image(NextUnseenGroup.class.getResourceAsStream("/org/sleuthkit/autopsy/imagegallery/images/control-double.png"));
+    private static final Image END =
+            new Image(NextUnseenGroup.class.getResourceAsStream("/org/sleuthkit/autopsy/imagegallery/images/control-stop.png"));
+    private static final Image ADVANCE =
+            new Image(NextUnseenGroup.class.getResourceAsStream("/org/sleuthkit/autopsy/imagegallery/images/control-double.png"));
 
     private static final String MARK_GROUP_SEEN = "Mark Group Seen";
     private static final String NEXT_UNSEEN_GROUP = "Next Unseen group";
@@ -53,25 +53,36 @@ public class NextUnseenGroup extends Action {
 
         //TODO: do we need both these listeners?
         controller.getGroupManager().getAnalyzedGroups().addListener((Observable observable) -> {
-            Platform.runLater(this::updateButton);
+            updateButton();
 
         });
         controller.getGroupManager().getUnSeenGroups().addListener((Observable observable) -> {
-            Platform.runLater(this::updateButton);
-
+            updateButton();
         });
 
         setEventHandler((ActionEvent t) -> {
+            //fx-thread
             //if there is a group assigned to the view, mark it as seen
             Optional.ofNullable(controller.viewState())
                     .map(ObjectExpression<GroupViewState>::getValue)
                     .map(GroupViewState::getGroup)
                     .ifPresent(group -> controller.getGroupManager().markGroupSeen(group, true));
+            controller.execute(new Task<Void>() {
 
-            if (false == controller.getGroupManager().getUnSeenGroups().isEmpty()) {
-                controller.advance(GroupViewState.tile(controller.getGroupManager().getUnSeenGroups().get(0)), true);
-            }
-            updateButton();
+                @Override
+                protected Void call() throws Exception {
+                    if (false == controller.getGroupManager().getUnSeenGroups().isEmpty()) {
+                        controller.advance(GroupViewState.tile(controller.getGroupManager().getUnSeenGroups().get(0)), true);
+                    }
+                    return null;
+                }
+
+                @Override
+                protected void succeeded() {
+                    super.succeeded();
+                    updateButton();
+                }
+            });
         });
 
         updateButton();

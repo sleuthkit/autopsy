@@ -25,7 +25,9 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.logging.Level;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
+import javafx.beans.WeakInvalidationListener;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -111,7 +113,6 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     @FXML
     private ImageView hashHitImageView;
 
-
     /**
      * displays the icon representing follow up tag
      */
@@ -148,7 +149,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
         super(controller);
         this.groupPane = groupPane;
         selectionModel = controller.getSelectionModel();
-        selectionModel.getSelected().addListener((Observable observable) -> updateSelectionState());
+        selectionModel.getSelected().addListener(new WeakInvalidationListener(selectionListener));
 
         //set up mouse listener
         //TODO: split this between DrawableTile and SingleDrawableViewBase
@@ -220,7 +221,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                 });
                 menuItems.add(contentViewer);
 
-                OpenExternalViewerAction openExternalViewerAction = new OpenExternalViewerAction(file.getAbstractFile());
+                OpenExternalViewerAction openExternalViewerAction = new OpenExternalViewerAction(file);
                 MenuItem externalViewer = ActionUtils.createMenuItem(openExternalViewerAction);
                 externalViewer.textProperty().unbind();
                 externalViewer.textProperty().bind(openExternalViewerAction.longTextProperty());
@@ -243,6 +244,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
             }
         });
     }
+    private final InvalidationListener selectionListener = (Observable observable) -> updateSelectionState();
 
     GroupPane getGroupPane() {
         return groupPane;
@@ -314,7 +316,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
         getFile().ifPresent(file -> {
             final boolean isVideo = file.isVideo();
             final boolean hasHashSetHits = hasHashHit();
-     
+
             final String text = getTextForLabel();
 
             Platform.runLater(() -> {
@@ -322,7 +324,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                 fileTypeImageView.setVisible(isVideo);
                 hashHitImageView.setManaged(hasHashSetHits);
                 hashHitImageView.setVisible(hasHashSetHits);
-        
+
                 nameLabel.setText(text);
                 nameLabel.setTooltip(new Tooltip(text));
             });

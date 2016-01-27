@@ -110,12 +110,12 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
                     // (i.e., rows that differ only in artifact id), but doing
                     // otherwise would requires reworking the interesting files
                     // set hit artifact.
-                    BlackboardAttribute setNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), moduleName, filesSet.getName());
+                    BlackboardAttribute setNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, moduleName, filesSet.getName());
                     artifact.addAttribute(setNameAttribute);
 
                     // Add a category attribute to the artifact to record the 
                     // interesting files set membership rule that was satisfied.
-                    BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID(), moduleName, ruleSatisfied);
+                    BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, moduleName, ruleSatisfied);
                     artifact.addAttribute(ruleNameAttribute);
                     
                     try {

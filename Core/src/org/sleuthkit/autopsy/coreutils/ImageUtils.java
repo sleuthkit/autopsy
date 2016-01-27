@@ -234,22 +234,29 @@ public class ImageUtils {
      */
     public static boolean isGIF(AbstractFile file) {
         try {
-            final FileTypeDetector fileTypeDetector = getFileTypeDetector();
-            if (nonNull(fileTypeDetector)) {
-                String fileType = fileTypeDetector.getFileType(file);
+            final FileTypeDetector myFileTypeDetector = getFileTypeDetector();
+            if (nonNull(myFileTypeDetector)) {
+                String fileType = myFileTypeDetector.getFileType(file);
                 return IMAGE_GIF_MIME.equalsIgnoreCase(fileType);
             }
-        } catch (TskCoreException | FileTypeDetectorInitException ex) {
-            LOGGER.log(Level.WARNING, "Failed to get mime type with FileTypeDetector.", ex); //NOI18N
+        } catch (FileTypeDetectorInitException ex) {
+            LOGGER.log(Level.WARNING, "Failed to initialize FileTypeDetector.", ex); //NOI18N
+        } catch (TskCoreException ex) {
+            if (ex.getMessage().contains("An SQLException was provoked by the following failure: java.lang.InterruptedException")) {
+                LOGGER.log(Level.WARNING, "Mime type look up with FileTypeDetector was interupted."); //NOI18N}
+                return "gif".equalsIgnoreCase(file.getNameExtension()); //NOI18N
+            } else {
+                LOGGER.log(Level.SEVERE, "Failed to get mime type of " + getContentPathSafe(file) + " with FileTypeDetector.", ex); //NOI18N}
+            }
         }
-        LOGGER.log(Level.WARNING, "Falling back on direct mime type check."); //NOI18N
+        LOGGER.log(Level.WARNING, "Falling back on direct mime type check for {0}.", getContentPathSafe(file)); //NOI18N
         switch (file.isMimeType(GIF_MIME_SET)) {
 
             case TRUE:
                 return true;
             case UNDEFINED:
                 LOGGER.log(Level.WARNING, "Falling back on extension check."); //NOI18N
-                return "gif".equals(file.getNameExtension()); //NOI18N
+                return "gif".equalsIgnoreCase(file.getNameExtension()); //NOI18N
             case FALSE:
             default:
                 return false;
@@ -287,7 +294,8 @@ public class ImageUtils {
                         || (conditionalMimes.contains(mimeType.toLowerCase()) && supportedExtension.contains(extension));
             }
         } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "Failed to look up mimetype for " + getContentPathSafe(file) + " using FileTypeDetector.  Fallingback on AbstractFile.isMimeType", ex); //NOI18N
+            LOGGER.log(Level.WARNING, "Failed to look up mimetype for {0} using FileTypeDetector:{1}", new Object[]{getContentPathSafe(file), ex.toString()}); //NOI18N
+            LOGGER.log(Level.INFO, "Falling back on AbstractFile.isMimeType"); //NOI18N
             AbstractFile.MimeMatchEnum mimeMatch = file.isMimeType(supportedMimeTypes);
             if (mimeMatch == AbstractFile.MimeMatchEnum.TRUE) {
                 return true;
@@ -429,6 +437,7 @@ public class ImageUtils {
             String cacheDirectory = Case.getCurrentCase().getCacheDirectory();
             return Paths.get(cacheDirectory, "thumbnails", fileID + ".png").toFile(); //NOI18N
         } catch (IllegalStateException e) {
+            LOGGER.log(Level.WARNING, "Could not get cached thumbnail location.  No case is open.");
             return null;
         }
 
@@ -656,6 +665,12 @@ public class ImageUtils {
 
         @Override
         protected javafx.scene.image.Image call() throws Exception {
+            if (isGIF(file)) {
+                return readImage();
+            }
+            if (isCancelled()) {
+                return null;
+            }
             // If a thumbnail file is already saved locally, just read that.
             if (cacheFile != null && cacheFile.exists()) {
                 try {
@@ -668,20 +683,27 @@ public class ImageUtils {
                 }
             }
 
+            if (isCancelled()) {
+                return null;
+            }
             //There was no correctly-sized cached thumbnail so make one.
             BufferedImage thumbnail = null;
+
             if (VideoUtils.isVideoThumbnailSupported(file)) {
                 if (openCVLoaded) {
                     updateMessage(Bundle.GetOrGenerateThumbnailTask_generatingPreviewFor(file.getName()));
                     thumbnail = VideoUtils.generateVideoThumbnail(file, iconSize);
-                } else if (defaultOnFailure) {
-                    thumbnail = DEFAULT_THUMBNAIL;
-                } else {
-                    throw new IIOException("Failed to read image for thumbnail generation.");
+                }
+                if (null == thumbnail) {
+                    if (defaultOnFailure) {
+                        thumbnail = DEFAULT_THUMBNAIL;
+                    } else {
+                        throw new IIOException("Failed to generate thumbnail for video file.");
+                    }
                 }
 
             } else {
-                //read the image into abuffered image.
+                //read the image into a buffered image.
                 BufferedImage bufferedImage = SwingFXUtils.fromFXImage(readImage(), null);
                 if (null == bufferedImage) {
                     LOGGER.log(Level.WARNING, FAILED_TO_READ_IMAGE_FOR_THUMBNAIL_GENERATION);
@@ -714,12 +736,18 @@ public class ImageUtils {
                     throw e;
                 }
             }
+
+            if (isCancelled()) {
+                return null;
+            }
+
             updateProgress(-1, 1);
 
             //if we got a valid thumbnail save it
-            if (cacheFile != null && nonNull(thumbnail) && DEFAULT_THUMBNAIL != thumbnail) {
+            if ((cacheFile != null) && nonNull(thumbnail) && DEFAULT_THUMBNAIL != thumbnail) {
                 saveThumbnail(thumbnail);
             }
+
             return SwingFXUtils.toFXImage(thumbnail, null);
         }
 
@@ -783,7 +811,7 @@ public class ImageUtils {
      */
     static private abstract class ReadImageTaskBase extends Task<javafx.scene.image.Image> implements IIOReadProgressListener {
 
-        private static final String IMAGE_IO_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT = "ImageIO could not read {0}.  It may be unsupported or corrupt"; //NOI18N
+        private static final String IMAGE_UTILS_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT = "ImageUtils could not read {0}.  It may be unsupported or corrupt"; //NOI18N
         final AbstractFile file;
         private ImageReader reader;
 
@@ -801,7 +829,9 @@ public class ImageUtils {
                     }
                     //fall through to default image reading code if there was an error
                 }
-
+                if (isCancelled()) {
+                    return null;
+                }
                 try (ImageInputStream input = ImageIO.createImageInputStream(inputStream)) {
                     if (input == null) {
                         throw new IIOException(COULD_NOT_CREATE_IMAGE_INPUT_STREAM);
@@ -825,15 +855,15 @@ public class ImageUtils {
                         param.setDestination(bufferedImage);
                         try {
                             bufferedImage = reader.read(0, param); //should always be same bufferedImage object
-                            if (isCancelled()) {
-                                return null;
-                            }
                         } catch (IOException iOException) {
                             // Ignore this exception or display a warning or similar, for exceptions happening during decoding
-                            LOGGER.log(Level.WARNING, IMAGE_IO_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT + ": " + iOException.toString(), ImageUtils.getContentPathSafe(file)); //NOI18N
+                            LOGGER.log(Level.WARNING, IMAGE_UTILS_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT + ": " + iOException.toString(), ImageUtils.getContentPathSafe(file)); //NOI18N
                         } finally {
                             reader.removeIIOReadProgressListener(this);
                             reader.dispose();
+                        }
+                        if (isCancelled()) {
+                            return null;
                         }
                         return SwingFXUtils.toFXImage(bufferedImage, null);
                     } else {
@@ -848,6 +878,7 @@ public class ImageUtils {
             //update this task with the progress reported by ImageReader.read
             updateProgress(percentageDone, 100);
             if (isCancelled()) {
+                reader.removeIIOReadProgressListener(this);
                 reader.abort();
                 reader.dispose();
             }
@@ -859,11 +890,11 @@ public class ImageUtils {
             try {
                 javafx.scene.image.Image fxImage = get();
                 if (fxImage == null) {
-                    LOGGER.log(Level.WARNING, IMAGE_IO_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT, ImageUtils.getContentPathSafe(file));
+                    LOGGER.log(Level.WARNING, IMAGE_UTILS_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT, ImageUtils.getContentPathSafe(file));
                 } else {
                     if (fxImage.isError()) {
                         //if there was somekind of error, log it
-                        LOGGER.log(Level.WARNING, IMAGE_IO_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT + ": " + ObjectUtils.toString(fxImage.getException()), ImageUtils.getContentPathSafe(file));
+                        LOGGER.log(Level.WARNING, IMAGE_UTILS_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT + ": " + ObjectUtils.toString(fxImage.getException()), ImageUtils.getContentPathSafe(file));
                     }
                 }
             } catch (InterruptedException | ExecutionException ex) {
@@ -874,7 +905,7 @@ public class ImageUtils {
         @Override
         protected void failed() {
             super.failed();
-            LOGGER.log(Level.WARNING, IMAGE_IO_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT + ": " + ObjectUtils.toString(getException()), ImageUtils.getContentPathSafe(file));
+            LOGGER.log(Level.WARNING, IMAGE_UTILS_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT + ": " + ObjectUtils.toString(getException()), ImageUtils.getContentPathSafe(file));
         }
 
         @Override

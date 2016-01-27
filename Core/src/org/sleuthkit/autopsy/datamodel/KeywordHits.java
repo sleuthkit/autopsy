@@ -268,7 +268,7 @@ public class KeywordHits implements AutopsyVisitableItem {
                          * for the event to have a null oldValue.
                          */
                         ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
-                        if (null != eventData && eventData.getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT) {
+                        if (null != eventData && eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
                             keywordResults.update();
                         }
                     } catch (IllegalStateException notUsed) {

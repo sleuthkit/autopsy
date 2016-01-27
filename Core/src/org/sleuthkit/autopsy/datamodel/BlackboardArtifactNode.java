@@ -97,7 +97,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         this.associated = this.getLookup().lookup(Content.class);
         this.setName(Long.toString(artifact.getArtifactID()));
         this.setDisplayName();
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/" + getIcon(BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID()))); //NON-NLS
+        this.setIconBaseWithExtension(ExtractedContent.getIconFilePath(artifact.getArtifactTypeID())); //NON-NLS
     }
 
     /**
@@ -131,7 +131,6 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         this.setDisplayName(displayName);
     }
 
-    @Override
     protected Sheet createSheet() {
         Sheet s = super.createSheet();
         Sheet.Set ss = s.get(Sheet.PROPERTIES);
@@ -167,38 +166,24 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         // If mismatch, add props for extension and file type
         if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID()) {
             String ext = "";
+            String actualMimeType = "";
             if (associated instanceof AbstractFile) {
                 AbstractFile af = (AbstractFile) associated;
                 ext = af.getNameExtension();
+                actualMimeType = af.getMIMEType();
+                if(actualMimeType == null) {
+                    actualMimeType = "";
+                }
             }
             ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.ext.name"),
                     NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.ext.displayName"),
                     NO_DESCR,
                     ext));
-
-            try {
-                String actualMimeType = "";
-                ArrayList<BlackboardArtifact> artList = associated.getAllArtifacts();
-                for (BlackboardArtifact art : artList) {
-                    List<BlackboardAttribute> atrList = art.getAttributes();
-                    for (BlackboardAttribute att : atrList) {
-                        if (att.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID()) {
-                            actualMimeType = att.getValueString();
-                        }
-                    }
-                }
-                if (actualMimeType.isEmpty()) {
-                    logger.log(Level.WARNING, "Could not find expected TSK_FILE_TYPE_SIG attribute."); //NON-NLS
-                } else {
-                    ss.put(new NodeProperty<>(
-                            NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.mimeType.name"),
-                            NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.mimeType.displayName"),
-                            NO_DESCR,
-                            actualMimeType));
-                }
-            } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Error while searching for TSK_FILE_TYPE_SIG attribute: ", ex); //NON-NLS
-            }
+                ss.put(new NodeProperty<>(
+                        NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.mimeType.name"),
+                        NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.mimeType.displayName"),
+                        NO_DESCR,
+                        actualMimeType));
         }
 
         if (Arrays.asList(SHOW_UNIQUE_PATH).contains(artifactTypeId)) {
@@ -297,8 +282,8 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
     /**
      * Fill map with Artifact properties
      *
-     * @param map      map with preserved ordering, where property names/values
-     *                 are put
+     * @param map map with preserved ordering, where property names/values are
+     * put
      * @param artifact to extract properties from
      */
     @SuppressWarnings("deprecation") // TODO: Remove this when TSK_TAGGED_ARTIFACT rows are removed in a database upgrade.
@@ -422,64 +407,6 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
             logger.log(Level.WARNING, "Failed to retrieve Blackboard Attributes", ex); //NON-NLS
         }
         return null;
-    }
-
-    // @@@ TODO: Merge with ArtifactTypeNode.getIcon()
-    private String getIcon(BlackboardArtifact.ARTIFACT_TYPE type) {
-        switch (type) {
-            case TSK_WEB_BOOKMARK:
-                return "bookmarks.png"; //NON-NLS
-            case TSK_WEB_COOKIE:
-                return "cookies.png"; //NON-NLS
-            case TSK_WEB_HISTORY:
-                return "history.png"; //NON-NLS
-            case TSK_WEB_DOWNLOAD:
-                return "downloads.png"; //NON-NLS
-            case TSK_INSTALLED_PROG:
-                return "programs.png"; //NON-NLS
-            case TSK_RECENT_OBJECT:
-                return "recent_docs.png"; //NON-NLS
-            case TSK_DEVICE_ATTACHED:
-                return "usb_devices.png"; //NON-NLS
-            case TSK_WEB_SEARCH_QUERY:
-                return "searchquery.png"; //NON-NLS
-            case TSK_TAG_FILE:
-                return "blue-tag-icon-16.png"; //NON-NLS
-            case TSK_TAG_ARTIFACT:
-                return "green-tag-icon-16.png"; //NON-NLS
-            case TSK_METADATA_EXIF:
-                return "camera-icon-16.png"; //NON-NLS
-            case TSK_EMAIL_MSG:
-                return "mail-icon-16.png"; //NON-NLS
-            case TSK_CONTACT:
-                return "contact.png"; //NON-NLS
-            case TSK_MESSAGE:
-                return "message.png"; //NON-NLS
-            case TSK_CALLLOG:
-                return "calllog.png"; //NON-NLS
-            case TSK_CALENDAR_ENTRY:
-                return "calendar.png"; //NON-NLS
-            case TSK_SPEED_DIAL_ENTRY:
-                return "speeddialentry.png"; //NON-NLS
-            case TSK_BLUETOOTH_PAIRING:
-                return "bluetooth.png"; //NON-NLS
-            case TSK_GPS_BOOKMARK:
-                return "gpsfav.png"; //NON-NLS
-            case TSK_GPS_LAST_KNOWN_LOCATION:
-                return "gps-lastlocation.png"; //NON-NLS
-            case TSK_GPS_SEARCH:
-                return "gps-search.png"; //NON-NLS
-            case TSK_SERVICE_ACCOUNT:
-                return "account-icon-16.png"; //NON-NLS
-            case TSK_ENCRYPTION_DETECTED:
-                return "encrypted-file.png"; //NON-NLS
-            case TSK_EXT_MISMATCH_DETECTED:
-                return "mismatch-16.png"; //NON-NLS
-            case TSK_OS_INFO:
-                return "computer.png"; //NON-NLS
-            default:
-                return "artifact-icon.png"; //NON-NLS                
-        }
     }
 
     @Override
