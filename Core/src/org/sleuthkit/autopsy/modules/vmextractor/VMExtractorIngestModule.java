@@ -49,6 +49,8 @@ import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -60,6 +62,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
     private static final Logger logger = Logger.getLogger(VMExtractorIngestModule.class.getName());
     private IngestJobContext context;
     private Path ingestJobOutputDir;
+    private String parentDataSourceId = null;
 
     private final HashMap<String, String> imageFolderToOutputFolder = new HashMap<>();
     private int folderId = 0;
@@ -67,13 +70,26 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
-        String timeStamp = dateFormat.format(Calendar.getInstance().getTime());
-        String ingestJobOutputDirName = context.getDataSource().getName() + "_" + context.getDataSource().getId() + "_" + timeStamp;
-        ingestJobOutputDir = Paths.get(Case.getCurrentCase().getModuleDirectory(), VMExtractorIngestModuleFactory.getModuleName(), ingestJobOutputDirName);
+        long dataSourceObjId = context.getDataSource().getId();        
         try {
+            Case currentCase = Case.getCurrentCase();
+            SleuthkitCase caseDb = currentCase.getSleuthkitCase();
+            List<DataSource> dataSources = caseDb.getDataSources();
+            for (DataSource dataSource : dataSources) {
+                if (dataSource.getObjectId() == dataSourceObjId) {
+                    parentDataSourceId = dataSource.getUniqueId();
+                }
+            }
+            if (null == parentDataSourceId) {
+                throw new IngestModuleException(String.format("Data source %s missing unique id", context.getDataSource().getName()));
+            }
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
+            String timeStamp = dateFormat.format(Calendar.getInstance().getTime());
+            String ingestJobOutputDirName = context.getDataSource().getName() + "_" + context.getDataSource().getId() + "_" + timeStamp;
+            ingestJobOutputDir = Paths.get(Case.getCurrentCase().getModuleDirectory(), VMExtractorIngestModuleFactory.getModuleName(), ingestJobOutputDirName);
+            // create module output folder to write extracted virtual machine files to
             Files.createDirectories(ingestJobOutputDir);
-        } catch (IOException | SecurityException | UnsupportedOperationException ex) {
+        } catch (IOException | SecurityException | UnsupportedOperationException | TskCoreException ex) {
             throw new IngestModule.IngestModuleException(NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.cannotCreateOutputDir.message", ex.getLocalizedMessage()));
         }
     }
@@ -152,7 +168,10 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
         // update progress bar
         progressBar.switchToDeterminate(imageFolderToOutputFolder.size());
         progressBar.progress(NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.queuingIngestJobs.message"));
+        // this is for progress bar purposes because at this point we only know in advance how many job folders to ingest, not how many data sources.
         int numJobsQueued = 0;
+        // keeps track of number of VMs ingested. A job folder may contain multiple VMs.
+        int numDataSourcesQueued = 0;
         // start processing output folders after we are done writing out all vm files
         for (String folder : imageFolderToOutputFolder.values()) {
             if (context.dataSourceIngestIsCancelled()) {
@@ -163,8 +182,11 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
                 try {
                     logger.log(Level.INFO, "Ingesting virtual machine file {0} in folder {1}", new Object[]{file, folder});
                 
-                    // ingest the data sources                
-                    ingestVirtualMachineImage(Paths.get(folder, file));
+                    // for extracted virtual machines there is no manifest XML file to read data source ID from so we need to create one
+                    numDataSourcesQueued++;
+                    String dataSourceID = parentDataSourceId + "-VM" + numDataSourcesQueued;
+                    // ingest the data sources  
+                    ingestVirtualMachineImage(Paths.get(folder, file), dataSourceID);
                     logger.log(Level.INFO, "Ingest complete for virtual machine file {0} in folder {1}", new Object[]{file, folder});
                 } catch (InterruptedException ex) {
                     logger.log(Level.INFO, "Interrupted while ingesting virtual machine file "+file+" in folder "+folder, ex);
@@ -230,7 +252,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
      *
      * @param vmFile A virtual machine file.
      */
-    private void ingestVirtualMachineImage(Path vmFile) throws InterruptedException, IOException {
+    private void ingestVirtualMachineImage(Path vmFile, String dataSourceID) throws InterruptedException, IOException {
 
         /*
          * Try to add the virtual machine file to the case as a data source.
@@ -240,8 +262,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         AddDataSourceCallback dspCallback = new AddDataSourceCallback(vmFile);
         synchronized (this) {
-            // for extracted virtual machines we use UUID as data source ID because there is no manifest XML file
-            dataSourceProcessor.run(taskId.toString(), vmFile.toString(), "", false, new AddDataSourceProgressMonitor(), dspCallback);
+            dataSourceProcessor.run(dataSourceID, vmFile.toString(), "", false, new AddDataSourceProgressMonitor(), dspCallback);
             /*
              * Block the ingest thread until the data source processor finishes.
              */
