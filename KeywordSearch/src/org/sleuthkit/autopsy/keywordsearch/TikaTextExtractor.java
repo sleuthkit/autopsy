@@ -64,9 +64,8 @@ class TikaTextExtractor implements TextExtractor {
     private static final int MAX_EXTR_TEXT_CHARS = 512 * 1024;
     private static final int SINGLE_READ_CHARS = 1024;
     private static final int EXTRA_CHARS = 128; //for whitespace
-    //private static final String UTF16BOM = "\uFEFF"; disabled prepending of BOM
     private final char[] textChunkBuf = new char[MAX_EXTR_TEXT_CHARS];
-    private KeywordSearchIngestModule module;
+    private final KeywordSearchIngestModule module;
     private AbstractFile sourceFile; //currently processed file
     private int numChunks = 0;
     private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
@@ -187,19 +186,15 @@ class TikaTextExtractor implements TextExtractor {
                     }
                 }
 
-                //logger.log(Level.INFO, "TOTAL READ SIZE: " + totalRead + " file: " + sourceFile.getName());
-                //encode to bytes to index as byte stream
-                String extracted;
-                //add BOM and trim the 0 bytes
-                //set initial size to chars read + bom + metadata (roughly) - try to prevent from resizing
-                StringBuilder sb = new StringBuilder((int) totalRead + 1000);
-                //inject BOM here (saves byte buffer realloc later), will be converted to specific encoding BOM
-                //sb.append(UTF16BOM); disabled prepending of BOM
-                if (totalRead < MAX_EXTR_TEXT_CHARS) {
-                    sb.append(textChunkBuf, 0, (int) totalRead);
-                } else {
-                    sb.append(textChunkBuf);
+                // Sanitize by replacing non-UTF-8 characters with caret '^'
+                for (int i = 0; i < totalRead; ++i) {
+                    if (!isValidSolrUTF8(textChunkBuf[i])) {
+                        textChunkBuf[i] = '^';
+                    }
                 }
+
+                StringBuilder sb = new StringBuilder((int) totalRead + 1000);
+                sb.append(textChunkBuf, 0, (int) totalRead);
 
                 //reset for next chunk
                 totalRead = 0;
@@ -216,10 +211,8 @@ class TikaTextExtractor implements TextExtractor {
                     }
                 }
 
-                extracted = sb.toString();
-
-                //converts BOM automatically to charSet encoding
-                byte[] encodedBytes = extracted.getBytes(OUTPUT_CHARSET);
+                // Encode from UTF-8 charset to bytes
+                byte[] encodedBytes = sb.toString().getBytes(OUTPUT_CHARSET);
                 AbstractFileChunk chunk = new AbstractFileChunk(this, this.numChunks + 1);
                 try {
                     chunk.index(ingester, encodedBytes, encodedBytes.length, OUTPUT_CHARSET);
@@ -260,6 +253,27 @@ class TikaTextExtractor implements TextExtractor {
         ingester.ingest(this);
 
         return success;
+    }
+
+    /**
+     * This method determines if a passed-in Java char (16 bits) is a valid
+     * UTF-8 printable character, returning true if so, false if not.
+     *
+     * Note that this method can have ramifications for characters outside the
+     * Unicode Base Multilingual Plane (BMP), which require more than 16 bits.
+     * We are using Java characters (16 bits) to look at the data and this will
+     * not accurately identify any non-BMP character (larger than 16 bits)
+     * ending with 0xFFFF and 0xFFFE. In the interest of a fast solution, we
+     * have chosen to ignore the extended planes above Unicode BMP for the time
+     * being. The net result of this is some non-BMP characters may be
+     * interspersed with '^' characters in Autopsy.
+     *
+     * @param ch the character to test
+     *
+     * @return Returns true if the character is valid UTF-8, false if not.
+     */
+    private static boolean isValidSolrUTF8(char ch) {
+        return ((ch <= 0xFDD0 || ch >= 0xFDEF) && (ch > 0x1F || ch == 0x9 || ch == 0xA || ch == 0xD) && (ch != 0xFFFF) && (ch != 0xFFFE));
     }
 
     @Override

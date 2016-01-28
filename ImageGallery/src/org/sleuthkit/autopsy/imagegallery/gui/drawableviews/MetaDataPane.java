@@ -214,6 +214,7 @@ public class MetaDataPane extends DrawableUIBase {
     public void handleCategoryChanged(CategoryManager.CategoryChangeEvent evt) {
         getFileID().ifPresent(fileID -> {
             if (evt.getFileIDs().contains(fileID)) {
+                updateCategory();
                 updateAttributesTable();
             }
         });

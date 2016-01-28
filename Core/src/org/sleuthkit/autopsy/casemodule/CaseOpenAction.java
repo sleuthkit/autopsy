@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -72,21 +72,22 @@ public final class CaseOpenAction implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
 
-        // if ingest is ongoing, warn and get confirmaion before opening a different case
+        /*
+         * If ingest is running, do a dialog to warn the user and confirm
+         * abandoning the ingest.
+         */
         if (IngestManager.getInstance().isIngestRunning()) {
-            // show the confirmation first to close the current case and open the "New Case" wizard panel
             String closeCurrentCase = NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning");
             NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(closeCurrentCase,
                     NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning.title"),
                     NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
             descriptor.setValue(NotifyDescriptor.NO_OPTION);
-
             Object res = DialogDisplayer.getDefault().notify(descriptor);
             if (res != null && res == DialogDescriptor.YES_OPTION) {
                 try {
-                    Case.getCurrentCase().closeCase(); // close the current case
+                    Case.getCurrentCase().closeCase();
                 } catch (Exception ex) {
-                    Logger.getLogger(NewCaseWizardAction.class.getName()).log(Level.WARNING, "Error closing case.", ex); //NON-NLS
+                    Logger.getLogger(NewCaseWizardAction.class.getName()).log(Level.WARNING, "Error closing case", ex); //NON-NLS
                 }
             } else {
                 return;
@@ -95,7 +96,7 @@ public final class CaseOpenAction implements ActionListener {
 
         /**
          * Pop up a file chooser to allow the user to select a case meta data
-         * file (.aut file)
+         * file (.aut file).
          */
         int retval = fileChooser.showOpenDialog(WindowManager.getDefault().getMainWindow());
         if (retval == JFileChooser.APPROVE_OPTION) {

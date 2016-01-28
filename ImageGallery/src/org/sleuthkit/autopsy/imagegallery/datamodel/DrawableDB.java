@@ -41,6 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
 import org.apache.commons.lang3.StringUtils;
@@ -928,7 +929,15 @@ public final class DrawableDB {
                 try (Statement stmt = con.createStatement();
                         ResultSet valsResults = stmt.executeQuery(query.toString())) {
                     while (valsResults.next()) {
-                        vals.add((A) valsResults.getObject(groupBy.attrName.toString()));
+                        /*
+                         * I don't like that we have to do this cast here, but
+                         * can't think of a better alternative at the momment
+                         * unless something has gone seriously wrong, we know
+                         * this should be of type A even if JAVA doesn't
+                         */
+                        @SuppressWarnings("unchecked")
+                        A value = (A) valsResults.getObject(groupBy.attrName.toString());
+                        vals.add(value);
                     }
                 } catch (SQLException ex) {
                     LOGGER.log(Level.WARNING, "Unable to get values for attribute", ex);
@@ -1209,8 +1218,7 @@ public final class DrawableDB {
      * @param f check if this file is a video. will return false for null file.
      *
      * @return returns true if this file is a video as determined by {@link ImageGalleryModule#isVideoFile(org.sleuthkit.datamodel.AbstractFile)
-     *         } but caches the result.
-     *         returns false if passed a null AbstractFile
+     *         } but caches the result. returns false if passed a null AbstractFile
      */
     public boolean isVideoFile(AbstractFile f) {
         return isNull(f) ? false
@@ -1247,6 +1255,48 @@ public final class DrawableDB {
             LOGGER.log(Level.WARNING, "Case closed while getting files");
         } catch (TskCoreException ex1) {
             LOGGER.log(Level.SEVERE, "Failed to get content tags by tag name.", ex1);
+        }
+        return -1;
+    }
+
+    /**
+     * get the number of files in the given set that have the given category.
+     *
+     * NOTE: although the category data is stored in autopsy as Tags, this
+     * method is provided on DrawableDb to provide a single point of access for
+     * ImageGallery data.
+     *
+     * //TODO: think about moving this and similar methods that don't actually
+     * get their data form the drawabledb to a layer wrapping the drawable db:
+     * something like ImageGalleryCaseData?
+     *
+     * @param cat     the category to count the number of files for
+     * @param fileIDs the the files ids to count within
+     *
+     * @return the number of the with the given category
+     */
+    public long getCategoryCount(Category cat, Collection<Long> fileIDs) {
+        DrawableTagsManager tagsManager = controller.getTagsManager();
+
+        String catTagNameIDs = Category.getNonZeroCategories().stream()
+                .map(tagsManager::getTagName)
+                .map(TagName::getId)
+                .map(Object::toString)
+                .collect(Collectors.joining(",", "(", ")"));
+
+        String fileIdsList = "(" + StringUtils.join(fileIDs, ",") + " )";
+
+        //count the fileids that are in the given list and don't have a non-zero category assigned to them.
+        String name =
+                "SELECT COUNT(obj_id) FROM tsk_files where obj_id IN " + fileIdsList
+                + " AND obj_id NOT IN (SELECT obj_id FROM content_tags WHERE content_tags.tag_name_id IN " + catTagNameIDs + ")";
+        try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery(name);
+                ResultSet resultSet = executeQuery.getResultSet();) {
+            while (resultSet.next()) {
+                return resultSet.getLong("count(obj_id)");
+            }
+        } catch (SQLException | TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting category count.", ex);
         }
         return -1;
     }

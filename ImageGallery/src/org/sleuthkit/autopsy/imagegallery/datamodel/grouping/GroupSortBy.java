@@ -49,11 +49,7 @@ public enum GroupSortBy implements ComparatorProvider {
 
                 @Override
                 public <A extends Comparable<A>> Comparator<A> getValueComparator(final DrawableAttribute<A> attr, final SortOrder sortOrder) {
-                    return (A v1, A v2) -> {
-                        DrawableGroup g1 = ImageGalleryController.getDefault().getGroupManager().getGroupForKey(new GroupKey<A>(attr, v1));
-                        DrawableGroup g2 = ImageGalleryController.getDefault().getGroupManager().getGroupForKey(new GroupKey<A>(attr, v2));
-                        return getGrpComparator(sortOrder).compare(g1, g2);
-                    };
+                    return getDefaultValueComparator(attr, sortOrder);
                 }
             },
     /**
@@ -101,12 +97,7 @@ public enum GroupSortBy implements ComparatorProvider {
 
                 @Override
                 public <A extends Comparable<A>> Comparator<A> getValueComparator(DrawableAttribute<A> attr, SortOrder sortOrder) {
-                    return (A v1, A v2) -> {
-                        DrawableGroup g1 = ImageGalleryController.getDefault().getGroupManager().getGroupForKey(new GroupKey<A>(attr, v1));
-                        DrawableGroup g2 = ImageGalleryController.getDefault().getGroupManager().getGroupForKey(new GroupKey<A>(attr, v2));
-
-                        return getGrpComparator(sortOrder).compare(g1, g2);
-                    };
+                    return getDefaultValueComparator(attr, sortOrder);
                 }
             };
 
@@ -151,12 +142,12 @@ public enum GroupSortBy implements ComparatorProvider {
         return sortOrderEnabled;
     }
 
-    private static <T> Comparator<T> applySortOrder(final SortOrder sortOrder, Comparator<T> comparingInt) {
+    private static <T> Comparator<T> applySortOrder(final SortOrder sortOrder, Comparator<T> comparator) {
         switch (sortOrder) {
             case ASCENDING:
-                return comparingInt;
+                return comparator;
             case DESCENDING:
-                return comparingInt.reversed();
+                return comparator.reversed();
             case UNSORTED:
             default:
                 return new NoOpComparator<>();
@@ -170,11 +161,12 @@ public enum GroupSortBy implements ComparatorProvider {
             return 0;
         }
     }
+
 }
 
 /**
  * * implementers of this interface must provide a method to compare
- * ({@link  Comparable}) values and Groupings based on an
+ * ({@link Comparable}) values and Groupings based on an
  * {@link DrawableAttribute} and a {@link SortOrder}
  */
 interface ComparatorProvider {
@@ -182,4 +174,13 @@ interface ComparatorProvider {
     <A extends Comparable<A>> Comparator<A> getValueComparator(DrawableAttribute<A> attr, SortOrder sortOrder);
 
     Comparator<DrawableGroup> getGrpComparator(SortOrder sortOrder);
+
+    default <A extends Comparable<A>> Comparator<A> getDefaultValueComparator(DrawableAttribute<A> attr, SortOrder sortOrder) {
+        return (A v1, A v2) -> {
+            DrawableGroup g1 = ImageGalleryController.getDefault().getGroupManager().getGroupForKey(new GroupKey<>(attr, v1));
+            DrawableGroup g2 = ImageGalleryController.getDefault().getGroupManager().getGroupForKey(new GroupKey<>(attr, v2));
+
+            return getGrpComparator(sortOrder).compare(g1, g2);
+        };
+    }
 }

@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -63,6 +65,7 @@ import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.imagegallery.actions.UndoRedoManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
@@ -72,7 +75,6 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 import org.sleuthkit.autopsy.imagegallery.gui.NoGroupsDialog;
 import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
-import org.sleuthkit.autopsy.imagegallery.gui.navpanel.NavPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -88,11 +90,17 @@ import org.sleuthkit.datamodel.TskData;
  * Connects different parts of ImageGallery together and is hub for flow of
  * control.
  */
-public final class ImageGalleryController {
+public final class ImageGalleryController implements Executor {
+
+    private final Executor execDelegate = Executors.newSingleThreadExecutor();
+    private Runnable showTree;
+
+    @Override
+    public void execute(Runnable command) {
+        execDelegate.execute(command);
+    }
 
     private static final Logger LOGGER = Logger.getLogger(ImageGalleryController.class.getName());
-
-    private static final String IMAGEGALLERY = "ImageGallery";
 
     private final Region infoOverLayBackground = new Region() {
         {
@@ -111,6 +119,7 @@ public final class ImageGalleryController {
     }
 
     private final History<GroupViewState> historyManager = new History<>();
+    private final UndoRedoManager undoManager = new UndoRedoManager();
 
     /**
      * true if Image Gallery should listen to ingest events, false if it should
@@ -144,7 +153,7 @@ public final class ImageGalleryController {
 
     private Node infoOverlay;
     private SleuthkitCase sleuthKitCase;
-    private NavPanel navPanel;
+//    private NavPanel navPanel;
 
     public ReadOnlyBooleanProperty getMetaDataCollapsed() {
         return metaDataCollapsed.getReadOnlyProperty();
@@ -230,7 +239,9 @@ public final class ImageGalleryController {
         });
 
         viewState().addListener((Observable observable) -> {
+            //when the viewed group changes, clear the selection and the undo/redo history
             selectionModel.clearSelection();
+            undoManager.clear();
         });
 
         regroupDisabled.addListener((Observable observable) -> {
@@ -255,8 +266,8 @@ public final class ImageGalleryController {
 
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
     public void advance(GroupViewState newState, boolean forceShowTree) {
-        if (Objects.nonNull(navPanel) && forceShowTree) {
-            navPanel.showTree();
+        if (forceShowTree && showTree != null) {
+            showTree.run();
         }
         historyManager.advance(newState);
     }
@@ -471,8 +482,12 @@ public final class ImageGalleryController {
         return tagsManager;
     }
 
-    public void setNavPanel(NavPanel navPanel) {
-        this.navPanel = navPanel;
+    public void setShowTree(Runnable showTree) {
+        this.showTree = showTree;
+    }
+
+    public UndoRedoManager getUndoManager() {
+        return undoManager;
     }
 
     // @@@ REVIEW IF THIS SHOLD BE STATIC...
@@ -702,8 +717,8 @@ public final class ImageGalleryController {
                 + StringUtils.join(FileTypeUtils.getAllSupportedExtensions(),
                         "' or name LIKE '%.")
                 + "')";
-        static private final String MIMETYPE_CLAUSE
-                = "blackboard_attributes.value_text LIKE '"
+        static private final String MIMETYPE_CLAUSE =
+                "blackboard_attributes.value_text LIKE '"
                 + StringUtils.join(FileTypeUtils.getAllSupportedMimeTypes(),
                         "' OR blackboard_attributes.value_text LIKE '") + "' ";
 
@@ -832,7 +847,7 @@ public final class ImageGalleryController {
         /**
          * Copy files from a newly added data source into the DB. Get all
          * "drawable" files, based on extension. After ingest we use file type
-         * id module and if necessary jpeg signature matching to add/remove
+         * id module and if necessary jpeg/png signature matching to add/remove
          * files
          */
         @Override
@@ -841,30 +856,28 @@ public final class ImageGalleryController {
             updateMessage("prepopulating image/video database");
 
             try {
-                String fsQuery = "";
+                String fsQuery = "(fs_obj_id IS NULL) "; //default clause
+                /*
+                 * NOTE: Logical files currently (Apr '15) have a null value for
+                 * fs_obj_id in DB. for them, we will not specify a fs_obj_id,
+                 * which means we will grab files from another data source, but
+                 * the drawable DB is smart enough to de-dupe them. For Images
+                 * we can do better.
+                 */
                 if (dataSource instanceof Image) {
                     List<FileSystem> fileSystems = ((Image) dataSource).getFileSystems();
-                    if (fileSystems.isEmpty() == false) {
+                    if (fileSystems.isEmpty()) {
                         /*
                          * no filesystems, don't bother with the initial
-                         * population, just catch things on file_done
+                         * population, just sort things out on file_done events
                          */
                         progressHandle.finish();
                         return;
                     }
-                    String internal = fileSystems.stream()
+                    //use this clause to only grab files from the newly added filesystems.
+                    fsQuery = fileSystems.stream()
                             .map(fileSystem -> String.valueOf(fileSystem.getId()))
-                            .collect(Collectors.joining(" OR fs_obj_id = "));
-                    fsQuery = "(fs_obj_id = " + internal + ") "; //suffix
-                } else {
-                    /*
-                     * NOTE: Logical files currently (Apr '15) have a null value
-                     * for fs_obj_id in DB. for them, we will not specify a
-                     * fs_obj_id, which means we will grab files from another
-                     * data source, but the drawable DB is smart enough to
-                     * de-dupe them.
-                     */
-                    fsQuery = "(fs_obj_id IS NULL) ";
+                            .collect(Collectors.joining(" OR fs_obj_id = ", "(fs_obj_id = ", ") "));
                 }
 
                 final List<AbstractFile> files = getSleuthKitCase().findAllFilesWhere(fsQuery + " AND " + DRAWABLE_QUERY);

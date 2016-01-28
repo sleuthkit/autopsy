@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2015 Basis Technology Corp.
+ * Copyright 2014-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,6 +35,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * Detects the type of a file by an inspection of its contents.
@@ -45,7 +46,6 @@ public class FileTypeDetector {
     private static final int BUFFER_SIZE = 64 * 1024;
     private final byte buffer[] = new byte[BUFFER_SIZE];
     private final List<FileType> userDefinedFileTypes;
-    private static Blackboard blackboard;
     private static final Logger logger = Logger.getLogger(FileTypeDetector.class.getName());
 
     /**
@@ -123,16 +123,9 @@ public class FileTypeDetector {
      * @throws TskCoreException
      */
     public String getFileType(AbstractFile file) throws TskCoreException {
-        String fileType;
-        ArrayList<BlackboardAttribute> attributes = file.getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
-        for (BlackboardAttribute attribute : attributes) {
-            /**
-             * Get the first TSK_FILE_TYPE_SIG attribute.
-             */
-            fileType = attribute.getValueString();
-            if (null != fileType && !fileType.isEmpty()) {
-                return fileType;
-            }
+        String fileType = file.getMIMEType();
+        if (null != fileType) {
+            return fileType;
         }
         return detectAndPostToBlackboard(file);
     }
@@ -148,6 +141,7 @@ public class FileTypeDetector {
      *
      * @throws TskCoreException
      */
+    @SuppressWarnings("deprecation")
     public String detectAndPostToBlackboard(AbstractFile file) throws TskCoreException {
         String mimeType = detect(file);
         if (null != mimeType) {
@@ -157,9 +151,14 @@ public class FileTypeDetector {
              * because general info artifacts are different from other
              * artifacts, e.g., they are not displayed in the results tree.
              */
-            BlackboardArtifact getInfoArt = file.getGenInfoArtifact();
-            BlackboardAttribute batt = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID(), FileTypeIdModuleFactory.getModuleName(), mimeType);
-            getInfoArt.addAttribute(batt);
+            try {
+                file.setMIMEType(mimeType);
+                BlackboardArtifact getInfoArt = file.getGenInfoArtifact();
+                BlackboardAttribute batt = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG, FileTypeIdModuleFactory.getModuleName(), mimeType);
+                getInfoArt.addAttribute(batt);
+            } catch (TskDataException ex) {
+                //Swallowing exception so that the logs aren't clogged in the case that ingest is run multiple times.
+            }
         }
         return mimeType;
     }
@@ -174,7 +173,6 @@ public class FileTypeDetector {
      * @throws TskCoreException
      */
     public String detect(AbstractFile file) throws TskCoreException {
-        blackboard = Case.getCurrentCase().getServices().getBlackboard();
         // consistently mark non-regular files (refer TskData.TSK_FS_META_TYPE_ENUM),
         // 0 sized files, unallocated, and unused blocks (refer TskData.TSK_DB_FILES_TYPE_ENUM)
         // as octet-stream.
@@ -234,7 +232,7 @@ public class FileTypeDetector {
                 if (fileType.alertOnMatch()) {
                     BlackboardArtifact artifact;
                     artifact = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
-                    BlackboardAttribute setNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), FileTypeIdModuleFactory.getModuleName(), fileType.getFilesSetName());
+                    BlackboardAttribute setNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, FileTypeIdModuleFactory.getModuleName(), fileType.getFilesSetName());
                     artifact.addAttribute(setNameAttribute);
 
                     /**
@@ -242,14 +240,14 @@ public class FileTypeDetector {
                      * determined this file belongs to the interesting files
                      * set.
                      */
-                    BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID(), FileTypeIdModuleFactory.getModuleName(), fileType.getMimeType());
+                    BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, FileTypeIdModuleFactory.getModuleName(), fileType.getMimeType());
                     artifact.addAttribute(ruleNameAttribute);
 
                     try {
                         // index the artifact for keyword search
-                        blackboard.indexArtifact(artifact);
-                    } catch (Blackboard.BlackboardException ex) {
-                        logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", artifact.getDisplayName()), ex); //NON-NLS
+                        Case.getCurrentCase().getServices().getBlackboard().indexArtifact(artifact);
+                    } catch (Blackboard.BlackboardException | IllegalStateException ex) {
+                        logger.log(Level.SEVERE, String.format("Unable to index blackboard artifact %d", artifact.getArtifactID()), ex); //NON-NLS
                         MessageNotifyUtil.Notify.error(
                                 NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), artifact.getDisplayName());
                     }
@@ -261,6 +259,7 @@ public class FileTypeDetector {
     }
 
     public static class FileTypeDetectorInitException extends Exception {
+        private static final long serialVersionUID = 1L;
 
         FileTypeDetectorInitException(String message) {
             super(message);
@@ -271,4 +270,18 @@ public class FileTypeDetector {
         }
     }
 
+    /**
+     * Gets the list of user defined file types (MIME types)
+     *
+     * @return the List<String> of user defined file types
+     */
+    public List<String> getUserDefinedTypes() {
+        List<String> list = new ArrayList<>();
+        if (userDefinedFileTypes != null) {
+            for (FileType fileType : userDefinedFileTypes) {
+                list.add(fileType.getMimeType());
+            }
+        }
+        return list;
+    }
 }

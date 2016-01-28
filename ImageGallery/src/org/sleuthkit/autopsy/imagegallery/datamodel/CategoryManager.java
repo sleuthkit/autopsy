@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
@@ -30,9 +31,9 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.logging.Level;
 import javax.annotation.concurrent.Immutable;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
@@ -43,8 +44,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * {@link CategoryChangeEvent}s when files are categorized.
  *
  * To receive CategoryChangeEvents, a listener must register itself, and
- * implement a method annotated with {@link Subscribe} that accepts one argument
- * of type CategoryChangeEvent
+ * implement a public method annotated with {@link Subscribe} that accepts one
+ * argument of type CategoryChangeEvent
  *
  * TODO: currently these two functions (cached counts and events) are separate
  * although they are related. Can they be integrated more?
@@ -52,7 +53,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class CategoryManager {
 
-    private static final org.sleuthkit.autopsy.coreutils.Logger LOGGER = Logger.getLogger(CategoryManager.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(CategoryManager.class.getName());
 
     private final ImageGalleryController controller;
 
@@ -68,7 +69,7 @@ public class CategoryManager {
      */
     private final EventBus categoryEventBus = new AsyncEventBus(Executors.newSingleThreadExecutor(
             new BasicThreadFactory.Builder().namingPattern("Category Event Bus").uncaughtExceptionHandler((Thread t, Throwable e) -> {
-                LOGGER.log(Level.SEVERE, "uncaught exception in event bus handler", e);
+                LOGGER.log(Level.SEVERE, "Uncaught exception in category event bus handler", e);
             }).build()
     ));
 
@@ -77,14 +78,16 @@ public class CategoryManager {
      * the count related methods go through this cache, which loads initial
      * values from the database if needed.
      */
-    private final LoadingCache<Category, LongAdder> categoryCounts
-            = CacheBuilder.newBuilder().build(CacheLoader.from(this::getCategoryCountHelper));
+    private final LoadingCache<Category, LongAdder> categoryCounts =
+            CacheBuilder.newBuilder().build(CacheLoader.from(this::getCategoryCountHelper));
     /**
      * cached TagNames corresponding to Categories, looked up from
      * autopsyTagManager at initial request or if invalidated by case change.
      */
-    private final LoadingCache<Category, TagName> catTagNameMap = CacheBuilder.newBuilder().build(CacheLoader.from(cat
-            -> getController().getTagsManager().getTagName(cat)));
+    private final LoadingCache<Category, TagName> catTagNameMap =
+            CacheBuilder.newBuilder().build(CacheLoader.from(
+                            cat -> getController().getTagsManager().getTagName(cat)
+                    ));
 
     public CategoryManager(ImageGalleryController controller) {
         this.controller = controller;
@@ -98,15 +101,13 @@ public class CategoryManager {
      * assign a new db. the counts cache is invalidated and all subsequent db
      * lookups go to the new db.
      *
-     * Also clears the Category TagNames (should this happen here?)
+     * Also clears the Category TagNames
      *
      * @param db
      */
     synchronized public void setDb(DrawableDB db) {
         this.db = db;
-        categoryCounts.invalidateAll();
-        catTagNameMap.invalidateAll();
-        fireChange(Collections.emptyList(), null);
+        invalidateCaches();
     }
 
     synchronized public void invalidateCaches() {
@@ -120,7 +121,7 @@ public class CategoryManager {
      *
      * @param cat get the number of files with Category = cat
      *
-     * @return the long the number of files with the given Category
+     * @return the number of files with the given Category
      */
     synchronized public long getCategoryCount(Category cat) {
         if (cat == Category.ZERO) {
@@ -196,6 +197,7 @@ public class CategoryManager {
      */
     public void registerListener(Object listner) {
         categoryEventBus.register(listner);
+
     }
 
     /**
@@ -204,7 +206,16 @@ public class CategoryManager {
      * @param listener
      */
     public void unregisterListener(Object listener) {
-        categoryEventBus.unregister(listener);
+
+        try {
+            categoryEventBus.unregister(listener);
+        } catch (IllegalArgumentException e) {
+            if (e.getMessage().contains("missing event subscriber for an annotated method. Is " + listener + " registered?")) {
+                LOGGER.log(Level.WARNING, "Attempted to unregister {0} for category change events, but it was not registered.", listener.toString());
+            } else {
+                throw e;
+            }
+        }
     }
 
     /**
@@ -274,19 +285,18 @@ public class CategoryManager {
     }
 
     /**
-     * Event broadcast to various UI componenets when one or more files'
-     * category
+     * Event broadcast to various UI components when one or more files' category
      * has been changed
      */
     @Immutable
     public static class CategoryChangeEvent {
 
-        private final Collection<Long> fileIDs;
+        private final ImmutableSet<Long> fileIDs;
         private final Category newCategory;
 
         public CategoryChangeEvent(Collection<Long> fileIDs, Category newCategory) {
             super();
-            this.fileIDs = fileIDs;
+            this.fileIDs = ImmutableSet.copyOf(fileIDs);
             this.newCategory = newCategory;
         }
 
@@ -297,8 +307,8 @@ public class CategoryManager {
         /**
          * @return the fileIDs of the files whose categories have changed
          */
-        public Collection<Long> getFileIDs() {
-            return Collections.unmodifiableCollection(fileIDs);
+        public ImmutableSet<Long> getFileIDs() {
+            return fileIDs;
         }
     }
 }

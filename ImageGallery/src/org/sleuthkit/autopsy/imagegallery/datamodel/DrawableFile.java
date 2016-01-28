@@ -123,7 +123,8 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
                 file.getGid(),
                 file.getMd5Hash(),
                 file.getKnown(),
-                file.getParentPath());
+                file.getParentPath(),
+                file.getMIMEType());
         this.analyzed = new SimpleBooleanProperty(analyzed);
         this.file = file;
     }
@@ -215,6 +216,8 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
                                     return attr.getValueLong();
                                 case STRING:
                                     return attr.getValueString();
+                                case DATETIME:
+                                    return attr.getValueLong();
                             }
                         }
                     }

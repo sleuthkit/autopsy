@@ -23,9 +23,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.logging.Level;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
+
 /**
  * This class supports programmer productivity by abstracting frequently used
  * code to load FXML-defined GUI components,
@@ -35,10 +35,10 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * http://stackoverflow.com/questions/11734885/javafx2-very-poor-performance-when-adding-custom-made-fxmlpanels-to-gridpane.
  */
 public class FXMLConstructor {
-    
+
     private static Logger logger = Logger.getLogger(FXMLConstructor.class.getName());
 
-    static public void construct(Node n, String fxmlFileName) {
+    static public void construct(Object n, String fxmlFileName) {
         final String name = "nbres:/" + StringUtils.replace(n.getClass().getPackage().getName(), ".", "/") + "/" + fxmlFileName;
 
         try {
