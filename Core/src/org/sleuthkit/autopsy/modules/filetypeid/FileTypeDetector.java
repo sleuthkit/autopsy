@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2015 Basis Technology Corp.
+ * Copyright 2014-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,6 @@ import java.util.logging.Level;
 import org.apache.tika.Tika;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MimeTypes;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
@@ -247,12 +246,8 @@ public class FileTypeDetector {
                     try {
                         // index the artifact for keyword search
                         Case.getCurrentCase().getServices().getBlackboard().indexArtifact(artifact);
-                    } catch (Blackboard.BlackboardException ex) {
+                    } catch (Blackboard.BlackboardException | IllegalStateException ex) {
                         logger.log(Level.SEVERE, String.format("Unable to index blackboard artifact %d", artifact.getArtifactID()), ex); //NON-NLS
-                        MessageNotifyUtil.Notify.error(
-                                NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), artifact.getDisplayName());
-                    } catch (IllegalStateException ex) {
-                        logger.log(Level.SEVERE, String.format("Unable to index blackboard artifact %d", artifact.getArtifactID()), ex);
                         MessageNotifyUtil.Notify.error(
                                 NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), artifact.getDisplayName());
                     }
@@ -264,6 +259,7 @@ public class FileTypeDetector {
     }
 
     public static class FileTypeDetectorInitException extends Exception {
+        private static final long serialVersionUID = 1L;
 
         FileTypeDetectorInitException(String message) {
             super(message);
