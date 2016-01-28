@@ -44,6 +44,8 @@
     <target name="copyWinTskLibs64ToBaseDir" if="win64.TskLib.exists">
         <fileset dir="${win64.TskLib.path}" id="win64dlls">
             <include name="libewf.dll" />
+            <include name="libvmdk.dll"/> 
+            <include name="libvhdi.dll"/>            
             <include name="zlib.dll"/>
         </fileset>
         
@@ -70,6 +72,8 @@
     <target name="copyWinTskLibs32ToBaseDir" if="win32.TskLib.exists">
         <fileset dir="${win32.TskLib.path}" id="win32dlls">
             <include name="zlib.dll" />
+            <include name="libvmdk.dll"/>
+            <include name="libvhdi.dll"/> 
             <include name="libewf.dll"/>          
         </fileset>
         

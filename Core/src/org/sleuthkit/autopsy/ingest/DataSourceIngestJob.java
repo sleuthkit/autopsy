@@ -281,6 +281,15 @@ final class DataSourceIngestJob {
     }
 
     /**
+     * Get the ingest execution context identifier.
+     *
+     * @return The context string.
+     */
+    String getExecutionContext() {
+        return this.settings.getExecutionContext();
+    }
+    
+    /**
      * Gets the data source to be ingested by this job.
      *
      * @return A Content object representing the data source.
