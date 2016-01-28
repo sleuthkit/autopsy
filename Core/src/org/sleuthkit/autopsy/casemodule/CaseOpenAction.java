@@ -45,6 +45,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 @ServiceProvider(service = CaseOpenAction.class)
 public final class CaseOpenAction implements ActionListener {
 
+    private static final Logger logger = Logger.getLogger(CaseOpenAction.class.getName());
     private static final String PROP_BASECASE = "LBL_BaseCase_PATH"; //NON-NLS
     private final JFileChooser fileChooser = new JFileChooser();
     private final FileFilter caseMetadataFileFilter;
@@ -71,7 +72,6 @@ public final class CaseOpenAction implements ActionListener {
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-
         /*
          * If ingest is running, do a dialog to warn the user and confirm
          * abandoning the ingest.
@@ -87,7 +87,7 @@ public final class CaseOpenAction implements ActionListener {
                 try {
                     Case.getCurrentCase().closeCase();
                 } catch (Exception ex) {
-                    Logger.getLogger(NewCaseWizardAction.class.getName()).log(Level.WARNING, "Error closing case", ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Error closing case", ex); //NON-NLS
                 }
             } else {
                 return;
@@ -121,10 +121,11 @@ public final class CaseOpenAction implements ActionListener {
                 try {
                     Case.open(path);
                 } catch (CaseActionException ex) {
+                    logger.log(Level.SEVERE, String.format("Could not open case at %s", path), ex);
                     SwingUtilities.invokeLater(() -> {
                         WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                        JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), ex.getMessage() + " "
-                                + NbBundle.getMessage(this.getClass(), "CaseExceptionWarning.CheckMultiUserOptions"),
+                        JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), 
+                                ex.getMessage(),
                                 NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), JOptionPane.ERROR_MESSAGE); //NON-NLS
                         if (!Case.isCaseOpen()) {
                             StartupWindowProvider.getInstance().open();

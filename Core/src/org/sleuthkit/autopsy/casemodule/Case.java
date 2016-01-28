@@ -554,11 +554,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      *
      * @throws CaseActionException
      */
-    /**
-     * TODO: Deprecate this and throw a more general exception.
-     */
     public static void open(String caseMetadataFilePath) throws CaseActionException {
-
         if (!caseMetadataFilePath.endsWith(CASE_DOT_EXTENSION)) {
             throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.checkFile.msg", CASE_DOT_EXTENSION));
         }
@@ -590,8 +586,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     db = SleuthkitCase.openCase(metadata.getCaseDatabaseName(), UserPreferences.getDatabaseConnectionInfo(), caseDir);
                 } catch (UserPreferencesException ex) {
                     logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
-                    throw new CaseActionException(
-                            NbBundle.getMessage(Case.class, "Case.databaseConnectionInfo.error.msg"), ex);
+                    throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.databaseConnectionInfo.error.msg"), ex);
                 }
             }
 
