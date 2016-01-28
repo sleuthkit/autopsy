@@ -137,13 +137,13 @@ final public class GroupTree extends NavPanel<TreeItem<GroupTreeNode>> {
     }
 
     private static List<String> groupingToPath(DrawableGroup g) {
-        String path = g.groupKey.getValueDisplayName();
-        if (g.groupKey.getAttribute() != DrawableAttribute.PATH) {
-            String stripStart = StringUtils.strip(path, "/");
-            return Arrays.asList(stripStart);
-        } else {
+        String path = g.getGroupByValueDislpayName();
+        if (g.getGroupByAttribute() == DrawableAttribute.PATH) {
             String[] cleanPathTokens = StringUtils.stripStart(path, "/").split("/");
             return Arrays.asList(cleanPathTokens);
+        } else {
+            String stripStart = StringUtils.strip(path, "/");
+            return Arrays.asList(stripStart);
         }
     }
 }

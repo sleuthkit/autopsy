@@ -254,7 +254,7 @@ public class GroupPane extends BorderPane {
 
     private final InvalidationListener filesSyncListener = (observable) -> {
         final String header = getHeaderString();
-        final List<Long> fileIds = getGroup().fileIds();
+        final List<Long> fileIds = getGroup().getFileIDs();
         Platform.runLater(() -> {
             slideShowToggle.setDisable(fileIds.isEmpty());
             gridView.getItems().setAll(fileIds);
@@ -289,8 +289,8 @@ public class GroupPane extends BorderPane {
         }
 
         //assign last selected file or if none first file in group
-        if (slideShowFileID == null || getGroup().fileIds().contains(slideShowFileID) == false) {
-            slideShowPane.setFile(getGroup().fileIds().get(0));
+        if (slideShowFileID == null || getGroup().getFileIDs().contains(slideShowFileID) == false) {
+            slideShowPane.setFile(getGroup().getFileIDs().get(0));
         } else {
             slideShowPane.setFile(slideShowFileID);
         }
@@ -324,7 +324,7 @@ public class GroupPane extends BorderPane {
     }
 
     private void selectAllFiles() {
-        selectionModel.clearAndSelectAll(getGroup().fileIds());
+        selectionModel.clearAndSelectAll(getGroup().getFileIDs());
     }
 
     /**
@@ -676,7 +676,7 @@ public class GroupPane extends BorderPane {
 
         if (isNull(viewState) || isNull(viewState.getGroup())) {
             if (nonNull(getGroup())) {
-                getGroup().fileIds().removeListener(filesSyncListener);
+                getGroup().getFileIDs().removeListener(filesSyncListener);
             }
             this.grouping.set(null);
 
@@ -695,16 +695,16 @@ public class GroupPane extends BorderPane {
         } else {
             if (getGroup() != viewState.getGroup()) {
                 if (nonNull(getGroup())) {
-                    getGroup().fileIds().removeListener(filesSyncListener);
+                    getGroup().getFileIDs().removeListener(filesSyncListener);
                 }
                 this.grouping.set(viewState.getGroup());
 
-                getGroup().fileIds().addListener(filesSyncListener);
+                getGroup().getFileIDs().addListener(filesSyncListener);
 
                 final String header = getHeaderString();
 
                 Platform.runLater(() -> {
-                    gridView.getItems().setAll(getGroup().fileIds());
+                    gridView.getItems().setAll(getGroup().getFileIDs());
                     slideShowToggle.setDisable(gridView.getItems().isEmpty());
                     groupLabel.setText(header);
                     resetScrollBar();
@@ -737,10 +737,10 @@ public class GroupPane extends BorderPane {
 
         if (shiftDown) {
             //TODO: do more hear to implement slicker multiselect
-            int endIndex = grouping.get().fileIds().indexOf(newFileID);
-            int startIndex = IntStream.of(grouping.get().fileIds().size(), selectionAnchorIndex, endIndex).min().getAsInt();
+            int endIndex = grouping.get().getFileIDs().indexOf(newFileID);
+            int startIndex = IntStream.of(grouping.get().getFileIDs().size(), selectionAnchorIndex, endIndex).min().getAsInt();
             endIndex = IntStream.of(0, selectionAnchorIndex, endIndex).max().getAsInt();
-            List<Long> subList = grouping.get().fileIds().subList(Math.max(0, startIndex), Math.min(endIndex, grouping.get().fileIds().size()) + 1);
+            List<Long> subList = grouping.get().getFileIDs().subList(Math.max(0, startIndex), Math.min(endIndex, grouping.get().getFileIDs().size()) + 1);
 
             selectionModel.clearAndSelectAll(subList.toArray(new Long[subList.size()]));
             selectionModel.select(newFileID);
@@ -802,7 +802,7 @@ public class GroupPane extends BorderPane {
                 switch (t.getCode()) {
                     case SHIFT:
                         if (selectionAnchorIndex == null) {
-                            selectionAnchorIndex = grouping.get().fileIds().indexOf(selectionModel.lastSelectedProperty().get());
+                            selectionAnchorIndex = grouping.get().getFileIDs().indexOf(selectionModel.lastSelectedProperty().get());
                         }
                         t.consume();
                         break;
@@ -880,7 +880,7 @@ public class GroupPane extends BorderPane {
             Long lastSelectFileId = selectionModel.lastSelectedProperty().get();
 
             int lastSelectedIndex = lastSelectFileId != null
-                    ? grouping.get().fileIds().indexOf(lastSelectFileId)
+                    ? grouping.get().getFileIDs().indexOf(lastSelectFileId)
                     : Optional.ofNullable(selectionAnchorIndex).orElse(0);
 
             final int columns = Math.max((int) Math.floor((gridView.getWidth() - 18) / (gridView.getCellWidth() + gridView.getHorizontalCellSpacing() * 2)), 1);
@@ -889,15 +889,15 @@ public class GroupPane extends BorderPane {
 
             // implement proper keyboard based multiselect
             int indexOfToBeSelectedTile = lastSelectedIndex + tileIndexMap.get(t.getCode());
-            final int size = grouping.get().fileIds().size();
+            final int size = grouping.get().getFileIDs().size();
             if (0 > indexOfToBeSelectedTile) {
                 //don't select past begining of group
             } else if (0 <= indexOfToBeSelectedTile && indexOfToBeSelectedTile < size) {
                 //normal selection within group
-                makeSelection(t.isShiftDown(), grouping.get().fileIds().get(indexOfToBeSelectedTile));
+                makeSelection(t.isShiftDown(), grouping.get().getFileIDs().get(indexOfToBeSelectedTile));
             } else if (indexOfToBeSelectedTile <= size - 1 + columns - (size % columns)) {
                 //selection last item if selection is empty space at end of group
-                makeSelection(t.isShiftDown(), grouping.get().fileIds().get(size - 1));
+                makeSelection(t.isShiftDown(), grouping.get().getFileIDs().get(size - 1));
             } else {
                 //don't select past end of group
             }

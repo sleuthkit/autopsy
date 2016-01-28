@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -64,6 +64,7 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.actions.UndoRedoManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
@@ -77,8 +78,6 @@ import org.sleuthkit.autopsy.imagegallery.gui.NoGroupsDialog;
 import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
@@ -697,9 +696,8 @@ public final class ImageGalleryController implements Executor {
      * Task that runs when image gallery listening is (re) enabled.
      *
      * Grabs all files with supported image/video mime types or extensions, and
-     * adds them to the Drawable DB. Uses the presence of TSK_FILE_TYPE_SIG
-     * attributes as a approximation to 'analyzed'.
-     *
+     * adds them to the Drawable DB. Uses the presence of a mimetype as an
+     * approximation to 'analyzed'.
      */
     static private class CopyAnalyzedFiles extends InnerTask {
 
@@ -713,27 +711,23 @@ public final class ImageGalleryController implements Executor {
             this.tskCase = tskCase;
         }
 
-        static private final String FILE_EXTESNION_CLAUSE = "(name LIKE '%."
-                + StringUtils.join(FileTypeUtils.getAllSupportedExtensions(),
-                        "' or name LIKE '%.")
+        static private final String FILE_EXTENSION_CLAUSE =
+                "(name LIKE '%."
+                + StringUtils.join(FileTypeUtils.getAllSupportedExtensions(), "' OR name LIKE '%.")
                 + "')";
+
         static private final String MIMETYPE_CLAUSE =
-                "blackboard_attributes.value_text LIKE '"
-                + StringUtils.join(FileTypeUtils.getAllSupportedMimeTypes(),
-                        "' OR blackboard_attributes.value_text LIKE '") + "' ";
+                "(mime_type LIKE '"
+                + StringUtils.join(FileTypeUtils.getAllSupportedMimeTypes(), "' OR mime_type LIKE '")
+                + "') ";
 
-        static private final String DRAWABLE_QUERY = FILE_EXTESNION_CLAUSE + " OR tsk_files.obj_id IN ("
-                + "SELECT tsk_files.obj_id from tsk_files , blackboard_artifacts,  blackboard_attributes"
-                + " WHERE  blackboard_artifacts.obj_id = tsk_files.obj_id"
-                + " AND blackboard_attributes.artifact_id = blackboard_artifacts.artifact_id"
-                + " AND blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID()
-                + " AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID()
-                + " AND (blackboard_attributes.value_text LIKE 'video/%'"
-                + "     OR blackboard_attributes.value_text LIKE 'image/%'"
-                + "     OR " + MIMETYPE_CLAUSE
-                + "     )"
-                + ")";
-
+        static private final String DRAWABLE_QUERY =
+                //grab files with supported extension
+                FILE_EXTENSION_CLAUSE
+                //grab files with supported mime-types
+                + " OR " + MIMETYPE_CLAUSE
+                //grab files with image or video mime-types even if we don't officially support them
+                + " OR mime_type LIKE 'video/%' OR mime_type LIKE 'image/%'";
         private ProgressHandle progressHandle = ProgressHandleFactory.createHandle("populating analyzed image/video database");
 
         @Override
@@ -753,7 +747,7 @@ public final class ImageGalleryController implements Executor {
                 int units = 0;
                 for (final AbstractFile f : files) {
                     if (isCancelled()) {
-                        LOGGER.log(Level.WARNING, "task cancelled: not all contents may be transfered to database");
+                        LOGGER.log(Level.WARNING, "Task cancelled: not all contents may be transfered to drawable database.");
                         progressHandle.finish();
                         break;
                     }
@@ -765,7 +759,7 @@ public final class ImageGalleryController implements Executor {
                     } else {
                         final Optional<Boolean> hasMimeType = FileTypeUtils.hasDrawableMimeType(f);
                         if (hasMimeType.isPresent()) {
-                            if (hasMimeType.get()) {  // supported mimetype => analyzed
+                            if (hasMimeType.get()) {  //supported mimetype => analyzed
                                 taskDB.updateFile(DrawableFile.create(f, true, false), tr);
                             } else { //unsupported mimtype => analyzed but shouldn't include
                                 taskDB.removeFile(f.getId(), tr);
@@ -800,6 +794,7 @@ public final class ImageGalleryController implements Executor {
             } catch (TskCoreException ex) {
                 progressHandle.progress("Stopping copy to drawable db task.");
                 Logger.getLogger(CopyAnalyzedFiles.class.getName()).log(Level.WARNING, "Stopping copy to drawable db task.  Failed to transfer all database contents: " + ex.getMessage());
+                MessageNotifyUtil.Notify.warn("There was an error populating Image Gallery database.", ex.getMessage());
                 progressHandle.finish();
                 updateMessage("");
                 updateProgress(-1.0);
@@ -816,7 +811,7 @@ public final class ImageGalleryController implements Executor {
 
     /**
      * task that does pre-ingest copy over of files from a new datasource (uses
-     * fs_obj_id to identify files from new datasource) *
+     * fs_obj_id to identify files from new datasources)
      *
      * TODO: create methods to simplify progress value/text updates to both
      * netbeans and ImageGallery progress/status
