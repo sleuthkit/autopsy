@@ -41,6 +41,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JDialog;
@@ -66,6 +68,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.BlackboardAttribute.Type;
 
 /**
  * Instances of this class use GeneralReportModules, TableReportModules and
@@ -239,7 +242,7 @@ class ReportGenerator {
      * @param tagSelections the enabled/disabled state of the tag names to be
      * included in the report
      */
-    public void generateTableReports(Map<ARTIFACT_TYPE, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) {
+    public void generateTableReports(Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) {
         if (!tableProgress.isEmpty() && null != artifactTypeSelections) {
             TableReportsWorker worker = new TableReportsWorker(artifactTypeSelections, tagNameSelections);
             worker.execute();
@@ -420,19 +423,19 @@ class ReportGenerator {
     private class TableReportsWorker extends SwingWorker<Integer, Integer> {
 
         private List<TableReportModule> tableModules = new ArrayList<>();
-        private List<ARTIFACT_TYPE> artifactTypes = new ArrayList<>();
+        private List<BlackboardArtifact.Type> artifactTypes = new ArrayList<>();
         private HashSet<String> tagNamesFilter = new HashSet<>();
 
         private List<Content> images = new ArrayList<>();
 
-        TableReportsWorker(Map<ARTIFACT_TYPE, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) {
+        TableReportsWorker(Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) {
             // Get the report modules selected by the user.
             for (Entry<TableReportModule, ReportProgressPanel> entry : tableProgress.entrySet()) {
                 tableModules.add(entry.getKey());
             }
 
             // Get the artifact types selected by the user.
-            for (Entry<ARTIFACT_TYPE, Boolean> entry : artifactTypeSelections.entrySet()) {
+            for (Entry<BlackboardArtifact.Type, Boolean> entry : artifactTypeSelections.entrySet()) {
                 if (entry.getValue()) {
                     artifactTypes.add(entry.getKey());
                 }
@@ -492,7 +495,7 @@ class ReportGenerator {
             }
 
             // Add a table to the report for every enabled blackboard artifact type.
-            for (ARTIFACT_TYPE type : artifactTypes) {
+            for (BlackboardArtifact.Type type : artifactTypes) {
                 // Check for cancellaton.
                 removeCancelledTableReportModules();
                 if (tableModules.isEmpty()) {
@@ -525,6 +528,13 @@ class ReportGenerator {
                 // each time an element is added, which adds unnecessary overhead if we only need it sorted once.
                 Collections.sort(unsortedArtifacts);
 
+                Set<BlackboardAttribute.Type> attrTypeSet = new HashSet<>();
+                for (ArtifactData data : unsortedArtifacts) {
+                    List<BlackboardAttribute> attributes = data.getAttributes();
+                    for (BlackboardAttribute attribute : attributes) {
+                        attrTypeSet.add(attribute.getAttributeType());
+                    }
+                }
                 // Get the column headers appropriate for the artifact type.
                 /*
                  * @@@ BC: Seems like a better design here would be to have a
@@ -875,10 +885,10 @@ class ReportGenerator {
      *
      * @return a list of the filtered tags.
      */
-    private List<ArtifactData> getFilteredArtifacts(ARTIFACT_TYPE type, HashSet<String> tagNamesFilter) {
+    private List<ArtifactData> getFilteredArtifacts(BlackboardArtifact.Type type, HashSet<String> tagNamesFilter) {
         List<ArtifactData> artifacts = new ArrayList<>();
         try {
-            for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(type)) {
+            for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(type.getTypeID())) {
                 List<BlackboardArtifactTag> tags = Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact);
                 HashSet<String> uniqueTagNames = new HashSet<>();
                 for (BlackboardArtifactTag tag : tags) {
@@ -1843,10 +1853,9 @@ class ReportGenerator {
                         orderedRowData.add(file.getName());
                         orderedRowData.add(file.getNameExtension());
                         String mimeType = file.getMIMEType();
-                        if(mimeType == null) {
+                        if (mimeType == null) {
                             orderedRowData.add("");
-                        }
-                        else {
+                        } else {
                             orderedRowData.add(mimeType);
                         }
                         orderedRowData.add(file.getUniquePath());
@@ -1957,4 +1966,20 @@ class ReportGenerator {
         return uniqueTagNames;
     }
 
+    private class ArtifactCell {
+
+        private String columnHeader;
+        private BlackboardAttribute.Type attributeType;
+
+        /**
+         * Constructs an ArtifactCell
+         *
+         * @param columnHeader The header text of this cell's column
+         * @param attributeType The attribute type associated with this column
+         */
+        ArtifactCell(String columnHeader, BlackboardAttribute.Type attributeType) {
+            this.columnHeader = Objects.requireNonNull(columnHeader);
+            this.attributeType = attributeType;
+        }
+    }
 }

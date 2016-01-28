@@ -42,6 +42,7 @@ import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.report.ReportWizardAction")
@@ -68,7 +69,7 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
             ReportGenerator generator = new ReportGenerator((Map<TableReportModule, Boolean>) wiz.getProperty("tableModuleStates"), //NON-NLS
                     (Map<GeneralReportModule, Boolean>) wiz.getProperty("generalModuleStates"), //NON-NLS
                     (Map<FileReportModule, Boolean>) wiz.getProperty("fileModuleStates")); //NON-NLS
-            generator.generateTableReports((Map<ARTIFACT_TYPE, Boolean>) wiz.getProperty("artifactStates"), (Map<String, Boolean>) wiz.getProperty("tagStates")); //NON-NLS
+            generator.generateTableReports((Map<BlackboardArtifact.Type, Boolean>) wiz.getProperty("artifactStates"), (Map<String, Boolean>) wiz.getProperty("tagStates")); //NON-NLS
             generator.generateFileListReports((Map<FileReportDataTypes, Boolean>) wiz.getProperty("fileReportOptions")); //NON-NLS
             generator.generateGeneralReports();
             generator.displayProgressPanels();
