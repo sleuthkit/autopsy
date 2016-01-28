@@ -173,7 +173,10 @@ public class CategorizeAction extends AddTagAction {
                     }
                 } catch (TskCoreException ex) {
                     LOGGER.log(Level.SEVERE, "Error categorizing result", ex); //NON-NLS
-                    JOptionPane.showMessageDialog(null, "Unable to categorize " + fileID + ".", "Categorizing Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(null,
+                            NbBundle.getMessage(this.getClass(), "CategorizeAction.caterror.errMsg.txt", fileID),
+                            NbBundle.getMessage(this.getClass(), "CategorizeAction.caterror.displayTitle.txt"),
+                            JOptionPane.ERROR_MESSAGE);
                 }
             }
 
