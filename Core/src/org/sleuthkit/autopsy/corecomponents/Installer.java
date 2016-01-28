@@ -107,8 +107,8 @@ public class Installer extends ModuleInstall {
                 if (Case.isCaseOpen()) {
                     Case.getCurrentCase().closeCase();
                 }
-            } catch (CaseActionException | IllegalStateException ignored) {
-                // Exception already logged. Shutting down, no need to do popup.
+            } catch (CaseActionException | IllegalStateException ex) {
+                logger.log(Level.SEVERE, "Error closing case", ex); //NON-NLS
             }
         }).start();
     }
