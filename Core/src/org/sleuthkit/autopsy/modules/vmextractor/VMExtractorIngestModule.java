@@ -177,7 +177,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
             if (context.dataSourceIngestIsCancelled()) {
                 break;
             }
-            List<String> vmFilesToIngest = VirtualMachineFinderUtility.identifyVirtualMachines(Paths.get(folder));
+            List<String> vmFilesToIngest = VirtualMachineFinder.identifyVirtualMachines(Paths.get(folder));
             for (String file : vmFilesToIngest) {
                 try {
                     logger.log(Level.INFO, "Ingesting virtual machine file {0} in folder {1}", new Object[]{file, folder});
