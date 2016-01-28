@@ -632,22 +632,22 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
         } catch (CaseMetadataException ex) {
             /**
-             * Clean-up the case if it was actually opened. TODO: Do this
-             * better.
+             * Attempt clean up.
              */
             try {
                 Case badCase = Case.getCurrentCase();
                 badCase.closeCase();
-            } catch (IllegalStateException unused) {
-                // Already logged.
+            } catch (IllegalStateException ignored) {
             }
-            throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.gen.msg") + ": " + ex.getMessage(), ex); //NON-NLS
+            throw new CaseActionException(ex.getMessage(), ex); //NON-NLS
         } catch (TskCoreException ex) {
+            /**
+             * Attempt clean up.
+             */
             try {
                 Case badCase = Case.getCurrentCase();
                 badCase.closeCase();
-            } catch (CaseActionException | IllegalStateException unused) {
-                // Already logged.
+            } catch (IllegalStateException ignored) {
             }
             SwingUtilities.invokeLater(() -> {
                 WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
