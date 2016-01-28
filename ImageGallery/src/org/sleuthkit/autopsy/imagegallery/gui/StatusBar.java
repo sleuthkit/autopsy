@@ -28,6 +28,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.AnchorPane;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 
 /**
@@ -69,7 +70,7 @@ public class StatusBar extends AnchorPane {
         assert bgTaskLabel != null : "fx:id=\"bgTaskLabel\" was not injected: check your FXML file 'StatusBar.fxml'.";
         assert bgTaskProgressBar != null : "fx:id=\"bgTaskProgressBar\" was not injected: check your FXML file 'StatusBar.fxml'.";
 
-        fileUpdateTaskLabel.textProperty().bind(controller.getFileUpdateQueueSizeProperty().asString().concat(" File Update Tasks"));//;setText(newSize.toString() + " File Update Tasks");
+        fileUpdateTaskLabel.textProperty().bind(controller.getFileUpdateQueueSizeProperty().asString().concat(NbBundle.getMessage(this.getClass(), "StatusBar.fileUpdateTaskLabel.msg")));//;setText(newSize.toString() + " File Update Tasks");
         fileTaskProgresBar.progressProperty().bind(controller.getFileUpdateQueueSizeProperty().negate());
 //        controller.getFileUpdateQueueSizeProperty().addListener((ov, oldSize, newSize) -> {
 //            Platform.runLater(() -> {
@@ -83,7 +84,7 @@ public class StatusBar extends AnchorPane {
                 if(controller.regroupProgress().lessThan(1.0).get()){
                     // Regrouping in progress
                     bgTaskProgressBar.progressProperty().setValue(-1.0);
-                    bgTaskLabel.setText("Regrouping");
+                    bgTaskLabel.setText(NbBundle.getMessage(this.getClass(), "StatusBar.bgTaskLabel.text"));
                 } else{
                     // Clear the progress bar
                     bgTaskProgressBar.progressProperty().setValue(0.0);
@@ -94,14 +95,14 @@ public class StatusBar extends AnchorPane {
         
 
         Platform.runLater(() -> {
-            staleLabel.setTooltip(new Tooltip("Some data may be out of date.  Enable Image Gallery in Tools | Options | Image /Video Gallery , after ingest is complete to update the Image Gallery data."));
+            staleLabel.setTooltip(new Tooltip(NbBundle.getMessage(this.getClass(), "StatusBar.toolTip.text")));
         });
         staleLabel.visibleProperty().bind(controller.stale());
     }
 
     public StatusBar(ImageGalleryController controller) {
         this.controller = controller;
-        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("StatusBar.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("StatusBar.fxml")); //NON-NLS
         fxmlLoader.setRoot(this);
         fxmlLoader.setController(this);
 

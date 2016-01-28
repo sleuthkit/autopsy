@@ -92,41 +92,41 @@ public enum FileTypeUtils {
                 .collect(Collectors.toList()));
         //add list of known image extensions
         imageExtensions.addAll(Arrays.asList(
-                "bmp" //Bitmap
+                "bmp" //Bitmap NON-NLS
                 , "gif" //gif
-                , "jpg", "jpeg", "jpe", "jp2", "jpx" //jpeg variants
-                , "pbm", "pgm", "ppm" // Portable image format variants
-                , "png" //portable network graphic
-                , "tga" //targa
-                , "psd" //photoshop
-                , "tif", "tiff" //tiff variants
-                , "yuv", "ico" //icons
-                , "ai" //illustrator
-                , "svg" //scalable vector graphics
-                , "sn", "ras" //sun raster
-                , "ico" //windows icons
-                , "tga" //targa
+                , "jpg", "jpeg", "jpe", "jp2", "jpx" //jpeg variants NON-NLS
+                , "pbm", "pgm", "ppm" // Portable image format variants NON-NLS
+                , "png" //portable network graphic NON-NLS
+                , "tga" //targa NON-NLS
+                , "psd" //photoshop NON-NLS
+                , "tif", "tiff" //tiff variants NON-NLS
+                , "yuv", "ico" //icons NON-NLS
+                , "ai" //illustrator NON-NLS
+                , "svg" //scalable vector graphics NON-NLS
+                , "sn", "ras" //sun raster NON-NLS
+                , "ico" //windows icons NON-NLS
+                , "tga" //targa NON-NLS
         ));
 
         //add list of known video extensions
-        videoExtensions.addAll(Arrays.asList("fxm", "aaf", "3gp", "asf", "avi",
-                "m1v", "m2v", "m4v", "mp4", "mov", "mpeg", "mpg", "mpe", "mp4",
-                "rm", "wmv", "mpv", "flv", "swf"));
+        videoExtensions.addAll(Arrays.asList("fxm", "aaf", "3gp", "asf", "avi", // NON-NLS
+                "m1v", "m2v", "m4v", "mp4", "mov", "mpeg", "mpg", "mpe", "mp4", // NON-NLS
+                "rm", "wmv", "mpv", "flv", "swf")); // NON-NLS
 
         supportedExtensions = Sets.union(imageExtensions, videoExtensions);
 
         //add list of mimetypes to count as videos even though they aren't prefixed by video/
-        videoMimeTypes.addAll(Arrays.asList("application/x-shockwave-flash"));
+        videoMimeTypes.addAll(Arrays.asList("application/x-shockwave-flash")); // NON-NLS
 
         supportedMimeTypes.addAll(videoMimeTypes);
-        supportedMimeTypes.addAll(Arrays.asList("application/x-123"));
+        supportedMimeTypes.addAll(Arrays.asList("application/x-123")); // NON-NLS
 
         //add list of mimetypes ImageIO claims to support
         supportedMimeTypes.addAll(Stream.of(ImageIO.getReaderMIMETypes())
                 .map(String::toLowerCase)
                 .collect(Collectors.toList()));
 
-        supportedMimeTypes.removeIf("application/octet-stream"::equals); //this is rearely usefull
+        supportedMimeTypes.removeIf("application/octet-stream"::equals); //this is rearely usefull NON-NLS
     }
 
     /**
@@ -150,7 +150,7 @@ public enum FileTypeUtils {
             try {
                 FILE_TYPE_DETECTOR = new FileTypeDetector();
             } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-                LOGGER.log(Level.SEVERE, "Failed to initialize File Type Detector, will fall back on extensions in some situations.", ex);
+                LOGGER.log(Level.SEVERE, "Failed to initialize File Type Detector, will fall back on extensions in some situations.", ex); //NON-NLS
             }
         }
         return FILE_TYPE_DETECTOR;
@@ -198,8 +198,8 @@ public enum FileTypeUtils {
                 return Optional.empty();
             } else {
                 mimeType = mimeType.toLowerCase();
-                return Optional.of(mimeType.startsWith("image/")
-                        || mimeType.startsWith("video/")
+                return Optional.of(mimeType.startsWith("image/") //NON-NLS
+                        || mimeType.startsWith("video/") //NON-NLS
                         || supportedMimeTypes.contains(mimeType));
             }
         }
@@ -223,11 +223,11 @@ public enum FileTypeUtils {
                 String mimeType = fileTypeDetector.getFileType(file);
                 if (nonNull(mimeType)) {
                     mimeType = mimeType.toLowerCase();
-                    return mimeType.startsWith("video/") || videoMimeTypes.contains(mimeType);
+                    return mimeType.startsWith("video/") || videoMimeTypes.contains(mimeType); //NON-NLS
                 }
             }
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.INFO, "failed to get mime type for " + file.getName(), ex);
+            LOGGER.log(Level.INFO, "failed to get mime type for " + file.getName(), ex); //NON-NLS
         }
         return FileTypeUtils.videoExtensions.contains(file.getNameExtension());
     }

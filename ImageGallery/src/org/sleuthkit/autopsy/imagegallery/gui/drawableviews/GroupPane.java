@@ -97,6 +97,7 @@ import org.controlsfx.control.GridView;
 import org.controlsfx.control.SegmentedButton;
 import org.controlsfx.control.action.ActionUtils;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
@@ -273,7 +274,7 @@ public class GroupPane extends BorderPane {
         undoAction = new UndoAction(controller);
         redoAction = new RedoAction(controller);
 
-        FXMLConstructor.construct(this, "GroupPane.fxml");
+        FXMLConstructor.construct(this, "GroupPane.fxml"); //NON-NLS
     }
 
     @ThreadConfined(type = ThreadType.JFX)
@@ -332,8 +333,7 @@ public class GroupPane extends BorderPane {
      */
     protected String getHeaderString() {
         return isNull(getGroup()) ? ""
-                : StringUtils.defaultIfBlank(getGroup().getGroupByValueDislpayName(), DrawableGroup.getBlankGroupName()) + " -- "
-                + getGroup().getHashSetHitsCount() + " hash set hits / " + getGroup().getSize() + " files";
+                : NbBundle.getMessage(this.getClass(), "GroupPane.headerString.txt", StringUtils.defaultIfBlank(getGroup().getGroupByValueDislpayName(), DrawableGroup.getBlankGroupName()), getGroup().getHashSetHitsCount(), getGroup().getSize());
     }
 
     ContextMenu getContextMenu() {
@@ -451,13 +451,13 @@ public class GroupPane extends BorderPane {
         try {
             tagSelectedSplitMenu.setText(controller.getTagsManager().getFollowUpTagName().getDisplayName());
         } catch (TskCoreException tskCoreException) {
-            LOGGER.log(Level.WARNING, "failed to load FollowUpTagName", tskCoreException);
+            LOGGER.log(Level.WARNING, "failed to load FollowUpTagName", tskCoreException); //NON-NLS
         }
         tagSelectedSplitMenu.setOnAction(actionEvent -> {
             try {
                 new TagSelectedFilesAction(controller.getTagsManager().getFollowUpTagName(), controller).handle(actionEvent);
             } catch (TskCoreException tskCoreException) {
-                LOGGER.log(Level.WARNING, "failed to load FollowUpTagName", tskCoreException);
+                LOGGER.log(Level.WARNING, "failed to load FollowUpTagName", tskCoreException); //NON-NLS
             }
         });
 
@@ -528,7 +528,7 @@ public class GroupPane extends BorderPane {
                         }
                     }
                 }
-                final MenuItem extractMenuItem = new MenuItem("Extract File(s)");
+                final MenuItem extractMenuItem = new MenuItem(NbBundle.getMessage(this.getClass(), "GroupPane.menuItem.extractFiles.text"));
                 extractMenuItem.setOnAction((ActionEvent t) -> {
                     SwingUtilities.invokeLater(() -> {
                         TopComponent etc = WindowManager.getDefault().findTopComponent(ImageGalleryTopComponent.PREFERRED_ID);
@@ -730,7 +730,7 @@ public class GroupPane extends BorderPane {
         if (gridView == null || gridView.getSkin() == null) {
             return Optional.empty();
         }
-        return Optional.ofNullable((ScrollBar) gridView.getSkin().getNode().lookup(".scroll-bar"));
+        return Optional.ofNullable((ScrollBar) gridView.getSkin().getNode().lookup(".scroll-bar")); //NON-NLS
     }
 
     void makeSelection(Boolean shiftDown, Long newFileID) {

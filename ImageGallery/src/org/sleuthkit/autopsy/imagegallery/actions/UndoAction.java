@@ -23,6 +23,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import org.controlsfx.control.action.Action;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 
 /**
@@ -30,10 +31,10 @@ import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
  */
 public class UndoAction extends Action {
 
-    private static final Image UNDO_IMAGE = new Image("/org/sleuthkit/autopsy/imagegallery/images/undo.png", 16, 16, true, true, true);
+    private static final Image UNDO_IMAGE = new Image("/org/sleuthkit/autopsy/imagegallery/images/undo.png", 16, 16, true, true, true); //NON-NLS
 
     public UndoAction(ImageGalleryController controller) {
-        super("Undo");
+        super(NbBundle.getMessage(UndoAction.class, "UndoAction.displayName.text"));
         setGraphic(new ImageView(UNDO_IMAGE));
         setAccelerator(new KeyCodeCombination(KeyCode.Z, KeyCodeCombination.CONTROL_DOWN));
         setEventHandler(actionEvent -> controller.getUndoManager().undo());

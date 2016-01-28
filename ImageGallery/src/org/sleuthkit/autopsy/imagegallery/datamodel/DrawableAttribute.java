@@ -27,6 +27,7 @@ import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.StringProperty;
 import javafx.scene.image.Image;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.TagName;
 
@@ -40,13 +41,13 @@ import org.sleuthkit.datamodel.TagName;
 public class DrawableAttribute<T extends Comparable<T>> {
 
     public final static DrawableAttribute<String> MD5_HASH
-            = new DrawableAttribute<>(AttributeName.MD5_HASH, "MD5 Hash", false, "icon-hashtag.png", f -> Collections.singleton(f.getMd5Hash()));
+            = new DrawableAttribute<>(AttributeName.MD5_HASH, NbBundle.getMessage(DrawableAttribute.class, "DrawableAttribute.md5Hash.txt"), false, "icon-hashtag.png", f -> Collections.singleton(f.getMd5Hash())); // NON-NLS
 
     public final static DrawableAttribute<String> NAME
-            = new DrawableAttribute<>(AttributeName.NAME, "Name", true, "folder-rename.png", f -> Collections.singleton(f.getName()));
+            = new DrawableAttribute<>(AttributeName.NAME, NbBundle.getMessage(DrawableAttribute.class, "DrawableAttribute.name.txt"), true, "folder-rename.png", f -> Collections.singleton(f.getName())); // NON-NLS
 
     public final static DrawableAttribute<Boolean> ANALYZED
-            = new DrawableAttribute<>(AttributeName.ANALYZED, "Analyzed", true, "", f -> Collections.singleton(f.isAnalyzed()));
+            = new DrawableAttribute<>(AttributeName.ANALYZED, NbBundle.getMessage(DrawableAttribute.class, "DrawableAttribute.analyzed.txt"), true, "", f -> Collections.singleton(f.isAnalyzed()));
 
     /**
      * since categories are really just tags in autopsy, they are not dealt with
@@ -57,37 +58,37 @@ public class DrawableAttribute<T extends Comparable<T>> {
      * advantage. move categories into DrawableDB?
      */
     public final static DrawableAttribute<Category> CATEGORY
-            = new DrawableAttribute<>(AttributeName.CATEGORY, "Category", false, "category-icon.png", f -> Collections.singleton(f.getCategory()));
+            = new DrawableAttribute<>(AttributeName.CATEGORY, NbBundle.getMessage(DrawableAttribute.class, "DrawableAttribute.category.txt"), false, "category-icon.png", f -> Collections.singleton(f.getCategory())); // NON-NLS
 
     public final static DrawableAttribute<TagName> TAGS
-            = new DrawableAttribute<>(AttributeName.TAGS, "Tags", false, "tag_red.png", DrawableFile::getTagNames);
+            = new DrawableAttribute<>(AttributeName.TAGS, NbBundle.getMessage(DrawableAttribute.class, "DrawableAttribute.tags.txt"), false, "tag_red.png", DrawableFile::getTagNames); // NON-NLS
 
     public final static DrawableAttribute<String> PATH
-            = new DrawableAttribute<>(AttributeName.PATH, "Path", true, "folder_picture.png", f -> Collections.singleton(f.getDrawablePath()));
+            = new DrawableAttribute<>(AttributeName.PATH, NbBundle.getMessage(DrawableAttribute.class, "DrawableAttribute.path.txt"), true, "folder_picture.png", f -> Collections.singleton(f.getDrawablePath())); // NON-NLS
 
     public final static DrawableAttribute<String> CREATED_TIME
-            = new DrawableAttribute<>(AttributeName.CREATED_TIME, "Created Time", true, "clock--plus.png", f -> Collections.singleton(ContentUtils.getStringTime(f.getCrtime(), f)));
+            = new DrawableAttribute<>(AttributeName.CREATED_TIME, NbBundle.getMessage(DrawableAttribute.class, "DrawableAttribute.createdTime.txt"), true, "clock--plus.png", f -> Collections.singleton(ContentUtils.getStringTime(f.getCrtime(), f))); // NON-NLS
 
     public final static DrawableAttribute<String> MODIFIED_TIME
-            = new DrawableAttribute<>(AttributeName.MODIFIED_TIME, "Modified Time", true, "clock--pencil.png", f -> Collections.singleton(ContentUtils.getStringTime(f.getMtime(), f)));
+            = new DrawableAttribute<>(AttributeName.MODIFIED_TIME, NbBundle.getMessage(DrawableAttribute.class, "DrawableAttribute.modifiedTime.txt"), true, "clock--pencil.png", f -> Collections.singleton(ContentUtils.getStringTime(f.getMtime(), f))); // NON-NLS
 
     public final static DrawableAttribute<String> MAKE
-            = new DrawableAttribute<>(AttributeName.MAKE, "Camera Make", true, "camera.png", f -> Collections.singleton(f.getMake()));
+            = new DrawableAttribute<>(AttributeName.MAKE, NbBundle.getMessage(DrawableAttribute.class, "DrawableAttribute.cameraMake.txt"), true, "camera.png", f -> Collections.singleton(f.getMake())); // NON-NLS
 
     public final static DrawableAttribute<String> MODEL
-            = new DrawableAttribute<>(AttributeName.MODEL, "Camera Model", true, "camera.png", f -> Collections.singleton(f.getModel()));
+            = new DrawableAttribute<>(AttributeName.MODEL, NbBundle.getMessage(DrawableAttribute.class, "DrawableAttribute.cameraModel.txt"), true, "camera.png", f -> Collections.singleton(f.getModel())); // NON-NLS
 
     public final static DrawableAttribute<String> HASHSET
-            = new DrawableAttribute<>(AttributeName.HASHSET, "Hashset", true, "hashset_hits.png", DrawableFile::getHashSetNamesUnchecked);
+            = new DrawableAttribute<>(AttributeName.HASHSET, NbBundle.getMessage(DrawableAttribute.class, "DrawableAttribute.hashset.txt"), true, "hashset_hits.png", DrawableFile::getHashSetNamesUnchecked); // NON-NLS
 
     public final static DrawableAttribute<Long> OBJ_ID
-            = new DrawableAttribute<>(AttributeName.OBJ_ID, "Internal Object ID", true, "", f -> Collections.singleton(f.getId()));
+            = new DrawableAttribute<>(AttributeName.OBJ_ID, NbBundle.getMessage(DrawableAttribute.class, "DrawableAttribute.internalObjectId.txt"), true, "", f -> Collections.singleton(f.getId()));
 
     public final static DrawableAttribute<Double> WIDTH
-            = new DrawableAttribute<>(AttributeName.WIDTH, "Width", true, "arrow-resize.png", f -> Collections.singleton(f.getWidth()));
+            = new DrawableAttribute<>(AttributeName.WIDTH, NbBundle.getMessage(DrawableAttribute.class, "DrawableAttribute.width.txt"), true, "arrow-resize.png", f -> Collections.singleton(f.getWidth())); // NON-NLS
 
     public final static DrawableAttribute<Double> HEIGHT
-            = new DrawableAttribute<>(AttributeName.HEIGHT, "Height", true, "arrow-resize-090.png", f -> Collections.singleton(f.getHeight()));
+            = new DrawableAttribute<>(AttributeName.HEIGHT, NbBundle.getMessage(DrawableAttribute.class, "DrawableAttribute.height.txt"), true, "arrow-resize-090.png", f -> Collections.singleton(f.getHeight())); // NON-NLS
 
     final private static List< DrawableAttribute<?>> groupables
             = Arrays.asList(PATH, HASHSET, CATEGORY, TAGS, MAKE, MODEL);
@@ -119,7 +120,7 @@ public class DrawableAttribute<T extends Comparable<T>> {
     public Image getIcon() {
         if (icon == null) {
             if (StringUtils.isBlank(imageName) == false) {
-                this.icon = new Image("org/sleuthkit/autopsy/imagegallery/images/" + imageName, true);
+                this.icon = new Image("org/sleuthkit/autopsy/imagegallery/images/" + imageName, true); //NON-NLS
             }
         }
         return icon;

@@ -58,6 +58,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
@@ -191,10 +192,10 @@ public class GroupManager {
                 DrawableFile<?> file = db.getFileFromID(fileID);
                 return getGroupKeysForFile(file);
             } else {
-                Logger.getLogger(GroupManager.class.getName()).log(Level.WARNING, "Failed to load file with id: {0} from database.  There is no database assigned.", fileID);
+                Logger.getLogger(GroupManager.class.getName()).log(Level.WARNING, "Failed to load file with id: {0} from database.  There is no database assigned.", fileID); //NON-NLS
             }
         } catch (TskCoreException ex) {
-            Logger.getLogger(GroupManager.class.getName()).log(Level.SEVERE, "failed to load file with id: " + fileID + " from database", ex);
+            Logger.getLogger(GroupManager.class.getName()).log(Level.SEVERE, "failed to load file with id: " + fileID + " from database", ex); //NON-NLS
         }
         return Collections.emptySet();
     }
@@ -348,7 +349,7 @@ public class GroupManager {
 
             return values;
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "TSK error getting list of type {0}", groupBy.getDisplayName());
+            LOGGER.log(Level.WARNING, "TSK error getting list of type {0}", groupBy.getDisplayName()); //NON-NLS
             return Collections.emptyList();
         }
 
@@ -392,7 +393,7 @@ public class GroupManager {
                     }
                 }
 
-                return db.findAllFileIdsWhere("obj_id NOT IN (" + StringUtils.join(files, ',') + ")");
+                return db.findAllFileIdsWhere("obj_id NOT IN (" + StringUtils.join(files, ',') + ")"); //NON-NLS
             } else {
 
                 List<ContentTag> contentTags = tagsManager.getContentTagsByTagName(tagsManager.getTagName(category));
@@ -404,7 +405,7 @@ public class GroupManager {
 
             }
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "TSK error getting files in Category:" + category.getDisplayName(), ex);
+            LOGGER.log(Level.WARNING, "TSK error getting files in Category:" + category.getDisplayName(), ex); //NON-NLS
             throw ex;
         }
     }
@@ -420,7 +421,7 @@ public class GroupManager {
             }
             return files;
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "TSK error getting files with Tag:" + tagName.getDisplayName(), ex);
+            LOGGER.log(Level.WARNING, "TSK error getting files with Tag:" + tagName.getDisplayName(), ex); //NON-NLS
             throw ex;
         }
     }
@@ -507,7 +508,7 @@ public class GroupManager {
     /**
      * an executor to submit async ui related background tasks to.
      */
-    final ExecutorService regroupExecutor = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder().namingPattern("ui task -%d").build());
+    final ExecutorService regroupExecutor = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder().namingPattern("ui task -%d").build()); //NON-NLS
 
     public ReadOnlyDoubleProperty regroupProgress() {
         return regroupProgress.getReadOnlyProperty();
@@ -658,7 +659,7 @@ public class GroupManager {
                         return group;
                     }
                 } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "failed to get files for group: " + groupKey.getAttribute().attrName.toString() + " = " + groupKey.getValue(), ex);
+                    LOGGER.log(Level.SEVERE, "failed to get files for group: " + groupKey.getAttribute().attrName.toString() + " = " + groupKey.getValue(), ex); //NON-NLS
                 }
             }
         }
@@ -681,7 +682,7 @@ public class GroupManager {
         private final SortOrder sortOrder;
 
         public ReGroupTask(DrawableAttribute<A> groupBy, GroupSortBy sortBy, SortOrder sortOrder) {
-            super("regrouping files by " + groupBy.attrName.toString() + " sorted by " + sortBy.name() + " in " + sortOrder.toString() + " order", true);
+            super(NbBundle.getMessage(GroupManager.class, "GroupManager.reGroupTask.displayName.txt", groupBy.attrName.toString(), sortBy.name(), sortOrder.toString()), true);
 
             this.groupBy = groupBy;
             this.sortBy = sortBy;
@@ -700,7 +701,7 @@ public class GroupManager {
                 return null;
             }
 
-            groupProgress = ProgressHandleFactory.createHandle("regrouping files by " + groupBy.attrName.toString() + " sorted by " + sortBy.name() + " in " + sortOrder.toString() + " order", this);
+            groupProgress = ProgressHandleFactory.createHandle(NbBundle.getMessage(this.getClass(), "GroupManager.reGroupTask.displayName.txt", groupBy.attrName.toString(), sortBy.name(), sortOrder.toString()), this);
             Platform.runLater(() -> {
                 analyzedGroups.clear();
                 unSeenGroups.clear();
@@ -718,9 +719,9 @@ public class GroupManager {
                     return null;//abort
                 }
                 p++;
-                updateMessage("regrouping files by " + groupBy.attrName.toString() + " : " + val);
+                updateMessage(NbBundle.getMessage(this.getClass(), "GroupManager.updateMessage.regroupingFiles.txt", groupBy.attrName.toString(), val));
                 updateProgress(p, vals.size());
-                groupProgress.progress("regrouping files by " + groupBy.attrName.toString() + " : " + val, p);
+                groupProgress.progress(NbBundle.getMessage(this.getClass(), "GroupManager.progress.regroupingFiles.txt", groupBy.attrName.toString(), val), p);
                 popuplateIfAnalyzed(new GroupKey<A>(groupBy, val), this);
             }
             Platform.runLater(() -> FXCollections.sort(analyzedGroups, sortBy.getGrpComparator(sortOrder)));
