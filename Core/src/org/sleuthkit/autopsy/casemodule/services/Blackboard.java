@@ -67,7 +67,7 @@ public final class Blackboard implements Closeable {
     public BlackboardArtifact.Type addArtifactType(String typeName, String displayName) throws BlackboardException {
         try {
             return Case.getCurrentCase().getSleuthkitCase().addBlackboardArtifactType(typeName, displayName);
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | TskDataException ex) {
             throw new BlackboardException("New artifact type could not be added", ex);
         }
     }
@@ -85,9 +85,9 @@ public final class Blackboard implements Closeable {
         try {
             return Case.getCurrentCase().getSleuthkitCase().addArtifactAttributeType(attrTypeString, valueType, displayName);
         } catch (TskDataException ex) {
-            throw new BlackboardException("New artifact type could not be added", ex);
+            throw new BlackboardException("New attribute type could not be added", ex);
         } catch (TskCoreException ex) {
-            throw new BlackboardException("New artifact type could not be added", ex);
+            throw new BlackboardException("New attribute type could not be added", ex);
         }
     }
 
