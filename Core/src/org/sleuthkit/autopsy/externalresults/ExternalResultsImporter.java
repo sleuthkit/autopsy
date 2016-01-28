@@ -135,7 +135,7 @@ public final class ExternalResultsImporter {
                 // Add the artifact to the case database.
                 int artifactTypeId = caseDb.getArtifactTypeID(artifactData.getType());
                 if (artifactTypeId == -1) {
-                    artifactTypeId = caseDb.addArtifactType(artifactData.getType(), artifactData.getType());
+                    artifactTypeId = caseDb.addBlackboardArtifactType(artifactData.getType(), artifactData.getType()).getTypeID();
                 }
                 Content sourceFile = findFileInCaseDatabase(artifactData.getSourceFilePath());
                 if (sourceFile != null) {
