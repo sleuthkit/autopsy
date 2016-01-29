@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.imagegallery.gui;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Comparator;
-import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -35,7 +34,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javax.swing.SortOrder;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 
 /**
@@ -57,23 +55,10 @@ public class SortChooser<X, Y extends Comparator<X>> extends HBox {
     private final ReadOnlyObjectWrapper<SortOrder> sortOrder = new ReadOnlyObjectWrapper<>(SortOrder.ASCENDING);
     private final SimpleBooleanProperty sortOrderDisabled = new SimpleBooleanProperty(false);
     private final SimpleObjectProperty<ValueType> valueType = new SimpleObjectProperty<>(ValueType.NUMERIC);
-    private ObjectBinding<Y> comparator;
 
     public SortChooser(ObservableList<Y> comps) {
         this.comparators = comps;
         FXMLConstructor.construct(this, "SortChooser.fxml");
-    }
-
-    public ValueType getValueType() {
-        return valueType.get();
-    }
-
-    public void setValueType(ValueType type) {
-        valueType.set(type);
-    }
-
-    public SimpleObjectProperty<ValueType> valueTypeProperty() {
-        return valueType;
     }
 
     @FXML
@@ -95,8 +80,7 @@ public class SortChooser<X, Y extends Comparator<X>> extends HBox {
 
         ascRadio.disableProperty().bind(sortOrderDisabled);
         descRadio.disableProperty().bind(sortOrderDisabled);
-
-        orderGroup.selectedToggleProperty().addListener(selectedToggle -> {
+        ascRadio.selectedProperty().addListener(selectedToggle -> {
             sortOrder.set(orderGroup.getSelectedToggle() == ascRadio ? SortOrder.ASCENDING : SortOrder.DESCENDING);
         });
 
@@ -105,7 +89,19 @@ public class SortChooser<X, Y extends Comparator<X>> extends HBox {
         sortByBox.setButtonCell(new ComparatorCell());
     }
 
-    void setSortOrderDisabled(boolean disabled) {
+    public ValueType getValueType() {
+        return valueType.get();
+    }
+
+    public void setValueType(ValueType type) {
+        valueType.set(type);
+    }
+
+    public SimpleObjectProperty<ValueType> valueTypeProperty() {
+        return valueType;
+    }
+
+    public void setSortOrderDisabled(boolean disabled) {
         sortOrderDisabled.set(disabled);
     }
 
@@ -113,27 +109,27 @@ public class SortChooser<X, Y extends Comparator<X>> extends HBox {
         return sortOrderDisabled.get();
     }
 
-    SimpleBooleanProperty sortOrderDisabledProperty() {
+    public SimpleBooleanProperty sortOrderDisabledProperty() {
         return sortOrderDisabled;
     }
 
-    SortOrder getSortOrder() {
+    public SortOrder getSortOrder() {
         return sortOrder.get();
     }
 
-    ReadOnlyObjectProperty<SortOrder> sortOrderProperty() {
+    public ReadOnlyObjectProperty<SortOrder> sortOrderProperty() {
         return sortOrder.getReadOnlyProperty();
     }
 
-    Y getComparator() {
+    public Y getComparator() {
         return sortByBox.getSelectionModel().getSelectedItem();
     }
 
-    void setComparator(Y selected) {
+    public void setComparator(Y selected) {
         sortByBox.getSelectionModel().select(selected);
     }
 
-    ReadOnlyObjectProperty<Y> comparatorProperty() {
+    public ReadOnlyObjectProperty<Y> comparatorProperty() {
         return sortByBox.getSelectionModel().selectedItemProperty();
     }
 
@@ -164,14 +160,21 @@ public class SortChooser<X, Y extends Comparator<X>> extends HBox {
         @Override
         protected void updateItem(Y item, boolean empty) {
             super.updateItem(item, empty); //To change body of generated methods, choose Tools | Templates.
-            try {
-                String displayName = (String) item.getClass().getMethod("getDisplayName").invoke(item);
-                setText(displayName);
-            } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-                Exceptions.printStackTrace(ex);
-                setText(item.toString());
-            } catch (NullPointerException ex) {
-                setText("NPE");
+
+            if (empty || null == item) {
+                setText(null);
+                setGraphic(null);
+            } else {
+                try {
+                    String displayName = (String) item.getClass().getMethod("getDisplayName").invoke(item);
+                    setText(displayName);
+                    Image icon = (Image) item.getClass().getMethod("getIcon").invoke(item);
+                    setGraphic(new ImageView(icon));
+                } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+//                    Exceptions.printStackTrace(ex);
+                    setText(item.toString());
+                    setGraphic(null);
+                }
             }
         }
     }
