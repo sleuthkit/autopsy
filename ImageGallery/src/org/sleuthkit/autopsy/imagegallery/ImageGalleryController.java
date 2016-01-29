@@ -791,7 +791,7 @@ public final class ImageGalleryController implements Executor {
             } catch (TskCoreException ex) {
                 progressHandle.progress(NbBundle.getMessage(this.getClass(), "ImageGalleryController.copyAnalyzedFile.progress.stop"));
                 Logger.getLogger(CopyAnalyzedFiles.class.getName()).log(Level.WARNING, "Stopping copy to drawable db task.  Failed to transfer all database contents: " + ex.getMessage()); //NON-NLS
-                MessageNotifyUtil.Notify.warn("There was an error populating Image Gallery database.", ex.getMessage());
+                MessageNotifyUtil.Notify.warn(NbBundle.getMessage(this.getClass(), "ImageGalleryController.notifyMsg.errPopulatingDb.txt"), ex.getMessage());
                 progressHandle.finish();
                 updateMessage("");
                 updateProgress(-1.0);

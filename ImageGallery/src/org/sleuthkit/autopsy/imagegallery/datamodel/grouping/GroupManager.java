@@ -348,7 +348,7 @@ public class GroupManager {
                     break;
                 case MIME_TYPE:
                     HashSet<String> types = new HashSet<>();
-                    try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery("select group_concat(obj_id), mime_type from tsk_files group by mime_type ");
+                    try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery("select group_concat(obj_id), mime_type from tsk_files group by mime_type "); //NON-NLS
                             ResultSet resultSet = executeQuery.getResultSet();) {
                         while (resultSet.next()) {
                             final String mimeType = resultSet.getString("mime_type"); // NON-NLS
@@ -694,13 +694,13 @@ public class GroupManager {
 
         HashSet<Long> hashSet = new HashSet<>();
         String query = (null == mimeType)
-                ? "SELECT obj_id FROM tsk_files WHERE mime_type IS NULL"
-                : "SELECT obj_id FROM tsk_files WHERE mime_type = '" + mimeType + "'";
+                ? "SELECT obj_id FROM tsk_files WHERE mime_type IS NULL" //NON-NLS
+                : "SELECT obj_id FROM tsk_files WHERE mime_type = '" + mimeType + "'"; //NON-NLS
 
         try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery(query);
                 ResultSet resultSet = executeQuery.getResultSet();) {
             while (resultSet.next()) {
-                final long fileID = resultSet.getLong("obj_id");
+                final long fileID = resultSet.getLong("obj_id"); //NON-NLS
                 if (db.isInDB(fileID)) {
                     hashSet.add(fileID);
                 }

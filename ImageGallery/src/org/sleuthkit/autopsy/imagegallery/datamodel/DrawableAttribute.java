@@ -148,9 +148,9 @@ public class DrawableAttribute<T extends Comparable<T>> {
 
     public final static DrawableAttribute<String> MIME_TYPE =
             new DrawableAttribute<>(AttributeName.MIME_TYPE,
-                    "MIME type",
+                    NbBundle.getMessage(DrawableAttribute.class, "DrawableAttribute.mimeType.txt"),
                     false,
-                    "mime_types.png",
+                    "mime_types.png", // NON-NLS
                     f -> Collections.singleton(f.getMIMEType()));
 
     final private static List< DrawableAttribute<?>> groupables =
