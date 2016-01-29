@@ -118,6 +118,6 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
 
     @Override
     public String getItemType() {
-        return "LocalFile";
+        return "LocalFile"; //NON-NLS
     }
 }
