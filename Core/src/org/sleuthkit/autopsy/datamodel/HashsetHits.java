@@ -171,7 +171,7 @@ public class HashsetHits implements AutopsyVisitableItem {
 
         @Override
         public String getItemType() {
-            return "HashsetRoot";
+            return "HashsetRoot"; //NON-NLS
         }
     }
 
@@ -329,7 +329,7 @@ public class HashsetHits implements AutopsyVisitableItem {
 
         @Override
         public String getItemType() {
-            return "HashsetName";
+            return "HashsetName"; //NON-NLS
         }
     }
 
