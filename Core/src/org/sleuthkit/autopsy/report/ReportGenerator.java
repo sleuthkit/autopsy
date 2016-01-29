@@ -544,7 +544,7 @@ class ReportGenerator {
                  * artifact-specific logic in both getArtifactTableCoumnHeaders
                  * and ArtifactData.getRow()
                  */
-                List<String> columnHeaders = getArtifactTableColumnHeaders(type.getTypeID());
+                List<Cell> columnHeaders = getArtifactTableColumnHeaders(type.getTypeID(), attrTypeSet);
                 if (columnHeaders == null) {
                     // @@@ Hack to prevent system from hanging.  Better solution is to merge all attributes into a single column or analyze the artifacts to find out how many are needed.
                     continue;
@@ -1217,58 +1217,85 @@ class ReportGenerator {
      * reporting on.
      *
      * @param artifactTypeId artifact type ID
+     * @param types The set of types available for this artifact type
      *
      * @return List<String> row titles
      */
-    private List<String> getArtifactTableColumnHeaders(int artifactTypeId) {
-        ArrayList<String> columnHeaders;
+    private List<Cell> getArtifactTableColumnHeaders(int artifactTypeId, Set<BlackboardAttribute.Type> types) {
+        ArrayList<Cell> columnHeaders;
 
         BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactTypeId);
         switch (type) {
             case TSK_WEB_BOOKMARK:
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[]{
-                    NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.url"),
+                columnHeaders = new ArrayList<>(Arrays.asList(new Cell[]{
+                    new ArtifactCell(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.url"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
+                    ATTRIBUTE_TYPE.TSK_URL.getLabel(),
+                    ATTRIBUTE_TYPE.TSK_URL.getDisplayName(),
+                    ATTRIBUTE_TYPE.TSK_URL.getValueType())),
+                    //ATTRIBUTE_TYPE.TSK_TITLE
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.title"),
+                    //ATTRIBUTE_TYPE.TSK_DATETIME_CREATED
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateCreated"),
+                    //ATTRIBUTE_TYPE.TSK_PROG_NAME
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program"),
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
                 break;
             case TSK_WEB_COOKIE:
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[]{
+                    //ATTRIBUTE_TYPE.TSK_URL
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.url"),
+                    //ATTRIBUTE_TYPE.TSK_DATETIME
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
+                    //ATTRIBUTE_TYPE.TSK_NAME
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
+                    //ATTRIBUTE_TYPE.TSK_VALUE
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.value"),
+                    //ATTRIBUTE_TYPE.TSK_PROG_NAME
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program"),
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
                 break;
             case TSK_WEB_HISTORY:
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[]{
+                    //ATTRIBUTE_TYPE.TSK_URL
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.url"),
+                    //ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateAccessed"),
+                    //ATTRIBUTE_TYPE.TSK_REFERRER
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.referrer"),
+                    //ATTRIBUTE_TYPE.TSK_TITLE
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.title"),
+                    //ATTRIBUTE_TYPE.TSK_PROG_NAME
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program"),
+                    //ATTRIBUTE_TYPE.TSK_URL_DECODED
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.urlDomainDecoded"),
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
                 break;
             case TSK_WEB_DOWNLOAD:
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[]{
+                    //ATTRIBUTE_TYPE.TSK_PATH
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dest"),
+                    //ATTRIBUTE_TYPE.TSK_URL
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.sourceUrl"),
+                    //ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateAccessed"),
+                    //ATTRIBUTE_TYPE.TSK_PROG_NAME
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program"),
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
                 break;
             case TSK_RECENT_OBJECT:
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[]{
+                    //ATTRIBUTE_TYPE.TSK_PATH
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.path"),
+                    //ATTRIBUTE_TYPE.TSK_DATETIME
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
                 break;
             case TSK_INSTALLED_PROG:
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[]{
+                    //ATTRIBUTE_TYPE.TSK_PROG_NAME
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.progName"),
+                    //ATTRIBUTE_TYPE.TSK_DATETIME
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.instDateTime"),
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
                 break;
@@ -1966,7 +1993,14 @@ class ReportGenerator {
         return uniqueTagNames;
     }
 
-    private class ArtifactCell {
+    private interface Cell {
+
+        String getColumnHeader();
+
+        BlackboardAttribute.Type getType();
+    }
+
+    private class ArtifactCell implements Cell {
 
         private String columnHeader;
         private BlackboardAttribute.Type attributeType;
@@ -1980,6 +2014,35 @@ class ReportGenerator {
         ArtifactCell(String columnHeader, BlackboardAttribute.Type attributeType) {
             this.columnHeader = Objects.requireNonNull(columnHeader);
             this.attributeType = attributeType;
+        }
+
+        @Override
+        public String getColumnHeader() {
+            return this.columnHeader;
+        }
+
+        @Override
+        public Type getType() {
+            return this.attributeType;
+        }
+    }
+
+    private class OtherCell implements Cell {
+
+        private String columnHeader;
+
+        OtherCell(String columnHeader) {
+            this.columnHeader = columnHeader;
+        }
+
+        @Override
+        public String getColumnHeader() {
+            return this.columnHeader;
+        }
+
+        @Override
+        public Type getType() {
+            return null;
         }
     }
 }
