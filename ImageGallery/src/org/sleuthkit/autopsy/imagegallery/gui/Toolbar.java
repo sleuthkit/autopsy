@@ -173,11 +173,11 @@ public class Toolbar extends ToolBar {
         groupByBox.setButtonCell(new AttributeListCell());
 
         sortChooser = new SortChooser<>(GroupSortBy.getValues());
-        sortChooser.comparatorProperty().addListener((observable, oldValue, newValue) -> {
-            final boolean orderEnabled = newValue == GroupSortBy.NONE || newValue == GroupSortBy.PRIORITY;
+        sortChooser.comparatorProperty().addListener((observable, oldComparator, newComparator) -> {
+            final boolean orderEnabled = newComparator == GroupSortBy.NONE || newComparator == GroupSortBy.PRIORITY;
             sortChooser.setSortOrderDisabled(orderEnabled);
 
-            final SortChooser.ValueType valueType = newValue == GroupSortBy.GROUP_BY_VALUE ? SortChooser.ValueType.LEXICOGRAPHIC : SortChooser.ValueType.NUMERIC;
+            final SortChooser.ValueType valueType = newComparator == GroupSortBy.GROUP_BY_VALUE ? SortChooser.ValueType.LEXICOGRAPHIC : SortChooser.ValueType.NUMERIC;
             sortChooser.setValueType(valueType);
             queryInvalidationListener.invalidated(observable);
         });
