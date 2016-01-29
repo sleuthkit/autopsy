@@ -164,7 +164,7 @@ public class InterestingHits implements AutopsyVisitableItem {
 
         @Override
         public String getItemType() {
-            return "InterestingHitsRoot";
+            return "InterestingHitsRoot"; //NON-NLS
         }
     }
 
@@ -315,7 +315,7 @@ public class InterestingHits implements AutopsyVisitableItem {
 
         @Override
         public String getItemType() {
-            return "InterestingHitsSetName";
+            return "InterestingHitsSetName"; //NON-NLS
         }
     }
 

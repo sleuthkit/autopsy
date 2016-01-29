@@ -31,7 +31,7 @@ import java.nio.file.Path;
 public class FileUtil {
 
     private static final Logger logger = Logger.getLogger(FileUtil.class.getName());
-    private static String TEMP_FILE_PREFIX = "Autopsy";
+    private static String TEMP_FILE_PREFIX = "Autopsy"; //NON-NLS
 
     /**
      * Recursively delete all of the files and sub-directories in a directory.

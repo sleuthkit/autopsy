@@ -58,7 +58,7 @@ public class DataSourcesNode extends DisplayableItemNode {
 
     @Override
     public String getItemType() {
-        return "DataSources";
+        return "DataSources"; //NON-NLS
     }
 
     /*
