@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,6 +45,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 @ServiceProvider(service = CaseOpenAction.class)
 public final class CaseOpenAction implements ActionListener {
 
+    private static final Logger logger = Logger.getLogger(CaseOpenAction.class.getName());
     private static final String PROP_BASECASE = "LBL_BaseCase_PATH"; //NON-NLS
     private final JFileChooser fileChooser = new JFileChooser();
     private final FileFilter caseMetadataFileFilter;
@@ -71,22 +72,22 @@ public final class CaseOpenAction implements ActionListener {
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-
-        // if ingest is ongoing, warn and get confirmaion before opening a different case
+        /*
+         * If ingest is running, do a dialog to warn the user and confirm
+         * abandoning the ingest.
+         */
         if (IngestManager.getInstance().isIngestRunning()) {
-            // show the confirmation first to close the current case and open the "New Case" wizard panel
             String closeCurrentCase = NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning");
             NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(closeCurrentCase,
                     NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning.title"),
                     NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
             descriptor.setValue(NotifyDescriptor.NO_OPTION);
-
             Object res = DialogDisplayer.getDefault().notify(descriptor);
             if (res != null && res == DialogDescriptor.YES_OPTION) {
                 try {
-                    Case.getCurrentCase().closeCase(); // close the current case
+                    Case.getCurrentCase().closeCase();
                 } catch (Exception ex) {
-                    Logger.getLogger(NewCaseWizardAction.class.getName()).log(Level.WARNING, "Error closing case.", ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Error closing case", ex); //NON-NLS
                 }
             } else {
                 return;
@@ -95,7 +96,7 @@ public final class CaseOpenAction implements ActionListener {
 
         /**
          * Pop up a file chooser to allow the user to select a case meta data
-         * file (.aut file)
+         * file (.aut file).
          */
         int retval = fileChooser.showOpenDialog(WindowManager.getDefault().getMainWindow());
         if (retval == JFileChooser.APPROVE_OPTION) {
@@ -120,10 +121,11 @@ public final class CaseOpenAction implements ActionListener {
                 try {
                     Case.open(path);
                 } catch (CaseActionException ex) {
+                    logger.log(Level.SEVERE, String.format("Could not open case at %s", path), ex);
                     SwingUtilities.invokeLater(() -> {
                         WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                        JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), ex.getMessage() + " "
-                                + NbBundle.getMessage(this.getClass(), "CaseExceptionWarning.CheckMultiUserOptions"),
+                        JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), 
+                                ex.getMessage(),
                                 NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), JOptionPane.ERROR_MESSAGE); //NON-NLS
                         if (!Case.isCaseOpen()) {
                             StartupWindowProvider.getInstance().open();

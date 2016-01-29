@@ -33,7 +33,7 @@ public class CategorizeGroupAction extends Action {
 
     public CategorizeGroupAction(Category cat, ImageGalleryController controller) {
         super(cat.getDisplayName(), (javafx.event.ActionEvent actionEvent) -> {
-            Set<Long> fileIdSet = ImmutableSet.copyOf(controller.viewState().get().getGroup().fileIds());
+            Set<Long> fileIdSet = ImmutableSet.copyOf(controller.viewState().get().getGroup().getFileIDs());
             new CategorizeAction(controller).addTagsToFiles(controller.getTagsManager().getTagName(cat), "", fileIdSet);
         });
         setGraphic(new ImageView(DrawableAttribute.CATEGORY.getIcon()));

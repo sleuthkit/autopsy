@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -293,7 +294,7 @@ public class UNCPathUtilities {
                     }
                 }
             }
-        } catch (IOException | InterruptedException ex) {
+        } catch (IOException | InterruptedException | NoSuchElementException | IllegalStateException ex) {
             // if we couldn't do it, no big deal  
             Logger.getLogger(UNCPathUtilities.class.getName()).log(Level.WARNING, "Unable to parse 'net use' output", ex); //NON-NLS
         } finally {

@@ -515,13 +515,6 @@ public class IngestManager {
     private boolean startIngestJob(IngestJob job) {
         boolean success = false;
         if (this.jobCreationIsEnabled) {
-            /**
-             * TODO: This is not really reliable.
-             */
-            if (RuntimeProperties.coreComponentsAreActive() && jobsById.size() == 1) {
-                clearIngestMessageBox();
-            }
-
             // multi-user cases must have multi-user database service running            
             if (Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) {
                 try {
