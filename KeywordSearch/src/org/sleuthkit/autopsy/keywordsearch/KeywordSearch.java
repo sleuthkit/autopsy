@@ -75,7 +75,7 @@ public class KeywordSearch {
             //do not forward to the parent autopsy logger
             TIKA_LOGGER.setUseParentHandlers(false);
         } catch (IOException | SecurityException ex) {
-            logger.log(Level.SEVERE, "Error setting up tika logging", ex);
+            logger.log(Level.SEVERE, "Error setting up tika logging", ex); //NON-NLS
         }
     }
 
@@ -125,7 +125,7 @@ public class KeywordSearch {
                         server.closeCore();
                     } catch (Exception ex) {
                         String caseName = closedCase.getName();
-                        logger.log(Level.SEVERE, String.format("Failed to close core for %s", caseName), ex);
+                        logger.log(Level.SEVERE, String.format("Failed to close core for %s", caseName), ex); //NON-NLS
                         MessageNotifyUtil.Notify.error(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.closeCore.notification.msg"), ex.getMessage());
                     }
                 }
@@ -135,7 +135,7 @@ public class KeywordSearch {
                         server.openCoreForCase(openedCase);
                     } catch (Exception ex) {
                         String caseName = openedCase.getName();
-                        logger.log(Level.SEVERE, String.format("Failed to open or create core for %s", caseName), ex);
+                        logger.log(Level.SEVERE, String.format("Failed to open or create core for %s", caseName), ex); //NON-NLS
                         MessageNotifyUtil.Notify.error(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.openCore.notification.msg"), ex.getMessage());
                     }
                 }

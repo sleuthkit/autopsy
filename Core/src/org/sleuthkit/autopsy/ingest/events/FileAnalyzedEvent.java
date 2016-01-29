@@ -79,7 +79,7 @@ public final class FileAnalyzedEvent extends AutopsyEvent implements Serializabl
             file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(id);
             return file;
         } catch (IllegalStateException | TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error doing lazy load for remote event", ex);
+            logger.log(Level.SEVERE, "Error doing lazy load for remote event", ex); //NON-NLS
             return null;
         }
     }

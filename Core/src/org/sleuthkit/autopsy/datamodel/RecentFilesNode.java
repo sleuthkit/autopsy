@@ -68,6 +68,6 @@ public class RecentFilesNode extends DisplayableItemNode {
 
     @Override
     public String getItemType() {
-        return "RecentFiles";
+        return "RecentFiles"; //NON-NLS
     }
 }

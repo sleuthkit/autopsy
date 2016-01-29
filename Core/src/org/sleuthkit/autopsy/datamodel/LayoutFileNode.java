@@ -40,7 +40,7 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
 
     @Override
     public String getItemType() {
-        return "LayoutFile";
+        return "LayoutFile"; //NON-NLS
     }
 
     public static enum LayoutContentPropertyType {

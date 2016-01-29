@@ -75,6 +75,6 @@ public class ViewsNode extends DisplayableItemNode {
 
     @Override
     public String getItemType() {
-        return "Views";
+        return "Views"; //NON-NLS
     }
 }
