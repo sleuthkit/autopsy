@@ -36,7 +36,7 @@ public class UNCPathUtilities {
 
     private static Map<String, String> drives;
     private static final String MAPPED_DRIVES = "_mapped_drives.txt"; //NON-NLS
-    private static final String TEMP_FOLDER = "TEMP";
+    private static final String TEMP_FOLDER = "TEMP"; //NON-NLS
     private static final String DATA_TRIGGER = "----------"; //NON-NLS
     private static final String OK_TXT = "OK"; //NON-NLS
     private static final String COLON = ":"; //NON-NLS

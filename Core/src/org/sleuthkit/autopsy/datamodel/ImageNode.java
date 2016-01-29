@@ -112,6 +112,6 @@ public class ImageNode extends AbstractContentNode<Image> {
 
     @Override
     public String getItemType() {
-        return "Image";
+        return "Image"; //NON-NLS
     }
 }

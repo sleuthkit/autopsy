@@ -186,6 +186,6 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
 
     @Override
     public String getItemType() {
-        return "File";
+        return "File"; //NON-NLS
     }
 }
