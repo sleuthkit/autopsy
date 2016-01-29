@@ -110,6 +110,6 @@ public class BlackboardArtifactTagNode extends DisplayableItemNode {
 
     @Override
     public String getItemType() {
-        return "BlackboardArtifactTag";
+        return "BlackboardArtifactTag"; //NON-NLS
     }
 }

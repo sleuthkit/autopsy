@@ -360,10 +360,10 @@ final class DataSourceIngestJob {
         List<IngestModuleError> errors = startUpIngestPipelines();
         if (errors.isEmpty()) {
             if (this.hasFirstStageDataSourceIngestPipeline() || this.hasFileIngestPipeline()) {
-                logger.log(Level.INFO, "Starting first stage analysis for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id});
+                logger.log(Level.INFO, "Starting first stage analysis for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id}); //NON-NLS
                 this.startFirstStage();
             } else if (this.hasSecondStageDataSourceIngestPipeline()) {
-                logger.log(Level.INFO, "Starting second stage analysis for {0} (jobId={1}), no first stage configured", new Object[]{dataSource.getName(), this.id});
+                logger.log(Level.INFO, "Starting second stage analysis for {0} (jobId={1}), no first stage configured", new Object[]{dataSource.getName(), this.id}); //NON-NLS
                 this.startSecondStage();
             }
         }
@@ -450,13 +450,13 @@ final class DataSourceIngestJob {
          * Schedule the first stage tasks.
          */
         if (this.hasFirstStageDataSourceIngestPipeline() && this.hasFileIngestPipeline()) {
-            logger.log(Level.INFO, "Scheduling first stage data source and file level analysis tasks for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id});
+            logger.log(Level.INFO, "Scheduling first stage data source and file level analysis tasks for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id}); //NON-NLS
             DataSourceIngestJob.taskScheduler.scheduleIngestTasks(this);
         } else if (this.hasFirstStageDataSourceIngestPipeline()) {
-            logger.log(Level.INFO, "Scheduling first stage data source level analysis tasks for {0} (jobId={1}), no file level analysis configured", new Object[]{dataSource.getName(), this.id});
+            logger.log(Level.INFO, "Scheduling first stage data source level analysis tasks for {0} (jobId={1}), no file level analysis configured", new Object[]{dataSource.getName(), this.id}); //NON-NLS
             DataSourceIngestJob.taskScheduler.scheduleDataSourceIngestTask(this);
         } else {
-            logger.log(Level.INFO, "Scheduling file level analysis tasks for {0} (jobId={1}), no first stage data source level analysis configured", new Object[]{dataSource.getName(), this.id});
+            logger.log(Level.INFO, "Scheduling file level analysis tasks for {0} (jobId={1}), no first stage data source level analysis configured", new Object[]{dataSource.getName(), this.id}); //NON-NLS
             DataSourceIngestJob.taskScheduler.scheduleFileIngestTasks(this);
 
             /**
@@ -475,7 +475,7 @@ final class DataSourceIngestJob {
      * Starts the second stage of this ingest job.
      */
     private void startSecondStage() {
-        logger.log(Level.INFO, "Starting second stage analysis for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id});
+        logger.log(Level.INFO, "Starting second stage analysis for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id}); //NON-NLS
         this.stage = DataSourceIngestJob.Stages.SECOND;
         if (this.doUI) {
             this.startDataSourceIngestProgressBar();
@@ -483,7 +483,7 @@ final class DataSourceIngestJob {
         synchronized (this.dataSourceIngestPipelineLock) {
             this.currentDataSourceIngestPipeline = this.secondStageDataSourceIngestPipeline;
         }
-        logger.log(Level.INFO, "Scheduling second stage data source level analysis tasks for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id});
+        logger.log(Level.INFO, "Scheduling second stage data source level analysis tasks for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id}); //NON-NLS
         DataSourceIngestJob.taskScheduler.scheduleDataSourceIngestTask(this);
     }
 
@@ -572,7 +572,7 @@ final class DataSourceIngestJob {
      * job and starts the second stage, if appropriate.
      */
     private void finishFirstStage() {
-        logger.log(Level.INFO, "Finished first stage analysis for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id});
+        logger.log(Level.INFO, "Finished first stage analysis for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id}); //NON-NLS
 
         // Shut down the file ingest pipelines. Note that no shut down is
         // required for the data source ingest pipeline because data source 
@@ -622,7 +622,7 @@ final class DataSourceIngestJob {
      * Shuts down the ingest pipelines and progress bars for this job.
      */
     private void finish() {
-        logger.log(Level.INFO, "Finished analysis for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id});
+        logger.log(Level.INFO, "Finished analysis for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id}); //NON-NLS
         this.stage = DataSourceIngestJob.Stages.FINALIZATION;
 
         if (this.doUI) {
