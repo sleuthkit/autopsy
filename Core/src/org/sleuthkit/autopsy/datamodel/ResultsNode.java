@@ -71,6 +71,6 @@ public class ResultsNode extends DisplayableItemNode {
 
     @Override
     public String getItemType() {
-        return "Results";
+        return "Results"; //NON-NLS
     }
 }
