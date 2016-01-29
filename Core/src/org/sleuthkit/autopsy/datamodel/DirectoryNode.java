@@ -103,6 +103,6 @@ public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
 
     @Override
     public String getItemType() {
-        return "Directory";
+        return "Directory"; //NON-NLS
     }
 }

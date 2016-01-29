@@ -124,6 +124,6 @@ class ContentTagNode extends DisplayableItemNode {
 
     @Override
     public String getItemType() {
-        return "ContentTag";
+        return "ContentTag"; //NON-NLS
     }
 }

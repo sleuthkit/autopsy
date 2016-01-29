@@ -554,11 +554,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      *
      * @throws CaseActionException
      */
-    /**
-     * TODO: Deprecate this and throw a more general exception.
-     */
     public static void open(String caseMetadataFilePath) throws CaseActionException {
-
         if (!caseMetadataFilePath.endsWith(CASE_DOT_EXTENSION)) {
             throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.checkFile.msg", CASE_DOT_EXTENSION));
         }
@@ -590,8 +586,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     db = SleuthkitCase.openCase(metadata.getCaseDatabaseName(), UserPreferences.getDatabaseConnectionInfo(), caseDir);
                 } catch (UserPreferencesException ex) {
                     logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
-                    throw new CaseActionException(
-                            NbBundle.getMessage(Case.class, "Case.databaseConnectionInfo.error.msg"), ex);
+                    throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.databaseConnectionInfo.error.msg"), ex);
                 }
             }
 
@@ -632,22 +627,22 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
         } catch (CaseMetadataException ex) {
             /**
-             * Clean-up the case if it was actually opened. TODO: Do this
-             * better.
+             * Attempt clean up.
              */
             try {
                 Case badCase = Case.getCurrentCase();
                 badCase.closeCase();
-            } catch (IllegalStateException unused) {
-                // Already logged.
+            } catch (IllegalStateException ignored) {
             }
-            throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.gen.msg") + ": " + ex.getMessage(), ex); //NON-NLS
+            throw new CaseActionException(ex.getMessage(), ex); //NON-NLS
         } catch (TskCoreException ex) {
+            /**
+             * Attempt clean up.
+             */
             try {
                 Case badCase = Case.getCurrentCase();
                 badCase.closeCase();
-            } catch (CaseActionException | IllegalStateException unused) {
-                // Already logged.
+            } catch (IllegalStateException ignored) {
             }
             SwingUtilities.invokeLater(() -> {
                 WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));

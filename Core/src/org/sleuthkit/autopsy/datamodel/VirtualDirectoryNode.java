@@ -151,6 +151,6 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
 
     @Override
     public String getItemType() {
-        return "VirtualDirectory";
+        return "VirtualDirectory"; //NON-NLS
     }
 }

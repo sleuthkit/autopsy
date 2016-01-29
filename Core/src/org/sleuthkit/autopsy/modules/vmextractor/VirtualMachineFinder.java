@@ -33,11 +33,11 @@ import org.sleuthkit.autopsy.casemodule.GeneralFilter;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * Virtual machine file finder utility
+ * Virtual machine file finder 
  */
-public final class VirtualMachineFinderUtility {
+public final class VirtualMachineFinder {
 
-    private static final Logger logger = Logger.getLogger(VirtualMachineFinderUtility.class.getName());
+    private static final Logger logger = Logger.getLogger(VirtualMachineFinder.class.getName());
 
     private static final int MAX_VMDK_DESCRIPTOR_FILE_SIZE_BYTES = 10000;
     private static final int MIN_VMDK_EXTENT_DESCRIPTOR_FIELDS_NUM = 4; // See readExtentFilesFromVmdkDescriptorFile() for details

@@ -169,7 +169,7 @@ public class Server {
     private int currentSolrServerPort = 0;
     private int currentSolrStopPort = 0;
     private static final boolean DEBUG = false;//(Version.getBuildType() == Version.Type.DEVELOPMENT);
-    private final UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
+    private UNCPathUtilities uncPathUtilities = null;
 
     public enum CORE_EVT_STATES {
 
@@ -196,14 +196,15 @@ public class Server {
      */
     Server() {
         initSettings();
-
+        
         this.localSolrServer = new HttpSolrServer("http://localhost:" + currentSolrServerPort + "/solr"); //NON-NLS
         serverAction = new ServerAction();
         solrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
         javaPath = PlatformUtil.getJavaPath();
 
         currentCoreLock = new ReentrantReadWriteLock(true);
-
+        uncPathUtilities = new UNCPathUtilities();
+        
         logger.log(Level.INFO, "Created Server instance"); //NON-NLS
     }
 
@@ -405,10 +406,10 @@ public class Server {
                 solrProcessBuilder.directory(solrFolder);
 
                 // Redirect stdout and stderr to files to prevent blocking.
-                Path solrStdoutPath = Paths.get(Places.getUserDirectory().getAbsolutePath(), "var", "log", "solr.log.stdout");
+                Path solrStdoutPath = Paths.get(Places.getUserDirectory().getAbsolutePath(), "var", "log", "solr.log.stdout"); //NON-NLS
                 solrProcessBuilder.redirectOutput(solrStdoutPath.toFile());
 
-                Path solrStderrPath = Paths.get(Places.getUserDirectory().getAbsolutePath(), "var", "log", "solr.log.stderr");
+                Path solrStderrPath = Paths.get(Places.getUserDirectory().getAbsolutePath(), "var", "log", "solr.log.stderr"); //NON-NLS
                 solrProcessBuilder.redirectError(solrStderrPath.toFile());
 
                 logger.log(Level.INFO, "Starting Solr using: {0}", solrProcessBuilder.command()); //NON-NLS
@@ -656,15 +657,19 @@ public class Server {
      */
     String getIndexDirPath(Case theCase) {
         String indexDir = theCase.getModuleDirectory() + File.separator + "keywordsearch" + File.separator + "data"; //NON-NLS
-        String result = uncPathUtilities.mappedDriveToUNC(indexDir);
-        if (result == null) {
-            uncPathUtilities.rescanDrives();
-            result = uncPathUtilities.mappedDriveToUNC(indexDir);
+        if (uncPathUtilities != null) {
+            // if we can check for UNC paths, do so, otherwise just return the indexDir
+            String result = uncPathUtilities.mappedDriveToUNC(indexDir);
+            if (result == null) {
+                uncPathUtilities.rescanDrives();
+                result = uncPathUtilities.mappedDriveToUNC(indexDir);
+            }
+            if (result == null) {
+                return indexDir;
+            }
+            return result;
         }
-        if (result == null) {
-            return indexDir;
-        }
-        return result;
+        return indexDir;
     }
 
     /**

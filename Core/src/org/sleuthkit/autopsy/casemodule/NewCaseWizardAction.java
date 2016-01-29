@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,70 +37,57 @@ import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JOptionPane;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
-import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.openide.windows.WindowManager;
 import java.awt.Cursor;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
- * Action to open the New Case wizard.
+ * An action that runs the new case wizard.
  */
 final class NewCaseWizardAction extends CallableSystemAction {
 
     private static final long serialVersionUID = 1L;
-
-    private WizardDescriptor.Panel<WizardDescriptor>[] panels;
-
     private static final Logger logger = Logger.getLogger(NewCaseWizardAction.class.getName());
+    private WizardDescriptor.Panel<WizardDescriptor>[] panels;
 
     @Override
     public void performAction() {
-
-        // if ingest is ongoing, warn and get confirmaion before opening a different case
+        /*
+         * If ingest is running, do a dialog to warn the user and confirm
+         * abandoning the ingest.
+         */
         if (IngestManager.getInstance().isIngestRunning()) {
-            // show the confirmation first to close the current case and open the "New Case" wizard panel
             String closeCurrentCase = NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning");
             NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(closeCurrentCase,
                     NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning.title"),
                     NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
             descriptor.setValue(NotifyDescriptor.NO_OPTION);
-
             Object res = DialogDisplayer.getDefault().notify(descriptor);
             if (res != null && res == DialogDescriptor.YES_OPTION) {
                 try {
-                    Case.getCurrentCase().closeCase(); // close the current case
+                    Case.getCurrentCase().closeCase();
                 } catch (Exception ex) {
-                    Logger.getLogger(NewCaseWizardAction.class.getName()).log(Level.WARNING, "Error closing case.", ex); //NON-NLS
+                    Logger.getLogger(NewCaseWizardAction.class.getName()).log(Level.WARNING, "Error closing case", ex); //NON-NLS
                 }
             } else {
                 return;
             }
         }
-
         WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        newCaseAction(); // start the new case creation process
+        newCaseAction();
     }
 
-    /**
-     * The method to perform new case creation
-     */
     private void newCaseAction() {
         final WizardDescriptor wizardDescriptor = new WizardDescriptor(getPanels());
-        // {0} will be replaced by WizardDesriptor.Panel.getComponent().getName()
         wizardDescriptor.setTitleFormat(new MessageFormat("{0}"));
         wizardDescriptor.setTitle(NbBundle.getMessage(this.getClass(), "NewCaseWizardAction.newCase.windowTitle.text"));
         Dialog dialog = DialogDisplayer.getDefault().createDialog(wizardDescriptor);
         dialog.setVisible(true);
         dialog.toFront();
-
         if (wizardDescriptor.getValue() == WizardDescriptor.FINISH_OPTION) {
             new SwingWorker<Void, Void>() {
-
                 @Override
                 protected Void doInBackground() throws Exception {
-                    // Create case.
-
                     String caseNumber = (String) wizardDescriptor.getProperty("caseNumber"); //NON-NLS
                     String examiner = (String) wizardDescriptor.getProperty("caseExaminer"); //NON-NLS
                     final String caseName = (String) wizardDescriptor.getProperty("caseName"); //NON-NLS
@@ -112,11 +99,8 @@ final class NewCaseWizardAction extends CallableSystemAction {
 
                 @Override
                 protected void done() {
-                    final String caseName = (String) wizardDescriptor.getProperty("caseName"); //NON-NLS
                     try {
                         get();
-                        CaseType currentCaseType = CaseType.values()[(int) wizardDescriptor.getProperty("caseType")]; //NON-NLS
-                        CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
                         AddImageAction addImageAction = SystemAction.get(AddImageAction.class);
                         addImageAction.actionPerformed(null);
                     } catch (Exception ex) {
@@ -126,7 +110,11 @@ final class NewCaseWizardAction extends CallableSystemAction {
                                     + NbBundle.getMessage(this.getClass(), "CaseExceptionWarning.CheckMultiUserOptions"),
                                     NbBundle.getMessage(this.getClass(), "CaseCreateAction.msgDlg.cantCreateCase.msg"),
                                     JOptionPane.ERROR_MESSAGE); //NON-NLS
-
+                            /**
+                             * This is a bit of a hack, but close the startup
+                             * window, if it was the source of the action
+                             * invocation.
+                             */
                             try {
                                 StartupWindowProvider.getInstance().close();
                             } catch (Exception unused) {
@@ -148,7 +136,6 @@ final class NewCaseWizardAction extends CallableSystemAction {
 
     private void doFailedCaseCleanup(WizardDescriptor wizardDescriptor) {
         String createdDirectory = (String) wizardDescriptor.getProperty("createdDirectory"); //NON-NLS
-
         if (createdDirectory != null) {
             logger.log(Level.INFO, "Deleting a created case directory due to an error, dir: {0}", createdDirectory); //NON-NLS
             Case.deleteCaseDirectory(new File(createdDirectory));
@@ -159,8 +146,7 @@ final class NewCaseWizardAction extends CallableSystemAction {
     }
 
     /**
-     * Initialize panels representing individual wizard's steps and sets various
-     * properties for them influencing wizard appearance.
+     * Initializes the new case wizard panels.
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     private WizardDescriptor.Panel<WizardDescriptor>[] getPanels() {

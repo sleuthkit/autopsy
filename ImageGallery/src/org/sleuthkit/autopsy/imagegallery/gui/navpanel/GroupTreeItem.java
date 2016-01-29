@@ -105,6 +105,7 @@ class GroupTreeItem extends TreeItem<GroupTreeNode> {
 
                     Platform.runLater(() -> {
                         getChildren().add(newTreeItem);
+                        getChildren().sort(Comparator.comparing(treeItem -> treeItem.getValue().getGroup(), Comparator.nullsLast(comp)));
                     });
                     return newTreeItem;
                 });
@@ -122,7 +123,7 @@ class GroupTreeItem extends TreeItem<GroupTreeNode> {
                 final GroupTreeItem newTreeItem = new GroupTreeItem(t, g, true);
                 Platform.runLater(() -> {
                     getChildren().add(newTreeItem);
-                    getChildren().sort(Comparator.comparing(treeItem -> treeItem.getValue().getGroup(), comp));
+                    getChildren().sort(Comparator.comparing(treeItem -> treeItem.getValue().getGroup(), Comparator.nullsLast(comp)));
                 });
                 return newTreeItem;
             });
@@ -171,7 +172,7 @@ class GroupTreeItem extends TreeItem<GroupTreeNode> {
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     synchronized void resortChildren(Comparator<DrawableGroup> newComp) {
         this.comp = newComp;
-        getChildren().sort(Comparator.comparing(treeItem -> treeItem.getValue().getGroup(), comp));
+        getChildren().sort(Comparator.comparing(treeItem -> treeItem.getValue().getGroup(), Comparator.nullsLast(comp)));
         for (GroupTreeItem ti : childMap.values()) {
             ti.resortChildren(comp);
         }

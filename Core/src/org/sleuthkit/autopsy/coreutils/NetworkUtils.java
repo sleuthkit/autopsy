@@ -34,10 +34,10 @@ public class NetworkUtils {
         } catch (UnknownHostException ex) {
             // getLocalHost().getHostName() can fail in some situations. 
             // Use environment variable if so.
-            hostName = System.getenv("COMPUTERNAME");
+            hostName = System.getenv("COMPUTERNAME"); //NON-NLS
         }
         if (hostName == null || hostName.isEmpty()) {
-            hostName = System.getenv("COMPUTERNAME");
+            hostName = System.getenv("COMPUTERNAME"); //NON-NLS
         }
         return hostName;
     }

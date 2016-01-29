@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.imagegallery.datamodel.grouping;
 
 import com.google.common.eventbus.Subscribe;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -34,6 +36,7 @@ import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javafx.application.Platform;
@@ -58,6 +61,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
@@ -290,7 +294,7 @@ public class GroupManager {
 
             // If we're grouping by category, we don't want to remove empty groups.
             if (groupKey.getAttribute() != DrawableAttribute.CATEGORY) {
-                if (group.fileIds().isEmpty()) {
+                if (group.getFileIDs().isEmpty()) {
                     Platform.runLater(() -> {
                         if (analyzedGroups.contains(group)) {
                             analyzedGroups.remove(group);
@@ -341,6 +345,24 @@ public class GroupManager {
                     TreeSet<A> names = new TreeSet<>((Collection<? extends A>) db.getHashSetNames());
                     values = new ArrayList<>(names);
                     break;
+                case MIME_TYPE:
+                    HashSet<String> types = new HashSet<>();
+                    try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery("select group_concat(obj_id), mime_type from tsk_files group by mime_type ");
+                            ResultSet resultSet = executeQuery.getResultSet();) {
+                        while (resultSet.next()) {
+                            final String mimeType = resultSet.getString("mime_type");
+                            String objIds = resultSet.getString("group_concat(obj_id)");
+
+                            Pattern.compile(",").splitAsStream(objIds)
+                                    .map(Long::valueOf)
+                                    .filter(db::isInDB)
+                                    .findAny().ifPresent(obj_id -> types.add(mimeType));
+                        }
+                    } catch (SQLException | TskCoreException ex) {
+                        Exceptions.printStackTrace(ex);
+                    }
+                    values = new ArrayList<A>((Collection<? extends A>) types);
+                    break;
                 default:
                     //otherwise do straight db query 
                     return db.findValuesForAttribute(groupBy, sortBy, sortOrder);
@@ -361,6 +383,8 @@ public class GroupManager {
                 return getFileIDsWithCategory((Category) groupKey.getValue());
             case TAGS:
                 return getFileIDsWithTag((TagName) groupKey.getValue());
+            case MIME_TYPE:
+                return getFileIDsWithMimeType((String) groupKey.getValue());
 //            case HASHSET: //comment out this case to use db functionality for hashsets
 //                return getFileIDsWithHashSetName((String) groupKey.getValue());
             default:
@@ -663,6 +687,29 @@ public class GroupManager {
             }
         }
         return null;
+    }
+
+    public Set<Long> getFileIDsWithMimeType(String mimeType) throws TskCoreException {
+
+        HashSet<Long> hashSet = new HashSet<>();
+        String query = (null == mimeType)
+                ? "SELECT obj_id FROM tsk_files WHERE mime_type IS NULL"
+                : "SELECT obj_id FROM tsk_files WHERE mime_type = '" + mimeType + "'";
+
+        try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery(query);
+                ResultSet resultSet = executeQuery.getResultSet();) {
+            while (resultSet.next()) {
+                final long fileID = resultSet.getLong("obj_id");
+                if (db.isInDB(fileID)) {
+                    hashSet.add(fileID);
+                }
+            }
+            return hashSet;
+
+        } catch (Exception ex) {
+            Exceptions.printStackTrace(ex);
+            throw new TskCoreException("Failed to get file ids with mime type " + mimeType, ex);
+        }
     }
 
     /**

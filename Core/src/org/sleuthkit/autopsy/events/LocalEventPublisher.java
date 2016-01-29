@@ -107,7 +107,7 @@ final class LocalEventPublisher {
                 try {
                     subscriber.propertyChange(event);
                 } catch (Exception ex) {
-                    logger.log(Level.SEVERE, "Exception thrown by subscriber", ex);
+                    logger.log(Level.SEVERE, "Exception thrown by subscriber", ex); //NON-NLS
                 }
             }
         }
