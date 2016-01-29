@@ -111,7 +111,7 @@ public class Tags implements AutopsyVisitableItem {
 
         @Override
         public String getItemType() {
-            return "TagsRoots";
+            return "TagsRoots"; //NON-NLS
         }
     }
 
@@ -273,7 +273,7 @@ public class Tags implements AutopsyVisitableItem {
 
         @Override
         public String getItemType() {
-            return "TagsName";
+            return "TagsName"; //NON-NLS
         }
     }
 
@@ -373,7 +373,7 @@ public class Tags implements AutopsyVisitableItem {
 
         @Override
         public String getItemType() {
-            return "TagsContentType";
+            return "TagsContentType"; //NON-NLS
         }
     }
 
@@ -471,7 +471,7 @@ public class Tags implements AutopsyVisitableItem {
 
         @Override
         public String getItemType() {
-            return "TagsBlackboardArtifact";
+            return "TagsBlackboardArtifact"; //NON-NLS
         }
     }
 

@@ -106,8 +106,8 @@ public class IngestManager {
     private int numberOfFileIngestThreads;
     private final ExecutorService fileIngestThreadPool;
 
-    private static final String JOB_EVENT_CHANNEL_NAME = "%s-Ingest-Job-Events";
-    private static final String MODULE_EVENT_CHANNEL_NAME = "%s-Ingest-Module-Events";
+    private static final String JOB_EVENT_CHANNEL_NAME = "%s-Ingest-Job-Events"; //NON-NLS
+    private static final String MODULE_EVENT_CHANNEL_NAME = "%s-Ingest-Module-Events"; //NON-NLS
     private static final Set<String> jobEventNames = Stream.of(IngestJobEvent.values())
             .map(IngestJobEvent::toString)
             .collect(Collectors.toSet());

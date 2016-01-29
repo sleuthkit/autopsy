@@ -192,6 +192,6 @@ public class VolumeNode extends AbstractContentNode<Volume> {
 
     @Override
     public String getItemType() {
-        return "Volume";
+        return "Volume"; //NON-NLS
     }
 }
