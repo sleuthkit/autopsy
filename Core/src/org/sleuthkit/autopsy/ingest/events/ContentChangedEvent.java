@@ -89,7 +89,7 @@ public final class ContentChangedEvent extends AutopsyEvent implements Serializa
             eventData = new ModuleContentEvent(data.moduleName, content);
             return eventData;
         } catch (IllegalStateException | TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error doing lazy load for remote event", ex);
+            logger.log(Level.SEVERE, "Error doing lazy load for remote event", ex); //NON-NLS
             return null;
         }
     }

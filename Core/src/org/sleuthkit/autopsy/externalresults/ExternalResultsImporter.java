@@ -148,19 +148,19 @@ public final class ExternalResultsImporter {
                         if (attributeType == null) {
                             switch (attributeData.getValueType()) {
                             case "text": //NON-NLS
-                                attributeType = caseDb.addArtifactAttributeType(attributeData.getType(), BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.fromLabel("String"), attributeData.getType());
+                                attributeType = caseDb.addArtifactAttributeType(attributeData.getType(), BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.fromLabel("String"), attributeData.getType()); //NON-NLS
                                 break;
                             case "int32": //NON-NLS
-                                attributeType = caseDb.addArtifactAttributeType(attributeData.getType(), BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.fromLabel("Integer"), attributeData.getType());
+                                attributeType = caseDb.addArtifactAttributeType(attributeData.getType(), BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.fromLabel("Integer"), attributeData.getType()); //NON-NLS
                                 break;
                             case "int64": //NON-NLS
-                                attributeType = caseDb.addArtifactAttributeType(attributeData.getType(), BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.fromLabel("Long"), attributeData.getType());
+                                attributeType = caseDb.addArtifactAttributeType(attributeData.getType(), BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.fromLabel("Long"), attributeData.getType()); //NON-NLS
                                 break;
                             case "double": //NON-NLS
-                                attributeType = caseDb.addArtifactAttributeType(attributeData.getType(), BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.fromLabel("Double"), attributeData.getType());
+                                attributeType = caseDb.addArtifactAttributeType(attributeData.getType(), BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.fromLabel("Double"), attributeData.getType()); //NON-NLS
                                 break;
-                            case "datetime":
-                                attributeType = caseDb.addArtifactAttributeType(attributeData.getType(), BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.fromLabel("DateTime"), attributeData.getType());
+                            case "datetime": //NON-NLS
+                                attributeType = caseDb.addArtifactAttributeType(attributeData.getType(), BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.fromLabel("DateTime"), attributeData.getType()); //NON-NLS
                             }
                         }
 
@@ -180,7 +180,7 @@ public final class ExternalResultsImporter {
                                 double doubleValue = Double.parseDouble(attributeData.getValue());
                                 attributes.add(new BlackboardAttribute(attributeType, attributeData.getSourceModule(), doubleValue));
                                 break;
-                            case "datetime":
+                            case "datetime": //NON-NLS
                                 long dateTimeValue = Long.parseLong(attributeData.getValue());
                                 attributes.add(new BlackboardAttribute(attributeType, attributeData.getSourceModule(), dateTimeValue));
                                 break;
