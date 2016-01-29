@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -62,9 +62,7 @@ class GroupListCell extends ListCell<DrawableGroup> {
      */
     private final InvalidationListener seenListener = (Observable o) -> {
         final String style = getSeenStyleClass();
-        Platform.runLater(() -> {
-            setStyle(style);
-        });
+        Platform.runLater(() -> setStyle(style));
     };
 
     private final ReadOnlyObjectProperty<GroupComparators<?>> sortOrder;
@@ -77,24 +75,19 @@ class GroupListCell extends ListCell<DrawableGroup> {
 
         //since end of path is probably more interesting put ellipsis at front
         setTextOverrun(OverrunStyle.LEADING_ELLIPSIS);
-        Platform.runLater(() -> {
-            prefWidthProperty().bind(getListView().widthProperty().subtract(15));
-        });
-
+        Platform.runLater(() -> prefWidthProperty().bind(getListView().widthProperty().subtract(15)));
     }
 
-    /**
-     * {@inheritDoc }
-     */
     @Override
     protected synchronized void updateItem(final DrawableGroup group, boolean empty) {
         //if there was a previous group, remove the listeners
         Optional.ofNullable(getItem())
                 .ifPresent(oldGroup -> {
                     sortOrder.removeListener(fileCountListener);
-                    oldGroup.fileIds().removeListener(fileCountListener);
+            oldGroup.getFileIDs().removeListener(fileCountListener);
                     oldGroup.seenProperty().removeListener(seenListener);
-                    oldGroup.uncatCountProperty().removeListener(fileCountListener);
+            oldGroup.uncatCountProperty().removeListener(fileCountListener);
+            oldGroup.hashSetHitsCountProperty().removeListener(fileCountListener);
                 });
 
         super.updateItem(group, empty);
@@ -107,35 +100,33 @@ class GroupListCell extends ListCell<DrawableGroup> {
                 setStyle("");
             });
         } else {
+            final String text = getGroupName() + getCountsText();
+            String style;
+            Image icon;
             if (isNull(group)) {
-                final String text = getGroupName();
                 //"dummy" group in file system tree <=>  a folder with no drawables
-                Platform.runLater(() -> {
-                    setTooltip(new Tooltip(text));
-                    setText(text);
-                    setGraphic(new ImageView(EMPTY_FOLDER_ICON));
-                    setStyle("");
-                });
-
+                icon = EMPTY_FOLDER_ICON;
+                style = "";
             } else {
                 //if number of files in this group changes (eg a file is recategorized), update counts via listener
-                group.fileIds().addListener(fileCountListener);
+                group.getFileIDs().addListener(fileCountListener);
                 group.uncatCountProperty().addListener(fileCountListener);
+                group.hashSetHitsCountProperty().addListener(fileCountListener);
                 sortOrder.addListener(fileCountListener);
                 //if the seen state of this group changes update its style
                 group.seenProperty().addListener(seenListener);
 
                 //and use icon corresponding to group type
-                final Image icon = group.groupKey.getAttribute().getIcon();
-                final String text = getGroupName() + getCountsText();
-                final String style = getSeenStyleClass();
-                Platform.runLater(() -> {
-                    setTooltip(new Tooltip(text));
-                    setGraphic(new ImageView(icon));
-                    setText(text);
-                    setStyle(style);
-                });
+                icon = group.getGroupKey().getIcon();
+                style = getSeenStyleClass();
             }
+
+            Platform.runLater(() -> {
+                setTooltip(new Tooltip(text));
+                setGraphic(new ImageView(icon));
+                setText(text);
+                setStyle(style);
+            });
         }
     }
 
@@ -166,7 +157,6 @@ class GroupListCell extends ListCell<DrawableGroup> {
      */
     @Nonnull
     private String getCountsText() {
-
         return Optional.ofNullable(getItem())
                 .map(group ->
                         " (" + (sortOrder.get() == GroupComparators.ALPHABETICAL

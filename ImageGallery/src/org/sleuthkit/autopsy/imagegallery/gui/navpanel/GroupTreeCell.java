@@ -96,7 +96,8 @@ class GroupTreeCell extends TreeCell<GroupTreeNode> {
                 .map(GroupTreeNode::getGroup)
                 .ifPresent(group -> {
             sortOrder.addListener(fileCountListener);
-                    group.fileIds().removeListener(fileCountListener);
+            group.getFileIDs().removeListener(fileCountListener);
+            group.hashSetHitsCountProperty().removeListener(fileCountListener);
             group.seenProperty().removeListener(seenListener);
             group.uncatCountProperty().removeListener(fileCountListener);
                 });
@@ -123,14 +124,15 @@ class GroupTreeCell extends TreeCell<GroupTreeNode> {
 
             } else {
                 //if number of files in this group changes (eg a file is recategorized), update counts via listener
-                treeNode.getGroup().fileIds().addListener(fileCountListener);
+                treeNode.getGroup().getFileIDs().addListener(fileCountListener);
                 treeNode.getGroup().uncatCountProperty().addListener(fileCountListener);
+                treeNode.getGroup().hashSetHitsCountProperty().addListener(fileCountListener);
                 sortOrder.addListener(fileCountListener);
                 //if the seen state of this group changes update its style
                 treeNode.getGroup().seenProperty().addListener(seenListener);
 
                 //and use icon corresponding to group type
-                final Image icon = treeNode.getGroup().groupKey.getAttribute().getIcon();
+                final Image icon = treeNode.getGroup().getGroupKey().getIcon();
                 final String text = getGroupName() + getCountsText();
                 final String style = getSeenStyleClass();
                 Platform.runLater(() -> {

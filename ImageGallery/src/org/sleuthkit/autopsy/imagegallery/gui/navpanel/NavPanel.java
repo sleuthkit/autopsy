@@ -90,7 +90,6 @@ abstract class NavPanel<X> extends Tab {
             } else {
                 categoryManager.unregisterListener(NavPanel.this);
             }
-
         });
 
         //keep selection in sync with controller

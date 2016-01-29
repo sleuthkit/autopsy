@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -102,7 +102,7 @@ public final class DrawableDB {
     private final PreparedStatement insertHashHitStmt;
 
     private final PreparedStatement updateFileStmt;
-    private PreparedStatement insertFileStmt;
+    private final PreparedStatement insertFileStmt;
 
     private final PreparedStatement pathGroupStmt;
 
@@ -126,7 +126,7 @@ public final class DrawableDB {
      */
     private final Map<DrawableAttribute<?>, PreparedStatement> groupStatementMap = new HashMap<>();
 
-    private GroupManager groupManager;
+    private final GroupManager groupManager;
 
     private final Path dbPath;
 
@@ -349,7 +349,7 @@ public final class DrawableDB {
             setPragmas();
 
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "problem accessing  database", ex); //NON-NLS
+            LOGGER.log(Level.SEVERE, "problem accessing database", ex); //NON-NLS
             return false;
         }
         try (Statement stmt = con.createStatement()) {
@@ -729,17 +729,6 @@ public final class DrawableDB {
             } catch (SQLException ex) {
                 LOGGER.log(Level.WARNING, "problem counting analyzed files: ", ex); //NON-NLS
             }
-
-            //// Old method
-            //try (Statement stmt = con.createStatement();
-            //        //Can't make this a preprared statement because of the IN ( ... )
-            //        ResultSet analyzedQuery = stmt.executeQuery("select count(analyzed) as analyzed from drawable_files where analyzed = 1 and obj_id in (" + StringUtils.join(fileIDsInGroup, ", ") + ")")) {
-            //    while (analyzedQuery.next()) {
-            //        return analyzedQuery.getInt(ANALYZED) == fileIDsInGroup.size();
-            //    }
-            //} catch (SQLException ex) {
-            //    LOGGER.log(Level.WARNING, "problem counting analyzed files: ", ex);
-            //}
         } catch (TskCoreException tskCoreException) {
             LOGGER.log(Level.WARNING, "problem counting analyzed files: ", tskCoreException); //NON-NLS
         } finally {
@@ -840,6 +829,7 @@ public final class DrawableDB {
      *
      * @throws TskCoreException
      */
+    @Deprecated
     public long countFiles() throws TskCoreException {
         Statement statement = null;
         ResultSet rs = null;
@@ -1008,8 +998,10 @@ public final class DrawableDB {
 
     public Set<Long> getFileIDsInGroup(GroupKey<?> groupKey) throws TskCoreException {
 
-        if (groupKey.getAttribute().isDBColumn) {
+        if (groupKey.getAttribute().isDBColumn == false) {
             switch (groupKey.getAttribute().attrName) {
+                case MIME_TYPE:
+                    return groupManager.getFileIDsWithMimeType((String) groupKey.getValue());
                 case CATEGORY:
                     return groupManager.getFileIDsWithCategory((Category) groupKey.getValue());
                 case TAGS:
@@ -1036,60 +1028,9 @@ public final class DrawableDB {
         return files;
     }
 
-    public List<DrawableFile<?>> getFilesInGroup(GroupKey<?> key) throws TskCoreException {
-        List<DrawableFile<?>> files = new ArrayList<>();
-        dbReadLock();
-        try {
-            PreparedStatement statement = null;
-
-            /*
-             * I hate this! not flexible/generic/maintainable we could have the
-             * DrawableAttribute provide/create/configure the correct statement
-             * but they shouldn't be coupled like that -jm
-             */
-            switch (key.getAttribute().attrName) {
-                case CATEGORY:
-                    return getFilesWithCategory((Category) key.getValue());
-                default:
-                    statement = getGroupStatment(key.getAttribute());
-            }
-
-            statement.setObject(1, key.getValue());
-
-            try (ResultSet valsResults = statement.executeQuery()) {
-                while (valsResults.next()) {
-                    files.add(getFileFromID(valsResults.getLong(OBJ_ID), valsResults.getBoolean(ANALYZED)));
-                }
-            }
-        } catch (SQLException ex) {
-            LOGGER.log(Level.WARNING, "failed to get file for group:" + key.getAttribute() + " == " + key.getValue(), ex); //NON-NLS
-        } finally {
-            dbReadUnlock();
-        }
-
-        return files;
-    }
-
     private void closeStatements() throws SQLException {
         for (PreparedStatement pStmt : preparedStatements) {
             pStmt.close();
-        }
-    }
-
-    public List<DrawableFile<?>> getFilesWithCategory(Category cat) throws TskCoreException, IllegalArgumentException {
-        try {
-            List<DrawableFile<?>> files = new ArrayList<>();
-            List<ContentTag> contentTags = controller.getTagsManager().getContentTagsByTagName(controller.getTagsManager().getTagName(cat));
-            for (ContentTag ct : contentTags) {
-                if (ct.getContent() instanceof AbstractFile) {
-                    files.add(DrawableFile.create((AbstractFile) ct.getContent(), isFileAnalyzed(ct.getContent().getId()),
-                            isVideoFile((AbstractFile) ct.getContent())));
-                }
-            }
-            return files;
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "TSK error getting files in Category:" + cat.getDisplayName(), ex); //NON-NLS
-            throw ex;
         }
     }
 
@@ -1147,6 +1088,7 @@ public final class DrawableDB {
 
         //indicates succesfull removal of 1 file
         return valsResults == 1;
+
     }
 
     public class MultipleTransactionException extends IllegalStateException {
@@ -1257,6 +1199,7 @@ public final class DrawableDB {
             LOGGER.log(Level.SEVERE, "Failed to get content tags by tag name.", ex1); //NON-NLS
         }
         return -1;
+
     }
 
     /**
@@ -1299,6 +1242,7 @@ public final class DrawableDB {
             LOGGER.log(Level.SEVERE, "Error getting category count.", ex); //NON-NLS
         }
         return -1;
+
     }
 
     /**

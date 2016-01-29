@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,7 +38,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Enum style singleton to provide utilities related to questions about a files
- * type, and wheather it should be supported in Image Gallery.
+ * type, and whether it should be supported in Image Gallery.
  *
  * TODO: refactor this to remove code that duplicates
  * org.sleuthkit.autopsy.coreutils.ImageUtils
@@ -74,6 +74,7 @@ public enum FileTypeUtils {
      * videoExtensions sets.
      */
     private static final Set<String> supportedExtensions;
+
     /**
      * Lazily instantiated FileTypeDetector to use when the mimetype of a file
      * is needed
@@ -93,7 +94,7 @@ public enum FileTypeUtils {
         //add list of known image extensions
         imageExtensions.addAll(Arrays.asList(
                 "bmp" //Bitmap NON-NLS
-                , "gif" //gif
+                , "gif" //gif NON-NLS
                 , "jpg", "jpeg", "jpe", "jp2", "jpx" //jpeg variants NON-NLS
                 , "pbm", "pgm", "ppm" // Portable image format variants NON-NLS
                 , "png" //portable network graphic NON-NLS
@@ -119,6 +120,14 @@ public enum FileTypeUtils {
         videoMimeTypes.addAll(Arrays.asList("application/x-shockwave-flash")); // NON-NLS
 
         supportedMimeTypes.addAll(videoMimeTypes);
+
+        /*
+         * TODO: windows .cur cursor files get misidentified as
+         * application/x-123, so we claim to support application/x-123 so we
+         * don't miss them: ie this is a hack to cover another bug. when this is
+         * fixed, we should remove application/x-123 from the list of supported
+         * mime types.
+         */
         supportedMimeTypes.addAll(Arrays.asList("application/x-123")); // NON-NLS
 
         //add list of mimetypes ImageIO claims to support
@@ -126,21 +135,13 @@ public enum FileTypeUtils {
                 .map(String::toLowerCase)
                 .collect(Collectors.toList()));
 
-        supportedMimeTypes.removeIf("application/octet-stream"::equals); //this is rearely usefull NON-NLS
+        supportedMimeTypes.removeIf("application/octet-stream"::equals); //this is rarely usefull NON-NLS
     }
 
-    /**
-     *
-     * @return
-     */
     public static Set<String> getAllSupportedMimeTypes() {
         return Collections.unmodifiableSet(supportedMimeTypes);
     }
 
-    /**
-     *
-     * @return
-     */
     static Set<String> getAllSupportedExtensions() {
         return Collections.unmodifiableSet(supportedExtensions);
     }
@@ -167,12 +168,9 @@ public enum FileTypeUtils {
      */
     public static boolean isDrawable(AbstractFile file) throws TskCoreException {
         return hasDrawableMimeType(file).orElseGet(() -> {
-            final boolean contains = FileTypeUtils.supportedExtensions.contains(file.getNameExtension());
-            final boolean jpegFileHeader = ImageUtils.isJpegFileHeader(file);
-            final boolean pngFileHeader = ImageUtils.isPngFileHeader(file);
-            return contains
-                    || jpegFileHeader
-                    || pngFileHeader;
+            return FileTypeUtils.supportedExtensions.contains(file.getNameExtension().toLowerCase())
+                    || ImageUtils.isJpegFileHeader(file)
+                    || ImageUtils.isPngFileHeader(file);
         });
     }
 

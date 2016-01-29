@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,12 +35,13 @@ import java.awt.Cursor;
  * Panel show from the splash dialog that shows recent cases and allows them to
  * be opened.
  */
-class OpenRecentCasePanel extends javax.swing.JPanel {
+final class OpenRecentCasePanel extends javax.swing.JPanel {
 
-    static String[] caseNames;
-    static String[] casePaths;
-    private static final Logger logger = Logger.getLogger(OpenRecentCasePanel.class.getName());
+    private static final long serialVersionUID = 1L;
     private static OpenRecentCasePanel instance;
+    private static String[] caseNames;
+    private static String[] casePaths;
+    private static final Logger logger = Logger.getLogger(OpenRecentCasePanel.class.getName());
     private RecentCasesTableModel model;
 
     private OpenRecentCasePanel() {
@@ -75,6 +76,144 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
         }
         instance.generateRecentCases(); // refresh the case list
         return instance;
+    }
+
+    // Open the selected case
+    private void openCase() {
+        if (casePaths.length < 1) {
+            logger.log(Level.INFO, "No Case paths exist, cannot open the case"); //NON-NLS
+            return;
+        }
+        final String casePath = casePaths[imagesTable.getSelectedRow()];
+        final String caseName = caseNames[imagesTable.getSelectedRow()];
+        if (!casePath.equals("")) {
+            // Close the startup menu
+            try {
+                StartupWindowProvider.getInstance().close();
+                CueBannerPanel.closeOpenRecentCasesWindow();
+            } catch (Exception ex) {
+                logger.log(Level.WARNING, "Error: couldn't open case: " + caseName, ex); //NON-NLS
+            }
+            // Open the recent cases
+            if (caseName.equals("") || casePath.equals("") || (!new File(casePath).exists())) {
+                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                        NbBundle.getMessage(this.getClass(),
+                                "OpenRecentCasePanel.openCase.msgDlg.caseDoesntExist.msg",
+                                caseName),
+                        NbBundle.getMessage(this.getClass(),
+                                "OpenRecentCasePanel.openCase.msgDlg.err"),
+                        JOptionPane.ERROR_MESSAGE);
+                RecentCases.getInstance().removeRecentCase(caseName, casePath); // remove the recent case if it doesn't exist anymore
+
+                //if case is not opened, open the start window
+                if (Case.isCaseOpen() == false) {
+                    StartupWindowProvider.getInstance().open();
+                }
+
+            } else {
+                SwingUtilities.invokeLater(() -> {
+                    WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                });
+                new Thread(() -> {
+                    try {
+                        Case.open(casePath);
+                    } catch (CaseActionException ex) {
+                        SwingUtilities.invokeLater(() -> {
+                            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), ex.getMessage(),
+                                    NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), JOptionPane.ERROR_MESSAGE); //NON-NLS
+                            if (!Case.isCaseOpen()) {
+                                StartupWindowProvider.getInstance().open();
+                            }
+                        });
+                    }
+                }).start();
+            }
+        }
+    }
+
+    /**
+     * Sets the Close button action listener.
+     *
+     * @param e the action listener
+     */
+    public void setCloseButtonActionListener(ActionListener e) {
+        this.cancelButton.addActionListener(e);
+    }
+
+    /**
+     * Table model to keep track of recent cases.
+     */
+    private class RecentCasesTableModel extends AbstractTableModel {
+
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public int getRowCount() {
+            int count = 0;
+            for (String s : caseNames) {
+                if (!s.equals("")) {
+                    count++;
+                }
+            }
+            return count;
+        }
+
+        @Override
+        public int getColumnCount() {
+            return 2;
+        }
+
+        @Override
+        public String getColumnName(int column) {
+            String colName = null;
+            switch (column) {
+                case 0:
+                    colName = NbBundle.getMessage(OpenRecentCasePanel.class, "OpenRecentCasePanel.colName.caseName");
+                    break;
+                case 1:
+                    colName = NbBundle.getMessage(OpenRecentCasePanel.class, "OpenRecentCasePanel.colName.path");
+                    break;
+                default:
+                    break;
+            }
+            return colName;
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            Object ret = null;
+            switch (columnIndex) {
+                case 0:
+                    ret = caseNames[rowIndex];
+                    break;
+                case 1:
+                    ret = shortenPath(casePaths[rowIndex]);
+                    break;
+                default:
+                    logger.log(Level.SEVERE, "Invalid table column index: {0}", columnIndex); //NON-NLS
+                    break;
+            }
+            return ret;
+        }
+
+        @Override
+        public boolean isCellEditable(int rowIndex, int columnIndex) {
+            return false;
+        }
+
+        @Override
+        public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+        }
+
+        private String shortenPath(String path) {
+            String shortenedPath = path;
+            if (shortenedPath.length() > 50) {
+                shortenedPath = path.substring(0, 10 + path.substring(10).indexOf(File.separator) + 1) + "..."
+                        + path.substring((path.length() - 20) + path.substring(path.length() - 20).indexOf(File.separator));
+            }
+            return shortenedPath;
+        }
     }
 
     /**
@@ -180,59 +319,6 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_imagesTableKeyPressed
 
-    // Open the selected case
-    private void openCase() {
-        if (casePaths.length < 1) {
-            logger.log(Level.INFO, "No Case paths exist, cannot open the case"); //NON-NLS
-            return;
-        }
-        final String casePath = casePaths[imagesTable.getSelectedRow()];
-        final String caseName = caseNames[imagesTable.getSelectedRow()];
-        if (!casePath.equals("")) {
-            // Close the startup menu
-            try {
-                StartupWindowProvider.getInstance().close();
-                CueBannerPanel.closeOpenRecentCasesWindow();
-            } catch (Exception ex) {
-                logger.log(Level.WARNING, "Error: couldn't open case: " + caseName, ex); //NON-NLS
-            }
-            // Open the recent cases
-            if (caseName.equals("") || casePath.equals("") || (!new File(casePath).exists())) {
-                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                        NbBundle.getMessage(this.getClass(),
-                                "OpenRecentCasePanel.openCase.msgDlg.caseDoesntExist.msg",
-                                caseName),
-                        NbBundle.getMessage(this.getClass(),
-                                "OpenRecentCasePanel.openCase.msgDlg.err"),
-                        JOptionPane.ERROR_MESSAGE);
-                RecentCases.getInstance().removeRecentCase(caseName, casePath); // remove the recent case if it doesn't exist anymore
-
-                //if case is not opened, open the start window
-                if (Case.isCaseOpen() == false) {
-                    StartupWindowProvider.getInstance().open();
-                }
-
-            } else {
-                SwingUtilities.invokeLater(() -> {
-                    WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                });
-                new Thread(() -> {
-                    try {
-                        Case.open(casePath);
-                    } catch (CaseActionException ex) {
-                        SwingUtilities.invokeLater(() -> {
-                            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), ex.getMessage(),
-                                    NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), JOptionPane.ERROR_MESSAGE); //NON-NLS
-                            if (!Case.isCaseOpen()) {
-                                StartupWindowProvider.getInstance().open();
-                            }
-                        });
-                    }
-                }).start();
-            }
-        }
-    }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancelButton;
     private javax.swing.JTable imagesTable;
@@ -241,86 +327,4 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
     private javax.swing.JScrollPane tableScrollPane;
     // End of variables declaration//GEN-END:variables
 
-    /**
-     * Sets the Close button action listener.
-     *
-     * @param e the action listener
-     */
-    public void setCloseButtonActionListener(ActionListener e) {
-        this.cancelButton.addActionListener(e);
-    }
-
-    /**
-     * Table model to keep track of recent cases.
-     */
-    private class RecentCasesTableModel extends AbstractTableModel {
-
-        @Override
-        public int getRowCount() {
-            int count = 0;
-            for (String s : caseNames) {
-                if (!s.equals("")) {
-                    count++;
-                }
-            }
-            return count;
-        }
-
-        @Override
-        public int getColumnCount() {
-            return 2;
-        }
-
-        @Override
-        public String getColumnName(int column) {
-            String colName = null;
-
-            switch (column) {
-                case 0:
-                    colName = NbBundle.getMessage(OpenRecentCasePanel.class, "OpenRecentCasePanel.colName.caseName");
-                    break;
-                case 1:
-                    colName = NbBundle.getMessage(OpenRecentCasePanel.class, "OpenRecentCasePanel.colName.path");
-                    break;
-                default:
-                    ;
-
-            }
-            return colName;
-        }
-
-        @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            Object ret = null;
-            switch (columnIndex) {
-                case 0:
-                    ret = caseNames[rowIndex];
-                    break;
-                case 1:
-                    ret = shortenPath(casePaths[rowIndex]);
-                    break;
-                default:
-                    logger.log(Level.SEVERE, "Invalid table column index: {0}", columnIndex); //NON-NLS
-                    break;
-            }
-            return ret;
-        }
-
-        @Override
-        public boolean isCellEditable(int rowIndex, int columnIndex) {
-            return false;
-        }
-
-        @Override
-        public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-        }
-
-        private String shortenPath(String path) {
-            if (path.length() > 50) {
-                path = path.substring(0, 10 + path.substring(10).indexOf(File.separator) + 1) + "..."
-                        + path.substring((path.length() - 20) + path.substring(path.length() - 20).indexOf(File.separator));
-            }
-            return path;
-        }
-    }
 }
