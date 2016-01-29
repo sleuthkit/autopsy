@@ -78,8 +78,7 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
         return create(Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(id), analyzed);
     }
 
-    SoftReference<Image> imageRef;
-//    SoftReference<Image> thumbref;
+    private SoftReference<Image> imageRef;
 
     private String drawablePath;
 

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-14 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -59,7 +59,7 @@ public enum GroupSortBy implements ComparatorProvider {
     GROUP_BY_VALUE("Group Name", true, "folder-rename.png") {
                 @Override
                 public Comparator<DrawableGroup> getGrpComparator(final SortOrder sortOrder) {
-                    return applySortOrder(sortOrder, Comparator.comparing(t -> t.groupKey.getValueDisplayName()));
+                    return applySortOrder(sortOrder, Comparator.comparing(t -> t.getGroupByValueDislpayName()));
                 }
 
                 @Override
@@ -67,10 +67,6 @@ public enum GroupSortBy implements ComparatorProvider {
                     return applySortOrder(sortOrder, Comparator.<A>naturalOrder());
                 }
             },
-    /**
-     * don't sort the groups just use what ever order they come in (ingest
-     * order)
-     */
     /**
      * don't sort the groups just use what ever order they come in (ingest
      * order)

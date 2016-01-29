@@ -35,6 +35,15 @@ public final class IngestJobContext {
     }
 
     /**
+     * Gets the ingest job execution context identifier.
+     *
+     * @return The context string.
+     */
+    public String getExecutionContext() {
+        return this.ingestJob.getExecutionContext();
+    }
+        
+    /**
      * Gets the data source associated with this context.
      *
      * @return The data source.

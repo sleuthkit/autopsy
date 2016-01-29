@@ -220,7 +220,6 @@ class TskDbDiff(object):
 
                     src = attributes[0][0]
                     for attr in attributes:
-                        attr_value_index = 3 + attr["value_type"]
                         numvals = 0
                         for x in range(3, 6):
                             if(attr[x] != None):
@@ -232,11 +231,20 @@ class TskDbDiff(object):
                             msg = "There were inconsistent sources for artifact with id #" + str(row["artifact_id"]) + ".\n"
 
                         try:
-                            attr_value_as_string = str(attr[attr_value_index])
+                            if attr["value_type"] == 0:
+                                attr_value_as_string = str(attr["value_text"])                        
+                            elif attr["value_type"] == 1:
+                                attr_value_as_string = str(attr["value_int32"])                        
+                            elif attr["value_type"] == 2:
+                                attr_value_as_string = str(attr["value_int64"])                        
+                            elif attr["value_type"] == 3:
+                                attr_value_as_string = str(attr["value_double"])                        
+                            elif attr["value_type"] == 4:
+                                attr_value_as_string = "bytes"                        
+                            elif attr["value_type"] == 5:
+                                attr_value_as_string = str(attr["value_int64"])                        
                             if attr["display_name"] == "Associated Artifact":
-                                attr_value_as_string = getAssociatedArtifactType(db_file, attr_value_as_string)
-                            #if((type(attr_value_as_string) != 'unicode') or (type(attr_value_as_string) != 'str')):
-                            #    attr_value_as_string = str(attr_value_as_string)
+                                attr_value_as_string = getAssociatedArtifactType(db_file, attr_value_as_string)                            
                             patrn = re.compile("[\n\0\a\b\r\f]")
                             attr_value_as_string = re.sub(patrn, ' ', attr_value_as_string)
                             database_log.write('<attribute source="' + attr["source"] + '" type="' + attr["display_name"] + '" value="' + attr_value_as_string + '" />')

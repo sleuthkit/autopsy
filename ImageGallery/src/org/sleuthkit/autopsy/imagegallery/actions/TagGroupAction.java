@@ -33,7 +33,7 @@ public class TagGroupAction extends Action {
 
     public TagGroupAction(final TagName tagName, ImageGalleryController controller) {
         super(tagName.getDisplayName(), (javafx.event.ActionEvent actionEvent) -> {
-            Set<Long> fileIdSet = ImmutableSet.copyOf(controller.viewState().get().getGroup().fileIds());
+            Set<Long> fileIdSet = ImmutableSet.copyOf(controller.viewState().get().getGroup().getFileIDs());
             new AddDrawableTagAction(controller).addTagsToFiles(tagName, "", fileIdSet);
         });
         setGraphic(new ImageView(DrawableAttribute.TAGS.getIcon()));
