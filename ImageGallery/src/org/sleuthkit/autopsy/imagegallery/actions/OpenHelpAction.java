@@ -38,15 +38,15 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         displayName = "#CTL_OpenHelpAction"
 )
 @ActionReference(path = "Menu/Help", position = 350)
-@Messages("CTL_OpenHelpAction=Image / Video Gallery Help")
+//@Messages("CTL_OpenHelpAction=Image / Video Gallery Help")
 public final class OpenHelpAction implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
         try {
-            Desktop.getDesktop().browse(URI.create("http://sleuthkit.org/autopsy/docs/user-docs/4.0/image_gallery_page.html"));
+            Desktop.getDesktop().browse(URI.create("http://sleuthkit.org/autopsy/docs/user-docs/4.0/image_gallery_page.html")); //NON-NLS
         } catch (IOException ex) {
-            Logger.getLogger(OpenHelpAction.class.getName()).log(Level.SEVERE, "failed to open help page", ex);
+            Logger.getLogger(OpenHelpAction.class.getName()).log(Level.SEVERE, "failed to open help page", ex); //NON-NLS
         }
     }
 }

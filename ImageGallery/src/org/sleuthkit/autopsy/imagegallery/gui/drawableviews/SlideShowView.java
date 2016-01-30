@@ -77,7 +77,7 @@ public class SlideShowView extends DrawableTileBase {
 
     SlideShowView(GroupPane gp, ImageGalleryController controller) {
         super(gp, controller);
-        FXMLConstructor.construct(this, "SlideShowView.fxml");
+        FXMLConstructor.construct(this, "SlideShowView.fxml"); //NON-NLS
     }
 
     @FXML
@@ -137,7 +137,7 @@ public class SlideShowView extends DrawableTileBase {
             });
         } catch (NullPointerException ex) {
             // The case has likely been closed
-            LOGGER.log(Level.WARNING, "Error accessing groupPane");
+            LOGGER.log(Level.WARNING, "Error accessing groupPane"); //NON-NLS
         }
     }
 
@@ -280,7 +280,7 @@ public class SlideShowView extends DrawableTileBase {
      */
     private String getSupplementalText() {
         final ObservableList<Long> fileIds = getGroupPane().getGroup().getFileIDs();
-        return getFileID().map(fileID -> " ( " + (fileIds.indexOf(fileID) + 1) + " of " + fileIds.size() + " in group )")
+        return getFileID().map(fileID -> " ( " + (fileIds.indexOf(fileID) + 1) + " of " + fileIds.size() + " in group )") // NON-NLS
                 .orElse("");
 
     }
@@ -324,7 +324,7 @@ public class SlideShowView extends DrawableTileBase {
                 final Media media = file.getMedia();
                 return new VideoPlayer(new MediaPlayer(media), file);
             } catch (MediaException | IOException | OutOfMemoryError ex) {
-                LOGGER.log(Level.WARNING, "Failed to initialize VideoPlayer for {0} : " + ex.toString(), file.getContentPathSafe());
+                LOGGER.log(Level.WARNING, "Failed to initialize VideoPlayer for {0} : " + ex.toString(), file.getContentPathSafe()); //NON-NLS
                 return doReadImageTask(file);
             }
         }

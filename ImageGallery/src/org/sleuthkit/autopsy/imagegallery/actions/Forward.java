@@ -24,6 +24,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import org.controlsfx.control.action.Action;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 
 /**
@@ -32,12 +33,12 @@ import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 //TODO: This and the corresponding timeline action are identical except for the type of the controller...  abstract something! -jm
 public class Forward extends Action {
 
-    private static final Image BACK_IMAGE = new Image("/org/sleuthkit/autopsy/imagegallery/images/arrow.png", 16, 16, true, true, true);
+    private static final Image BACK_IMAGE = new Image("/org/sleuthkit/autopsy/imagegallery/images/arrow.png", 16, 16, true, true, true); //NON-NLS
 
     private final ImageGalleryController controller;
 
     public Forward(ImageGalleryController controller) {
-        super("Forward");
+        super(NbBundle.getMessage(Forward.class, "Forward.forward.txt"));
         setGraphic(new ImageView(BACK_IMAGE));
         setAccelerator(new KeyCodeCombination(KeyCode.RIGHT, KeyCodeCombination.ALT_DOWN));
         this.controller = controller;

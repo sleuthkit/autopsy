@@ -27,6 +27,7 @@ import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.StringProperty;
 import javafx.scene.image.Image;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.TagName;
 
@@ -40,19 +41,22 @@ import org.sleuthkit.datamodel.TagName;
 public class DrawableAttribute<T extends Comparable<T>> {
 
     public final static DrawableAttribute<String> MD5_HASH =
-            new DrawableAttribute<>(AttributeName.MD5_HASH, "MD5 Hash",
+            new DrawableAttribute<>(AttributeName.MD5_HASH,
+                    NbBundle.getMessage(DrawableAttribute.class, "DrawableAttribute.md5Hash.txt"),
                     false,
-                    "icon-hashtag.png",
+                    "icon-hashtag.png", // NON-NLS
                     f -> Collections.singleton(f.getMd5Hash()));
 
     public final static DrawableAttribute<String> NAME =
-            new DrawableAttribute<>(AttributeName.NAME, "Name",
+            new DrawableAttribute<>(AttributeName.NAME,
+                    NbBundle.getMessage(DrawableAttribute.class, "DrawableAttribute.name.txt"),
                     true,
-                    "folder-rename.png",
+                    "folder-rename.png", // NON-NLS
                     f -> Collections.singleton(f.getName()));
 
     public final static DrawableAttribute<Boolean> ANALYZED =
-            new DrawableAttribute<>(AttributeName.ANALYZED, "Analyzed",
+            new DrawableAttribute<>(AttributeName.ANALYZED,
+                    NbBundle.getMessage(DrawableAttribute.class, "DrawableAttribute.analyzed.txt"),
                     true,
                     "",
                     f -> Collections.singleton(f.isAnalyzed()));
@@ -66,75 +70,87 @@ public class DrawableAttribute<T extends Comparable<T>> {
      * advantage. move categories into DrawableDB?
      */
     public final static DrawableAttribute<Category> CATEGORY =
-            new DrawableAttribute<>(AttributeName.CATEGORY, "Category",
+            new DrawableAttribute<>(AttributeName.CATEGORY,
+                    NbBundle.getMessage(DrawableAttribute.class, "DrawableAttribute.category.txt"),
                     false,
-                    "category-icon.png",
+                    "category-icon.png", // NON-NLS
                     f -> Collections.singleton(f.getCategory()));
 
     public final static DrawableAttribute<TagName> TAGS =
-            new DrawableAttribute<>(AttributeName.TAGS, "Tags",
+            new DrawableAttribute<>(AttributeName.TAGS,
+                    NbBundle.getMessage(DrawableAttribute.class, "DrawableAttribute.tags.txt"),
                     false,
-                    "tag_red.png",
+                    "tag_red.png", // NON-NLS
                     DrawableFile::getTagNames);
 
     public final static DrawableAttribute<String> PATH =
-            new DrawableAttribute<>(AttributeName.PATH, "Path",
+            new DrawableAttribute<>(AttributeName.PATH,
+                    NbBundle.getMessage(DrawableAttribute.class, "DrawableAttribute.path.txt"),
                     true,
-                    "folder_picture.png",
+                    "folder_picture.png", // NON-NLS
                     f -> Collections.singleton(f.getDrawablePath()));
 
     public final static DrawableAttribute<String> CREATED_TIME =
-            new DrawableAttribute<>(AttributeName.CREATED_TIME, "Created Time",
+            new DrawableAttribute<>(AttributeName.CREATED_TIME,
+                    NbBundle.getMessage(DrawableAttribute.class, "DrawableAttribute.createdTime.txt"),
                     true,
-                    "clock--plus.png",
+                    "clock--plus.png", // NON-NLS
                     f -> Collections.singleton(ContentUtils.getStringTime(f.getCrtime(), f)));
 
     public final static DrawableAttribute<String> MODIFIED_TIME =
-            new DrawableAttribute<>(AttributeName.MODIFIED_TIME, "Modified Time",
+            new DrawableAttribute<>(AttributeName.MODIFIED_TIME,
+                    NbBundle.getMessage(DrawableAttribute.class, "DrawableAttribute.modifiedTime.txt"),
                     true,
-                    "clock--pencil.png",
+                    "clock--pencil.png", // NON-NLS
                     f -> Collections.singleton(ContentUtils.getStringTime(f.getMtime(), f)));
 
     public final static DrawableAttribute<String> MAKE =
-            new DrawableAttribute<>(AttributeName.MAKE, "Camera Make",
+            new DrawableAttribute<>(AttributeName.MAKE,
+                    NbBundle.getMessage(DrawableAttribute.class, "DrawableAttribute.cameraMake.txt"),
                     true,
-                    "camera.png",
+                    "camera.png", // NON-NLS
                     f -> Collections.singleton(f.getMake()));
 
     public final static DrawableAttribute<String> MODEL =
-            new DrawableAttribute<>(AttributeName.MODEL, "Camera Model",
+            new DrawableAttribute<>(AttributeName.MODEL,
+                    NbBundle.getMessage(DrawableAttribute.class, "DrawableAttribute.cameraModel.txt"),
                     true,
-                    "camera.png",
+                    "camera.png", // NON-NLS
                     f -> Collections.singleton(f.getModel()));
 
     public final static DrawableAttribute<String> HASHSET =
-            new DrawableAttribute<>(AttributeName.HASHSET, "Hashset",
+            new DrawableAttribute<>(AttributeName.HASHSET,
+                    NbBundle.getMessage(DrawableAttribute.class, "DrawableAttribute.hashset.txt"),
                     true,
-                    "hashset_hits.png",
+                    "hashset_hits.png", // NON-NLS
                     DrawableFile::getHashSetNamesUnchecked);
 
     public final static DrawableAttribute<Long> OBJ_ID =
-            new DrawableAttribute<>(AttributeName.OBJ_ID, "Internal Object ID",
+            new DrawableAttribute<>(AttributeName.OBJ_ID,
+                    NbBundle.getMessage(DrawableAttribute.class, "DrawableAttribute.internalObjectId.txt"),
                     true,
                     "",
                     f -> Collections.singleton(f.getId()));
 
     public final static DrawableAttribute<Double> WIDTH =
-            new DrawableAttribute<>(AttributeName.WIDTH, "Width",
-                    false,
-                    "arrow-resize.png",
+            new DrawableAttribute<>(AttributeName.WIDTH,
+                    NbBundle.getMessage(DrawableAttribute.class, "DrawableAttribute.width.txt"),
+                    true,
+                    "arrow-resize.png", // NON-NLS
                     f -> Collections.singleton(f.getWidth()));
 
     public final static DrawableAttribute<Double> HEIGHT =
-            new DrawableAttribute<>(AttributeName.HEIGHT, "Height",
-                    false,
-                    "arrow-resize-090.png",
+            new DrawableAttribute<>(AttributeName.HEIGHT,
+                    NbBundle.getMessage(DrawableAttribute.class, "DrawableAttribute.height.txt"),
+                    true,
+                    "arrow-resize-090.png", // NON-NLS
                     f -> Collections.singleton(f.getHeight()));
 
     public final static DrawableAttribute<String> MIME_TYPE =
-            new DrawableAttribute<>(AttributeName.MIME_TYPE, "MIME type",
+            new DrawableAttribute<>(AttributeName.MIME_TYPE,
+                    NbBundle.getMessage(DrawableAttribute.class, "DrawableAttribute.mimeType.txt"),
                     false,
-                    "mime_types.png",
+                    "mime_types.png", // NON-NLS
                     f -> Collections.singleton(f.getMIMEType()));
 
     final private static List< DrawableAttribute<?>> groupables =
@@ -170,7 +186,7 @@ public class DrawableAttribute<T extends Comparable<T>> {
          * time they are needed
          */
         if (null == icon && StringUtils.isNotBlank(imageName)) {
-            this.icon = new Image("org/sleuthkit/autopsy/imagegallery/images/" + imageName, true);
+            this.icon = new Image("org/sleuthkit/autopsy/imagegallery/images/" + imageName, true); // NON-NLS
         }
         return icon;
     }

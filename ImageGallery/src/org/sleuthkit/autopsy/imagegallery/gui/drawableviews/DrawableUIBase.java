@@ -102,7 +102,7 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
                 try {
                     fileOpt = Optional.ofNullable(getController().getFileFromId(fileIDOpt.get()));
                 } catch (TskCoreException ex) {
-                    Logger.getAnonymousLogger().log(Level.WARNING, "failed to get DrawableFile for obj_id" + fileIDOpt.get(), ex);
+                    Logger.getAnonymousLogger().log(Level.WARNING, "failed to get DrawableFile for obj_id" + fileIDOpt.get(), ex); //NON-NLS
                     fileOpt = Optional.empty();
                 }
                 return fileOpt;
@@ -147,7 +147,7 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
         myTask.setOnFailed(failed -> {
             Throwable exception = myTask.getException();
             if (exception instanceof OutOfMemoryError
-                    && exception.getMessage().contains("Java heap space")) {
+                    && exception.getMessage().contains("Java heap space")) { //NON-NLS
                 showErrorNode(Bundle.DrawableUIBase_errorLabel_OOMText(), file);
             } else {
                 showErrorNode(Bundle.DrawableUIBase_errorLabel_text(), file);

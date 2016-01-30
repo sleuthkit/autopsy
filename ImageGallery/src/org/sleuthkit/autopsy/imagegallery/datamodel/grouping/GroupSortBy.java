@@ -27,6 +27,7 @@ import javax.swing.SortOrder;
 import static javax.swing.SortOrder.ASCENDING;
 import static javax.swing.SortOrder.DESCENDING;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 
@@ -41,7 +42,7 @@ public enum GroupSortBy implements ComparatorProvider {
      * sort the groups by the number of files in each sort the groups by the
      * number of files in each
      */
-    FILE_COUNT("Group Size", true, "folder-open-image.png") {
+    FILE_COUNT(NbBundle.getMessage(GroupSortBy.class, "GroupSortBy.fileCount.groupSize.txt"), true, "folder-open-image.png") { // NON-NLS
                 @Override
                 public Comparator<DrawableGroup> getGrpComparator(final SortOrder sortOrder) {
                     return applySortOrder(sortOrder, Comparator.comparingInt(DrawableGroup::getSize));
@@ -56,7 +57,7 @@ public enum GroupSortBy implements ComparatorProvider {
      * sort the groups by the natural order of the grouping value ( eg group
      * them by path alphabetically )
      */
-    GROUP_BY_VALUE("Group Name", true, "folder-rename.png") {
+    GROUP_BY_VALUE(NbBundle.getMessage(GroupSortBy.class, "GroupSortBy.groupByValue.groupName.txt"), true, "folder-rename.png") { // NON-NLS
                 @Override
                 public Comparator<DrawableGroup> getGrpComparator(final SortOrder sortOrder) {
                     return applySortOrder(sortOrder, Comparator.comparing(t -> t.getGroupByValueDislpayName()));
@@ -71,7 +72,7 @@ public enum GroupSortBy implements ComparatorProvider {
      * don't sort the groups just use what ever order they come in (ingest
      * order)
      */
-    NONE("None", false, "prohibition.png") {
+    NONE(NbBundle.getMessage(GroupSortBy.class, "GroupSortBy.none.txt"), false, "prohibition.png") { // NON-NLS
                 @Override
                 public Comparator<DrawableGroup> getGrpComparator(SortOrder sortOrder) {
                     return new NoOpComparator<>();
@@ -85,7 +86,7 @@ public enum GroupSortBy implements ComparatorProvider {
     /**
      * sort the groups by some priority metric to be determined and implemented
      */
-    PRIORITY("Priority", false, "hashset_hits.png") {
+    PRIORITY(NbBundle.getMessage(GroupSortBy.class, "GroupSortBy.priority.txt"), false, "hashset_hits.png") { //NON-NLS
                 @Override
                 public Comparator<DrawableGroup> getGrpComparator(SortOrder sortOrder) {
                     return Comparator.nullsLast(Comparator.comparingDouble(DrawableGroup::getHashHitDensity).thenComparingInt(DrawableGroup::getSize).reversed());
@@ -128,7 +129,7 @@ public enum GroupSortBy implements ComparatorProvider {
     public Image getIcon() {
         if (icon == null) {
             if (StringUtils.isBlank(imageName) == false) {
-                this.icon = new Image("org/sleuthkit/autopsy/imagegallery/images/" + imageName, true);
+                this.icon = new Image("org/sleuthkit/autopsy/imagegallery/images/" + imageName, true); //NON-NLS
             }
         }
         return icon;

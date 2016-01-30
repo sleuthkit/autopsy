@@ -25,6 +25,8 @@ import javafx.event.ActionEvent;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javax.swing.SwingUtilities;
+
+import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.GetTagNameAndCommentDialog;
@@ -77,7 +79,7 @@ abstract class AddTagAction {
             super(getActionDisplayName());
 
             // Create a "Quick Tag" sub-menu.
-            Menu quickTagMenu = new Menu("Quick Tag");
+            Menu quickTagMenu = new Menu(NbBundle.getMessage(this.getClass(), "AddTagAction.tagMenu.quickTag"));
             getItems().add(quickTagMenu);
 
             /*
@@ -87,7 +89,7 @@ abstract class AddTagAction {
              */
             Collection<TagName> tagNames = controller.getTagsManager().getNonCategoryTagNames();
             if (tagNames.isEmpty()) {
-                MenuItem empty = new MenuItem("No tags");
+                MenuItem empty = new MenuItem(NbBundle.getMessage(this.getClass(), "AddTagAction.tagMenu.noTags"));
                 empty.setDisable(true);
                 quickTagMenu.getItems().add(empty);
             } else {
@@ -105,7 +107,7 @@ abstract class AddTagAction {
              * Selecting this item initiates a dialog that can be used to create
              * or select a tag name and adds a tag with the resulting name.
              */
-            MenuItem newTagMenuItem = new MenuItem("New Tag...");
+            MenuItem newTagMenuItem = new MenuItem(NbBundle.getMessage(this.getClass(), "AddTagAction.tagMenu.newTag"));
             newTagMenuItem.setOnAction((ActionEvent t) -> {
                 SwingUtilities.invokeLater(() -> {
                     TagName tagName = GetTagNameDialog.doDialog(getIGWindow());
@@ -122,7 +124,7 @@ abstract class AddTagAction {
              * name with an optional comment and adds a tag with the resulting
              * name.
              */
-            MenuItem tagAndCommentItem = new MenuItem("Tag and Comment...");
+            MenuItem tagAndCommentItem = new MenuItem(NbBundle.getMessage(this.getClass(), "AddTagAction.tagMenu.tagAndComment"));
             tagAndCommentItem.setOnAction((ActionEvent t) -> {
                 SwingUtilities.invokeLater(() -> {
                     GetTagNameAndCommentDialog.TagNameAndComment tagNameAndComment = GetTagNameAndCommentDialog.doDialog(getIGWindow());
