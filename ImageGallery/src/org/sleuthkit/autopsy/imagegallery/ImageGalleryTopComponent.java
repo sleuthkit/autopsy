@@ -68,7 +68,7 @@ import org.sleuthkit.autopsy.imagegallery.gui.navpanel.HashHitGroupList;
 })
 public final class ImageGalleryTopComponent extends TopComponent implements ExplorerManager.Provider, Lookup.Provider {
 
-    public final static String PREFERRED_ID = "ImageGalleryTopComponent";
+    public final static String PREFERRED_ID = "ImageGalleryTopComponent"; // NON-NLS
     private static final Logger LOGGER = Logger.getLogger(ImageGalleryTopComponent.class.getName());
     private static boolean topComponentInitialized = false;
 
@@ -81,11 +81,11 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         //            }
         //        }
         //        timeLineController.openTimeLine();
-        final ImageGalleryTopComponent tc = (ImageGalleryTopComponent) WindowManager.getDefault().findTopComponent("ImageGalleryTopComponent");
+        final ImageGalleryTopComponent tc = (ImageGalleryTopComponent) WindowManager.getDefault().findTopComponent(PREFERRED_ID);
         if (tc != null) {
             topComponentInitialized = true;
             WindowManager.getDefault().isTopComponentFloating(tc);
-            Mode mode = WindowManager.getDefault().findMode("timeline");
+            Mode mode = WindowManager.getDefault().findMode("timeline"); // NON-NLS
             if (mode != null) {
                 mode.dockInto(tc);
             }
@@ -96,12 +96,12 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
 
     public static void closeTopComponent() {
         if (topComponentInitialized) {
-            final TopComponent etc = WindowManager.getDefault().findTopComponent("ImageGalleryTopComponent");
+            final TopComponent etc = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
             if (etc != null) {
                 try {
                     etc.close();
                 } catch (Exception e) {
-                    LOGGER.log(Level.SEVERE, "failed to close ImageGalleryTopComponent", e);
+                    LOGGER.log(Level.SEVERE, "failed to close " + PREFERRED_ID, e); // NON-NLS
                 }
             }
         }

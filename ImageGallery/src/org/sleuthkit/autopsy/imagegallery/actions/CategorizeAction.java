@@ -35,6 +35,8 @@ import javafx.scene.input.KeyCodeCombination;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
 import javax.swing.JOptionPane;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
@@ -52,6 +54,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * TODO: since we are not using actionsGlobalContext anymore and this has
  * diverged from autopsy action, make this extend from controlsfx Action
  */
+@NbBundle.Messages({"CategorizeAction.displayName=Categorize"})
 public class CategorizeAction extends AddTagAction {
 
     private static final Logger LOGGER = Logger.getLogger(CategorizeAction.class.getName());
@@ -71,7 +74,7 @@ public class CategorizeAction extends AddTagAction {
 
     @Override
     protected String getActionDisplayName() {
-        return "Categorize";
+        return Bundle.CategorizeAction_displayName();
     }
 
     @Override
@@ -86,7 +89,7 @@ public class CategorizeAction extends AddTagAction {
     }
 
     public void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles, boolean createUndo) {
-        Logger.getAnonymousLogger().log(Level.INFO, "categorizing{0} as {1}", new Object[]{selectedFiles.toString(), tagName.getDisplayName()});
+        Logger.getAnonymousLogger().log(Level.INFO, "categorizing{0} as {1}", new Object[]{selectedFiles.toString(), tagName.getDisplayName()}); //NON-NLS
         controller.queueDBWorkerTask(new CategorizeTask(selectedFiles, tagName, comment, createUndo));
     }
 
@@ -97,7 +100,7 @@ public class CategorizeAction extends AddTagAction {
     static private class CategoryMenu extends Menu {
 
         CategoryMenu(ImageGalleryController controller) {
-            super("Categorize");
+            super(Bundle.CategorizeAction_displayName());
 
             // Each category get an item in the sub-menu. Selecting one of these menu items adds
             // a tag with the associated category.
@@ -114,6 +117,9 @@ public class CategorizeAction extends AddTagAction {
         }
     }
 
+    @NbBundle.Messages({"# {0} - fileID number",
+            "CategorizeTask.errorUnable.msg=Unable to categorize {0}.",
+            "CategorizeTask.errorUnable.title=Categorizing Error"})
     private class CategorizeTask extends ImageGalleryController.InnerTask {
 
         private final Set<Long> fileIDs;
@@ -131,6 +137,7 @@ public class CategorizeAction extends AddTagAction {
             this.createUndo = createUndo;
 
         }
+
 
         @Override
         public void run() {
@@ -157,7 +164,7 @@ public class CategorizeAction extends AddTagAction {
                                     try {
                                         tagsManager.deleteContentTag(ct);
                                     } catch (TskCoreException ex) {
-                                        LOGGER.log(Level.SEVERE, "Error removing old categories result", ex);
+                                        LOGGER.log(Level.SEVERE, "Error removing old categories result", ex); //NON-NLS
                                     }
                                 });
                     } else {
@@ -170,8 +177,11 @@ public class CategorizeAction extends AddTagAction {
                         }
                     }
                 } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "Error categorizing result", ex);
-                    JOptionPane.showMessageDialog(null, "Unable to categorize " + fileID + ".", "Categorizing Error", JOptionPane.ERROR_MESSAGE);
+                    LOGGER.log(Level.SEVERE, "Error categorizing result", ex); //NON-NLS
+                    JOptionPane.showMessageDialog(null,
+                            Bundle.CategorizeTask_errorUnable_msg(fileID),
+                            Bundle.CategorizeTask_errorUnable_title(),
+                            JOptionPane.ERROR_MESSAGE);
                 }
             }
 

@@ -54,7 +54,7 @@ public class DrawableTile extends DrawableTileBase {
         try {
             setEffect(Objects.equals(newValue, getFileID()) ? LAST_SELECTED_EFFECT : null);
         } catch (java.lang.IllegalStateException ex) {
-            Logger.getLogger(DrawableTile.class.getName()).log(Level.WARNING, "Error displaying tile");
+            Logger.getLogger(DrawableTile.class.getName()).log(Level.WARNING, "Error displaying tile"); //NON-NLS
         }
     };
 
@@ -78,7 +78,7 @@ public class DrawableTile extends DrawableTileBase {
     public DrawableTile(GroupPane gp, ImageGalleryController controller) {
         super(gp, controller);
 
-        FXMLConstructor.construct(this, "DrawableTile.fxml");
+        FXMLConstructor.construct(this, "DrawableTile.fxml"); //NON-NLS
     }
 
     /**
