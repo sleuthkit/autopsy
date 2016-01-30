@@ -69,8 +69,13 @@ public class ResultsNode extends DisplayableItemNode {
         return s;
     }
 
-    @Override
-    public String getItemType() {
-        return "Results"; //NON-NLS
-    }
+    /*
+     * TODO (AUT-1849): Correct or remove peristent column reordering code
+     *
+     * Added to support this feature.
+     */
+//    @Override
+//    public String getItemType() {
+//        return "Results"; //NON-NLS
+//    }
 }
