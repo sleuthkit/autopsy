@@ -32,22 +32,38 @@ import org.openide.windows.WindowManager;
 import java.awt.Cursor;
 
 /**
- * Panel show from the splash dialog that shows recent cases and allows them to
- * be opened.
+ * Panel used by the the open recent case option of the start window.
  */
-final class OpenRecentCasePanel extends javax.swing.JPanel {
+class OpenRecentCasePanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(OpenRecentCasePanel.class.getName());
     private static OpenRecentCasePanel instance;
     private static String[] caseNames;
     private static String[] casePaths;
-    private static final Logger logger = Logger.getLogger(OpenRecentCasePanel.class.getName());
     private RecentCasesTableModel model;
 
     private OpenRecentCasePanel() {
         initComponents();
     }
 
+    static OpenRecentCasePanel getInstance() {
+        if (instance == null) {
+            instance = new OpenRecentCasePanel();
+        }
+        instance.generateRecentCases(); // refresh the case list
+        return instance;
+    }
+
+    /**
+     * Sets the Close button action listener.
+     *
+     * @param e the action listener
+     */
+    public void setCloseButtonActionListener(ActionListener e) {
+        this.cancelButton.addActionListener(e);
+    }
+    
     /**
      * Retrieves all the recent cases and adds them to the table.
      */
@@ -69,43 +85,35 @@ final class OpenRecentCasePanel extends javax.swing.JPanel {
             openButton.setEnabled(false);
         }
     }
-
-    static OpenRecentCasePanel getInstance() {
-        if (instance == null) {
-            instance = new OpenRecentCasePanel();
-        }
-        instance.generateRecentCases(); // refresh the case list
-        return instance;
-    }
-
+    
     // Open the selected case
     private void openCase() {
         if (casePaths.length < 1) {
-            logger.log(Level.INFO, "No Case paths exist, cannot open the case"); //NON-NLS
             return;
         }
         final String casePath = casePaths[imagesTable.getSelectedRow()];
         final String caseName = caseNames[imagesTable.getSelectedRow()];
         if (!casePath.equals("")) {
-            // Close the startup menu
             try {
                 StartupWindowProvider.getInstance().close();
                 CueBannerPanel.closeOpenRecentCasesWindow();
             } catch (Exception ex) {
-                logger.log(Level.WARNING, "Error: couldn't open case: " + caseName, ex); //NON-NLS
+                logger.log(Level.SEVERE, "Error closing start up window", ex); //NON-NLS
             }
-            // Open the recent cases
+
+            /*
+             * Verify the case name and metadata file path.
+             */
             if (caseName.equals("") || casePath.equals("") || (!new File(casePath).exists())) {
                 JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                        NbBundle.getMessage(this.getClass(),
-                                "OpenRecentCasePanel.openCase.msgDlg.caseDoesntExist.msg",
-                                caseName),
-                        NbBundle.getMessage(this.getClass(),
-                                "OpenRecentCasePanel.openCase.msgDlg.err"),
+                        NbBundle.getMessage(this.getClass(), "RecentItems.openRecentCase.msgDlg.text", caseName),
+                        NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"),
                         JOptionPane.ERROR_MESSAGE);
                 RecentCases.getInstance().removeRecentCase(caseName, casePath); // remove the recent case if it doesn't exist anymore
 
-                //if case is not opened, open the start window
+                /*
+                 * If a case was not already open, pop up the start window.
+                 */
                 if (Case.isCaseOpen() == false) {
                     StartupWindowProvider.getInstance().open();
                 }
@@ -119,9 +127,16 @@ final class OpenRecentCasePanel extends javax.swing.JPanel {
                         Case.open(casePath);
                     } catch (CaseActionException ex) {
                         SwingUtilities.invokeLater(() -> {
+                            logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", casePath), ex); //NON-NLS                            
                             WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), ex.getMessage(),
+                            JOptionPane.showMessageDialog(
+                                    WindowManager.getDefault().getMainWindow(),
+                                    ex.getMessage(),
                                     NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), JOptionPane.ERROR_MESSAGE); //NON-NLS
+                            /*
+                             * If a case was not already open, pop up the start
+                             * window.
+                             */
                             if (!Case.isCaseOpen()) {
                                 StartupWindowProvider.getInstance().open();
                             }
@@ -130,15 +145,6 @@ final class OpenRecentCasePanel extends javax.swing.JPanel {
                 }).start();
             }
         }
-    }
-
-    /**
-     * Sets the Close button action listener.
-     *
-     * @param e the action listener
-     */
-    public void setCloseButtonActionListener(ActionListener e) {
-        this.cancelButton.addActionListener(e);
     }
 
     /**
