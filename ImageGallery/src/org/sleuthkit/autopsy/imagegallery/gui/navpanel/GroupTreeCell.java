@@ -47,7 +47,7 @@ class GroupTreeCell extends TreeCell<GroupTreeNode> {
      * folder(with no DrawableFiles) in the file system hierarchy.
      */
     private static final Image EMPTY_FOLDER_ICON =
-            new Image(GroupTreeCell.class.getResourceAsStream("/org/sleuthkit/autopsy/imagegallery/images/folder.png")); //NON-NLS
+            new Image(GroupTreeCell.class.getResourceAsStream("/org/sleuthkit/autopsy/imagegallery/images/folder.png"));
 
     /**
      * reference to group files listener that allows us to remove it from a
@@ -75,8 +75,8 @@ class GroupTreeCell extends TreeCell<GroupTreeNode> {
 
     GroupTreeCell(ReadOnlyObjectProperty<GroupComparators<?>> sortOrderProperty) {
         this.sortOrder = sortOrderProperty;
-        getStylesheets().add(GroupTreeCell.class.getResource("GroupTreeCell.css").toExternalForm()); //NON-NLS
-        getStyleClass().add("groupTreeCell");        //reduce  indent to 5, default is 10 which uses up a lot of space. NON-NLS
+        getStylesheets().add(GroupTreeCell.class.getResource("GroupTreeCell.css").toExternalForm());
+        getStyleClass().add("groupTreeCell");        //reduce  indent to 5, default is 10 which uses up a lot of space.
 
         //since end of path is probably more interesting put ellipsis at front
         setTextOverrun(OverrunStyle.LEADING_ELLIPSIS);
@@ -161,7 +161,7 @@ class GroupTreeCell extends TreeCell<GroupTreeNode> {
         return Optional.ofNullable(getItem())
                 .map(GroupTreeNode::getGroup)
                 .map(DrawableGroup::isSeen)
-                .map(seen -> seen ? "" : "-fx-font-weight:bold;") //NON-NLS
+                .map(seen -> seen ? "" : "-fx-font-weight:bold;")
                 .orElse(""); //if item is null or group is null
     }
 

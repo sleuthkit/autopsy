@@ -41,14 +41,10 @@ import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
 @ActionRegistration( //        iconBase = "org/sleuthkit/autopsy/imagegallery/images/lightbulb.png",
         lazy = false,
         displayName = "#CTL_OpenAction")
-@Messages({"CTL_OpenAction=View Images/Videos",
-        "OpenAction.stale.confDlg.msg=The image / video database may be out of date. " +
-                "Do you want to update and listen for further ingest results?\n" +
-                "Choosing 'yes' will update the database and enable listening to future ingests.",
-        "OpenAction.stale.confDlg.title=Image Gallery"})
+@Messages("CTL_OpenAction=View Images/Videos")
 public final class OpenAction extends CallableSystemAction {
 
-    private static final String VIEW_IMAGES_VIDEOS = Bundle.CTL_OpenAction();
+    private static final String VIEW_IMAGES_VIDEOS = "View Images/Videos";
 
     private static final boolean fxInited = Installer.isJavaFxInited();
 
@@ -87,8 +83,11 @@ public final class OpenAction extends CallableSystemAction {
 
         if (ImageGalleryModule.isDrawableDBStale(currentCase)) {
             //drawable db is stale, ask what to do
-            int answer = JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(), Bundle.OpenAction.stale.confDlg.msg(),
-                    Bundle.OpenAction_stale_confDlg.title(), JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+            int answer = JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(), "The image / video database may be out of date. " + "Do you want to update and listen for further ingest results?\n"
+                    + "Choosing 'yes' will update the database and enable listening to future ingests."
+                    + "  Choosing 'no' will display the out of date results."
+                    + "  Choosing 'cancel' will close the image /video gallery",
+                    "Image Gallery", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
 
             switch (answer) {
                 case JOptionPane.YES_OPTION:

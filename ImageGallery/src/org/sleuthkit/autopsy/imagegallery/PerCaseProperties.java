@@ -37,9 +37,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  */
 class PerCaseProperties {
 
-    public static final String ENABLED = "enabled"; //NON-NLS
+    public static final String ENABLED = "enabled";
 
-    public static final String STALE = "stale"; //NON-NLS
+    public static final String STALE = "stale";
 
     private final Case theCase;
 
@@ -88,7 +88,7 @@ class PerCaseProperties {
      * @return true if the config exists, false otherwise.
      */
     public synchronized boolean configExists(String moduleName) {
-        Path get = Paths.get(theCase.getModuleDirectory(), moduleName, theCase.getName() + ".properties"); //NON-NLS
+        Path get = Paths.get(theCase.getModuleDirectory(), moduleName, theCase.getName() + ".properties");
         return Files.exists(get);
     }
 

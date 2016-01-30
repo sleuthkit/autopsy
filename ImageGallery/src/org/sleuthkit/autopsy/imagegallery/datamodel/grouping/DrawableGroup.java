@@ -126,7 +126,7 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
                         .filter(Boolean::booleanValue)
                         .count());
             } catch (IllegalStateException | NullPointerException ex) {
-                LOGGER.log(Level.WARNING, "could not access case during getFilesWithHashSetHitsCount()"); //NON-NLS
+                LOGGER.log(Level.WARNING, "could not access case during getFilesWithHashSetHitsCount()");
             }
         }
 
@@ -145,7 +145,7 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
                 uncatCount.set(ImageGalleryController.getDefault().getDatabase().getCategoryCount(Category.ZERO, fileIDs));
 
             } catch (IllegalStateException | NullPointerException ex) {
-                LOGGER.log(Level.WARNING, "could not access case during getFilesWithHashSetHitsCount()"); //NON-NLS
+                LOGGER.log(Level.WARNING, "could not access case during getFilesWithHashSetHitsCount()");
             }
         }
 
@@ -202,7 +202,7 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
 
     @Override
     public String toString() {
-        return "Grouping{ keyProp=" + groupKey + '}'; //NON-NLS
+        return "Grouping{ keyProp=" + groupKey + '}';
     }
 
     @Override
