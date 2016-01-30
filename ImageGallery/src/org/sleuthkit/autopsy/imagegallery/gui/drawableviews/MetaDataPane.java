@@ -50,6 +50,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.text.Text;
 import javafx.util.Pair;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -84,10 +85,11 @@ public class MetaDataPane extends DrawableUIBase {
 
     public MetaDataPane(ImageGalleryController controller) {
         super(controller);
-        FXMLConstructor.construct(this, "MetaDataPane.fxml");
+        FXMLConstructor.construct(this, "MetaDataPane.fxml"); //NON-NLS
     }
 
     @FXML
+    @NbBundle.Messages({"MetaDataPane.tableView.placeholder=Select a file to show its details here."})
     void initialize() {
         assert attributeColumn != null : "fx:id=\"attributeColumn\" was not injected: check your FXML file 'MetaDataPane.fxml'.";
         assert imageView != null : "fx:id=\"imageView\" was not injected: check your FXML file 'MetaDataPane.fxml'.";
@@ -116,7 +118,7 @@ public class MetaDataPane extends DrawableUIBase {
         });
 
         tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        tableView.setPlaceholder(new Label("Select a file to show its details here."));
+        tableView.setPlaceholder(new Label(Bundle.MetaDataPane_tableView_placeholder()));
         tableView.getColumns().setAll(Arrays.asList(attributeColumn, valueColumn));
 
         attributeColumn.setPrefWidth(USE_COMPUTED_SIZE);

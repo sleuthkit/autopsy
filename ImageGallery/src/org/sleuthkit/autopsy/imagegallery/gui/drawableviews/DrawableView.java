@@ -92,7 +92,7 @@ public interface DrawableView {
         } catch (NullPointerException ex) {
             // I think this happens when we're in the process of removing images from the view while
             // also trying to update it? 
-            Logger.getLogger(DrawableView.class.getName()).log(Level.WARNING, "Error looking up hash set hits");
+            Logger.getLogger(DrawableView.class.getName()).log(Level.WARNING, "Error looking up hash set hits"); //NON-NLS
             return false;
         }
     }
