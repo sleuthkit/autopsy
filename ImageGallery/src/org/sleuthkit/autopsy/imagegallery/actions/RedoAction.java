@@ -23,7 +23,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import org.controlsfx.control.action.Action;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 
 /**
@@ -31,10 +30,10 @@ import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
  */
 public class RedoAction extends Action {
 
-    private static final Image REDO_IMAGE = new Image("/org/sleuthkit/autopsy/imagegallery/images/redo.png", 16, 16, true, true, true); //NON-NLS
+    private static final Image REDO_IMAGE = new Image("/org/sleuthkit/autopsy/imagegallery/images/redo.png", 16, 16, true, true, true);
 
     public RedoAction(ImageGalleryController controller) {
-        super(NbBundle.getMessage(RedoAction.class, "RedoAction.displayName.text"));
+        super("Redo");
         setGraphic(new ImageView(REDO_IMAGE));
         setAccelerator(new KeyCodeCombination(KeyCode.Y, KeyCodeCombination.CONTROL_DOWN));
         setEventHandler(actionEvent -> controller.getUndoManager().redo());

@@ -25,7 +25,6 @@ import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
 import org.openide.util.HelpCtx;
-import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.windows.WindowManager;
@@ -42,10 +41,10 @@ import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
 @ActionRegistration( //        iconBase = "org/sleuthkit/autopsy/imagegallery/images/lightbulb.png",
         lazy = false,
         displayName = "#CTL_OpenAction")
-//@Messages("CTL_OpenAction=View Images/Videos")
+@Messages("CTL_OpenAction=View Images/Videos")
 public final class OpenAction extends CallableSystemAction {
 
-    private static final String VIEW_IMAGES_VIDEOS = NbBundle.getMessage(OpenAction.class, "CTL_OpenAction");
+    private static final String VIEW_IMAGES_VIDEOS = "View Images/Videos";
 
     private static final boolean fxInited = Installer.isJavaFxInited();
 
@@ -84,8 +83,11 @@ public final class OpenAction extends CallableSystemAction {
 
         if (ImageGalleryModule.isDrawableDBStale(currentCase)) {
             //drawable db is stale, ask what to do
-            int answer = JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(), NbBundle.getMessage(this.getClass(), "OpenAction.performAction.answer.txt"),
-                    NbBundle.getMessage(this.getClass(), "OpenAction.moduleName.text"), JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+            int answer = JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(), "The image / video database may be out of date. " + "Do you want to update and listen for further ingest results?\n"
+                    + "Choosing 'yes' will update the database and enable listening to future ingests."
+                    + "  Choosing 'no' will display the out of date results."
+                    + "  Choosing 'cancel' will close the image /video gallery",
+                    "Image Gallery", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
 
             switch (answer) {
                 case JOptionPane.YES_OPTION:

@@ -23,7 +23,6 @@ import java.util.logging.Level;
 import javafx.event.ActionEvent;
 import javax.swing.SwingWorker;
 import org.controlsfx.control.action.Action;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
@@ -40,7 +39,7 @@ public class DeleteFollowUpTagAction extends Action {
     private static final Logger LOGGER = Logger.getLogger(DeleteFollowUpTagAction.class.getName());
 
     public DeleteFollowUpTagAction(final ImageGalleryController controller, final DrawableFile<?> file) {
-        super(NbBundle.getMessage(DeleteFollowUpTagAction.class, "DeleteFollwUpTagAction.displayName.txt"));
+        super("Delete Follow Up Tag");
         setEventHandler((ActionEvent t) -> {
             new SwingWorker<Void, Void>() {
 
@@ -58,7 +57,7 @@ public class DeleteFollowUpTagAction extends Action {
                             }
                         }
                     } catch (TskCoreException ex) {
-                        LOGGER.log(Level.SEVERE, "Failed to delete follow up tag.", ex); //NON-NLS
+                        LOGGER.log(Level.SEVERE, "Failed to delete follow up tag.", ex);
                     }
                     return null;
                 }

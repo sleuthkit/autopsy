@@ -24,7 +24,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javafx.scene.paint.Color;
-import org.openide.util.NbBundle;
 
 /**
  * Enum to represent the six categories in the DHS image categorization scheme.
@@ -33,15 +32,15 @@ public enum Category {
 
     /*
      * This order of declaration is required so that Enum's compareTo method
-     * preserves the fact that lower category numbers are first/most severe,
+     * preserves the fact that lower category numbers are first/most sever,
      * except 0 which is last
      */
-    ONE(Color.RED, 1, NbBundle.getMessage(Category.class, "Category.cat1.childExploitationIllegal.displayName")),
-    TWO(Color.ORANGE, 2, NbBundle.getMessage(Category.class, "Category.cat2.childExploitationNonIllegalAgeDifficult.displayName")),
-    THREE(Color.YELLOW, 3, NbBundle.getMessage(Category.class, "Category.cat3.cgiAnimationChildExploitive.displayName")),
-    FOUR(Color.BISQUE, 4, NbBundle.getMessage(Category.class, "Category.cat4.exemplarComparisonInternalUseOnly.displayName")),
-    FIVE(Color.GREEN, 5, NbBundle.getMessage(Category.class, "Category.cat5.nonPertinent.displayName")),
-    ZERO(Color.LIGHTGREY, 0, NbBundle.getMessage(Category.class, "Category.cat0.uncategorized.displayName"));
+    ONE(Color.RED, 1, "CAT-1: Child Exploitation (Illegal)"),
+    TWO(Color.ORANGE, 2, "CAT-2: Child Exploitation (Non-Illegal/Age Difficult)"),
+    THREE(Color.YELLOW, 3, "CAT-3: CGI/Animation (Child Exploitive)"),
+    FOUR(Color.BISQUE, 4, "CAT-4: Exemplar/Comparison (Internal Use Only)"),
+    FIVE(Color.GREEN, 5, "CAT-5: Non-pertinent"),
+    ZERO(Color.LIGHTGREY, 0, "CAT-0: Uncategorized");
 
     public static ImmutableList<Category> getNonZeroCategories() {
         return nonZeroCategories;

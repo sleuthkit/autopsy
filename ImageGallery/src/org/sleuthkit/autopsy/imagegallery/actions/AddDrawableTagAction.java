@@ -28,8 +28,6 @@ import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Menu;
 import javax.swing.SwingWorker;
-
-import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
@@ -62,11 +60,7 @@ public class AddDrawableTagAction extends AddTagAction {
 
     @Override
     protected String getActionDisplayName() {
-        if (Utilities.actionsGlobalContext().lookupAll(AbstractFile.class).size() > 1) {
-            return NbBundle.getMessage(this.getClass(), "AddDrawableTagAction.pluralTagFile");
-        } else {
-            return NbBundle.getMessage(this.getClass(), "AddDrawableTagAction.singularTagFile");
-        }
+        return Utilities.actionsGlobalContext().lookupAll(AbstractFile.class).size() > 1 ? "Tag Files" : "Tag File";
     }
 
     @Override
@@ -84,7 +78,7 @@ public class AddDrawableTagAction extends AddTagAction {
                 for (Long fileID : selectedFiles) {
                     try {
                         final DrawableFile<?> file = controller.getFileFromId(fileID);
-                        LOGGER.log(Level.INFO, "tagging {0} with {1} and comment {2}", new Object[]{file.getName(), tagName.getDisplayName(), comment}); //NON-NLS
+                        LOGGER.log(Level.INFO, "tagging {0} with {1} and comment {2}", new Object[]{file.getName(), tagName.getDisplayName(), comment});
 
                         // check if the same tag is being added for the same abstract file.
                         DrawableTagsManager tagsManager = controller.getTagsManager();
@@ -95,16 +89,16 @@ public class AddDrawableTagAction extends AddTagAction {
                                 .findAny();
 
                         if (duplicateTagName.isPresent()) {
-                            LOGGER.log(Level.INFO, "{0} already tagged as {1}. Skipping.", new Object[]{file.getName(), tagName.getDisplayName()}); //NON-NLS
+                            LOGGER.log(Level.INFO, "{0} already tagged as {1}. Skipping.", new Object[]{file.getName(), tagName.getDisplayName()});
                         } else {
-                            LOGGER.log(Level.INFO, "Tagging {0} as {1}", new Object[]{file.getName(), tagName.getDisplayName()}); //NON-NLS
+                            LOGGER.log(Level.INFO, "Tagging {0} as {1}", new Object[]{file.getName(), tagName.getDisplayName()});
                             controller.getTagsManager().addContentTag(file, tagName, comment);
                         }
 
                     } catch (TskCoreException tskCoreException) {
-                        LOGGER.log(Level.SEVERE, "Error tagging file", tskCoreException); //NON-NLS
+                        LOGGER.log(Level.SEVERE, "Error tagging file", tskCoreException);
                         Platform.runLater(() -> {
-                            new Alert(Alert.AlertType.ERROR, NbBundle.getMessage(this.getClass(), "AddDrawableTagAction.addTagsToFiles.unableToTag.alert.msg", fileID)).show();
+                            new Alert(Alert.AlertType.ERROR, "Unable to tag file " + fileID + ".").show();
                         });
                     }
                 }
@@ -117,7 +111,7 @@ public class AddDrawableTagAction extends AddTagAction {
                 try {
                     get();
                 } catch (InterruptedException | ExecutionException ex) {
-                    LOGGER.log(Level.SEVERE, "unexpected exception while tagging files", ex); //NON-NLS
+                    LOGGER.log(Level.SEVERE, "unexpected exception while tagging files", ex);
                 }
             }
         }.execute();
