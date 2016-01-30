@@ -283,7 +283,7 @@ public class SlideShowView extends DrawableTileBase {
             "SlideShowView.supplementalText={0} of {1} in group"})
     private String getSupplementalText() {
         final ObservableList<Long> fileIds = getGroupPane().getGroup().getFileIDs();
-        return getFileID().map(fileID -> " ( " + Bundle.SlideShowView.supplementalText(fileIds.indexOf(fileID) + 1, fileIds.size()) + " )")
+        return getFileID().map(fileID -> " ( " + Bundle.SlideShowView_supplementalText(fileIds.indexOf(fileID) + 1, fileIds.size()) + " )")
                 .orElse("");
 
     }

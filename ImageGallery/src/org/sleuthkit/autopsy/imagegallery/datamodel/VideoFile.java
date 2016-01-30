@@ -75,7 +75,7 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
 
         if (cacheFile.exists() == false || cacheFile.length() < getAbstractFile().getSize()) {
             Files.createParentDirs(cacheFile);
-            ProgressHandle progressHandle = ProgressHandleFactory.createHandle(Bundle.VideoFile_getMedia.progress());
+            ProgressHandle progressHandle = ProgressHandleFactory.createHandle(Bundle.VideoFile_getMedia_progress());
             progressHandle.start(100);
             ContentUtils.writeToFile(this.getAbstractFile(), cacheFile, progressHandle, null, true);
             progressHandle.finish();

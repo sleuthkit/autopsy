@@ -709,10 +709,10 @@ public final class ImageGalleryController implements Executor {
      * approximation to 'analyzed'.
      */
     @NbBundle.Messages({"CopyAnalyzedFiles.populatingDb.status=populating analyzed image/video database",
-    "CopyAnalyzedFiles.committingDb.status=commiting image/video database",
-    "CopyAnalyzedFiles.stopCopy.status=Stopping copy to drawable db task.",
-    "CopyAnalyzedFiles.errPopulating.errMsg=There was an error populating Image Gallery database.",
-    ""})
+            "CopyAnalyzedFiles.committingDb.status=commiting image/video database",
+            "CopyAnalyzedFiles.stopCopy.status=Stopping copy to drawable db task.",
+            "CopyAnalyzedFiles.errPopulating.errMsg=There was an error populating Image Gallery database.",
+            ""})
     static private class CopyAnalyzedFiles extends InnerTask {
 
         private final ImageGalleryController controller;
