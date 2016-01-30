@@ -24,7 +24,6 @@ import javafx.fxml.FXML;
 import javafx.scene.control.ListView;
 import javafx.scene.control.SelectionModel;
 import javafx.scene.image.ImageView;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
@@ -48,7 +47,7 @@ final public class HashHitGroupList extends NavPanel<DrawableGroup> {
 
     public HashHitGroupList(ImageGalleryController controller) {
         super(controller);
-        FXMLConstructor.construct(this, "NavPanel.fxml"); //NON-NLS
+        FXMLConstructor.construct(this, "NavPanel.fxml");
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
@@ -69,12 +68,11 @@ final public class HashHitGroupList extends NavPanel<DrawableGroup> {
 
     @FXML
     @Override
-    @NbBundle.Messages({"HashHitGroupList.displayName.onlyHashHits=Only Hash Hits"})
     void initialize() {
         super.initialize();
 
-        setText(Bundle.HashHitGroupList_displayName_onlyHashHits());
-        setGraphic(new ImageView("org/sleuthkit/autopsy/imagegallery/images/hashset_hits.png")); //NON-NLS
+        setText("Only Hash Hits");
+        setGraphic(new ImageView("org/sleuthkit/autopsy/imagegallery/images/hashset_hits.png"));
 
         getBorderPane().setCenter(groupList);
         sorted = getController().getGroupManager().getAnalyzedGroups().filtered((DrawableGroup t) -> t.getHashSetHitsCount() > 0).sorted(getDefaultComparator());

@@ -89,8 +89,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
-
-import javax.ejb.MessageDriven;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.StringUtils;
@@ -99,7 +97,6 @@ import org.controlsfx.control.GridView;
 import org.controlsfx.control.SegmentedButton;
 import org.controlsfx.control.action.ActionUtils;
 import org.openide.util.Lookup;
-import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
@@ -276,7 +273,7 @@ public class GroupPane extends BorderPane {
         undoAction = new UndoAction(controller);
         redoAction = new RedoAction(controller);
 
-        FXMLConstructor.construct(this, "GroupPane.fxml"); //NON-NLS
+        FXMLConstructor.construct(this, "GroupPane.fxml");
     }
 
     @ThreadConfined(type = ThreadType.JFX)
@@ -333,14 +330,10 @@ public class GroupPane extends BorderPane {
     /**
      * create the string to display in the group header
      */
-    @NbBundle.Messages({"# {0} - default group name",
-            "# {1} - hashset hits count",
-            "# {2} - group size",
-            "GroupPane.headerString={0} -- {1} hash set hits / {2} files"})
     protected String getHeaderString() {
         return isNull(getGroup()) ? ""
-                : Bundle.GroupPane_headerString(StringUtils.defaultIfBlank(getGroup().getGroupByValueDislpayName(), DrawableGroup.getBlankGroupName()),
-                getGroup().getHashSetHitsCount(), getGroup().getSize());
+                : StringUtils.defaultIfBlank(getGroup().getGroupByValueDislpayName(), DrawableGroup.getBlankGroupName()) + " -- "
+                + getGroup().getHashSetHitsCount() + " hash set hits / " + getGroup().getSize() + " files";
     }
 
     ContextMenu getContextMenu() {
@@ -458,13 +451,13 @@ public class GroupPane extends BorderPane {
         try {
             tagSelectedSplitMenu.setText(controller.getTagsManager().getFollowUpTagName().getDisplayName());
         } catch (TskCoreException tskCoreException) {
-            LOGGER.log(Level.WARNING, "failed to load FollowUpTagName", tskCoreException); //NON-NLS
+            LOGGER.log(Level.WARNING, "failed to load FollowUpTagName", tskCoreException);
         }
         tagSelectedSplitMenu.setOnAction(actionEvent -> {
             try {
                 new TagSelectedFilesAction(controller.getTagsManager().getFollowUpTagName(), controller).handle(actionEvent);
             } catch (TskCoreException tskCoreException) {
-                LOGGER.log(Level.WARNING, "failed to load FollowUpTagName", tskCoreException); //NON-NLS
+                LOGGER.log(Level.WARNING, "failed to load FollowUpTagName", tskCoreException);
             }
         });
 
@@ -519,7 +512,6 @@ public class GroupPane extends BorderPane {
         addEventFilter(KeyEvent.KEY_PRESSED, tileKeyboardNavigationHandler);
         gridView.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
 
-            @NbBundle.Messages({"GroupPane.gridViewContextMenuItem.extractFiles=Extract File(s)"})
             private ContextMenu buildContextMenu() {
                 ArrayList<MenuItem> menuItems = new ArrayList<>();
 
@@ -536,7 +528,7 @@ public class GroupPane extends BorderPane {
                         }
                     }
                 }
-                final MenuItem extractMenuItem = new MenuItem(Bundle.GroupPane_gridViewContextMenuItem_extractFiles());
+                final MenuItem extractMenuItem = new MenuItem("Extract File(s)");
                 extractMenuItem.setOnAction((ActionEvent t) -> {
                     SwingUtilities.invokeLater(() -> {
                         TopComponent etc = WindowManager.getDefault().findTopComponent(ImageGalleryTopComponent.PREFERRED_ID);
@@ -738,7 +730,7 @@ public class GroupPane extends BorderPane {
         if (gridView == null || gridView.getSkin() == null) {
             return Optional.empty();
         }
-        return Optional.ofNullable((ScrollBar) gridView.getSkin().getNode().lookup(".scroll-bar")); //NON-NLS
+        return Optional.ofNullable((ScrollBar) gridView.getSkin().getNode().lookup(".scroll-bar"));
     }
 
     void makeSelection(Boolean shiftDown, Long newFileID) {

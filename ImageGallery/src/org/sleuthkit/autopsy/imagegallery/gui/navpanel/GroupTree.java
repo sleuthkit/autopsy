@@ -32,8 +32,6 @@ import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.image.ImageView;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.util.Beta;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
@@ -55,16 +53,15 @@ final public class GroupTree extends NavPanel<TreeItem<GroupTreeNode>> {
 
     public GroupTree(ImageGalleryController controller) {
         super(controller);
-        FXMLConstructor.construct(this, "NavPanel.fxml"); //NON-NLS
+        FXMLConstructor.construct(this, "NavPanel.fxml");
     }
 
     @FXML
     @Override
-    @NbBundle.Messages({"GroupTree.displayName.allGroups=All Groups"})
     void initialize() {
         super.initialize();
-        setText(Bundle.GroupTree_displayName_allGroups());
-        setGraphic(new ImageView("org/sleuthkit/autopsy/imagegallery/images/Folder-icon.png")); //NON-NLS
+        setText("All Groups");
+        setGraphic(new ImageView("org/sleuthkit/autopsy/imagegallery/images/Folder-icon.png"));
 
         getBorderPane().setCenter(groupTree);
 
