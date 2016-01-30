@@ -53,7 +53,7 @@ public class NoGroupsDialog extends GridPane {
     }
 
     private NoGroupsDialog() {
-        FXMLConstructor.construct(this, "NoGroupsDialog.fxml"); //NON-NLS
+        FXMLConstructor.construct(this, "NoGroupsDialog.fxml");
     }
 
     public NoGroupsDialog(String message) {

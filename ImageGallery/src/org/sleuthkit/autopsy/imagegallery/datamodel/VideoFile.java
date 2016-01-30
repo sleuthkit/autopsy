@@ -29,7 +29,6 @@ import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.VideoUtils;
@@ -40,7 +39,7 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
 
     private static final Logger LOGGER = Logger.getLogger(VideoFile.class.getName());
 
-    private static final Image VIDEO_ICON = new Image("org/sleuthkit/autopsy/imagegallery/images/Clapperboard.png"); //NON-NLS
+    private static final Image VIDEO_ICON = new Image("org/sleuthkit/autopsy/imagegallery/images/Clapperboard.png");
 
     VideoFile(T file, Boolean analyzed) {
         super(file, analyzed);
@@ -54,7 +53,7 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
 
     @Override
     String getMessageTemplate(final Exception exception) {
-        return "Failed to get image preview for video {0}: " + exception.toString(); //NON-NLS
+        return "Failed to get image preview for video {0}: " + exception.toString();
     }
 
     @Override
@@ -74,7 +73,7 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
 
         if (cacheFile.exists() == false || cacheFile.length() < getAbstractFile().getSize()) {
             Files.createParentDirs(cacheFile);
-            ProgressHandle progressHandle = ProgressHandleFactory.createHandle(NbBundle.getMessage(this.getClass(), "VideoFile.progress.text"));
+            ProgressHandle progressHandle = ProgressHandleFactory.createHandle("writing temporary file to disk");
             progressHandle.start(100);
             ContentUtils.writeToFile(this.getAbstractFile(), cacheFile, progressHandle, null, true);
             progressHandle.finish();

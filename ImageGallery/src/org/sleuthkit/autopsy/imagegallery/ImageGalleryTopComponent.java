@@ -32,7 +32,6 @@ import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.util.Lookup;
-import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.Mode;
 import org.openide.windows.TopComponent;
@@ -50,7 +49,7 @@ import org.sleuthkit.autopsy.imagegallery.gui.navpanel.HashHitGroupList;
  * Top component which displays ImageGallery interface.
  *
  * Although ImageGallery doesn't currently use the explorer manager, this
- * Topcomponent provides one through the getExplorerManager method. However,
+ * Topcomponenet provides one through the getExplorerManager method. However,
  * this does not seem to function correctly unless a Netbeans provided explorer
  * view is present in the TopComponenet, even if it is invisible/ zero sized
  */
@@ -62,18 +61,14 @@ import org.sleuthkit.autopsy.imagegallery.gui.navpanel.HashHitGroupList;
         //iconBase = "org/sleuthkit/autopsy/imagegallery/images/lightbulb.png" use this to put icon in window title area,
         persistenceType = TopComponent.PERSISTENCE_NEVER)
 @TopComponent.Registration(mode = "timeline", openAtStartup = false)
-//@Messages({
-//    "CTL_ImageGalleryAction=Image/Video Gallery",
-//    "CTL_ImageGalleryTopComponent=Image/Video Gallery",
-//    "HINT_ImageGalleryTopComponent=This is a Image/Video Gallery window"
-//})
+@Messages({
+    "CTL_ImageGalleryAction=Image/Video Gallery",
+    "CTL_ImageGalleryTopComponent=Image/Video Gallery",
+    "HINT_ImageGalleryTopComponent=This is a Image/Video Gallery window"
+})
 public final class ImageGalleryTopComponent extends TopComponent implements ExplorerManager.Provider, Lookup.Provider {
 
-    private final static String PREFERRED_ID = "ImageGalleryTopComponent"; //NON-NLS
-    private static final String DEFAULT_NAME = NbBundle.getMessage(ImageGalleryTopComponent.class, "CTL_ImageGalleryTopComponent");
-    private static final String TOOLTIP_TEXT = NbBundle.getMessage(ImageGalleryTopComponent.class, "HINT_ImageGalleryTopComponent");
-
-
+    public final static String PREFERRED_ID = "ImageGalleryTopComponent";
     private static final Logger LOGGER = Logger.getLogger(ImageGalleryTopComponent.class.getName());
     private static boolean topComponentInitialized = false;
 
@@ -86,11 +81,11 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         //            }
         //        }
         //        timeLineController.openTimeLine();
-        final ImageGalleryTopComponent tc = (ImageGalleryTopComponent) WindowManager.getDefault().findTopComponent(PREFERRED_ID);
+        final ImageGalleryTopComponent tc = (ImageGalleryTopComponent) WindowManager.getDefault().findTopComponent("ImageGalleryTopComponent");
         if (tc != null) {
             topComponentInitialized = true;
             WindowManager.getDefault().isTopComponentFloating(tc);
-            Mode mode = WindowManager.getDefault().findMode("timeline"); //NON-NLS
+            Mode mode = WindowManager.getDefault().findMode("timeline");
             if (mode != null) {
                 mode.dockInto(tc);
             }
@@ -101,12 +96,12 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
 
     public static void closeTopComponent() {
         if (topComponentInitialized) {
-            final TopComponent etc = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
+            final TopComponent etc = WindowManager.getDefault().findTopComponent("ImageGalleryTopComponent");
             if (etc != null) {
                 try {
                     etc.close();
                 } catch (Exception e) {
-                    LOGGER.log(Level.SEVERE, "failed to close ImageGalleryTopComponent", e); //NON-NLS
+                    LOGGER.log(Level.SEVERE, "failed to close ImageGalleryTopComponent", e);
                 }
             }
         }
@@ -139,8 +134,8 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
 
     public ImageGalleryTopComponent() {
 
-        setName(DEFAULT_NAME);
-        setToolTipText(TOOLTIP_TEXT);
+        setName(Bundle.CTL_ImageGalleryTopComponent());
+        setToolTipText(Bundle.HINT_ImageGalleryTopComponent());
 
         initComponents();
 
@@ -231,15 +226,5 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
     @Override
     public Lookup getLookup() {
         return lookup;
-    }
-
-    /**
-     * Returns the unique ID of this TopComponent
-     *
-     * @return PREFERRED_ID the unique ID of this TopComponent
-     */
-    @Override
-    protected String preferredID() {
-        return PREFERRED_ID;
     }
 }

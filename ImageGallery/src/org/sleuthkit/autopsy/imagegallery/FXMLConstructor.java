@@ -39,7 +39,7 @@ public class FXMLConstructor {
     private static Logger logger = Logger.getLogger(FXMLConstructor.class.getName());
 
     static public void construct(Object n, String fxmlFileName) {
-        final String name = "nbres:/" + StringUtils.replace(n.getClass().getPackage().getName(), ".", "/") + "/" + fxmlFileName; //NON-NLS
+        final String name = "nbres:/" + StringUtils.replace(n.getClass().getPackage().getName(), ".", "/") + "/" + fxmlFileName;
 
         try {
             FXMLLoader fxmlLoader = new FXMLLoader(new URL(name));
@@ -53,12 +53,12 @@ public class FXMLConstructor {
                     fxmlLoader.setClassLoader(FXMLLoader.getDefaultClassLoader());
                     fxmlLoader.load();
                 } catch (IOException ex) {
-                    String msg = String.format("Failed to load fxml file %s", fxmlFileName); //NON-NLS
+                    String msg = String.format("Failed to load fxml file %s", fxmlFileName);
                     logger.log(Level.SEVERE, msg, ex);
                 }
             }
         } catch (MalformedURLException ex) {
-            String msg = String.format("Malformed URL %s", name); //NON-NLS
+            String msg = String.format("Malformed URL %s", name);
             logger.log(Level.SEVERE, msg, ex);
         }
 
