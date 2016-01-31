@@ -42,7 +42,7 @@ public class IngestibleFileFilter {
      *
      * @return
      */
-    static boolean isIngestible(AbstractFile candidateFile, boolean excludeUnallocSpaceFiles) {
+    public static boolean isIngestible(AbstractFile candidateFile, boolean excludeUnallocSpaceFiles) {
         /*
          * Filter out synthesized unallocated space files.
          */
