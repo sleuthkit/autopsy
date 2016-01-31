@@ -395,64 +395,8 @@ final class IngestTasksScheduler {
      * @return True or false.
      */
     private static boolean shouldEnqueueFileTask(final FileIngestTask task) {
-        final AbstractFile file = task.getFile();
-
-        // Skip the task if the file is an unallocated space file and the
-        // process unallocated space flag is not set for this job.
-        if (!task.getIngestJob().shouldProcessUnallocatedSpace()
-                && file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
-            return false;
-        }
-
-        // Skip the task if the file is actually the pseudo-file for the parent
-        // or current directory.
-        String fileName = file.getName();
-        if (fileName.equals(".") || fileName.equals("..")) {
-            return false;
-        }
-
-        // Skip the task if the file is one of a select group of special, large
-        // NTFS or FAT file system files.
-        if (file instanceof org.sleuthkit.datamodel.File) {
-            final org.sleuthkit.datamodel.File f = (org.sleuthkit.datamodel.File) file;
-
-            // Get the type of the file system, if any, that owns the file.
-            TskData.TSK_FS_TYPE_ENUM fsType = TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_UNSUPP;
-            try {
-                FileSystem fs = f.getFileSystem();
-                if (fs != null) {
-                    fsType = fs.getFsType();
-                }
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error querying file system for " + f, ex); //NON-NLS
-            }
-
-            // If the file system is not NTFS or FAT, don't skip the file.
-            if ((fsType.getValue() & FAT_NTFS_FLAGS) == 0) {
-                return true;
-            }
-
-            // Find out whether the file is in a root directory. 
-            boolean isInRootDir = false;
-            try {
-                AbstractFile parent = f.getParentDirectory();
-                isInRootDir = parent.isRoot();
-            } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Error querying parent directory for" + f.getName(), ex); //NON-NLS
-            }
-
-            // If the file is in the root directory of an NTFS or FAT file 
-            // system, check its meta-address and check its name for the '$'
-            // character and a ':' character (not a default attribute).
-            if (isInRootDir && f.getMetaAddr() < 32) {
-                String name = f.getName();
-                if (name.length() > 0 && name.charAt(0) == '$' && name.contains(":")) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
+        AbstractFile file = task.getFile();
+        return IngestibleFileFilter.isIngestible(task.getFile(), !task.getIngestJob().shouldProcessUnallocatedSpace());
     }
 
     /**
