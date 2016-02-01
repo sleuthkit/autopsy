@@ -145,6 +145,8 @@ public abstract class DrawableTileBase extends DrawableUIBase {
      * @param groupPane  the value of groupPane
      * @param controller the value of controller
      */
+    @NbBundle.Messages({"DrawableTileBase.menuItem.extractFiles=Extract File(s)",
+            "DrawableTileBase.menuItem.showContentViewer=Show Content Viewer"})
     protected DrawableTileBase(GroupPane groupPane, final ImageGalleryController controller) {
         super(controller);
         this.groupPane = groupPane;
@@ -197,8 +199,6 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                 t.consume();
             }
 
-            @NbBundle.Messages({"DrawableTileBase.menuItem.extractFiles=Extract File(s)",
-                    "DrawableTileBase.menuItem.showContentViewer=Show Content Viewer"})
             private ContextMenu buildContextMenu(DrawableFile<?> file) {
                 final ArrayList<MenuItem> menuItems = new ArrayList<>();
 

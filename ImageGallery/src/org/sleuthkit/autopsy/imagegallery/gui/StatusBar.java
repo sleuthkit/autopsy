@@ -63,8 +63,7 @@ public class StatusBar extends AnchorPane {
     private ProgressBar bgTaskProgressBar;
 
     @FXML
-    @NbBundle.Messages({"# {0} - file update queue size",
-            "StatusBar.fileUpdateTaskLabel.text={0} File Update Tasks",
+    @NbBundle.Messages({"StatusBar.fileUpdateTaskLabel.text= File Update Tasks",
             "StatusBar.bgTaskLabel.text=Regrouping",
             "StatuBar.toolTip=Some data may be out of date.  Enable Image Gallery in Tools | Options | Image /Video Gallery , after ingest is complete to update the Image Gallery data."})
     void initialize() {
@@ -74,7 +73,7 @@ public class StatusBar extends AnchorPane {
         assert bgTaskLabel != null : "fx:id=\"bgTaskLabel\" was not injected: check your FXML file 'StatusBar.fxml'.";
         assert bgTaskProgressBar != null : "fx:id=\"bgTaskProgressBar\" was not injected: check your FXML file 'StatusBar.fxml'.";
 
-        fileUpdateTaskLabel.textProperty().bind(Bundle.StatusBar_fileUpdateTaskLabel_text(controller.getFileUpdateQueueSizeProperty().asString()));//;setText(newSize.toString() + " File Update Tasks");
+        fileUpdateTaskLabel.textProperty().bind(controller.getFileUpdateQueueSizeProperty().asString().concat(Bundle.StatusBar_fileUpdateTaskLabel_text()));//;setText(newSize.toString() + " File Update Tasks");
         fileTaskProgresBar.progressProperty().bind(controller.getFileUpdateQueueSizeProperty().negate());
 //        controller.getFileUpdateQueueSizeProperty().addListener((ov, oldSize, newSize) -> {
 //            Platform.runLater(() -> {

@@ -31,15 +31,15 @@ import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
  *
  */
 //TODO: This and the corresponding timeline action are identical except for the type of the controller...  abstract something! -jm
+@NbBundle.Messages({"Back_diplayName=Back"})
 public class Back extends Action {
 
     private static final Image BACK_IMAGE = new Image("/org/sleuthkit/autopsy/imagegallery/images/arrow-180.png", 16, 16, true, true, true); //NON-NLS
 
     private final ImageGalleryController controller;
 
-    @NbBundle.Messages({"Back.diplayName=Back"})
     public Back(ImageGalleryController controller) {
-        super(Bundle.Back_displayName());
+        super(Bundle.Back_diplayName());
         setGraphic(new ImageView(BACK_IMAGE));
         setAccelerator(new KeyCodeCombination(KeyCode.LEFT, KeyCodeCombination.ALT_DOWN));
         this.controller = controller;

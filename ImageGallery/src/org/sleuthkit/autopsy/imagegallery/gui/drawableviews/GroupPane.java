@@ -397,6 +397,7 @@ public class GroupPane extends BorderPane {
      * checks that FXML loading went ok and performs additional setup
      */
     @FXML
+    @NbBundle.Messages({"GroupPane.gridViewContextMenuItem.extractFiles=Extract File(s)"})
     void initialize() {
         assert cat0Toggle != null : "fx:id=\"cat0Toggle\" was not injected: check your FXML file 'SlideShowView.fxml'.";
         assert cat1Toggle != null : "fx:id=\"cat1Toggle\" was not injected: check your FXML file 'SlideShowView.fxml'.";
@@ -519,7 +520,6 @@ public class GroupPane extends BorderPane {
         addEventFilter(KeyEvent.KEY_PRESSED, tileKeyboardNavigationHandler);
         gridView.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
 
-            @NbBundle.Messages({"GroupPane.gridViewContextMenuItem.extractFiles=Extract File(s)"})
             private ContextMenu buildContextMenu() {
                 ArrayList<MenuItem> menuItems = new ArrayList<>();
 

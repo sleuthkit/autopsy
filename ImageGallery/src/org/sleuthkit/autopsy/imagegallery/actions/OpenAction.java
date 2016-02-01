@@ -87,8 +87,8 @@ public final class OpenAction extends CallableSystemAction {
 
         if (ImageGalleryModule.isDrawableDBStale(currentCase)) {
             //drawable db is stale, ask what to do
-            int answer = JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(), Bundle.OpenAction.stale.confDlg.msg(),
-                    Bundle.OpenAction_stale_confDlg.title(), JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+            int answer = JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(), Bundle.OpenAction_stale_confDlg_msg(),
+                    Bundle.OpenAction_stale_confDlg_title(), JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
 
             switch (answer) {
                 case JOptionPane.YES_OPTION:
