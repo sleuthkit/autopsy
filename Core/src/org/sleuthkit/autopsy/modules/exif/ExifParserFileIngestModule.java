@@ -79,9 +79,9 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     private Blackboard blackboard;
 
     ExifParserFileIngestModule() {
-        supportedMimeTypes.add("audio/x-wav");
-        supportedMimeTypes.add("image/jpeg");
-        supportedMimeTypes.add("image/tiff");
+        supportedMimeTypes.add("audio/x-wav"); //NON-NLS
+        supportedMimeTypes.add("image/jpeg"); //NON-NLS
+        supportedMimeTypes.add("image/tiff"); //NON-NLS
     }
 
     @Override

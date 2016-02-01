@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.ingest;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -128,7 +130,7 @@ final class FileIngestPipeline {
                     if (msg == null) {
                         msg = ex.toString();
                     }
-                    MessageNotifyUtil.Notify.error(module.getDisplayName() + " Error", msg);
+                    MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "FileIngestPipeline.moduleError.title.text", module.getDisplayName()), msg);
                 }
                 if (this.job.isCancelled()) {
                     break;
@@ -161,7 +163,7 @@ final class FileIngestPipeline {
                     if (msg == null) {
                         msg = ex.toString();
                     }
-                    MessageNotifyUtil.Notify.error(module.getDisplayName() + " Error", msg);
+                    MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "FileIngestPipeline.moduleError.title.text", module.getDisplayName()), msg);
                 }
             }
         }

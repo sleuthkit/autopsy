@@ -57,7 +57,7 @@ class ImageExtractor {
     private static final Logger logger = Logger.getLogger(ImageExtractor.class.getName());
     private final IngestJobContext context;
     private String parentFileName;
-    private final String UNKNOWN_NAME_PREFIX = "image_";
+    private final String UNKNOWN_NAME_PREFIX = "image_"; //NON-NLS
     private final FileTypeDetector fileTypeDetector;
 
     private String moduleDirRelative;
@@ -68,12 +68,12 @@ class ImageExtractor {
      */
     enum SupportedImageExtractionFormats {
 
-        DOC("application/msword"),
-        DOCX("application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
-        PPT("application/vnd.ms-powerpoint"),
-        PPTX("application/vnd.openxmlformats-officedocument.presentationml.presentation"),
-        XLS("application/vnd.ms-excel"),
-        XLSX("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        DOC("application/msword"), //NON-NLS
+        DOCX("application/vnd.openxmlformats-officedocument.wordprocessingml.document"), //NON-NLS
+        PPT("application/vnd.ms-powerpoint"), //NON-NLS
+        PPTX("application/vnd.openxmlformats-officedocument.presentationml.presentation"), //NON-NLS
+        XLS("application/vnd.ms-excel"), //NON-NLS
+        XLSX("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"); //NON-NLS
 
         private final String mimeType;
 
@@ -266,7 +266,7 @@ class ImageExtractor {
             outputFolderPath = getOutputFolderPath(this.parentFileName);
         }
         if (outputFolderPath == null) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.extractImageFrom.outputPath.exception.msg", af.getName()));
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.extractImageFrom.outputPath.exception.msg", af.getName())); //NON-NLS
             return null;
         }
         listOfExtractedImages = new ArrayList<>();
@@ -309,7 +309,7 @@ class ImageExtractor {
             outputFolderPath = getOutputFolderPath(this.parentFileName);
         }
         if (outputFolderPath == null) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.extractImageFrom.outputPath.exception.msg", af.getName()));
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.extractImageFrom.outputPath.exception.msg", af.getName())); //NON-NLS
             return null;
         }
 
@@ -379,7 +379,7 @@ class ImageExtractor {
             outputFolderPath = getOutputFolderPath(this.parentFileName);
         }
         if (outputFolderPath == null) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.extractImageFrom.outputPath.exception.msg", af.getName()));
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.extractImageFrom.outputPath.exception.msg", af.getName())); //NON-NLS
             return null;
         }
 
@@ -428,7 +428,7 @@ class ImageExtractor {
             outputFolderPath = getOutputFolderPath(this.parentFileName);
         }
         if (outputFolderPath == null) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.extractImageFrom.outputPath.exception.msg", af.getName()));
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.extractImageFrom.outputPath.exception.msg", af.getName())); //NON-NLS
             return null;
         }
 
@@ -473,7 +473,7 @@ class ImageExtractor {
             outputFolderPath = getOutputFolderPath(this.parentFileName);
         }
         if (outputFolderPath == null) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.extractImageFrom.outputPath.exception.msg", af.getName()));
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.extractImageFrom.outputPath.exception.msg", af.getName())); //NON-NLS
             return null;
         }
 

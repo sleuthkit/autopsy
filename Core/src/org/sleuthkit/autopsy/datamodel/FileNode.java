@@ -184,8 +184,13 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
         return true;
     }
 
-    @Override
-    public String getItemType() {
-        return "File";
-    }
+    /*
+     * TODO (AUT-1849): Correct or remove peristent column reordering code
+     *
+     * Added to support this feature.
+     */
+//    @Override
+//    public String getItemType() {
+//        return "File"; //NON-NLS
+//    }
 }
