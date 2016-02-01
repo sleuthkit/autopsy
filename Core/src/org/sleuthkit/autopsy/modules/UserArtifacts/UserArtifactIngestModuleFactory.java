@@ -17,7 +17,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
  *
  * @author oliver
  */
-//@ServiceProvider(service = IngestModuleFactory.class)
+@ServiceProvider(service = IngestModuleFactory.class)
 public class UserArtifactIngestModuleFactory extends IngestModuleFactoryAdapter {
     
     static String getModuleName() {

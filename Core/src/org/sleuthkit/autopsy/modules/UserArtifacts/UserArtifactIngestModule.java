@@ -56,13 +56,13 @@ public class UserArtifactIngestModule implements DataSourceIngestModule {
             } else {
                 art2 = dataSource.newArtifact(type2.getTypeID());
             }
-            BlackboardAttribute.Type attributeType = Case.getCurrentCase().getServices().getBlackboard().addAttributeType("Test", TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.LONG, "2");
-            BlackboardAttribute.Type attributeType2 = Case.getCurrentCase().getServices().getBlackboard().addAttributeType("Test2", TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.BYTE, "3");
+            BlackboardAttribute.Type attributeType = Case.getCurrentCase().getServices().getBlackboard().addAttributeType("Test", TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "2");
+            BlackboardAttribute.Type attributeType2 = Case.getCurrentCase().getServices().getBlackboard().addAttributeType("Test2", TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "3");
             art1.addAttribute(new BlackboardAttribute(attributeType,
-                    UserArtifactIngestModuleFactory.getModuleName(), -1L));
+                    UserArtifactIngestModuleFactory.getModuleName(), "tester1"));
             progressBar.progress(1);
             art2.addAttribute(new BlackboardAttribute(attributeType2,
-                    UserArtifactIngestModuleFactory.getModuleName(), new byte[7]));
+                    UserArtifactIngestModuleFactory.getModuleName(), "abatecombo"));
             progressBar.progress(1);
             IngestServices.getInstance().postMessage(IngestMessage.createDataMessage(
                     "name",

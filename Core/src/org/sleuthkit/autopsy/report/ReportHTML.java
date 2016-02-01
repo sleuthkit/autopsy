@@ -262,7 +262,6 @@ class ReportHTML implements TableReportModule {
                     break;
             }
         } else {  // no defined artifact found for this dataType 
-            logger.log(Level.WARNING, "useDataTypeIcon: no artifact found for data type = " + dataType); //NON-NLS
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png"); //NON-NLS
             iconFileName = "star.png"; //NON-NLS
             iconFilePath = path + File.separator + iconFileName;
