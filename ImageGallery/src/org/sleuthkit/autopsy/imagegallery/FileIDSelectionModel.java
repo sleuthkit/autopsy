@@ -72,7 +72,7 @@ public class FileIDSelectionModel {
                     try {
                         fileNodes.add(new FileNode(controller.getSleuthKitCase().getAbstractFileById(id)));
                     } catch (TskCoreException ex) {
-                        LOGGER.log(Level.SEVERE, "Failed to get abstract file by its ID", ex); //NON-NLS
+                        LOGGER.log(Level.SEVERE, "Failed to get abstract file by its ID", ex);
                     }
                 }
                 FileNode[] fileNodeArray = fileNodes.stream().toArray(FileNode[]::new);
@@ -84,7 +84,7 @@ public class FileIDSelectionModel {
                 try {
                     etc.getExplorerManager().setSelectedNodes(fileNodeArray);
                 } catch (PropertyVetoException ex) {
-                    LOGGER.log(Level.SEVERE, "Explorer manager selection was vetoed.", ex); //NON-NLS
+                    LOGGER.log(Level.SEVERE, "Explorer manager selection was vetoed.", ex);
                 }
             });
         });

@@ -142,7 +142,7 @@ public class Toolbar extends ToolBar {
             try {
                 new TagGroupAction(controller.getTagsManager().getFollowUpTagName(), controller).handle(actionEvent);
             } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Could create follow up tag menu item", ex); //NON-NLS
+                LOGGER.log(Level.SEVERE, "Could create follow up tag menu item", ex);
             }
         });
 
@@ -213,7 +213,7 @@ public class Toolbar extends ToolBar {
 
     private Toolbar(ImageGalleryController controller) {
         this.controller = controller;
-        FXMLConstructor.construct(this, "Toolbar.fxml"); //NON-NLS
+        FXMLConstructor.construct(this, "Toolbar.fxml");
     }
 
 }

@@ -101,7 +101,7 @@ public enum ThumbnailCache {
         try {
             return cache.get(file.getId(), () -> load(file));
         } catch (UncheckedExecutionException | CacheLoader.InvalidCacheLoadException | ExecutionException ex) {
-            LOGGER.log(Level.WARNING, "Failed to load thumbnail for file: " + file.getName(), ex.getCause()); //NON-NLS
+            LOGGER.log(Level.WARNING, "Failed to load thumbnail for file: " + file.getName(), ex.getCause());
             return null;
         }
     }
@@ -111,7 +111,7 @@ public enum ThumbnailCache {
         try {
             return get(ImageGalleryController.getDefault().getFileFromId(fileID));
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "Failed to load thumbnail for file: " + fileID, ex.getCause()); //NON-NLS
+            LOGGER.log(Level.WARNING, "Failed to load thumbnail for file: " + fileID, ex.getCause());
             return null;
         }
     }
@@ -142,9 +142,9 @@ public enum ThumbnailCache {
                         return cachedThumbnail;
                     }
                 } catch (MalformedURLException ex) {
-                    LOGGER.log(Level.WARNING, "Unable to parse cache file path: " + cachFile.getPath(), ex); //NON-NLS
+                    LOGGER.log(Level.WARNING, "Unable to parse cache file path: " + cachFile.getPath(), ex);
                 } catch (IOException ex) {
-                    LOGGER.log(Level.WARNING, "Unable to read cache file " + cachFile.getPath(), ex); //NON-NLS
+                    LOGGER.log(Level.WARNING, "Unable to read cache file " + cachFile.getPath(), ex);
                 }
             }
             return null;
@@ -176,7 +176,7 @@ public enum ThumbnailCache {
             return Optional.of(ImageUtils.getCachedThumbnailFile(file.getAbstractFile(), MAX_THUMBNAIL_SIZE));
 
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Failed to create cache file.{0}", e.getLocalizedMessage()); //NON-NLS
+            LOGGER.log(Level.WARNING, "Failed to create cache file.{0}", e.getLocalizedMessage());
             return Optional.empty();
         }
     }
@@ -193,7 +193,7 @@ public enum ThumbnailCache {
                     try {
                         cache.put(Long.MIN_VALUE, newGetThumbnailTask.get());
                     } catch (InterruptedException | ExecutionException ex) {
-                        LOGGER.log(Level.SEVERE, "There was an exception even though thumbnail task succedded for.  This should not be possible.", ex); //NON-NLS
+                        LOGGER.log(Level.SEVERE, "There was an exception even though thumbnail task succedded for.  This should not be possible.", ex);
                     }
             }
         });

@@ -40,20 +40,19 @@ import javafx.scene.media.MediaView;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.datamodel.VideoFile;
 
 public class VideoPlayer extends BorderPane {
 
-    private static final Image VOLUME_HIGH = new Image("/org/sleuthkit/autopsy/imagegallery/images/speaker-volume.png"); //NON-NLS
-    private static final Image VOLUME_LOW = new Image("/org/sleuthkit/autopsy/imagegallery/images/speaker-volume-low.png"); //NON-NLS
-    private static final Image VOLUME_ZERO = new Image("/org/sleuthkit/autopsy/imagegallery/images/speaker-volume-none.png"); //NON-NLS
-    private static final Image VOLUME_MUTE = new Image("/org/sleuthkit/autopsy/imagegallery/images/speaker-volume-control-mute.png"); //NON-NLS
+    private static final Image VOLUME_HIGH = new Image("/org/sleuthkit/autopsy/imagegallery/images/speaker-volume.png");
+    private static final Image VOLUME_LOW = new Image("/org/sleuthkit/autopsy/imagegallery/images/speaker-volume-low.png");
+    private static final Image VOLUME_ZERO = new Image("/org/sleuthkit/autopsy/imagegallery/images/speaker-volume-none.png");
+    private static final Image VOLUME_MUTE = new Image("/org/sleuthkit/autopsy/imagegallery/images/speaker-volume-control-mute.png");
 
-    private static final Image PLAY = new Image("/org/sleuthkit/autopsy/imagegallery/images/media_controls_play_small.png", true); //NON-NLS
-    private static final Image PAUSE = new Image("/org/sleuthkit/autopsy/imagegallery/images/media_controls_pause_small.png", true); //NON-NLS
+    private static final Image PLAY = new Image("/org/sleuthkit/autopsy/imagegallery/images/media_controls_play_small.png", true);
+    private static final Image PAUSE = new Image("/org/sleuthkit/autopsy/imagegallery/images/media_controls_pause_small.png", true);
 
     private final MediaPlayer mp;
 
@@ -107,8 +106,6 @@ public class VideoPlayer extends BorderPane {
     private final VideoFile<?> file;
 
     @FXML
-    @NbBundle.Messages({"# {0} - exception type",
-            "VideoPlayer.errNotice={0}\nSee the logs for details."})
     void initialize() {
         assert controlButton != null : "fx:id=\"controlButton\" was not injected: check your FXML file 'MediaControl.fxml'.";
         assert timeSlider != null : "fx:id=\"timeSlider\" was not injected: check your FXML file 'MediaControl.fxml'.";
@@ -117,14 +114,14 @@ public class VideoPlayer extends BorderPane {
             final MediaException ex = mp.getError();
             if (ex != null) {
                 Platform.runLater(() -> {
-                    Logger.getLogger(VideoFile.class.getName()).log(Level.WARNING, ex.getType() + " Failed to initialize MediaControl for file " + file.getName(), ex); //NON-NLS
-                    setCenter(new Text(Bundle.VideoPlayer_errNotice(ex.getType())));
+                    Logger.getLogger(VideoFile.class.getName()).log(Level.WARNING, ex.getType() + " Failed to initialize MediaControl for file " + file.getName(), ex);
+                    setCenter(new Text(ex.getType() + "\nSee the logs for details."));
                     setBottom(null);
                 });
             }
         });
         mp.statusProperty().addListener((observableStatus, oldStatus, newStatus) -> {
-            Logger.getAnonymousLogger().log(Level.INFO, "media player: {0}", newStatus); //NON-NLS
+            Logger.getAnonymousLogger().log(Level.INFO, "media player: {0}", newStatus);
         });
         mediaView.setMediaPlayer(mp);
         mediaView.fitHeightProperty().bind(this.heightProperty().subtract(playControlBar.heightProperty()));
@@ -239,7 +236,7 @@ public class VideoPlayer extends BorderPane {
     public VideoPlayer(MediaPlayer mp, VideoFile<?> file) {
         this.file = file;
         this.mp = mp;
-        FXMLConstructor.construct(this, "MediaControl.fxml"); //NON-NLS
+        FXMLConstructor.construct(this, "MediaControl.fxml");
     }
 
     protected void updateTime() {
@@ -280,10 +277,10 @@ public class VideoPlayer extends BorderPane {
         int elapsedSeconds = totalSeconds - elapsedMinutes * 60;
 
         if (elapsedHours > 0) {
-            return String.format("%d:%02d:%02d", elapsedHours, //NON-NLS
+            return String.format("%d:%02d:%02d", elapsedHours,
                     elapsedMinutes, elapsedSeconds);
         } else {
-            return String.format("%02d:%02d", elapsedMinutes, //NON-NLS
+            return String.format("%02d:%02d", elapsedMinutes,
                     elapsedSeconds);
         }
     }

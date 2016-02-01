@@ -21,34 +21,27 @@ package org.sleuthkit.autopsy.imagegallery.gui.navpanel;
 import com.google.common.collect.ImmutableList;
 import java.util.Comparator;
 import java.util.function.Function;
-
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 
 /**
  *
  */
-@NbBundle.Messages({"GroupComparators.uncategorizedCount=Uncategorized Count",
-        "GroupComparators.groupName=Group Name",
-        "GroupComparators.hitCount=Hit Count",
-        "GroupComparators.groupSize=Group Size",
-        "GroupComparators.hitDensity=Hit Density"})
 final class GroupComparators<T extends Comparable<T>> implements Comparator<DrawableGroup> {
 
     static final GroupComparators<Long> UNCATEGORIZED_COUNT =
-            new GroupComparators<>(Bundle.GroupComparators_uncategorizedCount(), DrawableGroup::getUncategorizedCount, String::valueOf, false);
+            new GroupComparators<>("Uncategorized Count", DrawableGroup::getUncategorizedCount, String::valueOf, false);
 
     static final GroupComparators<String> ALPHABETICAL =
-            new GroupComparators<>(Bundle.GroupComparators_groupName(), DrawableGroup::getGroupByValueDislpayName, String::valueOf, false);
+            new GroupComparators<>("Group Name", DrawableGroup::getGroupByValueDislpayName, String::valueOf, false);
 
     static final GroupComparators<Long> HIT_COUNT =
-            new GroupComparators<>(Bundle.GroupComparators_hitCount(), DrawableGroup::getHashSetHitsCount, String::valueOf, true);
+            new GroupComparators<>("Hit Count", DrawableGroup::getHashSetHitsCount, String::valueOf, true);
 
     static final GroupComparators<Integer> FILE_COUNT =
-            new GroupComparators<>(Bundle.GroupComparators_groupSize(), DrawableGroup::getSize, String::valueOf, true);
+            new GroupComparators<>("Group Size", DrawableGroup::getSize, String::valueOf, true);
 
     static final GroupComparators<Double> HIT_FILE_RATIO =
-            new GroupComparators<>(Bundle.GroupComparators_hitDensity(), DrawableGroup::getHashHitDensity, density -> String.format("%.2f", density) + "%", true); //NON-NLS
+            new GroupComparators<>("Hit Density", DrawableGroup::getHashHitDensity, density -> String.format("%.2f", density) + "%", true);
 
     private final static ImmutableList<GroupComparators<?>> values = ImmutableList.of(UNCATEGORIZED_COUNT, ALPHABETICAL, HIT_COUNT, FILE_COUNT, HIT_FILE_RATIO);
 
