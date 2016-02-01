@@ -29,7 +29,7 @@ class ImageGalleryPreferences {
     private static final Preferences preferences = NbPreferences.forModule(ImageGalleryPreferences.class);
 
     /** key for the listening enabled for new cases setting */
-    private static final String ENABLED_BY_DEFAULT = "enabled_by_default"; //NON-NLS
+    private static final String ENABLED_BY_DEFAULT = "enabled_by_default";
 
     /**
      * Return setting of whether Image Analyzer should be automatically enabled

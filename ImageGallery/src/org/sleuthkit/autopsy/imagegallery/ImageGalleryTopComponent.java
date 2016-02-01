@@ -68,7 +68,7 @@ import org.sleuthkit.autopsy.imagegallery.gui.navpanel.HashHitGroupList;
 })
 public final class ImageGalleryTopComponent extends TopComponent implements ExplorerManager.Provider, Lookup.Provider {
 
-    public final static String PREFERRED_ID = "ImageGalleryTopComponent"; // NON-NLS
+    public final static String PREFERRED_ID = "ImageGalleryTopComponent";
     private static final Logger LOGGER = Logger.getLogger(ImageGalleryTopComponent.class.getName());
     private static boolean topComponentInitialized = false;
 
@@ -81,11 +81,11 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         //            }
         //        }
         //        timeLineController.openTimeLine();
-        final ImageGalleryTopComponent tc = (ImageGalleryTopComponent) WindowManager.getDefault().findTopComponent(PREFERRED_ID);
+        final ImageGalleryTopComponent tc = (ImageGalleryTopComponent) WindowManager.getDefault().findTopComponent("ImageGalleryTopComponent");
         if (tc != null) {
             topComponentInitialized = true;
             WindowManager.getDefault().isTopComponentFloating(tc);
-            Mode mode = WindowManager.getDefault().findMode("timeline"); // NON-NLS
+            Mode mode = WindowManager.getDefault().findMode("timeline");
             if (mode != null) {
                 mode.dockInto(tc);
             }
@@ -96,12 +96,12 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
 
     public static void closeTopComponent() {
         if (topComponentInitialized) {
-            final TopComponent etc = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
+            final TopComponent etc = WindowManager.getDefault().findTopComponent("ImageGalleryTopComponent");
             if (etc != null) {
                 try {
                     etc.close();
                 } catch (Exception e) {
-                    LOGGER.log(Level.SEVERE, "failed to close " + PREFERRED_ID, e); // NON-NLS
+                    LOGGER.log(Level.SEVERE, "failed to close ImageGalleryTopComponent", e);
                 }
             }
         }
