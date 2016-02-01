@@ -567,7 +567,7 @@ public final class ImageGalleryController implements Executor {
      * Abstract base class for task to be done on {@link DBWorkerThread}
      */
     @NbBundle.Messages({"ImageGalleryController.InnerTask.progress.name=progress",
-            "ImageGalleryController.InnerTask.progress.name=status"})
+            "ImageGalleryController.InnerTask.message.name=status"})
     static public abstract class InnerTask implements Runnable, Cancellable {
 
         public double getProgress() {
@@ -587,7 +587,7 @@ public final class ImageGalleryController implements Executor {
         }
         SimpleObjectProperty<Worker.State> state = new SimpleObjectProperty<>(Worker.State.READY);
         SimpleDoubleProperty progress = new SimpleDoubleProperty(this, Bundle.ImageGalleryController_InnerTask_progress_name());
-        SimpleStringProperty message = new SimpleStringProperty(this, Bundle.ImageGalleryController_InnerTask_progress_name());
+        SimpleStringProperty message = new SimpleStringProperty(this, Bundle.ImageGalleryController_InnerTask_message_name());
 
         public SimpleDoubleProperty progressProperty() {
             return progress;
@@ -711,8 +711,7 @@ public final class ImageGalleryController implements Executor {
     @NbBundle.Messages({"CopyAnalyzedFiles.populatingDb.status=populating analyzed image/video database",
             "CopyAnalyzedFiles.committingDb.status=commiting image/video database",
             "CopyAnalyzedFiles.stopCopy.status=Stopping copy to drawable db task.",
-            "CopyAnalyzedFiles.errPopulating.errMsg=There was an error populating Image Gallery database.",
-            ""})
+            "CopyAnalyzedFiles.errPopulating.errMsg=There was an error populating Image Gallery database."})
     static private class CopyAnalyzedFiles extends InnerTask {
 
         private final ImageGalleryController controller;
