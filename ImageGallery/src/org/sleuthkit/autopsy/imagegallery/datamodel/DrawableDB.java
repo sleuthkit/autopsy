@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import java.util.Set;
@@ -42,6 +43,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
 import org.apache.commons.lang3.StringUtils;
@@ -588,18 +590,27 @@ public final class DrawableDB {
         insertOrUpdateFile(f, tr, updateFileStmt);
     }
 
-    private void insertOrUpdateFile(DrawableFile<?> f, DrawableTransaction tr, PreparedStatement stmt) {
+    /**
+     * Update (or insert) a file in(to) the drawable db. Weather this is an
+     * insert or an update depends on the given prepared statement. This method
+     * also inserts hash set hits and groups into their respective tables for
+     * the given file.
+     *
+     * //TODO: this is a kinda weird design, is their a better way? //TODO:
+     * implement batch version -jm
+     *
+     * @param f    The file to insert.
+     * @param tr   a transaction to use, must not be null
+     * @param stmt the statement that does the actull inserting
+     */
+    private void insertOrUpdateFile(DrawableFile<?> f, @Nonnull DrawableTransaction tr, @Nonnull PreparedStatement stmt) {
 
-        //TODO:      implement batch version -jm
         if (tr.isClosed()) {
             throw new IllegalArgumentException("can't update database with closed transaction");
         }
 
         dbWriteLock();
         try {
-            // Update the list of file IDs in memory
-            addImageFileToList(f.getId());
-
             // "INSERT OR IGNORE/ INTO drawable_files (path, name, created_time, modified_time, make, model, analyzed)"
             stmt.setLong(1, f.getId());
             stmt.setString(2, f.getDrawablePath());
@@ -610,6 +621,8 @@ public final class DrawableDB {
             stmt.setString(7, f.getModel());
             stmt.setBoolean(8, f.isAnalyzed());
             stmt.executeUpdate();
+            // Update the list of file IDs in memory
+            addImageFileToList(f.getId());
 
             try {
                 for (String name : f.getHashSetNames()) {
@@ -633,24 +646,27 @@ public final class DrawableDB {
                     }
                 }
             } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "failed to insert/update hash hits for file" + f.getName(), ex);
+                LOGGER.log(Level.SEVERE, "failed to insert/update hash hits for file" + f.getContentPathSafe(), ex);
             }
 
             //and update all groups this file is in
             for (DrawableAttribute<?> attr : DrawableAttribute.getGroupableAttrs()) {
                 Collection<? extends Comparable<?>> vals = attr.getValue(f);
-                for (Object val : vals) {
-                    insertGroup(val.toString(), attr);
+                for (Comparable<?> val : vals) {
+                    //use empty string for null values (mime_type), this shouldn't happen!
+                    insertGroup(Objects.toString(val, ""), attr);
                 }
             }
 
             tr.addUpdatedFile(f.getId());
 
         } catch (SQLException | NullPointerException ex) {
-            // This is one of the places where we get an error if the case is closed during processing,
-            // which doesn't need to be reported here.
+            /*
+             * This is one of the places where we get an error if the case is
+             * closed during processing, which doesn't need to be reported here.
+             */
             if (Case.isCaseOpen()) {
-                LOGGER.log(Level.SEVERE, "failed to insert/update file" + f.getName(), ex);
+                LOGGER.log(Level.SEVERE, "failed to insert/update file" + f.getContentPathSafe(), ex);
             }
 
         } finally {
