@@ -34,7 +34,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import java.util.Set;
@@ -654,7 +653,9 @@ public final class DrawableDB {
                 Collection<? extends Comparable<?>> vals = attr.getValue(f);
                 for (Comparable<?> val : vals) {
                     //use empty string for null values (mime_type), this shouldn't happen!
-                    insertGroup(Objects.toString(val, ""), attr);
+                    if (null != val) {
+                        insertGroup(val.toString(), attr);
+                    }
                 }
             }
 
