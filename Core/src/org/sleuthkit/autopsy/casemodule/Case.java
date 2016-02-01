@@ -93,7 +93,7 @@ import org.sleuthkit.datamodel.TskException;
 public class Case implements SleuthkitCase.ErrorObserver {
 
     private static final String autopsyVer = Version.getVersion(); // current version of autopsy. Change it when the version is changed
-    private static final String EVENT_CHANNEL_NAME = "%s-Case-Events";
+    private static final String EVENT_CHANNEL_NAME = "%s-Case-Events"; //NON-NLS
     private static String appName = null;
     volatile private IntervalErrorReportData tskErrorReporter = null;
     private static final int MIN_SECONDS_BETWEEN_ERROR_REPORTS = 60; // No less than 60 seconds between warnings for errors
@@ -218,10 +218,12 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * This enum describes the type of case, either single-user (standalone) or
      * multi-user (using PostgreSql)
      */
+    @NbBundle.Messages({"Case_caseType_singleUser=Single-user case",
+    "Case_caseType_multiUser=Multi-user case"})
     public enum CaseType {
 
-        SINGLE_USER_CASE("Single-user case"),
-        MULTI_USER_CASE("Multi-user case");
+        SINGLE_USER_CASE(Bundle.Case_caseType_singleUser()),
+        MULTI_USER_CASE(Bundle.Case_caseType_multiUser());
 
         private final String caseType;
 
