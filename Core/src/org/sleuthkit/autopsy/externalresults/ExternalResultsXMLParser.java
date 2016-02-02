@@ -101,7 +101,7 @@ public final class ExternalResultsXMLParser implements ExternalResultsParser {
         VALUE_TYPE_INT32("int32"), //NON-NLS
         VALUE_TYPE_INT64("int64"), //NON-NLS
         VALUE_TYPE_DOUBLE("double"), //NON-NLS
-        VALUE_TYPE_DATETIME("datetime");
+        VALUE_TYPE_DATETIME("datetime"); //NON-NLS
         private final String text;
 
         private AttributeValues(final String text) {
