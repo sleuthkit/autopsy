@@ -370,7 +370,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     eventPublisher.openRemoteEventChannel(String.format(EVENT_CHANNEL_NAME, newCase.getTextIndexName()));
                     currentCase.collaborationMonitor = new CollaborationMonitor();
                 } catch (AutopsyEventException | CollaborationMonitor.CollaborationMonitorException ex) {
-                    logger.log(Level.SEVERE, "Failed to setup for collaboration", ex);
+                    logger.log(Level.SEVERE, "Failed to setup for collaboration", ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(NbBundle.getMessage(Case.class, "Case.CollaborationSetup.FailNotify.Title"), NbBundle.getMessage(Case.class, "Case.CollaborationSetup.FailNotify.ErrMsg"));
                 }
             }
@@ -544,13 +544,13 @@ public class Case implements SleuthkitCase.ErrorObserver {
         String result;
 
         // Remove all non-ASCII characters
-        result = caseName.replaceAll("[^\\p{ASCII}]", "_");
+        result = caseName.replaceAll("[^\\p{ASCII}]", "_"); //NON-NLS
 
         // Remove all control characters
-        result = result.replaceAll("[\\p{Cntrl}]", "_");
+        result = result.replaceAll("[\\p{Cntrl}]", "_"); //NON-NLS
 
         // Remove / \ : ? space ' "
-        result = result.replaceAll("[ /?:'\"\\\\]", "_");
+        result = result.replaceAll("[ /?:'\"\\\\]", "_"); //NON-NLS
 
         // Make it all lowercase
         result = result.toLowerCase();
@@ -566,7 +566,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         }
 
         if (result.isEmpty()) {
-            result = "case";
+            result = "case"; //NON-NLS
         }
 
         return result;
