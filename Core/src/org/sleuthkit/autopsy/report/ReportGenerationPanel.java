@@ -157,7 +157,7 @@ class ReportGenerationPanel extends javax.swing.JPanel {
 
         reportScrollPane.setViewportView(reportPanel);
 
-        titleLabel.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
+        titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(titleLabel, org.openide.util.NbBundle.getMessage(ReportGenerationPanel.class, "ReportGenerationPanel.titleLabel.text")); // NOI18N
 
         titleSeparator.setForeground(new java.awt.Color(0, 0, 0));

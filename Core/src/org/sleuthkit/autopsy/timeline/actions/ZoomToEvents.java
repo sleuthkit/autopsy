@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
  */
 public class ZoomToEvents extends Action {
 
-    private static final Image MAGNIFIER_OUT = new Image("/org/sleuthkit/autopsy/timeline/images/magnifier-zoom-out-red.png", 16, 16, true, true); //NOI18N
+    private static final Image MAGNIFIER_OUT = new Image("/org/sleuthkit/autopsy/timeline/images/magnifier-zoom-out-red.png", 16, 16, true, true); //NOI18N NON-NLS
 
     @NbBundle.Messages({"ZoomToEvents.action.text=Zoom to events",
         "ZoomToEvents.longText=Zoom out to show the nearest events."})

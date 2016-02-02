@@ -50,7 +50,7 @@ public final class VirtualMachineFinder {
         vmFiltersList.add(virtualMachineFilter);
     }
 
-    private static final List<String> VMDK_EXTS = Arrays.asList(new String[]{".vmdk"});
+    private static final List<String> VMDK_EXTS = Arrays.asList(new String[]{".vmdk"}); //NON-NLS
     private static final GeneralFilter vmdkFilter = new GeneralFilter(VMDK_EXTS, "");
     private static final List<FileFilter> vmdkFiltersList = new ArrayList<>();
 
@@ -135,7 +135,7 @@ public final class VirtualMachineFinder {
                     // line doesn't have enough fields, can't be an extent descriptor
                     continue;
                 }
-                if (splited[0].equals("RW") || splited[0].equals("RDONLY") || splited[0].equals("NOACCESS")) {
+                if (splited[0].equals("RW") || splited[0].equals("RDONLY") || splited[0].equals("NOACCESS")) { //NON-NLS
                     // found an extent descriptor
                     // remove quotation marks around the file name
                     String extentFileName = splited[FILE_NAME_FIELD_INDX_IN_EXTENT_DESCRIPTOR].replace("\"", "");
@@ -145,7 +145,7 @@ public final class VirtualMachineFinder {
                 }
             }
         } catch (Exception ex) {
-            logger.log(Level.WARNING, String.format("Error while parsing vmdk descriptor file %s", file.toString()), ex);
+            logger.log(Level.WARNING, String.format("Error while parsing vmdk descriptor file %s", file.toString()), ex); //NON-NLS
         }
         return extentFiles;
     }

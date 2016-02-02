@@ -49,7 +49,7 @@ public class SingleUserCaseConverter {
     private static final String DOTAUT = ".aut"; //NON-NLS
     private static final String TIMELINE_FOLDER = "Timeline"; //NON-NLS
     private static final String TIMELINE_FILE = "events.db"; //NON-NLS
-    private static final String POSTGRES_DEFAULT_DB_NAME = "postgres";
+    private static final String POSTGRES_DEFAULT_DB_NAME = "postgres"; //NON-NLS
     private static final int MAX_DB_NAME_LENGTH = 63;
 
     public class ImportCaseData {
@@ -316,7 +316,7 @@ public class SingleUserCaseConverter {
                 Statement check = postgreSQLConnection.createStatement();
                 ResultSet checkResult = check.executeQuery("SELECT * FROM blackboard_artifact_types WHERE artifact_type_id=" + value + " AND type_name LIKE '" + inputResultSet.getString(2) + "' AND display_name LIKE '" + inputResultSet.getString(3) + "'"); //NON-NLS
                 if (!checkResult.isBeforeFirst()) { // only insert if it doesn't exist
-                    String sql = "INSERT INTO blackboard_artifact_types (artifact_type_id, type_name, display_name) VALUES ("
+                    String sql = "INSERT INTO blackboard_artifact_types (artifact_type_id, type_name, display_name) VALUES (" //NON-NLS
                             + value + ", '"
                             + SleuthkitCase.escapeSingleQuotes(inputResultSet.getString(2)) + "',"
                             + " ? )"; //NON-NLS
@@ -347,7 +347,7 @@ public class SingleUserCaseConverter {
                 Statement check = postgreSQLConnection.createStatement();
                 ResultSet checkResult = check.executeQuery("SELECT * FROM blackboard_attribute_types WHERE attribute_type_id=" + value + " AND type_name LIKE '" + inputResultSet.getString(2) + "' AND display_name LIKE '" + inputResultSet.getString(3) + "'"); //NON-NLS
                 if (!checkResult.isBeforeFirst()) { // only insert if it doesn't exist
-                    String sql = "INSERT INTO blackboard_attribute_types (attribute_type_id, type_name, display_name) VALUES ("
+                    String sql = "INSERT INTO blackboard_attribute_types (attribute_type_id, type_name, display_name) VALUES (" //NON-NLS
                             + value + ", '"
                             + SleuthkitCase.escapeSingleQuotes(inputResultSet.getString(2)) + "',"
                             + " ? )"; //NON-NLS
@@ -377,7 +377,7 @@ public class SingleUserCaseConverter {
                 if (value > biggestPK) {
                     biggestPK = value;
                 }
-                outputStatement.executeUpdate("INSERT INTO tsk_objects (obj_id, par_obj_id, type) VALUES ("
+                outputStatement.executeUpdate("INSERT INTO tsk_objects (obj_id, par_obj_id, type) VALUES (" //NON-NLS
                         + value + ","
                         + getNullableLong(inputResultSet, 2) + ","
                         + inputResultSet.getInt(3) + ")"); //NON-NLS
@@ -397,7 +397,7 @@ public class SingleUserCaseConverter {
         while (inputResultSet.next()) {
             outputStatement = postgreSQLConnection.createStatement();
             try {
-                outputStatement.executeUpdate("INSERT INTO tsk_image_names (obj_id, name, sequence) VALUES ("
+                outputStatement.executeUpdate("INSERT INTO tsk_image_names (obj_id, name, sequence) VALUES (" //NON-NLS
                         + inputResultSet.getLong(1) + ",'"
                         + inputResultSet.getString(2) + "',"
                         + inputResultSet.getInt(3) + ")"); //NON-NLS
@@ -419,7 +419,7 @@ public class SingleUserCaseConverter {
                 if (value > biggestPK) {
                     biggestPK = value;
                 }
-                String sql = "INSERT INTO tsk_image_info (obj_id, type, ssize, tzone, size, md5, display_name) VALUES ("
+                String sql = "INSERT INTO tsk_image_info (obj_id, type, ssize, tzone, size, md5, display_name) VALUES (" //NON-NLS
                         + value + ","
                         + getNullableInt(inputResultSet, 2) + ","
                         + getNullableInt(inputResultSet, 3) + ","
@@ -454,7 +454,7 @@ public class SingleUserCaseConverter {
                 if (value > biggestPK) {
                     biggestPK = value;
                 }
-                String sql = "INSERT INTO tsk_fs_info (obj_id, img_offset, fs_type, block_size, block_count, root_inum, first_inum, last_inum, display_name) VALUES ("
+                String sql = "INSERT INTO tsk_fs_info (obj_id, img_offset, fs_type, block_size, block_count, root_inum, first_inum, last_inum, display_name) VALUES (" //NON-NLS
                         + value + ","
                         + inputResultSet.getLong(2) + ","
                         + inputResultSet.getInt(3) + ","
@@ -490,7 +490,7 @@ public class SingleUserCaseConverter {
                 if (value > biggestPK) {
                     biggestPK = value;
                 }
-                outputStatement.executeUpdate("INSERT INTO tsk_files_path (obj_id, path) VALUES ("
+                outputStatement.executeUpdate("INSERT INTO tsk_files_path (obj_id, path) VALUES (" //NON-NLS
                         + value + ", '"
                         + SleuthkitCase.escapeSingleQuotes(inputResultSet.getString(2)) + "')"); //NON-NLS
             } catch (SQLException ex) {
@@ -513,7 +513,7 @@ public class SingleUserCaseConverter {
                 if (value > biggestPK) {
                     biggestPK = value;
                 }
-                String sql = "INSERT INTO tsk_files (obj_id, fs_obj_id, attr_type, attr_id, name, meta_addr, meta_seq, type, has_layout, has_path, dir_type, meta_type, dir_flags, meta_flags, size, ctime, crtime, atime, mtime, mode, uid, gid, md5, known, parent_path) VALUES ("
+                String sql = "INSERT INTO tsk_files (obj_id, fs_obj_id, attr_type, attr_id, name, meta_addr, meta_seq, type, has_layout, has_path, dir_type, meta_type, dir_flags, meta_flags, size, ctime, crtime, atime, mtime, mode, uid, gid, md5, known, parent_path) VALUES (" //NON-NLS
                         + value + ","
                         + getNullableLong(inputResultSet, 2) + ","
                         + getNullableInt(inputResultSet, 3) + ","
@@ -561,7 +561,7 @@ public class SingleUserCaseConverter {
         while (inputResultSet.next()) {
             outputStatement = postgreSQLConnection.createStatement();
             try {
-                outputStatement.executeUpdate("INSERT INTO tsk_file_layout (obj_id, byte_start, byte_len, sequence) VALUES ("
+                outputStatement.executeUpdate("INSERT INTO tsk_file_layout (obj_id, byte_start, byte_len, sequence) VALUES (" //NON-NLS
                         + inputResultSet.getLong(1) + ","
                         + inputResultSet.getLong(2) + ","
                         + inputResultSet.getLong(3) + ","
@@ -583,7 +583,7 @@ public class SingleUserCaseConverter {
                 Statement check = postgreSQLConnection.createStatement();
                 ResultSet checkResult = check.executeQuery("SELECT * FROM tsk_db_info WHERE schema_ver=" + inputResultSet.getInt(1) + " AND tsk_ver=" + inputResultSet.getInt(2)); //NON-NLS
                 if (!checkResult.isBeforeFirst()) { // only insert if it doesn't exist
-                    outputStatement.executeUpdate("INSERT INTO tsk_db_info (schema_ver, tsk_ver) VALUES ("
+                    outputStatement.executeUpdate("INSERT INTO tsk_db_info (schema_ver, tsk_ver) VALUES (" //NON-NLS
                             + getNullableInt(inputResultSet, 1) + ","
                             + getNullableInt(inputResultSet, 2) + ")"); //NON-NLS
                 }
@@ -605,7 +605,7 @@ public class SingleUserCaseConverter {
                 if (value > biggestPK) {
                     biggestPK = value;
                 }
-                String sql = "INSERT INTO tag_names (tag_name_id, display_name, description, color) VALUES ("
+                String sql = "INSERT INTO tag_names (tag_name_id, display_name, description, color) VALUES (" //NON-NLS
                         + value + ","
                         + " ? ,'"
                         + SleuthkitCase.escapeSingleQuotes(inputResultSet.getString(3)) + "','"
@@ -636,7 +636,7 @@ public class SingleUserCaseConverter {
                 if (value > biggestPK) {
                     biggestPK = value;
                 }
-                outputStatement.executeUpdate("INSERT INTO reports (report_id, path, crtime, src_module_name, report_name) VALUES ("
+                outputStatement.executeUpdate("INSERT INTO reports (report_id, path, crtime, src_module_name, report_name) VALUES (" //NON-NLS
                         + value + ", '"
                         + SleuthkitCase.escapeSingleQuotes(inputResultSet.getString(2)) + "',"
                         + inputResultSet.getInt(3) + ",'"
@@ -664,7 +664,7 @@ public class SingleUserCaseConverter {
                 if (value > biggestPK) {
                     biggestPK = value;
                 }
-                outputStatement.executeUpdate("INSERT INTO blackboard_artifacts (artifact_id, obj_id, artifact_type_id) VALUES ("
+                outputStatement.executeUpdate("INSERT INTO blackboard_artifacts (artifact_id, obj_id, artifact_type_id) VALUES (" //NON-NLS
                         + value + ","
                         + inputResultSet.getLong(2) + ","
                         + inputResultSet.getLong(3) + ")"); //NON-NLS
@@ -684,7 +684,7 @@ public class SingleUserCaseConverter {
 
         while (inputResultSet.next()) {
             try {
-                String sql = "INSERT INTO blackboard_attributes (artifact_id, artifact_type_id, source, context, attribute_type_id, value_type, value_byte, value_text, value_int32, value_int64, value_double) VALUES ("
+                String sql = "INSERT INTO blackboard_attributes (artifact_id, artifact_type_id, source, context, attribute_type_id, value_type, value_byte, value_text, value_int32, value_int64, value_double) VALUES (" //NON-NLS
                         + inputResultSet.getLong(1) + ","
                         + inputResultSet.getLong(2) + ","
                         + " ? ,"
@@ -722,7 +722,7 @@ public class SingleUserCaseConverter {
                 if (value > biggestPK) {
                     biggestPK = value;
                 }
-                String sql = "INSERT INTO tsk_vs_parts (obj_id, addr, start, length, descr, flags) VALUES ("
+                String sql = "INSERT INTO tsk_vs_parts (obj_id, addr, start, length, descr, flags) VALUES (" //NON-NLS
                         + value + ","
                         + inputResultSet.getLong(2) + ","
                         + inputResultSet.getLong(3) + ","
@@ -754,7 +754,7 @@ public class SingleUserCaseConverter {
                 if (value > biggestPK) {
                     biggestPK = value;
                 }
-                outputStatement.executeUpdate("INSERT INTO tsk_vs_info (obj_id, vs_type, img_offset, block_size) VALUES ("
+                outputStatement.executeUpdate("INSERT INTO tsk_vs_info (obj_id, vs_type, img_offset, block_size) VALUES (" //NON-NLS
                         + value + ","
                         + inputResultSet.getInt(2) + ","
                         + inputResultSet.getLong(3) + ","
@@ -780,7 +780,7 @@ public class SingleUserCaseConverter {
                 if (value > biggestPK) {
                     biggestPK = value;
                 }
-                String sql = "INSERT INTO tsk_files_derived (obj_id, derived_id, rederive) VALUES ("
+                String sql = "INSERT INTO tsk_files_derived (obj_id, derived_id, rederive) VALUES (" //NON-NLS
                         + value + ","
                         + inputResultSet.getLong(2) + ","
                         + " ? )"; //NON-NLS
@@ -808,7 +808,7 @@ public class SingleUserCaseConverter {
                 if (value > biggestPK) {
                     biggestPK = value;
                 }
-                String sql = "INSERT INTO tsk_files_derived_method (derived_id, tool_name, tool_version, other) VALUES ("
+                String sql = "INSERT INTO tsk_files_derived_method (derived_id, tool_name, tool_version, other) VALUES (" //NON-NLS
                         + value + ", '"
                         + inputResultSet.getString(2) + "','"
                         + inputResultSet.getString(3) + "',"
@@ -838,7 +838,7 @@ public class SingleUserCaseConverter {
                 if (value > biggestPK) {
                     biggestPK = value;
                 }
-                outputStatement.executeUpdate("INSERT INTO content_tags (tag_id, obj_id, tag_name_id, comment, begin_byte_offset, end_byte_offset) VALUES ("
+                outputStatement.executeUpdate("INSERT INTO content_tags (tag_id, obj_id, tag_name_id, comment, begin_byte_offset, end_byte_offset) VALUES (" //NON-NLS
                         + value + ","
                         + inputResultSet.getLong(2) + ","
                         + inputResultSet.getLong(3) + ",'"
@@ -867,7 +867,7 @@ public class SingleUserCaseConverter {
                 if (value > biggestPK) {
                     biggestPK = value;
                 }
-                outputStatement.executeUpdate("INSERT INTO blackboard_artifact_tags (tag_id, artifact_id, tag_name_id, comment) VALUES ("
+                outputStatement.executeUpdate("INSERT INTO blackboard_artifact_tags (tag_id, artifact_id, tag_name_id, comment) VALUES (" //NON-NLS
                         + value + ","
                         + inputResultSet.getLong(2) + ","
                         + inputResultSet.getLong(3) + ",'"
@@ -1140,7 +1140,7 @@ public class SingleUserCaseConverter {
      * @throws SQLException if unable to open
      */
     private static Connection getPostgreSQLConnection(ImportCaseData icd, String dbName) throws SQLException {
-        return DriverManager.getConnection("jdbc:postgresql://"
+        return DriverManager.getConnection("jdbc:postgresql://" //NON-NLS
                 + icd.getDb().getHost() + ":"
                 + icd.getDb().getPort() + "/"
                 + dbName,

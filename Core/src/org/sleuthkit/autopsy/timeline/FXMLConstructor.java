@@ -85,16 +85,16 @@ public class FXMLConstructor {
             try {
                 fxmlLoader.load();
             } catch (IOException exception) {
-                LOGGER.log(Level.SEVERE, "FXMLConstructor was unable to load FXML, falling back on default Class Loader, and trying again.", exception);
+                LOGGER.log(Level.SEVERE, "FXMLConstructor was unable to load FXML, falling back on default Class Loader, and trying again.", exception); //NON-NLS
                 try {
                     fxmlLoader.setClassLoader(FXMLLoader.getDefaultClassLoader());
                     fxmlLoader.load();
                 } catch (IOException ex) {
-                    LOGGER.log(Level.SEVERE, "FXMLConstructor was unable to load FXML, node initialization may not be complete.", ex);
+                    LOGGER.log(Level.SEVERE, "FXMLConstructor was unable to load FXML, node initialization may not be complete.", ex); //NON-NLS
                 }
             }
         } catch (MalformedURLException ex) {
-            LOGGER.log(Level.SEVERE, "FXMLConstructor was unable to load FXML, node initialization may not be complete.", ex);
+            LOGGER.log(Level.SEVERE, "FXMLConstructor was unable to load FXML, node initialization may not be complete.", ex); //NON-NLS
         }
     }
 
