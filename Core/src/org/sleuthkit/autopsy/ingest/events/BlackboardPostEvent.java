@@ -99,7 +99,7 @@ public final class BlackboardPostEvent extends AutopsyEvent implements Serializa
             eventData = new ModuleDataEvent(data.moduleName, data.artifactTypeId, !artifacts.isEmpty() ? artifacts : null);
             return eventData;
         } catch (IllegalStateException | TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error doing lazy load for remote event", ex);
+            logger.log(Level.SEVERE, "Error doing lazy load for remote event", ex); //NON-NLS
             return null;
         }
     }
