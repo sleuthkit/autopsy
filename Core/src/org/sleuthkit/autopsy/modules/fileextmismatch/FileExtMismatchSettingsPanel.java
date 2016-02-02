@@ -166,7 +166,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
 
         jPanel1.setPreferredSize(new java.awt.Dimension(687, 450));
 
-        saveButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/fileextmismatch/save16.png"))); // NOI18N
+        saveButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/fileextmismatch/save16.png"))); // NOI18N NON-NLS
         saveButton.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.saveButton.text")); // NOI18N
         saveButton.setEnabled(false);
         saveButton.addActionListener(new java.awt.event.ActionListener() {

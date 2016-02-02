@@ -81,7 +81,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
                 }
             }
             if (null == parentDataSourceId) {
-                throw new IngestModuleException(String.format("Data source %s missing unique id", context.getDataSource().getName()));
+                throw new IngestModuleException(String.format("Data source %s missing unique id", context.getDataSource().getName())); //NON-NLS
             }
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
             String timeStamp = dateFormat.format(Calendar.getInstance().getTime());
@@ -108,19 +108,19 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
         // Not sure how long it will take for search to complete.
         progressBar.switchToIndeterminate();
 
-        logger.log(Level.INFO, "Looking for virtual machine files in data source {0}", dataSource.getName());
+        logger.log(Level.INFO, "Looking for virtual machine files in data source {0}", dataSource.getName()); //NON-NLS
         
         try {
             // look for all VM files
             vmFiles = findVirtualMachineFiles(dataSource);
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error querying case database", ex);
+            logger.log(Level.SEVERE, "Error querying case database", ex); //NON-NLS
             return ProcessResult.ERROR;
         }
 
         if (vmFiles.isEmpty()) {
             // no VM files found
-            logger.log(Level.INFO, "No virtual machine files found in data source {0}", dataSource.getName());
+            logger.log(Level.INFO, "No virtual machine files found in data source {0}", dataSource.getName()); //NON-NLS
             return ProcessResult.OK;
         }
         // display progress for saving each VM file to disk
@@ -133,7 +133,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
                 break;
             }
             
-            logger.log(Level.INFO, "Saving virtual machine file {0} to disk", vmFile.getName());
+            logger.log(Level.INFO, "Saving virtual machine file {0} to disk", vmFile.getName()); //NON-NLS
 
             // get vmFolderPathInsideTheImage to the folder where VM is located 
             String vmFolderPathInsideTheImage = vmFile.getParentPath();
@@ -155,15 +155,16 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
             try {
                 writeVirtualMachineToDisk(vmFile, outputFolderForThisVM);
             } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Failed to write virtual machine file "+vmFile.getName()+" to folder "+outputFolderForThisVM, ex);
-                MessageNotifyUtil.Notify.error("Failed to extract virtual machine file", String.format("Failed to write virtual machine file %s to disk", vmFile.getName()));
+                logger.log(Level.SEVERE, "Failed to write virtual machine file "+vmFile.getName()+" to folder "+outputFolderForThisVM, ex); //NON-NLS
+                MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.msgNotify.failedExtractVM.title.txt"),
+                        NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.msgNotify.failedExtractVM.msg.txt", vmFile.getName()));
             }
 
             // Update progress bar
             numFilesSaved++;
             progressBar.progress(NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.exportingToDisk.message"), numFilesSaved);
         }
-        logger.log(Level.INFO, "Finished saving virtual machine files to disk");
+        logger.log(Level.INFO, "Finished saving virtual machine files to disk"); //NON-NLS
 
         // update progress bar
         progressBar.switchToDeterminate(imageFolderToOutputFolder.size());
@@ -180,26 +181,27 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
             List<String> vmFilesToIngest = VirtualMachineFinder.identifyVirtualMachines(Paths.get(folder));
             for (String file : vmFilesToIngest) {
                 try {
-                    logger.log(Level.INFO, "Ingesting virtual machine file {0} in folder {1}", new Object[]{file, folder});
+                    logger.log(Level.INFO, "Ingesting virtual machine file {0} in folder {1}", new Object[]{file, folder}); //NON-NLS
                 
                     // for extracted virtual machines there is no manifest XML file to read data source ID from so we need to create one
                     numDataSourcesQueued++;
-                    String dataSourceID = parentDataSourceId + "-VM" + numDataSourcesQueued;
+                    String dataSourceID = parentDataSourceId + "-VM" + numDataSourcesQueued; //NON-NLS
                     // ingest the data sources  
                     ingestVirtualMachineImage(Paths.get(folder, file), dataSourceID);
-                    logger.log(Level.INFO, "Ingest complete for virtual machine file {0} in folder {1}", new Object[]{file, folder});
+                    logger.log(Level.INFO, "Ingest complete for virtual machine file {0} in folder {1}", new Object[]{file, folder}); //NON-NLS
                 } catch (InterruptedException ex) {
-                    logger.log(Level.INFO, "Interrupted while ingesting virtual machine file "+file+" in folder "+folder, ex);
+                    logger.log(Level.INFO, "Interrupted while ingesting virtual machine file "+file+" in folder "+folder, ex); //NON-NLS
                 } catch (IOException ex) {
-                    logger.log(Level.SEVERE, "Failed to ingest virtual machine file "+file+" in folder "+folder, ex);
-                    MessageNotifyUtil.Notify.error("Failed to ingest virtual machine", String.format("Failed to ingest virtual machine file %s", file));
+                    logger.log(Level.SEVERE, "Failed to ingest virtual machine file "+file+" in folder "+folder, ex); //NON-NLS
+                    MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.msgNotify.failedIngestVM.title.txt"),
+                            NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.msgNotify.failedIngestVM.msg.txt", file));
                 }
             }
             // Update progress bar
             numJobsQueued++;
             progressBar.progress(NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.queuingIngestJobs.message"), numJobsQueued);
         }
-        logger.log(Level.INFO, "VMExtractorIngestModule completed processing of data source {0}", dataSource.getName());
+        logger.log(Level.INFO, "VMExtractorIngestModule completed processing of data source {0}", dataSource.getName()); //NON-NLS
         return ProcessResult.OK;
     }
 
@@ -278,7 +280,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
             List<Content> dataSourceContent = new ArrayList<>(dspCallback.vmDataSources);
             IngestJobSettings ingestJobSettings = new IngestJobSettings(context.getExecutionContext());
             for (String warning : ingestJobSettings.getWarnings()) {
-                logger.log(Level.WARNING, String.format("Ingest job settings warning for virtual machine file %s : %s", vmFile.toString(), warning));
+                logger.log(Level.WARNING, String.format("Ingest job settings warning for virtual machine file %s : %s", vmFile.toString(), warning)); //NON-NLS
             }
             IngestServices.getInstance().postMessage(IngestMessage.createMessage(IngestMessage.MessageType.INFO,
                     VMExtractorIngestModuleFactory.getModuleName(),
@@ -333,7 +335,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
         @Override
         public void done(DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errList, List<Content> content) {
             for (String error : errList) {
-                String logMessage = String.format("Data source processor error for virtual machine file %s: %s", vmFile.toString(), error);
+                String logMessage = String.format("Data source processor error for virtual machine file %s: %s", vmFile.toString(), error); //NON-NLS
                 if (DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS == result) {
                     logger.log(Level.SEVERE, logMessage);
                 } else {

@@ -74,7 +74,7 @@ public class VolumeNode extends AbstractContentNode<Volume> {
         // Listen for case events so that we can detect when case is closed
         Case.addPropertyChangeListener(pcl);
     }
-    
+
     private void removeListeners() {
         IngestManager.getInstance().removeIngestModuleEventListener(pcl);
         Case.removePropertyChangeListener(pcl);
@@ -190,8 +190,13 @@ public class VolumeNode extends AbstractContentNode<Volume> {
         return v.visit(this);
     }
 
-    @Override
-    public String getItemType() {
-        return "Volume"; //NON-NLS
-    }
+    /*
+     * TODO (AUT-1849): Correct or remove peristent column reordering code
+     *
+     * Added to support this feature.
+     */
+//    @Override
+//    public String getItemType() {
+//        return "Volume"; //NON-NLS
+//    }
 }
