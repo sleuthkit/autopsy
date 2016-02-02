@@ -192,7 +192,7 @@ class MissingImageDialog extends javax.swing.JDialog {
             }
         });
 
-        lbWarning.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        lbWarning.setFont(lbWarning.getFont().deriveFont(Font.BOLD, 12));
         lbWarning.setForeground(new java.awt.Color(244, 0, 0));
         org.openide.awt.Mnemonics.setLocalizedText(lbWarning, org.openide.util.NbBundle.getMessage(MissingImageDialog.class, "MissingImageDialog.lbWarning.text")); // NOI18N
         lbWarning.setToolTipText(org.openide.util.NbBundle.getMessage(MissingImageDialog.class, "MissingImageDialog.lbWarning.toolTipText")); // NOI18N
@@ -223,7 +223,7 @@ class MissingImageDialog extends javax.swing.JDialog {
                 .addGap(18, 18, 18))
         );
 
-        titleLabel.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, 12));
         org.openide.awt.Mnemonics.setLocalizedText(titleLabel, org.openide.util.NbBundle.getMessage(MissingImageDialog.class, "MissingImageDialog.titleLabel.text")); // NOI18N
 
         titleSeparator.setForeground(new java.awt.Color(102, 102, 102));

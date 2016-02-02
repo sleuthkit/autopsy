@@ -52,7 +52,7 @@ public class ServicesMonitor {
     private static final Logger logger = Logger.getLogger(ServicesMonitor.class.getName());
     private final ScheduledThreadPoolExecutor periodicTasksExecutor;
 
-    private static final String PERIODIC_TASK_THREAD_NAME = "services-monitor-periodic-task-%d";
+    private static final String PERIODIC_TASK_THREAD_NAME = "services-monitor-periodic-task-%d"; //NON-NLS
     private static final int NUMBER_OF_PERIODIC_TASK_THREADS = 1;
     private static final long CRASH_DETECTION_INTERVAL_MINUTES = 2;
 
@@ -84,18 +84,18 @@ public class ServicesMonitor {
          * changes. New value is set to updated ServiceStatus, old value is
          * null.
          */
-        REMOTE_CASE_DATABASE("Multi-user case database service"),
+        REMOTE_CASE_DATABASE(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.remoteCaseDatabase.displayName.text")),
         /**
          * Property change event fired when remote keyword search service status
          * changes. New value is set to updated ServiceStatus, old value is
          * null.
          */
-        REMOTE_KEYWORD_SEARCH("Multi-user keyword search service"),
+        REMOTE_KEYWORD_SEARCH(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.remoteKeywordSearch.displayName.text")),
         /**
          * Property change event fired when messaging service status changes.
          * New value is set to updated ServiceStatus, old value is null.
          */
-        MESSAGING("Messaging service");
+        MESSAGING(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.messaging.displayName.text"));
 
         private final String displayName;
 
@@ -244,7 +244,7 @@ public class ServicesMonitor {
             info = UserPreferences.getDatabaseConnectionInfo();
         } catch (UserPreferencesException ex) {
             logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
-            setServiceStatus(Service.REMOTE_CASE_DATABASE.toString(), ServiceStatus.DOWN.toString(), "Error accessing case database connection info");
+            setServiceStatus(Service.REMOTE_CASE_DATABASE.toString(), ServiceStatus.DOWN.toString(), NbBundle.getMessage(this.getClass(), "ServicesMonitor.databaseConnectionInfo.error.msg"));
             return;
         }
         try {
@@ -289,7 +289,7 @@ public class ServicesMonitor {
             info = UserPreferences.getMessageServiceConnectionInfo();
         } catch (UserPreferencesException ex) {
             logger.log(Level.SEVERE, "Error accessing messaging service connection info", ex); //NON-NLS
-            setServiceStatus(Service.MESSAGING.toString(), ServiceStatus.DOWN.toString(), "Error accessing messaging service connection info");
+            setServiceStatus(Service.MESSAGING.toString(), ServiceStatus.DOWN.toString(), NbBundle.getMessage(this.getClass(), "ServicesMonitor.messagingService.connErr.text"));
             return;
         }
 

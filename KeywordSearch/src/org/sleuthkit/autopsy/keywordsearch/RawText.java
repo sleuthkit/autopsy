@@ -156,7 +156,7 @@ class RawText implements IndexedText {
         } catch (SolrServerException | NoOpenCoreException ex) {
             logger.log(Level.WARNING, "Couldn't get extracted content.", ex); //NON-NLS
         }
-        return "Error getting text";
+        return NbBundle.getMessage(this.getClass(), "RawText.getText.error.msg");
     }
 
     @Override
