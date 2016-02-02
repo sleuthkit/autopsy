@@ -96,10 +96,10 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
  */
 public final class EventDetailsChart extends XYChart<DateTime, EventStripe> implements TimeLineChart<DateTime> {
 
-    private static final String styleSheet = GuideLine.class.getResource("EventsDetailsChart.css").toExternalForm();
+    private static final String styleSheet = GuideLine.class.getResource("EventsDetailsChart.css").toExternalForm(); //NON-NLS
     private static final Image HIDE = new Image("/org/sleuthkit/autopsy/timeline/images/eye--minus.png"); // NON-NLS
     private static final Image SHOW = new Image("/org/sleuthkit/autopsy/timeline/images/eye--plus.png"); // NON-NLS
-    private static final Image MARKER = new Image("/org/sleuthkit/autopsy/timeline/images/marker.png", 16, 16, true, true, true);
+    private static final Image MARKER = new Image("/org/sleuthkit/autopsy/timeline/images/marker.png", 16, 16, true, true, true); //NON-NLS
     private static final int PROJECTED_LINE_Y_OFFSET = 5;
     private static final int PROJECTED_LINE_STROKE_WIDTH = 5;
     private static final int MINIMUM_EVENT_NODE_GAP = 4;
@@ -725,11 +725,13 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
         }
     }
 
+    @NbBundle.Messages({"HideDescriptionAction.displayName=Hide",
+            "HideDescriptionAction.displayMsg=Hide this group from the details view."})
     class HideDescriptionAction extends Action {
 
         HideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
-            super("Hide");
-            setLongText("Hide this group from the details view.");
+            super(Bundle.HideDescriptionAction_displayName());
+            setLongText(Bundle.HideDescriptionAction_displayMsg());
             setGraphic(new ImageView(HIDE));
             setEventHandler((ActionEvent t) -> {
                 final DescriptionFilter testFilter = new DescriptionFilter(
@@ -749,10 +751,11 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
         }
     }
 
+    @NbBundle.Messages({"UnhideDescriptionAction.displayName=Unhide"})
     class UnhideDescriptionAction extends Action {
 
         UnhideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
-            super("Unhide");
+            super(Bundle.UnhideDescriptionAction_displayName());
             setGraphic(new ImageView(SHOW));
             setEventHandler((ActionEvent t) ->
                     getController().getQuickHideFilters().stream()

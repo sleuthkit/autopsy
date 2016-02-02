@@ -78,7 +78,7 @@ class EventNode extends DisplayableItemNode {
             try {
                 timePropery.setValue(getDateTimeString());
             } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-                LOGGER.log(Level.SEVERE, "unexpected error setting date/time property on EventNode explorer node", ex);
+                LOGGER.log(Level.SEVERE, "unexpected error setting date/time property on EventNode explorer node", ex); //NON-NLS
             }
         });
 

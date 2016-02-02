@@ -207,7 +207,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
                         descLOD.set(loadedDescriptionLoD);
                     }
                 } catch (InterruptedException | ExecutionException ex) {
-                    LOGGER.log(Level.SEVERE, "Error loading subnodes", ex);
+                    LOGGER.log(Level.SEVERE, "Error loading subnodes", ex); //NON-NLS
                 }
                 chart.requestChartLayout();
                 chart.setCursor(null);
