@@ -85,7 +85,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
     }
 
     static String getIconFilePath(int typeID) {
-        String filePath = "org/sleuthkit/autopsy/images/";
+        String filePath = "org/sleuthkit/autopsy/images/"; //NON-NLS
         if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()) {
             return filePath + "bookmarks.png"; //NON-NLS
         } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()) {
@@ -183,10 +183,15 @@ public class ExtractedContent implements AutopsyVisitableItem {
             return s;
         }
 
-        @Override
-        public String getItemType() {
-            return "ExtractedContentRoot";
-        }
+        /*
+         * TODO (AUT-1849): Correct or remove peristent column reordering code
+         *
+         * Added to support this feature.
+         */
+//        @Override
+//        public String getItemType() {
+//            return "ExtractedContentRoot"; //NON-NLS
+//        }
     }
 
     /**
@@ -400,10 +405,15 @@ public class ExtractedContent implements AutopsyVisitableItem {
             return true;
         }
 
-        @Override
-        public String getItemType() {
-            return type.getDisplayName();
-        }
+        /*
+         * TODO (AUT-1849): Correct or remove peristent column reordering code
+         *
+         * Added to support this feature.
+         */
+//        @Override
+//        public String getItemType() {
+//            return type.getDisplayName();
+//        }
     }
 
     /**
