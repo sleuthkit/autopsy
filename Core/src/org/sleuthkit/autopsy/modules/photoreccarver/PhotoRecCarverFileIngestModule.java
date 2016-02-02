@@ -214,7 +214,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                     "\"" + outputDirPath.toAbsolutePath() + File.separator + PHOTOREC_RESULTS_BASE + "\"",
                     "/cmd", // NON-NLS
                     "\"" + tempFilePath.toFile() + "\"",
-                    "search");  // NON_NLS
+                    "search");  // NON-NLS
 
             // Add environment variable to force PhotoRec to run with the same permissions Autopsy uses
             processAndSettings.environment().put("__COMPAT_LAYER", "RunAsInvoker"); //NON-NLS

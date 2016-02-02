@@ -32,6 +32,7 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.opencv.core.Mat;
 import org.opencv.highgui.VideoCapture;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
 import static org.sleuthkit.autopsy.coreutils.ImageUtils.isMediaThumbnailSupported;
@@ -44,24 +45,24 @@ import org.sleuthkit.datamodel.AbstractFile;
 public class VideoUtils {
 
     private static final List<String> SUPPORTED_VIDEO_EXTENSIONS =
-            Arrays.asList("mov", "m4v", "flv", "mp4", "3gp", "avi", "mpg",
-                    "mpeg", "asf", "divx", "rm", "moov", "wmv", "vob", "dat",
-                    "m1v", "m2v", "m4v", "mkv", "mpe", "yop", "vqa", "xmv",
-                    "mve", "wtv", "webm", "vivo", "vc1", "seq", "thp", "san",
-                    "mjpg", "smk", "vmd", "sol", "cpk", "sdp", "sbg", "rtsp",
-                    "rpl", "rl2", "r3d", "mlp", "mjpeg", "hevc", "h265", "265",
-                    "h264", "h263", "h261", "drc", "avs", "pva", "pmp", "ogg",
-                    "nut", "nuv", "nsv", "mxf", "mtv", "mvi", "mxg", "lxf",
-                    "lvf", "ivf", "mve", "cin", "hnm", "gxf", "fli", "flc",
-                    "flx", "ffm", "wve", "uv2", "dxa", "dv", "cdxl", "cdg",
-                    "bfi", "jv", "bik", "vid", "vb", "son", "avs", "paf", "mm",
+            Arrays.asList("mov", "m4v", "flv", "mp4", "3gp", "avi", "mpg", //NON-NLS
+                    "mpeg", "asf", "divx", "rm", "moov", "wmv", "vob", "dat", //NON-NLS
+                    "m1v", "m2v", "m4v", "mkv", "mpe", "yop", "vqa", "xmv", //NON-NLS
+                    "mve", "wtv", "webm", "vivo", "vc1", "seq", "thp", "san", //NON-NLS
+                    "mjpg", "smk", "vmd", "sol", "cpk", "sdp", "sbg", "rtsp", //NON-NLS
+                    "rpl", "rl2", "r3d", "mlp", "mjpeg", "hevc", "h265", "265", //NON-NLS
+                    "h264", "h263", "h261", "drc", "avs", "pva", "pmp", "ogg", //NON-NLS
+                    "nut", "nuv", "nsv", "mxf", "mtv", "mvi", "mxg", "lxf", //NON-NLS
+                    "lvf", "ivf", "mve", "cin", "hnm", "gxf", "fli", "flc", //NON-NLS
+                    "flx", "ffm", "wve", "uv2", "dxa", "dv", "cdxl", "cdg", //NON-NLS
+                    "bfi", "jv", "bik", "vid", "vb", "son", "avs", "paf", "mm", //NON-NLS
                     "flm", "tmv", "4xm");  //NON-NLS
 
     private static final SortedSet<String> SUPPORTED_VIDEO_MIME_TYPES = new TreeSet<>(
-            Arrays.asList("application/x-shockwave-flash", "video/x-m4v", "video/x-flv", "video/quicktime", "video/avi", "video/msvideo", "video/x-msvideo",
+            Arrays.asList("application/x-shockwave-flash", "video/x-m4v", "video/x-flv", "video/quicktime", "video/avi", "video/msvideo", "video/x-msvideo", //NON-NLS
                     "video/mp4", "video/x-ms-wmv", "video/mpeg", "video/asf")); //NON-NLS
 
-    private static final List<String> CONDITIONAL_MIME_TYPES = Arrays.asList("application/octet-stream");
+    private static final List<String> CONDITIONAL_MIME_TYPES = Arrays.asList("application/octet-stream"); //NON-NLS
 
     public static List<String> getSupportedVideoExtensions() {
         return SUPPORTED_VIDEO_EXTENSIONS;
@@ -83,7 +84,7 @@ public class VideoUtils {
     }
 
     public static File getTempVideoFile(AbstractFile file) {
-        return Paths.get(Case.getCurrentCase().getTempDirectory(), "videos", file.getId() + "." + file.getNameExtension()).toFile();
+        return Paths.get(Case.getCurrentCase().getTempDirectory(), "videos", file.getId() + "." + file.getNameExtension()).toFile(); //NON-NLS
     }
 
     public static boolean isVideoThumbnailSupported(AbstractFile file) {
@@ -96,7 +97,7 @@ public class VideoUtils {
         try {
             if (tempFile.exists() == false || tempFile.length() < file.getSize()) {
                 com.google.common.io.Files.createParentDirs(tempFile);
-                ProgressHandle progress = ProgressHandleFactory.createHandle("extracting temporary file " + file.getName());
+                ProgressHandle progress = ProgressHandleFactory.createHandle(NbBundle.getMessage(VideoUtils.class, "VideoUtils.genVideoThumb.progress.text", file.getName()));
                 progress.start(100);
                 try {
                     ContentUtils.writeToFile(file, tempFile, progress, null, true);
