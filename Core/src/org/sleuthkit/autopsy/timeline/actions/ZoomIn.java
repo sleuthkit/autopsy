@@ -29,7 +29,7 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
  */
 public class ZoomIn extends Action {
 
-    private static final Image MAGNIFIER_IN = new Image("/org/sleuthkit/autopsy/timeline/images/magnifier-zoom-in-green.png"); //NOI18N
+    private static final Image MAGNIFIER_IN = new Image("/org/sleuthkit/autopsy/timeline/images/magnifier-zoom-in-green.png"); //NOI18N NON-NLS
 
     @NbBundle.Messages({"ZoomIn.longText=Zoom in to view about half as much time.",
         "ZoomIn.action.text=Zoom in"})

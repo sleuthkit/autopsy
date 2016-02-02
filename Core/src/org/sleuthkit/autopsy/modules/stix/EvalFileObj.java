@@ -173,7 +173,7 @@ class EvalFileObj extends EvaluatableObject {
                 if (h.getSimpleHashValue() != null) {
                     if (h.getType().getValue().equals("MD5")) { //NON-NLS
                         String newClause = "";
-                        if (h.getSimpleHashValue().getValue().toString().toLowerCase().contains("##comma##")) {
+                        if (h.getSimpleHashValue().getValue().toString().toLowerCase().contains("##comma##")) { //NON-NLS
                             String[] parts = h.getSimpleHashValue().getValue().toString().toLowerCase().split("##comma##"); //NON-NLS
                             String hashList = "";
                             for (String s : parts) {
@@ -182,7 +182,7 @@ class EvalFileObj extends EvaluatableObject {
                                 }
                                 hashList += "\'" + s + "\'";
                             }
-                            newClause = "md5 IN (" + hashList + ")";
+                            newClause = "md5 IN (" + hashList + ")"; //NON-NLS
                         } else {
                             newClause = "md5=\'" + h.getSimpleHashValue().getValue().toString().toLowerCase() + "\'"; //NON-NLS
                         }
