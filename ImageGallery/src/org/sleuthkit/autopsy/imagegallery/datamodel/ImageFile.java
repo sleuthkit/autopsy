@@ -46,7 +46,7 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
 
     @Override
     String getMessageTemplate(final Exception exception) {
-        return "Failed to read image {0}: " + exception.toString();
+        return "Failed to read image {0}: " + exception.toString(); //NON-NLS
     }
 
     @Override
