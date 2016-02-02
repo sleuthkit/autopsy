@@ -32,26 +32,50 @@ import org.openide.windows.WindowManager;
 import java.awt.Cursor;
 
 /**
- * Panel show from the splash dialog that shows recent cases and allows them to
- * be opened.
+ * Panel used by the the open recent case option of the start window.
  */
-final class OpenRecentCasePanel extends javax.swing.JPanel {
+class OpenRecentCasePanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(OpenRecentCasePanel.class.getName());
     private static OpenRecentCasePanel instance;
     private static String[] caseNames;
     private static String[] casePaths;
-    private static final Logger logger = Logger.getLogger(OpenRecentCasePanel.class.getName());
     private RecentCasesTableModel model;
 
+    /**
+     * Constructs a panel used by the the open recent case option of the start
+     * window.
+     */
     private OpenRecentCasePanel() {
         initComponents();
+    }
+
+    /*
+     * Gets the singleton instance of the panel used by the the open recent case
+     * option of the start window.
+     */
+    static OpenRecentCasePanel getInstance() {
+        if (instance == null) {
+            instance = new OpenRecentCasePanel();
+        }
+        instance.refreshRecentCasesTable();
+        return instance;
+    }
+
+    /**
+     * Adds an action listener to the cancel button.
+     *
+     * @param listener An action listener.
+     */
+    void setCloseButtonActionListener(ActionListener listener) {
+        this.cancelButton.addActionListener(listener);
     }
 
     /**
      * Retrieves all the recent cases and adds them to the table.
      */
-    private void generateRecentCases() {
+    private void refreshRecentCasesTable() {
         caseNames = RecentCases.getInstance().getRecentCaseNames();
         casePaths = RecentCases.getInstance().getRecentCasePaths();
         model = new RecentCasesTableModel();
@@ -70,46 +94,35 @@ final class OpenRecentCasePanel extends javax.swing.JPanel {
         }
     }
 
-    static OpenRecentCasePanel getInstance() {
-        if (instance == null) {
-            instance = new OpenRecentCasePanel();
-        }
-        instance.generateRecentCases(); // refresh the case list
-        return instance;
-    }
-
-    // Open the selected case
+    /*
+     * Opens the selected case.
+     */
     private void openCase() {
         if (casePaths.length < 1) {
-            logger.log(Level.INFO, "No Case paths exist, cannot open the case"); //NON-NLS
             return;
         }
         final String casePath = casePaths[imagesTable.getSelectedRow()];
         final String caseName = caseNames[imagesTable.getSelectedRow()];
         if (!casePath.equals("")) {
-            // Close the startup menu
             try {
                 StartupWindowProvider.getInstance().close();
                 CueBannerPanel.closeOpenRecentCasesWindow();
             } catch (Exception ex) {
-                logger.log(Level.WARNING, "Error: couldn't open case: " + caseName, ex); //NON-NLS
+                logger.log(Level.SEVERE, "Error closing start up window", ex); //NON-NLS
             }
-            // Open the recent cases
+
+            /*
+             * Open the case.
+             */
             if (caseName.equals("") || casePath.equals("") || (!new File(casePath).exists())) {
                 JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                        NbBundle.getMessage(this.getClass(),
-                                "OpenRecentCasePanel.openCase.msgDlg.caseDoesntExist.msg",
-                                caseName),
-                        NbBundle.getMessage(this.getClass(),
-                                "OpenRecentCasePanel.openCase.msgDlg.err"),
+                        NbBundle.getMessage(this.getClass(), "RecentItems.openRecentCase.msgDlg.text", caseName),
+                        NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"),
                         JOptionPane.ERROR_MESSAGE);
                 RecentCases.getInstance().removeRecentCase(caseName, casePath); // remove the recent case if it doesn't exist anymore
-
-                //if case is not opened, open the start window
                 if (Case.isCaseOpen() == false) {
                     StartupWindowProvider.getInstance().open();
                 }
-
             } else {
                 SwingUtilities.invokeLater(() -> {
                     WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -119,9 +132,13 @@ final class OpenRecentCasePanel extends javax.swing.JPanel {
                         Case.open(casePath);
                     } catch (CaseActionException ex) {
                         SwingUtilities.invokeLater(() -> {
+                            logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", casePath), ex); //NON-NLS                            
                             WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), ex.getMessage(),
-                                    NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), JOptionPane.ERROR_MESSAGE); //NON-NLS
+                            JOptionPane.showMessageDialog(
+                                    WindowManager.getDefault().getMainWindow(),
+                                    ex.getMessage(), // Should be user-friendly
+                                    NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), //NON-NLS
+                                    JOptionPane.ERROR_MESSAGE); 
                             if (!Case.isCaseOpen()) {
                                 StartupWindowProvider.getInstance().open();
                             }
@@ -133,21 +150,15 @@ final class OpenRecentCasePanel extends javax.swing.JPanel {
     }
 
     /**
-     * Sets the Close button action listener.
-     *
-     * @param e the action listener
-     */
-    public void setCloseButtonActionListener(ActionListener e) {
-        this.cancelButton.addActionListener(e);
-    }
-
-    /**
      * Table model to keep track of recent cases.
      */
     private class RecentCasesTableModel extends AbstractTableModel {
 
         private static final long serialVersionUID = 1L;
 
+        /**
+         * @inheritDoc
+         */
         @Override
         public int getRowCount() {
             int count = 0;
@@ -159,11 +170,17 @@ final class OpenRecentCasePanel extends javax.swing.JPanel {
             return count;
         }
 
+        /**
+         * @inheritDoc
+         */
         @Override
         public int getColumnCount() {
             return 2;
         }
 
+        /**
+         * @inheritDoc
+         */
         @Override
         public String getColumnName(int column) {
             String colName = null;
@@ -180,6 +197,9 @@ final class OpenRecentCasePanel extends javax.swing.JPanel {
             return colName;
         }
 
+        /**
+         * @inheritDoc
+         */
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             Object ret = null;
@@ -197,15 +217,28 @@ final class OpenRecentCasePanel extends javax.swing.JPanel {
             return ret;
         }
 
+        /**
+         * @inheritDoc
+         */
         @Override
         public boolean isCellEditable(int rowIndex, int columnIndex) {
             return false;
         }
 
+        /**
+         * @inheritDoc
+         */
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         }
 
+        /**
+         * Shortens a path to fit the display.
+         *
+         * @param path The path to shorten.
+         *
+         * @return The shortened path.
+         */
         private String shortenPath(String path) {
             String shortenedPath = path;
             if (shortenedPath.length() > 50) {
