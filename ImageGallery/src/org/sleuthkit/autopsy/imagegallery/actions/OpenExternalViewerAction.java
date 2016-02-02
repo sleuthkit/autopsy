@@ -32,14 +32,15 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
  * Wraps {@link ExternalViewerAction} in a ControlsFX {@link Action} with
  * appropriate text and graphic
  */
-@NbBundle.Messages({"MediaViewImagePanel.externalViewerButton.text=Open in External Viewer"})
+@NbBundle.Messages({"MediaViewImagePanel.externalViewerButton.text=Open in External Viewer",
+        "OpenExternalViewerAction.displayName=External Viewer"})
 public class OpenExternalViewerAction extends Action {
 
-    private static final Image EXTERNAL = new Image(OpenExternalViewerAction.class.getResource("/org/sleuthkit/autopsy/imagegallery/images/external.png").toExternalForm());
+    private static final Image EXTERNAL = new Image(OpenExternalViewerAction.class.getResource("/org/sleuthkit/autopsy/imagegallery/images/external.png").toExternalForm()); //NON-NLS
     private static final ActionEvent ACTION_EVENT = new ActionEvent(OpenExternalViewerAction.class, ActionEvent.ACTION_PERFORMED, ""); //Swing ActionEvent //NOI18N
 
     public OpenExternalViewerAction(DrawableFile<?> file) {
-        super("External Viewer");
+        super(Bundle.OpenExternalViewerAction_displayName());
 
         /**
          * TODO: why is the name passed to the action? it means we duplicate
