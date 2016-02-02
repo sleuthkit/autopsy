@@ -97,7 +97,7 @@ public class EventsRepository {
 
     private final static Logger LOGGER = Logger.getLogger(EventsRepository.class.getName());
 
-    private final Executor workerExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("eventrepository-worker-%d").build());
+    private final Executor workerExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("eventrepository-worker-%d").build()); //NON-NLS
     private DBPopulationWorker dbWorker;
     private final EventDB eventDB;
     private final Case autoCase;
@@ -218,7 +218,7 @@ public class EventsRepository {
         try {
             return eventStripeCache.get(params);
         } catch (ExecutionException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to load Event Stripes from cache for " + params.toString(), ex);
+            LOGGER.log(Level.SEVERE, "Failed to load Event Stripes from cache for " + params.toString(), ex); //NON-NLS
             return Collections.emptyList();
         }
     }
@@ -275,7 +275,7 @@ public class EventsRepository {
             try {
                 datasourcesMap.putIfAbsent(id, skCase.getContentById(id).getDataSource().getName());
             } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Failed to get datasource by ID.", ex);
+                LOGGER.log(Level.SEVERE, "Failed to get datasource by ID.", ex); //NON-NLS
             }
         }
 
@@ -283,7 +283,7 @@ public class EventsRepository {
             //should this only be tags applied to files or event bearing artifacts?
             tagNames.setAll(skCase.getTagNamesInUse());
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to get tag names in use.", ex);
+            LOGGER.log(Level.SEVERE, "Failed to get tag names in use.", ex); //NON-NLS
         }
     }
 
@@ -310,7 +310,7 @@ public class EventsRepository {
         try {
             tagNames.setAll(autoCase.getSleuthkitCase().getTagNamesInUse());
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to get tag names in use.", ex);
+            LOGGER.log(Level.SEVERE, "Failed to get tag names in use.", ex); //NON-NLS
         }
     }
 
@@ -368,7 +368,7 @@ public class EventsRepository {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private CancellationProgressTask<Void> rebuildRepository(final DBPopulationMode mode) {
-        LOGGER.log(Level.INFO, "(re)starting {0} db population task", mode);
+        LOGGER.log(Level.INFO, "(re)starting {0} db population task", mode); //NON-NLS
         if (dbWorker != null) {
             dbWorker.cancel();
         }
@@ -481,7 +481,7 @@ public class EventsRepository {
                 //reset database //TODO: can we do more incremental updates? -jm
                 eventDB.reInitializeDB();
                 //grab ids of all files
-                List<Long> fileIDs = skCase.findAllFileIdsWhere("name != '.' AND name != '..'");
+                List<Long> fileIDs = skCase.findAllFileIdsWhere("name != '.' AND name != '..'"); //NON-NLS
                 final int numFiles = fileIDs.size();
 
                 trans = eventDB.beginTransaction();
@@ -635,7 +635,7 @@ public class EventsRepository {
             try {
                 get();
             } catch (CancellationException ex) {
-                LOGGER.log(Level.WARNING, "Timeline database population was cancelled by the user. "
+                LOGGER.log(Level.WARNING, "Timeline database population was cancelled by the user. " //NON-NLS
                         + " Not all events may be present or accurate."); // NON-NLS
             } catch (Exception ex) {
                 LOGGER.log(Level.WARNING, "Unexpected exception while populating database.", ex); // NON-NLS

@@ -65,7 +65,7 @@ public final class CaseOpenAction implements ActionListener {
     }
 
     /**
-     * Pops up a file chooser to allow the user to select a case meta data file
+     * Pops up a file chooser to allow the user to select a case metadata file
      * (.aut file) and attempts to open the case described by the file.
      *
      * @param e The action event.
@@ -73,21 +73,28 @@ public final class CaseOpenAction implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         /*
-         * If ingest is running, do a dialog to warn the user and confirm
-         * abandoning the ingest.
+         * If ingest is running, do a dialog to warn the user and confirm the
+         * intent to close the current case and leave the ingest process
+         * incomplete.
          */
         if (IngestManager.getInstance().isIngestRunning()) {
-            String closeCurrentCase = NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning");
-            NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(closeCurrentCase,
+            NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(
+                    NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning"),
                     NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning.title"),
                     NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
             descriptor.setValue(NotifyDescriptor.NO_OPTION);
             Object res = DialogDisplayer.getDefault().notify(descriptor);
             if (res != null && res == DialogDescriptor.YES_OPTION) {
+                Case currentCase = null;
                 try {
-                    Case.getCurrentCase().closeCase();
-                } catch (Exception ex) {
-                    logger.log(Level.SEVERE, "Error closing case", ex); //NON-NLS
+                    currentCase = Case.getCurrentCase();
+                    currentCase.closeCase();
+                } catch (IllegalStateException ignored) {
+                    /*
+                     * No current case.
+                     */
+                } catch (CaseActionException ex) {
+                    logger.log(Level.SEVERE, String.format("Error closing case at %s while ingest was running", (null != currentCase ? currentCase.getCaseDirectory() : "?")), ex); //NON-NLS
                 }
             } else {
                 return;
@@ -100,17 +107,13 @@ public final class CaseOpenAction implements ActionListener {
          */
         int retval = fileChooser.showOpenDialog(WindowManager.getDefault().getMainWindow());
         if (retval == JFileChooser.APPROVE_OPTION) {
-            /**
-             * This is a bit of a hack, but close the startup window, if it was
-             * the source of the action invocation.
+            /*
+             * Close the startup window, if it is open.
              */
-            try {
-                StartupWindowProvider.getInstance().close();
-            } catch (Exception unused) {
-            }
+            StartupWindowProvider.getInstance().close();
 
-            /**
-             * Try to open the case associated with the case meta data file the
+            /*
+             * Try to open the case associated with the case metadata file the
              * user selected.
              */
             final String path = fileChooser.getSelectedFile().getPath();
@@ -121,12 +124,14 @@ public final class CaseOpenAction implements ActionListener {
                 try {
                     Case.open(path);
                 } catch (CaseActionException ex) {
-                    logger.log(Level.SEVERE, String.format("Could not open case at %s", path), ex);
+                    logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", path), ex); //NON-NLS
                     SwingUtilities.invokeLater(() -> {
                         WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                        JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), 
-                                ex.getMessage(),
-                                NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), JOptionPane.ERROR_MESSAGE); //NON-NLS
+                        JOptionPane.showMessageDialog(
+                                WindowManager.getDefault().getMainWindow(),
+                                ex.getMessage(), // Should be user-friendly
+                                NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), //NON-NLS
+                                JOptionPane.ERROR_MESSAGE); 
                         if (!Case.isCaseOpen()) {
                             StartupWindowProvider.getInstance().open();
                         }
