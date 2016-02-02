@@ -116,8 +116,13 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
         return true; //!this.hasContentChildren();
     }
 
-    @Override
-    public String getItemType() {
-        return "LocalFile";
-    }
+    /*
+     * TODO (AUT-1849): Correct or remove peristent column reordering code
+     *
+     * Added to support this feature.
+     */
+//    @Override
+//    public String getItemType() {
+//        return "LocalFile"; //NON-NLS
+//    }
 }

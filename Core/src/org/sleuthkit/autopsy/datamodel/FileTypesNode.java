@@ -104,16 +104,21 @@ public class FileTypesNode extends DisplayableItemNode {
         return s;
     }
 
-    @Override
-    public String getItemType() {
-        if(filter == null)
-            return "FileTypes";
-        if (filter.equals(FileTypeExtensionFilters.RootFilter.TSK_DOCUMENT_FILTER))
-            return "FileTypesDoc";
-        if (filter.equals(FileTypeExtensionFilters.RootFilter.TSK_EXECUTABLE_FILTER))
-            return "FileTypesExe";
-        return "FileTypes";
-    }
+    /*
+     * TODO (AUT-1849): Correct or remove peristent column reordering code
+     *
+     * Added to support this feature.
+     */
+//    @Override
+//    public String getItemType() {
+//        if(filter == null)
+//            return "FileTypes"; //NON-NLS
+//        if (filter.equals(FileTypeExtensionFilters.RootFilter.TSK_DOCUMENT_FILTER))
+//            return "FileTypesDoc"; //NON-NLS
+//        if (filter.equals(FileTypeExtensionFilters.RootFilter.TSK_EXECUTABLE_FILTER))
+//            return "FileTypesExe"; //NON-NLS
+//        return "FileTypes"; //NON-NLS
+//    }
 
     /**
      *
