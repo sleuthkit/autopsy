@@ -59,25 +59,53 @@ public final class CaseMetadata {
         try {
             /*
              * TODO (RC): This class should eventually replace the non-public
-             * XMLCaseManagement class altogether.
+             * and unsafe XMLCaseManagement class altogether.
              */
             XMLCaseManagement metadata = new XMLCaseManagement();
             metadata.open(metadataFilePath.toString());
-            caseType = metadata.getCaseType();
-            caseName = metadata.getCaseName();
-            if (caseName.isEmpty()) {
-                throw new CaseMetadataException("Case name missing");
+            try {
+                caseType = metadata.getCaseType();
+            } catch (NullPointerException unused) {
+                throw new CaseMetadataException("Case type element missing");
             }
-            caseNumber = metadata.getCaseNumber();
-            examiner = metadata.getCaseExaminer();
-            caseDirectory = metadata.getCaseDirectory();
-            if (caseDirectory.isEmpty()) {
-                throw new CaseMetadataException("Case directory missing");
+            try {
+                caseName = metadata.getCaseName();
+                if (caseName.isEmpty()) {
+                    throw new CaseMetadataException("Case name missing");
+                }
+            } catch (NullPointerException unused) {
+                throw new CaseMetadataException("Case name element missing");
             }
-            caseDatabaseName = metadata.getDatabaseName();
-            caseTextIndexName = metadata.getTextIndexName();
-            if (Case.CaseType.MULTI_USER_CASE == caseType && caseDatabaseName.isEmpty()) {
-                throw new CaseMetadataException("Case database name missing");
+            try {
+                caseNumber = metadata.getCaseNumber();
+            } catch (NullPointerException unused) {
+                throw new CaseMetadataException("Case number element missing");
+            }
+            try {
+                examiner = metadata.getCaseExaminer();
+            } catch (NullPointerException unused) {
+                throw new CaseMetadataException("Examiner element missing");
+            }
+            try {
+                caseDirectory = metadata.getCaseDirectory();
+                if (caseDirectory.isEmpty()) {
+                    throw new CaseMetadataException("Case directory missing");
+                }
+            } catch (NullPointerException unused) {
+                throw new CaseMetadataException("Case directory element missing");
+            }
+            try {
+                caseDatabaseName = metadata.getDatabaseName();
+            } catch (NullPointerException unused) {
+                throw new CaseMetadataException("Case database element missing");
+            }
+            try {
+                caseTextIndexName = metadata.getTextIndexName();
+                if (Case.CaseType.MULTI_USER_CASE == caseType && caseDatabaseName.isEmpty()) {
+                    throw new CaseMetadataException("Case keyword search index name missing");
+                }
+            } catch (NullPointerException unused) {
+                throw new CaseMetadataException("Case keyword search index name missing");
             }
         } catch (CaseActionException ex) {
             throw new CaseMetadataException(ex.getLocalizedMessage(), ex);
