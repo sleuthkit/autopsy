@@ -99,13 +99,13 @@ class SevenZipExtractor {
      */
     private enum SupportedArchiveExtractionFormats {
 
-        ZIP("application/zip"),
-        SEVENZ("application/x-7z-compressed"),
-        GZIP("application/gzip"),
-        XGZIP("application/x-gzip"),
-        XBZIP2("application/x-bzip2"),
-        XTAR("application/x-tar"),
-        XGTAR("application/x-gtar");
+        ZIP("application/zip"), //NON-NLS
+        SEVENZ("application/x-7z-compressed"), //NON-NLS
+        GZIP("application/gzip"), //NON-NLS
+        XGZIP("application/x-gzip"), //NON-NLS
+        XBZIP2("application/x-bzip2"), //NON-NLS
+        XTAR("application/x-tar"), //NON-NLS
+        XGTAR("application/x-gtar"); //NON-NLS
 
         private final String mimeType;
 

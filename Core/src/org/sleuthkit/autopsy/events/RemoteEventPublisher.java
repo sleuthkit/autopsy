@@ -43,7 +43,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 final class RemoteEventPublisher {
 
     private static final Logger logger = Logger.getLogger(RemoteEventPublisher.class.getName());
-    private static final String ALL_MESSAGE_SELECTOR = "All";
+    private static final String ALL_MESSAGE_SELECTOR = "All"; //NON-NLS
     private final LocalEventPublisher localPublisher;
     private final Connection connection;
     private final Session session;
@@ -76,11 +76,11 @@ final class RemoteEventPublisher {
             Topic topic = session.createTopic(eventChannelName);
             producer = session.createProducer(topic);
             producer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
-            consumer = session.createConsumer(topic, "events = '" + ALL_MESSAGE_SELECTOR + "'", true);
+            consumer = session.createConsumer(topic, "events = '" + ALL_MESSAGE_SELECTOR + "'", true); //NON-NLS
             receiver = new MessageReceiver();
             consumer.setMessageListener(receiver);
         } catch (URISyntaxException | JMSException ex) {
-            logger.log(Level.SEVERE, "Failed to connect to event channel", ex);
+            logger.log(Level.SEVERE, "Failed to connect to event channel", ex); //NON-NLS
             try {
                 stop();
             } catch (JMSException ignored) {
@@ -121,7 +121,7 @@ final class RemoteEventPublisher {
      */
     synchronized void publish(AutopsyEvent event) throws JMSException {
         ObjectMessage message = session.createObjectMessage();
-        message.setStringProperty("events", ALL_MESSAGE_SELECTOR);
+        message.setStringProperty("events", ALL_MESSAGE_SELECTOR); //NON-NLS
         message.setObject(event);
         producer.send(message);
     }
@@ -151,7 +151,7 @@ final class RemoteEventPublisher {
                     }
                 }
             } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Error receiving message", ex);
+                logger.log(Level.SEVERE, "Error receiving message", ex); //NON-NLS
             }
         }
     }

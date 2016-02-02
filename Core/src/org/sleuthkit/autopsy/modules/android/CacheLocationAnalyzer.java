@@ -58,7 +58,7 @@ class CacheLocationAnalyzer {
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
         try {
             List<AbstractFile> abstractFiles = fileManager.findFiles(dataSource, "cache.cell"); //NON-NLS
-            abstractFiles.addAll(fileManager.findFiles(dataSource, "cache.wifi"));
+            abstractFiles.addAll(fileManager.findFiles(dataSource, "cache.wifi")); //NON-NLS
 
             for (AbstractFile abstractFile : abstractFiles) {
                 try {
