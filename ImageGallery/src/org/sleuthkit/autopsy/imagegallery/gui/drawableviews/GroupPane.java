@@ -552,7 +552,6 @@ public class GroupPane extends BorderPane {
                                 contextMenu.hide();
                             }
                         }
-                        t.consume();
                         break;
                     case SECONDARY:
                         if (t.getClickCount() == 1) {
@@ -566,7 +565,6 @@ public class GroupPane extends BorderPane {
                             contextMenu.hide();
                             contextMenu.show(GroupPane.this, t.getScreenX(), t.getScreenY());
                         }
-                        t.consume();
                         break;
                 }
             }
