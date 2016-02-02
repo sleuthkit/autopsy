@@ -111,7 +111,7 @@ public final class FilteredEventsModel {
     @GuardedBy("this")
     private final ReadOnlyObjectWrapper<ZoomParams> requestedZoomParamters = new ReadOnlyObjectWrapper<>();
 
-    private final EventBus eventbus = new EventBus("Event_Repository_EventBus");
+    private final EventBus eventbus = new EventBus("Event_Repository_EventBus"); //NON-NLS
 
     /**
      * The underlying repo for events. Atomic access to repo is synchronized
@@ -374,7 +374,7 @@ public final class FilteredEventsModel {
             Set<Long> updatedEventIDs = repo.deleteTag(content.getId(), null, deletedTagInfo.getTagID(), tagged);
             return postTagsUpdated(updatedEventIDs);
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "unable to determine tagged status of content.", ex);
+            LOGGER.log(Level.SEVERE, "unable to determine tagged status of content.", ex); //NON-NLS
         }
         return false;
     }
@@ -387,7 +387,7 @@ public final class FilteredEventsModel {
             Set<Long> updatedEventIDs = repo.deleteTag(artifact.getObjectID(), artifact.getArtifactID(), deletedTagInfo.getTagID(), tagged);
             return postTagsUpdated(updatedEventIDs);
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "unable to determine tagged status of artifact.", ex);
+            LOGGER.log(Level.SEVERE, "unable to determine tagged status of artifact.", ex); //NON-NLS
         }
         return false;
     }
