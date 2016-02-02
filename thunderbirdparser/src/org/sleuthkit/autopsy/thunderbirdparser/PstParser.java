@@ -58,11 +58,13 @@ class PstParser {
      */
     private List<EmailMessage> results;
     private StringBuilder errors;
+    private long fileID;
 
-    PstParser(IngestServices services) {
+    PstParser(IngestServices services, long fileID) {
         results = new ArrayList<>();
         this.services = services;
         errors = new StringBuilder();
+        this.fileID = fileID;
     }
 
     enum ParseResult {
@@ -76,7 +78,7 @@ class PstParser {
      * @param file A pst or ost file.
      *
      * @return ParseResult: OK on success, ERROR on an error, ENCRYPT if failed
-     *         because the file is encrypted.
+     * because the file is encrypted.
      */
     ParseResult parse(File file) {
         PSTFile pstFile;
@@ -118,8 +120,8 @@ class PstParser {
      * structure.
      *
      * @param folder The folder to navigate and process
-     * @param path   The path to the folder within the pst/ost file's directory
-     *               structure
+     * @param path The path to the folder within the pst/ost file's directory
+     * structure
      *
      * @throws PSTException
      * @throws IOException
@@ -215,14 +217,14 @@ class PstParser {
                 if (filename.isEmpty()) {
                     filename = attach.getFilename();
                 }
-                String uniqueFilename = msg.getDescriptorNodeId() + "-" + filename;
+                String uniqueFilename =  fileID + "-" + msg.getDescriptorNodeId() + "-" + filename;
                 String outPath = outputDirPath + uniqueFilename;
                 saveAttachmentToDisk(attach, outPath);
 
                 EmailMessage.Attachment attachment = new EmailMessage.Attachment();
 
-                long crTime = attach.getCreationTime()!= null ? attach.getCreationTime().getTime() : 0;
-                long mTime = attach.getModificationTime()!= null ? attach.getModificationTime().getTime() : 0;
+                long crTime = attach.getCreationTime() != null ? attach.getCreationTime().getTime() : 0;
+                long mTime = attach.getModificationTime() != null ? attach.getModificationTime().getTime() : 0;
                 String relPath = getRelModuleOutputPath() + File.separator + uniqueFilename;
                 attachment.setName(filename);
                 attachment.setCrTime(crTime);
@@ -256,11 +258,11 @@ class PstParser {
             int bufferSize = 8176;
             byte[] buffer = new byte[bufferSize];
             int count = attachmentStream.read(buffer);
-            
-            if(count == -1) {
-                throw new IOException("attachmentStream invalid (read() fails). File "+attach.getLongFilename()+ " skipped");
+
+            if (count == -1) {
+                throw new IOException("attachmentStream invalid (read() fails). File " + attach.getLongFilename() + " skipped");
             }
-            
+
             while (count == bufferSize) {
                 out.write(buffer);
                 count = attachmentStream.read(buffer);

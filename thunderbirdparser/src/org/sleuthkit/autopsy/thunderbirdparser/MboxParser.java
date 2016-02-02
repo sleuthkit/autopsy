@@ -79,8 +79,9 @@ class MboxParser {
      * The local path of the mbox file.
      */
     private String localPath;
+    private long fileID;
 
-    MboxParser(IngestServices services, String localPath) {
+    MboxParser(IngestServices services, String localPath, long fileID) {
         this.services = services;
         this.localPath = localPath;
         messageBuilder = new DefaultMessageBuilder();
@@ -88,6 +89,7 @@ class MboxParser {
         // disable line length checks.
         messageBuilder.setMimeEntityConfig(config);
         errors = new StringBuilder();
+        this.fileID = fileID;
     }
 
     static boolean isValidMimeTypeMbox(byte[] buffer) {
@@ -194,7 +196,7 @@ class MboxParser {
      * @param multi
      */
     private void handleMultipart(EmailMessage email, Multipart multi) {
-        for (Entity e : multi.getBodyParts()) {
+        for (Entity e: multi.getBodyParts()) {
             if (e.isMultipart()) {
                 handleMultipart(email, (Multipart) e.getBody());
             } else if (e.getDispositionType() != null
@@ -217,7 +219,7 @@ class MboxParser {
      *
      * @param email
      * @param tb
-     * @param type  The Mime type of the body.
+     * @param type The Mime type of the body.
      */
     private void handleTextBody(EmailMessage email, TextBody tb, String type) {
         BufferedReader r;
@@ -274,7 +276,7 @@ class MboxParser {
             filename = UUID.randomUUID().toString();
         }
 
-        String uniqueFilename = filename + "-" + email.getSentDate();
+        String uniqueFilename = filename + "-" + email.getSentDate() + "-" + fileID;
         String outPath = outputDirPath + uniqueFilename;
         FileOutputStream fos;
         BinaryBody bb;

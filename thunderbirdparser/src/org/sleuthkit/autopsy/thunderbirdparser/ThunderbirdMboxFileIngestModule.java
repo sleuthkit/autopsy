@@ -143,7 +143,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             return ProcessResult.OK;
         }
 
-        PstParser parser = new PstParser(services);
+        PstParser parser = new PstParser(services, abstractFile.getId());
         PstParser.ParseResult result = parser.parse(file);
 
         if (result == PstParser.ParseResult.OK) {
@@ -237,7 +237,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             return ProcessResult.OK;
         }
 
-        MboxParser parser = new MboxParser(services, emailFolder);
+        MboxParser parser = new MboxParser(services, emailFolder, abstractFile.getId());
         List<EmailMessage> emails = parser.parse(file);
 
         processEmails(emails, abstractFile);
