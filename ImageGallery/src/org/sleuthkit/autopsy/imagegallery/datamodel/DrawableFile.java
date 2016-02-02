@@ -186,9 +186,9 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
                     .map(Tag::getName)
                     .collect(Collectors.toSet());
         } catch (TskCoreException ex) {
-            Logger.getAnonymousLogger().log(Level.WARNING, "problem looking up " + DrawableAttribute.TAGS.getDisplayName() + " for " + file.getName(), ex); //NON-NLS
+            Logger.getAnonymousLogger().log(Level.WARNING, "problem looking up " + DrawableAttribute.TAGS.getDisplayName() + " for " + file.getName(), ex);
         } catch (IllegalStateException ex) {
-            Logger.getAnonymousLogger().log(Level.WARNING, "there is no case open; failed to look up " + DrawableAttribute.TAGS.getDisplayName() + " for " + file.getName()); //NON-NLS
+            Logger.getAnonymousLogger().log(Level.WARNING, "there is no case open; failed to look up " + DrawableAttribute.TAGS.getDisplayName() + " for " + file.getName());
         }
         return Collections.emptySet();
     }
@@ -223,7 +223,7 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
                 }
             }
         } catch (TskCoreException ex) {
-            Logger.getAnonymousLogger().log(Level.WARNING, "problem looking up {0}/{1}" + " " + " for {2}", new Object[]{artType.getDisplayName(), attrType.getDisplayName(), getName()}); //NON-NLS
+            Logger.getAnonymousLogger().log(Level.WARNING, "problem looking up {0}/{1}" + " " + " for {2}", new Object[]{artType.getDisplayName(), attrType.getDisplayName(), getName()});
         }
         return "";
     }
@@ -255,7 +255,7 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
                     .orElse(Category.ZERO)
             );
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "problem looking up category for file " + this.getName() + ex.getLocalizedMessage()); //NON-NLS
+            LOGGER.log(Level.WARNING, "problem looking up category for file " + this.getName() + ex.getLocalizedMessage());
         } catch (IllegalStateException ex) {
             // We get here many times if the case is closed during ingest, so don't print out a ton of warnings.
         }
@@ -333,7 +333,7 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
                 drawablePath = StringUtils.removeEnd(getUniquePath(), getName());
                 return drawablePath;
             } catch (TskCoreException ex) {
-                LOGGER.log(Level.WARNING, "failed to get drawablePath from {0}", getName()); //NON-NLS
+                LOGGER.log(Level.WARNING, "failed to get drawablePath from {0}", getName());
                 return "";
             }
         }
@@ -344,7 +344,7 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
         try {
             return getHashSetNames();
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "Failed to get hash set names", ex); //NON-NLS
+            LOGGER.log(Level.WARNING, "Failed to get hash set names", ex);
             return Collections.emptySet();
         }
     }
@@ -362,7 +362,7 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
             return this.getUniquePath();
         } catch (TskCoreException tskCoreException) {
             String contentName = this.getName();
-            LOGGER.log(Level.SEVERE, "Failed to get unique path for " + contentName, tskCoreException); //NOI18N NON-NLS
+            LOGGER.log(Level.SEVERE, "Failed to get unique path for " + contentName, tskCoreException); //NOI18N
             return contentName;
         }
     }

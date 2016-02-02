@@ -77,7 +77,7 @@ public class SlideShowView extends DrawableTileBase {
 
     SlideShowView(GroupPane gp, ImageGalleryController controller) {
         super(gp, controller);
-        FXMLConstructor.construct(this, "SlideShowView.fxml"); //NON-NLS
+        FXMLConstructor.construct(this, "SlideShowView.fxml");
     }
 
     @FXML
@@ -137,7 +137,7 @@ public class SlideShowView extends DrawableTileBase {
             });
         } catch (NullPointerException ex) {
             // The case has likely been closed
-            LOGGER.log(Level.WARNING, "Error accessing groupPane"); //NON-NLS
+            LOGGER.log(Level.WARNING, "Error accessing groupPane");
         }
     }
 
@@ -278,12 +278,9 @@ public class SlideShowView extends DrawableTileBase {
      * @return supplemental text to include in the label, specifically: "image x
      *         of y"
      */
-    @NbBundle.Messages({"# {0} - file id number",
-            "# {1} - number of file ids",
-            "SlideShowView.supplementalText={0} of {1} in group"})
     private String getSupplementalText() {
         final ObservableList<Long> fileIds = getGroupPane().getGroup().getFileIDs();
-        return getFileID().map(fileID -> " ( " + Bundle.SlideShowView_supplementalText(fileIds.indexOf(fileID) + 1, fileIds.size()) + " )")
+        return getFileID().map(fileID -> " ( " + (fileIds.indexOf(fileID) + 1) + " of " + fileIds.size() + " in group )")
                 .orElse("");
 
     }
@@ -327,7 +324,7 @@ public class SlideShowView extends DrawableTileBase {
                 final Media media = file.getMedia();
                 return new VideoPlayer(new MediaPlayer(media), file);
             } catch (MediaException | IOException | OutOfMemoryError ex) {
-                LOGGER.log(Level.WARNING, "Failed to initialize VideoPlayer for {0} : " + ex.toString(), file.getContentPathSafe()); //NON-NLS
+                LOGGER.log(Level.WARNING, "Failed to initialize VideoPlayer for {0} : " + ex.toString(), file.getContentPathSafe());
                 return doReadImageTask(file);
             }
         }
