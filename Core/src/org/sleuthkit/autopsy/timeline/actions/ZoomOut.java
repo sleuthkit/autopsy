@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
  */
 public class ZoomOut extends Action {
 
-    private static final Image MAGNIFIER_OUT = new Image("/org/sleuthkit/autopsy/timeline/images/magnifier-zoom-out-red.png"); //NOI18N
+    private static final Image MAGNIFIER_OUT = new Image("/org/sleuthkit/autopsy/timeline/images/magnifier-zoom-out-red.png"); //NOI18N NON-NLS
 
     @NbBundle.Messages({"ZoomOut.longText=Zoom out to view about 50% more time.",
         "ZoomOut.action.text=Zoom out"})

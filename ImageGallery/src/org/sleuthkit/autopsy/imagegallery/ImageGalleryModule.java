@@ -22,6 +22,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.apache.commons.lang3.StringUtils;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
@@ -30,11 +32,12 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /** static definitions and utilities for the ImageGallery module */
+@NbBundle.Messages({"ImageGalleryModule.moduleName=Image Gallery"})
 public class ImageGalleryModule {
 
     private static final Logger LOGGER = Logger.getLogger(ImageGalleryModule.class.getName());
 
-    private static final String MODULE_NAME = "Image Gallery";
+    private static final String MODULE_NAME = Bundle.ImageGalleryModule_moduleName();
 
     static String getModuleName() {
         return MODULE_NAME;

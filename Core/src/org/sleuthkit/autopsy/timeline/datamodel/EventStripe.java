@@ -191,6 +191,6 @@ public final class EventStripe implements EventBundle<EventCluster> {
 
     @Override
     public String toString() {
-        return "EventStripe{" + "description=" + description + ", eventIDs=" + eventIDs.size() + '}';
+        return "EventStripe{" + "description=" + description + ", eventIDs=" + eventIDs.size() + '}'; //NON-NLS
     }
 }

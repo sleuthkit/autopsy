@@ -10,7 +10,7 @@ This page covers the use of ingest modules.  Specific pages will cover the confi
 
 Ingest modules are configured to find user content quickly.  The ingest modules are grouped into pipelines and each file goes down the pipeline, module by module. A pipeline may have modules in the following order: 
 
-\image html ingest_pipeline.png
+\image html ingest_pipeline.PNG
 
 Multiple pipelines may be running at the same time.  By default, two pipelines are running, but you can add more depending on how many cores you have on your system.   You can configure the number of pipelines to make in the "Tools", "Options", "General" area. 
 
@@ -31,7 +31,7 @@ Once ingest is started, you can review the currently running ingest tasks in the
 
 You will be presented with an interface to configure the ingest modules. From here, you can choose to enable or disable each module and some modules will have further configuration settings. 
 
-\image html select-ingest-modules.png
+\image html select-ingest-modules.PNG
 
 There are two places to configure ingest modules. When you select the module name, you may have some "run time" options to configure in the panel to the right.  These are generally settings that you may want to change from image to image. 
 

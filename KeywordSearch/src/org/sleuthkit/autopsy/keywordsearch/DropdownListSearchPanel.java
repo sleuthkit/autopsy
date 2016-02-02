@@ -119,7 +119,7 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 Object source = evt.getSource();
-                if (source instanceof String && ((String) source).equals("LOCAL")) {
+                if (source instanceof String && ((String) source).equals("LOCAL")) { //NON-NLS
                     EventQueue.invokeLater(new Runnable() {
                         @Override
                         public void run() {
