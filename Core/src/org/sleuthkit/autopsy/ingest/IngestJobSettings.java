@@ -55,7 +55,7 @@ public class IngestJobSettings {
     private final String executionContext;
     private final IngestType ingestType;
     private String moduleSettingsFolderPath;
-    private static final CharSequence pythonModuleSettingsPrefixCS = "org.python.proxies.".subSequence(0, "org.python.proxies.".length() - 1);
+    private static final CharSequence pythonModuleSettingsPrefixCS = "org.python.proxies.".subSequence(0, "org.python.proxies.".length() - 1); //NON-NLS
     private final List<IngestModuleTemplate> moduleTemplates;
     private boolean processUnallocatedSpace;
     private final List<String> warnings;
@@ -337,7 +337,7 @@ public class IngestJobSettings {
                         moduleNames.add("E01 Verifier"); //NON-NLS
                         break;
                     case "Archive Extractor": //NON-NLS
-                        moduleNames.add("Embedded File Extractor");
+                        moduleNames.add("Embedded File Extractor"); //NON-NLS
                         break;
                     default:
                         moduleNames.add(name);
@@ -454,7 +454,7 @@ public class IngestJobSettings {
             if (isPythonModuleSettingsFile(moduleSettingsFilePath)) {
                 // compiled python modules have variable instance number as a part of their file name.
                 // This block of code gets rid of that variable instance number and helps maitains constant module name over multiple runs.
-                moduleSettingsFilePath = moduleSettingsFilePath.replaceAll("[$][\\d]+.settings$", "\\$.settings");
+                moduleSettingsFilePath = moduleSettingsFilePath.replaceAll("[$][\\d]+.settings$", "\\$.settings"); //NON-NLS NON-NLS
             }
             try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(moduleSettingsFilePath))) {
                 out.writeObject(settings);

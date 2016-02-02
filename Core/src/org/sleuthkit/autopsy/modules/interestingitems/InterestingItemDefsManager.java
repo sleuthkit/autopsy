@@ -258,11 +258,11 @@ final class InterestingItemDefsManager extends Observable {
                     if (!rules.containsKey(rule.getUuid())) {
                         rules.put(rule.getUuid(), rule);
                     } else {
-                        logger.log(Level.SEVERE, "Found duplicate rule {0} for set named {1} in interesting file sets definition file at {2}, discarding malformed set", new Object[]{rule.getUuid(), setName, filePath}); //NOI18N
+                        logger.log(Level.SEVERE, "Found duplicate rule {0} for set named {1} in interesting file sets definition file at {2}, discarding malformed set", new Object[]{rule.getUuid(), setName, filePath}); //NOI18N NON-NLS
                         return;
                     }
                 } else {
-                    logger.log(Level.SEVERE, "Found malformed rule for set named {0} in interesting file sets definition file at {1}, discarding malformed set", new Object[]{setName, filePath}); //NOI18N
+                    logger.log(Level.SEVERE, "Found malformed rule for set named {0} in interesting file sets definition file at {1}, discarding malformed set", new Object[]{setName, filePath}); //NOI18N NON-NLS
                     return;
                 }
             }
@@ -294,7 +294,7 @@ final class InterestingItemDefsManager extends Observable {
             String content = elem.getTextContent();
             FilesSet.Rule.FullNameFilter nameFilter;
             String regex = elem.getAttribute(FilesSetXML.REGEX_ATTR);
-            if ((!regex.isEmpty() && regex.equalsIgnoreCase("true")) || content.contains("*")) { // NON_NLS
+            if ((!regex.isEmpty() && regex.equalsIgnoreCase("true")) || content.contains("*")) { // NON-NLS
                 Pattern pattern = compileRegex(content);
                 if (pattern != null) {
                     nameFilter = new FilesSet.Rule.FullNameFilter(pattern);
@@ -352,7 +352,7 @@ final class InterestingItemDefsManager extends Observable {
             String content = elem.getTextContent();
             FilesSet.Rule.ExtensionFilter extFilter;
             String regex = elem.getAttribute(FilesSetXML.REGEX_ATTR);
-            if ((!regex.isEmpty() && regex.equalsIgnoreCase("true")) || content.contains("*")) { // NON_NLS
+            if ((!regex.isEmpty() && regex.equalsIgnoreCase("true")) || content.contains("*")) { // NON-NLS
                 Pattern pattern = compileRegex(content);
                 if (pattern != null) {
                     extFilter = new FilesSet.Rule.ExtensionFilter(pattern);

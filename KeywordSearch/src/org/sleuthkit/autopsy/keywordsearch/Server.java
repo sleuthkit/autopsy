@@ -406,10 +406,10 @@ public class Server {
                 solrProcessBuilder.directory(solrFolder);
 
                 // Redirect stdout and stderr to files to prevent blocking.
-                Path solrStdoutPath = Paths.get(Places.getUserDirectory().getAbsolutePath(), "var", "log", "solr.log.stdout");
+                Path solrStdoutPath = Paths.get(Places.getUserDirectory().getAbsolutePath(), "var", "log", "solr.log.stdout"); //NON-NLS
                 solrProcessBuilder.redirectOutput(solrStdoutPath.toFile());
 
-                Path solrStderrPath = Paths.get(Places.getUserDirectory().getAbsolutePath(), "var", "log", "solr.log.stderr");
+                Path solrStderrPath = Paths.get(Places.getUserDirectory().getAbsolutePath(), "var", "log", "solr.log.stderr"); //NON-NLS
                 solrProcessBuilder.redirectError(solrStderrPath.toFile());
 
                 logger.log(Level.INFO, "Starting Solr using: {0}", solrProcessBuilder.command()); //NON-NLS
