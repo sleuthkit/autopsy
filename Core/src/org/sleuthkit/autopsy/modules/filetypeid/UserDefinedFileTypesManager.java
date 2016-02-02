@@ -68,7 +68,7 @@ final class UserDefinedFileTypesManager {
     private static final String SIGNATURE_TYPE_ATTRIBUTE = "type"; //NON-NLS
     private static final String BYTES_TAG_NAME = "Bytes"; //NON-NLS
     private static final String OFFSET_TAG_NAME = "Offset"; //NON-NLS
-    private static final String RELATIVE_ATTRIBUTE = "RelativeToStart";
+    private static final String RELATIVE_ATTRIBUTE = "RelativeToStart"; //NON-NLS
     private static final String INTERESTING_FILES_SET_TAG_NAME = "InterestingFileSset"; //NON-NLS
     private static final String ALERT_ATTRIBUTE = "alert"; //NON-NLS
     private static final String ENCODING_FOR_XML_FILE = "UTF-8"; //NON-NLS
@@ -230,8 +230,8 @@ final class UserDefinedFileTypesManager {
             fileTypes.add(fileType);
             
             // Add rule for .tga
-            byteArray = DatatypeConverter.parseHexBinary("54525545564953494F4E2D5846494C452E00");
-            fileType = new FileType("image/x-tga", new Signature(byteArray, 17, false), "", false);
+            byteArray = DatatypeConverter.parseHexBinary("54525545564953494F4E2D5846494C452E00"); //NON-NLS
+            fileType = new FileType("image/x-tga", new Signature(byteArray, 17, false), "", false); //NON-NLS
             fileTypes.add(fileType);
         }
         // parseHexBinary() throws this if the argument passed in is not Hex

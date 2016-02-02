@@ -383,9 +383,9 @@ class ExtractRegistry extends Extract {
                             String value = artnode.getTextContent().trim();
                             String name = artnode.getAttribute("name"); //NON-NLS
 
-                            if (name.equals("ProductName")) { // NON_NLS
+                            if (name.equals("ProductName")) { // NON-NLS
                                 version = value;
-                            } else if (name.equals("CSDVersion")) { // NON_NLS
+                            } else if (name.equals("CSDVersion")) { // NON-NLS
                                 // This is dependant on the fact that ProductName shows up first in the module output
                                 version = version + " " + value;
                             } else if (name.equals("SystemRoot")) { //NON-NLS
