@@ -384,7 +384,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
     @Override
     public void receiveError(String context, String errorMessage) {
-        /* NOTE: We are accessing tskErrorReporter from two different threads.
+        /*
+         * NOTE: We are accessing tskErrorReporter from two different threads.
          * This is ok as long as we only read the value of tskErrorReporter
          * because tskErrorReporter is declared as volatile.
          */
@@ -398,63 +399,87 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     /**
-     * Creates a new case (create the XML config file and database). Overload
-     * for API consistency, defaults to a single-user case.
+     * Creates a single-user new case.
      *
-     * @param caseDir    The directory to store case data in. Will be created if
-     *                   it doesn't already exist. If it exists, it should have
-     *                   all of the needed sub dirs that createCaseDirectory()
-     *                   will create.
-     * @param caseName   the name of case
-     * @param caseNumber the case number
-     * @param examiner   the examiner for this case
+     * @param caseDir    The full path of the case directory. It will be created
+     *                   if it doesn't already exist; if it exists, it should
+     *                   have been created using Case.createCaseDirectory() to
+     *                   ensure that the required sub-directories aere created.
+     * @param caseName   The name of case.
+     * @param caseNumber The case number, can be the empty string.
+     * @param examiner   The examiner to associate with the case, can be the
+     *                   empty string.
      *
-     * @throws org.sleuthkit.autopsy.casemodule.CaseActionException
+     * @throws CaseActionException if there is a problem creating the case. The
+     *                             exception will have a user-friendly message
+     *                             and may be a wrapper for a lower-level
+     *                             exception. If so,
+     *                             CaseActionException.getCause will return a
+     *                             Throwable (null otherwise).
      */
     public static void create(String caseDir, String caseName, String caseNumber, String examiner) throws CaseActionException {
         create(caseDir, caseName, caseNumber, examiner, CaseType.SINGLE_USER_CASE);
     }
 
     /**
-     * Creates a new case (create the XML config file and database)
+     * Creates a new case.
      *
-     * @param caseDir    The directory to store case data in. Will be created if
-     *                   it doesn't already exist. If it exists, it should have
-     *                   all of the needed sub dirs that createCaseDirectory()
-     *                   will create.
-     * @param caseName   the name of case
-     * @param caseNumber the case number
-     * @param examiner   the examiner for this case
-     * @param caseType   the type of case, single-user or multi-user
+     * @param caseDir    The full path of the case directory. It will be created
+     *                   if it doesn't already exist; if it exists, it should
+     *                   have been created using Case.createCaseDirectory() to
+     *                   ensure that the required sub-directories aere created.
+     * @param caseName   The name of case.
+     * @param caseNumber The case number, can be the empty string.
+     * @param examiner   The examiner to associate with the case, can be the
+     *                   empty string.
+     * @param caseType   The type of case (single-user or multi-user). The
+     *                   exception will have a user-friendly message and may be
+     *                   a wrapper for a lower-level exception. If so,
+     *                   CaseActionException.getCause will return a Throwable
+     *                   (null otherwise).
+     *
+     * @throws CaseActionException if there is a problem creating the case.
      */
     public static void create(String caseDir, String caseName, String caseNumber, String examiner, CaseType caseType) throws CaseActionException {
-        logger.log(Level.INFO, "Creating new case.\ncaseDir: {0}\ncaseName: {1}", new Object[]{caseDir, caseName}); //NON-NLS
+        logger.log(Level.INFO, "Creating case with case directory {0}, caseName {1}", new Object[]{caseDir, caseName}); //NON-NLS
 
-        // create case directory if it doesn't already exist.
+        /*
+         * Create case directory if it doesn't already exist.
+         */
         if (new File(caseDir).exists() == false) {
             Case.createCaseDirectory(caseDir, caseType);
         }
 
-        String configFilePath = caseDir + File.separator + caseName + CASE_DOT_EXTENSION;
-
-        XMLCaseManagement xmlcm = new XMLCaseManagement();
-
+        /*
+         * Sanitize the case name, create a unique keyword search index name,
+         * and create a standard (single-user) or unique (multi-user) case
+         * database name.
+         */
+        String santizedCaseName = sanitizeCaseName(caseName);
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
         Date date = new Date();
-        String santizedCaseName = sanitizeCaseName(caseName);
         String indexName = santizedCaseName + "_" + dateFormat.format(date);
         String dbName = null;
-
-        // figure out the database name and index name for text extraction
         if (caseType == CaseType.SINGLE_USER_CASE) {
             dbName = caseDir + File.separator + "autopsy.db"; //NON-NLS
         } else if (caseType == CaseType.MULTI_USER_CASE) {
             dbName = indexName;
         }
 
-        xmlcm.create(caseDir, caseName, examiner, caseNumber, caseType, dbName, indexName); // create a new XML config file
+        /*
+         * Create the case metadata (.aut) file.
+         *
+         * TODO (AUT-1885): Replace use of obsolete and unsafe XMLCaseManagement
+         * class with use of CaseMetadata class.
+         */
+        String configFilePath = caseDir + File.separator + caseName + CASE_DOT_EXTENSION;
+        XMLCaseManagement xmlcm = new XMLCaseManagement();
+        xmlcm.create(caseDir, caseName, examiner, caseNumber, caseType, dbName, indexName);
         xmlcm.writeFile();
 
+        /*
+         * Create the case database.
+         */
         SleuthkitCase db = null;
         try {
             if (caseType == CaseType.SINGLE_USER_CASE) {
@@ -463,24 +488,23 @@ public class Case implements SleuthkitCase.ErrorObserver {
                 db = SleuthkitCase.newCase(dbName, UserPreferences.getDatabaseConnectionInfo(), caseDir);
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error creating a case: " + caseName + " in dir " + caseDir + " " + ex.getMessage(), ex); //NON-NLS
+            logger.log(Level.SEVERE, String.format("Error creating a case %s in %s ", caseName, caseDir), ex); //NON-NLS
             SwingUtilities.invokeLater(() -> {
                 WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             });
+            /*
+             * SleuthkitCase.newCase throws TskCoreExceptions with user-friendly
+             * messages, so propagate the exception message.
+             */
             throw new CaseActionException(ex.getMessage(), ex); //NON-NLS
         } catch (UserPreferencesException ex) {
             logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
             SwingUtilities.invokeLater(() -> {
                 WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             });
-            throw new CaseActionException(
-                    NbBundle.getMessage(Case.class, "Case.databaseConnectionInfo.error.msg"), ex);
+            throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.databaseConnectionInfo.error.msg"), ex);
         }
 
-        /**
-         * Two-stage initialization to avoid leaking reference to "this" in
-         * constructor.
-         */
         Case newCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db, caseType);
         changeCase(newCase);
     }
@@ -549,20 +573,28 @@ public class Case implements SleuthkitCase.ErrorObserver {
     /**
      * Opens an existing case.
      *
-     * @param caseMetadataFilePath The path of the case metadata file for the
-     *                             case to be opened.
+     * @param caseMetadataFilePath The path of the case metadata file.
      *
-     * @throws CaseActionException
+     * @throws CaseActionException if there is a problem opening the case. The
+     *                             exception will have a user-friendly message
+     *                             and may be a wrapper for a lower-level
+     *                             exception. If so,
+     *                             CaseActionException.getCause will return a
+     *                             Throwable (null otherwise).
      */
     public static void open(String caseMetadataFilePath) throws CaseActionException {
+        logger.log(Level.INFO, "Opening case with metadata file path {0}", caseMetadataFilePath); //NON-NLS
+
+        /*
+         * Verify the extension of the case metadata file.
+         */
         if (!caseMetadataFilePath.endsWith(CASE_DOT_EXTENSION)) {
             throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.checkFile.msg", CASE_DOT_EXTENSION));
         }
 
-        logger.log(Level.INFO, "Opening case, case metadata file path: {0}", caseMetadataFilePath); //NON-NLS
         try {
-            /**
-             * Get the case metadata from the file.
+            /*
+             * Get the case metadata required to open the case database.
              */
             CaseMetadata metadata = new CaseMetadata(Paths.get(caseMetadataFilePath));
             String caseName = metadata.getCaseName();
@@ -571,7 +603,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             CaseType caseType = metadata.getCaseType();
             String caseDir = metadata.getCaseDirectory();
 
-            /**
+            /*
              * Open the case database.
              */
             SleuthkitCase db;
@@ -585,40 +617,57 @@ public class Case implements SleuthkitCase.ErrorObserver {
                 try {
                     db = SleuthkitCase.openCase(metadata.getCaseDatabaseName(), UserPreferences.getDatabaseConnectionInfo(), caseDir);
                 } catch (UserPreferencesException ex) {
-                    logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
                     throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.databaseConnectionInfo.error.msg"), ex);
                 }
             }
 
-            /**
-             * Do things that require a UI.
+            /*
+             * Check for the presence of the UI and do things that can only be
+             * done with user interaction.
              */
             if (RuntimeProperties.coreComponentsAreActive()) {
-                /**
+                /*
                  * If the case database was upgraded for a new schema, notify
                  * the user.
                  */
                 if (null != db.getBackupDatabasePath()) {
                     SwingUtilities.invokeLater(() -> {
-                        JOptionPane.showMessageDialog(null,
-                                NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.msg",
-                                        db.getBackupDatabasePath()),
+                        JOptionPane.showMessageDialog(
+                                WindowManager.getDefault().getMainWindow(),
+                                NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.msg", db.getBackupDatabasePath()),
                                 NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.title"),
                                 JOptionPane.INFORMATION_MESSAGE);
                     });
                 }
 
-                /**
-                 * TODO: This currently has no value if it there is no user to
-                 * interact with a fid missing images dialog.
+                /*
+                 * Look for the files for the data sources listed in the case
+                 * database and give the user the opportunity to locate any that
+                 * are missing.
                  */
-                checkImagesExist(db);
+                Map<Long, String> imgPaths = getImagePaths(db);
+                for (Map.Entry<Long, String> entry : imgPaths.entrySet()) {
+                    long obj_id = entry.getKey();
+                    String path = entry.getValue();
+                    boolean fileExists = (pathExists(path) || driveExists(path));
+                    if (!fileExists) {
+                        int ret = JOptionPane.showConfirmDialog(
+                                WindowManager.getDefault().getMainWindow(),
+                                NbBundle.getMessage(Case.class, "Case.checkImgExist.confDlg.doesntExist.msg", getAppName(), path),
+                                NbBundle.getMessage(Case.class, "Case.checkImgExist.confDlg.doesntExist.title"),
+                                JOptionPane.YES_NO_OPTION);
+                        if (ret == JOptionPane.YES_OPTION) {
+                            MissingImageDialog.makeDialog(obj_id, db);
+                        } else {
+                            logger.log(Level.WARNING, "Selected image files don't match old files!"); //NON-NLS
+                        }
+                    }
+                }
             }
 
-            /**
-             * Two-stage initialization to avoid leaking reference to "this" in
-             * constructor. TODO: Remove use of obsolete XMLCaseManagement
-             * class.
+            /*
+             * TODO (AUT-1885): Replace use of obsolete and unsafe
+             * XMLCaseManagement class with use of CaseMetadata class.
              */
             XMLCaseManagement xmlcm = new XMLCaseManagement();
             xmlcm.open(caseMetadataFilePath);
@@ -626,28 +675,16 @@ public class Case implements SleuthkitCase.ErrorObserver {
             changeCase(openedCase);
 
         } catch (CaseMetadataException ex) {
-            /**
-             * Attempt clean up.
-             */
-            try {
-                Case badCase = Case.getCurrentCase();
-                badCase.closeCase();
-            } catch (IllegalStateException ignored) {
-            }
-            throw new CaseActionException(ex.getMessage(), ex); //NON-NLS
+            throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.metaDataFileCorrupt.exception.msg"), ex); //NON-NLS
         } catch (TskCoreException ex) {
-            /**
-             * Attempt clean up.
-             */
-            try {
-                Case badCase = Case.getCurrentCase();
-                badCase.closeCase();
-            } catch (IllegalStateException ignored) {
-            }
             SwingUtilities.invokeLater(() -> {
                 WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             });
-            throw new CaseActionException(ex.getMessage(), ex); //NON-NLS
+            /*
+             * SleuthkitCase.openCase throws TskCoreExceptions with
+             * user-friendly messages, so propagate the exception message.
+             */
+            throw new CaseActionException(ex.getMessage(), ex);
         }
     }
 
@@ -664,35 +701,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
             logger.log(Level.WARNING, "Error getting image paths", ex); //NON-NLS
         }
         return imgPaths;
-    }
-
-    /**
-     * Ensure that all image paths point to valid image files
-     */
-    private static void checkImagesExist(SleuthkitCase db) {
-        Map<Long, String> imgPaths = getImagePaths(db);
-        for (Map.Entry<Long, String> entry : imgPaths.entrySet()) {
-            long obj_id = entry.getKey();
-            String path = entry.getValue();
-            boolean fileExists = (pathExists(path) || driveExists(path));
-            if (!fileExists) {
-                int ret = JOptionPane.showConfirmDialog(null,
-                        NbBundle.getMessage(Case.class,
-                                "Case.checkImgExist.confDlg.doesntExist.msg",
-                                getAppName(), path),
-                        NbBundle.getMessage(Case.class,
-                                "Case.checkImgExist.confDlg.doesntExist.title"),
-                        JOptionPane.YES_NO_OPTION);
-                if (ret == JOptionPane.YES_OPTION) {
-
-                    MissingImageDialog.makeDialog(obj_id, db);
-
-                } else {
-                    logger.log(Level.WARNING, "Selected image files don't match old files!"); //NON-NLS
-                }
-
-            }
-        }
     }
 
     /**
@@ -1585,10 +1593,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
             if (RuntimeProperties.coreComponentsAreActive()) {
                 // enable these menus
-                    CallableSystemAction.get(AddImageAction.class).setEnabled(true);
-                    CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
-                    CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
-                    CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true); // Delete Case menu
+                CallableSystemAction.get(AddImageAction.class).setEnabled(true);
+                CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
+                CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
+                CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true); // Delete Case menu
 
                 if (toChangeTo.hasData()) {
                     // open all top components

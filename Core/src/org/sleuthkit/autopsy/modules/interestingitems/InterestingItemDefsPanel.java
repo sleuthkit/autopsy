@@ -418,7 +418,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel6, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.jLabel6.text")); // NOI18N
 
-        newRuleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add16.png"))); // NOI18N
+        newRuleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add16.png"))); // NOI18N NON-NLS
         org.openide.awt.Mnemonics.setLocalizedText(newRuleButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.newRuleButton.text")); // NOI18N
         newRuleButton.setEnabled(false);
         newRuleButton.addActionListener(new java.awt.event.ActionListener() {
@@ -431,7 +431,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         org.openide.awt.Mnemonics.setLocalizedText(filesRadioButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.filesRadioButton.text")); // NOI18N
         filesRadioButton.setEnabled(false);
 
-        editRuleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/edit16.png"))); // NOI18N
+        editRuleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/edit16.png"))); // NOI18N NON-NLS
         org.openide.awt.Mnemonics.setLocalizedText(editRuleButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.editRuleButton.text")); // NOI18N
         editRuleButton.setEnabled(false);
         editRuleButton.addActionListener(new java.awt.event.ActionListener() {
@@ -452,7 +452,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         setDescriptionTextArea.setRows(2);
         setDescScrollPanel.setViewportView(setDescriptionTextArea);
 
-        editSetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/edit16.png"))); // NOI18N
+        editSetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/edit16.png"))); // NOI18N NON-NLS
         org.openide.awt.Mnemonics.setLocalizedText(editSetButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.editSetButton.text")); // NOI18N
         editSetButton.setEnabled(false);
         editSetButton.addActionListener(new java.awt.event.ActionListener() {
@@ -500,7 +500,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         org.openide.awt.Mnemonics.setLocalizedText(bothRadioButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.bothRadioButton.text")); // NOI18N
         bothRadioButton.setEnabled(false);
 
-        deleteSetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/delete16.png"))); // NOI18N
+        deleteSetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/delete16.png"))); // NOI18N NON-NLS
         org.openide.awt.Mnemonics.setLocalizedText(deleteSetButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.deleteSetButton.text")); // NOI18N
         deleteSetButton.setEnabled(false);
         deleteSetButton.addActionListener(new java.awt.event.ActionListener() {
@@ -509,7 +509,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             }
         });
 
-        deleteRuleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/delete16.png"))); // NOI18N
+        deleteRuleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/delete16.png"))); // NOI18N NON-NLS
         org.openide.awt.Mnemonics.setLocalizedText(deleteRuleButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.deleteRuleButton.text")); // NOI18N
         deleteRuleButton.setEnabled(false);
         deleteRuleButton.addActionListener(new java.awt.event.ActionListener() {
@@ -518,7 +518,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             }
         });
 
-        newSetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add16.png"))); // NOI18N
+        newSetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add16.png"))); // NOI18N NON-NLS
         org.openide.awt.Mnemonics.setLocalizedText(newSetButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.newSetButton.text")); // NOI18N
         newSetButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -546,7 +546,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         jTextArea1.setEditable(false);
         jTextArea1.setBackground(new java.awt.Color(240, 240, 240));
         jTextArea1.setColumns(20);
-        jTextArea1.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
+        jTextArea1.setFont(jTextArea1.getFont().deriveFont(Font.PLAIN, 11));
         jTextArea1.setLineWrap(true);
         jTextArea1.setRows(3);
         jTextArea1.setText(org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.jTextArea1.text")); // NOI18N
