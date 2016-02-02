@@ -108,8 +108,13 @@ public class BlackboardArtifactTagNode extends DisplayableItemNode {
         return true;
     }
 
-    @Override
-    public String getItemType() {
-        return "BlackboardArtifactTag"; //NON-NLS
-    }
+    /*
+     * TODO (AUT-1849): Correct or remove peristent column reordering code
+     *
+     * Added to support this feature.
+     */
+//    @Override
+//    public String getItemType() {
+//        return "BlackboardArtifactTag"; //NON-NLS
+//    }
 }
