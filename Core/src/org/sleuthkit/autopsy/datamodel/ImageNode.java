@@ -110,8 +110,13 @@ public class ImageNode extends AbstractContentNode<Image> {
         return v.visit(this);
     }
 
-    @Override
-    public String getItemType() {
-        return "Image";
-    }
+    /*
+     * TODO (AUT-1849): Correct or remove peristent column reordering code
+     *
+     * Added to support this feature.
+     */
+//    @Override
+//    public String getItemType() {
+//        return "Image"; //NON-NLS
+//    }
 }

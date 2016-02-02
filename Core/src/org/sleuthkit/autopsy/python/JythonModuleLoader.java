@@ -74,7 +74,7 @@ public final class JythonModuleLoader {
 
         // add python modules from 'autospy/build/cluster/InternalPythonModules' folder
         // which are copied from 'autopsy/*/release/InternalPythonModules' folders.
-        for (File f : InstalledFileLocator.getDefault().locateAll("InternalPythonModules", JythonModuleLoader.class.getPackage().getName(), false)) {
+        for (File f : InstalledFileLocator.getDefault().locateAll("InternalPythonModules", JythonModuleLoader.class.getPackage().getName(), false)) { //NON-NLS
             Collections.addAll(pythonModuleDirs, f.listFiles());
         }
         // add python modules from 'testuserdir/python_modules' folder
@@ -127,7 +127,7 @@ public final class JythonModuleLoader {
         interpreter.exec("reload(" + moduleName + ")"); //NON-NLS
 
         // Importing the appropriate class from the Py Script which contains multiple classes.
-        interpreter.exec("from " + moduleName + " import " + className);
+        interpreter.exec("from " + moduleName + " import " + className); //NON-NLS
         interpreter.exec("obj = " + className + "()"); //NON-NLS
 
         T obj = interpreter.get("obj", interfaceClass); //NON-NLS

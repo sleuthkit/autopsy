@@ -27,6 +27,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -42,12 +44,12 @@ public final class IngestJob {
      */
     public enum CancellationReason {
 
-        NOT_CANCELLED("Not cancelled"),
-        USER_CANCELLED("Cancelled by user"),
-        INGEST_MODULES_STARTUP_FAILED("Ingest modules startup failed"),
-        OUT_OF_DISK_SPACE("Out of disk space"),
-        SERVICES_DOWN("Not cancelled"),
-        CASE_CLOSED("Case closed");
+        NOT_CANCELLED(NbBundle.getMessage(IngestJob.class, "IngestJob.cancelReason.notCancelled.text")),
+        USER_CANCELLED(NbBundle.getMessage(IngestJob.class, "IngestJob.cancelReason.cancelledByUser.text")),
+        INGEST_MODULES_STARTUP_FAILED(NbBundle.getMessage(IngestJob.class, "IngestJob.cancelReason.ingestModStartFail.text")),
+        OUT_OF_DISK_SPACE(NbBundle.getMessage(IngestJob.class, "IngestJob.cancelReason.outOfDiskSpace.text")),
+        SERVICES_DOWN(NbBundle.getMessage(IngestJob.class, "IngestJob.cancelReason.servicesDown.text")),
+        CASE_CLOSED(NbBundle.getMessage(IngestJob.class, "IngestJob.cancelReason.caseClosed.text"));
         
         private final String displayName;
         
@@ -128,7 +130,7 @@ public final class IngestJob {
     synchronized List<IngestModuleError> start() {
         List<IngestModuleError> errors = new ArrayList<>();
         if (started) {
-            errors.add(new IngestModuleError("IngestJob", new IllegalStateException("Job already started")));
+            errors.add(new IngestModuleError("IngestJob", new IllegalStateException("Job already started"))); //NON-NLS
             return errors;
         }
         started = true;

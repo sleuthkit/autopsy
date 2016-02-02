@@ -35,10 +35,10 @@ import org.openide.util.NbBundle;
 @Immutable
 public final class MessageServiceConnectionInfo {
 
-    private static final String MESSAGE_SERVICE_URI = "tcp://%s:%s?wireFormat.maxInactivityDuration=0";
-    private static final String CONNECTION_TIMED_OUT = "connection timed out";
-    private static final String CONNECTION_REFUSED = "connection refused";
-    private static final String PASSWORD_OR_USERNAME_BAD = "user name [";
+    private static final String MESSAGE_SERVICE_URI = "tcp://%s:%s?wireFormat.maxInactivityDuration=0"; //NON-NLS
+    private static final String CONNECTION_TIMED_OUT = "connection timed out"; //NON-NLS
+    private static final String CONNECTION_REFUSED = "connection refused"; //NON-NLS
+    private static final String PASSWORD_OR_USERNAME_BAD = "user name ["; //NON-NLS
     private static final int IS_REACHABLE_TIMEOUT_MS = 1000;
     private final String userName;
     private final String password;
