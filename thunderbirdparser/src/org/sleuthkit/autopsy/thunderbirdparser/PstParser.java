@@ -223,8 +223,8 @@ class PstParser {
 
                 EmailMessage.Attachment attachment = new EmailMessage.Attachment();
 
-                long crTime = attach.getCreationTime() != null ? attach.getCreationTime().getTime() : 0;
-                long mTime = attach.getModificationTime() != null ? attach.getModificationTime().getTime() : 0;
+                long crTime = attach.getCreationTime() != null ? attach.getCreationTime().getTime()/1000 : 0;
+                long mTime = attach.getModificationTime() != null ? attach.getModificationTime().getTime()/1000 : 0;
                 String relPath = getRelModuleOutputPath() + File.separator + uniqueFilename;
                 attachment.setName(filename);
                 attachment.setCrTime(crTime);
