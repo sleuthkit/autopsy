@@ -64,7 +64,7 @@ public final class IngestMonitor {
             MONITOR_LOGGER.setUseParentHandlers(false);
             MONITOR_LOGGER.addHandler(monitorLogHandler);
         } catch (IOException | SecurityException ex) {
-            logger.log(Level.SEVERE, "Failed to create memory usage logger", ex);
+            logger.log(Level.SEVERE, "Failed to create memory usage logger", ex); //NON-NLS
         }
     }
 

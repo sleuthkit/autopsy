@@ -631,11 +631,18 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         //set node, wrap in filter node first to filter out children
                         Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
                         Node kffn = new KnownFileFilterNode(drfn, KnownFileFilterNode.getSelectionContext(originNode));
-                        if(originNode instanceof DisplayableItemNode) {
-                            dataResult.setNode(new TableFilterNode(kffn, true, ((DisplayableItemNode) originNode).getItemType()));
-                        } else {
-                            dataResult.setNode(new TableFilterNode(kffn, true));
-                        }
+                        /*
+                         * TODO (AUT-1849): Correct or remove peristent column
+                         * reordering code
+                         *
+                         * The following conditional was added to support this
+                         * feature.
+                         */
+//                        if(originNode instanceof DisplayableItemNode) {
+//                            dataResult.setNode(new TableFilterNode(kffn, true, ((DisplayableItemNode) originNode).getItemType()));
+//                        } else {
+                        dataResult.setNode(new TableFilterNode(kffn, true));
+//                        }
 
                         String displayName = "";
                         Content content = originNode.getLookup().lookup(Content.class);
@@ -772,7 +779,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
         Node imagesNode = imagesNodeOrig.getNode();
 
-        DataSourcesNode.DataSourcesNodeChildren contentRootChildren = (DataSourcesNode.DataSourcesNodeChildren) imagesNode.getChildren();        
+        DataSourcesNode.DataSourcesNodeChildren contentRootChildren = (DataSourcesNode.DataSourcesNodeChildren) imagesNode.getChildren();
         contentRootChildren.refreshContentKeys();
 
         //final TreeView tree = getTree();
