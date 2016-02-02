@@ -170,8 +170,8 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
     @Override
     public void storeSettings(WizardDescriptor settings) {
         NewCaseVisualPanel2 currentComponent = getComponent();
-        settings.putProperty("caseNumber", currentComponent.getCaseNumber());
-        settings.putProperty("caseExaminer", currentComponent.getExaminer());
+        settings.putProperty("caseNumber", currentComponent.getCaseNumber()); //NON-NLS
+        settings.putProperty("caseExaminer", currentComponent.getExaminer()); //NON-NLS
     }
 
     @Override

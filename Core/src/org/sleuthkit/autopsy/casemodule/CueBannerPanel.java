@@ -18,9 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.awt.Dialog;
-import java.awt.Dimension;
-import java.awt.Toolkit;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -79,10 +77,10 @@ public class CueBannerPanel extends javax.swing.JPanel {
         closeButton = new javax.swing.JButton();
         jSeparator1 = new javax.swing.JSeparator();
 
-        autopsyLogo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/welcome_logo.png"))); // NOI18N
+        autopsyLogo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/welcome_logo.png"))); // NOI18N NON-NLS
         autopsyLogo.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.autopsyLogo.text")); // NOI18N
 
-        newCaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/btn_icon_create_new_case.png"))); // NOI18N
+        newCaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/btn_icon_create_new_case.png"))); // NOI18N NON-NLS
         newCaseButton.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.newCaseButton.text")); // NOI18N
         newCaseButton.setBorder(null);
         newCaseButton.setBorderPainted(false);
@@ -94,7 +92,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
             }
         });
 
-        openRecentButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/btn_icon_open_recent.png"))); // NOI18N
+        openRecentButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/btn_icon_open_recent.png"))); // NOI18N NON-NLS
         openRecentButton.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openRecentButton.text")); // NOI18N
         openRecentButton.setBorder(null);
         openRecentButton.setBorderPainted(false);
@@ -106,13 +104,13 @@ public class CueBannerPanel extends javax.swing.JPanel {
             }
         });
 
-        createNewLabel.setFont(new java.awt.Font("Tahoma", 0, 13)); // NOI18N
+        createNewLabel.setFont(createNewLabel.getFont().deriveFont(Font.PLAIN, 13));
         createNewLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.createNewLabel.text")); // NOI18N
 
-        openRecentLabel.setFont(new java.awt.Font("Tahoma", 0, 13)); // NOI18N
+        openRecentLabel.setFont(openRecentLabel.getFont().deriveFont(Font.PLAIN, 13));
         openRecentLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openRecentLabel.text")); // NOI18N
 
-        openCaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/btn_icon_open_existing.png"))); // NOI18N
+        openCaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/btn_icon_open_existing.png"))); // NOI18N NON-NLS
         openCaseButton.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openCaseButton.text")); // NOI18N
         openCaseButton.setBorder(null);
         openCaseButton.setBorderPainted(false);
@@ -125,7 +123,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
             }
         });
 
-        openLabel.setFont(new java.awt.Font("Tahoma", 0, 13)); // NOI18N
+        openLabel.setFont(openLabel.getFont().deriveFont(Font.PLAIN, 13));
         openLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openLabel.text")); // NOI18N
 
         closeButton.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.closeButton.text")); // NOI18N
