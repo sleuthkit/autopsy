@@ -40,6 +40,11 @@ public abstract class DisplayableItemNode extends AbstractNode {
     public abstract boolean isLeafTypeNode();
 
     public abstract <T> T accept(DisplayableItemNodeVisitor<T> v);
-    
-    public abstract String getItemType();
+
+    /*
+     * TODO (AUT-1849): Correct or remove peristent column reordering code
+     * 
+     * Added to support this feature.
+     */
+//    public abstract String getItemType();
 }

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.imagegallery;
 
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -83,17 +84,17 @@ final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
 
         furtherDescriptionArea.setBackground(new java.awt.Color(240, 240, 240));
         furtherDescriptionArea.setColumns(20);
-        furtherDescriptionArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
+        furtherDescriptionArea.setFont(furtherDescriptionArea.getFont().deriveFont(Font.PLAIN, 11)); // NOI18N
         furtherDescriptionArea.setLineWrap(true);
         furtherDescriptionArea.setRows(5);
         furtherDescriptionArea.setText(NbBundle.getMessage(ImageGalleryOptionsPanel.class, "ImageGalleryOptionsPanel.furtherDescriptionArea.text")); // NOI18N
         furtherDescriptionArea.setWrapStyleWord(true);
         furtherDescriptionArea.setPreferredSize(new java.awt.Dimension(378, 74));
 
-        infoIconLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/imagegallery/images/info-icon-16.png"))); // NOI18N
+        infoIconLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/imagegallery/images/info-icon-16.png"))); // NOI18N NON-NLS
         org.openide.awt.Mnemonics.setLocalizedText(infoIconLabel, NbBundle.getMessage(ImageGalleryOptionsPanel.class, "ImageGalleryOptionsPanel.infoIconLabel.text")); // NOI18N
 
-        unavailableDuringInjestLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/imagegallery/images/warning16.png"))); // NOI18N
+        unavailableDuringInjestLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/imagegallery/images/warning16.png"))); // NOI18N NON-NLS
         org.openide.awt.Mnemonics.setLocalizedText(unavailableDuringInjestLabel, NbBundle.getMessage(ImageGalleryOptionsPanel.class, "ImageGalleryOptionsPanel.unavailableDuringInjestLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
