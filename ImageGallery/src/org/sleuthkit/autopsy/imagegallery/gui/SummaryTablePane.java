@@ -79,7 +79,7 @@ public class SummaryTablePane extends AnchorPane {
 
     public SummaryTablePane(ImageGalleryController controller) {
         this.controller = controller;
-        FXMLConstructor.construct(this, "SummaryTablePane.fxml");
+        FXMLConstructor.construct(this, "SummaryTablePane.fxml"); //NON-NLS
 
     }
 
