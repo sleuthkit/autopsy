@@ -149,7 +149,6 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         sortByLabel.setText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.sortByLabel.text")); // NOI18N
 
         sortByComboBox.setFont(sortByComboBox.getFont().deriveFont(sortByComboBox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        sortByComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { "Time", "Priority" }));
         sortByComboBox.setToolTipText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.sortByComboBox.toolTipText")); // NOI18N
         sortByComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -240,6 +239,14 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         mainPanel.setOpaque(true);
         jScrollPane1.setOpaque(true);
         messageTable.setOpaque(false);
+
+        /**
+         * It is not possible to internationalize the list of options in a ComboBox
+         * inside of the generated form code. So, it is done here.
+         */
+        sortByComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] {
+            NbBundle.getMessage(this.getClass(), "IngestMessagePanel.sortByComboBox.model.time"), 
+            NbBundle.getMessage(this.getClass(), "IngestMessagePanel.sortByComboBox.model.priority")}));
 
         jScrollPane1.setWheelScrollingEnabled(true);
 
