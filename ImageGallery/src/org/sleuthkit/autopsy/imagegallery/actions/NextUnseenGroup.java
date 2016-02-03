@@ -26,6 +26,7 @@ import javafx.event.ActionEvent;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import org.controlsfx.control.action.Action;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
@@ -34,15 +35,17 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
  * Marks the currently fisplayed group as "seen" and advances to the next unseen
  * group
  */
+@NbBundle.Messages({"NextUnseenGroup.markGroupSeen=Mark Group Seen",
+        "NextUnseenGroup.nextUnseenGroup=Next Unseen group"})
 public class NextUnseenGroup extends Action {
 
     private static final Image END =
-            new Image(NextUnseenGroup.class.getResourceAsStream("/org/sleuthkit/autopsy/imagegallery/images/control-stop.png"));
+            new Image(NextUnseenGroup.class.getResourceAsStream("/org/sleuthkit/autopsy/imagegallery/images/control-stop.png")); //NON-NLS
     private static final Image ADVANCE =
-            new Image(NextUnseenGroup.class.getResourceAsStream("/org/sleuthkit/autopsy/imagegallery/images/control-double.png"));
+            new Image(NextUnseenGroup.class.getResourceAsStream("/org/sleuthkit/autopsy/imagegallery/images/control-double.png")); //NON-NLS
 
-    private static final String MARK_GROUP_SEEN = "Mark Group Seen";
-    private static final String NEXT_UNSEEN_GROUP = "Next Unseen group";
+    private static final String MARK_GROUP_SEEN = Bundle.NextUnseenGroup_markGroupSeen();
+    private static final String NEXT_UNSEEN_GROUP = Bundle.NextUnseenGroup_nextUnseenGroup();
 
     private final ImageGalleryController controller;
 

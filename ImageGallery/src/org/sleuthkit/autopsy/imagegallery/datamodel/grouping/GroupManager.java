@@ -62,6 +62,7 @@ import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Exceptions;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
@@ -195,10 +196,10 @@ public class GroupManager {
                 DrawableFile<?> file = db.getFileFromID(fileID);
                 return getGroupKeysForFile(file);
             } else {
-                Logger.getLogger(GroupManager.class.getName()).log(Level.WARNING, "Failed to load file with id: {0} from database.  There is no database assigned.", fileID);
+                Logger.getLogger(GroupManager.class.getName()).log(Level.WARNING, "Failed to load file with id: {0} from database.  There is no database assigned.", fileID); //NON-NLS
             }
         } catch (TskCoreException ex) {
-            Logger.getLogger(GroupManager.class.getName()).log(Level.SEVERE, "failed to load file with id: " + fileID + " from database", ex);
+            Logger.getLogger(GroupManager.class.getName()).log(Level.SEVERE, "failed to load file with id: " + fileID + " from database", ex); //NON-NLS
         }
         return Collections.emptySet();
     }
@@ -347,11 +348,11 @@ public class GroupManager {
                     break;
                 case MIME_TYPE:
                     HashSet<String> types = new HashSet<>();
-                    try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery("select group_concat(obj_id), mime_type from tsk_files group by mime_type ");
+                    try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery("select group_concat(obj_id), mime_type from tsk_files group by mime_type "); //NON-NLS
                             ResultSet resultSet = executeQuery.getResultSet();) {
                         while (resultSet.next()) {
-                            final String mimeType = resultSet.getString("mime_type");
-                            String objIds = resultSet.getString("group_concat(obj_id)");
+                            final String mimeType = resultSet.getString("mime_type"); //NON-NLS
+                            String objIds = resultSet.getString("group_concat(obj_id)"); //NON-NLS
 
                             Pattern.compile(",").splitAsStream(objIds)
                                     .map(Long::valueOf)
@@ -370,7 +371,7 @@ public class GroupManager {
 
             return values;
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "TSK error getting list of type {0}", groupBy.getDisplayName());
+            LOGGER.log(Level.WARNING, "TSK error getting list of type {0}", groupBy.getDisplayName()); //NON-NLS
             return Collections.emptyList();
         }
 
@@ -416,7 +417,7 @@ public class GroupManager {
                     }
                 }
 
-                return db.findAllFileIdsWhere("obj_id NOT IN (" + StringUtils.join(files, ',') + ")");
+                return db.findAllFileIdsWhere("obj_id NOT IN (" + StringUtils.join(files, ',') + ")"); //NON-NLS
             } else {
 
                 List<ContentTag> contentTags = tagsManager.getContentTagsByTagName(tagsManager.getTagName(category));
@@ -428,7 +429,7 @@ public class GroupManager {
 
             }
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "TSK error getting files in Category:" + category.getDisplayName(), ex);
+            LOGGER.log(Level.WARNING, "TSK error getting files in Category:" + category.getDisplayName(), ex); //NON-NLS
             throw ex;
         }
     }
@@ -444,7 +445,7 @@ public class GroupManager {
             }
             return files;
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "TSK error getting files with Tag:" + tagName.getDisplayName(), ex);
+            LOGGER.log(Level.WARNING, "TSK error getting files with Tag:" + tagName.getDisplayName(), ex); //NON-NLS
             throw ex;
         }
     }
@@ -531,7 +532,7 @@ public class GroupManager {
     /**
      * an executor to submit async ui related background tasks to.
      */
-    final ExecutorService regroupExecutor = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder().namingPattern("ui task -%d").build());
+    final ExecutorService regroupExecutor = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder().namingPattern("ui task -%d").build()); //NON-NLS
 
     public ReadOnlyDoubleProperty regroupProgress() {
         return regroupProgress.getReadOnlyProperty();
@@ -682,7 +683,7 @@ public class GroupManager {
                         return group;
                     }
                 } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "failed to get files for group: " + groupKey.getAttribute().attrName.toString() + " = " + groupKey.getValue(), ex);
+                    LOGGER.log(Level.SEVERE, "failed to get files for group: " + groupKey.getAttribute().attrName.toString() + " = " + groupKey.getValue(), ex); //NON-NLS
                 }
             }
         }
@@ -693,13 +694,13 @@ public class GroupManager {
 
         HashSet<Long> hashSet = new HashSet<>();
         String query = (null == mimeType)
-                ? "SELECT obj_id FROM tsk_files WHERE mime_type IS NULL"
-                : "SELECT obj_id FROM tsk_files WHERE mime_type = '" + mimeType + "'";
+                ? "SELECT obj_id FROM tsk_files WHERE mime_type IS NULL" //NON-NLS
+                : "SELECT obj_id FROM tsk_files WHERE mime_type = '" + mimeType + "'"; //NON-NLS
 
         try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery(query);
                 ResultSet resultSet = executeQuery.getResultSet();) {
             while (resultSet.next()) {
-                final long fileID = resultSet.getLong("obj_id");
+                final long fileID = resultSet.getLong("obj_id"); //NON-NLS
                 if (db.isInDB(fileID)) {
                     hashSet.add(fileID);
                 }
@@ -717,6 +718,13 @@ public class GroupManager {
      * {@link Groupings} for them
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
+    @NbBundle.Messages({"# {0} - groupBy attribute Name",
+            "# {1} - sortBy name",
+            "# {2} - sort Order",
+            "ReGroupTask.displayTitle=regrouping files by {0} sorted by {1} in {2} order",
+            "# {0} - groupBy attribute Name",
+            "# {1} - atribute value",
+            "ReGroupTask.progressUpdate=regrouping files by {0} : {1}"})
     private class ReGroupTask<A extends Comparable<A>> extends LoggedTask<Void> {
 
         private ProgressHandle groupProgress;
@@ -728,7 +736,7 @@ public class GroupManager {
         private final SortOrder sortOrder;
 
         public ReGroupTask(DrawableAttribute<A> groupBy, GroupSortBy sortBy, SortOrder sortOrder) {
-            super("regrouping files by " + groupBy.attrName.toString() + " sorted by " + sortBy.name() + " in " + sortOrder.toString() + " order", true);
+            super(Bundle.ReGroupTask_displayTitle(groupBy.attrName.toString(), sortBy.name(), sortOrder.toString()), true);
 
             this.groupBy = groupBy;
             this.sortBy = sortBy;
@@ -747,7 +755,7 @@ public class GroupManager {
                 return null;
             }
 
-            groupProgress = ProgressHandleFactory.createHandle("regrouping files by " + groupBy.attrName.toString() + " sorted by " + sortBy.name() + " in " + sortOrder.toString() + " order", this);
+            groupProgress = ProgressHandleFactory.createHandle(Bundle.ReGroupTask_displayTitle(groupBy.attrName.toString(), sortBy.name(), sortOrder.toString()), this);
             Platform.runLater(() -> {
                 analyzedGroups.clear();
                 unSeenGroups.clear();
@@ -765,9 +773,9 @@ public class GroupManager {
                     return null;//abort
                 }
                 p++;
-                updateMessage("regrouping files by " + groupBy.attrName.toString() + " : " + val);
+                updateMessage(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), val));
                 updateProgress(p, vals.size());
-                groupProgress.progress("regrouping files by " + groupBy.attrName.toString() + " : " + val, p);
+                groupProgress.progress(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), val), p);
                 popuplateIfAnalyzed(new GroupKey<A>(groupBy, val), this);
             }
             Platform.runLater(() -> FXCollections.sort(analyzedGroups, sortBy.getGrpComparator(sortOrder)));
