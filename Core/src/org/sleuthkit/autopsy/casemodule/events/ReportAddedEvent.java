@@ -78,7 +78,7 @@ public final class ReportAddedEvent extends AutopsyEvent implements Serializable
             }
             return report;
         } catch (IllegalStateException | TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error doing lazy load for remote event", ex);
+            logger.log(Level.SEVERE, "Error doing lazy load for remote event", ex); //NON-NLS
             return null;
         }
     }
