@@ -94,6 +94,7 @@ final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
         furtherDescriptionArea.setRows(5);
         furtherDescriptionArea.setText(NbBundle.getMessage(ImageGalleryOptionsPanel.class, "ImageGalleryOptionsPanel.furtherDescriptionArea.text")); // NOI18N
         furtherDescriptionArea.setWrapStyleWord(true);
+        furtherDescriptionArea.setPreferredSize(new java.awt.Dimension(378, 74));
 
         infoIconLabel.setFont(infoIconLabel.getFont().deriveFont(infoIconLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         infoIconLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/imagegallery/images/info-icon-16.png"))); // NOI18N
@@ -118,7 +119,7 @@ final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
                             .addGap(21, 21, 21)
                             .addComponent(infoIconLabel)
                             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(furtherDescriptionArea))
+                            .addComponent(furtherDescriptionArea, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addComponent(enabledByDefaultBox)
                         .addComponent(enabledForCaseBox)
                         .addComponent(descriptionLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
