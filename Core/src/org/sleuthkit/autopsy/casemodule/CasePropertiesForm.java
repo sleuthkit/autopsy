@@ -24,6 +24,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.awt.*;
 import java.nio.file.Paths;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -173,6 +174,8 @@ class CasePropertiesForm extends javax.swing.JPanel {
      */
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    @NbBundle.Messages({"CasePropertiesForm.imagesTable.path=Path",
+            "CasePropertiesForm.imagesTable.remove=Remove"})
     private void initComponents() {
 
         jScrollPane1 = new javax.swing.JScrollPane();
@@ -205,7 +208,7 @@ class CasePropertiesForm extends javax.swing.JPanel {
         jTextArea1.setRows(5);
         jScrollPane1.setViewportView(jTextArea1);
 
-        casePropLabel.setFont(new java.awt.Font("Tahoma", 1, 24)); // NOI18N
+        casePropLabel.setFont(casePropLabel.getFont().deriveFont(Font.BOLD, 24));
         casePropLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         casePropLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.casePropLabel.text")); // NOI18N
 
@@ -227,10 +230,10 @@ class CasePropertiesForm extends javax.swing.JPanel {
             }
         });
 
-        genInfoLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        genInfoLabel.setFont(genInfoLabel.getFont().deriveFont(Font.BOLD, 14));
         genInfoLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.genInfoLabel.text")); // NOI18N
 
-        imgInfoLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        imgInfoLabel.setFont(imgInfoLabel.getFont().deriveFont(Font.BOLD, 14));
         imgInfoLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.imgInfoLabel.text")); // NOI18N
 
         OKButton.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.OKButton.text")); // NOI18N
@@ -240,7 +243,8 @@ class CasePropertiesForm extends javax.swing.JPanel {
 
             },
             new String [] {
-                "Path", "Remove"
+                Bundle.CasePropertiesForm_imagesTable_path(),
+                Bundle.CasePropertiesForm_imagesTable_remove()
             }
         ) {
             boolean[] canEdit = new boolean [] {
