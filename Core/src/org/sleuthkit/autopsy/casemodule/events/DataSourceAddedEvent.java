@@ -81,7 +81,7 @@ public final class DataSourceAddedEvent extends AutopsyEvent implements Serializ
             dataSource = Case.getCurrentCase().getSleuthkitCase().getContentById(id);
             return dataSource;
         } catch (IllegalStateException | TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error doing lazy load for remote event", ex);
+            logger.log(Level.SEVERE, "Error doing lazy load for remote event", ex); //NON-NLS
             return null;
         }
     }

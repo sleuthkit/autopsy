@@ -28,6 +28,8 @@ import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Menu;
 import javax.swing.SwingWorker;
+
+import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
@@ -59,8 +61,12 @@ public class AddDrawableTagAction extends AddTagAction {
     }
 
     @Override
+    @NbBundle.Messages({"AddDrawableTagAction.displayName.plural=Tag Files",
+            "AddDrawableTagAction.displayName.singular=Tag File"})
     protected String getActionDisplayName() {
-        return Utilities.actionsGlobalContext().lookupAll(AbstractFile.class).size() > 1 ? "Tag Files" : "Tag File";
+        return Utilities.actionsGlobalContext().lookupAll(AbstractFile.class).size() > 1
+                ? Bundle.AddDrawableTagAction_displayName_plural()
+                : Bundle.AddDrawableTagAction_displayName_singular();
     }
 
     @Override
@@ -70,6 +76,8 @@ public class AddDrawableTagAction extends AddTagAction {
     }
 
     @Override
+    @NbBundle.Messages({"# {0} - fileID",
+            "AddDrawableTagAction.addTagsToFiles.alert=Unable to tag file {0}."})
     public void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles) {
         new SwingWorker<Void, Void>() {
 
@@ -78,7 +86,7 @@ public class AddDrawableTagAction extends AddTagAction {
                 for (Long fileID : selectedFiles) {
                     try {
                         final DrawableFile<?> file = controller.getFileFromId(fileID);
-                        LOGGER.log(Level.INFO, "tagging {0} with {1} and comment {2}", new Object[]{file.getName(), tagName.getDisplayName(), comment});
+                        LOGGER.log(Level.INFO, "tagging {0} with {1} and comment {2}", new Object[]{file.getName(), tagName.getDisplayName(), comment}); //NON-NLS
 
                         // check if the same tag is being added for the same abstract file.
                         DrawableTagsManager tagsManager = controller.getTagsManager();
@@ -89,16 +97,16 @@ public class AddDrawableTagAction extends AddTagAction {
                                 .findAny();
 
                         if (duplicateTagName.isPresent()) {
-                            LOGGER.log(Level.INFO, "{0} already tagged as {1}. Skipping.", new Object[]{file.getName(), tagName.getDisplayName()});
+                            LOGGER.log(Level.INFO, "{0} already tagged as {1}. Skipping.", new Object[]{file.getName(), tagName.getDisplayName()}); //NON-NLS
                         } else {
-                            LOGGER.log(Level.INFO, "Tagging {0} as {1}", new Object[]{file.getName(), tagName.getDisplayName()});
+                            LOGGER.log(Level.INFO, "Tagging {0} as {1}", new Object[]{file.getName(), tagName.getDisplayName()}); //NON-NLS
                             controller.getTagsManager().addContentTag(file, tagName, comment);
                         }
 
                     } catch (TskCoreException tskCoreException) {
-                        LOGGER.log(Level.SEVERE, "Error tagging file", tskCoreException);
+                        LOGGER.log(Level.SEVERE, "Error tagging file", tskCoreException); //NON-NLS
                         Platform.runLater(() -> {
-                            new Alert(Alert.AlertType.ERROR, "Unable to tag file " + fileID + ".").show();
+                            new Alert(Alert.AlertType.ERROR, Bundle.AddDrawableTagAction_addTagsToFiles_alert(fileID)).show();
                         });
                     }
                 }
@@ -111,7 +119,7 @@ public class AddDrawableTagAction extends AddTagAction {
                 try {
                     get();
                 } catch (InterruptedException | ExecutionException ex) {
-                    LOGGER.log(Level.SEVERE, "unexpected exception while tagging files", ex);
+                    LOGGER.log(Level.SEVERE, "unexpected exception while tagging files", ex); //NON-NLS
                 }
             }
         }.execute();
