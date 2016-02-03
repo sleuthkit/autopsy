@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2015 Basis Technology Corp.
+ * Copyright 2012-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,7 +31,8 @@ import java.nio.file.Path;
 public class FileUtil {
 
     private static final Logger logger = Logger.getLogger(FileUtil.class.getName());
-    private static String TEMP_FILE_PREFIX = "Autopsy"; //NON-NLS
+    private static final String TEMP_FILE_NAME = "Autopsy"; //NON-NLS
+    private static final String TEMP_FILE_EXT = null; //NON-NLS
 
     /**
      * Recursively delete all of the files and sub-directories in a directory.
@@ -172,16 +173,17 @@ public class FileUtil {
     }
 
     /**
-     * Test if the current user has read and write access to the path.
+     * Test if the current user has read and write access to the dirPath.
      *
-     * @param path The path to test for read and write access.
+     * @param dirPath The path to the directory to test for read and write
+     *                access.
      *
      * @return True if we have both read and write access, false otherwise.
      */
-    public static boolean hasReadWriteAccess(Path path) {
+    public static boolean hasReadWriteAccess(Path dirPath) {
         Path p = null;
         try {
-            p = Files.createTempFile(path, TEMP_FILE_PREFIX, null);
+            p = Files.createTempFile(dirPath, TEMP_FILE_NAME, TEMP_FILE_EXT);
             return (p.toFile().canRead() && p.toFile().canWrite());
         } catch (IOException ex) {
             return false;
@@ -193,5 +195,11 @@ public class FileUtil {
                 }
             }
         }
+    }
+
+    /**
+     * Prevents instantiation of this utility class.
+     */
+    private FileUtil() {
     }
 }

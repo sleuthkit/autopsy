@@ -78,7 +78,7 @@ class EventNode extends DisplayableItemNode {
             try {
                 timePropery.setValue(getDateTimeString());
             } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-                LOGGER.log(Level.SEVERE, "unexpected error setting date/time property on EventNode explorer node", ex);
+                LOGGER.log(Level.SEVERE, "unexpected error setting date/time property on EventNode explorer node", ex); //NON-NLS
             }
         });
 
@@ -121,11 +121,15 @@ class EventNode extends DisplayableItemNode {
         throw new UnsupportedOperationException("Not supported yet."); // NON-NLS //To change body of generated methods, choose Tools | Templates.
     }
 
-    @Override
-    public String getItemType() {
-        return "Event";
-    }
-
+    /*
+     * TODO (AUT-1849): Correct or remove peristent column reordering code
+     *
+     * Added to support this feature.
+     */
+//    @Override
+//    public String getItemType() {
+//        return "Event";
+//    }
     /**
      * We use TimeProperty instead of a normal NodeProperty to correctly display
      * the date/time when the user changes the timezone setting.

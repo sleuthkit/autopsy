@@ -85,7 +85,7 @@ abstract class TagAddedEvent<T extends Tag> extends AutopsyEvent implements Seri
             tag = getTagByID();
             return tag;
         } catch (IllegalStateException | TskCoreException ex) {
-            Logger.getLogger(TagAddedEvent.class.getName()).log(Level.SEVERE, "Error doing lazy load for remote event", ex);
+            Logger.getLogger(TagAddedEvent.class.getName()).log(Level.SEVERE, "Error doing lazy load for remote event", ex); //NON-NLS
             return null;
         }
     }

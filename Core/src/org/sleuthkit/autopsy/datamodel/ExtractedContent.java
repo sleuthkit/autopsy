@@ -183,10 +183,15 @@ public class ExtractedContent implements AutopsyVisitableItem {
             return s;
         }
 
-        @Override
-        public String getItemType() {
-            return "ExtractedContentRoot"; //NON-NLS
-        }
+        /*
+         * TODO (AUT-1849): Correct or remove peristent column reordering code
+         *
+         * Added to support this feature.
+         */
+//        @Override
+//        public String getItemType() {
+//            return "ExtractedContentRoot"; //NON-NLS
+//        }
     }
 
     /**
@@ -400,10 +405,15 @@ public class ExtractedContent implements AutopsyVisitableItem {
             return true;
         }
 
-        @Override
-        public String getItemType() {
-            return type.getDisplayName();
-        }
+        /*
+         * TODO (AUT-1849): Correct or remove peristent column reordering code
+         *
+         * Added to support this feature.
+         */
+//        @Override
+//        public String getItemType() {
+//            return type.getDisplayName();
+//        }
     }
 
     /**

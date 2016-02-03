@@ -3,7 +3,7 @@
 \section result_overview Overview
 DataResultViewer modules exist in the upper-right area of the default Autopsy interface, as shown below.  
 
-\image html viewer_image.jpg "Module Viewer Areas" 
+\image html viewer_image.JPG "Module Viewer Areas" 
 
 They display a set of files that are passed into the viewer from the tree on the left, keyword searching, or other searches. The main idea is that the same set of files can be viewed in table form, thumbnail form, or any other form that you can think of.  Once a file is selected from the DataResult area, it is passed to the DataContent area for display. 
 

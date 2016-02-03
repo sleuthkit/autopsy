@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.timeline.filters;
 
 import java.util.Objects;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 public class DescriptionFilter extends AbstractFilter {
@@ -69,10 +71,12 @@ public class DescriptionFilter extends AbstractFilter {
         return description;
     }
 
+    @NbBundle.Messages({"DescriptionFilter.mode.exclude=Exclude",
+            "DescriptionFilter.mode.include=Include"})
     public enum FilterMode {
 
-        EXCLUDE("Exclude"),
-        INCLUDE("Include");
+        EXCLUDE(Bundle.DescriptionFilter_mode_exclude()),
+        INCLUDE(Bundle.DescriptionFilter_mode_include());
 
         private final String displayName;
 

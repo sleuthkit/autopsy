@@ -89,10 +89,15 @@ public final class Reports implements AutopsyVisitableItem {
             return visitor.visit(this);
         }
 
-        @Override
-        public String getItemType() {
-            return "ReportsList"; //NON-NLS
-        }
+        /*
+         * TODO (AUT-1849): Correct or remove peristent column reordering code
+         *
+         * Added to support this feature.
+         */
+//        @Override
+//        public String getItemType() {
+//            return "ReportsList"; //NON-NLS
+//        }
     }
 
     /**
@@ -214,11 +219,15 @@ public final class Reports implements AutopsyVisitableItem {
             return new OpenReportAction();
         }
 
-        @Override
-        public String getItemType() {
-            return "Reports"; //NON-NLS
-        }
-
+        /*
+         * TODO (AUT-1849): Correct or remove peristent column reordering code
+         *
+         * Added to support this feature.
+         */
+//        @Override
+//        public String getItemType() {
+//            return "Reports"; //NON-NLS
+//        }
         private static class DeleteReportAction extends AbstractAction {
 
             private static DeleteReportAction instance;
