@@ -93,7 +93,7 @@ import org.sleuthkit.datamodel.TskException;
 public class Case implements SleuthkitCase.ErrorObserver {
 
     private static final String autopsyVer = Version.getVersion(); // current version of autopsy. Change it when the version is changed
-    private static final String EVENT_CHANNEL_NAME = "%s-Case-Events";
+    private static final String EVENT_CHANNEL_NAME = "%s-Case-Events"; //NON-NLS
     private static String appName = null;
     volatile private IntervalErrorReportData tskErrorReporter = null;
     private static final int MIN_SECONDS_BETWEEN_ERROR_REPORTS = 60; // No less than 60 seconds between warnings for errors
@@ -218,10 +218,12 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * This enum describes the type of case, either single-user (standalone) or
      * multi-user (using PostgreSql)
      */
+    @NbBundle.Messages({"Case_caseType_singleUser=Single-user case",
+    "Case_caseType_multiUser=Multi-user case"})
     public enum CaseType {
 
-        SINGLE_USER_CASE("Single-user case"),
-        MULTI_USER_CASE("Multi-user case");
+        SINGLE_USER_CASE(Bundle.Case_caseType_singleUser()),
+        MULTI_USER_CASE(Bundle.Case_caseType_multiUser());
 
         private final String caseType;
 
@@ -368,7 +370,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     eventPublisher.openRemoteEventChannel(String.format(EVENT_CHANNEL_NAME, newCase.getTextIndexName()));
                     currentCase.collaborationMonitor = new CollaborationMonitor();
                 } catch (AutopsyEventException | CollaborationMonitor.CollaborationMonitorException ex) {
-                    logger.log(Level.SEVERE, "Failed to setup for collaboration", ex);
+                    logger.log(Level.SEVERE, "Failed to setup for collaboration", ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(NbBundle.getMessage(Case.class, "Case.CollaborationSetup.FailNotify.Title"), NbBundle.getMessage(Case.class, "Case.CollaborationSetup.FailNotify.ErrMsg"));
                 }
             }
@@ -542,13 +544,13 @@ public class Case implements SleuthkitCase.ErrorObserver {
         String result;
 
         // Remove all non-ASCII characters
-        result = caseName.replaceAll("[^\\p{ASCII}]", "_");
+        result = caseName.replaceAll("[^\\p{ASCII}]", "_"); //NON-NLS
 
         // Remove all control characters
-        result = result.replaceAll("[\\p{Cntrl}]", "_");
+        result = result.replaceAll("[\\p{Cntrl}]", "_"); //NON-NLS
 
         // Remove / \ : ? space ' "
-        result = result.replaceAll("[ /?:'\"\\\\]", "_");
+        result = result.replaceAll("[ /?:'\"\\\\]", "_"); //NON-NLS
 
         // Make it all lowercase
         result = result.toLowerCase();
@@ -564,7 +566,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         }
 
         if (result.isEmpty()) {
-            result = "case";
+            result = "case"; //NON-NLS
         }
 
         return result;
