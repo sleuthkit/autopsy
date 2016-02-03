@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 
 /**
- * An image data source processor with a configuration panel. This data source
+ * An image file data source processor with a configuration panel. This data source
  * processor implements the DataSourceProcessor service provider interface to
  * allow integration with the add data source wizard. It also provides a run
  * method overload to allow it to be used independently of the configuration UI.
@@ -66,7 +66,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
     }
 
     /**
-     * Constructs a local drive data source processor with a configuration
+     * Constructs an image file data source processor with a configuration
      * panel. This data source processor implements the DataSourceProcessor
      * service provider interface to allow integration with the add data source
      * wizard. It also provides a run method overload to allow it to be used

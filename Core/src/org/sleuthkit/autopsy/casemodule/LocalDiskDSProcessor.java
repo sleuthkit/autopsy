@@ -93,7 +93,6 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
      * Indicates whether or not the inputs to the configuration panel are valid.
      *
      * @return True or false.
-     *
      */
     @Override
     public boolean isPanelValid() {

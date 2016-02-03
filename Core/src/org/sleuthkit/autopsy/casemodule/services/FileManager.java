@@ -391,6 +391,53 @@ public class FileManager implements Closeable {
         return fileSetRootDir;
     }
 
+    public synchronized VirtualDirectory addLocalFilesAndDirs(List<String> localAbsPaths, FileAddProgressUpdater progressUpdater) throws TskCoreException {
+        final List<java.io.File> rootsToAdd = new ArrayList<>();
+        //first validate all the inputs before any additions
+        for (String absPath : localAbsPaths) {
+            java.io.File localFile = new java.io.File(absPath);
+            if (!localFile.exists() || !localFile.canRead()) {
+                String msg = NbBundle
+                        .getMessage(this.getClass(), "FileManager.addLocalFilesDirs.exception.notReadable.msg",
+                                localFile.getAbsolutePath());
+                logger.log(Level.SEVERE, msg);
+                throw new TskCoreException(msg);
+            }
+            rootsToAdd.add(localFile);
+        }
+
+        CaseDbTransaction trans = tskCase.beginTransaction();
+        // make a virtual top-level directory for this set of files/dirs
+        final VirtualDirectory fileSetRootDir = addLocalFileSetRootDir(trans);
+
+        try {
+            // recursively add each item in the set
+            for (java.io.File localRootToAdd : rootsToAdd) {
+                AbstractFile localFileAdded = addLocalDirInt(trans, fileSetRootDir, localRootToAdd, progressUpdater);
+
+                if (localFileAdded == null) {
+                    String msg = NbBundle
+                            .getMessage(this.getClass(), "FileManager.addLocalFilesDirs.exception.cantAdd.msg",
+                                    localRootToAdd.getAbsolutePath());
+                    logger.log(Level.SEVERE, msg);
+                    throw new TskCoreException(msg);
+                } else {
+                    //added.add(localFileAdded);
+                    //send new content event
+                    //for now reusing ingest events, in future this will be replaced by datamodel / observer sending out events
+                    // @@@ Is this the right place for this? A directory tree refresh will be triggered, so this may be creating a race condition
+                    // since the transaction is not yet committed.   
+                    IngestServices.getInstance().fireModuleContentEvent(new ModuleContentEvent(localFileAdded));
+                }
+            }
+
+            trans.commit();
+        } catch (TskCoreException ex) {
+            trans.rollback();
+        }
+        return fileSetRootDir;
+    }    
+    
     /**
      * Adds a new virtual directory root object with FileSet X name and
      * consecutive sequence number characteristic to every add operation
