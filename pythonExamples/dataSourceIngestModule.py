@@ -140,7 +140,7 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
             # Make an artifact on the blackboard.  TSK_INTERESTING_FILE_HIT is a generic type of
             # artfiact.  Refer to the developer docs for other examples.
             art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT)
-            att = BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), SampleJythonDataSourceIngestModuleFactory.moduleName, "Test file")
+            att = BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, SampleJythonDataSourceIngestModuleFactory.moduleName, "Test file")
             art.addAttribute(att)
 
             # This will work in 4.0.1 and beyond

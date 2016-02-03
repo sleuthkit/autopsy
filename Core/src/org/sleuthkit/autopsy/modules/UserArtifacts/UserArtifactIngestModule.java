@@ -1,14 +1,25 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2011-2016 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.modules.UserArtifacts;
 
 import com.sun.media.jfxmedia.logging.Logger;
 import java.util.List;
-import org.openide.util.Exceptions;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard.BlackboardException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
@@ -17,24 +28,18 @@ import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbIngestModule;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupModuleFactory;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskDataException;
 
 /**
- *
- * @author oliver
+ * Test module that creates new artifact and attribute types.
  */
 public class UserArtifactIngestModule implements DataSourceIngestModule {
 
-    private IngestJobContext context = null;
     private BlackboardArtifact.Type type1, type2;
 
     @Override
@@ -71,18 +76,13 @@ public class UserArtifactIngestModule implements DataSourceIngestModule {
                     "Test", //NON-NLS
                     art1));
             return ProcessResult.OK;
-        } catch (TskCoreException ex) {
-            return ProcessResult.ERROR;
-        } catch (TskDataException ex) {
-            return ProcessResult.ERROR;
-        } catch (BlackboardException ex) {
+        } catch (TskCoreException | BlackboardException ex) {
             return ProcessResult.ERROR;
         }
     }
 
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
-        this.context = context;
         try {
             type1 = Case.getCurrentCase().getServices().getBlackboard().addArtifactType("This is", "a test"); //NON-NLS
             type2 = Case.getCurrentCase().getServices().getBlackboard().addArtifactType("Another", "kinda test"); //NON-NLS

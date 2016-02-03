@@ -109,10 +109,15 @@ public class Tags implements AutopsyVisitableItem {
             return propertySheet;
         }
 
-        @Override
-        public String getItemType() {
-            return "TagsRoots"; //NON-NLS
-        }
+        /*
+         * TODO (AUT-1849): Correct or remove peristent column reordering code
+         *
+         * Added to support this feature.
+         */
+//        @Override
+//        public String getItemType() {
+//            return "TagsRoots"; //NON-NLS
+//        }
     }
 
     private class TagNameNodeFactory extends ChildFactory.Detachable<TagName> implements Observer {
@@ -271,10 +276,15 @@ public class Tags implements AutopsyVisitableItem {
             updateDisplayName();
         }
 
-        @Override
-        public String getItemType() {
-            return "TagsName"; //NON-NLS
-        }
+        /*
+         * TODO (AUT-1849): Correct or remove peristent column reordering code
+         *
+         * Added to support this feature.
+         */
+//        @Override
+//        public String getItemType() {
+//            return "TagsName"; //NON-NLS
+//        }
     }
 
     /**
@@ -371,10 +381,15 @@ public class Tags implements AutopsyVisitableItem {
             updateDisplayName();
         }
 
-        @Override
-        public String getItemType() {
-            return "TagsContentType"; //NON-NLS
-        }
+        /*
+         * TODO (AUT-1849): Correct or remove peristent column reordering code
+         *
+         * Added to support this feature.
+         */
+//        @Override
+//        public String getItemType() {
+//            return "TagsContentType"; //NON-NLS
+//        }
     }
 
     private class ContentTagNodeFactory extends ChildFactory<ContentTag> implements Observer {
@@ -469,10 +484,15 @@ public class Tags implements AutopsyVisitableItem {
             updateDisplayName();
         }
 
-        @Override
-        public String getItemType() {
-            return "TagsBlackboardArtifact"; //NON-NLS
-        }
+        /*
+         * TODO (AUT-1849): Correct or remove peristent column reordering code
+         *
+         * Added to support this feature.
+         */
+//        @Override
+//        public String getItemType() {
+//            return "TagsBlackboardArtifact"; //NON-NLS
+//        }
     }
 
     private class BlackboardArtifactTagNodeFactory extends ChildFactory<BlackboardArtifactTag> implements Observer {

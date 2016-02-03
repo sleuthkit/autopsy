@@ -46,7 +46,7 @@ public class HashSetManager {
         try {
             return db.getHashSetsForFile(fileID);
         } catch (TskCoreException ex) {
-            Logger.getLogger(HashSetManager.class.getName()).log(Level.SEVERE, "Failed to get Hash Sets for file", ex);
+            Logger.getLogger(HashSetManager.class.getName()).log(Level.SEVERE, "Failed to get Hash Sets for file", ex); //NON-NLS
             return Collections.emptySet();
         }
     }

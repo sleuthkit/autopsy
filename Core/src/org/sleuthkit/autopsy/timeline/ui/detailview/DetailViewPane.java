@@ -391,6 +391,8 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
         "DetailViewPane.loggedTask.queryDb=Retreiving event data",
         "DetailViewPane.loggedTask.name=Updating Details View",
         "DetailViewPane.loggedTask.updateUI=Populating visualization",
+        "DetailViewPane.loggedTask.continueButton=Continue",
+        "DetailViewPane.loggedTask.backButton=Back (Cancel)",
         "# {0} - number of events",
         "DetailViewPane.loggedTask.prompt=You are about to show details for {0} events.  This might be very slow or even crash Autopsy.\n\nDo you want to continue?"})
     private class DetailsUpdateTask extends VisualizationUpdateTask<Interval> {
@@ -415,8 +417,8 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
 
                     @Override
                     protected ButtonType call() throws Exception {
-                        ButtonType ContinueButtonType = new ButtonType("Continue", ButtonBar.ButtonData.OK_DONE);
-                        ButtonType back = new ButtonType("Back (Cancel)", ButtonBar.ButtonData.CANCEL_CLOSE);
+                        ButtonType ContinueButtonType = new ButtonType(Bundle.DetailViewPane_loggedTask_continueButton(), ButtonBar.ButtonData.OK_DONE);
+                        ButtonType back = new ButtonType(Bundle.DetailViewPane_loggedTask_backButton(), ButtonBar.ButtonData.CANCEL_CLOSE);
 
                         Alert alert = new Alert(Alert.AlertType.WARNING, Bundle.DetailViewPane_loggedTask_prompt(eventStripes.size()), ContinueButtonType, back);
                         alert.setHeaderText("");

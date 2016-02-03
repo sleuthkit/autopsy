@@ -169,10 +169,15 @@ public class HashsetHits implements AutopsyVisitableItem {
             return s;
         }
 
-        @Override
-        public String getItemType() {
-            return "HashsetRoot"; //NON-NLS
-        }
+        /*
+         * TODO (AUT-1849): Correct or remove peristent column reordering code
+         *
+         * Added to support this feature.
+         */
+//        @Override
+//        public String getItemType() {
+//            return "HashsetRoot"; //NON-NLS
+//        }
     }
 
     /**
@@ -327,10 +332,15 @@ public class HashsetHits implements AutopsyVisitableItem {
             updateDisplayName();
         }
 
-        @Override
-        public String getItemType() {
-            return "HashsetName"; //NON-NLS
-        }
+        /*
+         * TODO (AUT-1849): Correct or remove peristent column reordering code
+         *
+         * Added to support this feature.
+         */
+//        @Override
+//        public String getItemType() {
+//            return "HashsetName"; //NON-NLS
+//        }
     }
 
     /**

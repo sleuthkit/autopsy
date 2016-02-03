@@ -68,8 +68,8 @@ public class CategoryManager {
      * Used to distribute {@link CategoryChangeEvent}s
      */
     private final EventBus categoryEventBus = new AsyncEventBus(Executors.newSingleThreadExecutor(
-            new BasicThreadFactory.Builder().namingPattern("Category Event Bus").uncaughtExceptionHandler((Thread t, Throwable e) -> {
-                LOGGER.log(Level.SEVERE, "Uncaught exception in category event bus handler", e);
+            new BasicThreadFactory.Builder().namingPattern("Category Event Bus").uncaughtExceptionHandler((Thread t, Throwable e) -> { //NON-NLS
+                LOGGER.log(Level.SEVERE, "Uncaught exception in category event bus handler", e); //NON-NLS
             }).build()
     ));
 
@@ -176,7 +176,7 @@ public class CategoryManager {
             longAdder.add(db.getCategoryCount(cat));
             longAdder.increment();
         } catch (IllegalStateException ex) {
-            LOGGER.log(Level.WARNING, "Case closed while getting files");
+            LOGGER.log(Level.WARNING, "Case closed while getting files"); //NON-NLS
         }
         return longAdder;
     }
@@ -210,8 +210,8 @@ public class CategoryManager {
         try {
             categoryEventBus.unregister(listener);
         } catch (IllegalArgumentException e) {
-            if (e.getMessage().contains("missing event subscriber for an annotated method. Is " + listener + " registered?")) {
-                LOGGER.log(Level.WARNING, "Attempted to unregister {0} for category change events, but it was not registered.", listener.toString());
+            if (e.getMessage().contains("missing event subscriber for an annotated method. Is " + listener + " registered?")) { //NON-NLS
+                LOGGER.log(Level.WARNING, "Attempted to unregister {0} for category change events, but it was not registered.", listener.toString()); //NON-NLS
             } else {
                 throw e;
             }
@@ -254,12 +254,12 @@ public class CategoryManager {
                         try {
                             tagsManager.deleteContentTag(ct);
                         } catch (TskCoreException tskException) {
-                            LOGGER.log(Level.SEVERE, "Failed to delete content tag. Unable to maintain categories in a consistent state.", tskException);
+                            LOGGER.log(Level.SEVERE, "Failed to delete content tag. Unable to maintain categories in a consistent state.", tskException); //NON-NLS
                         }
                     }
                 }
             } catch (TskCoreException tskException) {
-                LOGGER.log(Level.SEVERE, "Failed to get content tags for content.  Unable to maintain category in a consistent state.", tskException);
+                LOGGER.log(Level.SEVERE, "Failed to get content tags for content.  Unable to maintain category in a consistent state.", tskException); //NON-NLS
             }
             Category newCat = CategoryManager.categoryFromTagName(addedTag.getName());
             if (newCat != Category.ZERO) {
