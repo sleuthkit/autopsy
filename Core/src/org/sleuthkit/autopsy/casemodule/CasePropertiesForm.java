@@ -102,7 +102,9 @@ class CasePropertiesForm extends javax.swing.JPanel {
         int totalImages = imgPaths.size();
 
         // create the headers and add all the rows
-        String[] headers = {"Path"}; //NON-NLS
+        // Header names are internationalized via the generated code, do not overwrite.
+        String[] headers = {imagesTable.getColumnName(0), 
+                            imagesTable.getColumnName(1)};
         String[][] rows = new String[totalImages][];
 
         int i = 0;
@@ -167,6 +169,16 @@ class CasePropertiesForm extends javax.swing.JPanel {
 //        buttonColumn.setMnemonic(KeyEvent.VK_D);
     }
 
+    /** 
+     * In this generated code below, there are 2 strings "Path" and "Remove" that are
+     * table column headers in the DefaultTableModel. When this model is generated,
+     * it puts the hard coded English strings into the generated code. And then about 15
+     * lines later, it separately internationalizes them using:
+     * imagesTable.getColumnModel().getColumn(0).setHeaderValue().
+     * There is no way to prevent the GUI designer from putting the hard coded
+     * English strings into the generated code. So, they remain, and are not used.
+     */
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -243,6 +255,8 @@ class CasePropertiesForm extends javax.swing.JPanel {
         OKButton.setFont(OKButton.getFont().deriveFont(OKButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         OKButton.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.OKButton.text")); // NOI18N
 
+        imagesTableScrollPane.setFont(imagesTableScrollPane.getFont().deriveFont(imagesTableScrollPane.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+
         imagesTable.setFont(imagesTable.getFont().deriveFont(imagesTable.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         imagesTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -265,6 +279,12 @@ class CasePropertiesForm extends javax.swing.JPanel {
         imagesTable.getTableHeader().setReorderingAllowed(false);
         imagesTable.setUpdateSelectionOnSort(false);
         imagesTableScrollPane.setViewportView(imagesTable);
+        if (imagesTable.getColumnModel().getColumnCount() > 0) {
+            imagesTable.getColumnModel().getColumn(0).setHeaderValue(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.imagesTable.columnModel.title0")); // NOI18N
+            imagesTable.getColumnModel().getColumn(1).setHeaderValue(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.imagesTable.columnModel.title1")); // NOI18N
+        }
+
+        jScrollPane2.setFont(jScrollPane2.getFont().deriveFont(jScrollPane2.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
 
         caseDirTextArea.setEditable(false);
         caseDirTextArea.setBackground(new java.awt.Color(240, 240, 240));
