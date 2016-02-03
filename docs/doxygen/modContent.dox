@@ -4,7 +4,7 @@
 
 DataContentViewer modules exist in the lower-right area of the default Autopsy interface, as shown below.  
 
-\image html viewer_image.jpg "Module Viewer Areas" 
+\image html viewer_image.JPG "Module Viewer Areas" 
 
 They can analyze a single file that the user has identified from either browsing directories, keyword search, etc. It doesn't matter to these modules how the user found the file. 
 These modules allow the user to view the file in various ways. The default program comes with a hex and strings view and other modules exist to display pictures and videos as images instead of just a series of bytes.

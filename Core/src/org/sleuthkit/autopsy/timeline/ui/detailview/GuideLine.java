@@ -53,7 +53,7 @@ class GuideLine extends Line {
         Axis<DateTime> xAxis = chart.getXAxis();
         endYProperty().bind(chart.heightProperty().subtract(xAxis.heightProperty().subtract(xAxis.tickLengthProperty())));
 
-        getStyleClass().add("guide-line");
+        getStyleClass().add("guide-line"); //NON-NLS
 
         Tooltip.install(this, tooltip);
         tooltip.setOnShowing(showing -> tooltip.setText(Bundle.GuideLine_tooltip_text(getDateTimeAsString())));

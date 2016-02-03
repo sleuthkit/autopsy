@@ -73,7 +73,6 @@ public class KeywordHits implements AutopsyVisitableItem {
     private final class KeywordResults extends Observable {
 
         // Map from listName/Type to Map of keyword to set of artifact Ids
-
         private final Map<String, Map<String, Set<Long>>> topLevelMap;
 
         KeywordResults() {
@@ -240,10 +239,15 @@ public class KeywordHits implements AutopsyVisitableItem {
             return s;
         }
 
-        @Override
-        public String getItemType() {
-            return "KeywordRoot"; //NON-NLS
-        }
+        /*
+         * TODO (AUT-1849): Correct or remove peristent column reordering code
+         *
+         * Added to support this feature.
+         */
+//        @Override
+//        public String getItemType() {
+//            return "KeywordRoot"; //NON-NLS
+//        }
     }
 
     private class ListFactory extends ChildFactory.Detachable<String> implements Observer {
@@ -395,10 +399,15 @@ public class KeywordHits implements AutopsyVisitableItem {
             updateDisplayName();
         }
 
-        @Override
-        public String getItemType() {
-            return "KeywordList"; //NON-NLS
-        }
+        /*
+         * TODO (AUT-1849): Correct or remove peristent column reordering code
+         *
+         * Added to support this feature.
+         */
+//        @Override
+//        public String getItemType() {
+//            return "KeywordList"; //NON-NLS
+//        }
     }
 
     private class TermFactory extends ChildFactory.Detachable<String> implements Observer {
@@ -493,10 +502,15 @@ public class KeywordHits implements AutopsyVisitableItem {
             return s;
         }
 
-        @Override
-        public String getItemType() {
-            return "KeywordTerm"; //NON-NLS
-        }
+        /*
+         * TODO (AUT-1849): Correct or remove peristent column reordering code
+         *
+         * Added to support this feature.
+         */
+//        @Override
+//        public String getItemType() {
+//            return "KeywordTerm"; //NON-NLS
+//        }
     }
 
     public class HitsFactory extends ChildFactory.Detachable<Long> implements Observer {

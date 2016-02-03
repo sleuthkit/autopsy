@@ -23,17 +23,19 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import org.controlsfx.control.action.Action;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 
 /**
  * Action that redoes the last undone command
  */
+@NbBundle.Messages({"RedoAction.name=Redo"})
 public class RedoAction extends Action {
 
-    private static final Image REDO_IMAGE = new Image("/org/sleuthkit/autopsy/imagegallery/images/redo.png", 16, 16, true, true, true);
+    private static final Image REDO_IMAGE = new Image("/org/sleuthkit/autopsy/imagegallery/images/redo.png", 16, 16, true, true, true); //NON-NLS
 
     public RedoAction(ImageGalleryController controller) {
-        super("Redo");
+        super(Bundle.RedoAction_name());
         setGraphic(new ImageView(REDO_IMAGE));
         setAccelerator(new KeyCodeCombination(KeyCode.Y, KeyCodeCombination.CONTROL_DOWN));
         setEventHandler(actionEvent -> controller.getUndoManager().redo());

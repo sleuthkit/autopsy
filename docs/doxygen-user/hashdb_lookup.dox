@@ -54,7 +54,7 @@ Ingest Settings
 ------
 When hashsets are configured, the user can select the hashsets to use during the ingest process.
 
-\image html hash-lookup.png
+\image html hash-lookup.PNG
 
 
 
@@ -63,6 +63,6 @@ Seeing Results
 
 Results show up in the tree as "Hashset Hits", grouped by the name of the hash set.
 
-\image html hashset-hits.png
+\image html hashset-hits.PNG
 
 */
