@@ -38,11 +38,15 @@ import org.sleuthkit.datamodel.TskData;
  */
 public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
 
-    @Override
-    public String getItemType() {
-        return "LayoutFile"; //NON-NLS
-    }
-
+    /*
+     * TODO (AUT-1849): Correct or remove peristent column reordering code
+     *
+     * Added to support this feature.
+     */
+//    @Override
+//    public String getItemType() {
+//        return "LayoutFile"; //NON-NLS
+//    }
     public static enum LayoutContentPropertyType {
 
         PARTS {

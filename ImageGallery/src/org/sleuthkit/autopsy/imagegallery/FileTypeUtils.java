@@ -178,6 +178,25 @@ public enum FileTypeUtils {
         return ImageUtils.isGIF(file);
     }
 
+    public static Optional<String> getMimeType(AbstractFile file) throws TskCoreException {
+        final FileTypeDetector fileTypeDetector = getFileTypeDetector();
+        if (nonNull(fileTypeDetector)) {
+            return Optional.ofNullable(fileTypeDetector.getFileType(file));
+        }
+        return Optional.empty();
+    }
+
+    static boolean isDrawableMimeType(String mimeType) {
+        if (isNull(mimeType)) {
+            return false;
+        } else {
+            String mimeTypeLower = mimeType.toLowerCase();
+            return mimeTypeLower.startsWith("image/")
+                    || mimeTypeLower.startsWith("video/")
+                    || supportedMimeTypes.contains(mimeTypeLower);
+        }
+    }
+
     /**
      * does the given file have drawable/supported mime type
      *
@@ -188,21 +207,7 @@ public enum FileTypeUtils {
      *         mimetype could not be detected.
      */
     static Optional<Boolean> hasDrawableMimeType(AbstractFile file) throws TskCoreException {
-
-        final FileTypeDetector fileTypeDetector = getFileTypeDetector();
-        if (nonNull(fileTypeDetector)) {
-            String mimeType = fileTypeDetector.getFileType(file);
-            if (isNull(mimeType)) {
-                return Optional.empty();
-            } else {
-                mimeType = mimeType.toLowerCase();
-                return Optional.of(mimeType.startsWith("image/") //NON-NLS
-                        || mimeType.startsWith("video/") //NON-NLS
-                        || supportedMimeTypes.contains(mimeType));
-            }
-        }
-
-        return Optional.empty();
+        return getMimeType(file).map(FileTypeUtils::isDrawableMimeType);
     }
 
     /**
@@ -216,17 +221,14 @@ public enum FileTypeUtils {
      */
     public static boolean isVideoFile(AbstractFile file) {
         try {
-            final FileTypeDetector fileTypeDetector = getFileTypeDetector();
-            if (nonNull(fileTypeDetector)) {
-                String mimeType = fileTypeDetector.getFileType(file);
-                if (nonNull(mimeType)) {
-                    mimeType = mimeType.toLowerCase();
-                    return mimeType.startsWith("video/") || videoMimeTypes.contains(mimeType); //NON-NLS
-                }
-            }
+            return getMimeType(file)
+                    .map(String::toLowerCase)
+                    .map(mimeType ->
+                            mimeType.startsWith("video/")
+                            || videoMimeTypes.contains(mimeType))
+                    .orElseGet(() -> FileTypeUtils.videoExtensions.contains(file.getNameExtension()));
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.INFO, "failed to get mime type for " + file.getName(), ex); //NON-NLS
+            return FileTypeUtils.videoExtensions.contains(file.getNameExtension());
         }
-        return FileTypeUtils.videoExtensions.contains(file.getNameExtension());
     }
 }

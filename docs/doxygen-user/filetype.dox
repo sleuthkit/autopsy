@@ -18,7 +18,7 @@ You do not need to configure anything with this module unless you want to define
 
 From there, you can define rules based on the offset of the signature and if the signature is a byte sequence of an ASCII string.
 
-\image html filetype.png
+\image html filetype.PNG
 
 Using the Module
 ======

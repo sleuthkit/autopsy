@@ -770,14 +770,16 @@ public final class ImageGalleryController implements Executor {
                     if (known) {
                         taskDB.removeFile(f.getId(), tr);  //remove known files
                     } else {
-                        final Optional<Boolean> hasMimeType = FileTypeUtils.hasDrawableMimeType(f);
-                        if (hasMimeType.isPresent()) {
-                            if (hasMimeType.get()) {  //supported mimetype => analyzed
+                        Optional<String> mimeType = FileTypeUtils.getMimeType(f);
+                        if (mimeType.isPresent()) {
+                            //mime type
+                            if (FileTypeUtils.isDrawableMimeType(mimeType.get())) {  //supported mimetype => analyzed
                                 taskDB.updateFile(DrawableFile.create(f, true, false), tr);
                             } else { //unsupported mimtype => analyzed but shouldn't include
                                 taskDB.removeFile(f.getId(), tr);
                             }
                         } else {
+                            //no mime tyoe
                             if (FileTypeUtils.isDrawable(f)) {
                                 //no mime type but supported =>  add as not analyzed
                                 taskDB.insertFile(DrawableFile.create(f, false, false), tr);
