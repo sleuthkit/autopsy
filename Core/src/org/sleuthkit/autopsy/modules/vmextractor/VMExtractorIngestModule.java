@@ -171,8 +171,6 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
         progressBar.progress(NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.queuingIngestJobs.message"));
         // this is for progress bar purposes because at this point we only know in advance how many job folders to ingest, not how many data sources.
         int numJobsQueued = 0;
-        // keeps track of number of VMs ingested. A job folder may contain multiple VMs.
-        int numDataSourcesQueued = 0;
         // start processing output folders after we are done writing out all vm files
         for (String folder : imageFolderToOutputFolder.values()) {
             if (context.dataSourceIngestIsCancelled()) {
@@ -183,11 +181,9 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
                 try {
                     logger.log(Level.INFO, "Ingesting virtual machine file {0} in folder {1}", new Object[]{file, folder}); //NON-NLS
                 
-                    // for extracted virtual machines there is no manifest XML file to read data source ID from so we need to create one
-                    numDataSourcesQueued++;
-                    String dataSourceID = parentDataSourceId + "-VM" + numDataSourcesQueued; //NON-NLS
+                    // for extracted virtual machines there is no manifest XML file to read data source ID from so use parent data source ID.
                     // ingest the data sources  
-                    ingestVirtualMachineImage(Paths.get(folder, file), dataSourceID);
+                    ingestVirtualMachineImage(Paths.get(folder, file), parentDataSourceId);
                     logger.log(Level.INFO, "Ingest complete for virtual machine file {0} in folder {1}", new Object[]{file, folder}); //NON-NLS
                 } catch (InterruptedException ex) {
                     logger.log(Level.INFO, "Interrupted while ingesting virtual machine file "+file+" in folder "+folder, ex); //NON-NLS
