@@ -30,7 +30,10 @@
 package org.sleuthkit.autopsy.examples;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
@@ -56,22 +59,37 @@ import org.sleuthkit.datamodel.TskData;
 class SampleFileIngestModule implements FileIngestModule {
 
     private static final HashMap<Long, Long> artifactCountsForIngestJobs = new HashMap<>();
-    private static BlackboardAttribute.ATTRIBUTE_TYPE attrType = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COUNT;
     private final boolean skipKnownFiles;
     private IngestJobContext context = null;
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
+    private int filesFound;
+    private Logger logger;
 
     SampleFileIngestModule(SampleModuleIngestJobSettings settings) {
         this.skipKnownFiles = settings.skipKnownFiles();
     }
 
     @Override
+    /*
+     Where any setup and configuration is done
+     'context' is an instance of org.sleuthkit.autopsy.ingest.IngestJobContext.
+     See: http://sleuthkit.org/autopsy/docs/api-docs/3.1/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_ingest_job_context.html
+     TODO: Add any setup code that you need here.
+     */
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
         refCounter.incrementAndGet(context.getJobId());
+        this.filesFound = 0;
+        this.logger = Logger.getLogger(NbBundle.getMessage(SampleIngestModuleFactory.class, "SampleIngestModuleFactory.moduleName"));
     }
 
     @Override
+    /*
+     Where the analysis is done.  Each file will be passed into here.
+     The 'file' object being passed in is of type org.sleuthkit.datamodel.AbstractFile.
+     See: http://www.sleuthkit.org/sleuthkit/docs/jni-docs/4.3/classorg_1_1sleuthkit_1_1datamodel_1_1_abstract_file.html
+     TODO: Add your analysis code in here.
+     */
     public IngestModule.ProcessResult process(AbstractFile file) {
 
         // Skip anything other than actual file system files.
@@ -80,42 +98,66 @@ class SampleFileIngestModule implements FileIngestModule {
                 || (file.isFile() == false)) {
             return IngestModule.ProcessResult.OK;
         }
+        /*
+         This will work in 4.0.1 and beyond
+         Use blackboard class to index blackboard artifacts for keyword search
+         Blackboard blackboard = Case.getCurrentCase().getServices().getBlackboard()
+         */
+        //For an example, we will flag files with .txt in the name and make a blackboard artifact.
+        if (file.getName().toLowerCase().endsWith(".txt")) {
+            logger.log(Level.INFO, "Found a text file: " + file.getName());
+            this.filesFound++;
+            try {
+                BlackboardArtifact art = file.newArtifact(ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+                BlackboardAttribute attr = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME,
+                        NbBundle.getMessage(SampleIngestModuleFactory.class, "SampleIngestModuleFactory.moduleName"), "Text Files");
+                art.addAttribute(attr);
+                /*
+                 This will work in 4.0.1 and beyond
+                 try {
+                 //index the artifact for keyword search
+                 blackboard.indexArtifact(art)
+                 }
+                 catch (Blackboard.BlackboardException ex) {
+                 self.log(Level.SEVERE, "Error indexing artifact " + art.getDisplayName())
+                 }
+                 */
+            } catch (TskCoreException ex) {
+                Exceptions.printStackTrace(ex);
+            }
 
-        // Skip NSRL / known files.
-        if (skipKnownFiles && file.getKnown() == TskData.FileKnown.KNOWN) {
-            return IngestModule.ProcessResult.OK;
+            //Fire an event to notify the UI and others that there is a new artifact
+            IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(NbBundle.getMessage(SampleIngestModuleFactory.class, "SampleIngestModuleFactory.moduleName"),
+                    ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT));
+            /*
+             For the example (this wouldn't be needed normally), we'll query the blackboard for data that was added
+             by other modules. We then iterate over its attributes.  We'll just print them, but you would probably
+             want to do something with them.
+             */
+            try {
+                List<BlackboardArtifact> artifactList = file.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+                for (BlackboardArtifact artifact : artifactList) {
+                    List<BlackboardAttribute> attributeList = artifact.getAttributes();
+                    for (BlackboardAttribute attribute : attributeList) {
+                        logger.log(Level.INFO, attribute.toString());
+                    }
+                }
+            } catch (TskCoreException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+
         }
 
-        // Do a nonsensical calculation of the number of 0x00 bytes
-        // in the first 1024-bytes of the file.  This is for demo
-        // purposes only.
+        //To further the example, this code will read the contents of the file
+        //and count the number of bytes
         try {
             byte buffer[] = new byte[1024];
             int len = file.read(buffer, 0, 1024);
             int count = 0;
-            for (int i = 0; i < len; i++) {
-                if (buffer[i] == 0x00) {
-                    count++;
-                }
+            while (len != -1) {
+                count += len;
+                len = file.read(buffer, count, 1024);
             }
-
-            // Make an attribute using the ID for the attribute attrType that 
-            // was previously created.
-            BlackboardAttribute attr = new BlackboardAttribute(attrType, SampleIngestModuleFactory.getModuleName(), count);
-
-            // Add the to the general info artifact for the file. In a
-            // real module, you would likely have more complex data types 
-            // and be making more specific artifacts.
-            BlackboardArtifact art = file.getGenInfoArtifact();
-            art.addAttribute(attr);
-
-            // This method is thread-safe with per ingest job reference counted
-            // management of shared data.
-            addToBlackboardPostCount(context.getJobId(), 1L);
-
-            // Fire an event to notify any listeners for blackboard postings.
-            ModuleDataEvent event = new ModuleDataEvent(SampleIngestModuleFactory.getModuleName(), ARTIFACT_TYPE.TSK_GEN_INFO);
-            IngestServices.getInstance().fireModuleDataEvent(event);
 
             return IngestModule.ProcessResult.OK;
 
@@ -129,9 +171,10 @@ class SampleFileIngestModule implements FileIngestModule {
 
     @Override
     public void shutDown() {
-        // This method is thread-safe with per ingest job reference counted
-        // management of shared data.
-        reportBlackboardPostCount(context.getJobId());
+        IngestMessage message = IngestMessage.createMessage(
+                IngestMessage.MessageType.DATA, NbBundle.getMessage(SampleIngestModuleFactory.class, "SampleIngestModuleFactory.moduleName"),
+                this.filesFound + " files found");
+        IngestServices.getInstance().postMessage(message);
     }
 
     synchronized static void addToBlackboardPostCount(long ingestJobId, long countToAdd) {

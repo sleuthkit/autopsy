@@ -88,7 +88,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
  * implementations of most of the IngestModuleFactory methods.
  */
 @ServiceProvider(service = IngestModuleFactory.class) // Sample is discarded at runtime 
-public class SampleIngestModuleFactory implements IngestModuleFactory {
+public class SampleDataSourceIngestModuleFactory implements IngestModuleFactory {
 
     private static final String VERSION_NUMBER = "1.0.0";
 
@@ -96,7 +96,7 @@ public class SampleIngestModuleFactory implements IngestModuleFactory {
     // factory to use the same display name that is provided to the Autopsy
     // ingest framework by the factory.
     static String getModuleName() {
-        return NbBundle.getMessage(SampleIngestModuleFactory.class, "SampleIngestModuleFactory.moduleName");
+        return NbBundle.getMessage(SampleDataSourceIngestModuleFactory.class, "SampleDataSourceIngestModuleFactory.moduleName");
     }
 
     /**
@@ -121,7 +121,7 @@ public class SampleIngestModuleFactory implements IngestModuleFactory {
      */
     @Override
     public String getModuleDescription() {
-        return NbBundle.getMessage(SampleIngestModuleFactory.class, "SampleIngestModuleFactory.moduleDescription");
+        return NbBundle.getMessage(SampleDataSourceIngestModuleFactory.class, "SampleDataSourceIngestModuleFactory.moduleDescription");
     }
 
     /**
@@ -228,20 +228,20 @@ public class SampleIngestModuleFactory implements IngestModuleFactory {
     }
 
     /**
-     * Queries the factory to determine if it is capable of creating file ingest
-     * modules. If the module family does not include file ingest modules, the
-     * factory may extend IngestModuleFactoryAdapter to get an implementation of
-     * this method that returns false.
+     * Queries the factory to determine if it is capable of creating data source
+     * ingest modules. If the module family does not include data source ingest
+     * modules, the factory may extend IngestModuleFactoryAdapter to get an
+     * implementation of this method that returns false.
      *
-     * @return True if the factory can create file ingest modules.
+     * @return True if the factory can create data source ingest modules.
      */
     @Override
-    public boolean isFileIngestModuleFactory() {
+    public boolean isDataSourceIngestModuleFactory() {
         return true;
     }
 
     /**
-     * Creates a file ingest module instance.
+     * Creates a data source ingest module instance.
      * <p>
      * Autopsy will generally use the factory to several instances of each type
      * of module for each ingest job it performs. Completing an ingest job
@@ -261,29 +261,29 @@ public class SampleIngestModuleFactory implements IngestModuleFactory {
      * time. This must also be taken into consideration when sharing resources
      * between module instances. modules.
      * <p>
-     * If the module family does not include file ingest modules, the factory
-     * may extend IngestModuleFactoryAdapter to get an implementation of this
-     * method that throws an UnsupportedOperationException.
+     * If the module family does not include data source ingest modules, the
+     * factory may extend IngestModuleFactoryAdapter to get an implementation of
+     * this method that throws an UnsupportedOperationException.
      *
      * @param settings The settings for the ingest job.
      *
-     * @return A file ingest module instance.
+     * @return A data source ingest module instance.
      */
     @Override
-    public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
+    public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings settings) {
         if (!(settings instanceof SampleModuleIngestJobSettings)) {
             throw new IllegalArgumentException("Expected settings argument to be instanceof SampleModuleIngestJobSettings");
         }
-        return new SampleFileIngestModule((SampleModuleIngestJobSettings) settings);
+        return new SampleDataSourceIngestModule((SampleModuleIngestJobSettings) settings);
     }
 
     @Override
-    public boolean isDataSourceIngestModuleFactory() {
+    public boolean isFileIngestModuleFactory() {
         return false;
     }
 
     @Override
-    public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings settings) {
-        throw new UnsupportedOperationException("Not supported for this factory");
+    public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
+        throw new UnsupportedOperationException("Not supported for this factory."); 
     }
 }
