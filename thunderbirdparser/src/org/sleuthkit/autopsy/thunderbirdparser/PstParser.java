@@ -58,13 +58,11 @@ class PstParser {
      */
     private List<EmailMessage> results;
     private StringBuilder errors;
-    private long fileID;
 
-    PstParser(IngestServices services, long fileID) {
+    PstParser(IngestServices services) {
         results = new ArrayList<>();
         this.services = services;
         errors = new StringBuilder();
-        this.fileID = fileID;
     }
 
     enum ParseResult {
@@ -80,12 +78,12 @@ class PstParser {
      * @return ParseResult: OK on success, ERROR on an error, ENCRYPT if failed
      * because the file is encrypted.
      */
-    ParseResult parse(File file) {
+    ParseResult parse(File file, long fileID) {
         PSTFile pstFile;
         long failures;
         try {
             pstFile = new PSTFile(file);
-            failures = processFolder(pstFile.getRootFolder(), "\\", true);
+            failures = processFolder(pstFile.getRootFolder(), "\\", true, fileID);
             if (failures > 0) {
                 addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "PstParser.parse.errMsg.failedToParseNMsgs", failures));
@@ -126,7 +124,7 @@ class PstParser {
      * @throws PSTException
      * @throws IOException
      */
-    private long processFolder(PSTFolder folder, String path, boolean root) {
+    private long processFolder(PSTFolder folder, String path, boolean root, long fileID) {
         String newPath = (root ? path : path + "\\" + folder.getDisplayName());
         long failCount = 0L; // Number of emails that failed
         if (folder.hasSubfolders()) {
@@ -139,7 +137,7 @@ class PstParser {
             }
 
             for (PSTFolder f : subFolders) {
-                failCount += processFolder(f, newPath, false);
+                failCount += processFolder(f, newPath, false, fileID);
             }
         }
 
@@ -148,7 +146,7 @@ class PstParser {
             // A folder's children are always emails, never other folders.
             try {
                 while ((email = (PSTMessage) folder.getNextChild()) != null) {
-                    results.add(extractEmailMessage(email, newPath));
+                    results.add(extractEmailMessage(email, newPath, fileID));
                 }
             } catch (PSTException | IOException ex) {
                 failCount++;
@@ -167,7 +165,7 @@ class PstParser {
      *
      * @return
      */
-    private EmailMessage extractEmailMessage(PSTMessage msg, String localPath) {
+    private EmailMessage extractEmailMessage(PSTMessage msg, String localPath, long fileID) {
         EmailMessage email = new EmailMessage();
         email.setRecipients(msg.getDisplayTo());
         email.setCc(msg.getDisplayCC());
@@ -188,7 +186,7 @@ class PstParser {
         email.setId(msg.getDescriptorNodeId());
 
         if (msg.hasAttachments()) {
-            extractAttachments(email, msg);
+            extractAttachments(email, msg, fileID);
         }
 
         return email;
@@ -200,7 +198,7 @@ class PstParser {
      * @param email
      * @param msg
      */
-    private void extractAttachments(EmailMessage email, PSTMessage msg) {
+    private void extractAttachments(EmailMessage email, PSTMessage msg, long fileID) {
         int numberOfAttachments = msg.getNumberOfAttachments();
         String outputDirPath = ThunderbirdMboxFileIngestModule.getModuleOutputPath() + File.separator;
         for (int x = 0; x < numberOfAttachments; x++) {
