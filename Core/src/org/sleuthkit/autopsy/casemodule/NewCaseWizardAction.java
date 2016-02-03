@@ -39,10 +39,11 @@ import javax.swing.JOptionPane;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.openide.windows.WindowManager;
 import java.awt.Cursor;
+import java.util.concurrent.ExecutionException;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
- * An action that runs the new case wizard.
+ * An action that creates and runs the new case wizard.
  */
 final class NewCaseWizardAction extends CallableSystemAction {
 
@@ -53,32 +54,39 @@ final class NewCaseWizardAction extends CallableSystemAction {
     @Override
     public void performAction() {
         /*
-         * If ingest is running, do a dialog to warn the user and confirm
-         * abandoning the ingest.
+         * If ingest is running, do a dialog to warn the user and confirm the
+         * intent to close the current case and leave the ingest process
+         * incomplete.
          */
         if (IngestManager.getInstance().isIngestRunning()) {
-            String closeCurrentCase = NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning");
-            NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(closeCurrentCase,
+            NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(
+                    NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning"),
                     NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning.title"),
                     NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
             descriptor.setValue(NotifyDescriptor.NO_OPTION);
             Object res = DialogDisplayer.getDefault().notify(descriptor);
             if (res != null && res == DialogDescriptor.YES_OPTION) {
+                Case currentCase = null;
                 try {
-                    Case.getCurrentCase().closeCase();
-                } catch (Exception ex) {
-                    Logger.getLogger(NewCaseWizardAction.class.getName()).log(Level.WARNING, "Error closing case", ex); //NON-NLS
+                    currentCase = Case.getCurrentCase();
+                    currentCase.closeCase();
+                } catch (IllegalStateException ignored) {
+                    /*
+                     * No current case.
+                     */
+                } catch (CaseActionException ex) {
+                    logger.log(Level.SEVERE, String.format("Error closing case at %s while ingest was running", (null != currentCase ? currentCase.getCaseDirectory() : "?")), ex); //NON-NLS
                 }
             } else {
                 return;
             }
         }
         WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        newCaseAction();
+        runNewCaseWizard();
     }
 
-    private void newCaseAction() {
-        final WizardDescriptor wizardDescriptor = new WizardDescriptor(getPanels());
+    private void runNewCaseWizard() {
+        final WizardDescriptor wizardDescriptor = new WizardDescriptor(getNewCaseWizardPanels());
         wizardDescriptor.setTitleFormat(new MessageFormat("{0}"));
         wizardDescriptor.setTitle(NbBundle.getMessage(this.getClass(), "NewCaseWizardAction.newCase.windowTitle.text"));
         Dialog dialog = DialogDisplayer.getDefault().createDialog(wizardDescriptor);
@@ -104,21 +112,14 @@ final class NewCaseWizardAction extends CallableSystemAction {
                         AddImageAction addImageAction = SystemAction.get(AddImageAction.class);
                         addImageAction.actionPerformed(null);
                     } catch (Exception ex) {
-                        logger.log(Level.SEVERE, "Error creating case", ex); //NON-NLS
+                        logger.log(Level.SEVERE, String.format("Error creating case %s", wizardDescriptor.getProperty("caseName")), ex); //NON-NLS                                                
                         SwingUtilities.invokeLater(() -> {
-                            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), ex.getCause().getMessage() + " "
-                                    + NbBundle.getMessage(this.getClass(), "CaseExceptionWarning.CheckMultiUserOptions"),
-                                    NbBundle.getMessage(this.getClass(), "CaseCreateAction.msgDlg.cantCreateCase.msg"),
-                                    JOptionPane.ERROR_MESSAGE); //NON-NLS
-                            /**
-                             * This is a bit of a hack, but close the startup
-                             * window, if it was the source of the action
-                             * invocation.
-                             */
-                            try {
-                                StartupWindowProvider.getInstance().close();
-                            } catch (Exception unused) {
-                            }
+                            JOptionPane.showMessageDialog(
+                                    WindowManager.getDefault().getMainWindow(),
+                                    (ex instanceof ExecutionException ? ex.getCause().getMessage() : ex.getMessage()),
+                                    NbBundle.getMessage(this.getClass(), "CaseCreateAction.msgDlg.cantCreateCase.msg"), //NON-NLS
+                                    JOptionPane.ERROR_MESSAGE);
+                            StartupWindowProvider.getInstance().close(); // RC: Why close and open?
                             if (!Case.isCaseOpen()) {
                                 StartupWindowProvider.getInstance().open();
                             }
@@ -137,7 +138,6 @@ final class NewCaseWizardAction extends CallableSystemAction {
     private void doFailedCaseCleanup(WizardDescriptor wizardDescriptor) {
         String createdDirectory = (String) wizardDescriptor.getProperty("createdDirectory"); //NON-NLS
         if (createdDirectory != null) {
-            logger.log(Level.INFO, "Deleting a created case directory due to an error, dir: {0}", createdDirectory); //NON-NLS
             Case.deleteCaseDirectory(new File(createdDirectory));
         }
         SwingUtilities.invokeLater(() -> {
@@ -146,10 +146,10 @@ final class NewCaseWizardAction extends CallableSystemAction {
     }
 
     /**
-     * Initializes the new case wizard panels.
+     * Creates the new case wizard panels.
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private WizardDescriptor.Panel<WizardDescriptor>[] getPanels() {
+    private WizardDescriptor.Panel<WizardDescriptor>[] getNewCaseWizardPanels() {
         if (panels == null) {
             panels = new WizardDescriptor.Panel[]{
                 new NewCaseWizardPanel1(),
@@ -180,21 +180,33 @@ final class NewCaseWizardAction extends CallableSystemAction {
         return panels;
     }
 
+    /**
+     * @inheritDoc
+     */
     @Override
     public String getName() {
         return NbBundle.getMessage(this.getClass(), "NewCaseWizardAction.getName.text");
     }
 
+    /**
+     * @inheritDoc
+     */
     @Override
     public String iconResource() {
         return null;
     }
 
+    /**
+     * @inheritDoc
+     */
     @Override
     public HelpCtx getHelpCtx() {
         return HelpCtx.DEFAULT_HELP;
     }
 
+    /**
+     * @inheritDoc
+     */
     @Override
     protected boolean asynchronous() {
         return false;

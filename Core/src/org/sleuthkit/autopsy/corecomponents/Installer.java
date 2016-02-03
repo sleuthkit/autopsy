@@ -83,14 +83,14 @@ public class Installer extends ModuleInstall {
                             try {
                                 Case.open(caseFile);
                             } catch (Exception ex) {
-                                logger.log(Level.SEVERE, "Error opening case", ex); //NON-NLS
+                                logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseFile), ex); //NON-NLS
                             }
                         }).start();
                         return;
                     }
                 }
             }
-            Case.invokeStartupDialog(); // bring up the startup dialog
+            Case.invokeStartupDialog();
         });
 
     }
@@ -103,12 +103,19 @@ public class Installer extends ModuleInstall {
     @Override
     public void close() {
         new Thread(() -> {
+            String caseDirName = null;
             try {
                 if (Case.isCaseOpen()) {
-                    Case.getCurrentCase().closeCase();
+                    Case currentCase = Case.getCurrentCase();
+                    caseDirName = currentCase.getCaseDirectory();
+                    currentCase.closeCase();
                 }
-            } catch (CaseActionException | IllegalStateException ex) {
-                logger.log(Level.SEVERE, "Error closing case", ex); //NON-NLS
+            } catch (CaseActionException ex) {
+                logger.log(Level.SEVERE, String.format("Error closing case with case directory %s", (null != caseDirName ? caseDirName : "?")), ex); //NON-NLS
+            } catch (IllegalStateException ignored) {
+                /*
+                 * No current case. Case.isCaseOpen is not reliable. 
+                 */
             }
         }).start();
     }
@@ -128,7 +135,7 @@ public class Installer extends ModuleInstall {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
-            logger.log(Level.WARNING, "Unable to set theme. ", ex); //NON-NLS
+            logger.log(Level.WARNING, "Error setting OS-X look-and-feel", ex); //NON-NLS
         }
 
         // Store the keys that deal with menu items
@@ -138,20 +145,19 @@ public class Installer extends ModuleInstall {
             uiEntries.put(key, UIManager.get(key));
         }
 
-        // Use Metal if available
+        // Use Metal if available.
         for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
             if ("Nimbus".equals(info.getName())) { //NON-NLS
                 try {
                     UIManager.setLookAndFeel(info.getClassName());
-                } catch (ClassNotFoundException | InstantiationException |
-                        IllegalAccessException | UnsupportedLookAndFeelException ex) {
-                    logger.log(Level.WARNING, "Unable to set theme. ", ex); //NON-NLS
+                } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
+                    logger.log(Level.WARNING, "Error setting OS-X look-and-feel", ex); //NON-NLS
                 }
                 break;
             }
         }
 
-        // Overwrite the Metal menu item keys to use the Aqua versions
+        // Overwrite the Metal menu item keys to use the Aqua versions.
         uiEntries.entrySet().stream().forEach((entry) -> {
             UIManager.put(entry.getKey(), entry.getValue());
         });

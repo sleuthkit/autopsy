@@ -53,8 +53,8 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
  */
 public abstract class IntervalSelector<X> extends BorderPane {
 
-    private static final Image ClEAR_INTERVAL_ICON = new Image("/org/sleuthkit/autopsy/timeline/images/cross-script.png", 16, 16, true, true, true);
-    private static final Image ZOOM_TO_INTERVAL_ICON = new Image("/org/sleuthkit/autopsy/timeline/images/magnifier-zoom-fit.png", 16, 16, true, true, true);
+    private static final Image ClEAR_INTERVAL_ICON = new Image("/org/sleuthkit/autopsy/timeline/images/cross-script.png", 16, 16, true, true, true); //NON-NLS
+    private static final Image ZOOM_TO_INTERVAL_ICON = new Image("/org/sleuthkit/autopsy/timeline/images/magnifier-zoom-fit.png", 16, 16, true, true, true); //NON-NLS
     private static final double STROKE_WIDTH = 3;
     private static final double HALF_STROKE = STROKE_WIDTH / 2;
 
