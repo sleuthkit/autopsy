@@ -63,7 +63,7 @@ public class PromptDialogManager {
         try {
             x = new Image(new URL("nbresloc:/org/netbeans/core/startup/frame.gif").openStream()); //NOI18N
         } catch (IOException ex) {
-            LOGGER.log(Level.WARNING, "Failed to load branded icon for progress dialog.", ex); //NOI18N
+            LOGGER.log(Level.WARNING, "Failed to load branded icon for progress dialog.", ex); //NOI18N NON-NLS
         }
         LOGO = x;
     }

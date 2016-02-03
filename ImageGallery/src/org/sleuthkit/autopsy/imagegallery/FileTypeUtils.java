@@ -93,31 +93,31 @@ public enum FileTypeUtils {
                 .collect(Collectors.toList()));
         //add list of known image extensions
         imageExtensions.addAll(Arrays.asList(
-                "bmp" //Bitmap
-                , "gif" //gif
-                , "jpg", "jpeg", "jpe", "jp2", "jpx" //jpeg variants
-                , "pbm", "pgm", "ppm" // Portable image format variants
-                , "png" //portable network graphic
-                , "tga" //targa
-                , "psd" //photoshop
-                , "tif", "tiff" //tiff variants
-                , "yuv", "ico" //icons
-                , "ai" //illustrator
-                , "svg" //scalable vector graphics
-                , "sn", "ras" //sun raster
-                , "ico" //windows icons
-                , "tga" //targa
+                "bmp" //Bitmap NON-NLS
+                , "gif" //gif NON-NLS
+                , "jpg", "jpeg", "jpe", "jp2", "jpx" //jpeg variants NON-NLS
+                , "pbm", "pgm", "ppm" // Portable image format variants NON-NLS
+                , "png" //portable network graphic NON-NLS
+                , "tga" //targa NON-NLS
+                , "psd" //photoshop NON-NLS
+                , "tif", "tiff" //tiff variants NON-NLS
+                , "yuv", "ico" //icons NON-NLS
+                , "ai" //illustrator NON-NLS
+                , "svg" //scalable vector graphics NON-NLS
+                , "sn", "ras" //sun raster NON-NLS
+                , "ico" //windows icons NON-NLS
+                , "tga" //targa NON-NLS
         ));
 
         //add list of known video extensions
-        videoExtensions.addAll(Arrays.asList("fxm", "aaf", "3gp", "asf", "avi",
-                "m1v", "m2v", "m4v", "mp4", "mov", "mpeg", "mpg", "mpe", "mp4",
-                "rm", "wmv", "mpv", "flv", "swf"));
+        videoExtensions.addAll(Arrays.asList("fxm", "aaf", "3gp", "asf", "avi", //NON-NLS
+                "m1v", "m2v", "m4v", "mp4", "mov", "mpeg", "mpg", "mpe", "mp4", //NON-NLS
+                "rm", "wmv", "mpv", "flv", "swf")); //NON-NLS
 
         supportedExtensions = Sets.union(imageExtensions, videoExtensions);
 
         //add list of mimetypes to count as videos even though they aren't prefixed by video/
-        videoMimeTypes.addAll(Arrays.asList("application/x-shockwave-flash"));
+        videoMimeTypes.addAll(Arrays.asList("application/x-shockwave-flash")); //NON-NLS
 
         supportedMimeTypes.addAll(videoMimeTypes);
 
@@ -128,14 +128,14 @@ public enum FileTypeUtils {
          * fixed, we should remove application/x-123 from the list of supported
          * mime types.
          */
-        supportedMimeTypes.addAll(Arrays.asList("application/x-123"));
+        supportedMimeTypes.addAll(Arrays.asList("application/x-123")); //NON-NLS
 
         //add list of mimetypes ImageIO claims to support
         supportedMimeTypes.addAll(Stream.of(ImageIO.getReaderMIMETypes())
                 .map(String::toLowerCase)
                 .collect(Collectors.toList()));
 
-        supportedMimeTypes.removeIf("application/octet-stream"::equals); //this is rarely usefull
+        supportedMimeTypes.removeIf("application/octet-stream"::equals); //this is rarely usefull NON-NLS
     }
 
     public static Set<String> getAllSupportedMimeTypes() {
@@ -151,7 +151,7 @@ public enum FileTypeUtils {
             try {
                 FILE_TYPE_DETECTOR = new FileTypeDetector();
             } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-                LOGGER.log(Level.SEVERE, "Failed to initialize File Type Detector, will fall back on extensions in some situations.", ex);
+                LOGGER.log(Level.SEVERE, "Failed to initialize File Type Detector, will fall back on extensions in some situations.", ex); //NON-NLS
             }
         }
         return FILE_TYPE_DETECTOR;
@@ -178,6 +178,25 @@ public enum FileTypeUtils {
         return ImageUtils.isGIF(file);
     }
 
+    public static Optional<String> getMimeType(AbstractFile file) throws TskCoreException {
+        final FileTypeDetector fileTypeDetector = getFileTypeDetector();
+        if (nonNull(fileTypeDetector)) {
+            return Optional.ofNullable(fileTypeDetector.getFileType(file));
+        }
+        return Optional.empty();
+    }
+
+    static boolean isDrawableMimeType(String mimeType) {
+        if (isNull(mimeType)) {
+            return false;
+        } else {
+            String mimeTypeLower = mimeType.toLowerCase();
+            return mimeTypeLower.startsWith("image/")
+                    || mimeTypeLower.startsWith("video/")
+                    || supportedMimeTypes.contains(mimeTypeLower);
+        }
+    }
+
     /**
      * does the given file have drawable/supported mime type
      *
@@ -188,21 +207,7 @@ public enum FileTypeUtils {
      *         mimetype could not be detected.
      */
     static Optional<Boolean> hasDrawableMimeType(AbstractFile file) throws TskCoreException {
-
-        final FileTypeDetector fileTypeDetector = getFileTypeDetector();
-        if (nonNull(fileTypeDetector)) {
-            String mimeType = fileTypeDetector.getFileType(file);
-            if (isNull(mimeType)) {
-                return Optional.empty();
-            } else {
-                mimeType = mimeType.toLowerCase();
-                return Optional.of(mimeType.startsWith("image/")
-                        || mimeType.startsWith("video/")
-                        || supportedMimeTypes.contains(mimeType));
-            }
-        }
-
-        return Optional.empty();
+        return getMimeType(file).map(FileTypeUtils::isDrawableMimeType);
     }
 
     /**
@@ -216,17 +221,14 @@ public enum FileTypeUtils {
      */
     public static boolean isVideoFile(AbstractFile file) {
         try {
-            final FileTypeDetector fileTypeDetector = getFileTypeDetector();
-            if (nonNull(fileTypeDetector)) {
-                String mimeType = fileTypeDetector.getFileType(file);
-                if (nonNull(mimeType)) {
-                    mimeType = mimeType.toLowerCase();
-                    return mimeType.startsWith("video/") || videoMimeTypes.contains(mimeType);
-                }
-            }
+            return getMimeType(file)
+                    .map(String::toLowerCase)
+                    .map(mimeType ->
+                            mimeType.startsWith("video/")
+                            || videoMimeTypes.contains(mimeType))
+                    .orElseGet(() -> FileTypeUtils.videoExtensions.contains(file.getNameExtension()));
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.INFO, "failed to get mime type for " + file.getName(), ex);
+            return FileTypeUtils.videoExtensions.contains(file.getNameExtension());
         }
-        return FileTypeUtils.videoExtensions.contains(file.getNameExtension());
     }
 }
