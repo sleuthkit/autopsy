@@ -137,7 +137,7 @@ public enum MiscTypes implements EventType, ArtifactEventType {
                         return file.getName();
                     }
                 } catch (TskCoreException ex) {
-                    Logger.getLogger(MiscTypes.class.getName()).log(Level.SEVERE, "Exif event type failed to look up backing file name", ex);
+                    Logger.getLogger(MiscTypes.class.getName()).log(Level.SEVERE, "Exif event type failed to look up backing file name", ex); //NON-NLS
                 }
                 return " error loading file name"; // NON-NLS
             }),

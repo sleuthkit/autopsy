@@ -28,6 +28,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
@@ -41,11 +42,12 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Manages Tags, Tagging, and the relationship between Categories and Tags in
  * the autopsy Db. delegates some, work to the backing {@link TagsManager}.
  */
+@NbBundle.Messages({"DrawableTagsManager.followUp=Follow Up"})
 public class DrawableTagsManager {
 
     private static final Logger LOGGER = Logger.getLogger(DrawableTagsManager.class.getName());
 
-    private static final String FOLLOW_UP = "Follow Up";
+    private static final String FOLLOW_UP = Bundle.DrawableTagsManager_followUp();
 
     final private Object autopsyTagsManagerLock = new Object();
     private TagsManager autopsyTagsManager;
@@ -53,8 +55,8 @@ public class DrawableTagsManager {
     /** Used to distribute {@link TagsChangeEvent}s */
     private final EventBus tagsEventBus = new AsyncEventBus(
             Executors.newSingleThreadExecutor(
-                    new BasicThreadFactory.Builder().namingPattern("Tags Event Bus").uncaughtExceptionHandler((Thread t, Throwable e) -> {
-                        LOGGER.log(Level.SEVERE, "uncaught exception in event bus handler", e);
+                    new BasicThreadFactory.Builder().namingPattern("Tags Event Bus").uncaughtExceptionHandler((Thread t, Throwable e) -> { //NON-NLS
+                        LOGGER.log(Level.SEVERE, "uncaught exception in event bus handler", e); //NON-NLS
                     }).build()
             ));
 
@@ -147,7 +149,7 @@ public class DrawableTagsManager {
                         .distinct().sorted()
                         .collect(Collectors.toList());
             } catch (TskCoreException | IllegalStateException ex) {
-                LOGGER.log(Level.WARNING, "couldn't access case", ex);
+                LOGGER.log(Level.WARNING, "couldn't access case", ex); //NON-NLS
             }
             return Collections.emptyList();
         }
@@ -183,7 +185,7 @@ public class DrawableTagsManager {
                     throw new TskCoreException("tagame exists but wasn't found", ex);
                 }
             } catch (IllegalStateException ex) {
-                LOGGER.log(Level.SEVERE, "Case was closed out from underneath", ex);
+                LOGGER.log(Level.SEVERE, "Case was closed out from underneath", ex); //NON-NLS
                 throw new TskCoreException("Case was closed out from underneath", ex);
             }
         }
