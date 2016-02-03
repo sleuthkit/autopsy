@@ -119,7 +119,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         messageTable = new javax.swing.JTable();
         controlPanel = new javax.swing.JPanel();
         sortByLabel = new javax.swing.JLabel();
-        sortByComboBox = new javax.swing.JComboBox<String>();
+        sortByComboBox = new javax.swing.JComboBox<>();
         totalMessagesNameLabel = new javax.swing.JLabel();
         totalMessagesNameVal = new javax.swing.JLabel();
         totalUniqueMessagesNameLabel = new javax.swing.JLabel();
@@ -132,7 +132,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         jScrollPane1.setPreferredSize(new java.awt.Dimension(32767, 32767));
 
         messageTable.setBackground(new java.awt.Color(221, 221, 235));
-        messageTable.setFont(messageTable.getFont().deriveFont(Font.PLAIN, 12));
+        messageTable.setFont(messageTable.getFont().deriveFont(messageTable.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
         messageTable.setModel(tableModel);
         messageTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
         messageTable.setAutoscrolls(false);
@@ -148,9 +148,8 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
 
         sortByLabel.setText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.sortByLabel.text")); // NOI18N
 
-        sortByComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] {
-                NbBundle.getMessage(this.getClass(), "IngestMessagePanel.sortByComboBox.model.time"),
-                NbBundle.getMessage(this.getClass(), "IngestMessagePanel.sortByComboBox.model.priority") })); // NOI18N
+        sortByComboBox.setFont(sortByComboBox.getFont().deriveFont(sortByComboBox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        sortByComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { "Time", "Priority" }));
         sortByComboBox.setToolTipText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.sortByComboBox.toolTipText")); // NOI18N
         sortByComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -158,12 +157,16 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
             }
         });
 
+        totalMessagesNameLabel.setFont(totalMessagesNameLabel.getFont().deriveFont(totalMessagesNameLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         totalMessagesNameLabel.setText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.totalMessagesNameLabel.text")); // NOI18N
 
+        totalMessagesNameVal.setFont(totalMessagesNameVal.getFont().deriveFont(totalMessagesNameVal.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         totalMessagesNameVal.setText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.totalMessagesNameVal.text")); // NOI18N
 
+        totalUniqueMessagesNameLabel.setFont(totalUniqueMessagesNameLabel.getFont().deriveFont(totalUniqueMessagesNameLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         totalUniqueMessagesNameLabel.setText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.totalUniqueMessagesNameLabel.text")); // NOI18N
 
+        totalUniqueMessagesNameVal.setFont(totalUniqueMessagesNameVal.getFont().deriveFont(totalUniqueMessagesNameVal.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         totalUniqueMessagesNameVal.setText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.totalUniqueMessagesNameVal.text")); // NOI18N
 
         javax.swing.GroupLayout controlPanelLayout = new javax.swing.GroupLayout(controlPanel);
