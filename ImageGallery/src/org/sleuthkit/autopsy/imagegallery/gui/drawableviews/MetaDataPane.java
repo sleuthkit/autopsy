@@ -65,6 +65,8 @@ import org.sleuthkit.datamodel.TagName;
 /**
  * Shows details of the selected file.
  */
+@NbBundle.Messages({"MetaDataPane.tableView.placeholder=Select a file to show its details here.",
+        "MetaDataPane.copyMenuItem.text=Copy"})
 public class MetaDataPane extends DrawableUIBase {
 
     private static final Logger LOGGER = Logger.getLogger(MetaDataPane.class.getName());
@@ -80,7 +82,7 @@ public class MetaDataPane extends DrawableUIBase {
     @FXML
     private TableColumn<Pair<DrawableAttribute<?>, Collection<?>>, String> valueColumn;
 
-    private final MenuItem copyMenuItem = new MenuItem("Copy");
+    private final MenuItem copyMenuItem = new MenuItem(Bundle.MetaDataPane_copyMenuItem_text());
     private final ContextMenu contextMenu = new ContextMenu(copyMenuItem);
 
     public MetaDataPane(ImageGalleryController controller) {
@@ -89,7 +91,6 @@ public class MetaDataPane extends DrawableUIBase {
     }
 
     @FXML
-    @NbBundle.Messages({"MetaDataPane.tableView.placeholder=Select a file to show its details here."})
     void initialize() {
         assert attributeColumn != null : "fx:id=\"attributeColumn\" was not injected: check your FXML file 'MetaDataPane.fxml'.";
         assert imageView != null : "fx:id=\"imageView\" was not injected: check your FXML file 'MetaDataPane.fxml'.";
