@@ -122,8 +122,10 @@ class ReportGenerationPanel extends javax.swing.JPanel {
         titleSeparator = new javax.swing.JSeparator();
         optionSeparator = new javax.swing.JSeparator();
 
+        setFont(getFont().deriveFont(getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         setPreferredSize(new java.awt.Dimension(700, 400));
 
+        closeButton.setFont(closeButton.getFont().deriveFont(closeButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(closeButton, org.openide.util.NbBundle.getMessage(ReportGenerationPanel.class, "ReportGenerationPanel.closeButton.text")); // NOI18N
         closeButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -131,6 +133,7 @@ class ReportGenerationPanel extends javax.swing.JPanel {
             }
         });
 
+        cancelButton.setFont(cancelButton.getFont().deriveFont(cancelButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(ReportGenerationPanel.class, "ReportGenerationPanel.cancelButton.text")); // NOI18N
         cancelButton.setActionCommand(org.openide.util.NbBundle.getMessage(ReportGenerationPanel.class, "ReportGenerationPanel.cancelButton.actionCommand")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
@@ -141,7 +144,9 @@ class ReportGenerationPanel extends javax.swing.JPanel {
 
         reportScrollPane.setBorder(javax.swing.BorderFactory.createLineBorder(java.awt.SystemColor.activeCaptionBorder));
         reportScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        reportScrollPane.setFont(reportScrollPane.getFont().deriveFont(reportScrollPane.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
 
+        reportPanel.setFont(reportPanel.getFont().deriveFont(reportPanel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         reportPanel.setPreferredSize(new java.awt.Dimension(600, 400));
 
         javax.swing.GroupLayout reportPanelLayout = new javax.swing.GroupLayout(reportPanel);
@@ -157,7 +162,7 @@ class ReportGenerationPanel extends javax.swing.JPanel {
 
         reportScrollPane.setViewportView(reportPanel);
 
-        titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, 11));
+        titleLabel.setFont(titleLabel.getFont().deriveFont(titleLabel.getFont().getStyle() | java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(titleLabel, org.openide.util.NbBundle.getMessage(ReportGenerationPanel.class, "ReportGenerationPanel.titleLabel.text")); // NOI18N
 
         titleSeparator.setForeground(new java.awt.Color(0, 0, 0));

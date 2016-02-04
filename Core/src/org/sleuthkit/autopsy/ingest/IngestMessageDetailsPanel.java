@@ -127,25 +127,23 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
         messageDetailsPane.setEditable(false);
         messageDetailsPane.setBackground(new java.awt.Color(221, 221, 235));
         messageDetailsPane.setBorder(null);
-        messageDetailsPane.setContentType(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class,
-                                                                               "IngestMessageDetailsPanel.messageDetailsPane.contentType")); // NOI18N
-        messageDetailsPane.setFont(messageDetailsPane.getFont().deriveFont(Font.PLAIN, 10));
-        messageDetailsPane.setToolTipText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class,
-                                                                               "IngestMessageDetailsPanel.messageDetailsPane.toolTipText")); // NOI18N
+        messageDetailsPane.setContentType(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.messageDetailsPane.contentType")); // NOI18N
+        messageDetailsPane.setFont(messageDetailsPane.getFont().deriveFont(messageDetailsPane.getFont().getStyle() & ~java.awt.Font.BOLD, 10));
+        messageDetailsPane.setToolTipText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.messageDetailsPane.toolTipText")); // NOI18N
         jScrollPane1.setViewportView(messageDetailsPane);
 
         jToolBar1.setFloatable(false);
         jToolBar1.setRollover(true);
 
-        backButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/btn_step_back.png"))); // NOI18N NON-NLS
+        backButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/btn_step_back.png"))); // NOI18N
         backButton.setText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.backButton.text")); // NOI18N
         backButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         backButton.setMargin(new java.awt.Insets(2, 2, 2, 2));
         backButton.setMaximumSize(new java.awt.Dimension(23, 23));
         backButton.setMinimumSize(new java.awt.Dimension(23, 23));
         backButton.setPreferredSize(new java.awt.Dimension(23, 23));
-        backButton.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/btn_step_back_hover.png"))); // NOI18N NON-NLS
-        backButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/btn_step_back_hover.png"))); // NOI18N NON-NLS
+        backButton.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/btn_step_back_hover.png"))); // NOI18N
+        backButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/btn_step_back_hover.png"))); // NOI18N
         backButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 backButtonActionPerformed(evt);
@@ -154,7 +152,8 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
         jToolBar1.add(backButton);
         jToolBar1.add(filler1);
 
-        viewArtifactButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/goto_res.png"))); // NOI18N NON-NLS
+        viewArtifactButton.setFont(viewArtifactButton.getFont().deriveFont(viewArtifactButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        viewArtifactButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/goto_res.png"))); // NOI18N
         viewArtifactButton.setText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.viewArtifactButton.text")); // NOI18N
         viewArtifactButton.setIconTextGap(2);
         viewArtifactButton.setPreferredSize(new java.awt.Dimension(93, 23));
@@ -165,7 +164,8 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
         });
         jToolBar1.add(viewArtifactButton);
 
-        viewContentButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/goto_dir.png"))); // NOI18N NON-NLS
+        viewContentButton.setFont(viewContentButton.getFont().deriveFont(viewContentButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        viewContentButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/goto_dir.png"))); // NOI18N
         viewContentButton.setText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.viewContentButton.text")); // NOI18N
         viewContentButton.setIconTextGap(2);
         viewContentButton.setPreferredSize(new java.awt.Dimension(111, 23));
