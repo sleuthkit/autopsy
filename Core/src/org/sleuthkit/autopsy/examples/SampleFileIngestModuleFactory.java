@@ -43,6 +43,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
+import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
@@ -88,7 +89,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
  * implementations of most of the IngestModuleFactory methods.
  */
 @ServiceProvider(service = IngestModuleFactory.class) // Sample is discarded at runtime 
-public class SampleIngestModuleFactory implements IngestModuleFactory {
+public class SampleFileIngestModuleFactory extends IngestModuleFactoryAdapter {
 
     private static final String VERSION_NUMBER = "1.0.0";
 
@@ -96,7 +97,7 @@ public class SampleIngestModuleFactory implements IngestModuleFactory {
     // factory to use the same display name that is provided to the Autopsy
     // ingest framework by the factory.
     static String getModuleName() {
-        return NbBundle.getMessage(SampleIngestModuleFactory.class, "SampleIngestModuleFactory.moduleName");
+        return NbBundle.getMessage(SampleFileIngestModuleFactory.class, "SampleFileIngestModuleFactory.moduleName");
     }
 
     /**
@@ -121,7 +122,7 @@ public class SampleIngestModuleFactory implements IngestModuleFactory {
      */
     @Override
     public String getModuleDescription() {
-        return NbBundle.getMessage(SampleIngestModuleFactory.class, "SampleIngestModuleFactory.moduleDescription");
+        return NbBundle.getMessage(SampleFileIngestModuleFactory.class, "SampleFileIngestModuleFactory.moduleDescription");
     }
 
     /**
@@ -275,15 +276,5 @@ public class SampleIngestModuleFactory implements IngestModuleFactory {
             throw new IllegalArgumentException("Expected settings argument to be instanceof SampleModuleIngestJobSettings");
         }
         return new SampleFileIngestModule((SampleModuleIngestJobSettings) settings);
-    }
-
-    @Override
-    public boolean isDataSourceIngestModuleFactory() {
-        return false;
-    }
-
-    @Override
-    public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings settings) {
-        throw new UnsupportedOperationException("Not supported for this factory");
     }
 }

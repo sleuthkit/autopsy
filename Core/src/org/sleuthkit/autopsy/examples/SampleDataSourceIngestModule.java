@@ -29,6 +29,7 @@
  */
 package org.sleuthkit.autopsy.examples;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.Exceptions;
@@ -50,6 +51,7 @@ import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -60,12 +62,10 @@ import org.sleuthkit.datamodel.TskData;
  */
 class SampleDataSourceIngestModule implements DataSourceIngestModule {
 
-    private final boolean skipKnownFiles;
     private IngestJobContext context = null;
-    private Logger logger;
+    private static final Logger logger = Logger.getLogger(NbBundle.getMessage(SampleDataSourceIngestModuleFactory.class, "SampleDataSourceIngestModuleFactory.moduleName"));
 
     SampleDataSourceIngestModule(SampleModuleIngestJobSettings settings) {
-        this.skipKnownFiles = settings.skipKnownFiles();
     }
 
     @Override
@@ -77,7 +77,7 @@ class SampleDataSourceIngestModule implements DataSourceIngestModule {
      */
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
-        this.logger = Logger.getLogger(NbBundle.getMessage(SampleDataSourceIngestModuleFactory.class, "SampleDataSourceIngestModuleFactory.moduleName"));
+
     }
 
     @Override
@@ -104,16 +104,15 @@ class SampleDataSourceIngestModule implements DataSourceIngestModule {
          */
 
         try {
-            // Get count of files with .doc extension.
+            // Get count of files with test in name.
             FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
-            List<AbstractFile> docFiles = fileManager.findFiles(dataSource, "%test%");
-
-            int numFiles = docFiles.size();
+            List<AbstractFile> testFiles = fileManager.findFiles(dataSource, "%test%");
+            int numFiles = testFiles.size();
             logger.log(Level.INFO, "found " + numFiles + " files");
             progressBar.switchToDeterminate(numFiles);
             progressBar.progress(1);
             int fileCount = 0;
-            for (AbstractFile file : docFiles) {
+            for (AbstractFile file : testFiles) {
                 // check if we were cancelled
                 if (context.dataSourceIngestIsCancelled()) {
                     return IngestModule.ProcessResult.OK;
@@ -133,41 +132,37 @@ class SampleDataSourceIngestModule implements DataSourceIngestModule {
                      This will work in 4.0.1 and beyond
                      try {
                      //index the artifact for keyword search
-                     blackboard.indexArtifact(art)
+                     blackboard.indexArtifact(art);
                      }
                      catch (Blackboard.BlackboardException ex) {
-                     self.log(Level.SEVERE, "Error indexing artifact " + art.getDisplayName())
+                     logger.log(Level.SEVERE, "Error indexing artifact " + art.getDisplayName());
                      }
-//                     */
+                     */
                 } catch (TskCoreException ex) {
                     Exceptions.printStackTrace(ex);
                 }
                 try {
+                    ReadContentInputStream inputStream = new ReadContentInputStream(file);
                     byte buffer[] = new byte[1024];
-                    int len = file.read(buffer, 0, 1024);
-                    int count = 0;
+                    int totLen = 0;
+                    int len = inputStream.read(buffer);
                     while (len != -1) {
-                        count += len;
-                        len = file.read(buffer, count, 1024);
+                        totLen += len;
+                        len = inputStream.read(buffer);
                     }
 
-                } catch (TskCoreException ex) {
-                    IngestServices ingestServices = IngestServices.getInstance();
-                    Logger logger = ingestServices.getLogger(SampleDataSourceIngestModuleFactory.getModuleName());
+                } catch (IOException ex) {
                     logger.log(Level.SEVERE, "Error processing file (id = " + file.getId() + ")", ex);
                     return IngestModule.ProcessResult.ERROR;
                 }
                 progressBar.progress(fileCount);
             }
-
             IngestMessage message = IngestMessage.createMessage(IngestMessage.MessageType.DATA,
                     "Sample Data Source Ingest Module", "Found" + fileCount + " files");
             IngestServices.getInstance().postMessage(message);
             return IngestModule.ProcessResult.OK;
 
         } catch (TskCoreException ex) {
-            IngestServices ingestServices = IngestServices.getInstance();
-            Logger logger = ingestServices.getLogger(SampleDataSourceIngestModuleFactory.getModuleName());
             logger.log(Level.SEVERE, "File query failed", ex);
             return IngestModule.ProcessResult.ERROR;
         }

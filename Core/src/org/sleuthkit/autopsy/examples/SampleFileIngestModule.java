@@ -29,6 +29,7 @@
  */
 package org.sleuthkit.autopsy.examples;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
@@ -47,6 +48,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
@@ -58,15 +60,10 @@ import org.sleuthkit.datamodel.TskData;
  */
 class SampleFileIngestModule implements FileIngestModule {
 
-    private static final HashMap<Long, Long> artifactCountsForIngestJobs = new HashMap<>();
-    private final boolean skipKnownFiles;
-    private IngestJobContext context = null;
-    private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private int filesFound;
-    private Logger logger;
+    private static final Logger logger = Logger.getLogger(NbBundle.getMessage(SampleFileIngestModuleFactory.class, "SampleFileIngestModuleFactory.moduleName"));;
 
     SampleFileIngestModule(SampleModuleIngestJobSettings settings) {
-        this.skipKnownFiles = settings.skipKnownFiles();
     }
 
     @Override
@@ -77,10 +74,7 @@ class SampleFileIngestModule implements FileIngestModule {
      TODO: Add any setup code that you need here.
      */
     public void startUp(IngestJobContext context) throws IngestModuleException {
-        this.context = context;
-        refCounter.incrementAndGet(context.getJobId());
         this.filesFound = 0;
-        this.logger = Logger.getLogger(NbBundle.getMessage(SampleIngestModuleFactory.class, "SampleIngestModuleFactory.moduleName"));
     }
 
     @Override
@@ -105,21 +99,20 @@ class SampleFileIngestModule implements FileIngestModule {
          */
         //For an example, we will flag files with .txt in the name and make a blackboard artifact.
         if (file.getName().toLowerCase().endsWith(".txt")) {
-            logger.log(Level.INFO, "Found a text file: " + file.getName());
             this.filesFound++;
             try {
                 BlackboardArtifact art = file.newArtifact(ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
                 BlackboardAttribute attr = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME,
-                        NbBundle.getMessage(SampleIngestModuleFactory.class, "SampleIngestModuleFactory.moduleName"), "Text Files");
+                        NbBundle.getMessage(SampleFileIngestModuleFactory.class, "SampleFileIngestModuleFactory.moduleName"), "Text Files");
                 art.addAttribute(attr);
                 /*
                  This will work in 4.0.1 and beyond
                  try {
                  //index the artifact for keyword search
-                 blackboard.indexArtifact(art)
+                 blackboard.indexArtifact(art);
                  }
                  catch (Blackboard.BlackboardException ex) {
-                 self.log(Level.SEVERE, "Error indexing artifact " + art.getDisplayName())
+                 logger.log(Level.SEVERE, "Error indexing artifact " + art.getDisplayName());
                  }
                  */
             } catch (TskCoreException ex) {
@@ -127,7 +120,7 @@ class SampleFileIngestModule implements FileIngestModule {
             }
 
             //Fire an event to notify the UI and others that there is a new artifact
-            IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(NbBundle.getMessage(SampleIngestModuleFactory.class, "SampleIngestModuleFactory.moduleName"),
+            IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(NbBundle.getMessage(SampleFileIngestModuleFactory.class, "SampleFileIngestModuleFactory.moduleName"),
                     ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT));
             /*
              For the example (this wouldn't be needed normally), we'll query the blackboard for data that was added
@@ -147,23 +140,20 @@ class SampleFileIngestModule implements FileIngestModule {
             }
 
         }
-
         //To further the example, this code will read the contents of the file
         //and count the number of bytes
         try {
+            ReadContentInputStream inputStream = new ReadContentInputStream(file);
             byte buffer[] = new byte[1024];
-            int len = file.read(buffer, 0, 1024);
-            int count = 0;
+            int totLen = 0;
+            int len = inputStream.read(buffer);
             while (len != -1) {
-                count += len;
-                len = file.read(buffer, count, 1024);
+                totLen += len;
+                len = inputStream.read(buffer);
             }
-
             return IngestModule.ProcessResult.OK;
 
-        } catch (TskCoreException ex) {
-            IngestServices ingestServices = IngestServices.getInstance();
-            Logger logger = ingestServices.getLogger(SampleIngestModuleFactory.getModuleName());
+        } catch (IOException ex) {
             logger.log(Level.SEVERE, "Error processing file (id = " + file.getId() + ")", ex);
             return IngestModule.ProcessResult.ERROR;
         }
@@ -172,34 +162,8 @@ class SampleFileIngestModule implements FileIngestModule {
     @Override
     public void shutDown() {
         IngestMessage message = IngestMessage.createMessage(
-                IngestMessage.MessageType.DATA, NbBundle.getMessage(SampleIngestModuleFactory.class, "SampleIngestModuleFactory.moduleName"),
+                IngestMessage.MessageType.DATA, NbBundle.getMessage(SampleFileIngestModuleFactory.class, "SampleFileIngestModuleFactory.moduleName"),
                 this.filesFound + " files found");
         IngestServices.getInstance().postMessage(message);
-    }
-
-    synchronized static void addToBlackboardPostCount(long ingestJobId, long countToAdd) {
-        Long fileCount = artifactCountsForIngestJobs.get(ingestJobId);
-
-        // Ensures that this job has an entry
-        if (fileCount == null) {
-            fileCount = 0L;
-            artifactCountsForIngestJobs.put(ingestJobId, fileCount);
-        }
-
-        fileCount += countToAdd;
-        artifactCountsForIngestJobs.put(ingestJobId, fileCount);
-    }
-
-    synchronized static void reportBlackboardPostCount(long ingestJobId) {
-        Long refCount = refCounter.decrementAndGet(ingestJobId);
-        if (refCount == 0) {
-            Long filesCount = artifactCountsForIngestJobs.remove(ingestJobId);
-            String msgText = String.format("Posted %d times to the blackboard", filesCount);
-            IngestMessage message = IngestMessage.createMessage(
-                    IngestMessage.MessageType.INFO,
-                    SampleIngestModuleFactory.getModuleName(),
-                    msgText);
-            IngestServices.getInstance().postMessage(message);
-        }
     }
 }

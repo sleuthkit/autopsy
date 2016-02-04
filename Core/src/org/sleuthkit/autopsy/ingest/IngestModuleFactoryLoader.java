@@ -31,7 +31,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.examples.SampleDataSourceIngestModuleFactory;
 import org.sleuthkit.autopsy.examples.SampleExecutableIngestModuleFactory;
-import org.sleuthkit.autopsy.examples.SampleIngestModuleFactory;
+import org.sleuthkit.autopsy.examples.SampleFileIngestModuleFactory;
 import org.sleuthkit.autopsy.modules.android.AndroidModuleFactory;
 import org.sleuthkit.autopsy.modules.e01verify.E01VerifierModuleFactory;
 import org.sleuthkit.autopsy.modules.exif.ExifParserModuleFactory;
@@ -49,7 +49,7 @@ import org.sleuthkit.autopsy.python.JythonModuleLoader;
 final class IngestModuleFactoryLoader {
 
     private static final Logger logger = Logger.getLogger(IngestModuleFactoryLoader.class.getName());
-    private static final String SAMPLE_MODULE_FACTORY_CLASS_NAME = SampleIngestModuleFactory.class.getCanonicalName();
+    private static final String SAMPLE_MODULE_FACTORY_CLASS_NAME = SampleFileIngestModuleFactory.class.getCanonicalName();
     private static final String SAMPLE_EXECUTABLE_MODULE_FACTORY_CLASS_NAME = SampleExecutableIngestModuleFactory.class.getCanonicalName();
     private static final String SAMPLE_DATA_SOURCE_MODULE_FACTORY_CLASS_NAME = SampleDataSourceIngestModuleFactory.class.getCanonicalName();
     private static final ArrayList<String> coreModuleOrdering = new ArrayList<String>() {
@@ -145,11 +145,11 @@ final class IngestModuleFactoryLoader {
     private static void addFactory(IngestModuleFactory factory, HashSet<String> moduleDisplayNames, HashMap<String, IngestModuleFactory> javaFactoriesByClass) {
         // Ignore the sample ingest module factories implemented in Java.        
         String className = factory.getClass().getCanonicalName();
-        if (className.equals(IngestModuleFactoryLoader.SAMPLE_MODULE_FACTORY_CLASS_NAME)
+        /*if (className.equals(IngestModuleFactoryLoader.SAMPLE_MODULE_FACTORY_CLASS_NAME)
                 || className.equals(IngestModuleFactoryLoader.SAMPLE_EXECUTABLE_MODULE_FACTORY_CLASS_NAME)
                 || className.equals(IngestModuleFactoryLoader.SAMPLE_DATA_SOURCE_MODULE_FACTORY_CLASS_NAME)) {
             return;
-        }
+        }*/
 
         if (!moduleDisplayNames.contains(factory.getModuleDisplayName())) {
             moduleDisplayNames.add(factory.getModuleDisplayName());
