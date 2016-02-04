@@ -200,7 +200,7 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
 
         setFont(getFont().deriveFont(getFont().getStyle() & ~java.awt.Font.BOLD, 11));
 
-        jSplitPane1.setFont(jSplitPane1.getFont().deriveFont(jSplitPane1.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        jSplitPane1.setFont(leftPane.getFont());
 
         leftPane.setFont(leftPane.getFont().deriveFont(leftPane.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         leftPane.setMinimumSize(new java.awt.Dimension(150, 23));
