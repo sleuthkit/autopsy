@@ -99,25 +99,30 @@ public final class CaseMetadata {
     final static String RELATIVE_TRUE = "true";     // if it's a relative path NON-NLS
     final static String RELATIVE_FALSE = "false";   // if it's not a relative path NON-NLS
 
-    private Document doc;
-    private final Case.CaseType caseType;
-    private final String caseName;
-    private final String caseNumber;
-    private final String examiner;
-    private final String caseDirectory;
-    private final String caseDatabaseName;
-    private final String caseTextIndexName;
+    private final DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss (z)");
+    private Case.CaseType caseType;
+    private String caseName;
+    private String caseNumber;
+    private String examiner;
+    private String caseDirectory;
+    private String caseDatabaseName;
+    private String caseTextIndexName;
+    private final String createdDate;
+    private final String schemaVersion;
     private static final Logger logger = Logger.getLogger(CaseMetadata.class.getName());
 
-    public CaseMetadata(Case.CaseType caseType, String caseName, String caseNumber, String exainer, String caseDirectory, String caseDatabaseName, String caseTextIndexName) throws CaseMetadataException {
+    private CaseMetadata(Case.CaseType caseType, String caseName, String caseDirectory, String caseDatabaseName, String caseTextIndexName) throws CaseMetadataException {
         this.caseType = caseType;
         this.caseName = caseName;
-        this.caseNumber = caseNumber;
-        this.examiner = exainer;
+        this.caseNumber = "";
+        this.examiner = "";
+        this.createdDate = this.dateFormat.format(new Date());
         this.caseDirectory = caseDirectory;
         this.caseDatabaseName = caseDatabaseName;
         this.caseTextIndexName = caseTextIndexName;
-        this.create();
+        this.schemaVersion = "1.0";
+        this.write();
+
     }
 
     /**
@@ -126,13 +131,17 @@ public final class CaseMetadata {
      * @param metadataFilePath Path to the metadata (.aut) file for a case.
      */
     public CaseMetadata(Path metadataFilePath) throws CaseMetadataException {
+        this(metadataFilePath.toString());
+    }
+
+    private CaseMetadata(String metadataFilePath) throws CaseMetadataException {
         try {
             /*
              * TODO (RC): This class should eventually replace the non-public
              * and unsafe XMLCaseManagement class altogether.
              */
             XMLCaseManagement metadata = new XMLCaseManagement();
-            metadata.open(metadataFilePath.toString());
+            metadata.open(metadataFilePath);
             try {
                 caseType = metadata.getCaseType();
             } catch (NullPointerException unused) {
@@ -177,10 +186,32 @@ public final class CaseMetadata {
             } catch (NullPointerException unused) {
                 throw new CaseMetadataException("Case keyword search index name missing");
             }
+            try {
+                this.createdDate = metadata.getCreatedDate();
+            } catch (NullPointerException unused) {
+                throw new CaseMetadataException("Case created date element missing");
+            }
+            try {
+                this.schemaVersion = metadata.getSchemaVersion();
+            } catch (NullPointerException unused) {
+                throw new CaseMetadataException("Case created date element missing");
+            }
+
         } catch (CaseActionException ex) {
             throw new CaseMetadataException(ex.getLocalizedMessage(), ex);
         }
-        this.create();
+        this.write();
+    }
+
+    public static CaseMetadata open(Path metadataFilePath) throws CaseMetadataException {
+        CaseMetadata metadata = new CaseMetadata(metadataFilePath.toString());
+        return metadata;
+    }
+
+    public static CaseMetadata create(Case.CaseType caseType, String caseName, String caseNumber, String examiner, String caseDirectory, String caseDatabaseName, String caseTextIndexName) throws CaseMetadataException {
+        CaseMetadata metadata = new CaseMetadata(caseType, caseName, caseDirectory, caseDatabaseName, caseTextIndexName);
+        metadata.write();
+        return metadata;
     }
 
     /**
@@ -238,15 +269,78 @@ public final class CaseMetadata {
     }
 
     /**
-     * Gets the text index name.
+     * Gets the date this case was created
      *
-     * @return The case text index name, will be empty for a single-user case.
+     * @return The date this case was created as a string
      */
-    public String getTextIndexName() {
+    public String getCreatedDate() {
+        return this.createdDate;
+    }
+
+    /**
+     * @param caseType the caseType to set
+     */
+    public void setCaseType(Case.CaseType caseType) {
+        this.caseType = caseType;
+    }
+
+    /**
+     * @param caseName the caseName to set
+     */
+    public void setCaseName(String caseName) {
+        this.caseName = caseName;
+    }
+
+    /**
+     * @param caseNumber the caseNumber to set
+     */
+    public void setCaseNumber(String caseNumber) {
+        this.caseNumber = caseNumber;
+    }
+
+    /**
+     * @param examiner the examiner to set
+     */
+    public void setCaseExaminer(String examiner) {
+        this.examiner = examiner;
+    }
+
+    /**
+     * @param caseDirectory the caseDirectory to set
+     */
+    public void setCaseDirectory(String caseDirectory) {
+        this.caseDirectory = caseDirectory;
+    }
+
+    /**
+     * @param caseDatabaseName the caseDatabaseName to set
+     */
+    public void setCaseDatabaseName(String caseDatabaseName) {
+        this.caseDatabaseName = caseDatabaseName;
+    }
+
+    /**
+     * @return the caseTextIndexName
+     */
+    public String getCaseTextIndexName() {
         return caseTextIndexName;
     }
 
-    private void create() throws CaseMetadataException {
+    /**
+     * @param caseTextIndexName the caseTextIndexName to set
+     */
+    public void setCaseTextIndexName(String caseTextIndexName) {
+        this.caseTextIndexName = caseTextIndexName;
+    }
+
+    /**
+     * @return the schemaVersion
+     */
+    public String getSchemaVersion() {
+        return schemaVersion;
+    }
+
+    private void write() throws CaseMetadataException {
         DocumentBuilder docBuilder;
         DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 
@@ -254,18 +348,16 @@ public final class CaseMetadata {
         try {
             docBuilder = docFactory.newDocumentBuilder();
         } catch (ParserConfigurationException ex) {
-            clear();
             throw new CaseMetadataException(
                     NbBundle.getMessage(this.getClass(), "XMLCaseManagement.create.exception.msg"), ex);
         }
-        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss (z)");
 
-        doc = docBuilder.newDocument();
+        Document doc = docBuilder.newDocument();
         Element rootElement = doc.createElement(TOP_ROOT_NAME); // <AutopsyCase> ... </AutopsyCase>
         doc.appendChild(rootElement);
 
         Element crDateElement = doc.createElement(CREATED_DATE_NAME); // <CreatedDate> ... </CreatedDate>
-        crDateElement.appendChild(doc.createTextNode(dateFormat.format(new Date())));
+        crDateElement.appendChild(doc.createTextNode(this.getCreatedDate()));
         rootElement.appendChild(crDateElement);
 
         Element mDateElement = doc.createElement(MODIFIED_DATE_NAME); // <ModifedDate> ... </ModifedDate>
@@ -281,22 +373,22 @@ public final class CaseMetadata {
         rootElement.appendChild(autSavedVerElement);
 
         Element schVerElement = doc.createElement(SCHEMA_VERSION_NAME); // <SchemaVersion> ... </SchemaVersion>
-        schVerElement.appendChild(doc.createTextNode(schemaVersion));
+        schVerElement.appendChild(doc.createTextNode(getSchemaVersion()));
         rootElement.appendChild(schVerElement);
 
         Element caseElement = doc.createElement(CASE_ROOT_NAME); // <Case> ... </Case>
         rootElement.appendChild(caseElement);
 
         Element nameElement = doc.createElement(NAME); // <Name> ... </Name>
-        nameElement.appendChild(doc.createTextNode(caseName));
+        nameElement.appendChild(doc.createTextNode(getCaseName()));
         caseElement.appendChild(nameElement);
 
         Element numberElement = doc.createElement(NUMBER); // <Number> ... </Number>
-        numberElement.appendChild(doc.createTextNode(String.valueOf(caseNumber)));
+        numberElement.appendChild(doc.createTextNode(String.valueOf(getCaseNumber())));
         caseElement.appendChild(numberElement);
 
         Element examinerElement = doc.createElement(EXAMINER); // <Examiner> ... </Examiner>
-        examinerElement.appendChild(doc.createTextNode(examiner));
+        examinerElement.appendChild(doc.createTextNode(getExaminer()));
         caseElement.appendChild(examinerElement);
 
         Element exportElement = doc.createElement(EXPORT_FOLDER_NAME); // <ExportFolder> ... </ExportFolder>
@@ -320,21 +412,21 @@ public final class CaseMetadata {
         caseElement.appendChild(cacheElement);
 
         Element typeElement = doc.createElement(CASE_TYPE); // <CaseType> ... </CaseType>
-        typeElement.appendChild(doc.createTextNode(caseType.toString()));
+        typeElement.appendChild(doc.createTextNode(getCaseType().toString()));
         caseElement.appendChild(typeElement);
 
         Element dbNameElement = doc.createElement(DATABASE_NAME); // <DatabaseName> ... </DatabaseName>
-        dbNameElement.appendChild(doc.createTextNode(this.caseDatabaseName));
+        dbNameElement.appendChild(doc.createTextNode(this.getCaseDatabaseName()));
         caseElement.appendChild(dbNameElement);
 
         Element indexNameElement = doc.createElement(CASE_TEXT_INDEX_NAME); // <TextIndexName> ... </TextIndexName>
-        indexNameElement.appendChild(doc.createTextNode(this.caseTextIndexName));
+        indexNameElement.appendChild(doc.createTextNode(this.getCaseTextIndexName()));
         caseElement.appendChild(indexNameElement);
-        this.writeFile();
+        this.writeFile(doc);
     }
 
-    private void writeFile() throws CaseMetadataException {
-        if (doc == null || caseName.equals("")) {
+    private void writeFile(Document doc) throws CaseMetadataException {
+        if (doc == null || getCaseName().equals("")) {
             throw new CaseMetadataException(
                     NbBundle.getMessage(this.getClass(), "XMLCaseManagement.writeFile.exception.noCase.msg"));
         }
@@ -372,7 +464,7 @@ public final class CaseMetadata {
 
         // preparing the output file
         String xmlString = sw.toString();
-        File file = new File(this.caseDirectory + File.separator + caseName + ".aut");
+        File file = new File(this.getCaseDirectory() + File.separator + getCaseName() + ".aut");
 
         // write the file
         try {
@@ -385,6 +477,16 @@ public final class CaseMetadata {
             throw new CaseMetadataException(
                     NbBundle.getMessage(this.getClass(), "XMLCaseManagement.writeFile.exception.errWriteToFile.msg"), ex);
         }
+    }
+
+    /**
+     * When user wants to close the case. This method writes any changes to the
+     * XML case configuration file, closes it and the document handler, and
+     * clears all the local variables / fields.
+     *
+     */
+    public void close() throws CaseMetadataException {
+        write(); // write any changes to xml
     }
 
 }

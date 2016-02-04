@@ -256,7 +256,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
     private String number;
     private String examiner;
     private String configFilePath;
-    private final XMLCaseManagement xmlcm;
     private final CaseMetadata caseMetadata;
     private final SleuthkitCase db;
     // Track the current case (only set with changeCase() method)
@@ -286,7 +285,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
         this.number = number;
         this.examiner = examiner;
         this.configFilePath = configFilePath;
-        this.xmlcm = new XMLCaseManagement();
         this.caseMetadata = caseMetadata;
         this.caseType = type;
         this.db = db;
@@ -509,7 +507,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             });
             throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.databaseConnectionInfo.error.msg"), ex);
         }
-        CaseMetadata metadata = new CaseMetadata(caseType, caseName, caseNumber, examiner, caseDir, dbName, indexName);
+        CaseMetadata metadata = CaseMetadata.create(caseType, caseName, caseNumber, examiner, caseDir, santizedCaseName, indexName);
 
         Case newCase = new Case(caseName, caseNumber, examiner, configFilePath, metadata, db, caseType);
         changeCase(newCase);
@@ -852,7 +850,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         changeCase(null);
         try {
             services.close();
-            this.xmlcm.close(); // close the xmlcm
+            this.caseMetadata.close(); // close the xmlcm
             this.db.close();
         } catch (Exception e) {
             throw new CaseActionException(NbBundle.getMessage(this.getClass(), "Case.closeCase.exception.msg"), e);
@@ -871,7 +869,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
         try {
 
-            xmlcm.close(); // close the xmlcm
+            this.caseMetadata.close(); // close the xmlcm
             boolean result = deleteCaseDirectory(caseDir); // delete the directory
 
             RecentCases.getInstance().removeRecentCase(this.name, this.configFilePath); // remove it from the recent case
@@ -899,7 +897,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      */
     void updateCaseName(String oldCaseName, String oldPath, String newCaseName, String newPath) throws CaseActionException {
         try {
-            xmlcm.setCaseName(newCaseName); // set the case
+            caseMetadata.setCaseName(newCaseName); // set the case
             name = newCaseName; // change the local value
             eventPublisher.publish(new AutopsyEvent(Events.NAME.toString(), oldCaseName, newCaseName));
             SwingUtilities.invokeLater(() -> {
@@ -925,7 +923,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      */
     void updateExaminer(String oldExaminer, String newExaminer) throws CaseActionException {
         try {
-            xmlcm.setCaseExaminer(newExaminer); // set the examiner
+            caseMetadata.setCaseExaminer(newExaminer); // set the examiner
             examiner = newExaminer;
             eventPublisher.publish(new AutopsyEvent(Events.EXAMINER.toString(), oldExaminer, newExaminer));
         } catch (Exception e) {
@@ -943,7 +941,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      */
     void updateCaseNumber(String oldCaseNumber, String newCaseNumber) throws CaseActionException {
         try {
-            xmlcm.setCaseNumber(newCaseNumber); // set the case number
+            caseMetadata.setCaseNumber(newCaseNumber); // set the case number
             number = newCaseNumber;
             eventPublisher.publish(new AutopsyEvent(Events.NUMBER.toString(), oldCaseNumber, newCaseNumber));
         } catch (Exception e) {
@@ -1032,10 +1030,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @return caseDirectoryPath
      */
     public String getCaseDirectory() {
-        if (xmlcm == null) {
+        if (caseMetadata == null) {
             return "";
         } else {
-            return xmlcm.getCaseDirectory();
+            return caseMetadata.getCaseDirectory();
         }
     }
 
@@ -1234,10 +1232,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @return case creation date
      */
     public String getCreatedDate() {
-        if (xmlcm == null) {
+        if (caseMetadata == null) {
             return "";
         } else {
-            return xmlcm.getCreatedDate();
+            return caseMetadata.getCreatedDate();
         }
     }
 
@@ -1247,10 +1245,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @return Index name.
      */
     public String getTextIndexName() {
-        if (xmlcm == null) {
+        if (caseMetadata == null) {
             return "";
         } else {
-            return xmlcm.getTextIndexName();
+            return caseMetadata.getCaseTextIndexName();
         }
     }
 
