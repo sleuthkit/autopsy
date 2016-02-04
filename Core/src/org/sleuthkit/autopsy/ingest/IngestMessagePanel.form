@@ -57,8 +57,10 @@
             <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="eb" green="dd" red="dd" type="rgb"/>
             </Property>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-              <Font name="Arial" size="12" style="0"/>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font bold="false" component="messageTable" property="font" relativeSize="false" size="12"/>
+              </FontInfo>
             </Property>
             <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
               <Connection code="tableModel" type="code"/>
@@ -132,8 +134,10 @@
         </Component>
         <Component class="javax.swing.JComboBox" name="sortByComboBox">
           <Properties>
-            <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-              <Connection code="new javax.swing.DefaultComboBoxModel&lt;String&gt;(new String[] { &quot;Time&quot;, &quot;Priority&quot; })" type="code"/>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font bold="false" component="sortByComboBox" property="font" relativeSize="false" size="11"/>
+              </FontInfo>
             </Property>
             <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/ingest/Bundle.properties" key="IngestMessagePanel.sortByComboBox.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
@@ -148,6 +152,11 @@
         </Component>
         <Component class="javax.swing.JLabel" name="totalMessagesNameLabel">
           <Properties>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font bold="false" component="totalMessagesNameLabel" property="font" relativeSize="false" size="11"/>
+              </FontInfo>
+            </Property>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/ingest/Bundle.properties" key="IngestMessagePanel.totalMessagesNameLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
@@ -155,6 +164,11 @@
         </Component>
         <Component class="javax.swing.JLabel" name="totalMessagesNameVal">
           <Properties>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font bold="false" component="totalMessagesNameVal" property="font" relativeSize="false" size="11"/>
+              </FontInfo>
+            </Property>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/ingest/Bundle.properties" key="IngestMessagePanel.totalMessagesNameVal.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
@@ -162,6 +176,11 @@
         </Component>
         <Component class="javax.swing.JLabel" name="totalUniqueMessagesNameLabel">
           <Properties>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font bold="false" component="totalUniqueMessagesNameLabel" property="font" relativeSize="false" size="11"/>
+              </FontInfo>
+            </Property>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/ingest/Bundle.properties" key="IngestMessagePanel.totalUniqueMessagesNameLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
@@ -169,6 +188,11 @@
         </Component>
         <Component class="javax.swing.JLabel" name="totalUniqueMessagesNameVal">
           <Properties>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font bold="false" component="totalUniqueMessagesNameVal" property="font" relativeSize="false" size="11"/>
+              </FontInfo>
+            </Property>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/ingest/Bundle.properties" key="IngestMessagePanel.totalUniqueMessagesNameVal.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
