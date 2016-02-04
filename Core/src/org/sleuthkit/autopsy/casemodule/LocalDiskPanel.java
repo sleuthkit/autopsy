@@ -111,25 +111,33 @@ final class LocalDiskPanel extends JPanel {
         diskComboBox = new javax.swing.JComboBox<>();
         errorLabel = new javax.swing.JLabel();
         timeZoneLabel = new javax.swing.JLabel();
-        timeZoneComboBox = new javax.swing.JComboBox<String>();
+        timeZoneComboBox = new javax.swing.JComboBox<>();
         noFatOrphansCheckbox = new javax.swing.JCheckBox();
         descLabel = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(0, 65));
         setPreferredSize(new java.awt.Dimension(485, 65));
 
+        diskLabel.setFont(diskLabel.getFont().deriveFont(diskLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(diskLabel, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.diskLabel.text")); // NOI18N
 
+        diskComboBox.setFont(diskComboBox.getFont().deriveFont(diskComboBox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+
+        errorLabel.setFont(errorLabel.getFont().deriveFont(errorLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         errorLabel.setForeground(new java.awt.Color(255, 0, 0));
         org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.errorLabel.text")); // NOI18N
 
+        timeZoneLabel.setFont(timeZoneLabel.getFont().deriveFont(timeZoneLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(timeZoneLabel, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.timeZoneLabel.text")); // NOI18N
 
+        timeZoneComboBox.setFont(timeZoneComboBox.getFont().deriveFont(timeZoneComboBox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         timeZoneComboBox.setMaximumRowCount(30);
 
+        noFatOrphansCheckbox.setFont(noFatOrphansCheckbox.getFont().deriveFont(noFatOrphansCheckbox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(noFatOrphansCheckbox, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.noFatOrphansCheckbox.text")); // NOI18N
         noFatOrphansCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.noFatOrphansCheckbox.toolTipText")); // NOI18N
 
+        descLabel.setFont(descLabel.getFont().deriveFont(descLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(descLabel, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.descLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
