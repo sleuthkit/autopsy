@@ -60,7 +60,6 @@ import javafx.scene.control.SplitMenuButton;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
 import javafx.scene.effect.DropShadow;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import static javafx.scene.input.KeyCode.DIGIT0;
 import static javafx.scene.input.KeyCode.DIGIT1;
@@ -114,7 +113,6 @@ import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
 import org.sleuthkit.autopsy.imagegallery.actions.AddDrawableTagAction;
 import org.sleuthkit.autopsy.imagegallery.actions.Back;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
-import org.sleuthkit.autopsy.imagegallery.actions.CategorizeGroupAction;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeSelectedFilesAction;
 import org.sleuthkit.autopsy.imagegallery.actions.Forward;
 import org.sleuthkit.autopsy.imagegallery.actions.NextUnseenGroup;
@@ -123,7 +121,6 @@ import org.sleuthkit.autopsy.imagegallery.actions.SwingMenuItemAdapter;
 import org.sleuthkit.autopsy.imagegallery.actions.TagSelectedFilesAction;
 import org.sleuthkit.autopsy.imagegallery.actions.UndoAction;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
-import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewMode;
@@ -412,40 +409,30 @@ public class GroupPane extends BorderPane {
         BooleanBinding isSelectionEmpty = Bindings.isEmpty(selectionModel.getSelected());
         catSelectedSplitMenu.disableProperty().bind(isSelectionEmpty);
         tagSelectedSplitMenu.disableProperty().bind(isSelectionEmpty);
-//        selectionModel.getSelected().addListener((Observable o) -> {
-//            Platform.runLater(() -> {
-//                catSelectedSplitMenu.setDisable(selectionModel.getSelected().isEmpty());
-//                tagSelectedSplitMenu.setDisable(selectionModel.getSelected().isEmpty());
-//            });
-//        });
 
         Platform.runLater(() -> {
             try {
-                tagSelectedSplitMenu.setText(controller.getTagsManager().getFollowUpTagName().getDisplayName());
+                TagSelectedFilesAction followUpSelectedACtion = new TagSelectedFilesAction(controller.getTagsManager().getFollowUpTagName(), controller);
+                tagSelectedSplitMenu.setText(followUpSelectedACtion.getText());
+                tagSelectedSplitMenu.setGraphic(followUpSelectedACtion.getGraphic());
+                tagSelectedSplitMenu.setOnAction(followUpSelectedACtion);
             } catch (TskCoreException tskCoreException) {
                 LOGGER.log(Level.WARNING, "failed to load FollowUpTagName", tskCoreException); //NON-NLS
             }
+            tagSelectedSplitMenu.showingProperty().addListener(showing -> {
+                if (tagSelectedSplitMenu.isShowing()) {
+                    List<MenuItem> selTagMenues = Lists.transform(controller.getTagsManager().getNonCategoryTagNames(),
+                            tagName -> GuiUtils.createAutoAssigningMenuItem(tagSelectedSplitMenu, new TagSelectedFilesAction(tagName, controller)));
+                    tagSelectedSplitMenu.getItems().setAll(selTagMenues);
+                }
+            });
+
         });
 
-        tagSelectedSplitMenu.setOnAction(actionEvent -> {
-            try {
-                new TagSelectedFilesAction(controller.getTagsManager().getFollowUpTagName(), controller).handle(actionEvent);
-            } catch (TskCoreException tskCoreException) {
-                LOGGER.log(Level.WARNING, "failed to load FollowUpTagName", tskCoreException); //NON-NLS
-            }
-        });
-        tagSelectedSplitMenu.setGraphic(new ImageView(DrawableAttribute.TAGS.getIcon()));
-        tagSelectedSplitMenu.showingProperty().addListener(showing -> {
-            if (tagSelectedSplitMenu.isShowing()) {
-                List<MenuItem> selTagMenues = Lists.transform(controller.getTagsManager().getNonCategoryTagNames(),
-                        tagName -> GuiUtils.createAutoAssigningMenuItem(tagSelectedSplitMenu, new TagSelectedFilesAction(tagName, controller)));
-                tagSelectedSplitMenu.getItems().setAll(selTagMenues);
-            }
-        });
-
-        catSelectedSplitMenu.setOnAction(new CategorizeGroupAction(Category.FIVE, controller));
-        catSelectedSplitMenu.setText(Category.FIVE.getDisplayName());
-        catSelectedSplitMenu.setGraphic(new ImageView(DrawableAttribute.CATEGORY.getIcon()));
+        CategorizeSelectedFilesAction cat5SelectedAction = new CategorizeSelectedFilesAction(Category.FIVE, controller);
+        catSelectedSplitMenu.setOnAction(cat5SelectedAction);
+        catSelectedSplitMenu.setText(cat5SelectedAction.getText());
+        catSelectedSplitMenu.setGraphic(cat5SelectedAction.getGraphic());
         catSelectedSplitMenu.showingProperty().addListener(showing -> {
             if (catSelectedSplitMenu.isShowing()) {
                 List<MenuItem> categoryMenues = Lists.transform(Arrays.asList(Category.values()),
@@ -459,11 +446,17 @@ public class GroupPane extends BorderPane {
         tileToggle.getStyleClass().remove("radio-button");
         tileToggle.getStyleClass().add("toggle-button");
 
-        BooleanBinding equal = Bindings.equal(GroupViewMode.SLIDE_SHOW, groupViewMode);
-        catSegmentedContainer.visibleProperty().bind(equal);
-        catSegmentedContainer.managedProperty().bind(equal);
-        catSplitMenuContainer.visibleProperty().bind(equal.not());
-        catSplitMenuContainer.managedProperty().bind(equal.not());
+        //show categorization controls depending on group view mode
+        headerToolBar.getItems().remove(catSegmentedContainer);
+        groupViewMode.addListener((ObservableValue<? extends GroupViewMode> observable, GroupViewMode oldValue, GroupViewMode newValue) -> {
+            if (newValue == GroupViewMode.SLIDE_SHOW) {
+                headerToolBar.getItems().remove(catSplitMenuContainer);
+                headerToolBar.getItems().add(catSegmentedContainer);
+            } else {
+                headerToolBar.getItems().remove(catSegmentedContainer);
+                headerToolBar.getItems().add(catSplitMenuContainer);
+            }
+        });
 
         //listen to toggles and update view state
         slideShowToggle.setOnAction(onAction -> activateSlideShowViewer(selectionModel.lastSelectedProperty().get()));

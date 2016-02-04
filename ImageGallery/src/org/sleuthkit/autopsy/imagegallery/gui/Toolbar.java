@@ -37,7 +37,6 @@ import javafx.scene.control.Slider;
 import javafx.scene.control.SplitMenuButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.ToolBar;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javax.swing.SortOrder;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -138,15 +137,14 @@ public class Toolbar extends ToolBar {
         });
         syncGroupControlsEnabledState(controller.viewState().get());
 
-        tagGroupMenuButton.setOnAction(actionEvent -> {
-            try {
-                new TagGroupAction(controller.getTagsManager().getFollowUpTagName(), controller).handle(actionEvent);
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Could create follow up tag menu item", ex); //NON-NLS
-            }
-        });
-
-        tagGroupMenuButton.setGraphic(new ImageView(DrawableAttribute.TAGS.getIcon()));
+        try {
+            TagGroupAction followUpGroupAction = new TagGroupAction(controller.getTagsManager().getFollowUpTagName(), controller);
+            tagGroupMenuButton.setOnAction(followUpGroupAction);
+            tagGroupMenuButton.setText(followUpGroupAction.getText());
+            tagGroupMenuButton.setGraphic(followUpGroupAction.getGraphic());
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Could create follow up tag menu item", ex); //NON-NLS
+        }
         tagGroupMenuButton.showingProperty().addListener(showing -> {
             if (tagGroupMenuButton.isShowing()) {
                 List<MenuItem> selTagMenues = Lists.transform(controller.getTagsManager().getNonCategoryTagNames(),
@@ -155,9 +153,10 @@ public class Toolbar extends ToolBar {
             }
         });
 
-        catGroupMenuButton.setOnAction(new CategorizeGroupAction(Category.FIVE, controller));
-        catGroupMenuButton.setText(Category.FIVE.getDisplayName());
-        catGroupMenuButton.setGraphic(new ImageView(DrawableAttribute.CATEGORY.getIcon()));
+        CategorizeGroupAction cat5GroupAction = new CategorizeGroupAction(Category.FIVE, controller);
+        catGroupMenuButton.setOnAction(cat5GroupAction);
+        catGroupMenuButton.setText(cat5GroupAction.getText());
+        catGroupMenuButton.setGraphic(cat5GroupAction.getGraphic());
         catGroupMenuButton.showingProperty().addListener(showing -> {
             if (catGroupMenuButton.isShowing()) {
                 List<MenuItem> categoryMenues = Lists.transform(Arrays.asList(Category.values()),
@@ -186,11 +185,8 @@ public class Toolbar extends ToolBar {
 
         });
         sortByBox.getSelectionModel().select(GroupSortBy.PRIORITY);
-//        ascRadio.disableProperty().bind(sortByBox.getSelectionModel().selectedItemProperty().isEqualTo(GroupSortBy.NONE));
-//        descRadio.disableProperty().bind(sortByBox.getSelectionModel().selectedItemProperty().isEqualTo(GroupSortBy.NONE));
 
         orderGroup.selectedToggleProperty().addListener(queryInvalidationListener);
-
     }
 
     private void syncGroupControlsEnabledState(GroupViewState newViewState) {

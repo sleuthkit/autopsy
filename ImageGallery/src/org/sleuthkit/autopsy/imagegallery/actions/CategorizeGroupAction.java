@@ -20,11 +20,9 @@ package org.sleuthkit.autopsy.imagegallery.actions;
 
 import com.google.common.collect.ImmutableSet;
 import java.util.Set;
-import javafx.scene.image.ImageView;
 import org.controlsfx.control.action.Action;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
-import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 
 /**
  *
@@ -36,7 +34,6 @@ public class CategorizeGroupAction extends Action {
             Set<Long> fileIdSet = ImmutableSet.copyOf(controller.viewState().get().getGroup().getFileIDs());
             new CategorizeAction(controller).addTagsToFiles(controller.getTagsManager().getTagName(cat), "", fileIdSet);
         });
-        setGraphic(new ImageView(DrawableAttribute.CATEGORY.getIcon()));
+        setGraphic(cat.getGraphic());
     }
-
 }

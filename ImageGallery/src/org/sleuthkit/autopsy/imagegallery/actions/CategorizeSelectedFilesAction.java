@@ -18,11 +18,9 @@
  */
 package org.sleuthkit.autopsy.imagegallery.actions;
 
-import javafx.scene.image.ImageView;
 import org.controlsfx.control.action.Action;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
-import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 
 /**
  *
@@ -31,7 +29,6 @@ public class CategorizeSelectedFilesAction extends Action {
 
     public CategorizeSelectedFilesAction(Category cat, ImageGalleryController controller) {
         super(cat.getDisplayName(), (javafx.event.ActionEvent actionEvent) -> new CategorizeAction(controller).addTag(controller.getTagsManager().getTagName(cat), ""));
-        setGraphic(new ImageView(DrawableAttribute.CATEGORY.getIcon()));
+        setGraphic(cat.getGraphic());
     }
-
 }
