@@ -29,7 +29,6 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.RadioButton;
@@ -61,9 +60,6 @@ public class Toolbar extends ToolBar {
 
     @FXML
     private ComboBox<DrawableAttribute<?>> groupByBox;
-
-    @FXML
-    private CheckBox onlyAnalyzedCheckBox;
 
     @FXML
     private Slider sizeSlider;
@@ -125,7 +121,7 @@ public class Toolbar extends ToolBar {
         assert catGroupMenuButton != null : "fx:id=\"catSelectedMenubutton\" was not injected: check your FXML file 'Toolbar.fxml'.";
         assert descRadio != null : "fx:id=\"descRadio\" was not injected: check your FXML file 'Toolbar.fxml'.";
         assert groupByBox != null : "fx:id=\"groupByBox\" was not injected: check your FXML file 'Toolbar.fxml'.";
-        assert onlyAnalyzedCheckBox != null : "fx:id=\"onlyAnalyzedCheckBox\" was not injected: check your FXML file 'Toolbar.fxml'.";
+
         assert orderGroup != null : "fx:id=\"orderGroup\" was not injected: check your FXML file 'Toolbar.fxml'.";
         assert sizeSlider != null : "fx:id=\"sizeSlider\" was not injected: check your FXML file 'Toolbar.fxml'.";
         assert sortByBox != null : "fx:id=\"sortByBox\" was not injected: check your FXML file 'Toolbar.fxml'.";

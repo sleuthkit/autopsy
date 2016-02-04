@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,6 +26,9 @@ import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import javafx.scene.Node;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javax.annotation.Nonnull;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.openide.util.NbBundle;
@@ -40,7 +43,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Manages Tags, Tagging, and the relationship between Categories and Tags in
- * the autopsy Db. delegates some, work to the backing {@link TagsManager}.
+ * the autopsy Db. Delegates some work to the backing {@link TagsManager}.
  */
 @NbBundle.Messages({"DrawableTagsManager.followUp=Follow Up"})
 public class DrawableTagsManager {
@@ -48,11 +51,14 @@ public class DrawableTagsManager {
     private static final Logger LOGGER = Logger.getLogger(DrawableTagsManager.class.getName());
 
     private static final String FOLLOW_UP = Bundle.DrawableTagsManager_followUp();
+    private static Image FOLLOW_UP_IMAGE;
 
     final private Object autopsyTagsManagerLock = new Object();
     private TagsManager autopsyTagsManager;
 
-    /** Used to distribute {@link TagsChangeEvent}s */
+    /**
+     * Used to distribute {@link TagsChangeEvent}s
+     */
     private final EventBus tagsEventBus = new AsyncEventBus(
             Executors.newSingleThreadExecutor(
                     new BasicThreadFactory.Builder().namingPattern("Tags Event Bus").uncaughtExceptionHandler((Thread t, Throwable e) -> { //NON-NLS
@@ -60,7 +66,9 @@ public class DrawableTagsManager {
                     }).build()
             ));
 
-    /** The tag name corresponding to the "built-in" tag "Follow Up" */
+    /**
+     * The tag name corresponding to the "built-in" tag "Follow Up"
+     */
     private TagName followUpTagName;
 
     public DrawableTagsManager(TagsManager autopsyTagsManager) {
@@ -137,8 +145,8 @@ public class DrawableTagsManager {
      * get all the TagNames that are not categories
      *
      * @return all the TagNames that are not categories, in alphabetical order
-     *         by displayName, or, an empty set if there was an exception looking them
-     *         up from the db.
+     *         by displayName, or, an empty set if there was an exception
+     *         looking them up from the db.
      */
     @Nonnull
     public List<TagName> getNonCategoryTagNames() {
@@ -227,5 +235,23 @@ public class DrawableTagsManager {
         synchronized (autopsyTagsManagerLock) {
             autopsyTagsManager.deleteContentTag(ct);
         }
+    }
+
+    public Node getGraphic(TagName tagname) {
+        try {
+            if (tagname.equals(getFollowUpTagName())) {
+                return new ImageView(getFollowUpImage());
+            }
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to get \"Follow Up\" tag name from db.", ex);
+        }
+        return DrawableAttribute.TAGS.getGraphicForValue(tagname);
+    }
+
+    synchronized private static Image getFollowUpImage() {
+        if (FOLLOW_UP_IMAGE == null) {
+            FOLLOW_UP_IMAGE = new Image("/org/sleuthkit/autopsy/imagegallery/images/flag_red.png");
+        }
+        return FOLLOW_UP_IMAGE;
     }
 }
