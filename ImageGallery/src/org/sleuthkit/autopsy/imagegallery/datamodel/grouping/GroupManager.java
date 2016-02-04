@@ -666,7 +666,7 @@ public class GroupManager {
                                 group = new DrawableGroup(groupKey, fileIDs, groupSeen);
                                 controller.getCategoryManager().registerListener(group);
                                 group.seenProperty().addListener((o, oldSeen, newSeen) -> {
-                                    markGroupSeen(group, newSeen);
+                                    Platform.runLater(() -> markGroupSeen(group, newSeen));
                                 });
                                 groupMap.put(groupKey, group);
                             }
@@ -719,12 +719,12 @@ public class GroupManager {
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     @NbBundle.Messages({"# {0} - groupBy attribute Name",
-            "# {1} - sortBy name",
-            "# {2} - sort Order",
-            "ReGroupTask.displayTitle=regrouping files by {0} sorted by {1} in {2} order",
-            "# {0} - groupBy attribute Name",
-            "# {1} - atribute value",
-            "ReGroupTask.progressUpdate=regrouping files by {0} : {1}"})
+        "# {1} - sortBy name",
+        "# {2} - sort Order",
+        "ReGroupTask.displayTitle=regrouping files by {0} sorted by {1} in {2} order",
+        "# {0} - groupBy attribute Name",
+        "# {1} - atribute value",
+        "ReGroupTask.progressUpdate=regrouping files by {0} : {1}"})
     private class ReGroupTask<A extends Comparable<A>> extends LoggedTask<Void> {
 
         private ProgressHandle groupProgress;
