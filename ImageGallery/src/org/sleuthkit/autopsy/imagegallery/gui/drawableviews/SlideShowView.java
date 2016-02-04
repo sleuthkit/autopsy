@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +27,6 @@ import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -37,7 +36,10 @@ import javafx.scene.image.Image;
 import static javafx.scene.input.KeyCode.LEFT;
 import static javafx.scene.input.KeyCode.RIGHT;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
 import javafx.scene.media.MediaPlayer;
@@ -54,6 +56,7 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.VideoFile;
 import org.sleuthkit.autopsy.imagegallery.gui.VideoPlayer;
 import static org.sleuthkit.autopsy.imagegallery.gui.drawableviews.DrawableUIBase.exec;
 import static org.sleuthkit.autopsy.imagegallery.gui.drawableviews.DrawableView.CAT_BORDER_WIDTH;
+import org.sleuthkit.datamodel.AbstractContent;
 
 /**
  * Displays the files of a group one at a time. Designed to be embedded in a
@@ -72,6 +75,8 @@ public class SlideShowView extends DrawableTileBase {
 
     @FXML
     private BorderPane footer;
+    @FXML
+    private Pane innerPane;
 
     private volatile MediaLoadTask mediaTask;
 
@@ -90,24 +95,33 @@ public class SlideShowView extends DrawableTileBase {
         imageView.fitWidthProperty().bind(imageBorder.widthProperty().subtract(CAT_BORDER_WIDTH * 2));
         imageView.fitHeightProperty().bind(heightProperty().subtract(CAT_BORDER_WIDTH * 4).subtract(footer.heightProperty()));
 
-        leftButton.setOnAction((ActionEvent t) -> {
-            cycleSlideShowImage(-1);
-        });
-        rightButton.setOnAction((ActionEvent t) -> {
-            cycleSlideShowImage(1);
+        leftButton.setOnAction(actionEvent -> cycleSlideShowImage(-1));
+        rightButton.setOnAction(sctionEvent -> cycleSlideShowImage(1));
+
+        innerPane.addEventHandler(MouseEvent.MOUSE_CLICKED, clickEvent -> {
+            if (clickEvent.getButton() == MouseButton.PRIMARY) {
+                getFile().ifPresent(file -> {
+                    final long fileID = file.getId();
+                    getGroupPane().makeSelection(false, fileID);
+                    if (clickEvent.getClickCount() > 1) {
+                        getGroupPane().activateTileViewer();
+                    }
+                });
+                clickEvent.consume();
+            }
         });
 
         //set up key listener equivalents of buttons
-        addEventFilter(KeyEvent.KEY_PRESSED, (KeyEvent t) -> {
-            if (t.getEventType() == KeyEvent.KEY_PRESSED) {
-                switch (t.getCode()) {
+        addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
+            if (keyEvent.getEventType() == KeyEvent.KEY_PRESSED) {
+                switch (keyEvent.getCode()) {
                     case LEFT:
                         cycleSlideShowImage(-1);
-                        t.consume();
+                        keyEvent.consume();
                         break;
                     case RIGHT:
                         cycleSlideShowImage(1);
-                        t.consume();
+                        keyEvent.consume();
                         break;
                 }
             }
@@ -115,12 +129,11 @@ public class SlideShowView extends DrawableTileBase {
 
         syncButtonVisibility();
 
-        getGroupPane().grouping().addListener((Observable observable) -> {
+        getGroupPane().grouping().addListener(observable -> {
             syncButtonVisibility();
             if (getGroupPane().getGroup() != null) {
-                getGroupPane().getGroup().getFileIDs().addListener((Observable observable1) -> {
-                    syncButtonVisibility();
-                });
+                getGroupPane().getGroup().getFileIDs().addListener((Observable observable1) ->
+                        syncButtonVisibility());
             }
         });
     }
@@ -252,7 +265,7 @@ public class SlideShowView extends DrawableTileBase {
      */
     @Override
     protected String getTextForLabel() {
-        return getFile().map(file -> file.getName()).orElse("") + " " + getSupplementalText();
+        return getFile().map(AbstractContent::getName).orElse("") + " " + getSupplementalText();
     }
 
     /**
@@ -266,10 +279,11 @@ public class SlideShowView extends DrawableTileBase {
     synchronized private void cycleSlideShowImage(int direction) {
         stopVideo();
         final int groupSize = getGroupPane().getGroup().getFileIDs().size();
-        final Integer nextIndex = getFileID().map(fileID -> {
-            final int currentIndex = getGroupPane().getGroup().getFileIDs().indexOf(fileID);
-            return (currentIndex + direction + groupSize) % groupSize;
-        }).orElse(0);
+        final Integer nextIndex = getFileID()
+                .map(fileID -> {
+                    final int currentIndex = getGroupPane().getGroup().getFileIDs().indexOf(fileID);
+                    return (currentIndex + direction + groupSize) % groupSize;
+                }).orElse(0);
         setFile(getGroupPane().getGroup().getFileIDs().get(nextIndex));
 
     }

@@ -198,9 +198,15 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
         searchAddButton = new javax.swing.JButton();
         ingestIndexLabel = new javax.swing.JLabel();
 
+        setFont(getFont().deriveFont(getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+
+        jSplitPane1.setFont(jSplitPane1.getFont().deriveFont(jSplitPane1.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+
+        leftPane.setFont(leftPane.getFont().deriveFont(leftPane.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         leftPane.setMinimumSize(new java.awt.Dimension(150, 23));
 
         listsTable.setBackground(new java.awt.Color(240, 240, 240));
+        listsTable.setFont(listsTable.getFont().deriveFont(listsTable.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         listsTable.setModel(listsTableModel);
         listsTable.setShowHorizontalLines(false);
         listsTable.setShowVerticalLines(false);
@@ -209,7 +215,10 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
 
         jSplitPane1.setLeftComponent(leftPane);
 
+        rightPane.setFont(rightPane.getFont().deriveFont(rightPane.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+
         keywordsTable.setBackground(new java.awt.Color(240, 240, 240));
+        keywordsTable.setFont(keywordsTable.getFont().deriveFont(keywordsTable.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         keywordsTable.setModel(keywordsTableModel);
         keywordsTable.setShowHorizontalLines(false);
         keywordsTable.setShowVerticalLines(false);
@@ -217,6 +226,7 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
 
         jSplitPane1.setRightComponent(rightPane);
 
+        manageListsButton.setFont(manageListsButton.getFont().deriveFont(manageListsButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         manageListsButton.setText(org.openide.util.NbBundle.getMessage(DropdownListSearchPanel.class, "KeywordSearchListsViewerPanel.manageListsButton.text")); // NOI18N
         manageListsButton.setToolTipText(org.openide.util.NbBundle.getMessage(DropdownListSearchPanel.class, "KeywordSearchListsViewerPanel.manageListsButton.toolTipText")); // NOI18N
         manageListsButton.addActionListener(new java.awt.event.ActionListener() {
@@ -225,6 +235,7 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
             }
         });
 
+        searchAddButton.setFont(searchAddButton.getFont().deriveFont(searchAddButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         searchAddButton.setText(org.openide.util.NbBundle.getMessage(DropdownListSearchPanel.class, "KeywordSearchListsViewerPanel.searchAddButton.text")); // NOI18N
         searchAddButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -232,7 +243,7 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
             }
         });
 
-        ingestIndexLabel.setFont(ingestIndexLabel.getFont().deriveFont(Font.PLAIN, 10));
+        ingestIndexLabel.setFont(ingestIndexLabel.getFont().deriveFont(ingestIndexLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 10));
         ingestIndexLabel.setText(org.openide.util.NbBundle.getMessage(DropdownListSearchPanel.class, "KeywordSearchListsViewerPanel.ingestIndexLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
