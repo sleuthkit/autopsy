@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -211,5 +211,4 @@ public class Toolbar extends ToolBar {
         this.controller = controller;
         FXMLConstructor.construct(this, "Toolbar.fxml"); //NON-NLS
     }
-
 }
