@@ -215,7 +215,7 @@ class PstParser {
                 if (filename.isEmpty()) {
                     filename = attach.getFilename();
                 }
-                String uniqueFilename = fileID + "-" + msg.getDescriptorNodeId() + "-" + filename;
+                String uniqueFilename = fileID + "-" + msg.getDescriptorNodeId() + "-" + attach.getContentId() + "-" + filename;
                 String outPath = outputDirPath + uniqueFilename;
                 saveAttachmentToDisk(attach, outPath);
 

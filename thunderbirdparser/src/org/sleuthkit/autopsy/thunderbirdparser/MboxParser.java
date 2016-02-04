@@ -194,12 +194,14 @@ class MboxParser {
      * @param multi
      */
     private void handleMultipart(EmailMessage email, Multipart multi, long fileID) {
-        for (Entity e: multi.getBodyParts()) {
+        List<Entity> entities = multi.getBodyParts();
+        for (int index = 0; index < entities.size(); index++) {
+            Entity e = entities.get(index);
             if (e.isMultipart()) {
                 handleMultipart(email, (Multipart) e.getBody(), fileID);
             } else if (e.getDispositionType() != null
                     && e.getDispositionType().equals(ContentDispositionField.DISPOSITION_TYPE_ATTACHMENT)) {
-                handleAttachment(email, e, fileID);
+                handleAttachment(email, e, fileID, index);
             } else if (e.getMimeType().equals(HTML_TYPE)
                     || e.getMimeType().equals(ContentTypeField.TYPE_TEXT_PLAIN)) {
                 handleTextBody(email, (TextBody) e.getBody(), e.getMimeType());
@@ -252,7 +254,7 @@ class MboxParser {
      * @param email
      * @param e
      */
-    private void handleAttachment(EmailMessage email, Entity e, long fileID) {
+    private void handleAttachment(EmailMessage email, Entity e, long fileID, int index) {
         String outputDirPath = ThunderbirdMboxFileIngestModule.getModuleOutputPath() + File.separator;
         String filename = e.getFilename();
 
@@ -274,7 +276,7 @@ class MboxParser {
             filename = UUID.randomUUID().toString();
         }
 
-        String uniqueFilename = filename + "-" + email.getSentDate() + "-" + fileID;
+        String uniqueFilename = fileID + "-" + index + "-" + email.getSentDate() + "-" + filename;
         String outPath = outputDirPath + uniqueFilename;
         FileOutputStream fos;
         BinaryBody bb;
