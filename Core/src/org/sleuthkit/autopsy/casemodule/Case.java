@@ -476,9 +476,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
          * class with use of CaseMetadata class.
          */
         String configFilePath = caseDir + File.separator + caseName + CASE_DOT_EXTENSION;
-        XMLCaseManagement xmlcm = new XMLCaseManagement();
-        xmlcm.create(caseDir, caseName, examiner, caseNumber, caseType, dbName, indexName);
-        xmlcm.writeFile();
+        CaseMetadata metadata = CaseMetadata.create(caseType, caseName, caseNumber, examiner, caseDir, santizedCaseName, indexName);
 
         /*
          * Create the case database.
@@ -507,7 +505,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
             });
             throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.databaseConnectionInfo.error.msg"), ex);
         }
-        CaseMetadata metadata = CaseMetadata.create(caseType, caseName, caseNumber, examiner, caseDir, santizedCaseName, indexName);
 
         Case newCase = new Case(caseName, caseNumber, examiner, configFilePath, metadata, db, caseType);
         changeCase(newCase);

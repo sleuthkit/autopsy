@@ -163,7 +163,6 @@ public final class CaseMetadata {
 
     public static CaseMetadata create(Case.CaseType caseType, String caseName, String caseNumber, String examiner, String caseDirectory, String caseDatabaseName, String caseTextIndexName) throws CaseMetadataException {
         CaseMetadata metadata = new CaseMetadata(caseType, caseName, caseDirectory, caseDatabaseName, caseTextIndexName);
-        metadata.write();
         return metadata;
     }
 
