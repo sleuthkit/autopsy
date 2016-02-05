@@ -37,6 +37,7 @@ import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuButton;
+import javafx.scene.control.TitledPane;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
@@ -537,8 +538,11 @@ final public class VisualizationPanel extends BorderPane {
         }
     }
 
+    @NbBundle.Messages("NoEventsDialog.titledPane.text=No Visible Events")
     private class NoEventsDialog extends StackPane {
 
+        @FXML
+        private TitledPane titledPane;
         @FXML
         private Button backButton;
         @FXML
@@ -563,6 +567,7 @@ final public class VisualizationPanel extends BorderPane {
             assert dismissButton != null : "fx:id=\"dismissButton\" was not injected: check your FXML file 'NoEventsDialog.fxml'."; // NON-NLS
             assert zoomButton != null : "fx:id=\"zoomButton\" was not injected: check your FXML file 'NoEventsDialog.fxml'."; // NON-NLS
 
+            titledPane.setText(Bundle.NoEventsDialog_titledPane_text());
             noEventsDialogLabel.setText(NbBundle.getMessage(NoEventsDialog.class, "VisualizationPanel.noEventsDialogLabel.text")); // NON-NLS
          
             dismissButton.setOnAction(actionEvent -> closeCallback.run());
