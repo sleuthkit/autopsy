@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 import com.google.common.collect.ImmutableList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.Objects;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -30,6 +29,7 @@ import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeCell;
@@ -72,7 +72,7 @@ final public class EventsTree extends BorderPane {
     private Label eventsTreeLabel;
 
     @FXML
-    private ComboBox<Comparator<TreeItem<EventBundle<?>>>> sortByBox;
+    private ComboBox<TreeComparator> sortByBox;
 
     public EventsTree(TimeLineController controller) {
         this.controller = controller;
@@ -128,6 +128,8 @@ final public class EventsTree extends BorderPane {
 
         sortByBox.getItems().setAll(Arrays.asList(TreeComparator.Description, TreeComparator.Count));
         sortByBox.getSelectionModel().select(TreeComparator.Description);
+        sortByBox.setCellFactory(listView -> new TreeComparatorCell());
+        sortByBox.setButtonCell(new TreeComparatorCell());
         sortByBox.getSelectionModel().selectedItemProperty().addListener((Observable o) -> {
             getRoot().resort(TreeComparator.Type.reversed().thenComparing(sortByBox.getSelectionModel().getSelectedItem()), true);
         });
@@ -246,6 +248,19 @@ final public class EventsTree extends BorderPane {
                 imageView.setOpacity(1);
                 rect.setStroke(item.getEventType().getColor());
                 rect.setFill(item.getEventType().getColor().deriveColor(0, 1, 1, 0.1));
+            }
+        }
+    }
+
+    static private class TreeComparatorCell extends ListCell<TreeComparator> {
+
+        @Override
+        protected void updateItem(TreeComparator item, boolean empty) {
+            super.updateItem(item, empty);
+            if (empty || item == null) {
+                setText(null);
+            } else {
+                setText(item.getDisplayName());
             }
         }
     }
