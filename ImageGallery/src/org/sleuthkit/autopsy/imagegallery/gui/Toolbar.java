@@ -29,16 +29,11 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.RadioButton;
-import javafx.scene.control.Slider;
-import javafx.scene.control.SplitMenuButton;
-import javafx.scene.control.ToggleGroup;
-import javafx.scene.control.ToolBar;
+import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javax.swing.SortOrder;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
@@ -89,6 +84,18 @@ public class Toolbar extends ToolBar {
     @FXML
     private SplitMenuButton tagGroupMenuButton;
 
+    @FXML
+    private Label groupByLabel;
+
+    @FXML
+    private Label sortByLabel;
+
+    @FXML
+    private Label applyToGroupLabel;
+
+    @FXML
+    private Label thumbnailSizeLabel;
+
     private static Toolbar instance;
 
     private final SimpleObjectProperty<SortOrder> orderProperty = new SimpleObjectProperty<>(SortOrder.ASCENDING);
@@ -120,6 +127,12 @@ public class Toolbar extends ToolBar {
     }
 
     @FXML
+    @NbBundle.Messages({"Toolbar.groupByLabel=Group By:",
+            "Toolbar.sortByLabel=Sort By:",
+            "Toolbar.ascRadio=Ascending",
+            "Toolbar.descRadio=Descending",
+            "Toolbar.applyToGroupLabel=Apply to Group:",
+            "Toolbar.thumbnailSizeLabel=Thumbnail Size (px):"})
     void initialize() {
         assert ascRadio != null : "fx:id=\"ascRadio\" was not injected: check your FXML file 'Toolbar.fxml'.";
         assert catGroupMenuButton != null : "fx:id=\"catSelectedMenubutton\" was not injected: check your FXML file 'Toolbar.fxml'.";
@@ -152,6 +165,13 @@ public class Toolbar extends ToolBar {
                 tagGroupMenuButton.getItems().setAll(selTagMenues);
             }
         });
+
+        groupByLabel.setText(Bundle.Toolbar_groupByLabel());
+        sortByLabel.setText(Bundle.Toolbar_sortByLabel());
+        ascRadio.setText(Bundle.Toolbar_ascRadio());
+        descRadio.setText(Bundle.Toolbar_descRadio());
+        applyToGroupLabel.setText(Bundle.Toolbar_applyToGroupLabel());
+        thumbnailSizeLabel.setText(Bundle.Toolbar_thumbnailSizeLabel());
 
         CategorizeGroupAction cat5GroupAction = new CategorizeGroupAction(Category.FIVE, controller);
         catGroupMenuButton.setOnAction(cat5GroupAction);

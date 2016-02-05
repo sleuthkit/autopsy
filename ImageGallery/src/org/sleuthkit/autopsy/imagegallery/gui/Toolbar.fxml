@@ -7,14 +7,14 @@
 
 <fx:root minWidth="-1.0" orientation="HORIZONTAL" prefWidth="-1.0" type="javafx.scene.control.ToolBar" xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1">
   <items>
-    <Label text="Group By:">
+    <Label fx:id="groupByLabel" text="Group By:">
       <labelFor>
         <ComboBox fx:id="groupByBox" editable="false" />
       </labelFor>
     </Label>
     <fx:reference source="groupByBox" />
     <Region prefHeight="-1.0" prefWidth="20.0" />
-    <Label text="Sort By:">
+    <Label fx:id="sortByLabel" text="Sort By:">
       <labelFor>
         <ComboBox fx:id="sortByBox" />
       </labelFor>
@@ -51,7 +51,7 @@
     </HBox>
     <Separator orientation="VERTICAL" prefHeight="-1.0" prefWidth="20.0" />
     <CheckBox fx:id="onlyAnalyzedCheckBox" allowIndeterminate="false" indeterminate="false" mnemonicParsing="false" prefWidth="16.0" selected="true" text="only analyzed groups" underline="false" visible="false" />
-    <Label contentDisplay="RIGHT" text="Apply to Group:" textOverrun="ELLIPSIS" />
+    <Label fx:id="applyToGroupLabel" contentDisplay="RIGHT" text="Apply to Group:" textOverrun="ELLIPSIS" />
     <SplitMenuButton id="tagSplitMenu" fx:id="tagGroupMenuButton" disable="true" mnemonicParsing="false" text="Follow Up" textOverrun="ELLIPSIS">
       <items>
         <MenuItem mnemonicParsing="false" text="Action 1" />
@@ -65,7 +65,7 @@
       </items>
     </SplitMenuButton>
     <Separator orientation="VERTICAL" prefHeight="-1.0" prefWidth="20.0" />
-    <Label text="Thumbnail Size (px):">
+    <Label fx:id="thumbnailSizeLabel" text="Thumbnail Size (px):">
       <labelFor>
         <Slider fx:id="sizeSlider" blockIncrement="100.0" majorTickUnit="100.0" max="300.0" min="100.0" minorTickCount="0" orientation="HORIZONTAL" prefHeight="-1.0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="100.0" />
       </labelFor>

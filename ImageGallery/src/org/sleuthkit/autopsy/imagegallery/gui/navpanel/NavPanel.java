@@ -23,13 +23,9 @@ import java.util.Comparator;
 import java.util.Optional;
 import java.util.function.Function;
 import javafx.fxml.FXML;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.RadioButton;
-import javafx.scene.control.SelectionModel;
-import javafx.scene.control.Tab;
-import javafx.scene.control.ToggleGroup;
-import javafx.scene.control.ToolBar;
+import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
@@ -60,6 +56,9 @@ abstract class NavPanel<X> extends Tab {
     @FXML
     private RadioButton descRadio;
 
+    @FXML
+    private Label sortByBoxLabel;
+
     private final ImageGalleryController controller;
     private final GroupManager groupManager;
     private final CategoryManager categoryManager;
@@ -71,6 +70,9 @@ abstract class NavPanel<X> extends Tab {
     }
 
     @FXML
+    @NbBundle.Messages({"NavPanel.ascRadio.text=Ascending",
+                "NavPanel.descRadio.text=Descending",
+                "NavPanel.sortByBoxLabel.text=Sort By:"})
     void initialize() {
         assert borderPane != null : "fx:id=\"borderPane\" was not injected: check your FXML file 'NavPanel.fxml'.";
         assert toolBar != null : "fx:id=\"toolBar\" was not injected: check your FXML file 'NavPanel.fxml'.";
@@ -92,6 +94,9 @@ abstract class NavPanel<X> extends Tab {
             }
         });
 
+        ascRadio.setText(Bundle.NavPanel_ascRadio_text());
+        descRadio.setText(Bundle.NavPanel_descRadio_text());
+        sortByBoxLabel.setText(Bundle.NavPanel_sortByBoxLabel_text());
         //keep selection in sync with controller
         controller.viewState().addListener(observable -> {
             Optional.ofNullable(controller.viewState().get())
