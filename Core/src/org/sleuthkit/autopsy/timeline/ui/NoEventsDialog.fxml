@@ -10,7 +10,7 @@
 
 <fx:root alignment="TOP_RIGHT" maxHeight="-Infinity" maxWidth="-Infinity" type="StackPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
    <children>
-      <TitledPane collapsible="false" contentDisplay="RIGHT" text="No Visible Events">
+      <TitledPane fx:id="titledPane" collapsible="false" contentDisplay="RIGHT" text="No Visible Events">
       <content>
       <VBox alignment="CENTER_LEFT" spacing="5.0">
       <children>

@@ -39,7 +39,7 @@
       <TreeTableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
       </columnResizePolicy>
       </TreeTableView>
-            <TitledPane fx:id="hiddenDescriptionsPane" collapsible="false" disable="true" expanded="false" minHeight="25.0" text="Hidden Descriptions">
+            <TitledPane fx:id="hiddenDescriptionsPane" collapsible="false" disable="true" expanded="false" minHeight="25.0">
                <content>
                   <ListView fx:id="hiddenDescriptionsListView" />
                </content>
