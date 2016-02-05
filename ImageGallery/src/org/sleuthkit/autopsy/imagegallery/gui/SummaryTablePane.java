@@ -32,6 +32,7 @@ import javafx.scene.layout.Priority;
 import static javafx.scene.layout.Region.USE_COMPUTED_SIZE;
 import javafx.scene.layout.VBox;
 import javafx.util.Pair;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
@@ -53,6 +54,8 @@ public class SummaryTablePane extends AnchorPane {
     private final ImageGalleryController controller;
 
     @FXML
+    @NbBundle.Messages({"SummaryTablePane.catColumn=Category",
+            "SummaryTablePane.countColumn=# Files"})
     void initialize() {
         assert catColumn != null : "fx:id=\"catColumn\" was not injected: check your FXML file 'SummaryTablePane.fxml'.";
         assert countColumn != null : "fx:id=\"countColumn\" was not injected: check your FXML file 'SummaryTablePane.fxml'.";
@@ -66,9 +69,11 @@ public class SummaryTablePane extends AnchorPane {
         //set up columns
         catColumn.setCellValueFactory((TableColumn.CellDataFeatures<Pair<Category, Long>, String> p) -> new SimpleObjectProperty<>(p.getValue().getKey().getDisplayName()));
         catColumn.setPrefWidth(USE_COMPUTED_SIZE);
+        catColumn.setText(Bundle.SummaryTablePane_catColumn());
 
         countColumn.setCellValueFactory((TableColumn.CellDataFeatures<Pair<Category, Long>, Long> p) -> new SimpleObjectProperty<>(p.getValue().getValue()));
         countColumn.setPrefWidth(USE_COMPUTED_SIZE);
+        countColumn.setText(Bundle.SummaryTablePane_countColumn());
 
         tableView.getColumns().setAll(Arrays.asList(catColumn, countColumn));
 

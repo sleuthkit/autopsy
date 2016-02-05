@@ -214,6 +214,14 @@ public class GroupPane extends BorderPane {
 
     @FXML
     private Label groupLabel;
+    @FXML
+    private Label bottomLabel;
+    @FXML
+    private Label headerLabel;
+    @FXML
+    private Label catContainerLabel;
+    @FXML
+    private Label catHeadingLabel;
 
     @FXML
     private HBox catSegmentedContainer;
@@ -368,7 +376,11 @@ public class GroupPane extends BorderPane {
      * checks that FXML loading went ok and performs additional setup
      */
     @FXML
-    @NbBundle.Messages({"GroupPane.gridViewContextMenuItem.extractFiles=Extract File(s)"})
+    @NbBundle.Messages({"GroupPane.gridViewContextMenuItem.extractFiles=Extract File(s)",
+            "GroupPane.bottomLabel.displayText=Group Viewing History: ",
+            "GroupPane.hederLabel.displayText=Tag Selected Files:",
+            "GroupPane.catContainerLabel.displayText=Categorize Selected File:",
+            "GroupPane.catHeadingLabel.displayText=Category:"})
     void initialize() {
         assert cat0Toggle != null : "fx:id=\"cat0Toggle\" was not injected: check your FXML file 'SlideShowView.fxml'.";
         assert cat1Toggle != null : "fx:id=\"cat1Toggle\" was not injected: check your FXML file 'SlideShowView.fxml'.";
@@ -449,6 +461,10 @@ public class GroupPane extends BorderPane {
         tileToggle.getStyleClass().remove("radio-button");
         tileToggle.getStyleClass().add("toggle-button");
 
+        bottomLabel.setText(Bundle.GroupPane_bottomLabel_displayText());
+        headerLabel.setText(Bundle.GroupPane_hederLabel_displayText());
+        catContainerLabel.setText(Bundle.GroupPane_catContainerLabel_displayText());
+        catHeadingLabel.setText(Bundle.GroupPane_catHeadingLabel_displayText());
         //show categorization controls depending on group view mode
         headerToolBar.getItems().remove(catSegmentedContainer);
         groupViewMode.addListener((ObservableValue<? extends GroupViewMode> observable, GroupViewMode oldValue, GroupViewMode newValue) -> {
