@@ -852,6 +852,7 @@ class ReportHTML implements TableReportModule {
                     NbBundle.getMessage(this.getClass(), "ReportHTML.writeIndex.title", currentCase.getName())).append(
                             "</title>\n"); //NON-NLS
             index.append("<link rel=\"icon\" type=\"image/ico\" href=\"favicon.ico\" />\n"); //NON-NLS
+            index.append("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n"); //NON-NLS
             index.append("</head>\n"); //NON-NLS
             index.append("<frameset cols=\"350px,*\">\n"); //NON-NLS
             index.append("<frame src=\"nav.html\" name=\"nav\">\n"); //NON-NLS
@@ -890,7 +891,8 @@ class ReportHTML implements TableReportModule {
             StringBuilder nav = new StringBuilder();
             nav.append("<html>\n<head>\n\t<title>").append( //NON-NLS
                     NbBundle.getMessage(this.getClass(), "ReportHTML.writeNav.title"))
-                    .append("</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\" />\n</head>\n<body>\n"); //NON-NLS
+                    .append("</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\" />\n"); //NON-NLS
+            nav.append("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n</head>\n<body>\n"); //NON-NLS
             nav.append("<div id=\"content\">\n<h1>").append( //NON-NLS
                     NbBundle.getMessage(this.getClass(), "ReportHTML.writeNav.h1")).append("</h1>\n"); //NON-NLS
             nav.append("<ul class=\"nav\">\n"); //NON-NLS
@@ -983,6 +985,7 @@ class ReportHTML implements TableReportModule {
             head.append("<html>\n<head>\n<title>").append( //NON-NLS
                     NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.title")).append("</title>\n"); //NON-NLS
             head.append("<style type=\"text/css\">\n"); //NON-NLS
+            head.append("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">"); //NON-NLS
             head.append("body { padding: 0px; margin: 0px; font: 13px/20px Arial, Helvetica, sans-serif; color: #535353; }\n"); //NON-NLS
             head.append("#wrapper { width: 90%; margin: 0px auto; margin-top: 35px; }\n"); //NON-NLS
             head.append("h1 { color: #07A; font-size: 36px; line-height: 42px; font-weight: normal; margin: 0px; border-bottom: 1px solid #81B9DB; }\n"); //NON-NLS
