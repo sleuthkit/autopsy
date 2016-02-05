@@ -58,7 +58,6 @@ public class DrawableTile extends DrawableTileBase {
 
     @FXML
     @Override
-    @NbBundle.Messages({"DrawableTile.nameLabel=file name"})
     protected void initialize() {
         super.initialize();
         assert imageView != null : "fx:id=\"imageView\" was not injected: check your FXML file 'DrawableTile.fxml'.";
@@ -67,7 +66,6 @@ public class DrawableTile extends DrawableTileBase {
         setCache(true);
         setCacheHint(CacheHint.SPEED);
         nameLabel.prefWidthProperty().bind(imageView.fitWidthProperty());
-        nameLabel.setText(Bundle.DrawableTile_nameLabel());
         imageView.fitHeightProperty().bind(Toolbar.getDefault(getController()).sizeSliderValue());
         imageView.fitWidthProperty().bind(Toolbar.getDefault(getController()).sizeSliderValue());
 

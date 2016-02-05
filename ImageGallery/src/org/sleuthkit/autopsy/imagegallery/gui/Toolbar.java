@@ -180,7 +180,6 @@ public class Toolbar extends ToolBar {
         descRadio.setText(Bundle.Toolbar_descRadio());
         tagImageViewLabel.setText(Bundle.Toolbar_tagImageViewLabel());
         categoryImageViewLabel.setText(Bundle.Toolbar_categoryImageViewLabel());
-
         thumbnailSizeLabel.setText(Bundle.Toolbar_thumbnailSizeLabel());
 
         CategorizeGroupAction cat5GroupAction = new CategorizeGroupAction(Category.FIVE, controller);
