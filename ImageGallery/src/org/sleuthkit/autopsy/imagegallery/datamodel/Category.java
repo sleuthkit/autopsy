@@ -23,18 +23,20 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javafx.scene.Node;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import org.openide.util.NbBundle;
 
 /**
  * Enum to represent the six categories in the DHS image categorization scheme.
  */
 @NbBundle.Messages({"Category.one=CAT-1: Child Exploitation (Illegal)",
-        "Category.two=CAT-2: Child Exploitation (Non-Illegal/Age Difficult)",
-        "Category.three=CAT-3: CGI/Animation (Child Exploitive)",
-        "Category.four=CAT-4: Exemplar/Comparison (Internal Use Only)",
-        "Category.five=CAT-5: Non-pertinent",
-        "Category.zero=CAT-0: Uncategorized"})
+    "Category.two=CAT-2: Child Exploitation (Non-Illegal/Age Difficult)",
+    "Category.three=CAT-3: CGI/Animation (Child Exploitive)",
+    "Category.four=CAT-4: Exemplar/Comparison (Internal Use Only)",
+    "Category.five=CAT-5: Non-pertinent",
+    "Category.zero=CAT-0: Uncategorized"})
 public enum Category {
 
     /*
@@ -103,5 +105,12 @@ public enum Category {
     @Override
     public String toString() {
         return displayName;
+    }
+
+    public Node getGraphic() {
+        Rectangle rectangle = new Rectangle(16d, 16d, getColor());
+        rectangle.setArcHeight(8);
+        rectangle.setArcWidth(8);
+        return rectangle;
     }
 }

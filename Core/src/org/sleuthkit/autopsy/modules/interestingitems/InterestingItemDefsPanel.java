@@ -388,12 +388,12 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         editRuleButton = new javax.swing.JButton();
         rulesListLabel = new javax.swing.JLabel();
         rulesListScrollPane = new javax.swing.JScrollPane();
-        rulesList = new javax.swing.JList<FilesSet.Rule>();
+        rulesList = new javax.swing.JList<>();
         setDescScrollPanel = new javax.swing.JScrollPane();
         setDescriptionTextArea = new javax.swing.JTextArea();
         editSetButton = new javax.swing.JButton();
         setsListScrollPane = new javax.swing.JScrollPane();
-        setsList = new javax.swing.JList<FilesSet>();
+        setsList = new javax.swing.JList<>();
         fileNameExtensionRadioButton = new javax.swing.JRadioButton();
         jLabel3 = new javax.swing.JLabel();
         fileNameTextField = new javax.swing.JTextField();
@@ -416,9 +416,17 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         jScrollPane2 = new javax.swing.JScrollPane();
         jTextArea1 = new javax.swing.JTextArea();
 
+        setFont(getFont().deriveFont(getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+
+        jScrollPane1.setFont(jScrollPane1.getFont().deriveFont(jScrollPane1.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+
+        jPanel1.setFont(jPanel1.getFont().deriveFont(jPanel1.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+
+        jLabel6.setFont(jLabel6.getFont().deriveFont(jLabel6.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(jLabel6, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.jLabel6.text")); // NOI18N
 
-        newRuleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add16.png"))); // NOI18N NON-NLS
+        newRuleButton.setFont(newRuleButton.getFont().deriveFont(newRuleButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        newRuleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(newRuleButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.newRuleButton.text")); // NOI18N
         newRuleButton.setEnabled(false);
         newRuleButton.addActionListener(new java.awt.event.ActionListener() {
@@ -427,11 +435,13 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             }
         });
 
+        filesRadioButton.setFont(filesRadioButton.getFont().deriveFont(filesRadioButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         filesRadioButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(filesRadioButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.filesRadioButton.text")); // NOI18N
         filesRadioButton.setEnabled(false);
 
-        editRuleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/edit16.png"))); // NOI18N NON-NLS
+        editRuleButton.setFont(editRuleButton.getFont().deriveFont(editRuleButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        editRuleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/edit16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(editRuleButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.editRuleButton.text")); // NOI18N
         editRuleButton.setEnabled(false);
         editRuleButton.addActionListener(new java.awt.event.ActionListener() {
@@ -440,19 +450,27 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             }
         });
 
+        rulesListLabel.setFont(rulesListLabel.getFont().deriveFont(rulesListLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(rulesListLabel, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.rulesListLabel.text")); // NOI18N
 
+        rulesListScrollPane.setFont(rulesListScrollPane.getFont().deriveFont(rulesListScrollPane.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+
+        rulesList.setFont(rulesList.getFont().deriveFont(rulesList.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         rulesList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         rulesListScrollPane.setViewportView(rulesList);
+
+        setDescScrollPanel.setFont(setDescScrollPanel.getFont().deriveFont(setDescScrollPanel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
 
         setDescriptionTextArea.setEditable(false);
         setDescriptionTextArea.setBackground(new java.awt.Color(240, 240, 240));
         setDescriptionTextArea.setColumns(20);
+        setDescriptionTextArea.setFont(setDescriptionTextArea.getFont().deriveFont(setDescriptionTextArea.getFont().getStyle() & ~java.awt.Font.BOLD, 13));
         setDescriptionTextArea.setLineWrap(true);
         setDescriptionTextArea.setRows(2);
         setDescScrollPanel.setViewportView(setDescriptionTextArea);
 
-        editSetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/edit16.png"))); // NOI18N NON-NLS
+        editSetButton.setFont(editSetButton.getFont().deriveFont(editSetButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        editSetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/edit16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(editSetButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.editSetButton.text")); // NOI18N
         editSetButton.setEnabled(false);
         editSetButton.addActionListener(new java.awt.event.ActionListener() {
@@ -461,27 +479,37 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             }
         });
 
+        setsListScrollPane.setFont(setsListScrollPane.getFont().deriveFont(setsListScrollPane.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+
+        setsList.setFont(setsList.getFont().deriveFont(setsList.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         setsList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         setsListScrollPane.setViewportView(setsList);
 
         fileNameButtonGroup.add(fileNameExtensionRadioButton);
+        fileNameExtensionRadioButton.setFont(fileNameExtensionRadioButton.getFont().deriveFont(fileNameExtensionRadioButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(fileNameExtensionRadioButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.fileNameExtensionRadioButton.text")); // NOI18N
         fileNameExtensionRadioButton.setEnabled(false);
 
+        jLabel3.setFont(jLabel3.getFont().deriveFont(jLabel3.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.jLabel3.text")); // NOI18N
 
         fileNameTextField.setEditable(false);
+        fileNameTextField.setFont(fileNameTextField.getFont().deriveFont(fileNameTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         fileNameTextField.setText(org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.fileNameTextField.text")); // NOI18N
 
+        jLabel5.setFont(jLabel5.getFont().deriveFont(jLabel5.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(jLabel5, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.jLabel5.text")); // NOI18N
 
         fileNameButtonGroup.add(fileNameRadioButton);
+        fileNameRadioButton.setFont(fileNameRadioButton.getFont().deriveFont(fileNameRadioButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(fileNameRadioButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.fileNameRadioButton.text")); // NOI18N
         fileNameRadioButton.setEnabled(false);
 
         rulePathFilterTextField.setEditable(false);
+        rulePathFilterTextField.setFont(rulePathFilterTextField.getFont().deriveFont(rulePathFilterTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         rulePathFilterTextField.setText(org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.rulePathFilterTextField.text")); // NOI18N
 
+        ignoreKnownFilesCheckbox.setFont(ignoreKnownFilesCheckbox.getFont().deriveFont(ignoreKnownFilesCheckbox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(ignoreKnownFilesCheckbox, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.ignoreKnownFilesCheckbox.text")); // NOI18N
         ignoreKnownFilesCheckbox.setEnabled(false);
         ignoreKnownFilesCheckbox.addActionListener(new java.awt.event.ActionListener() {
@@ -490,17 +518,21 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             }
         });
 
+        fileNameRegexCheckbox.setFont(fileNameRegexCheckbox.getFont().deriveFont(fileNameRegexCheckbox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(fileNameRegexCheckbox, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.fileNameRegexCheckbox.text")); // NOI18N
         fileNameRegexCheckbox.setEnabled(false);
 
         separator.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
+        setsListLabel.setFont(setsListLabel.getFont().deriveFont(setsListLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(setsListLabel, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.setsListLabel.text")); // NOI18N
 
+        bothRadioButton.setFont(bothRadioButton.getFont().deriveFont(bothRadioButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(bothRadioButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.bothRadioButton.text")); // NOI18N
         bothRadioButton.setEnabled(false);
 
-        deleteSetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/delete16.png"))); // NOI18N NON-NLS
+        deleteSetButton.setFont(deleteSetButton.getFont().deriveFont(deleteSetButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        deleteSetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/delete16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(deleteSetButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.deleteSetButton.text")); // NOI18N
         deleteSetButton.setEnabled(false);
         deleteSetButton.addActionListener(new java.awt.event.ActionListener() {
@@ -509,7 +541,8 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             }
         });
 
-        deleteRuleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/delete16.png"))); // NOI18N NON-NLS
+        deleteRuleButton.setFont(deleteRuleButton.getFont().deriveFont(deleteRuleButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        deleteRuleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/delete16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(deleteRuleButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.deleteRuleButton.text")); // NOI18N
         deleteRuleButton.setEnabled(false);
         deleteRuleButton.addActionListener(new java.awt.event.ActionListener() {
@@ -518,7 +551,8 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             }
         });
 
-        newSetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add16.png"))); // NOI18N NON-NLS
+        newSetButton.setFont(newSetButton.getFont().deriveFont(newSetButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        newSetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(newSetButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.newSetButton.text")); // NOI18N
         newSetButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -526,8 +560,10 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             }
         });
 
+        jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.jLabel2.text")); // NOI18N
 
+        dirsRadioButton.setFont(dirsRadioButton.getFont().deriveFont(dirsRadioButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(dirsRadioButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.dirsRadioButton.text")); // NOI18N
         dirsRadioButton.setEnabled(false);
         dirsRadioButton.addActionListener(new java.awt.event.ActionListener() {
@@ -536,17 +572,22 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             }
         });
 
+        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.jLabel1.text")); // NOI18N
 
+        jLabel4.setFont(jLabel4.getFont().deriveFont(jLabel4.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(jLabel4, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.jLabel4.text")); // NOI18N
 
+        rulePathFilterRegexCheckBox.setFont(rulePathFilterRegexCheckBox.getFont().deriveFont(rulePathFilterRegexCheckBox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(rulePathFilterRegexCheckBox, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.rulePathFilterRegexCheckBox.text")); // NOI18N
         rulePathFilterRegexCheckBox.setEnabled(false);
+
+        jScrollPane2.setFont(jScrollPane2.getFont().deriveFont(jScrollPane2.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
 
         jTextArea1.setEditable(false);
         jTextArea1.setBackground(new java.awt.Color(240, 240, 240));
         jTextArea1.setColumns(20);
-        jTextArea1.setFont(jTextArea1.getFont().deriveFont(Font.PLAIN, 11));
+        jTextArea1.setFont(jTextArea1.getFont().deriveFont(jTextArea1.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         jTextArea1.setLineWrap(true);
         jTextArea1.setRows(3);
         jTextArea1.setText(org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.jTextArea1.text")); // NOI18N

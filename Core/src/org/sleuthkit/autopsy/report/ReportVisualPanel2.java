@@ -96,10 +96,12 @@ final class ReportVisualPanel2 extends JPanel {
             public void mousePressed(MouseEvent evt) {
 
                 int index = tagsList.locationToIndex(evt.getPoint());
-                String value = tagsModel.getElementAt(index);
-                tagStates.put(value, !tagStates.get(value));
-                tagsList.repaint();
-                updateFinishButton();
+                if (index < tagsModel.getSize() && index >= 0) {
+                    String value = tagsModel.getElementAt(index);
+                    tagStates.put(value, !tagStates.get(value));
+                    tagsList.repaint();
+                    updateFinishButton();
+                }
             }
         });
     }
