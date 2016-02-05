@@ -164,6 +164,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
      * appropriate overload of the run method instead.
      */
     @Override
+    @Deprecated
     public void reset() {
         configPanel.reset();
         dataSourceId = null;
