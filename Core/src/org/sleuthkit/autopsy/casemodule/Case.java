@@ -598,7 +598,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             /*
              * Get the case metadata required to open the case database.
              */
-            CaseMetadata metadata = new CaseMetadata(Paths.get(caseMetadataFilePath));
+            CaseMetadata metadata = CaseMetadata.open(Paths.get(caseMetadataFilePath));
             String caseName = metadata.getCaseName();
             String caseNumber = metadata.getCaseNumber();
             String examiner = metadata.getExaminer();

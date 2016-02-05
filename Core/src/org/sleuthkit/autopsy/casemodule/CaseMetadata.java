@@ -29,6 +29,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.logging.Level;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -42,10 +44,22 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.openide.util.NbBundle;
+import static org.sleuthkit.autopsy.casemodule.XMLCaseManagement.AUTOPSY_CRVERSION_NAME;
+import static org.sleuthkit.autopsy.casemodule.XMLCaseManagement.CASE_ROOT_NAME;
+import static org.sleuthkit.autopsy.casemodule.XMLCaseManagement.CASE_TEXT_INDEX_NAME;
+import static org.sleuthkit.autopsy.casemodule.XMLCaseManagement.CASE_TYPE;
+import static org.sleuthkit.autopsy.casemodule.XMLCaseManagement.CREATED_DATE_NAME;
+import static org.sleuthkit.autopsy.casemodule.XMLCaseManagement.DATABASE_NAME;
+import static org.sleuthkit.autopsy.casemodule.XMLCaseManagement.EXAMINER;
+import static org.sleuthkit.autopsy.casemodule.XMLCaseManagement.NAME;
+import static org.sleuthkit.autopsy.casemodule.XMLCaseManagement.NUMBER;
+import static org.sleuthkit.autopsy.casemodule.XMLCaseManagement.SCHEMA_VERSION_NAME;
 import static org.sleuthkit.autopsy.casemodule.XMLCaseManagement.TOP_ROOT_NAME;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.xml.sax.SAXException;
 
 /**
  * Provides access to case metadata.
@@ -107,8 +121,11 @@ public final class CaseMetadata {
     private String caseDirectory;
     private String caseDatabaseName;
     private String caseTextIndexName;
-    private final String createdDate;
-    private final String schemaVersion;
+    private String createdDate;
+    private String schemaVersion;
+    private String fileName;
+    private JPanel caller;
+    private final String className = this.getClass().toString();
     private static final Logger logger = Logger.getLogger(CaseMetadata.class.getName());
 
     private CaseMetadata(Case.CaseType caseType, String caseName, String caseDirectory, String caseDatabaseName, String caseTextIndexName) throws CaseMetadataException {
@@ -121,6 +138,7 @@ public final class CaseMetadata {
         this.caseDatabaseName = caseDatabaseName;
         this.caseTextIndexName = caseTextIndexName;
         this.schemaVersion = "1.0";
+        this.fileName = caseName;
         this.write();
 
     }
@@ -135,72 +153,7 @@ public final class CaseMetadata {
     }
 
     private CaseMetadata(String metadataFilePath) throws CaseMetadataException {
-        try {
-            /*
-             * TODO (RC): This class should eventually replace the non-public
-             * and unsafe XMLCaseManagement class altogether.
-             */
-            XMLCaseManagement metadata = new XMLCaseManagement();
-            metadata.open(metadataFilePath);
-            try {
-                caseType = metadata.getCaseType();
-            } catch (NullPointerException unused) {
-                throw new CaseMetadataException("Case type element missing");
-            }
-            try {
-                caseName = metadata.getCaseName();
-                if (caseName.isEmpty()) {
-                    throw new CaseMetadataException("Case name missing");
-                }
-            } catch (NullPointerException unused) {
-                throw new CaseMetadataException("Case name element missing");
-            }
-            try {
-                caseNumber = metadata.getCaseNumber();
-            } catch (NullPointerException unused) {
-                throw new CaseMetadataException("Case number element missing");
-            }
-            try {
-                examiner = metadata.getCaseExaminer();
-            } catch (NullPointerException unused) {
-                throw new CaseMetadataException("Examiner element missing");
-            }
-            try {
-                caseDirectory = metadata.getCaseDirectory();
-                if (caseDirectory.isEmpty()) {
-                    throw new CaseMetadataException("Case directory missing");
-                }
-            } catch (NullPointerException unused) {
-                throw new CaseMetadataException("Case directory element missing");
-            }
-            try {
-                caseDatabaseName = metadata.getDatabaseName();
-            } catch (NullPointerException unused) {
-                throw new CaseMetadataException("Case database element missing");
-            }
-            try {
-                caseTextIndexName = metadata.getTextIndexName();
-                if (Case.CaseType.MULTI_USER_CASE == caseType && caseDatabaseName.isEmpty()) {
-                    throw new CaseMetadataException("Case keyword search index name missing");
-                }
-            } catch (NullPointerException unused) {
-                throw new CaseMetadataException("Case keyword search index name missing");
-            }
-            try {
-                this.createdDate = metadata.getCreatedDate();
-            } catch (NullPointerException unused) {
-                throw new CaseMetadataException("Case created date element missing");
-            }
-            try {
-                this.schemaVersion = metadata.getSchemaVersion();
-            } catch (NullPointerException unused) {
-                throw new CaseMetadataException("Case created date element missing");
-            }
-
-        } catch (CaseActionException ex) {
-            throw new CaseMetadataException(ex.getLocalizedMessage(), ex);
-        }
-        this.write();
+        this.open(metadataFilePath);
     }
 
     public static CaseMetadata open(Path metadataFilePath) throws CaseMetadataException {
@@ -464,7 +417,7 @@ public final class CaseMetadata {
 
         // preparing the output file
         String xmlString = sw.toString();
-        File file = new File(this.getCaseDirectory() + File.separator + getCaseName() + ".aut");
+        File file = new File(this.getCaseDirectory() + File.separator + this.fileName + ".aut");
 
         // write the file
         try {
@@ -487,6 +440,106 @@ public final class CaseMetadata {
      */
     public void close() throws CaseMetadataException {
         write(); // write any changes to xml
+    }
+
+    /**
+     * Opens the configuration file and load the document handler Note: this is
+     * for the schema version 1.0
+     *
+     * @param conFilePath the path of the XML case configuration file path
+     */
+    public void open(String conFilePath) throws CaseMetadataException {
+        File file = new File(conFilePath);
+        Document doc;
+
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        DocumentBuilder db;
+        try {
+            db = dbf.newDocumentBuilder();
+            doc = db.parse(file);
+        } catch (ParserConfigurationException | SAXException | IOException ex) {
+            throw new CaseMetadataException(
+                    NbBundle.getMessage(this.getClass(), "XMLCaseManagement.open.exception.errReadXMLFile.msg",
+                            conFilePath), ex);
+        }
+
+        doc.getDocumentElement().normalize();
+        doc.getDocumentElement().normalize();
+
+        // TODO: Restore later
+//        if (!XMLUtil.xmlIsValid(doc, XMLCaseManagement.class, XSDFILE)) {
+//            logger.log(Level.WARNING, "Could not validate against [" + XSDFILE + "], results may not accurate"); //NON-NLS
+//        }
+        Element rootEl = doc.getDocumentElement();
+        String rootName = rootEl.getNodeName();
+
+        // check if it's the autopsy case, if not, throws an error
+        if (!rootName.equals(TOP_ROOT_NAME)) {
+            // throw an error ...
+            if (RuntimeProperties.coreComponentsAreActive()) {
+
+                JOptionPane.showMessageDialog(caller,
+                        NbBundle.getMessage(this.getClass(),
+                                "XMLCaseManagement.open.msgDlg.notAutCase.msg",
+                                file.getName(), className),
+                        NbBundle.getMessage(this.getClass(),
+                                "XMLCaseManagement.open.msgDlg.notAutCase.title"),
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        } else {
+            /*
+             * Autopsy Created Version
+             */
+            Element rootElement = doc.getDocumentElement();
+
+            String createdVersion = ((Element) rootElement.getElementsByTagName(AUTOPSY_CRVERSION_NAME).item(0)).getTextContent(); // get the created version
+
+            // check if it has the same autopsy version as the current one
+            if (!createdVersion.equals(System.getProperty("netbeans.buildnumber"))) {
+                // if not the same version, update the saved version in the xml to the current version
+                rootElement.getElementsByTagName(AUTOPSY_MVERSION_NAME).item(0).setTextContent(System.getProperty("netbeans.buildnumber"));
+            }
+
+            /*
+             * Schema Version
+             */
+            String schemaVer = ((Element) rootElement.getElementsByTagName(SCHEMA_VERSION_NAME).item(0)).getTextContent();
+            // check if it has the same schema version as the current one
+            if (!schemaVer.equals(schemaVersion)) {
+                // do something here if not the same version
+                // ... @Override
+            }
+
+            try {
+                String fullFileName = file.getName();
+                String fileName = fullFileName.substring(0, fullFileName.lastIndexOf(".")); // remove the extension
+                this.fileName = fileName;
+                Element caseElement = (Element) doc.getElementsByTagName(CASE_ROOT_NAME).item(0);
+
+                String caseTypeString = ((Element) caseElement.getElementsByTagName(CASE_TYPE).item(0)).getTextContent();
+                this.caseType = caseTypeString.equals("") ? Case.CaseType.SINGLE_USER_CASE : Case.CaseType.fromString(caseTypeString);
+                this.caseName = ((Element) caseElement.getElementsByTagName(NAME).item(0)).getTextContent();
+                Element numberElement = caseElement.getElementsByTagName(NUMBER).getLength() > 0 ? (Element) caseElement.getElementsByTagName(NUMBER).item(0) : null;
+                this.caseNumber = numberElement != null ? numberElement.getTextContent() : "";
+                Element examinerElement = caseElement.getElementsByTagName(EXAMINER).getLength() > 0 ? (Element) caseElement.getElementsByTagName(EXAMINER).item(0) : null;
+                this.caseNumber = numberElement != null ? examinerElement.getTextContent() : "";
+                this.caseDirectory = conFilePath.substring(0, conFilePath.lastIndexOf("\\"));
+                if (this.caseDirectory.isEmpty()) {
+                    throw new CaseMetadataException("Case directory missing");
+                }
+                Element databaseNameElement = caseElement.getElementsByTagName(DATABASE_NAME).getLength() > 0 ? (Element) caseElement.getElementsByTagName(DATABASE_NAME).item(0) : null;
+                this.caseDatabaseName = databaseNameElement != null ? databaseNameElement.getTextContent() : "";
+                Element caseTextIndexNameElement = caseElement.getElementsByTagName(CASE_TEXT_INDEX_NAME).getLength() > 0 ? (Element) caseElement.getElementsByTagName(CASE_TEXT_INDEX_NAME).item(0) : null;
+                this.caseTextIndexName = caseTextIndexNameElement != null ? caseTextIndexNameElement.getTextContent() : "";
+                if (Case.CaseType.MULTI_USER_CASE == caseType && caseDatabaseName.isEmpty()) {
+                    throw new CaseMetadataException("Case keyword search index name missing");
+                }
+                this.createdDate = ((Element) rootElement.getElementsByTagName(CREATED_DATE_NAME).item(0)).getTextContent();
+                this.schemaVersion = ((Element) rootElement.getElementsByTagName(SCHEMA_VERSION_NAME).item(0)).getTextContent();
+            } catch (NullPointerException ex) {
+                throw new CaseMetadataException("Error setting case metadata when opening file.", ex);
+            }
+        }
     }
 
 }
