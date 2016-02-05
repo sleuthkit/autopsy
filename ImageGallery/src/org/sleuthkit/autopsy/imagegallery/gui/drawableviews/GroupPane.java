@@ -145,6 +145,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class GroupPane extends BorderPane {
 
     private static final Logger LOGGER = Logger.getLogger(GroupPane.class.getName());
+    private static final BorderWidths BORDER_WIDTHS_2 = new BorderWidths(2);
+    private static final CornerRadii CORNER_RADII_2 = new CornerRadii(2);
 
     private static final DropShadow DROP_SHADOW = new DropShadow(10, Color.BLUE);
 
@@ -395,10 +397,11 @@ public class GroupPane extends BorderPane {
         assert tileToggle != null : "fx:id=\"tileToggle\" was not injected: check your FXML file 'GroupHeader.fxml'.";
 
         for (Category cat : Category.values()) {
-            getToggleForCategory(cat).setBorder(new Border(new BorderStroke(cat.getColor(), BorderStrokeStyle.SOLID, new CornerRadii(1), new BorderWidths(1))));
-            getToggleForCategory(cat).getStyleClass().remove("radio-button");
-            getToggleForCategory(cat).getStyleClass().add("toggle-button");
-            getToggleForCategory(cat).selectedProperty().addListener((ov, wasSelected, toggleSelected) -> {
+            ToggleButton toggleForCategory = getToggleForCategory(cat);
+            toggleForCategory.setBorder(new Border(new BorderStroke(cat.getColor(), BorderStrokeStyle.SOLID, CORNER_RADII_2, BORDER_WIDTHS_2)));
+            toggleForCategory.getStyleClass().remove("radio-button");
+            toggleForCategory.getStyleClass().add("toggle-button");
+            toggleForCategory.selectedProperty().addListener((ov, wasSelected, toggleSelected) -> {
                 if (toggleSelected && slideShowPane != null) {
                     slideShowPane.getFileID().ifPresent((fileID) -> {
                         selectionModel.clearAndSelect(fileID);
