@@ -95,7 +95,10 @@ public class Toolbar extends ToolBar {
     private Label sortByLabel;
 
     @FXML
-    private Label applyToGroupLabel;
+    private Label tagImageViewLabel;
+
+    @FXML
+    private Label categoryImageViewLabel;
 
     @FXML
     private Label thumbnailSizeLabel;
@@ -135,7 +138,8 @@ public class Toolbar extends ToolBar {
             "Toolbar.sortByLabel=Sort By:",
             "Toolbar.ascRadio=Ascending",
             "Toolbar.descRadio=Descending",
-            "Toolbar.applyToGroupLabel=Apply to Group:",
+            "Toolbar.tagImageViewLabel=Tag Group's Files:",
+            "Toolbar.categoryImageViewLabel=Categorize Group's Files:",
             "Toolbar.thumbnailSizeLabel=Thumbnail Size (px):"})
     void initialize() {
         assert ascRadio != null : "fx:id=\"ascRadio\" was not injected: check your FXML file 'Toolbar.fxml'.";
@@ -174,7 +178,9 @@ public class Toolbar extends ToolBar {
         sortByLabel.setText(Bundle.Toolbar_sortByLabel());
         ascRadio.setText(Bundle.Toolbar_ascRadio());
         descRadio.setText(Bundle.Toolbar_descRadio());
-        applyToGroupLabel.setText(Bundle.Toolbar_applyToGroupLabel());
+        tagImageViewLabel.setText(Bundle.Toolbar_tagImageViewLabel());
+        categoryImageViewLabel.setText(Bundle.Toolbar_categoryImageViewLabel());
+
         thumbnailSizeLabel.setText(Bundle.Toolbar_thumbnailSizeLabel());
 
         CategorizeGroupAction cat5GroupAction = new CategorizeGroupAction(Category.FIVE, controller);
