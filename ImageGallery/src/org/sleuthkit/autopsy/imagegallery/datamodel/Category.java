@@ -23,9 +23,17 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.Border;
+import javafx.scene.layout.BorderStroke;
+import javafx.scene.layout.BorderStrokeStyle;
+import javafx.scene.layout.BorderWidths;
+import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
 import org.openide.util.NbBundle;
 
 /**
@@ -50,6 +58,9 @@ public enum Category {
     FOUR(Color.BISQUE, 4, Bundle.Category_four()),
     FIVE(Color.GREEN, 5, Bundle.Category_five()),
     ZERO(Color.LIGHTGREY, 0, Bundle.Category_zero());
+
+    private static final BorderWidths BORDER_WIDTHS_2 = new BorderWidths(2);
+    private static final CornerRadii CORNER_RADII_4 = new CornerRadii(4);
 
     public static ImmutableList<Category> getNonZeroCategories() {
         return nonZeroCategories;
@@ -108,9 +119,10 @@ public enum Category {
     }
 
     public Node getGraphic() {
-        Rectangle rectangle = new Rectangle(16d, 16d, getColor());
-        rectangle.setArcHeight(8);
-        rectangle.setArcWidth(8);
-        return rectangle;
+        Region region = new Region();
+        region.setBackground(new Background(new BackgroundFill(getColor(), CORNER_RADII_4, Insets.EMPTY)));
+        region.setPrefSize(16, 16);
+        region.setBorder(new Border(new BorderStroke(getColor().darker(), BorderStrokeStyle.SOLID, CORNER_RADII_4, BORDER_WIDTHS_2)));
+        return region;
     }
 }
