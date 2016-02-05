@@ -374,6 +374,7 @@ public final class CaseMetadata {
         Element indexNameElement = doc.createElement(CASE_TEXT_INDEX_NAME); // <TextIndexName> ... </TextIndexName>
         indexNameElement.appendChild(doc.createTextNode(this.getCaseTextIndexName()));
         caseElement.appendChild(indexNameElement);
+        doc.normalize();
         this.writeFile(doc);
     }
 
