@@ -448,7 +448,7 @@ public final class CaseMetadata {
      *
      * @param conFilePath the path of the XML case configuration file path
      */
-    public void open(String conFilePath) throws CaseMetadataException {
+    private void open(String conFilePath) throws CaseMetadataException {
         File file = new File(conFilePath);
         Document doc;
 
