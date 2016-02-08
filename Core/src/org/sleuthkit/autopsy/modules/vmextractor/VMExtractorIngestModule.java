@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.GeneralFilter;
 import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
@@ -52,6 +53,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * An ingest module that extracts virtual machine files and adds them to a case
@@ -62,11 +64,12 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
     private static final Logger logger = Logger.getLogger(VMExtractorIngestModule.class.getName());
     private IngestJobContext context;
     private Path ingestJobOutputDir;
-    private String parentDataSourceId = null;
+    private String parentDeviceId = null;
 
     private final HashMap<String, String> imageFolderToOutputFolder = new HashMap<>();
     private int folderId = 0;
 
+    @Messages({"# {0} - data source name", "deviceIdQueryErrMsg=Data source {0} missing device id"})
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
@@ -74,24 +77,19 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
         try {
             Case currentCase = Case.getCurrentCase();
             SleuthkitCase caseDb = currentCase.getSleuthkitCase();
-            List<DataSource> dataSources = caseDb.getDataSources();
-            for (DataSource dataSource : dataSources) {
-                if (dataSource.getObjectId() == dataSourceObjId) {
-                    parentDataSourceId = dataSource.getUniqueId();
-                }
-            }
-            if (null == parentDataSourceId) {
-                throw new IngestModuleException(String.format("Data source %s missing unique id", context.getDataSource().getName())); //NON-NLS
-            }
+            DataSource dataSource = caseDb.getDataSource(dataSourceObjId);
+            parentDeviceId = dataSource.getDeviceId();
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
             String timeStamp = dateFormat.format(Calendar.getInstance().getTime());
             String ingestJobOutputDirName = context.getDataSource().getName() + "_" + context.getDataSource().getId() + "_" + timeStamp;
             ingestJobOutputDir = Paths.get(Case.getCurrentCase().getModuleDirectory(), VMExtractorIngestModuleFactory.getModuleName(), ingestJobOutputDirName);
             // create module output folder to write extracted virtual machine files to
             Files.createDirectories(ingestJobOutputDir);
-        } catch (IOException | SecurityException | UnsupportedOperationException | TskCoreException ex) {
-            throw new IngestModule.IngestModuleException(NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.cannotCreateOutputDir.message", ex.getLocalizedMessage()));
-        }
+        } catch (IOException | SecurityException | UnsupportedOperationException ex) {
+            throw new IngestModule.IngestModuleException(NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.cannotCreateOutputDir.message", ex.getLocalizedMessage()), ex);
+        } catch (TskDataException | TskCoreException ex) {
+            throw new IngestModule.IngestModuleException(Bundle.deviceIdQueryErrMsg(context.getDataSource().getName()), ex);
+        } 
     }
 
     /**
@@ -183,7 +181,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
                 
                     // for extracted virtual machines there is no manifest XML file to read data source ID from so use parent data source ID.
                     // ingest the data sources  
-                    ingestVirtualMachineImage(Paths.get(folder, file), parentDataSourceId);
+                    ingestVirtualMachineImage(Paths.get(folder, file), parentDeviceId);
                     logger.log(Level.INFO, "Ingest complete for virtual machine file {0} in folder {1}", new Object[]{file, folder}); //NON-NLS
                 } catch (InterruptedException ex) {
                     logger.log(Level.INFO, "Interrupted while ingesting virtual machine file "+file+" in folder "+folder, ex); //NON-NLS
@@ -249,8 +247,9 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
      * with the ingest modules.
      *
      * @param vmFile A virtual machine file.
+     * @param deviceId The device id associated with the parent data source.
      */
-    private void ingestVirtualMachineImage(Path vmFile, String dataSourceID) throws InterruptedException, IOException {
+    private void ingestVirtualMachineImage(Path vmFile, String deviceID) throws InterruptedException, IOException {
 
         /*
          * Try to add the virtual machine file to the case as a data source.
@@ -260,7 +259,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         AddDataSourceCallback dspCallback = new AddDataSourceCallback(vmFile);
         synchronized (this) {
-            dataSourceProcessor.run(dataSourceID, vmFile.toString(), "", false, new AddDataSourceProgressMonitor(), dspCallback);
+            dataSourceProcessor.run(deviceID, vmFile.toString(), "", false, new AddDataSourceProgressMonitor(), dspCallback);
             /*
              * Block the ingest thread until the data source processor finishes.
              */

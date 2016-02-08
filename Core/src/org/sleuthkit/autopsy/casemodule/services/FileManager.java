@@ -43,9 +43,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskFileRange;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.CarvedFileContainer;
+import org.sleuthkit.datamodel.LocalFilesDataSource;
+import org.sleuthkit.datamodel.TskDataException;
 
 /**
- * Abstraction to facilitate access to files and directories.
+ * Abstraction to facilitate access to localFiles and directories.
  */
 public class FileManager implements Closeable {
 
@@ -77,19 +79,20 @@ public class FileManager implements Closeable {
         }
 
     }
-    
+
     /**
-     * Finds a set of files that meets the name criteria in all data sources in the current case.
+     * Finds a set of localFiles that meets the name criteria in all data
+     * sources in the current case.
      *
-     * @param fileName   Pattern of the name of the file or directory to match
-     *                   (case insensitive, used in LIKE SQL statement).
+     * @param fileName Pattern of the name of the file or directory to match
+     *                 (case insensitive, used in LIKE SQL statement).
      *
-     * @return a list of AbstractFile for files/directories whose name matches
-     *         the given fileName
+     * @return a list of AbstractFile for localFiles/directories whose name
+     *         matches the given fileName
      */
     public synchronized List<AbstractFile> findFiles(String fileName) throws TskCoreException {
         List<AbstractFile> result = new ArrayList<>();
-        
+
         if (tskCase == null) {
             throw new TskCoreException(NbBundle.getMessage(this.getClass(), "FileManager.findFiles.exception.msg"));
         }
@@ -101,20 +104,21 @@ public class FileManager implements Closeable {
     }
 
     /**
-     * Finds a set of files that meets the name criteria in all data sources in the current case.
+     * Finds a set of localFiles that meets the name criteria in all data
+     * sources in the current case.
      *
-     * @param fileName   Pattern of the name of the file or directory to match
-     *                   (case insensitive, used in LIKE SQL statement).
-     * @param dirName    Pattern of the name of the parent directory to use as
-     *                   the root of the search (case insensitive, used in LIKE
-     *                   SQL statement).
+     * @param fileName Pattern of the name of the file or directory to match
+     *                 (case insensitive, used in LIKE SQL statement).
+     * @param dirName  Pattern of the name of the parent directory to use as the
+     *                 root of the search (case insensitive, used in LIKE SQL
+     *                 statement).
      *
-     * @return a list of AbstractFile for files/directories whose name matches
-     *         fileName and whose parent directory contains dirName.
+     * @return a list of AbstractFile for localFiles/directories whose name
+     *         matches fileName and whose parent directory contains dirName.
      */
     public synchronized List<AbstractFile> findFiles(String fileName, String dirName) throws TskCoreException {
         List<AbstractFile> result = new ArrayList<>();
-        
+
         if (tskCase == null) {
             throw new TskCoreException(NbBundle.getMessage(this.getClass(), "FileManager.findFiles2.exception.msg"));
         }
@@ -126,39 +130,40 @@ public class FileManager implements Closeable {
     }
 
     /**
-     * Finds a set of files that meets the name criteria in all data sources in the current case.
+     * Finds a set of localFiles that meets the name criteria in all data
+     * sources in the current case.
      *
      * @param fileName   Pattern of the name of the file or directory to match
      *                   (case insensitive, used in LIKE SQL statement).
      * @param parentFile Object of root/parent directory to restrict search to.
      *
-     * @return a list of AbstractFile for files/directories whose name matches
-     *         fileName and that were inside a directory described by
+     * @return a list of AbstractFile for localFiles/directories whose name
+     *         matches fileName and that were inside a directory described by
      *         parentFsContent.
      */
     public synchronized List<AbstractFile> findFiles(String fileName, AbstractFile parentFile) throws TskCoreException {
         List<AbstractFile> result = new ArrayList<>();
-        
+
         if (tskCase == null) {
             throw new TskCoreException(NbBundle.getMessage(this.getClass(), "FileManager.findFiles3.exception.msg"));
         }
         List<Content> dataSources = tskCase.getRootObjects();
         for (Content dataSource : dataSources) {
-          result.addAll(findFiles(dataSource, fileName, parentFile));
+            result.addAll(findFiles(dataSource, fileName, parentFile));
         }
         return result;
     }
 
     /**
-     * Finds a set of files that meets the name criteria.
+     * Finds a set of localFiles that meets the name criteria.
      *
      * @param dataSource Root data source to limit search results to (Image,
      *                   VirtualDirectory, etc.).
      * @param fileName   Pattern of the name of the file or directory to match
      *                   (case insensitive, used in LIKE SQL statement).
      *
-     * @return a list of AbstractFile for files/directories whose name matches
-     *         the given fileName
+     * @return a list of AbstractFile for localFiles/directories whose name
+     *         matches the given fileName
      */
     public synchronized List<AbstractFile> findFiles(Content dataSource, String fileName) throws TskCoreException {
         if (tskCase == null) {
@@ -168,7 +173,7 @@ public class FileManager implements Closeable {
     }
 
     /**
-     * Finds a set of files that meets the name criteria.
+     * Finds a set of localFiles that meets the name criteria.
      *
      * @param dataSource Root data source to limit search results to (Image,
      *                   VirtualDirectory, etc.).
@@ -178,8 +183,8 @@ public class FileManager implements Closeable {
      *                   the root of the search (case insensitive, used in LIKE
      *                   SQL statement).
      *
-     * @return a list of AbstractFile for files/directories whose name matches
-     *         fileName and whose parent directory contains dirName.
+     * @return a list of AbstractFile for localFiles/directories whose name
+     *         matches fileName and whose parent directory contains dirName.
      */
     public synchronized List<AbstractFile> findFiles(Content dataSource, String fileName, String dirName) throws TskCoreException {
         if (tskCase == null) {
@@ -189,7 +194,7 @@ public class FileManager implements Closeable {
     }
 
     /**
-     * Finds a set of files that meets the name criteria.
+     * Finds a set of localFiles that meets the name criteria.
      *
      * @param dataSource Root data source to limit search results to (Image,
      *                   VirtualDirectory, etc.).
@@ -197,8 +202,8 @@ public class FileManager implements Closeable {
      *                   (case insensitive, used in LIKE SQL statement).
      * @param parentFile Object of root/parent directory to restrict search to.
      *
-     * @return a list of AbstractFile for files/directories whose name matches
-     *         fileName and that were inside a directory described by
+     * @return a list of AbstractFile for localFiles/directories whose name
+     *         matches fileName and that were inside a directory described by
      *         parentFsContent.
      */
     public synchronized List<AbstractFile> findFiles(Content dataSource, String fileName, AbstractFile parentFile) throws TskCoreException {
@@ -210,7 +215,7 @@ public class FileManager implements Closeable {
 
     /**
      * @param dataSource data source Content (Image, parent-less
-     *                   VirtualDirectory) where to find files
+     *                   VirtualDirectory) where to find localFiles
      * @param filePath   The full path to the file(s) of interest. This can
      *                   optionally include the image and volume names.
      *
@@ -292,14 +297,14 @@ public class FileManager implements Closeable {
     }
 
     /**
-     * Adds a collection of carved files to the VirtualDirectory '$CarvedFiles'
-     * in the volume or image given by systemId. Creates $CarvedFiles if it does
-     * not exist already.
+     * Adds a collection of carved localFiles to the VirtualDirectory
+     * '$CarvedFiles' in the volume or image given by systemId. Creates
+     * $CarvedFiles if it does not exist already.
      *
-     * @param filesToAdd a list of CarvedFileContainer files to add as carved
-     *                   files
+     * @param filesToAdd a list of CarvedFileContainer localFiles to add as
+     *                   carved localFiles
      *
-     * @return List<LayoutFile> This is a list of the files added to the
+     * @return List<LayoutFile> This is a list of the localFiles added to the
      *         database
      *
      * @throws org.sleuthkit.datamodel.TskCoreException
@@ -328,9 +333,10 @@ public class FileManager implements Closeable {
     }
 
     /**
-     * Add a set of local/logical files and dirs.
+     * Add a set of local/logical localFiles and dirs.
      *
-     * @param localAbsPaths      list of absolute paths to local files and dirs
+     * @param localAbsPaths      list of absolute paths to local localFiles and
+     *                           dirs
      * @param addProgressUpdater notifier to receive progress notifications on
      *                           folders added, or null if not used
      *
@@ -345,22 +351,15 @@ public class FileManager implements Closeable {
      *                          encountered.
      */
     public synchronized VirtualDirectory addLocalFilesDirs(List<String> localAbsPaths, FileAddProgressUpdater addProgressUpdater) throws TskCoreException {
-        final List<java.io.File> rootsToAdd = new ArrayList<>();
-        //first validate all the inputs before any additions
-        for (String absPath : localAbsPaths) {
-            java.io.File localFile = new java.io.File(absPath);
-            if (!localFile.exists() || !localFile.canRead()) {
-                String msg = NbBundle
-                        .getMessage(this.getClass(), "FileManager.addLocalFilesDirs.exception.notReadable.msg",
-                                localFile.getAbsolutePath());
-                logger.log(Level.SEVERE, msg);
-                throw new TskCoreException(msg);
-            }
-            rootsToAdd.add(localFile);
+        List<java.io.File> rootsToAdd;
+        try {
+            rootsToAdd = getFilesAndDirectories(localAbsPaths);
+        } catch (TskDataException ex) {
+            throw new TskCoreException(ex.getLocalizedMessage(), ex);
         }
 
         CaseDbTransaction trans = tskCase.beginTransaction();
-        // make a virtual top-level directory for this set of files/dirs
+        // make a virtual top-level directory for this set of localFiles/dirs
         final VirtualDirectory fileSetRootDir = addLocalFileSetRootDir(trans);
 
         try {
@@ -391,53 +390,93 @@ public class FileManager implements Closeable {
         return fileSetRootDir;
     }
 
-    public synchronized VirtualDirectory addLocalFilesAndDirs(List<String> localAbsPaths, FileAddProgressUpdater progressUpdater) throws TskCoreException {
-        final List<java.io.File> rootsToAdd = new ArrayList<>();
-        //first validate all the inputs before any additions
-        for (String absPath : localAbsPaths) {
-            java.io.File localFile = new java.io.File(absPath);
-            if (!localFile.exists() || !localFile.canRead()) {
-                String msg = NbBundle
-                        .getMessage(this.getClass(), "FileManager.addLocalFilesDirs.exception.notReadable.msg",
-                                localFile.getAbsolutePath());
-                logger.log(Level.SEVERE, msg);
-                throw new TskCoreException(msg);
-            }
-            rootsToAdd.add(localFile);
-        }
-
-        CaseDbTransaction trans = tskCase.beginTransaction();
-        // make a virtual top-level directory for this set of files/dirs
-        final VirtualDirectory fileSetRootDir = addLocalFileSetRootDir(trans);
-
+    /**
+     * Adds a set of local/logical files and/or directories to the case database
+     * as data source.
+     *
+     * @param deviceId                 An ASCII-printable identifier for the
+     *                                 device associated with the data source
+     *                                 that is intended to be unique across
+     *                                 multiple cases (e.g., a UUID).
+     * @param rootVirtualDirectoryName The name to give to the virtual directory
+     *                                 that will serve as the root for the
+     *                                 local/logical files and/or directories
+     *                                 that compose the data source. Pass the
+     *                                 empty string to get a default name of the
+     *                                 form: LogicalFileSet[N]
+     * @param localFilePaths           A list of local/logical file and/or
+     *                                 directory localFilePaths.
+     * @param progressUpdater          Called after each file/directory is added
+     *                                 to the case database.
+     *
+     * @return A local files data source object.
+     *
+     * @throws TskCoreException If there is a problem completing a database
+     *                          operation.
+     * @throws TskDataException if any of the local file paths is for a file or
+     *                          directory that does not exist or cannot be read.
+     */
+    public synchronized LocalFilesDataSource addLocalFilesDataSource(String deviceId, String rootVirtualDirectoryName, List<String> localFilePaths, FileAddProgressUpdater progressUpdater) throws TskCoreException, TskDataException {
+        List<java.io.File> localFiles = getFilesAndDirectories(localFilePaths);
+        CaseDbTransaction trans = null;
         try {
-            // recursively add each item in the set
-            for (java.io.File localRootToAdd : rootsToAdd) {
-                AbstractFile localFileAdded = addLocalDirInt(trans, fileSetRootDir, localRootToAdd, progressUpdater);
-
-                if (localFileAdded == null) {
-                    String msg = NbBundle
-                            .getMessage(this.getClass(), "FileManager.addLocalFilesDirs.exception.cantAdd.msg",
-                                    localRootToAdd.getAbsolutePath());
-                    logger.log(Level.SEVERE, msg);
-                    throw new TskCoreException(msg);
+            String rootDirectoryName = rootVirtualDirectoryName;
+            int newLocalFilesSetCount = curNumFileSets + 1;
+            if (rootVirtualDirectoryName.isEmpty()) {
+                rootDirectoryName = VirtualDirectoryNode.LOGICAL_FILE_SET_PREFIX + newLocalFilesSetCount;
+            }
+            trans = tskCase.beginTransaction();
+            LocalFilesDataSource dataSource = tskCase.addLocalFilesDataSource(deviceId, rootDirectoryName, trans);
+            VirtualDirectory rootDirectory = dataSource.getRootDirectory();
+            List<AbstractFile> filesAdded = new ArrayList<>();
+            for (java.io.File localFile : localFiles) {
+                AbstractFile fileAdded = addLocalDirInt(trans, rootDirectory, localFile, progressUpdater);
+                if (null != fileAdded) {
+                    filesAdded.add(fileAdded);
                 } else {
-                    //added.add(localFileAdded);
-                    //send new content event
-                    //for now reusing ingest events, in future this will be replaced by datamodel / observer sending out events
-                    // @@@ Is this the right place for this? A directory tree refresh will be triggered, so this may be creating a race condition
-                    // since the transaction is not yet committed.   
-                    IngestServices.getInstance().fireModuleContentEvent(new ModuleContentEvent(localFileAdded));
+                    throw new TskCoreException(NbBundle.getMessage(this.getClass(), "FileManager.addLocalFilesDirs.exception.cantAdd.msg", localFile.getAbsolutePath()));
                 }
             }
-
             trans.commit();
+            if (rootVirtualDirectoryName.isEmpty()) {
+                curNumFileSets = newLocalFilesSetCount;
+            }
+            for (AbstractFile fileAdded : filesAdded) {
+                IngestServices.getInstance().fireModuleContentEvent(new ModuleContentEvent(fileAdded));
+            }
+            return dataSource;
         } catch (TskCoreException ex) {
-            trans.rollback();
+            if (null != trans) {
+                trans.rollback();
+            }
+            throw ex;
         }
-        return fileSetRootDir;
-    }    
-    
+    }
+
+    /**
+     * Converts a list of local/logical file and/or directory paths to a list of
+     * file objects.
+     *
+     * @param localFilePaths A list of local/logical file and/or directory
+     *                       paths.
+     *
+     * @return A list of file objects.
+     *
+     * @throws TskDataException if any of the paths is for a file or directory
+     *                          that does not exist or cannot be read.
+     */
+    private List<java.io.File> getFilesAndDirectories(List<String> localFilePaths) throws TskDataException {
+        List<java.io.File> localFiles = new ArrayList<>();
+        for (String path : localFilePaths) {
+            java.io.File localFile = new java.io.File(path);
+            if (!localFile.exists() || !localFile.canRead()) {
+                throw new TskDataException(NbBundle.getMessage(this.getClass(), "FileManager.addLocalFilesDirs.exception.notReadable.msg", localFile.getAbsolutePath()));
+            }
+            localFiles.add(localFile);
+        }
+        return localFiles;
+    }
+
     /**
      * Adds a new virtual directory root object with FileSet X name and
      * consecutive sequence number characteristic to every add operation

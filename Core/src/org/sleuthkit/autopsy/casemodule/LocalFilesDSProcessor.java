@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -30,58 +29,62 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgress
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 
 /**
- * A local/logical files and/or directories data source processor with a
- * configuration panel. This data source processor implements the
- * DataSourceProcessor service provider interface to allow integration with the
- * add data source wizard. It also provides a run method overload to allow it to
- * be used independently of the configuration UI.
+ * A local/logical files and/or directories data source processor that
+ * implements the DataSourceProcessor service provider interface to allow
+ * integration with the add data source wizard. It also provides a run method
+ * overload to allow it to be used independently of the wizard.
  */
 @ServiceProvider(service = DataSourceProcessor.class)
 public class LocalFilesDSProcessor implements DataSourceProcessor {
 
-    private static final String dsType = NbBundle.getMessage(LocalFilesDSProcessor.class, "LocalFilesDSProcessor.dsType");
+    private static final String DATA_SOURCE_TYPE = NbBundle.getMessage(LocalFilesDSProcessor.class, "LocalFilesDSProcessor.dsType");
     private final LocalFilesPanel configPanel;
+    /*
+     * TODO: Remove the setDataSourceOptionsCalled flag and the settings fields
+     * when the deprecated method setDataSourceOptions is removed.
+     */
     private String deviceId;
-    private List<String> paths;
-    private boolean configured;
-    private AddLocalFilesTask addFilesTask;
+    private List<String> localFilePaths;
+    private boolean setDataSourceOptionsCalled;
 
     /**
      * Constructs a local/logical files and/or directories data source processor
-     * with a configuration panel. This data source processor implements the
-     * DataSourceProcessor service provider interface to allow integration with
-     * the add data source wizard. It also provides a run method overload to
-     * allow it to be used independently of the configuration UI.
+     * that implements the DataSourceProcessor service provider interface to
+     * allow integration with the add data source wizard. It also provides a run
+     * method overload to allow it to be used independently of the wizard.
      */
     public LocalFilesDSProcessor() {
         configPanel = LocalFilesPanel.getDefault();
     }
 
     /**
-     * Gets the display name of the type of data source this type of data source
-     * processor is able to process.
+     * Gets a string that describes the type of data sources this processor is
+     * able to process.
      *
-     * @return The data source type display name.
+     * @return A string suitable for display in a data source processor
+     *         selection UI component (e.g., a combo box).
      */
     public static String getType() {
-        return dsType;
+        return DATA_SOURCE_TYPE;
     }
 
     /**
-     * Gets the display name of the type of data source this data source
-     * processor is able to process.
+     * Gets a string that describes the type of data sources this processor is
+     * able to process.
      *
-     * @return The data source type display name.
+     * @return A string suitable for display in a data source processor
+     *         selection UI component (e.g., a combo box).
      */
     @Override
     public String getDataSourceType() {
-        return dsType;
+        return DATA_SOURCE_TYPE;
     }
 
     /**
-     * Gets the a configuration panel for this data source processor.
+     * Gets the panel that allows a user to select a data source and do any
+     * configuration the data source processor may require.
      *
-     * @return JPanel The configuration panel.
+     * @return A JPanel less than 544 pixels wide and 173 pixels high.
      */
     @Override
     public JPanel getPanel() {
@@ -90,11 +93,10 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
     }
 
     /**
-     * Validates the data collected by the JPanel
+     * Indicates whether the settings in the panel are valid and complete.
      *
-     * @return String returns NULL if success, error string if there is any
-     *         errors
-     *
+     * @return True if the settings are valid and complete and the processor is
+     *         ready to have its run method called; false otherwise.
      */
     @Override
     public boolean isPanelValid() {
@@ -102,62 +104,71 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
     }
 
     /**
-     * Runs the data source processor in a separate thread. Should only be
-     * called after further configuration has been completed.
+     * Adds a data source to the case database using a separate thread and the
+     * settings provided by the panel. Returns as soon as the background task is
+     * started and uses the callback object to signal task completion and return
+     * results.
      *
-     * @param monitor Progress monitor to report progress during processing.
-     * @param cbObj   Callback to call when processing is done.
+     * NOTE: This method should not be called unless isPanelValid returns true.
+     *
+     * @param progressMonitor Progress monitor for reporting progress during
+     *                        processing.
+     * @param callback        Callback to call when processing is done.
      */
     @Override
-    public void run(DataSourceProcessorProgressMonitor monitor, DataSourceProcessorCallback cbObj) {
-        if (!configured) {
-            if (null == deviceId) {
-                deviceId = UUID.randomUUID().toString();
-            }
-            paths = Arrays.asList(configPanel.getContentPaths().split(LocalFilesPanel.FILES_SEP));
-            configured = true;
+    public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        if (!setDataSourceOptionsCalled) {
+            deviceId = UUID.randomUUID().toString();
+            localFilePaths = Arrays.asList(configPanel.getContentPaths().split(LocalFilesPanel.FILES_SEP));
         }
-        addFilesTask = new AddLocalFilesTask(deviceId, paths, monitor, cbObj);
-        new Thread(addFilesTask).start();
+        run(deviceId, "", localFilePaths, progressMonitor, callback);
     }
 
     /**
-     * Runs the data source processor in a separate thread without requiring use
-     * the configuration panel.
+     * Adds a data source to the case database using a separate thread and the
+     * given settings instead of those provided by the panel. Returns as soon as
+     * the background task is started and uses the callback object to signal
+     * task completion and return results.
      *
-     * @param dataSourceId An ASCII-printable identifier for the device
-     *                     associated with the data source, in this case a group
-     *                     of local/logical files, that is intended to be unique
-     *                     across multiple cases (e.g., a UUID).
-     * @param paths        A list of local/logical file and/or directory paths.
-     * @param monitor      Progress monitor to report progress during
-     *                     processing.
-     * @param cbObj        Callback to call when processing is done.
+     * @param deviceId                 An ASCII-printable identifier for the
+     *                                 device associated with the data source
+     *                                 that is intended to be unique across
+     *                                 multiple cases (e.g., a UUID).
+     * @param rootVirtualDirectoryName The name to give to the virtual directory
+     *                                 that will serve as the root for the
+     *                                 local/logical files and/or directories
+     *                                 that compose the data source. Pass the
+     *                                 empty string to get a default name of the
+     *                                 form: LogicalFileSet[N]
+     * @param localFilePaths           A list of local/logical file and/or
+     *                                 directory localFilePaths.
+     * @param progressMonitor          Progress monitor for reporting progress
+     *                                 during processing.
+     * @param callback                 Callback to call when processing is done.
      */
-    public void run(String deviceId, List<String> paths, DataSourceProcessorProgressMonitor monitor, DataSourceProcessorCallback cbObj) {
-        this.deviceId = deviceId;
-        this.paths = new ArrayList<>(paths);
-        configured = true;
-        run(monitor, cbObj);
+    public void run(String deviceId, String rootVirtualDirectoryName, List<String> localFilePaths, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        new Thread(new AddLocalFilesTask(deviceId, rootVirtualDirectoryName, localFilePaths, progressMonitor, callback)).start();
     }
 
     /**
-     * Cancels the processing of the data source.
+     * Requests cancellation of the data source processing task after it is
+     * started using the run method. Cancellation is not guaranteed.
      */
     @Override
     public void cancel() {
-        addFilesTask.cancelTask();
+        /*
+         * Cancellation is not currently supported.
+         */
     }
 
     /**
-     * Resets the configuration of this data source processor, including its
-     * configuration panel.
+     * Resets the panel.
      */
     @Override
     public void reset() {
         configPanel.reset();
-        paths = null;
-        configured = false;
+        localFilePaths = null;
+        setDataSourceOptionsCalled = false;
     }
 
     /**
@@ -166,14 +177,15 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
      * data source and will use the time zone of the machine executing this code
      * when when processing dates and times for the image.
      *
-     * @param paths A list of local/logical file and/or directory paths.
+     * @param paths A list of local/logical file and/or directory
+     *              localFilePaths.
      *
-     * @deprecated Use the run method instead.
+     * @deprecated Use the provided overload of the run method instead.
      */
     @Deprecated
     public void setDataSourceOptions(String paths) {
-        this.paths = Arrays.asList(configPanel.getContentPaths().split(LocalFilesPanel.FILES_SEP));
-        configured = true;
+        this.localFilePaths = Arrays.asList(configPanel.getContentPaths().split(LocalFilesPanel.FILES_SEP));
+        setDataSourceOptionsCalled = true;
     }
 
 }
