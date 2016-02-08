@@ -44,19 +44,9 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.openide.util.NbBundle;
-import static org.sleuthkit.autopsy.casemodule.XMLCaseManagement.AUTOPSY_CRVERSION_NAME;
-import static org.sleuthkit.autopsy.casemodule.XMLCaseManagement.CASE_ROOT_NAME;
-import static org.sleuthkit.autopsy.casemodule.XMLCaseManagement.CASE_TEXT_INDEX_NAME;
-import static org.sleuthkit.autopsy.casemodule.XMLCaseManagement.CASE_TYPE;
-import static org.sleuthkit.autopsy.casemodule.XMLCaseManagement.CREATED_DATE_NAME;
-import static org.sleuthkit.autopsy.casemodule.XMLCaseManagement.DATABASE_NAME;
-import static org.sleuthkit.autopsy.casemodule.XMLCaseManagement.EXAMINER;
-import static org.sleuthkit.autopsy.casemodule.XMLCaseManagement.NAME;
-import static org.sleuthkit.autopsy.casemodule.XMLCaseManagement.NUMBER;
-import static org.sleuthkit.autopsy.casemodule.XMLCaseManagement.SCHEMA_VERSION_NAME;
-import static org.sleuthkit.autopsy.casemodule.XMLCaseManagement.TOP_ROOT_NAME;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
@@ -230,45 +220,59 @@ public final class CaseMetadata {
     }
 
     /**
+     * @param createdDate the createdDate to set
+     */
+    void setCreatedDate(String createdDate) throws CaseMetadataException {
+        this.createdDate = createdDate;
+        this.write();
+    }
+
+    /**
      * @param caseType the caseType to set
      */
-    public void setCaseType(Case.CaseType caseType) {
+    public void setCaseType(Case.CaseType caseType) throws CaseMetadataException {
         this.caseType = caseType;
+        this.write();
     }
 
     /**
      * @param caseName the caseName to set
      */
-    public void setCaseName(String caseName) {
+    public void setCaseName(String caseName) throws CaseMetadataException {
         this.caseName = caseName;
+        this.write();
     }
 
     /**
      * @param caseNumber the caseNumber to set
      */
-    public void setCaseNumber(String caseNumber) {
+    public void setCaseNumber(String caseNumber) throws CaseMetadataException {
         this.caseNumber = caseNumber;
+        this.write();
     }
 
     /**
      * @param examiner the examiner to set
      */
-    public void setCaseExaminer(String examiner) {
+    public void setCaseExaminer(String examiner) throws CaseMetadataException {
         this.examiner = examiner;
+        this.write();
     }
 
     /**
      * @param caseDirectory the caseDirectory to set
      */
-    public void setCaseDirectory(String caseDirectory) {
+    public void setCaseDirectory(String caseDirectory) throws CaseMetadataException {
         this.caseDirectory = caseDirectory;
+        this.write();
     }
 
     /**
      * @param caseDatabaseName the caseDatabaseName to set
      */
-    public void setCaseDatabaseName(String caseDatabaseName) {
+    public void setCaseDatabaseName(String caseDatabaseName) throws CaseMetadataException {
         this.caseDatabaseName = caseDatabaseName;
+        this.write();
     }
 
     /**
@@ -281,8 +285,9 @@ public final class CaseMetadata {
     /**
      * @param caseTextIndexName the caseTextIndexName to set
      */
-    public void setCaseTextIndexName(String caseTextIndexName) {
+    public void setCaseTextIndexName(String caseTextIndexName) throws CaseMetadataException {
         this.caseTextIndexName = caseTextIndexName;
+        this.write();
     }
 
     /**
@@ -293,18 +298,13 @@ public final class CaseMetadata {
     }
 
     private void write() throws CaseMetadataException {
-        DocumentBuilder docBuilder;
-        DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-
-        // throw an error here
+        Document doc;
         try {
-            docBuilder = docFactory.newDocumentBuilder();
+            doc = XMLUtil.createDocument();
         } catch (ParserConfigurationException ex) {
             throw new CaseMetadataException(
                     NbBundle.getMessage(this.getClass(), "XMLCaseManagement.create.exception.msg"), ex);
         }
-
-        Document doc = docBuilder.newDocument();
         Element rootElement = doc.createElement(TOP_ROOT_NAME); // <AutopsyCase> ... </AutopsyCase>
         doc.appendChild(rootElement);
 
@@ -433,16 +433,6 @@ public final class CaseMetadata {
     }
 
     /**
-     * When user wants to close the case. This method writes any changes to the
-     * XML case configuration file, closes it and the document handler, and
-     * clears all the local variables / fields.
-     *
-     */
-    public void close() throws CaseMetadataException {
-        write(); // write any changes to xml
-    }
-
-    /**
      * Opens the configuration file and load the document handler Note: this is
      * for the schema version 1.0
      *
@@ -466,10 +456,6 @@ public final class CaseMetadata {
         doc.getDocumentElement().normalize();
         doc.getDocumentElement().normalize();
 
-        // TODO: Restore later
-//        if (!XMLUtil.xmlIsValid(doc, XMLCaseManagement.class, XSDFILE)) {
-//            logger.log(Level.WARNING, "Could not validate against [" + XSDFILE + "], results may not accurate"); //NON-NLS
-//        }
         Element rootEl = doc.getDocumentElement();
         String rootName = rootEl.getNodeName();
 
@@ -534,7 +520,7 @@ public final class CaseMetadata {
                 if (Case.CaseType.MULTI_USER_CASE == caseType && caseDatabaseName.isEmpty()) {
                     throw new CaseMetadataException("Case keyword search index name missing");
                 }
-                this.createdDate = ((Element) rootElement.getElementsByTagName(CREATED_DATE_NAME).item(0)).getTextContent();
+                this.setCreatedDate(((Element) rootElement.getElementsByTagName(CREATED_DATE_NAME).item(0)).getTextContent());
                 this.schemaVersion = ((Element) rootElement.getElementsByTagName(SCHEMA_VERSION_NAME).item(0)).getTextContent();
             } catch (NullPointerException ex) {
                 throw new CaseMetadataException("Error setting case metadata when opening file.", ex);

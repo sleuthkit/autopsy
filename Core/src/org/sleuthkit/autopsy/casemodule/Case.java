@@ -471,9 +471,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
         /*
          * Create the case metadata (.aut) file.
-         *
-         * TODO (AUT-1885): Replace use of obsolete and unsafe XMLCaseManagement
-         * class with use of CaseMetadata class.
          */
         String configFilePath = caseDir + File.separator + caseName + CASE_DOT_EXTENSION;
         CaseMetadata metadata = CaseMetadata.create(caseType, caseName, caseNumber, examiner, caseDir, santizedCaseName, indexName);
@@ -847,7 +844,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
         changeCase(null);
         try {
             services.close();
-            this.caseMetadata.close(); // close the xmlcm
             this.db.close();
         } catch (Exception e) {
             throw new CaseActionException(NbBundle.getMessage(this.getClass(), "Case.closeCase.exception.msg"), e);
@@ -865,8 +861,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
         logger.log(Level.INFO, "Deleting case.\ncaseDir: {0}", caseDir); //NON-NLS
 
         try {
-
-            this.caseMetadata.close(); // close the xmlcm
             boolean result = deleteCaseDirectory(caseDir); // delete the directory
 
             RecentCases.getInstance().removeRecentCase(this.name, this.configFilePath); // remove it from the recent case
