@@ -25,12 +25,13 @@ import javax.swing.JMenuItem;
 import org.openide.awt.DynamicMenuContent;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * This class is used to populate the list of open images to run ingest on them
+ * This class is used to populate the list of open dataSources to run ingest on them
  */
 final class RunIngestSubMenu extends JMenuItem implements DynamicMenuContent {
         
@@ -43,29 +44,28 @@ final class RunIngestSubMenu extends JMenuItem implements DynamicMenuContent {
      */
     @Override
     public JComponent[] getMenuPresenters() {
-        List<Image> images = new ArrayList<>();
+        List<Content> dataSources = new ArrayList<>();
         
-        try {
-            SleuthkitCase sk = Case.getCurrentCase().getSleuthkitCase();    
-            images = sk.getImages();
+        try {    
+            dataSources = Case.getCurrentCase().getDataSources();
         } catch (IllegalStateException ex) {
             // No open Cases, create a disabled empty menu
             return getEmpty();
         } catch (TskCoreException e) {
             System.out.println("Exception getting images: " + e.getMessage()); //NON-NLS
 	}
-        JComponent[] comps = new JComponent[images.size()];
+        JComponent[] comps = new JComponent[dataSources.size()];
 
         // Add Images to the component list
-        for (int i = 0; i < images.size(); i++) {
-            String action = images.get(i).getName();
+        for (int i = 0; i < dataSources.size(); i++) {
+            String action = dataSources.get(i).getName();
             JMenuItem menuItem = new JMenuItem(action);
             menuItem.setActionCommand(action.toUpperCase());
-            menuItem.addActionListener(new RunIngestModulesAction(images.get(i)));
+            menuItem.addActionListener(new RunIngestModulesAction(dataSources.get(i)));
             comps[i] = menuItem;
         }
-        // If no images are open, create a disabled empty menu
-        if (images.isEmpty()) {
+        // If no dataSources are open, create a disabled empty menu
+        if (dataSources.isEmpty()) {
             return getEmpty();
         }
         return comps;
