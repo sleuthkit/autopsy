@@ -24,6 +24,7 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.scene.Node;
 import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeCell;
@@ -31,7 +32,10 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javax.annotation.Nonnull;
 import org.apache.commons.lang3.StringUtils;
+import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
+import org.sleuthkit.datamodel.TagName;
 
 /**
  * A cell in the NavPanel tree that listens to its associated group's fileids
@@ -72,8 +76,10 @@ class GroupTreeCell extends TreeCell<GroupTreeNode> {
         });
     };
     private final ReadOnlyObjectProperty<GroupComparators<?>> sortOrder;
+    private final ImageGalleryController controller;
 
-    GroupTreeCell(ReadOnlyObjectProperty<GroupComparators<?>> sortOrderProperty) {
+    GroupTreeCell(ImageGalleryController controller, ReadOnlyObjectProperty<GroupComparators<?>> sortOrderProperty) {
+        this.controller = controller;
         this.sortOrder = sortOrderProperty;
         getStylesheets().add(GroupTreeCell.class.getResource("GroupTreeCell.css").toExternalForm()); //NON-NLS
         getStyleClass().add("groupTreeCell");        //reduce  indent to 5, default is 10 which uses up a lot of space. NON-NLS
@@ -112,7 +118,8 @@ class GroupTreeCell extends TreeCell<GroupTreeNode> {
                 setStyle("");
             });
         } else {
-            if (isNull(treeNode.getGroup())) {
+            DrawableGroup group = treeNode.getGroup();
+            if (isNull(group)) {
                 final String text = getGroupName();
                 //"dummy" group in file system tree <=>  a folder with no drawables
                 Platform.runLater(() -> {
@@ -124,20 +131,22 @@ class GroupTreeCell extends TreeCell<GroupTreeNode> {
 
             } else {
                 //if number of files in this group changes (eg a file is recategorized), update counts via listener
-                treeNode.getGroup().getFileIDs().addListener(fileCountListener);
-                treeNode.getGroup().uncatCountProperty().addListener(fileCountListener);
-                treeNode.getGroup().hashSetHitsCountProperty().addListener(fileCountListener);
+                group.getFileIDs().addListener(fileCountListener);
+                group.uncatCountProperty().addListener(fileCountListener);
+                group.hashSetHitsCountProperty().addListener(fileCountListener);
                 sortOrder.addListener(fileCountListener);
                 //if the seen state of this group changes update its style
-                treeNode.getGroup().seenProperty().addListener(seenListener);
+                group.seenProperty().addListener(seenListener);
 
                 //and use icon corresponding to group type
-                final Image icon = treeNode.getGroup().getGroupKey().getIcon();
+                Node icon = (group.getGroupByAttribute() == DrawableAttribute.TAGS)
+                        ? controller.getTagsManager().getGraphic((TagName) group.getGroupByValue())
+                        : group.getGroupKey().getGraphic();
                 final String text = getGroupName() + getCountsText();
                 final String style = getSeenStyleClass();
                 Platform.runLater(() -> {
                     setTooltip(new Tooltip(text));
-                    setGraphic(new ImageView(icon));
+                    setGraphic(icon);
                     setText(text);
                     setStyle(style);
                 });

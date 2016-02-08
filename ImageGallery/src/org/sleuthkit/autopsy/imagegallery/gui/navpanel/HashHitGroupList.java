@@ -79,7 +79,7 @@ final public class HashHitGroupList extends NavPanel<DrawableGroup> {
         getBorderPane().setCenter(groupList);
         sorted = getController().getGroupManager().getAnalyzedGroups().filtered((DrawableGroup t) -> t.getHashSetHitsCount() > 0).sorted(getDefaultComparator());
 
-        groupList.setCellFactory(treeView -> new GroupListCell(getSortByBox().getSelectionModel().selectedItemProperty()));
+        groupList.setCellFactory(treeView -> new GroupListCell(getController(), getSortByBox().getSelectionModel().selectedItemProperty()));
 
         groupList.setItems(sorted);
     }

@@ -29,8 +29,8 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.Slider;
@@ -39,6 +39,8 @@ import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.ToolBar;
 import javafx.scene.layout.HBox;
 import javax.swing.SortOrder;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
@@ -63,9 +65,6 @@ public class Toolbar extends ToolBar {
     private ComboBox<DrawableAttribute<?>> groupByBox;
 
     @FXML
-    private CheckBox onlyAnalyzedCheckBox;
-
-    @FXML
     private Slider sizeSlider;
 
     @FXML
@@ -88,6 +87,21 @@ public class Toolbar extends ToolBar {
 
     @FXML
     private SplitMenuButton tagGroupMenuButton;
+
+    @FXML
+    private Label groupByLabel;
+
+    @FXML
+    private Label sortByLabel;
+
+    @FXML
+    private Label tagImageViewLabel;
+
+    @FXML
+    private Label categoryImageViewLabel;
+
+    @FXML
+    private Label thumbnailSizeLabel;
 
     private static Toolbar instance;
 
@@ -120,12 +134,19 @@ public class Toolbar extends ToolBar {
     }
 
     @FXML
+    @NbBundle.Messages({"Toolbar.groupByLabel=Group By:",
+            "Toolbar.sortByLabel=Sort By:",
+            "Toolbar.ascRadio=Ascending",
+            "Toolbar.descRadio=Descending",
+            "Toolbar.tagImageViewLabel=Tag Group's Files:",
+            "Toolbar.categoryImageViewLabel=Categorize Group's Files:",
+            "Toolbar.thumbnailSizeLabel=Thumbnail Size (px):"})
     void initialize() {
         assert ascRadio != null : "fx:id=\"ascRadio\" was not injected: check your FXML file 'Toolbar.fxml'.";
         assert catGroupMenuButton != null : "fx:id=\"catSelectedMenubutton\" was not injected: check your FXML file 'Toolbar.fxml'.";
         assert descRadio != null : "fx:id=\"descRadio\" was not injected: check your FXML file 'Toolbar.fxml'.";
         assert groupByBox != null : "fx:id=\"groupByBox\" was not injected: check your FXML file 'Toolbar.fxml'.";
-        assert onlyAnalyzedCheckBox != null : "fx:id=\"onlyAnalyzedCheckBox\" was not injected: check your FXML file 'Toolbar.fxml'.";
+
         assert orderGroup != null : "fx:id=\"orderGroup\" was not injected: check your FXML file 'Toolbar.fxml'.";
         assert sizeSlider != null : "fx:id=\"sizeSlider\" was not injected: check your FXML file 'Toolbar.fxml'.";
         assert sortByBox != null : "fx:id=\"sortByBox\" was not injected: check your FXML file 'Toolbar.fxml'.";
@@ -152,6 +173,14 @@ public class Toolbar extends ToolBar {
                 tagGroupMenuButton.getItems().setAll(selTagMenues);
             }
         });
+
+        groupByLabel.setText(Bundle.Toolbar_groupByLabel());
+        sortByLabel.setText(Bundle.Toolbar_sortByLabel());
+        ascRadio.setText(Bundle.Toolbar_ascRadio());
+        descRadio.setText(Bundle.Toolbar_descRadio());
+        tagImageViewLabel.setText(Bundle.Toolbar_tagImageViewLabel());
+        categoryImageViewLabel.setText(Bundle.Toolbar_categoryImageViewLabel());
+        thumbnailSizeLabel.setText(Bundle.Toolbar_thumbnailSizeLabel());
 
         CategorizeGroupAction cat5GroupAction = new CategorizeGroupAction(Category.FIVE, controller);
         catGroupMenuButton.setOnAction(cat5GroupAction);

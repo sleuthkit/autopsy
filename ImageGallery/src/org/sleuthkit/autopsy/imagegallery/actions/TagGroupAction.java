@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,10 +20,8 @@ package org.sleuthkit.autopsy.imagegallery.actions;
 
 import com.google.common.collect.ImmutableSet;
 import java.util.Set;
-import javafx.scene.image.ImageView;
 import org.controlsfx.control.action.Action;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.datamodel.TagName;
 
 /**
@@ -36,6 +34,6 @@ public class TagGroupAction extends Action {
             Set<Long> fileIdSet = ImmutableSet.copyOf(controller.viewState().get().getGroup().getFileIDs());
             new AddDrawableTagAction(controller).addTagsToFiles(tagName, "", fileIdSet);
         });
-        setGraphic(new ImageView(DrawableAttribute.TAGS.getIcon()));
+        setGraphic(controller.getTagsManager().getGraphic(tagName));
     }
 }

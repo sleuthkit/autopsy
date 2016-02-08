@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,68 +21,91 @@ package org.sleuthkit.autopsy.corecomponentinterfaces;
 import javax.swing.JPanel;
 
 /**
- * Interface used by the Add DataSource wizard to allow different types of data
- * sources to be added to a case. Examples of data sources include disk images,
- * local files, etc.
+ * Interface implemented by classes that add data sources of a particular type
+ * (e.g., images, local disks, virtual directories of local/logical files, etc.)
+ * to a case database. A data source processor is NOT responsible for analyzing
+ * the data source (running ingest modules on the data source and its contents).
  *
- * The interface provides a uniform mechanism for the Autopsy UI to: - Collect
- * details from the user about the data source to be processed. - Process the
- * data source in the background and add data to the database - Provides
- * progress feedback to the user / UI.
+ * Data source processors plug in to the add data source wizard and should
+ * provide a JPanel to allow a user to select a data source and do any
+ * configuration the data source processor may require. The panel should support
+ * addition of the add data source wizard as a property change listener and
+ * should fire DSP_PANEL_EVENT property changes to communicate with the wizard.
+ *
+ * Data source processors should perform all processing on a separate thread,
+ * reporting results using a callback object.
  */
 public interface DataSourceProcessor {
 
     /**
-     * The DSP Panel may fire Property change events The caller must enure to
-     * add itself as a listener and then react appropriately to the events
+     * Property change events fired to communicate with the add data source
+     * wizard.
+     *
+     * TODO (AUT-1891): What is needed is a single PANEL_CHANGED event so that
+     * the wizard can call isPanelValid and set the enabling and focus of the
+     * next button based on the result.
      */
     enum DSP_PANEL_EVENT {
 
-        UPDATE_UI, ///< the content of JPanel has changed that MAY warrant updates to the caller UI
-        FOCUS_NEXT  ///< the caller UI may move focus the the next UI element, following the panel.
+        /**
+         * Fire this event when the user changes something in the panel to
+         * notify the add data source wizard that it should call isPanelValid.
+         */
+        UPDATE_UI,
+        /**
+         * Fire this event to make the add data source wizard move focus to the
+         * next button.
+         */
+        FOCUS_NEXT
     };
 
     /**
-     * Returns the type of Data Source it handles. This name gets displayed in
-     * the drop-down listbox
+     * Gets a string that describes the type of data sources this processor is
+     * able to process.
+     *
+     * @return A string suitable for display in a data source processor
+     *         selection UI component (e.g., a combo box).
      */
     String getDataSourceType();
 
     /**
-     * Returns the picker panel to be displayed along with any other runtime
-     * options supported by the data source handler. The DSP is responsible for
-     * storing the settings so that a later call to run() will have the
-     * user-specified settings.
+     * Gets the panel that allows a user to select a data source and do any
+     * configuration the data source processor may require.
      *
-     * Should be less than 544 pixels wide and 173 pixels high.
+     * @return A JPanel less than 544 pixels wide and 173 pixels high.
      */
     JPanel getPanel();
 
     /**
-     * Called to validate the input data in the panel. Returns true if no
-     * errors, or Returns false if there is an error.
+     * Indicates whether the settings in the panel are valid and complete.
+     *
+     * @return True if the settings are valid and complete and the processor is
+     *         ready to have its run method called; false otherwise.
      */
     boolean isPanelValid();
 
     /**
-     * Called to invoke the handling of data source in the background. Returns
-     * after starting the background thread.
+     * Adds a data source to the case database using a separate thread and the
+     * settings provided by the panel. Returns as soon as the background task is
+     * started and uses the callback object to signal task completion and return
+     * results.
      *
-     * @param progressPanel progress panel to be updated while processing
-     * @param dspCallback   Contains the callback method
-     *                      DataSourceProcessorCallback.done() that the DSP must
-     *                      call when the background thread finishes with errors
-     *                      and status.
+     * NOTE: This method should not be called unless isPanelValid returns true.
+     *
+     * @param progressMonitor Progress monitor for reporting progress during
+     *                        processing.
+     * @param callback        Callback to call when processing is done.
      */
-    void run(DataSourceProcessorProgressMonitor progressPanel, DataSourceProcessorCallback dspCallback);
+    void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback);
 
     /**
-     * Called to cancel the background processing.
+     * Requests cancellation of the data source processing task after it is
+     * started using the run method. Cancellation is not guaranteed.
      */
     void cancel();
 
     /**
-     * Called to reset/reinitialize the DSP.
+     * Resets the panel.
      */
     void reset();
 }

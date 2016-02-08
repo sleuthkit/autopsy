@@ -145,6 +145,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class GroupPane extends BorderPane {
 
     private static final Logger LOGGER = Logger.getLogger(GroupPane.class.getName());
+    private static final BorderWidths BORDER_WIDTHS_2 = new BorderWidths(2);
+    private static final CornerRadii CORNER_RADII_2 = new CornerRadii(2);
 
     private static final DropShadow DROP_SHADOW = new DropShadow(10, Color.BLUE);
 
@@ -212,6 +214,14 @@ public class GroupPane extends BorderPane {
 
     @FXML
     private Label groupLabel;
+    @FXML
+    private Label bottomLabel;
+    @FXML
+    private Label headerLabel;
+    @FXML
+    private Label catContainerLabel;
+    @FXML
+    private Label catHeadingLabel;
 
     @FXML
     private HBox catSegmentedContainer;
@@ -366,7 +376,11 @@ public class GroupPane extends BorderPane {
      * checks that FXML loading went ok and performs additional setup
      */
     @FXML
-    @NbBundle.Messages({"GroupPane.gridViewContextMenuItem.extractFiles=Extract File(s)"})
+    @NbBundle.Messages({"GroupPane.gridViewContextMenuItem.extractFiles=Extract File(s)",
+            "GroupPane.bottomLabel.displayText=Group Viewing History: ",
+            "GroupPane.hederLabel.displayText=Tag Selected Files:",
+            "GroupPane.catContainerLabel.displayText=Categorize Selected File:",
+            "GroupPane.catHeadingLabel.displayText=Category:"})
     void initialize() {
         assert cat0Toggle != null : "fx:id=\"cat0Toggle\" was not injected: check your FXML file 'SlideShowView.fxml'.";
         assert cat1Toggle != null : "fx:id=\"cat1Toggle\" was not injected: check your FXML file 'SlideShowView.fxml'.";
@@ -383,10 +397,11 @@ public class GroupPane extends BorderPane {
         assert tileToggle != null : "fx:id=\"tileToggle\" was not injected: check your FXML file 'GroupHeader.fxml'.";
 
         for (Category cat : Category.values()) {
-            getToggleForCategory(cat).setBorder(new Border(new BorderStroke(cat.getColor(), BorderStrokeStyle.SOLID, new CornerRadii(1), new BorderWidths(1))));
-            getToggleForCategory(cat).getStyleClass().remove("radio-button");
-            getToggleForCategory(cat).getStyleClass().add("toggle-button");
-            getToggleForCategory(cat).selectedProperty().addListener((ov, wasSelected, toggleSelected) -> {
+            ToggleButton toggleForCategory = getToggleForCategory(cat);
+            toggleForCategory.setBorder(new Border(new BorderStroke(cat.getColor(), BorderStrokeStyle.SOLID, CORNER_RADII_2, BORDER_WIDTHS_2)));
+            toggleForCategory.getStyleClass().remove("radio-button");
+            toggleForCategory.getStyleClass().add("toggle-button");
+            toggleForCategory.selectedProperty().addListener((ov, wasSelected, toggleSelected) -> {
                 if (toggleSelected && slideShowPane != null) {
                     slideShowPane.getFileID().ifPresent((fileID) -> {
                         selectionModel.clearAndSelect(fileID);
@@ -446,6 +461,10 @@ public class GroupPane extends BorderPane {
         tileToggle.getStyleClass().remove("radio-button");
         tileToggle.getStyleClass().add("toggle-button");
 
+        bottomLabel.setText(Bundle.GroupPane_bottomLabel_displayText());
+        headerLabel.setText(Bundle.GroupPane_hederLabel_displayText());
+        catContainerLabel.setText(Bundle.GroupPane_catContainerLabel_displayText());
+        catHeadingLabel.setText(Bundle.GroupPane_catHeadingLabel_displayText());
         //show categorization controls depending on group view mode
         headerToolBar.getItems().remove(catSegmentedContainer);
         groupViewMode.addListener((ObservableValue<? extends GroupViewMode> observable, GroupViewMode oldValue, GroupViewMode newValue) -> {
