@@ -21,7 +21,7 @@
             <top>
                 <ToolBar fx:id="toolBar" BorderPane.alignment="CENTER">
                     <items>
-                        <Label text="Sort By:" />
+                        <Label fx:id="sortByBoxLabel" text="Sort By:" />
                         <ComboBox fx:id="sortByBox" maxWidth="-Infinity" minWidth="-Infinity">
                             <items>
                                 <FXCollections fx:factory="observableArrayList">

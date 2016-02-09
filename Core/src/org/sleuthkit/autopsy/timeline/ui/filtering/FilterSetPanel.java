@@ -102,13 +102,14 @@ final public class FilterSetPanel extends BorderPane {
         "Timeline.ui.filtering.menuItem.others=others",
         "Timeline.ui.filtering.menuItem.select=select",
         "FilterSetPanel.hiddenDescriptionsListView.unhideAndRm=Unhide and remove from list",
-        "FilterSetPanel.hiddenDescriptionsListView.remove=Remove from list"})
+        "FilterSetPanel.hiddenDescriptionsListView.remove=Remove from list",
+        "FilsetSetPanel.hiddenDescriptionsPane.displayName=Hidden Descriptions"})
     void initialize() {
         assert applyButton != null : "fx:id=\"applyButton\" was not injected: check your FXML file 'FilterSetPanel.fxml'."; // NON-NLS
 
         ActionUtils.configureButton(new ApplyFiltersAction(), applyButton);
         defaultButton.setText(Bundle.FilterSetPanel_defaultButton_text());
-
+        hiddenDescriptionsPane.setText(Bundle.FilsetSetPanel_hiddenDescriptionsPane_displayName());
         //remove column headers via css.
         filterTreeTable.getStylesheets().addAll(FilterSetPanel.class.getResource("FilterTable.css").toExternalForm()); // NON-NLS
 
