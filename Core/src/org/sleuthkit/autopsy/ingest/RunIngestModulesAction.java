@@ -25,8 +25,9 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 
 /**
- * This class is used to add the action to the run ingest modules menu item. 
- * When the dataSource is pressed, it should open the wizard for ingest modules.
+ * This class is used to add the action to the run ingest modules menu item.
+ * When the data source is pressed, it should open the wizard for ingest
+ * modules.
  */
 final class RunIngestModulesAction extends AbstractAction {
 
@@ -40,7 +41,7 @@ final class RunIngestModulesAction extends AbstractAction {
     }
 
     /**
-     * Runs the ingest modules wizard on the dataSource.
+     * Runs the ingest modules wizard on the data source.
      *
      * @param e the action event
      */
