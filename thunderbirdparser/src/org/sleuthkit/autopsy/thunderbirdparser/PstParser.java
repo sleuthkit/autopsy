@@ -166,6 +166,8 @@ class PstParser {
      * @return
      */
     private EmailMessage extractEmailMessage(PSTMessage msg, String localPath) {
+        
+        logger.log(Level.INFO, "Extracting email message " + msg.getDescriptorNodeId()); //NON-NLS
         EmailMessage email = new EmailMessage();
         email.setRecipients(msg.getDisplayTo());
         email.setCc(msg.getDisplayCC());
@@ -186,7 +188,45 @@ class PstParser {
         email.setId(msg.getDescriptorNodeId());
 
         if (msg.hasAttachments()) {
-            extractAttachments(email, msg);
+            String uniqueFilenameRoot = "" + msg.getDescriptorNodeId();
+            extractAttachments(email, msg, uniqueFilenameRoot);
+        }
+
+        return email;
+    }
+    
+    /**
+     * Create an EmailMessage from an Embedded PSTMessage.
+     *
+     * @param msg
+     * @param localPath
+     * @param descriptorNodeId
+     *
+     * @return
+     */
+    private EmailMessage extractEmbeddedEmailMessage(PSTMessage msg, String localPath, String descriptorNodeId) {
+        EmailMessage email = new EmailMessage();
+        email.setRecipients(msg.getDisplayTo());
+        email.setCc(msg.getDisplayCC());
+        email.setBcc(msg.getDisplayBCC());
+        email.setSender(getSender(msg.getSenderName(), msg.getSenderEmailAddress()));
+        email.setSentDate(msg.getMessageDeliveryTime());
+        email.setTextBody(msg.getBody());
+        email.setHtmlBody(msg.getBodyHTML());
+        String rtf = "";
+        try {
+            rtf = msg.getRTFBody();
+        } catch (PSTException | IOException ex) {
+            logger.log(Level.INFO, "Failed to get RTF content from pst email."); //NON-NLS
+        }
+        email.setRtfBody(rtf);
+        email.setLocalPath(localPath);
+        email.setSubject(msg.getSubject());
+        //email.setId(msg.getDescriptorNodeId()); embedded messages are not part of the pst btree structure
+
+        if (msg.hasAttachments()) {
+            String uniqueFilenameRoot = descriptorNodeId;
+            extractAttachments(email, msg, uniqueFilenameRoot);
         }
 
         return email;
@@ -197,8 +237,10 @@ class PstParser {
      *
      * @param email
      * @param msg
+     * @param uniqueFilenameRoot
+     * 
      */
-    private void extractAttachments(EmailMessage email, PSTMessage msg) {
+    private void extractAttachments(EmailMessage email, PSTMessage msg, String uniqueFilenameRoot) {
         int numberOfAttachments = msg.getNumberOfAttachments();
         String outputDirPath = ThunderbirdMboxFileIngestModule.getModuleOutputPath() + File.separator;
         for (int x = 0; x < numberOfAttachments; x++) {
@@ -215,14 +257,32 @@ class PstParser {
                 if (filename.isEmpty()) {
                     filename = attach.getFilename();
                 }
-                String uniqueFilename = msg.getDescriptorNodeId() + "-" + filename;
+                if (filename.isEmpty()) {
+                    // the attachement *may* be an embedded message
+                    PSTMessage embeddedEmail = attach.getEmbeddedPSTMessage();
+                    if(embeddedEmail != null){
+                        results.add(extractEmbeddedEmailMessage(embeddedEmail, email.getLocalPath(), uniqueFilenameRoot));
+                        
+                        // saveAttachmentToDisk will write an 8 byte binary file instead the embedded message itself
+                        // so we use this as a placeholder at the moment
+
+                        filename = "placeholder for embedded message";
+                    }
+                }
+                String uniqueFilename = uniqueFilenameRoot + "-" + filename;
                 String outPath = outputDirPath + uniqueFilename;
                 saveAttachmentToDisk(attach, outPath);
 
                 EmailMessage.Attachment attachment = new EmailMessage.Attachment();
 
-                long crTime = attach.getCreationTime().getTime() / 1000;
-                long mTime = attach.getModificationTime().getTime() / 1000;
+                long crTime = 0;
+                if(attach.getCreationTime() != null) 
+                    crTime = attach.getCreationTime().getTime() / 1000;
+                
+                long mTime = 0;
+                if(attach.getModificationTime() != null) 
+                    mTime = attach.getModificationTime().getTime() / 1000;
+                                
                 String relPath = getRelModuleOutputPath() + File.separator + uniqueFilename;
                 attachment.setName(filename);
                 attachment.setCrTime(crTime);
