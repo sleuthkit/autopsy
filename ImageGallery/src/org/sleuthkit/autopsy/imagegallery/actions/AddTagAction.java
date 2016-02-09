@@ -25,7 +25,6 @@ import javafx.event.ActionEvent;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javax.swing.SwingUtilities;
-
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
@@ -33,7 +32,6 @@ import org.sleuthkit.autopsy.actions.GetTagNameAndCommentDialog;
 import org.sleuthkit.autopsy.actions.GetTagNameDialog;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
-import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.datamodel.TagName;
 
 /**
@@ -74,9 +72,9 @@ abstract class AddTagAction {
     // @@@ This user interface has some significant usability issues and needs
     // to be reworked.
     @NbBundle.Messages({"AddTagAction.menuItem.quickTag=Quick Tag",
-            "AddTagAction.menuItem.noTags=No tags",
-            "AddTagAction.menuItem.newTag=New Tag...",
-            "AddTagAction.menuItem.tagAndComment=Tag and Comment..."})
+        "AddTagAction.menuItem.noTags=No tags",
+        "AddTagAction.menuItem.newTag=New Tag...",
+        "AddTagAction.menuItem.tagAndComment=Tag and Comment..."})
     protected class TagMenu extends Menu {
 
         TagMenu(ImageGalleryController controller) {
@@ -133,11 +131,7 @@ abstract class AddTagAction {
                 SwingUtilities.invokeLater(() -> {
                     GetTagNameAndCommentDialog.TagNameAndComment tagNameAndComment = GetTagNameAndCommentDialog.doDialog(getIGWindow());
                     if (null != tagNameAndComment) {
-                        if (CategoryManager.isCategoryTagName(tagNameAndComment.getTagName())) {
-                            new CategorizeAction(controller).addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
-                        } else {
-                            new AddDrawableTagAction(controller).addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
-                        }
+                        new AddDrawableTagAction(controller).addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
                     }
                 });
             });

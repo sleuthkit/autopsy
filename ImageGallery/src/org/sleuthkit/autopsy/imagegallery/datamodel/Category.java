@@ -25,6 +25,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
+import javafx.scene.Scene;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.Border;
@@ -94,6 +97,7 @@ public enum Category {
     private final String displayName;
 
     private final int id;
+    private Image snapshot;
 
     private Category(Color color, int id, String name) {
         this.color = color;
@@ -118,11 +122,15 @@ public enum Category {
         return displayName;
     }
 
-    public Node getGraphic() {
-        Region region = new Region();
-        region.setBackground(new Background(new BackgroundFill(getColor(), CORNER_RADII_4, Insets.EMPTY)));
-        region.setPrefSize(16, 16);
-        region.setBorder(new Border(new BorderStroke(getColor().darker(), BorderStrokeStyle.SOLID, CORNER_RADII_4, BORDER_WIDTHS_2)));
-        return region;
+    synchronized public Node getGraphic() {
+        if (snapshot == null) {
+            Region region = new Region();
+            region.setBackground(new Background(new BackgroundFill(getColor(), CORNER_RADII_4, Insets.EMPTY)));
+            region.setPrefSize(16, 16);
+            region.setBorder(new Border(new BorderStroke(getColor().darker(), BorderStrokeStyle.SOLID, CORNER_RADII_4, BORDER_WIDTHS_2)));
+            Scene scene = new Scene(region, 16, 16, Color.TRANSPARENT);
+            snapshot = region.snapshot(null, null);
+        }
+        return new ImageView(snapshot);
     }
 }
