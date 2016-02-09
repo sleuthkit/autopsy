@@ -19,21 +19,15 @@
 package org.sleuthkit.autopsy.imagegallery.actions;
 
 import com.google.common.collect.ImmutableSet;
-import java.util.Set;
-import org.controlsfx.control.action.Action;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.datamodel.TagName;
 
 /**
  *
  */
-public class TagGroupAction extends Action {
+public class TagGroupAction extends AddDrawableTagAction {
 
     public TagGroupAction(final TagName tagName, ImageGalleryController controller) {
-        super(tagName.getDisplayName(), (javafx.event.ActionEvent actionEvent) -> {
-            Set<Long> fileIdSet = ImmutableSet.copyOf(controller.viewState().get().getGroup().getFileIDs());
-            new AddDrawableTagAction(controller).addTagsToFiles(tagName, "", fileIdSet);
-        });
-        setGraphic(controller.getTagsManager().getGraphic(tagName));
+        super(controller, tagName, ImmutableSet.copyOf(controller.viewState().get().getGroup().getFileIDs()));
     }
 }

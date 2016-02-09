@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,7 +35,6 @@ import javafx.scene.input.KeyCodeCombination;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
 import javax.swing.JOptionPane;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
@@ -109,7 +108,7 @@ public class CategorizeAction extends AddTagAction {
                 MenuItem categoryItem = new MenuItem(cat.getDisplayName());
                 categoryItem.setOnAction((ActionEvent t) -> {
                     final CategorizeAction categorizeAction = new CategorizeAction(controller);
-                    categorizeAction.addTag(controller.getCategoryManager().getTagName(cat), NO_COMMENT);
+                    categorizeAction.addTag(controller.getCategoryManager().getTagName(cat), "");
                 });
                 categoryItem.setAccelerator(new KeyCodeCombination(KeyCode.getKeyCode(Integer.toString(cat.getCategoryNumber()))));
                 getItems().add(categoryItem);
@@ -118,8 +117,8 @@ public class CategorizeAction extends AddTagAction {
     }
 
     @NbBundle.Messages({"# {0} - fileID number",
-            "CategorizeTask.errorUnable.msg=Unable to categorize {0}.",
-            "CategorizeTask.errorUnable.title=Categorizing Error"})
+        "CategorizeTask.errorUnable.msg=Unable to categorize {0}.",
+        "CategorizeTask.errorUnable.title=Categorizing Error"})
     private class CategorizeTask extends ImageGalleryController.InnerTask {
 
         private final Set<Long> fileIDs;
@@ -137,7 +136,6 @@ public class CategorizeAction extends AddTagAction {
             this.createUndo = createUndo;
 
         }
-
 
         @Override
         public void run() {
