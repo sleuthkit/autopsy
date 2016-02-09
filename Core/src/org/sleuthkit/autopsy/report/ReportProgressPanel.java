@@ -306,16 +306,21 @@ public class ReportProgressPanel extends javax.swing.JPanel {
         processingLabel = new javax.swing.JLabel();
         separationLabel = new javax.swing.JLabel();
 
+        setFont(getFont().deriveFont(getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         setMinimumSize(new java.awt.Dimension(486, 68));
 
-        reportLabel.setFont(reportLabel.getFont().deriveFont(Font.BOLD, 11));
+        reportProgressBar.setFont(reportProgressBar.getFont().deriveFont(reportProgressBar.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+
+        reportLabel.setFont(reportLabel.getFont().deriveFont(reportLabel.getFont().getStyle() | java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(reportLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.reportLabel.text")); // NOI18N
 
+        pathLabel.setFont(pathLabel.getFont().deriveFont(pathLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(pathLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.pathLabel.text")); // NOI18N
 
-        processingLabel.setFont(processingLabel.getFont().deriveFont(Font.ITALIC, 10));
+        processingLabel.setFont(processingLabel.getFont().deriveFont((processingLabel.getFont().getStyle() | java.awt.Font.ITALIC) & ~java.awt.Font.BOLD, 10));
         org.openide.awt.Mnemonics.setLocalizedText(processingLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.processingLabel.text")); // NOI18N
 
+        separationLabel.setFont(separationLabel.getFont().deriveFont(separationLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(separationLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.separationLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);

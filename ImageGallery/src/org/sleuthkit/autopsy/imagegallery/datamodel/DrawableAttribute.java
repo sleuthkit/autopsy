@@ -25,8 +25,11 @@ import java.util.List;
 import java.util.function.Function;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.StringProperty;
+import javafx.scene.Node;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.TagName;
 
@@ -37,22 +40,37 @@ import org.sleuthkit.datamodel.TagName;
  * TODO: Review and refactor DrawableAttribute related code with an eye to usage
  * of type paramaters and multivalued attributes
  */
+@NbBundle.Messages({"DrawableAttribute.md5hash=MD5 Hash",
+    "DrawableAttribute.name=Name",
+    "DrawableAttribute.analyzed=Analyzed",
+    "DrawableAttribute.category=Category",
+    "DrawableAttribute.tags=Tags",
+    "DrawableAttribute.path=Path",
+    "DrawableAttribute.createdTime=Created Time",
+    "DrawableAttribute.modifiedTime=Modified Time",
+    "DrawableAttribute.cameraMake=Camera Make",
+    "DrawableAttribute.cameraModel=Camera Model",
+    "DrawableAttribute.hashSet=Hashset",
+    "DrawableAttribute.intObjID=Internal Object ID",
+    "DrawableAttribute.width=Width",
+    "DrawableAttribute.height=Height",
+    "DrawableAttribute.mimeType=MIME type"})
 public class DrawableAttribute<T extends Comparable<T>> {
 
     public final static DrawableAttribute<String> MD5_HASH =
-            new DrawableAttribute<>(AttributeName.MD5_HASH, "MD5 Hash",
+            new DrawableAttribute<>(AttributeName.MD5_HASH, Bundle.DrawableAttribute_md5hash(),
                     false,
-                    "icon-hashtag.png",
+                    "icon-hashtag.png", // NON-NLS
                     f -> Collections.singleton(f.getMd5Hash()));
 
     public final static DrawableAttribute<String> NAME =
-            new DrawableAttribute<>(AttributeName.NAME, "Name",
+            new DrawableAttribute<>(AttributeName.NAME, Bundle.DrawableAttribute_name(),
                     true,
-                    "folder-rename.png",
+                    "folder-rename.png", //NON-NLS
                     f -> Collections.singleton(f.getName()));
 
     public final static DrawableAttribute<Boolean> ANALYZED =
-            new DrawableAttribute<>(AttributeName.ANALYZED, "Analyzed",
+            new DrawableAttribute<>(AttributeName.ANALYZED, Bundle.DrawableAttribute_analyzed(),
                     true,
                     "",
                     f -> Collections.singleton(f.isAnalyzed()));
@@ -66,75 +84,81 @@ public class DrawableAttribute<T extends Comparable<T>> {
      * advantage. move categories into DrawableDB?
      */
     public final static DrawableAttribute<Category> CATEGORY =
-            new DrawableAttribute<>(AttributeName.CATEGORY, "Category",
+            new DrawableAttribute<Category>(AttributeName.CATEGORY, Bundle.DrawableAttribute_category(),
                     false,
-                    "category-icon.png",
-                    f -> Collections.singleton(f.getCategory()));
+                    "category-icon.png", //NON-NLS
+                    f -> Collections.singleton(f.getCategory())) {
+
+                @Override
+                public Node getGraphicForValue(Category val) {
+                    return val.getGraphic();
+                }
+            };
 
     public final static DrawableAttribute<TagName> TAGS =
-            new DrawableAttribute<>(AttributeName.TAGS, "Tags",
+            new DrawableAttribute<>(AttributeName.TAGS, Bundle.DrawableAttribute_tags(),
                     false,
-                    "tag_red.png",
+                    "tag_red.png", //NON-NLS
                     DrawableFile::getTagNames);
 
     public final static DrawableAttribute<String> PATH =
-            new DrawableAttribute<>(AttributeName.PATH, "Path",
+            new DrawableAttribute<>(AttributeName.PATH, Bundle.DrawableAttribute_path(),
                     true,
-                    "folder_picture.png",
+                    "folder_picture.png", //NON-NLS
                     f -> Collections.singleton(f.getDrawablePath()));
 
     public final static DrawableAttribute<String> CREATED_TIME =
-            new DrawableAttribute<>(AttributeName.CREATED_TIME, "Created Time",
+            new DrawableAttribute<>(AttributeName.CREATED_TIME, Bundle.DrawableAttribute_createdTime(),
                     true,
-                    "clock--plus.png",
+                    "clock--plus.png", //NON-NLS
                     f -> Collections.singleton(ContentUtils.getStringTime(f.getCrtime(), f)));
 
     public final static DrawableAttribute<String> MODIFIED_TIME =
-            new DrawableAttribute<>(AttributeName.MODIFIED_TIME, "Modified Time",
+            new DrawableAttribute<>(AttributeName.MODIFIED_TIME, Bundle.DrawableAttribute_modifiedTime(),
                     true,
-                    "clock--pencil.png",
+                    "clock--pencil.png", //NON-NLS
                     f -> Collections.singleton(ContentUtils.getStringTime(f.getMtime(), f)));
 
     public final static DrawableAttribute<String> MAKE =
-            new DrawableAttribute<>(AttributeName.MAKE, "Camera Make",
+            new DrawableAttribute<>(AttributeName.MAKE, Bundle.DrawableAttribute_cameraMake(),
                     true,
-                    "camera.png",
+                    "camera.png", //NON-NLS
                     f -> Collections.singleton(f.getMake()));
 
     public final static DrawableAttribute<String> MODEL =
-            new DrawableAttribute<>(AttributeName.MODEL, "Camera Model",
+            new DrawableAttribute<>(AttributeName.MODEL, Bundle.DrawableAttribute_cameraModel(),
                     true,
-                    "camera.png",
+                    "camera.png", //NON-NLS
                     f -> Collections.singleton(f.getModel()));
 
     public final static DrawableAttribute<String> HASHSET =
-            new DrawableAttribute<>(AttributeName.HASHSET, "Hashset",
+            new DrawableAttribute<>(AttributeName.HASHSET, Bundle.DrawableAttribute_hashSet(),
                     true,
-                    "hashset_hits.png",
+                    "hashset_hits.png", //NON-NLS
                     DrawableFile::getHashSetNamesUnchecked);
 
     public final static DrawableAttribute<Long> OBJ_ID =
-            new DrawableAttribute<>(AttributeName.OBJ_ID, "Internal Object ID",
+            new DrawableAttribute<>(AttributeName.OBJ_ID, Bundle.DrawableAttribute_intObjID(),
                     true,
                     "",
                     f -> Collections.singleton(f.getId()));
 
     public final static DrawableAttribute<Double> WIDTH =
-            new DrawableAttribute<>(AttributeName.WIDTH, "Width",
+            new DrawableAttribute<>(AttributeName.WIDTH, Bundle.DrawableAttribute_width(),
                     false,
-                    "arrow-resize.png",
+                    "arrow-resize.png", //NON-NLS
                     f -> Collections.singleton(f.getWidth()));
 
     public final static DrawableAttribute<Double> HEIGHT =
-            new DrawableAttribute<>(AttributeName.HEIGHT, "Height",
+            new DrawableAttribute<>(AttributeName.HEIGHT, Bundle.DrawableAttribute_height(),
                     false,
-                    "arrow-resize-090.png",
+                    "arrow-resize-090.png", //NON-NLS
                     f -> Collections.singleton(f.getHeight()));
 
     public final static DrawableAttribute<String> MIME_TYPE =
-            new DrawableAttribute<>(AttributeName.MIME_TYPE, "MIME type",
+            new DrawableAttribute<>(AttributeName.MIME_TYPE, Bundle.DrawableAttribute_mimeType(),
                     false,
-                    "mime_types.png",
+                    "mime_types.png", //NON-NLS
                     f -> Collections.singleton(f.getMIMEType()));
 
     final private static List< DrawableAttribute<?>> groupables =
@@ -170,7 +194,7 @@ public class DrawableAttribute<T extends Comparable<T>> {
          * time they are needed
          */
         if (null == icon && StringUtils.isNotBlank(imageName)) {
-            this.icon = new Image("org/sleuthkit/autopsy/imagegallery/images/" + imageName, true);
+            this.icon = new Image("org/sleuthkit/autopsy/imagegallery/images/" + imageName, true); //NON-NLS
         }
         return icon;
     }
@@ -179,8 +203,8 @@ public class DrawableAttribute<T extends Comparable<T>> {
      * TODO: override this to load per value icons form some attributes like
      * mime-type and category
      */
-    public Image getIconForValue(T val) {
-        return getIcon();
+    public Node getGraphicForValue(T val) {
+        return new ImageView(getIcon());
     }
 
     public static List<DrawableAttribute<?>> getGroupableAttrs() {

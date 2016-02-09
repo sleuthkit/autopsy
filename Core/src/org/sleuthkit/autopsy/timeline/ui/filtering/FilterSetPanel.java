@@ -53,9 +53,6 @@ import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
-import static org.sleuthkit.autopsy.timeline.ui.filtering.Bundle.Timeline_ui_filtering_menuItem_none;
-import static org.sleuthkit.autopsy.timeline.ui.filtering.Bundle.Timeline_ui_filtering_menuItem_only;
-import static org.sleuthkit.autopsy.timeline.ui.filtering.Bundle.Timeline_ui_filtering_menuItem_select;
 
 /**
  * The FXML controller for the filter ui.
@@ -65,7 +62,7 @@ import static org.sleuthkit.autopsy.timeline.ui.filtering.Bundle.Timeline_ui_fil
  */
 final public class FilterSetPanel extends BorderPane {
 
-    private static final Image TICK = new Image("org/sleuthkit/autopsy/timeline/images/tick.png");
+    private static final Image TICK = new Image("org/sleuthkit/autopsy/timeline/images/tick.png"); //NON-NLS
 
     @FXML
     private Button applyButton;
@@ -103,13 +100,16 @@ final public class FilterSetPanel extends BorderPane {
         "Timeline.ui.filtering.menuItem.none=none",
         "Timeline.ui.filtering.menuItem.only=only",
         "Timeline.ui.filtering.menuItem.others=others",
-        "Timeline.ui.filtering.menuItem.select=select"})
+        "Timeline.ui.filtering.menuItem.select=select",
+        "FilterSetPanel.hiddenDescriptionsListView.unhideAndRm=Unhide and remove from list",
+        "FilterSetPanel.hiddenDescriptionsListView.remove=Remove from list",
+        "FilsetSetPanel.hiddenDescriptionsPane.displayName=Hidden Descriptions"})
     void initialize() {
         assert applyButton != null : "fx:id=\"applyButton\" was not injected: check your FXML file 'FilterSetPanel.fxml'."; // NON-NLS
 
         ActionUtils.configureButton(new ApplyFiltersAction(), applyButton);
         defaultButton.setText(Bundle.FilterSetPanel_defaultButton_text());
-
+        hiddenDescriptionsPane.setText(Bundle.FilsetSetPanel_hiddenDescriptionsPane_displayName());
         //remove column headers via css.
         filterTreeTable.getStylesheets().addAll(FilterSetPanel.class.getResource("FilterTable.css").toExternalForm()); // NON-NLS
 
@@ -123,14 +123,14 @@ final public class FilterSetPanel extends BorderPane {
                     t.getValue().setSelected(Boolean.TRUE);
                 });
             });
-            MenuItem none = new MenuItem(Timeline_ui_filtering_menuItem_none());
+            MenuItem none = new MenuItem(Bundle.Timeline_ui_filtering_menuItem_none());
             none.setOnAction(e -> {
                 row.getTreeItem().getParent().getChildren().forEach((TreeItem<Filter> t) -> {
                     t.getValue().setSelected(Boolean.FALSE);
                 });
             });
 
-            MenuItem only = new MenuItem(Timeline_ui_filtering_menuItem_only());
+            MenuItem only = new MenuItem(Bundle.Timeline_ui_filtering_menuItem_only());
             only.setOnAction(e -> {
                 row.getTreeItem().getParent().getChildren().forEach((TreeItem<Filter> t) -> {
                     if (t == row.getTreeItem()) {
@@ -151,7 +151,7 @@ final public class FilterSetPanel extends BorderPane {
                 });
             });
             final ContextMenu rowMenu = new ContextMenu();
-            Menu select = new Menu(Timeline_ui_filtering_menuItem_select());
+            Menu select = new Menu(Bundle.Timeline_ui_filtering_menuItem_select());
             select.setOnAction(e -> {
                 row.getItem().setSelected(!row.getItem().isSelected());
             });
@@ -212,9 +212,9 @@ final public class FilterSetPanel extends BorderPane {
 
                         private void configureText(Boolean newValue) {
                             if (newValue) {
-                                setText("Unhide and remove from list");
+                                setText(Bundle.FilterSetPanel_hiddenDescriptionsListView_unhideAndRm());
                             } else {
-                                setText("Remove from list");
+                                setText(Bundle.FilterSetPanel_hiddenDescriptionsListView_remove());
                             }
                         }
                     }));
@@ -257,12 +257,13 @@ final public class FilterSetPanel extends BorderPane {
         });
     }
 
-    @NbBundle.Messages({"FilterSetPanel.applyButton.text=Apply"})
+    @NbBundle.Messages({"FilterSetPanel.applyButton.text=Apply",
+            "FilterSetPanel.applyButton.longText=(Re)Apply filters"})
     private class ApplyFiltersAction extends Action {
 
         ApplyFiltersAction() {
             super(Bundle.FilterSetPanel_applyButton_text());
-            setLongText("(Re)Apply filters");
+            setLongText(Bundle.FilterSetPanel_applyButton_longText());
             setGraphic(new ImageView(TICK));
             setEventHandler((ActionEvent t) -> {
                 applyFilters();

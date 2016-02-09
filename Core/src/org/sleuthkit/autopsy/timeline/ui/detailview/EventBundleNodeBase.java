@@ -84,10 +84,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  *
  */
+@NbBundle.Messages({"EventBundleNodeBase.toolTip.loading=loading..."})
 public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentType>, ParentType extends EventBundle<BundleType>, ParentNodeType extends EventBundleNodeBase<ParentType, BundleType, ?>> extends StackPane {
 
     private static final Logger LOGGER = Logger.getLogger(EventBundleNodeBase.class.getName());
-    private static final Image HASH_PIN = new Image("/org/sleuthkit/autopsy/images/hashset_hits.png"); //NOI18N
+    private static final Image HASH_PIN = new Image("/org/sleuthkit/autopsy/images/hashset_hits.png"); //NOI18N NON-NLS
     private static final Image TAG = new Image("/org/sleuthkit/autopsy/images/green-tag-icon-16.png"); // NON-NLS //NOI18N
 
     static final CornerRadii CORNER_RADII_3 = new CornerRadii(3);
@@ -131,7 +132,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
     final ImageView tagIV = new ImageView(TAG);
     final HBox infoHBox = new HBox(5, descrLabel, countLabel, hashIV, tagIV);
 
-    private final Tooltip tooltip = new Tooltip("loading...");
+    private final Tooltip tooltip = new Tooltip(Bundle.EventBundleNodeBase_toolTip_loading());
     private Timeline timeline;
 
     public EventBundleNodeBase(EventDetailsChart chart, BundleType eventBundle, ParentNodeType parentNode) {
@@ -226,13 +227,18 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         "# {2} - description",
         "# {3} - start date/time",
         "# {4} - end date/time",
-        "EventBundleNodeBase.tooltip.text={0} {1} events\n{2}\nbetween\t{3}\nand   \t{4}"})
+        "EventBundleNodeBase.tooltip.text={0} {1} events\n{2}\nbetween\t{3}\nand   \t{4}",
+        "EventBundleNodeBase.toolTip.loading2=loading tooltip",
+        "# {0} - hash set count string",
+        "EventBundleNodeBase.toolTip.hashSetHits=\n\nHash Set Hits\n{0}",
+        "# {0} - tag count string",
+        "EventBundleNodeBase.toolTip.tags=\n\nTags\n{0}"})
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void installTooltip() {
-        if (tooltip.getText().equalsIgnoreCase("loading...")) {
+        if (tooltip.getText().equalsIgnoreCase(Bundle.EventBundleNodeBase_toolTip_loading())) {
             final Task<String> tooltTipTask = new Task<String>() {
                 {
-                    updateTitle("loading tooltip");
+                    updateTitle(Bundle.EventBundleNodeBase_toolTip_loading2());
                 }
 
                 @Override
@@ -248,7 +254,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
                                 }
                             }
                         } catch (TskCoreException ex) {
-                            LOGGER.log(Level.SEVERE, "Error getting hashset hit info for event.", ex);
+                            LOGGER.log(Level.SEVERE, "Error getting hashset hit info for event.", ex); //NON-NLS
                         }
                     }
                     String hashSetCountsString = hashSetCounts.entrySet().stream()
@@ -266,8 +272,8 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
                     return Bundle.EventBundleNodeBase_tooltip_text(getEventIDs().size(), getEventType(), getDescription(),
                             TimeLineController.getZonedFormatter().print(getStartMillis()),
                             TimeLineController.getZonedFormatter().print(getEndMillis() + 1000))
-                            + (hashSetCountsString.isEmpty() ? "" : "\n\nHash Set Hits\n" + hashSetCountsString)
-                            + (tagCountsString.isEmpty() ? "" : "\n\nTags\n" + tagCountsString);
+                            + (hashSetCountsString.isEmpty() ? "" : Bundle.EventBundleNodeBase_toolTip_hashSetHits(hashSetCountsString))
+                            + (tagCountsString.isEmpty() ? "" : Bundle.EventBundleNodeBase_toolTip_tags(tagCountsString));
                 }
 
                 @Override
@@ -277,7 +283,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
                         tooltip.setText(get());
                         tooltip.setGraphic(null);
                     } catch (InterruptedException | ExecutionException ex) {
-                        LOGGER.log(Level.SEVERE, "Tooltip generation failed.", ex);
+                        LOGGER.log(Level.SEVERE, "Tooltip generation failed.", ex); //NON-NLS
                     }
                 }
             };

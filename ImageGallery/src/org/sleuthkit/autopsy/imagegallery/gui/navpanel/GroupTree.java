@@ -32,6 +32,7 @@ import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.image.ImageView;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
@@ -53,15 +54,16 @@ final public class GroupTree extends NavPanel<TreeItem<GroupTreeNode>> {
 
     public GroupTree(ImageGalleryController controller) {
         super(controller);
-        FXMLConstructor.construct(this, "NavPanel.fxml");
+        FXMLConstructor.construct(this, "NavPanel.fxml"); //NON-NLS
     }
 
     @FXML
     @Override
+    @NbBundle.Messages({"GroupTree.displayName.allGroups=All Groups"})
     void initialize() {
         super.initialize();
-        setText("All Groups");
-        setGraphic(new ImageView("org/sleuthkit/autopsy/imagegallery/images/Folder-icon.png"));
+        setText(Bundle.GroupTree_displayName_allGroups());
+        setGraphic(new ImageView("org/sleuthkit/autopsy/imagegallery/images/Folder-icon.png")); //NON-NLS
 
         getBorderPane().setCenter(groupTree);
 
@@ -70,7 +72,7 @@ final public class GroupTree extends NavPanel<TreeItem<GroupTreeNode>> {
         getToolBar().visibleProperty().bind(groupedByPath.not());
         getToolBar().managedProperty().bind(groupedByPath.not());
 
-        groupTree.setCellFactory(treeView -> new GroupTreeCell(getSortByBox().getSelectionModel().selectedItemProperty()));
+        groupTree.setCellFactory(treeView -> new GroupTreeCell(getController(), getSortByBox().getSelectionModel().selectedItemProperty()));
         groupTree.setShowRoot(false);
 
         getGroupManager().getAnalyzedGroups().addListener((ListChangeListener.Change<? extends DrawableGroup> change) -> {

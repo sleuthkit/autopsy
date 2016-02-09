@@ -36,12 +36,12 @@ The tool has been designed specifically with child-exploitation cases in mind an
 
 Name|Description|Color
 ----|-----------------|------
-CAT-0|Uncategorized|![gray](ImageGallery/gray.png)
-CAT-1|Child Abuse Material  |![red](ImageGallery/red.png)
-CAT-2|Child Exploitative / Age Difficult|![orange](ImageGallery/orange.png)
-CAT-3|CGI / Animation|![yellow](ImageGallery/yellow.png)
-CAT-4|Comparison Images |![bisque](ImageGallery/bisque.png)
-CAT-5|Non-pertinent|![green](ImageGallery/green.png)
+CAT-0|Uncategorized|![gray](ImageGallery/gray.PNG)
+CAT-1|Child Abuse Material  |![red](ImageGallery/red.PNG)
+CAT-2|Child Exploitative / Age Difficult|![orange](ImageGallery/orange.PNG)
+CAT-3|CGI / Animation|![yellow](ImageGallery/yellow.PNG)
+CAT-4|Comparison Images |![bisque](ImageGallery/bisque.PNG)
+CAT-5|Non-pertinent|![green](ImageGallery/green.PNG)
 
 GUI controls
 =================
@@ -82,10 +82,10 @@ Each file is represented in the main display area via a small tile.  The tile sh
 | image | description | meaning|
 |----|----|-----|
 | | solid colored border | file’s assigned category.|
-| ![](ImageGallery/purpledash.png) "" | purple dashed border |   file  has a known bad hashset hit, but has not yet been categorized. |
-| ![](ImageGallery/hashset_hits.png) ""|pushpin |  file  has a known bad hashset hit|
-| ![](ImageGallery/video-file.png) ""| clapboard on document | video file|
-| ![](ImageGallery/flag_red.png) ""| a red flag | file has been 'flagged' as with the follow up tag|
+| ![](ImageGallery/purpledash.PNG) "" | purple dashed border |   file  has a known bad hashset hit, but has not yet been categorized. |
+| ![](ImageGallery/hashset_hits.PNG) ""|pushpin |  file  has a known bad hashset hit|
+| ![](ImageGallery/video-file.PNG) ""| clapboard on document | video file|
+| ![](ImageGallery/flag_red.PNG) ""| a red flag | file has been 'flagged' as with the follow up tag|
 
 
 Slide Show Mode

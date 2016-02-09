@@ -87,11 +87,19 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         initialize();
     }
 
+    @NbBundle.Messages({"DataResultViewerThumbnail.thumbnailSizeComboBox.small=Small Thumbnails",
+                "DataResultViewerThumbnail.thumbnailSizeComboBox.medium=Medium Thumbnails",
+                "DataResultViewerThumbnail.thumbnailSizeComboBox.large=Large Thumbnails"
+    })
     private void initialize() {
         initComponents();
 
         iconView.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         em.addPropertyChangeListener(new ExplorerManagerNodeSelectionListener());
+        thumbnailSizeComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(
+                new String[] {  Bundle.DataResultViewerThumbnail_thumbnailSizeComboBox_small(),
+                                Bundle.DataResultViewerThumbnail_thumbnailSizeComboBox_medium(),
+                                Bundle.DataResultViewerThumbnail_thumbnailSizeComboBox_large() }));
 
         curPage = -1;
         totalPages = 0;
@@ -166,7 +174,6 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             }
         });
 
-        thumbnailSizeComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { "Small Thumbnails", "Medium Thumbnails", "Large Thumbnails" }));
         thumbnailSizeComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 thumbnailSizeComboBoxActionPerformed(evt);
@@ -203,10 +210,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                                 .addComponent(imagesRangeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(thumbnailSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 0, 0)
-                        .addComponent(iconView, javax.swing.GroupLayout.DEFAULT_SIZE, 563, Short.MAX_VALUE)
-                        .addGap(0, 0, 0)))
+                    .addComponent(iconView, javax.swing.GroupLayout.DEFAULT_SIZE, 563, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(

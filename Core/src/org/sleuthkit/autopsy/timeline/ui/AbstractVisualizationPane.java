@@ -223,7 +223,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
                     try {
                         this.hasEvents.set(updateTask.get());
                     } catch (InterruptedException | ExecutionException ex) {
-                        LOGGER.log(Level.SEVERE, "Unexpected exception updating visualization", ex); //NOI18N
+                        LOGGER.log(Level.SEVERE, "Unexpected exception updating visualization", ex); //NOI18N NON-NLS
                     }
                     break;
             }

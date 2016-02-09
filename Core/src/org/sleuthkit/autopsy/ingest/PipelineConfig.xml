@@ -10,7 +10,7 @@ Contains only the core ingest modules that ship with Autopsy -->
     <PIPELINE type="FileAnalysis">
         <MODULE>org.sleuthkit.autopsy.modules.hashdatabase.HashLookupModuleFactory</MODULE>
         <MODULE>org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory</MODULE>
-        <MODULE>org.sleuthkit.autopsy.modules.sevenzip.ArchiveFileExtractorModuleFactory</MODULE>
+        <MODULE>org.sleuthkit.autopsy.modules.embeddedfileextractor.EmbeddedFileExtractorModuleFactory</MODULE>
         <MODULE>org.sleuthkit.autopsy.modules.exif.ExifParserModuleFactory</MODULE>
         <MODULE>org.sleuthkit.autopsy.keywordsearch.KeywordSearchModuleFactory</MODULE>
         <MODULE>org.sleuthkit.autopsy.thunderbirdparser.EmailParserModuleFactory</MODULE>

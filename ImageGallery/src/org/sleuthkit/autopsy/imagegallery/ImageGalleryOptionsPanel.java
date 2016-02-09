@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.imagegallery;
 
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -64,6 +65,9 @@ final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
         infoIconLabel = new javax.swing.JLabel();
         unavailableDuringInjestLabel = new javax.swing.JLabel();
 
+        setFont(getFont().deriveFont(getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+
+        enabledByDefaultBox.setFont(enabledByDefaultBox.getFont().deriveFont(enabledByDefaultBox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(enabledByDefaultBox, org.openide.util.NbBundle.getMessage(ImageGalleryOptionsPanel.class, "ImageGalleryOptionsPanel.enabledByDefaultBox.text")); // NOI18N
         enabledByDefaultBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -71,6 +75,7 @@ final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
             }
         });
 
+        enabledForCaseBox.setFont(enabledForCaseBox.getFont().deriveFont(enabledForCaseBox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(enabledForCaseBox, org.openide.util.NbBundle.getMessage(ImageGalleryOptionsPanel.class, "ImageGalleryOptionsPanel.enabledForCaseBox.text")); // NOI18N
         enabledForCaseBox.setToolTipText(NbBundle.getMessage(ImageGalleryOptionsPanel.class, "ImageGalleryOptionsPanel.enabledForCaseBox.toolTipText")); // NOI18N
         enabledForCaseBox.addActionListener(new java.awt.event.ActionListener() {
@@ -79,20 +84,23 @@ final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
             }
         });
 
+        descriptionLabel.setFont(descriptionLabel.getFont().deriveFont(descriptionLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(descriptionLabel, org.openide.util.NbBundle.getMessage(ImageGalleryOptionsPanel.class, "ImageGalleryOptionsPanel.descriptionLabel.text")); // NOI18N
 
         furtherDescriptionArea.setBackground(new java.awt.Color(240, 240, 240));
         furtherDescriptionArea.setColumns(20);
-        furtherDescriptionArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
+        furtherDescriptionArea.setFont(furtherDescriptionArea.getFont().deriveFont(furtherDescriptionArea.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         furtherDescriptionArea.setLineWrap(true);
         furtherDescriptionArea.setRows(5);
         furtherDescriptionArea.setText(NbBundle.getMessage(ImageGalleryOptionsPanel.class, "ImageGalleryOptionsPanel.furtherDescriptionArea.text")); // NOI18N
         furtherDescriptionArea.setWrapStyleWord(true);
         furtherDescriptionArea.setPreferredSize(new java.awt.Dimension(378, 74));
 
+        infoIconLabel.setFont(infoIconLabel.getFont().deriveFont(infoIconLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         infoIconLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/imagegallery/images/info-icon-16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(infoIconLabel, NbBundle.getMessage(ImageGalleryOptionsPanel.class, "ImageGalleryOptionsPanel.infoIconLabel.text")); // NOI18N
 
+        unavailableDuringInjestLabel.setFont(unavailableDuringInjestLabel.getFont().deriveFont(unavailableDuringInjestLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         unavailableDuringInjestLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/imagegallery/images/warning16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(unavailableDuringInjestLabel, NbBundle.getMessage(ImageGalleryOptionsPanel.class, "ImageGalleryOptionsPanel.unavailableDuringInjestLabel.text")); // NOI18N
 

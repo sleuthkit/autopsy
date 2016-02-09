@@ -38,7 +38,7 @@ public class AboutWindowAction extends AboutAction {
 
     @Override
     public void performAction() {
-        AboutWindowPanel pip = new AboutWindowPanel();
+        AboutWindowPanel pip = new AboutWindowPanel("org/sleuthkit/autopsy/images/splash.png");
         DialogDescriptor descriptor = new DialogDescriptor(
                 pip,
                 NbBundle.getMessage(AboutWindowAction.class, "CTL_CustomAboutAction"),

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2014 Basis Technology Corp.
+ * Copyright 2013-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,165 +19,107 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.logging.Level;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
+import org.sleuthkit.datamodel.LocalFilesDataSource;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskDataException;
 
 /**
- * Thread that will add logical files to database, and then kick-off ingest
- * modules. Note: the add logical files task cannot currently be reverted as the
- * add image task can. This is a separate task from AddImgTask because it is
- * much simpler and does not require locks, since the underlying file manager
- * methods acquire the locks for each transaction when adding logical files.
+ * A runnable that adds a set of local/logical files and/or directories to the
+ * case database, grouped under a virtual directory that serves as the data
+ * source.
  */
 class AddLocalFilesTask implements Runnable {
 
-    private final Logger logger = Logger.getLogger(AddLocalFilesTask.class.getName());
+    private final String deviceId;
+    private final String rootVirtualDirectoryName;
+    private final List<String> localFilePaths;
+    private final DataSourceProcessorProgressMonitor progress;
+    private final DataSourceProcessorCallback callback;
 
-    private final String dataSourcePath;
-    private final DataSourceProcessorProgressMonitor progressMonitor;
-    private final DataSourceProcessorCallback callbackObj;
-
-    private final Case currentCase;
-
-    // synchronization object for cancelRequested
-    private final Object lock = new Object();
-    // true if the process was requested to stop
-    private volatile boolean cancelRequested = false;
-
-    private boolean hasCritError = false;
-
-    private final List<String> errorList = new ArrayList<>();
-    private final List<Content> newContents = Collections.synchronizedList(new ArrayList<Content>());
-
-    public AddLocalFilesTask(String dataSourcePath, DataSourceProcessorProgressMonitor aProgressMonitor, DataSourceProcessorCallback cbObj) {
-
-        currentCase = Case.getCurrentCase();
-
-        this.dataSourcePath = dataSourcePath;
-        this.callbackObj = cbObj;
-        this.progressMonitor = aProgressMonitor;
+    /**
+     * Constructs a runnable that adds a set of local/logical files and/or
+     * directories to the case database, grouped under a virtual directory that
+     * serves as the data source.
+     *
+     * @param deviceId                 An ASCII-printable identifier for the
+     *                                 device associated with the data source,
+     *                                 in this case a gropu of local/logical
+     *                                 files, that is intended to be unique
+     *                                 across multiple cases (e.g., a UUID).
+     * @param rootVirtualDirectoryName The name to give to the virtual directory
+     *                                 that will serve as the root for the
+     *                                 local/logical files and/or directories
+     *                                 that compose the data source. Pass the
+     *                                 empty string to get a default name of the
+     *                                 form: LogicalFileSet[N]
+     * @param localFilePaths           A list of localFilePaths of local/logical
+     *                                 files and/or directories.
+     * @param progressMonitor          Progress monitor to report progress
+     *                                 during processing.
+     * @param callback                 Callback to call when processing is done.
+     */
+    AddLocalFilesTask(String deviceId, String rootVirtualDirectoryName, List<String> localFilePaths, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        this.deviceId = deviceId;
+        this.rootVirtualDirectoryName = rootVirtualDirectoryName;
+        this.localFilePaths = localFilePaths;
+        this.callback = callback;
+        this.progress = progressMonitor;
     }
 
     /**
-     * Add local files and directories to the case
-     *
-     * @return
-     *
-     * @throws Exception
+     * Adds a set of local/logical files and/or directories to the case
+     * database, grouped under a virtual directory that serves as the data
+     * source.
      */
     @Override
     public void run() {
-
-        errorList.clear();
-
-        final LocalFilesAddProgressUpdater progUpdater = new LocalFilesAddProgressUpdater(progressMonitor);
+        List<Content> newDataSources = new ArrayList<>();
+        List<String> errors = new ArrayList<>();
         try {
-
-            progressMonitor.setIndeterminate(true);
-            progressMonitor.setProgress(0);
-
-            final FileManager fileManager = currentCase.getServices().getFileManager();
-            String[] paths = dataSourcePath.split(LocalFilesPanel.FILES_SEP);
-            List<String> absLocalPaths = new ArrayList<>();
-            for (String path : paths) {
-                absLocalPaths.add(path);
+            progress.setIndeterminate(true);
+            FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
+            LocalFilesDataSource newDataSource = fileManager.addLocalFilesDataSource(deviceId, rootVirtualDirectoryName, localFilePaths, new ProgressUpdater());
+            newDataSources.add(newDataSource.getRootDirectory());
+        } catch (TskDataException | TskCoreException ex) {
+            errors.add(ex.getMessage());
+        } finally {
+            DataSourceProcessorCallback.DataSourceProcessorResult result;
+            if (!errors.isEmpty()) {
+                result = DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS;
+            } else {
+                result = DataSourceProcessorCallback.DataSourceProcessorResult.NO_ERRORS;
             }
-            newContents.add(fileManager.addLocalFilesDirs(absLocalPaths, progUpdater));
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Errors occurred while running add logical files. ", ex); //NON-NLS
-            hasCritError = true;
-            errorList.add(ex.getMessage());
-        }
-
-        // handle  done
-        postProcess();
-
-    }
-
-    private void postProcess() {
-
-        if (cancelRequested() || hasCritError) {
-            logger.log(Level.WARNING, "Handling errors or interruption that occurred in logical files process");  //NON-NLS
-        }
-        if (!errorList.isEmpty()) {
-            //data error (non-critical)
-            logger.log(Level.WARNING, "Handling non-critical errors that occurred in logical files process"); //NON-NLS
-        }
-
-        if (!(cancelRequested() || hasCritError)) {
-            progressMonitor.setProgress(100);
-            progressMonitor.setIndeterminate(false);
-        }
-
-        // invoke the callBack, unless the caller cancelled 
-        if (!cancelRequested()) {
-            doCallBack();
-        }
-
-    }
-
-    /*
-     * Call the callback with results, new content, and errors, if any
-     */
-    private void doCallBack() {
-        DataSourceProcessorCallback.DataSourceProcessorResult result;
-
-        if (hasCritError) {
-            result = DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS;
-        } else if (!errorList.isEmpty()) {
-            result = DataSourceProcessorCallback.DataSourceProcessorResult.NONCRITICAL_ERRORS;
-        } else {
-            result = DataSourceProcessorCallback.DataSourceProcessorResult.NO_ERRORS;
-        }
-
-        // invoke the callback, passing it the result, list of new contents, and list of errors
-        callbackObj.done(result, errorList, newContents);
-    }
-
-    /*
-     * cancel the files addition, if possible
-     */
-    public void cancelTask() {
-        synchronized (lock) {
-            cancelRequested = true;
-        }
-    }
-
-    private boolean cancelRequested() {
-        synchronized (lock) {
-            return cancelRequested;
+            callback.done(result, errors, newDataSources);
         }
     }
 
     /**
-     * Updates the wizard status with logical file/folder
+     * Updates task progress as the file manager adds the local/logical files
+     * and/or directories to the case database.
      */
-    private class LocalFilesAddProgressUpdater implements FileManager.FileAddProgressUpdater {
+    private class ProgressUpdater implements FileManager.FileAddProgressUpdater {
 
-        private int count = 0;
-        private final DataSourceProcessorProgressMonitor progressMonitor;
+        private int count;
 
-        LocalFilesAddProgressUpdater(DataSourceProcessorProgressMonitor progressMonitor) {
-
-            this.progressMonitor = progressMonitor;
-        }
-
+        /**
+         * Updates task progress (called by the file manager after it adds each
+         * local file/directory to the case database).
+         */
         @Override
-        public void fileAdded(final AbstractFile newFile) {
-            if (count++ % 10 == 0) {
-                progressMonitor.setProgressText(
-                        NbBundle.getMessage(this.getClass(), "AddLocalFilesTask.localFileAdd.progress.text",
-                                newFile.getParentPath(), newFile.getName()));
+        public void fileAdded(final AbstractFile file) {
+            ++count;
+            if (count % 10 == 0) {
+                progress.setProgressText(NbBundle.getMessage(this.getClass(),
+                        "AddLocalFilesTask.localFileAdd.progress.text",
+                        file.getParentPath(),
+                        file.getName()));
             }
         }
     }

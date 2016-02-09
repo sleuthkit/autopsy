@@ -67,15 +67,19 @@ class NewCaseVisualPanel2 extends javax.swing.JPanel {
         examinerLabel = new javax.swing.JLabel();
         optionalLabel = new javax.swing.JLabel();
 
+        caseNumberTextField.setFont(caseNumberTextField.getFont().deriveFont(caseNumberTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         caseNumberTextField.setText(org.openide.util.NbBundle.getMessage(NewCaseVisualPanel2.class, "NewCaseVisualPanel2.caseNumberTextField.text")); // NOI18N
 
+        examinerTextField.setFont(examinerTextField.getFont().deriveFont(examinerTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         examinerTextField.setText(org.openide.util.NbBundle.getMessage(NewCaseVisualPanel2.class, "NewCaseVisualPanel2.examinerTextField.text")); // NOI18N
 
+        caseNumberLabel.setFont(caseNumberLabel.getFont().deriveFont(caseNumberLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         caseNumberLabel.setText(org.openide.util.NbBundle.getMessage(NewCaseVisualPanel2.class, "NewCaseVisualPanel2.caseNumberLabel.text")); // NOI18N
 
+        examinerLabel.setFont(examinerLabel.getFont().deriveFont(examinerLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         examinerLabel.setText(org.openide.util.NbBundle.getMessage(NewCaseVisualPanel2.class, "NewCaseVisualPanel2.examinerLabel.text")); // NOI18N
 
-        optionalLabel.setFont(optionalLabel.getFont().deriveFont(Font.BOLD, 14));
+        optionalLabel.setFont(optionalLabel.getFont().deriveFont(optionalLabel.getFont().getStyle() | java.awt.Font.BOLD, 14));
         optionalLabel.setText(org.openide.util.NbBundle.getMessage(NewCaseVisualPanel2.class, "NewCaseVisualPanel2.optionalLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);

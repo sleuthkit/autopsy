@@ -18,9 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.awt.Dialog;
-import java.awt.Dimension;
-import java.awt.Toolkit;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -106,10 +104,10 @@ public class CueBannerPanel extends javax.swing.JPanel {
             }
         });
 
-        createNewLabel.setFont(new java.awt.Font("Tahoma", 0, 13)); // NOI18N
+        createNewLabel.setFont(createNewLabel.getFont().deriveFont(createNewLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 13));
         createNewLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.createNewLabel.text")); // NOI18N
 
-        openRecentLabel.setFont(new java.awt.Font("Tahoma", 0, 13)); // NOI18N
+        openRecentLabel.setFont(openRecentLabel.getFont().deriveFont(openRecentLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 13));
         openRecentLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openRecentLabel.text")); // NOI18N
 
         openCaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/btn_icon_open_existing.png"))); // NOI18N
@@ -125,9 +123,10 @@ public class CueBannerPanel extends javax.swing.JPanel {
             }
         });
 
-        openLabel.setFont(new java.awt.Font("Tahoma", 0, 13)); // NOI18N
+        openLabel.setFont(openLabel.getFont().deriveFont(openLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 13));
         openLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openLabel.text")); // NOI18N
 
+        closeButton.setFont(closeButton.getFont().deriveFont(closeButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         closeButton.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.closeButton.text")); // NOI18N
 
         jSeparator1.setOrientation(javax.swing.SwingConstants.VERTICAL);
