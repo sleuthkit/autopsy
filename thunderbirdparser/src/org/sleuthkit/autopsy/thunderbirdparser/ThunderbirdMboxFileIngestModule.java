@@ -144,7 +144,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         }
 
         PstParser parser = new PstParser(services);
-        PstParser.ParseResult result = parser.parse(file);
+        PstParser.ParseResult result = parser.parse(file, abstractFile.getId());
 
         if (result == PstParser.ParseResult.OK) {
             // parse success: Process email and add artifacts
@@ -238,8 +238,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         }
 
         MboxParser parser = new MboxParser(services, emailFolder);
-        List<EmailMessage> emails = parser.parse(file);
-
+        List<EmailMessage> emails = parser.parse(file, abstractFile.getId());
         processEmails(emails, abstractFile);
 
         if (file.delete() == false) {
