@@ -518,40 +518,28 @@ class ReportGenerator {
                     continue;
                 }
 
-                List<ArtifactData> unsortedArtifacts = getFilteredArtifacts(type, tagNamesFilter);
+                List<ArtifactData> artifactList = getFilteredArtifacts(type, tagNamesFilter);
 
-                if (unsortedArtifacts.isEmpty()) {
+                if (artifactList.isEmpty()) {
                     continue;
                 }
 
-                // The most efficient way to sort all the Artifacts is to add them to a List, and then
-                // sort that List based off a Comparator. Adding to a TreeMap/Set/List sorts the list
-                // each time an element is added, which adds unnecessary overhead if we only need it sorted once.
                 Set<BlackboardAttribute.Type> attrTypeSet = new TreeSet<>();
-                for (ArtifactData data : unsortedArtifacts) {
+                for (ArtifactData data : artifactList) {
                     List<BlackboardAttribute> attributes = data.getAttributes();
                     for (BlackboardAttribute attribute : attributes) {
                         attrTypeSet.add(attribute.getAttributeType());
                     }
                 }
                 // Get the column headers appropriate for the artifact type.
-                /*
-                 * @@@ BC: Seems like a better design here would be to have a
-                 * method that takes in the artifact as an argument and returns
-                 * the attributes. We then use that to make the headers and to
-                 * make each row afterwards so that we don't have
-                 * artifact-specific logic in both getArtifactTableCoumnHeaders
-                 * and ArtifactData.getRow()
-                 */
                 List<Cell> columnHeaders = getArtifactTableColumnHeaders(type.getTypeID(), attrTypeSet);
-                if (columnHeaders == null) {
-                    // @@@ Hack to prevent system from hanging.  Better solution is to merge all attributes into a single column or analyze the artifacts to find out how many are needed.
-                    continue;
-                }
-                for (ArtifactData d : unsortedArtifacts) {
+                for (ArtifactData d : artifactList) {
                     d.setColumnHeaders(columnHeaders);
                 }
-                Collections.sort(unsortedArtifacts);
+                // The most efficient way to sort all the Artifacts is to add them to a List, and then
+                // sort that List based off a Comparator. Adding to a TreeMap/Set/List sorts the list
+                // each time an element is added, which adds unnecessary overhead if we only need it sorted once.
+                Collections.sort(artifactList);
                 List<String> columnHeaderNames = new ArrayList<>();
                 for (Cell c : columnHeaders) {
                     columnHeaderNames.add(c.getColumnHeader());
@@ -561,24 +549,13 @@ class ReportGenerator {
                     module.startDataType(type.getDisplayName(), comment.toString());
                     module.startTable(columnHeaderNames);
                 }
-
-                boolean msgSent = false;
-                for (ArtifactData artifactData : unsortedArtifacts) {
+                for (ArtifactData artifactData : artifactList) {
                     // Add the row data to all of the reports.
                     for (TableReportModule module : tableModules) {
 
                         // Get the row data for this type of artifact.
-                        List<String> rowData = artifactData.getRow(columnHeaders);
+                        List<String> rowData = artifactData.getRow();
                         if (rowData.isEmpty()) {
-                            if (msgSent == false) {
-                                MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(),
-                                        "ReportGenerator.msgShow.skippingArtRow.title",
-                                        type),
-                                        NbBundle.getMessage(this.getClass(),
-                                                "ReportGenerator.msgShow.skippingArtRow.msg"),
-                                        MessageNotifyUtil.MessageType.ERROR);
-                                msgSent = true;
-                            }
                             continue;
                         }
 
@@ -2303,7 +2280,7 @@ class ReportGenerator {
         private List<BlackboardAttribute> attributes;
         private HashSet<String> tags;
         private List<String> rowData = null;
-        private List<Cell> columnHeaders = null;
+        private List<Cell> columnHeaders = new ArrayList<>();
 
         ArtifactData(BlackboardArtifact artifact, List<BlackboardAttribute> attrs, HashSet<String> tags) {
             this.artifact = artifact;
@@ -2347,8 +2324,8 @@ class ReportGenerator {
         @Override
         public int compareTo(ArtifactData otherArtifactData) {
             if (columnHeaders != null) {
-                List<String> thisRow = getRow(columnHeaders);
-                List<String> otherRow = otherArtifactData.getRow(columnHeaders);
+                List<String> thisRow = getRow();
+                List<String> otherRow = otherArtifactData.getRow();
                 for (int i = 0; i < thisRow.size(); i++) {
                     int compare = thisRow.get(i).compareTo(otherRow.get(i));
                     if (compare != 0) {
@@ -2368,10 +2345,10 @@ class ReportGenerator {
          * the value types of custom artifacts
          * @return A list of string representing the data for this artifact.
          */
-        public List<String> getRow(List<Cell> columnHeaders) {
+        public List<String> getRow() {
             if (rowData == null) {
                 try {
-                    rowData = getOrderedRowDataAsStrings(columnHeaders);
+                    rowData = getOrderedRowDataAsStrings(this.columnHeaders);
                     // replace null values if attribute was not defined
                     for (int i = 0; i < rowData.size(); i++) {
                         if (rowData.get(i) == null) {
@@ -2394,7 +2371,7 @@ class ReportGenerator {
          *
          * @param columnHeaders The list of column headers that is used to find
          * the value types of custom artifacts
-         * 
+         *
          * @return List<String> row values. Values could be null if attribute is
          * not defined in artifact
          *

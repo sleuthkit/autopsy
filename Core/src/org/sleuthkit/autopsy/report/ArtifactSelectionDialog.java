@@ -47,8 +47,8 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
 
     private ArtifactModel model;
     private ArtifactRenderer renderer;
-    private Map<BlackboardArtifact.Type, Boolean> artifactStates;
-    private List<BlackboardArtifact.Type> artifacts;
+    private Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections;
+    private List<BlackboardArtifact.Type> artifactTypes;
 
     /**
      * Creates new form ArtifactSelectionDialog
@@ -61,7 +61,7 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
     }
 
     /**
-     * Populate the list of artifacts with all important artifacts.
+     * Populate the list of artifactTypes with all important artifactTypes.
      */
     @SuppressWarnings("deprecation")
     private void populateList() {
@@ -74,18 +74,18 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
                     BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getLabel(),
                     BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getDisplayName())); // output is too unstructured for table review
 
-            artifacts = Case.getCurrentCase().getSleuthkitCase().getArtifactTypesInUse();
-            artifacts.removeAll(doNotReport);
-            Collections.sort(artifacts, new Comparator<BlackboardArtifact.Type>() {
+            artifactTypes = Case.getCurrentCase().getSleuthkitCase().getArtifactTypesInUse();
+            artifactTypes.removeAll(doNotReport);
+            Collections.sort(artifactTypes, new Comparator<BlackboardArtifact.Type>() {
                 @Override
                 public int compare(BlackboardArtifact.Type o1, BlackboardArtifact.Type o2) {
                     return o1.getDisplayName().compareTo(o2.getDisplayName());
                 }
             });
 
-            artifactStates = new HashMap<>();
-            for (BlackboardArtifact.Type type : artifacts) {
-                artifactStates.put(type, Boolean.TRUE);
+            artifactTypeSelections = new HashMap<>();
+            for (BlackboardArtifact.Type type : artifactTypes) {
+                artifactTypeSelections.put(type, Boolean.TRUE);
             }
         } catch (TskCoreException ex) {
             Logger.getLogger(ArtifactSelectionDialog.class.getName()).log(Level.SEVERE, "Error getting list of artifacts in use: " + ex.getLocalizedMessage()); //NON-NLS
@@ -104,14 +104,14 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
             public void mousePressed(MouseEvent evt) {
                 int index = artifactList.locationToIndex(evt.getPoint());
                 BlackboardArtifact.Type type = model.getElementAt(index);
-                artifactStates.put(type, !artifactStates.get(type));
+                artifactTypeSelections.put(type, !artifactTypeSelections.get(type));
                 artifactList.repaint();
             }
         });
     }
 
     /**
-     * Display this dialog, and return the selected artifacts.
+     * Display this dialog, and return the selected artifactTypes.
      * 
      * @return The state of artifact types displayed
      */
@@ -126,7 +126,7 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
 
         this.setVisible(true);
-        return artifactStates;
+        return artifactTypeSelections;
     }
 
     /**
@@ -221,15 +221,15 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_okButtonActionPerformed
 
     private void selectAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectAllButtonActionPerformed
-        for (BlackboardArtifact.Type type : artifacts) {
-            artifactStates.put(type, Boolean.TRUE);
+        for (BlackboardArtifact.Type type : artifactTypes) {
+            artifactTypeSelections.put(type, Boolean.TRUE);
         }
         artifactList.repaint();
     }//GEN-LAST:event_selectAllButtonActionPerformed
 
     private void deselectAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deselectAllButtonActionPerformed
-        for (BlackboardArtifact.Type type : artifacts) {
-            artifactStates.put(type, Boolean.FALSE);
+        for (BlackboardArtifact.Type type : artifactTypes) {
+            artifactTypeSelections.put(type, Boolean.FALSE);
         }
         artifactList.repaint();
     }//GEN-LAST:event_deselectAllButtonActionPerformed
@@ -246,12 +246,13 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
 
         @Override
         public int getSize() {
-            return artifacts.size();
+            return artifactTypes.size();
         }
+
 
         @Override
         public BlackboardArtifact.Type getElementAt(int index) {
-            return artifacts.get(index);
+            return artifactTypes.get(index);
         }
 
         @Override
@@ -269,7 +270,7 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
         public Component getListCellRendererComponent(JList<? extends BlackboardArtifact.Type> list, BlackboardArtifact.Type value, int index, boolean isSelected, boolean cellHasFocus) {
             if (value != null) {
                 setEnabled(list.isEnabled());
-                setSelected(artifactStates.get(value));
+                setSelected(artifactTypeSelections.get(value));
                 setFont(list.getFont());
                 setBackground(list.getBackground());
                 setForeground(list.getForeground());
