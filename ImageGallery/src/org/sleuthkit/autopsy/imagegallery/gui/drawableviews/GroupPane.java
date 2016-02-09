@@ -112,7 +112,7 @@ import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
-import org.sleuthkit.autopsy.imagegallery.actions.AddDrawableTagAction;
+import org.sleuthkit.autopsy.imagegallery.actions.AddTagAction;
 import org.sleuthkit.autopsy.imagegallery.actions.Back;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeSelectedFilesAction;
@@ -832,10 +832,12 @@ public class GroupPane extends BorderPane {
         
         private ContextMenu buildContextMenu() {
             ArrayList<MenuItem> menuItems = new ArrayList<>();
+
             
             menuItems.add(CategorizeAction.getCategoriesMenu(controller));
-            menuItems.add(new AddDrawableTagAction(controller).getPopupMenu());
-            
+            menuItems.add(AddTagAction.getTagMenu(controller));
+
+
             Collection<? extends ContextMenuActionsProvider> menuProviders = Lookup.getDefault().lookupAll(ContextMenuActionsProvider.class);
             
             for (ContextMenuActionsProvider provider : menuProviders) {

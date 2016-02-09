@@ -63,7 +63,7 @@ import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
-import org.sleuthkit.autopsy.imagegallery.actions.AddDrawableTagAction;
+import org.sleuthkit.autopsy.imagegallery.actions.AddTagAction;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
 import org.sleuthkit.autopsy.imagegallery.actions.DeleteFollowUpTagAction;
 import org.sleuthkit.autopsy.imagegallery.actions.OpenExternalViewerAction;
@@ -183,8 +183,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                 final ArrayList<MenuItem> menuItems = new ArrayList<>();
 
                 menuItems.add(CategorizeAction.getCategoriesMenu(getController()));
-
-                menuItems.add(new AddDrawableTagAction(getController()).getPopupMenu());
+                menuItems.add(AddTagAction.getTagMenu(getController()));
 
                 final MenuItem extractMenuItem = new MenuItem(Bundle.DrawableTileBase_menuItem_extractFiles());
                 extractMenuItem.setOnAction(actionEvent -> {
@@ -240,7 +239,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                 if (followUpToggle.isSelected() == true) {
                     try {
                         selectionModel.clearAndSelect(file.getId());
-                        new AddDrawableTagAction(getController()).addTag(getController().getTagsManager().getFollowUpTagName(), "");
+                        new AddTagAction(getController(), getController().getTagsManager().getFollowUpTagName(), selectionModel.getSelected()).handle(actionEvent);
                     } catch (TskCoreException ex) {
                         LOGGER.log(Level.SEVERE, "Failed to add Follow Up tag.  Could not load TagName.", ex); //NON-NLS
                     }
