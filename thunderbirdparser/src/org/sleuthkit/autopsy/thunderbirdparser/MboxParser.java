@@ -101,7 +101,7 @@ class MboxParser {
      *
      * @return a list of the email messages in the mbox file.
      */
-    List<EmailMessage> parse(File mboxFile) {
+    List<EmailMessage> parse(File mboxFile, long fileID) {
         // Detect possible charsets
         List<CharsetEncoder> encoders = getPossibleEncoders(mboxFile);
 
@@ -138,7 +138,7 @@ class MboxParser {
         for (CharBufferWrapper message : mboxIterator) {
             try {
                 Message msg = messageBuilder.parseMessage(message.asInputStream(theEncoder.charset()));
-                emails.add(extractEmail(msg));
+                emails.add(extractEmail(msg, fileID));
             } catch (RuntimeException | IOException ex) {
                 logger.log(Level.WARNING, "Failed to get message from mbox: {0}", ex.getMessage()); //NON-NLS
                 failCount++;
@@ -164,7 +164,7 @@ class MboxParser {
      *
      * @return
      */
-    private EmailMessage extractEmail(Message msg) {
+    private EmailMessage extractEmail(Message msg, long fileID) {
         EmailMessage email = new EmailMessage();
         // Basic Info
         email.setSender(getAddresses(msg.getFrom()));
@@ -177,7 +177,7 @@ class MboxParser {
 
         // Body
         if (msg.isMultipart()) {
-            handleMultipart(email, (Multipart) msg.getBody());
+            handleMultipart(email, (Multipart) msg.getBody(), fileID);
         } else {
             handleTextBody(email, (TextBody) msg.getBody(), msg.getMimeType());
         }
@@ -193,13 +193,15 @@ class MboxParser {
      * @param email
      * @param multi
      */
-    private void handleMultipart(EmailMessage email, Multipart multi) {
-        for (Entity e : multi.getBodyParts()) {
+    private void handleMultipart(EmailMessage email, Multipart multi, long fileID) {
+        List<Entity> entities = multi.getBodyParts();
+        for (int index = 0; index < entities.size(); index++) {
+            Entity e = entities.get(index);
             if (e.isMultipart()) {
-                handleMultipart(email, (Multipart) e.getBody());
+                handleMultipart(email, (Multipart) e.getBody(), fileID);
             } else if (e.getDispositionType() != null
                     && e.getDispositionType().equals(ContentDispositionField.DISPOSITION_TYPE_ATTACHMENT)) {
-                handleAttachment(email, e);
+                handleAttachment(email, e, fileID, index);
             } else if (e.getMimeType().equals(HTML_TYPE)
                     || e.getMimeType().equals(ContentTypeField.TYPE_TEXT_PLAIN)) {
                 handleTextBody(email, (TextBody) e.getBody(), e.getMimeType());
@@ -217,7 +219,7 @@ class MboxParser {
      *
      * @param email
      * @param tb
-     * @param type  The Mime type of the body.
+     * @param type The Mime type of the body.
      */
     private void handleTextBody(EmailMessage email, TextBody tb, String type) {
         BufferedReader r;
@@ -252,7 +254,7 @@ class MboxParser {
      * @param email
      * @param e
      */
-    private void handleAttachment(EmailMessage email, Entity e) {
+    private void handleAttachment(EmailMessage email, Entity e, long fileID, int index) {
         String outputDirPath = ThunderbirdMboxFileIngestModule.getModuleOutputPath() + File.separator;
         String filename = e.getFilename();
 
@@ -274,7 +276,7 @@ class MboxParser {
             filename = UUID.randomUUID().toString();
         }
 
-        String uniqueFilename = filename + "-" + email.getSentDate();
+        String uniqueFilename = fileID + "-" + index + "-" + email.getSentDate() + "-" + filename;
         String outPath = outputDirPath + uniqueFilename;
         FileOutputStream fos;
         BinaryBody bb;
