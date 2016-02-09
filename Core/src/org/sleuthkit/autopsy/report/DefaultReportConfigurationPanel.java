@@ -43,7 +43,9 @@ public class DefaultReportConfigurationPanel extends javax.swing.JPanel {
 
         infoLabel = new javax.swing.JLabel();
 
-        infoLabel.setFont(infoLabel.getFont().deriveFont(Font.ITALIC, 11));
+        setFont(getFont().deriveFont(getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+
+        infoLabel.setFont(infoLabel.getFont().deriveFont((infoLabel.getFont().getStyle() | java.awt.Font.ITALIC) & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(infoLabel, org.openide.util.NbBundle.getMessage(DefaultReportConfigurationPanel.class, "DefaultReportConfigurationPanel.infoLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);

@@ -19,13 +19,13 @@
 package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Cursor;
+import java.awt.Image;
 import java.awt.Window;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.util.Locale;
-import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -36,6 +36,7 @@ import javax.swing.event.HyperlinkListener;
 import org.netbeans.core.actions.HTMLViewAction;
 import org.openide.awt.HtmlBrowser;
 import org.openide.modules.Places;
+import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
@@ -54,12 +55,8 @@ public final class AboutWindowPanel extends JPanel implements HyperlinkListener 
 
     private boolean verboseLogging;
 
-    public AboutWindowPanel() {
-        try {
-            about = new ImageIcon(new URL("nbdocs:/org/netbeans/core/startup/splash.gif"));
-        } catch (MalformedURLException ex) {
-            Logger.log(Level.INFO, "failed to load about window image", ex); //NON-NLS
-        }
+    public AboutWindowPanel(String pathToBrandingImage) {
+        about = new ImageIcon(ImageUtilities.loadImage(pathToBrandingImage));
         initComponents();
         logoLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         description.setText(org.openide.util.NbBundle.getMessage(AboutWindowPanel.class,

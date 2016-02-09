@@ -84,7 +84,7 @@ public class UNCPathUtilities {
                 String uncPath = null;
                 try {
                     String currentDrive = Paths.get(inputPath).getRoot().toString().substring(STARTING_OFFSET, REPLACEMENT_SIZE);
-                    String uncMapping = drives.get(currentDrive);
+                    String uncMapping = drives.get(currentDrive.toUpperCase());
                     if (uncMapping != null) {
                         uncPath = uncMapping + inputPath.substring(REPLACEMENT_SIZE, inputPath.length());
                     }

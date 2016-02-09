@@ -28,60 +28,65 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgress
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 
 /**
- * A local drive data source processor with a configuration panel. This data
- * source processor implements the DataSourceProcessor service provider
- * interface to allow integration with the add data source wizard. It also
- * provides a run method overload to allow it to be used independently of the
- * configuration UI.
+ * A local drive data source processor that implements the DataSourceProcessor
+ * service provider interface to allow integration with the add data source
+ * wizard. It also provides a run method overload to allow it to be used
+ * independently of the wizard.
  */
 @ServiceProvider(service = DataSourceProcessor.class)
 public class LocalDiskDSProcessor implements DataSourceProcessor {
 
-    private static final String dsType = NbBundle.getMessage(LocalDiskDSProcessor.class, "LocalDiskDSProcessor.dsType.text");
+    private static final String DATA_SOURCE_TYPE = NbBundle.getMessage(LocalDiskDSProcessor.class, "LocalDiskDSProcessor.dsType.text");
     private final LocalDiskPanel configPanel;
-    private String dataSourceId;
+    private AddImageTask addDiskTask;
+    /*
+     * TODO: Remove the setDataSourceOptionsCalled flag and the settings fields
+     * when the deprecated method setDataSourceOptions is removed.
+     */
+    private String deviceId;
     private String drivePath;
     private String timeZone;
     private boolean ignoreFatOrphanFiles;
-    private boolean configured;
-    private AddImageTask addDiskTask;
+    private boolean setDataSourceOptionsCalled;
 
     /**
-     * Constructs an image data source processor with a configuration panel.
-     * This data source processor implements the DataSourceProcessor service
-     * provider interface to allow integration with the add data source wizard.
-     * It also provides a run method overload to allow it to be used
-     * independently of the configuration UI.
+     * Constructs a local drive data source processor that implements the
+     * DataSourceProcessor service provider interface to allow integration with
+     * the add data source wizard. It also provides a run method overload to
+     * allow it to be used independently of the wizard.
      */
     public LocalDiskDSProcessor() {
         configPanel = LocalDiskPanel.getDefault();
     }
 
     /**
-     * Gets the display name of the type of data source this type of data source
-     * processor is able to process.
+     * Gets a string that describes the type of data sources this processor is
+     * able to process.
      *
-     * @return The data source type display name.
+     * @return A string suitable for display in a data source processor
+     *         selection UI component (e.g., a combo box).
      */
     public static String getType() {
-        return dsType;
+        return DATA_SOURCE_TYPE;
     }
 
     /**
-     * Gets the display name of the type of data source this data source
-     * processor is able to process.
+     * Gets a string that describes the type of data sources this processor is
+     * able to process.
      *
-     * @return The data source type display name.
+     * @return A string suitable for display in a data source processor
+     *         selection UI component (e.g., a combo box).
      */
     @Override
     public String getDataSourceType() {
-        return dsType;
+        return DATA_SOURCE_TYPE;
     }
 
     /**
-     * Gets the a configuration panel for this data source processor.
+     * Gets the JPanel that allows a user to select a data source and do any
+     * configuration the data source processor may require.
      *
-     * @return JPanel The configuration panel.
+     * @return A JPanel less than 544 pixels wide and 173 pixels high.
      */
     @Override
     public JPanel getPanel() {
@@ -90,10 +95,10 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
     }
 
     /**
-     * Indicates whether or not the inputs to the configuration panel are valid.
+     * Indicates whether the settings in the panel are valid and complete.
      *
-     * @return True or false.
-     *
+     * @return True if the settings are valid and complete and the processor is
+     *         ready to have its run method called; false otherwise.
      */
     @Override
     public boolean isPanelValid() {
@@ -101,59 +106,57 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
     }
 
     /**
-     * Runs the data source processor in a separate thread.
+     * Adds a data source to the case database using a separate thread and the
+     * settings provided by the panel. Returns as soon as the background task is
+     * started and uses the callback object to signal task completion and return
+     * results.
      *
-     * @param progressMonitor Progress monitor to report progress during
+     * NOTE: This method should not be called unless isPanelValid returns true.
+     *
+     * @param progressMonitor Progress monitor for reporting progress during
      *                        processing.
-     * @param cbObj           Callback to call when processing is done.
+     * @param callback        Callback to call when processing is done.
      */
     @Override
-    public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback cbObj) {
-        /*
-         * TODO (AUT-1867): Configuration is not currently enforced. This code
-         * assumes that the ingest panel is providing validated inputs.
-         */
-        if (!configured) {
-            if (null == dataSourceId) {
-                dataSourceId = UUID.randomUUID().toString();
-            }
+    public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        if (!setDataSourceOptionsCalled) {
+            deviceId = UUID.randomUUID().toString();
             drivePath = configPanel.getContentPaths();
             timeZone = configPanel.getTimeZone();
             ignoreFatOrphanFiles = configPanel.getNoFatOrphans();
-            configured = true;
         }
-        addDiskTask = new AddImageTask(dataSourceId, drivePath, timeZone, ignoreFatOrphanFiles, progressMonitor, cbObj);
+        addDiskTask = new AddImageTask(deviceId, drivePath, timeZone, ignoreFatOrphanFiles, progressMonitor, callback);
         new Thread(addDiskTask).start();
     }
 
     /**
-     * Runs the data source processor in a separate thread without requiring use
-     * the configuration panel.
+     * Adds a data source to the case database using a separate thread and the
+     * given settings instead of those provided by the panel. Returns as soon as
+     * the background task is started and uses the callback object to signal
+     * task completion and return results.
      *
-     * @param dataSourceId         An ASCII-printable identifier for the data
-     *                             source that is intended to be unique across
-     *                             multiple cases (e.g., a UUID).
+     * @param deviceId             An ASCII-printable identifier for the device
+     *                             associated with the data source that is
+     *                             intended to be unique across multiple cases
+     *                             (e.g., a UUID).
      * @param drivePath            Path to the local drive.
      * @param timeZone             The time zone to use when processing dates
      *                             and times for the image, obtained from
      *                             java.util.TimeZone.getID.
      * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
      *                             FAT filesystem.
-     * @param monitor              Progress monitor to report progress during
-     *                             processing.
-     * @param cbObj                Callback to call when processing is done.
+     * @param progressMonitor      Progress monitor for reporting progress
+     *                             during processing.
+     * @param callback             Callback to call when processing is done.
      */
-    public void run(String dataSourceId, String drivePath, String timeZone, boolean ignoreFatOrphanFiles, DataSourceProcessorProgressMonitor monitor, DataSourceProcessorCallback cbObj) {
-        this.dataSourceId = dataSourceId;
-        this.drivePath = drivePath;
-        this.timeZone = timeZone;
-        this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
-        configured = true;
-        run(monitor, cbObj);
+    public void run(String deviceId, String drivePath, String timeZone, boolean ignoreFatOrphanFiles, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        addDiskTask = new AddImageTask(deviceId, drivePath, timeZone, ignoreFatOrphanFiles, progressMonitor, callback);
+        new Thread(addDiskTask).start();
     }
 
     /**
-     * Cancels the processing of the data source.
+     * Requests cancellation of the data source processing task after it is
+     * started using the run method. Cancellation is not guaranteed.
      */
     @Override
     public void cancel() {
@@ -161,41 +164,38 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
     }
 
     /**
-     * Resets the configuration of this data source processor, including its
-     * configuration panel.
+     * Resets the panel.
      */
     @Override
     public void reset() {
         configPanel.reset();
-        dataSourceId = null;
+        deviceId = null;
         drivePath = null;
         timeZone = null;
         ignoreFatOrphanFiles = false;
-        configured = false;
+        setDataSourceOptionsCalled = false;
     }
 
     /**
      * Sets the configuration of the data source processor without using the
-     * configuration panel. The data source processor will assign a UUID to the
-     * data source and will use the time zone of the machine executing this code
-     * when when processing dates and times for the image.
+     * configuration panel.
      *
-     * @param drivePath            Path to the local drive.
+     * @param imagePath            Path to the image file.
      * @param timeZone             The time zone to use when processing dates
      *                             and times for the image, obtained from
      *                             java.util.TimeZone.getID.
      * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
      *                             FAT filesystem.
      *
-     * @deprecated Use the run method instead.
+     * @deprecated Use the provided overload of the run method instead.
      */
     @Deprecated
     public void setDataSourceOptions(String drivePath, String timeZone, boolean ignoreFatOrphanFiles) {
-        this.dataSourceId = UUID.randomUUID().toString();
+        this.deviceId = UUID.randomUUID().toString();
         this.drivePath = drivePath;
         this.timeZone = Calendar.getInstance().getTimeZone().getID();
         this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
-        configured = true;
+        setDataSourceOptionsCalled = true;
     }
 
 }
