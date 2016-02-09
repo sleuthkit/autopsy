@@ -238,56 +238,98 @@ public final class CaseMetadata {
      * @param createdDate the createdDate to set
      */
     void setCreatedDate(String createdDate) throws CaseMetadataException {
+        String oldCreatedDate = this.createdDate;
         this.createdDate = createdDate;
-        this.write();
+        try {
+            this.write();
+        } catch (CaseMetadataException ex) {
+            this.createdDate = oldCreatedDate;
+            throw ex;
+        }
     }
 
     /**
      * @param caseType the caseType to set
      */
     public void setCaseType(Case.CaseType caseType) throws CaseMetadataException {
+        Case.CaseType oldCaseType = this.caseType;
         this.caseType = caseType;
-        this.write();
+        try {
+            this.write();
+        } catch (CaseMetadataException ex) {
+            this.caseType = oldCaseType;
+            throw ex;
+        }
     }
 
     /**
      * @param caseName the caseName to set
      */
     public void setCaseName(String caseName) throws CaseMetadataException {
+        String oldCaseName = this.caseName;
         this.caseName = caseName;
-        this.write();
+        try {
+            this.write();
+        } catch (CaseMetadataException ex) {
+            this.caseName = oldCaseName;
+            throw ex;
+        }
     }
 
     /**
      * @param caseNumber the caseNumber to set
      */
     public void setCaseNumber(String caseNumber) throws CaseMetadataException {
+        String oldCaseNumber = this.caseNumber;
         this.caseNumber = caseNumber;
-        this.write();
+        try {
+            this.write();
+        } catch (CaseMetadataException ex) {
+            this.caseNumber = oldCaseNumber;
+            throw ex;
+        }
     }
 
     /**
      * @param examiner the examiner to set
      */
     public void setCaseExaminer(String examiner) throws CaseMetadataException {
+        String oldExaminer = this.examiner;
         this.examiner = examiner;
-        this.write();
+        try {
+            this.write();
+        } catch (CaseMetadataException ex) {
+            this.examiner = oldExaminer;
+            throw ex;
+        }
     }
 
     /**
      * @param caseDirectory the caseDirectory to set
      */
     public void setCaseDirectory(String caseDirectory) throws CaseMetadataException {
+        String oldCaseDirectory = this.caseDirectory;
         this.caseDirectory = caseDirectory;
-        this.write();
+        try {
+            this.write();
+        } catch (CaseMetadataException ex) {
+            this.caseDirectory = oldCaseDirectory;
+            throw ex;
+        }
     }
 
     /**
      * @param caseDatabaseName the caseDatabaseName to set
      */
     public void setCaseDatabaseName(String caseDatabaseName) throws CaseMetadataException {
+        String oldDbName = this.caseDatabaseName;
         this.caseDatabaseName = caseDatabaseName;
+        try {
         this.write();
+        } catch (CaseMetadataException ex) {
+            this.caseDatabaseName = oldDbName;
+            throw ex;
+        }
     }
 
     /**
@@ -301,8 +343,14 @@ public final class CaseMetadata {
      * @param caseTextIndexName the caseTextIndexName to set
      */
     public void setCaseTextIndexName(String caseTextIndexName) throws CaseMetadataException {
+        String oldIndexName = this.caseTextIndexName;
         this.caseTextIndexName = caseTextIndexName;
+        try {
         this.write();
+        } catch (CaseMetadataException ex) {
+            this.caseTextIndexName = oldIndexName;
+            throw ex;
+        }
     }
 
     /**
