@@ -44,6 +44,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
@@ -55,6 +56,19 @@ import org.xml.sax.SAXException;
  * Provides access to case metadata.
  */
 public final class CaseMetadata {
+
+    @Messages({
+        "CaseMetadata.writeFile.exception.noCase.msg=No set case to write management file for.",
+        "CaseMetadata.writeFile.exception.errWriteToFile.msg=Error writing to case file",
+        "# {0} - case file path",
+        "CaseMetadata.open.exception.errReadXMLFile.msg=Error reading case XML file\\: {0}",
+        "# {0} - file name",
+        "# {1} - class name",
+        "CaseMetadata.open.msgDlg.notAutCase.msg=Error\\: This is not an Autopsy config file (\"{0}\").\\n\\n\\\n"
+        + "Detail\\: \\n\\\n"
+        + "Cannot open a non-Autopsy config file (at {1}).",
+        "CaseMetadata.open.msgDlg.notAutCase.title=Error"
+    })
 
     /**
      * Exception thrown by the CaseMetadata class when there is a problem
@@ -119,6 +133,7 @@ public final class CaseMetadata {
     private static final Logger logger = Logger.getLogger(CaseMetadata.class.getName());
 
     private CaseMetadata(Case.CaseType caseType, String caseName, String caseDirectory, String caseDatabaseName, String caseTextIndexName) throws CaseMetadataException {
+
         this.caseType = caseType;
         this.caseName = caseName;
         this.caseNumber = "";
@@ -381,7 +396,7 @@ public final class CaseMetadata {
     private void writeFile(Document doc) throws CaseMetadataException {
         if (doc == null || getCaseName().equals("")) {
             throw new CaseMetadataException(
-                    NbBundle.getMessage(this.getClass(), "XMLCaseManagement.writeFile.exception.noCase.msg"));
+                    Bundle.CaseMetadata_writeFile_exception_noCase_msg());
         }
 
         // Prepare the DOM document for writing
@@ -400,7 +415,7 @@ public final class CaseMetadata {
         } catch (TransformerConfigurationException ex) {
             logger.log(Level.SEVERE, "Could not setup tranformer and write case file"); //NON-NLS
             throw new CaseMetadataException(
-                    NbBundle.getMessage(this.getClass(), "XMLCaseManagement.writeFile.exception.errWriteToFile.msg"), ex);
+                    Bundle.CaseMetadata_writeFile_exception_errWriteToFile_msg(), ex);
         }
 
         //Setup indenting to "pretty print"
@@ -412,7 +427,7 @@ public final class CaseMetadata {
         } catch (TransformerException ex) {
             logger.log(Level.SEVERE, "Could not run tranformer and write case file"); //NON-NLS
             throw new CaseMetadataException(
-                    NbBundle.getMessage(this.getClass(), "XMLCaseManagement.writeFile.exception.errWriteToFile.msg"), ex);
+                    Bundle.CaseMetadata_writeFile_exception_errWriteToFile_msg(), ex);
         }
 
         // preparing the output file
@@ -428,7 +443,7 @@ public final class CaseMetadata {
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Error writing to case file"); //NON-NLS
             throw new CaseMetadataException(
-                    NbBundle.getMessage(this.getClass(), "XMLCaseManagement.writeFile.exception.errWriteToFile.msg"), ex);
+                    Bundle.CaseMetadata_writeFile_exception_errWriteToFile_msg(), ex);
         }
     }
 
@@ -449,8 +464,7 @@ public final class CaseMetadata {
             doc = db.parse(file);
         } catch (ParserConfigurationException | SAXException | IOException ex) {
             throw new CaseMetadataException(
-                    NbBundle.getMessage(this.getClass(), "XMLCaseManagement.open.exception.errReadXMLFile.msg",
-                            conFilePath), ex);
+                    Bundle.CaseMetadata_open_exception_errReadXMLFile_msg(conFilePath), ex);
         }
 
         doc.getDocumentElement().normalize();
@@ -465,11 +479,9 @@ public final class CaseMetadata {
             if (RuntimeProperties.coreComponentsAreActive()) {
 
                 JOptionPane.showMessageDialog(caller,
-                        NbBundle.getMessage(this.getClass(),
-                                "XMLCaseManagement.open.msgDlg.notAutCase.msg",
+                        Bundle.CaseMetadata_open_msgDlg_notAutCase_msg(
                                 file.getName(), className),
-                        NbBundle.getMessage(this.getClass(),
-                                "XMLCaseManagement.open.msgDlg.notAutCase.title"),
+                        Bundle.CaseMetadata_open_msgDlg_notAutCase_title(),
                         JOptionPane.ERROR_MESSAGE);
             }
         } else {
@@ -511,19 +523,19 @@ public final class CaseMetadata {
                 this.caseNumber = numberElement != null ? examinerElement.getTextContent() : "";
                 this.caseDirectory = conFilePath.substring(0, conFilePath.lastIndexOf("\\"));
                 if (this.caseDirectory.isEmpty()) {
-                    throw new CaseMetadataException("Case directory missing");
+                    throw new CaseMetadataException(Bundle.CaseMetadata_open_exception_errReadXMLFile_msg(conFilePath));
                 }
                 Element databaseNameElement = caseElement.getElementsByTagName(DATABASE_NAME).getLength() > 0 ? (Element) caseElement.getElementsByTagName(DATABASE_NAME).item(0) : null;
                 this.caseDatabaseName = databaseNameElement != null ? databaseNameElement.getTextContent() : "";
                 Element caseTextIndexNameElement = caseElement.getElementsByTagName(CASE_TEXT_INDEX_NAME).getLength() > 0 ? (Element) caseElement.getElementsByTagName(CASE_TEXT_INDEX_NAME).item(0) : null;
                 this.caseTextIndexName = caseTextIndexNameElement != null ? caseTextIndexNameElement.getTextContent() : "";
                 if (Case.CaseType.MULTI_USER_CASE == caseType && caseDatabaseName.isEmpty()) {
-                    throw new CaseMetadataException("Case keyword search index name missing");
+                    throw new CaseMetadataException(Bundle.CaseMetadata_open_exception_errReadXMLFile_msg(conFilePath));
                 }
                 this.setCreatedDate(((Element) rootElement.getElementsByTagName(CREATED_DATE_NAME).item(0)).getTextContent());
                 this.schemaVersion = ((Element) rootElement.getElementsByTagName(SCHEMA_VERSION_NAME).item(0)).getTextContent();
             } catch (NullPointerException ex) {
-                throw new CaseMetadataException("Error setting case metadata when opening file.", ex);
+                throw new CaseMetadataException(Bundle.CaseMetadata_open_exception_errReadXMLFile_msg(conFilePath), ex);
             }
         }
     }
