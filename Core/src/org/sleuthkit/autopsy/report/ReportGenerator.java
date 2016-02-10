@@ -2596,12 +2596,7 @@ class ReportGenerator {
                 orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_REMOTE_PATH.getTypeID()));
             } else {
                 for (Cell c : columnHeaders) {
-                    String rowData = c.getRowData(this.attributes);
-                    if (rowData.equals("")) {
-                        if (c.getColumnHeader().equals(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile"))) {
-                            rowData = getFileUniquePath(getObjectID());
-                        }
-                    }
+                    String rowData = c.getRowData(this);
                     orderedRowData.add(rowData);
                 }
             }
@@ -2654,7 +2649,7 @@ class ReportGenerator {
 
         BlackboardAttribute.Type getType();
 
-        String getRowData(List<BlackboardAttribute> attributes);
+        String getRowData(ArtifactData artData);
     }
 
     private class AttributeCell implements Cell {
@@ -2684,7 +2679,8 @@ class ReportGenerator {
         }
 
         @Override
-        public String getRowData(List<BlackboardAttribute> attributes) {
+        public String getRowData(ArtifactData artData) {
+            List<BlackboardAttribute> attributes = artData.getAttributes();
             for (BlackboardAttribute attribute : attributes) {
                 if (attribute.getAttributeType().equals(this.attributeType)) {
                     switch (attribute.getValueType()) {
@@ -2728,7 +2724,10 @@ class ReportGenerator {
         }
 
         @Override
-        public String getRowData(List<BlackboardAttribute> attributes) {
+        public String getRowData(ArtifactData artData) {
+            if (this.columnHeader.equals(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile"))) {
+                return getFileUniquePath(artData.getObjectID());
+            }
             return "";
         }
     }
