@@ -533,16 +533,19 @@ class ReportGenerator {
                 }
                 // Get the column headers appropriate for the artifact type.
                 List<Cell> columnHeaders = getArtifactTableColumnHeaders(type.getTypeID(), attrTypeSet);
-                for (ArtifactData d : artifactList) {
-                    d.setColumnHeaders(columnHeaders);
+                if(columnHeaders.isEmpty()) {
+                    continue;
+                }
+                for (ArtifactData artData : artifactList) {
+                    artData.setColumnHeaders(columnHeaders);
                 }
                 // The most efficient way to sort all the Artifacts is to add them to a List, and then
                 // sort that List based off a Comparator. Adding to a TreeMap/Set/List sorts the list
                 // each time an element is added, which adds unnecessary overhead if we only need it sorted once.
                 Collections.sort(artifactList);
                 List<String> columnHeaderNames = new ArrayList<>();
-                for (Cell c : columnHeaders) {
-                    columnHeaderNames.add(c.getColumnHeader());
+                for (Cell currCell : columnHeaders) {
+                    columnHeaderNames.add(currCell.getColumnHeader());
                 }
 
                 for (TableReportModule module : tableModules) {
@@ -1042,8 +1045,8 @@ class ReportGenerator {
                         module.addSetElement(currentKeyword);
                         List<Cell> columnHeaders = getArtifactTableColumnHeaders(ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID(), new HashSet<BlackboardAttribute.Type>());
                         List<String> columnHeaderNames = new ArrayList<>();
-                        for (Cell c : columnHeaders) {
-                            columnHeaderNames.add(c.getColumnHeader());
+                        for (Cell currCell : columnHeaders) {
+                            columnHeaderNames.add(currCell.getColumnHeader());
                         }
                         module.startTable(columnHeaderNames);
                     }
@@ -1179,8 +1182,8 @@ class ReportGenerator {
                         module.startSet(currentSet);
                         List<Cell> columnHeaders = getArtifactTableColumnHeaders(ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID(), new HashSet<BlackboardAttribute.Type>());
                         List<String> columnHeaderNames = new ArrayList<>();
-                        for (Cell c : columnHeaders) {
-                            columnHeaderNames.add(c.getColumnHeader());
+                        for (Cell currCell : columnHeaders) {
+                            columnHeaderNames.add(currCell.getColumnHeader());
                         }
                         module.startTable(columnHeaderNames);
                         tableProgress.get(module).updateStatusLabel(
@@ -2348,7 +2351,7 @@ class ReportGenerator {
         public List<String> getRow() {
             if (rowData == null) {
                 try {
-                    rowData = getOrderedRowDataAsStrings(this.columnHeaders);
+                    rowData = getOrderedRowDataAsStrings();
                     // replace null values if attribute was not defined
                     for (int i = 0; i < rowData.size(); i++) {
                         if (rowData.get(i) == null) {
@@ -2377,7 +2380,7 @@ class ReportGenerator {
          *
          * @throws TskCoreException
          */
-        private List<String> getOrderedRowDataAsStrings(List<Cell> columnHeaders) throws TskCoreException {
+        private List<String> getOrderedRowDataAsStrings() throws TskCoreException {
             Map<Integer, String> mappedAttributes = getMappedAttributes();
             List<String> orderedRowData = new ArrayList<>();
             if (ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID() == getArtifact().getArtifactTypeID()) {
@@ -2595,8 +2598,8 @@ class ReportGenerator {
                 orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_LOCAL_PATH.getTypeID()));
                 orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_REMOTE_PATH.getTypeID()));
             } else {
-                for (Cell c : columnHeaders) {
-                    String rowData = c.getRowData(this);
+                for (Cell currCell : this.columnHeaders) {
+                    String rowData = currCell.getRowData(this);
                     orderedRowData.add(rowData);
                 }
                 return orderedRowData;
