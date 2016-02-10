@@ -55,7 +55,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javax.annotation.Nullable;
 import javax.swing.SwingUtilities;
-import org.apache.commons.lang3.StringUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
@@ -587,9 +586,9 @@ public final class ImageGalleryController implements Executor {
         public final void updateMessage(String Status) {
             this.message.set(Status);
         }
-        SimpleObjectProperty<Worker.State> state = new SimpleObjectProperty<>(Worker.State.READY);
-        SimpleDoubleProperty progress = new SimpleDoubleProperty(this, Bundle.ImageGalleryController_InnerTask_progress_name());
-        SimpleStringProperty message = new SimpleStringProperty(this, Bundle.ImageGalleryController_InnerTask_message_name());
+        private final SimpleObjectProperty<Worker.State> state = new SimpleObjectProperty<>(Worker.State.READY);
+        private final SimpleDoubleProperty progress = new SimpleDoubleProperty(this, Bundle.ImageGalleryController_InnerTask_progress_name());
+        private final SimpleStringProperty message = new SimpleStringProperty(this, Bundle.ImageGalleryController_InnerTask_message_name());
 
         public SimpleDoubleProperty progressProperty() {
             return progress;
@@ -646,7 +645,6 @@ public final class ImageGalleryController implements Executor {
             this.file = f;
             this.taskDB = taskDB;
         }
-
     }
 
     /**
@@ -701,38 +699,38 @@ public final class ImageGalleryController implements Executor {
             }
 
         }
-
     }
 
     @NbBundle.Messages({"BulkTask.committingDb.status=commiting image/video database",
         "BulkTask.stopCopy.status=Stopping copy to drawable db task.",
         "BulkTask.errPopulating.errMsg=There was an error populating Image Gallery database."})
-    abstract static private class BulkTask extends InnerTask {
-
-        protected final ImageGalleryController controller;
-        protected final DrawableDB taskDB;
-        protected final SleuthkitCase tskCase;
-        ProgressHandle progressHandle;
+    abstract static private class BulkTransferTask extends InnerTask {
 
         static private final String FILE_EXTENSION_CLAUSE =
                 "(name LIKE '%." //NON-NLS
-                + StringUtils.join(FileTypeUtils.getAllSupportedExtensions(), "' OR name LIKE '%.") //NON-NLS
+                + String.join("' OR name LIKE '%.", FileTypeUtils.getAllSupportedExtensions()) //NON-NLS
                 + "')";
 
         static private final String MIMETYPE_CLAUSE =
                 "(mime_type LIKE '" //NON-NLS
-                + StringUtils.join(FileTypeUtils.getAllSupportedMimeTypes(), "' OR mime_type LIKE '") //NON-NLS
+                + String.join("' OR mime_type LIKE '", FileTypeUtils.getAllSupportedMimeTypes()) //NON-NLS
                 + "') ";
 
         static final String DRAWABLE_QUERY =
                 //grab files with supported extension
-               "(" + FILE_EXTENSION_CLAUSE
+                "(" + FILE_EXTENSION_CLAUSE
                 //grab files with supported mime-types
                 + " OR " + MIMETYPE_CLAUSE //NON-NLS
                 //grab files with image or video mime-types even if we don't officially support them
                 + " OR mime_type LIKE 'video/%' OR mime_type LIKE 'image/%' )"; //NON-NLS
 
-        BulkTask(ImageGalleryController controller, DrawableDB taskDB, SleuthkitCase tskCase) {
+        final ImageGalleryController controller;
+        final DrawableDB taskDB;
+        final SleuthkitCase tskCase;
+
+        ProgressHandle progressHandle;
+
+        BulkTransferTask(ImageGalleryController controller, DrawableDB taskDB, SleuthkitCase tskCase) {
             this.controller = controller;
             this.taskDB = taskDB;
             this.tskCase = tskCase;
@@ -798,7 +796,6 @@ public final class ImageGalleryController implements Executor {
         }
 
         abstract ProgressHandle getInitialProgressHandle();
-
     }
 
     /**
@@ -808,7 +805,7 @@ public final class ImageGalleryController implements Executor {
      * adds them to the Drawable DB. Uses the presence of a mimetype as an
      * approximation to 'analyzed'.
      */
-    static private class CopyAnalyzedFiles extends BulkTask {
+    static private class CopyAnalyzedFiles extends BulkTransferTask {
 
         private static final Logger LOGGER = Logger.getLogger(CopyAnalyzedFiles.class.getName());
 
@@ -869,7 +866,7 @@ public final class ImageGalleryController implements Executor {
      * TODO: create methods to simplify progress value/text updates to both
      * netbeans and ImageGallery progress/status
      */
-    static private class PrePopulateDataSourceFiles extends BulkTask {
+    static private class PrePopulateDataSourceFiles extends BulkTransferTask {
 
         private static final Logger LOGGER = Logger.getLogger(PrePopulateDataSourceFiles.class.getName());
 
@@ -886,7 +883,6 @@ public final class ImageGalleryController implements Executor {
 
         @Override
         protected void cleanup(boolean success) {
-
         }
 
         @Override
