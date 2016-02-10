@@ -2599,6 +2599,7 @@ class ReportGenerator {
                     String rowData = c.getRowData(this);
                     orderedRowData.add(rowData);
                 }
+                return orderedRowData;
             }
             orderedRowData.add(makeCommaSeparatedList(getTags()));
 
@@ -2727,6 +2728,8 @@ class ReportGenerator {
         public String getRowData(ArtifactData artData) {
             if (this.columnHeader.equals(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile"))) {
                 return getFileUniquePath(artData.getObjectID());
+            } else if (this.columnHeader.equals(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tags"))) {
+                return makeCommaSeparatedList(artData.getTags());
             }
             return "";
         }
