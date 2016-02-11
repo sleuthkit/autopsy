@@ -142,7 +142,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
      * @param controller the value of controller
      */
     @NbBundle.Messages({"DrawableTileBase.menuItem.extractFiles=Extract File(s)",
-            "DrawableTileBase.menuItem.showContentViewer=Show Content Viewer"})
+        "DrawableTileBase.menuItem.showContentViewer=Show Content Viewer"})
     protected DrawableTileBase(GroupPane groupPane, final ImageGalleryController controller) {
         super(controller);
         this.groupPane = groupPane;
@@ -184,8 +184,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
 
                 menuItems.add(new CategorizeAction(getController()).getPopupMenu());
 
-                menuItems.add(new AddDrawableTagAction(getController()).getPopupMenu());
-
+                menuItems.add(AddDrawableTagAction.getTagMenu(getController()));
 
                 final MenuItem extractMenuItem = new MenuItem(Bundle.DrawableTileBase_menuItem_extractFiles());
                 extractMenuItem.setOnAction(actionEvent -> {
@@ -195,7 +194,6 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                     });
                 });
                 menuItems.add(extractMenuItem);
-
 
                 MenuItem contentViewer = new MenuItem(Bundle.DrawableTileBase_menuItem_showContentViewer());
                 contentViewer.setOnAction(actionEvent -> {
@@ -242,7 +240,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                 if (followUpToggle.isSelected() == true) {
                     try {
                         selectionModel.clearAndSelect(file.getId());
-                        new AddDrawableTagAction(getController()).addTag(getController().getTagsManager().getFollowUpTagName(), "");
+                        new AddDrawableTagAction(getController(), getController().getTagsManager().getFollowUpTagName(), selectionModel.getSelected()).handle(actionEvent);
                     } catch (TskCoreException ex) {
                         LOGGER.log(Level.SEVERE, "Failed to add Follow Up tag.  Could not load TagName.", ex); //NON-NLS
                     }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,22 +18,7 @@
  */
 package org.sleuthkit.autopsy.imagegallery.actions;
 
-import java.awt.Window;
-import java.util.Collection;
 import java.util.Set;
-import javafx.event.ActionEvent;
-import javafx.scene.control.Menu;
-import javafx.scene.control.MenuItem;
-import javax.swing.SwingUtilities;
-
-import org.openide.util.NbBundle;
-import org.openide.windows.TopComponent;
-import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.actions.GetTagNameAndCommentDialog;
-import org.sleuthkit.autopsy.actions.GetTagNameDialog;
-import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
-import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.datamodel.TagName;
 
 /**
@@ -44,9 +29,10 @@ import org.sleuthkit.datamodel.TagName;
  * org.sleuthkit.autopsy.actions.AddTagAction and needs to be refactored or
  * reintegrated to the AddTagAction hierarchy of Autopysy.
  */
+@Deprecated
 abstract class AddTagAction {
 
-    protected static final String NO_COMMENT = "";
+   
 
     /**
      * Template method to allow derived classes to provide a string for a menu
@@ -66,91 +52,9 @@ abstract class AddTagAction {
      */
     abstract protected void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles);
 
-    /**
-     * Instances of this class implement a context menu user interface for
-     * creating or selecting a tag name for a tag and specifying an optional tag
-     * comment.
-     */
-    // @@@ This user interface has some significant usability issues and needs
-    // to be reworked.
-    @NbBundle.Messages({"AddTagAction.menuItem.quickTag=Quick Tag",
-            "AddTagAction.menuItem.noTags=No tags",
-            "AddTagAction.menuItem.newTag=New Tag...",
-            "AddTagAction.menuItem.tagAndComment=Tag and Comment..."})
-    protected class TagMenu extends Menu {
-
-        TagMenu(ImageGalleryController controller) {
-            super(getActionDisplayName());
-
-            // Create a "Quick Tag" sub-menu.
-            Menu quickTagMenu = new Menu(Bundle.AddTagAction_menuItem_quickTag());
-            getItems().add(quickTagMenu);
-
-            /*
-             * Each non-Category tag name in the current set of tags gets its
-             * own menu item in the "Quick Tags" sub-menu. Selecting one of
-             * these menu items adds a tag with the associated tag name.
-             */
-            Collection<TagName> tagNames = controller.getTagsManager().getNonCategoryTagNames();
-            if (tagNames.isEmpty()) {
-                MenuItem empty = new MenuItem(Bundle.AddTagAction_menuItem_noTags());
-                empty.setDisable(true);
-                quickTagMenu.getItems().add(empty);
-            } else {
-                for (final TagName tagName : tagNames) {
-                    MenuItem tagNameItem = new MenuItem(tagName.getDisplayName());
-                    tagNameItem.setOnAction((ActionEvent t) -> {
-                        addTag(tagName, NO_COMMENT);
-                    });
-                    quickTagMenu.getItems().add(tagNameItem);
-                }
-            }
-
-            /*
-             * The "Quick Tag" menu also gets an "New Tag..." menu item.
-             * Selecting this item initiates a dialog that can be used to create
-             * or select a tag name and adds a tag with the resulting name.
-             */
-            MenuItem newTagMenuItem = new MenuItem(Bundle.AddTagAction_menuItem_newTag());
-            newTagMenuItem.setOnAction((ActionEvent t) -> {
-                SwingUtilities.invokeLater(() -> {
-                    TagName tagName = GetTagNameDialog.doDialog(getIGWindow());
-                    if (tagName != null) {
-                        addTag(tagName, NO_COMMENT);
-                    }
-                });
-            });
-            quickTagMenu.getItems().add(newTagMenuItem);
-
-            /*
-             * Create a "Tag and Comment..." menu item. Selecting this item
-             * initiates a dialog that can be used to create or select a tag
-             * name with an optional comment and adds a tag with the resulting
-             * name.
-             */
-            MenuItem tagAndCommentItem = new MenuItem(Bundle.AddTagAction_menuItem_tagAndComment());
-            tagAndCommentItem.setOnAction((ActionEvent t) -> {
-                SwingUtilities.invokeLater(() -> {
-                    GetTagNameAndCommentDialog.TagNameAndComment tagNameAndComment = GetTagNameAndCommentDialog.doDialog(getIGWindow());
-                    if (null != tagNameAndComment) {
-                        if (CategoryManager.isCategoryTagName(tagNameAndComment.getTagName())) {
-                            new CategorizeAction(controller).addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
-                        } else {
-                            new AddDrawableTagAction(controller).addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
-                        }
-                    }
-                });
-            });
-            getItems().add(tagAndCommentItem);
-        }
-
-    }
-
+  
     /**
      * @return the Window containing the ImageGalleryTopComponent
      */
-    static private Window getIGWindow() {
-        TopComponent etc = WindowManager.getDefault().findTopComponent(ImageGalleryTopComponent.PREFERRED_ID);
-        return SwingUtilities.getWindowAncestor(etc);
-    }
+  
 }

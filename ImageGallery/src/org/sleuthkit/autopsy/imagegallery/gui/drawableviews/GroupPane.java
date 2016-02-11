@@ -827,7 +827,7 @@ public class GroupPane extends BorderPane {
             ArrayList<MenuItem> menuItems = new ArrayList<>();
 
             menuItems.add(new CategorizeAction(controller).getPopupMenu());
-            menuItems.add(new AddDrawableTagAction(controller).getPopupMenu());
+            menuItems.add(AddDrawableTagAction.getTagMenu(controller));
 
             Collection<? extends ContextMenuActionsProvider> menuProviders = Lookup.getDefault().lookupAll(ContextMenuActionsProvider.class);
 

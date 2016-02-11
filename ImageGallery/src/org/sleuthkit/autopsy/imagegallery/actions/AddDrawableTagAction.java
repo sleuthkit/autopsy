@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,78 +18,81 @@
  */
 package org.sleuthkit.autopsy.imagegallery.actions;
 
-import java.util.HashSet;
+import java.awt.Window;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javafx.application.Platform;
+import javafx.collections.ObservableSet;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Menu;
+import javafx.scene.control.MenuItem;
+import javafx.scene.image.ImageView;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
-
+import org.controlsfx.control.action.Action;
+import org.controlsfx.control.action.ActionUtils;
 import org.openide.util.NbBundle;
-import org.openide.util.Utilities;
+import org.openide.windows.TopComponent;
+import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.actions.GetTagNameAndCommentDialog;
+import org.sleuthkit.autopsy.actions.GetTagNameDialog;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
+import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableTagsManager;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Instances of this Action allow users to apply tags to content.
- *
- * //TODO: since we are not using actionsGlobalContext anymore and this has
- * diverged from autopsy action, make this extend from controlsfx Action
  */
-public class AddDrawableTagAction extends AddTagAction {
+public class AddDrawableTagAction extends Action {
 
     private static final Logger LOGGER = Logger.getLogger(AddDrawableTagAction.class.getName());
 
     private final ImageGalleryController controller;
+    private final Set<Long> selectedFileIDs;
+    private final TagName tagName;
 
-    public AddDrawableTagAction(ImageGalleryController controller) {
+    public AddDrawableTagAction(ImageGalleryController controller, TagName tagName, Set<Long> selectedFileIDs) {
+        super(tagName.getDisplayName());
         this.controller = controller;
+        this.selectedFileIDs = selectedFileIDs;
+        this.tagName = tagName;
+        setGraphic(controller.getTagsManager().getGraphic(tagName));
+        setText(tagName.getDisplayName());
+        setEventHandler(actionEvent -> addTagWithComment(""));
     }
 
-    public Menu getPopupMenu() {
+    static public Menu getTagMenu(ImageGalleryController controller) {
         return new TagMenu(controller);
     }
 
-    @Override
-    @NbBundle.Messages({"AddDrawableTagAction.displayName.plural=Tag Files",
-            "AddDrawableTagAction.displayName.singular=Tag File"})
-    protected String getActionDisplayName() {
-        return Utilities.actionsGlobalContext().lookupAll(AbstractFile.class).size() > 1
-                ? Bundle.AddDrawableTagAction_displayName_plural()
-                : Bundle.AddDrawableTagAction_displayName_singular();
+    private void addTagWithComment(String comment) {
+        addTagsToFiles(tagName, comment, selectedFileIDs);
     }
 
-    @Override
-    public void addTag(TagName tagName, String comment) {
-        Set<Long> selectedFiles = new HashSet<>(controller.getSelectionModel().getSelected());
-        addTagsToFiles(tagName, comment, selectedFiles);
-    }
-
-    @Override
     @NbBundle.Messages({"# {0} - fileID",
-            "AddDrawableTagAction.addTagsToFiles.alert=Unable to tag file {0}."})
-    public void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles) {
+        "AddDrawableTagAction.addTagsToFiles.alert=Unable to tag file {0}."})
+    private void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles) {
         new SwingWorker<Void, Void>() {
 
             @Override
             protected Void doInBackground() throws Exception {
+                // check if the same tag is being added for the same abstract file.
+                DrawableTagsManager tagsManager = controller.getTagsManager();
                 for (Long fileID : selectedFiles) {
                     try {
                         final DrawableFile<?> file = controller.getFileFromId(fileID);
                         LOGGER.log(Level.INFO, "tagging {0} with {1} and comment {2}", new Object[]{file.getName(), tagName.getDisplayName(), comment}); //NON-NLS
 
-                        // check if the same tag is being added for the same abstract file.
-                        DrawableTagsManager tagsManager = controller.getTagsManager();
                         List<ContentTag> contentTags = tagsManager.getContentTagsByContent(file);
                         Optional<TagName> duplicateTagName = contentTags.stream()
                                 .map(ContentTag::getName)
@@ -105,9 +108,9 @@ public class AddDrawableTagAction extends AddTagAction {
 
                     } catch (TskCoreException tskCoreException) {
                         LOGGER.log(Level.SEVERE, "Error tagging file", tskCoreException); //NON-NLS
-                        Platform.runLater(() -> {
-                            new Alert(Alert.AlertType.ERROR, Bundle.AddDrawableTagAction_addTagsToFiles_alert(fileID)).show();
-                        });
+                        Platform.runLater(() ->
+                                new Alert(Alert.AlertType.ERROR, Bundle.AddDrawableTagAction_addTagsToFiles_alert(fileID)).show()
+                        );
                     }
                 }
                 return null;
@@ -123,5 +126,80 @@ public class AddDrawableTagAction extends AddTagAction {
                 }
             }
         }.execute();
+    }
+
+    @NbBundle.Messages({"AddTagAction.menuItem.quickTag=Quick Tag",
+        "AddTagAction.menuItem.noTags=No tags",
+        "AddTagAction.menuItem.newTag=New Tag...",
+        "AddTagAction.menuItem.tagAndComment=Tag and Comment...",
+        "AddDrawableTagAction.displayName.plural=Tag Files",
+        "AddDrawableTagAction.displayName.singular=Tag File"})
+    private static class TagMenu extends Menu {
+
+        TagMenu(ImageGalleryController controller) {
+            setGraphic(new ImageView(DrawableAttribute.TAGS.getIcon()));
+            ObservableSet<Long> selectedFileIDs = controller.getSelectionModel().getSelected();
+            setText(selectedFileIDs.size() > 1
+                    ? Bundle.AddDrawableTagAction_displayName_plural()
+                    : Bundle.AddDrawableTagAction_displayName_singular());
+
+            // Create a "Quick Tag" sub-menu.
+            Menu quickTagMenu = new Menu(Bundle.AddTagAction_menuItem_quickTag());
+            getItems().add(quickTagMenu);
+
+            /*
+             * Each non-Category tag name in the current set of tags gets its
+             * own menu item in the "Quick Tags" sub-menu. Selecting one of
+             * these menu items adds a tag with the associated tag name.
+             */
+            Collection<TagName> tagNames = controller.getTagsManager().getNonCategoryTagNames();
+            if (tagNames.isEmpty()) {
+                MenuItem empty = new MenuItem(Bundle.AddTagAction_menuItem_noTags());
+                empty.setDisable(true);
+                quickTagMenu.getItems().add(empty);
+            } else {
+                for (final TagName tagName : tagNames) {
+                    AddDrawableTagAction addDrawableTagAction = new AddDrawableTagAction(controller, tagName, selectedFileIDs);
+                    MenuItem tagNameItem = ActionUtils.createMenuItem(addDrawableTagAction);
+                    quickTagMenu.getItems().add(tagNameItem);
+                }
+            }
+
+            /*
+             * The "Quick Tag" menu also gets an "New Tag..." menu item.
+             * Selecting this item initiates a dialog that can be used to create
+             * or select a tag name and adds a tag with the resulting name.
+             */
+            MenuItem newTagMenuItem = new MenuItem(Bundle.AddTagAction_menuItem_newTag());
+            newTagMenuItem.setOnAction(actionEvent ->
+                    SwingUtilities.invokeLater(() -> {
+                        TagName tagName = GetTagNameDialog.doDialog(getIGWindow());
+                        if (tagName != null) {
+                            new AddDrawableTagAction(controller, tagName, selectedFileIDs).handle(actionEvent);
+                        }
+                    }));
+            quickTagMenu.getItems().add(newTagMenuItem);
+
+            /*
+             * Create a "Tag and Comment..." menu item. Selecting this item
+             * initiates a dialog that can be used to create or select a tag
+             * name with an optional comment and adds a tag with the resulting
+             * name.
+             */
+            MenuItem tagAndCommentItem = new MenuItem(Bundle.AddTagAction_menuItem_tagAndComment());
+            tagAndCommentItem.setOnAction(actionEvent ->
+                    SwingUtilities.invokeLater(() -> {
+                        GetTagNameAndCommentDialog.TagNameAndComment tagNameAndComment = GetTagNameAndCommentDialog.doDialog(getIGWindow());
+                        if (null != tagNameAndComment) {
+                            new AddDrawableTagAction(controller, tagNameAndComment.getTagName(), selectedFileIDs).addTagWithComment(tagNameAndComment.getComment());
+                        }
+                    }));
+            getItems().add(tagAndCommentItem);
+        }
+    }
+
+    static private Window getIGWindow() {
+        TopComponent etc = WindowManager.getDefault().findTopComponent(ImageGalleryTopComponent.PREFERRED_ID);
+        return SwingUtilities.getWindowAncestor(etc);
     }
 }
