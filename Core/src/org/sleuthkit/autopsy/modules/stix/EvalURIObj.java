@@ -108,7 +108,7 @@ class EvalURIObj extends EvaluatableObject {
             for (BlackboardArtifact art : artList) {
 
                 for (BlackboardAttribute attr : art.getAttributes()) {
-                    if (attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()) {
+                    if (attr.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()) {
 
                         String modifiedAttrString = attr.getValueString();
                         if (modifiedAttrString != null) {

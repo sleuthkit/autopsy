@@ -72,19 +72,19 @@ public class ArtifactStringContent implements StringContent {
 
                     // name column
                     buffer.append("<tr><td>"); //NON-NLS
-                    buffer.append(attr.getAttributeTypeDisplayName());
+                    buffer.append(attr.getAttributeType().getDisplayName());
                     buffer.append("</td>"); //NON-NLS
 
                     // value column
                     buffer.append("<td>"); //NON-NLS
-                    if (attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()
-                            || attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()
-                            || attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID()
-                            || attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED.getTypeID()
-                            || attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID()
-                            || attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID()
-                            || attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()
-                            || attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()) {
+                    if (attr.getAttributeType().getTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()
+                            || attr.getAttributeType().getTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()
+                            || attr.getAttributeType().getTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID()
+                            || attr.getAttributeType().getTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED.getTypeID()
+                            || attr.getAttributeType().getTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID()
+                            || attr.getAttributeType().getTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID()
+                            || attr.getAttributeType().getTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()
+                            || attr.getAttributeType().getTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()) {
                         long epoch = attr.getValueLong();
                         String time = "0000-00-00 00:00:00";
                         if (epoch != 0) {
@@ -93,7 +93,7 @@ public class ArtifactStringContent implements StringContent {
                         }
                         buffer.append(time);
                     } else {
-                        switch (attr.getValueType()) {
+                        switch (attr.getAttributeType().getValueType()) {
                             case STRING:
                                 String str = attr.getValueString();
                                 str = str.replaceAll(" ", "&nbsp;"); //NON-NLS

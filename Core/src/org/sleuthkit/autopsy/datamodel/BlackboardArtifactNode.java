@@ -117,7 +117,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         if (artifact != null && artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
             try {
                 for (BlackboardAttribute attribute : artifact.getAttributes()) {
-                    if (attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
+                    if (attribute.getAttributeType().getTypeID() == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
                         BlackboardArtifact associatedArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
                         if (associatedArtifact != null) {
                             displayName = associatedArtifact.getDisplayName() + " Artifact"; // NON-NLS
@@ -384,7 +384,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
             String keyword = null;
             String regexp = null;
             for (BlackboardAttribute att : attributes) {
-                final int attributeTypeID = att.getAttributeTypeID();
+                final int attributeTypeID = att.getAttributeType().getTypeID();
                 if (attributeTypeID == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()) {
                     keyword = att.getValueString();
                 } else if (attributeTypeID == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID()) {

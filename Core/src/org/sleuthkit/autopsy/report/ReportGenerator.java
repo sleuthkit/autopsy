@@ -2146,7 +2146,7 @@ class ReportGenerator {
         }
         for (BlackboardAttribute tempatt : attList) {
             String value = "";
-            Integer type = tempatt.getAttributeTypeID();
+            Integer type = tempatt.getAttributeType().getTypeID();
             if (type.equals(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID())
                     || type.equals(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID())
                     || type.equals(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID())
@@ -2284,7 +2284,6 @@ class ReportGenerator {
         /**
          * Get the values for each row in the table report.
          *
-         * @param columnHeaders The list of column headers that is used to find
          * the value types of custom artifacts
          * @return A list of string representing the data for this artifact.
          */
@@ -2311,9 +2310,6 @@ class ReportGenerator {
         /**
          * Get a list of Strings with all the row values for the Artifact in the
          * correct order to be written to the report.
-         *
-         * @param columnHeaders The list of column headers that is used to find
-         * the value types of custom artifacts
          *
          * @return List<String> row values. Values could be null if attribute is
          * not defined in artifact
