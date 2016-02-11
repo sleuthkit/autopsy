@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.coreutils;
 
+import com.google.common.io.Files;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -94,20 +95,18 @@ public class VideoUtils {
     static BufferedImage generateVideoThumbnail(AbstractFile file, int iconSize) {
         java.io.File tempFile = getTempVideoFile(file);
 
-        try {
-            if (tempFile.exists() == false || tempFile.length() < file.getSize()) {
-                com.google.common.io.Files.createParentDirs(tempFile);
-                ProgressHandle progress = ProgressHandleFactory.createHandle(NbBundle.getMessage(VideoUtils.class, "VideoUtils.genVideoThumb.progress.text", file.getName()));
-                progress.start(100);
-                try {
-                    ContentUtils.writeToFile(file, tempFile, progress, null, true);
-                } catch (IOException ex) {
-                    LOGGER.log(Level.WARNING, "Error buffering file", ex); //NON-NLS
-                }
+        if (tempFile.exists() == false || tempFile.length() < file.getSize()) {
+            ProgressHandle progress = ProgressHandleFactory.createHandle(NbBundle.getMessage(VideoUtils.class, "VideoUtils.genVideoThumb.progress.text", file.getName()));
+            progress.start(100);
+            try {
+                Files.createParentDirs(tempFile);
+                ContentUtils.writeToFile(file, tempFile, progress, null, true);
+            } catch (IOException ex) {
+                LOGGER.log(Level.WARNING, "Error buffering file to disk", ex); //NON-NLS
+                return null;
+            } finally {
                 progress.finish();
             }
-        } catch (IOException ex) {
-            return null;
         }
 
         VideoCapture videoFile = new VideoCapture(); // will contain the video
