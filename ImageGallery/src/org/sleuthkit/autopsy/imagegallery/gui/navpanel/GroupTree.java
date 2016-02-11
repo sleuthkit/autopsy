@@ -72,7 +72,8 @@ final public class GroupTree extends NavPanel<TreeItem<GroupTreeNode>> {
         getToolBar().visibleProperty().bind(groupedByPath.not());
         getToolBar().managedProperty().bind(groupedByPath.not());
 
-        groupTree.setCellFactory(treeView -> new GroupTreeCell(getController(), getSortByBox().getSelectionModel().selectedItemProperty()));
+        groupTree.setCellFactory(treeView -> new GroupTreeCell(getController(), comparatorProperty()));
+
         groupTree.setShowRoot(false);
 
         getGroupManager().getAnalyzedGroups().addListener((ListChangeListener.Change<? extends DrawableGroup> change) -> {
@@ -151,4 +152,5 @@ final public class GroupTree extends NavPanel<TreeItem<GroupTreeNode>> {
             return Arrays.asList(stripStart);
         }
     }
+
 }
