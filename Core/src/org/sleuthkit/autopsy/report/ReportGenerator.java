@@ -531,21 +531,21 @@ class ReportGenerator {
                         attrTypeSet.add(attribute.getAttributeType());
                     }
                 }
-                // Get the column headers appropriate for the artifact type.
-                List<Column> columnHeaders = getArtifactTableColumnHeaders(type.getTypeID(), attrTypeSet);
-                if (columnHeaders.isEmpty()) {
+                // Get the columns appropriate for the artifact type.
+                List<Column> columns = getArtifactTableColumns(type.getTypeID(), attrTypeSet);
+                if (columns.isEmpty()) {
                     continue;
                 }
                 for (ArtifactData artData : artifactList) {
-                    artData.setColumnHeaders(columnHeaders);
+                    artData.setColumns(columns);
                 }
                 // The most efficient way to sort all the Artifacts is to add them to a List, and then
                 // sort that List based off a Comparator. Adding to a TreeMap/Set/List sorts the list
                 // each time an element is added, which adds unnecessary overhead if we only need it sorted once.
                 Collections.sort(artifactList);
                 List<String> columnHeaderNames = new ArrayList<>();
-                for (Column currCell : columnHeaders) {
-                    columnHeaderNames.add(currCell.getColumnHeader());
+                for (Column currColumn : columns) {
+                    columnHeaderNames.add(currColumn.getColumnHeader());
                 }
 
                 for (TableReportModule module : tableModules) {
@@ -1043,10 +1043,10 @@ class ReportGenerator {
                     currentKeyword = keyword;
                     for (TableReportModule module : tableModules) {
                         module.addSetElement(currentKeyword);
-                        List<Column> columnHeaders = getArtifactTableColumnHeaders(ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID(), new HashSet<BlackboardAttribute.Type>());
+                        List<Column> columns = getArtifactTableColumns(ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID(), new HashSet<BlackboardAttribute.Type>());
                         List<String> columnHeaderNames = new ArrayList<>();
-                        for (Column currCell : columnHeaders) {
-                            columnHeaderNames.add(currCell.getColumnHeader());
+                        for (Column currColumn : columns) {
+                            columnHeaderNames.add(currColumn.getColumnHeader());
                         }
                         module.startTable(columnHeaderNames);
                     }
@@ -1180,10 +1180,10 @@ class ReportGenerator {
                     currentSet = set;
                     for (TableReportModule module : tableModules) {
                         module.startSet(currentSet);
-                        List<Column> columnHeaders = getArtifactTableColumnHeaders(ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID(), new HashSet<BlackboardAttribute.Type>());
+                        List<Column> columns = getArtifactTableColumns(ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID(), new HashSet<BlackboardAttribute.Type>());
                         List<String> columnHeaderNames = new ArrayList<>();
-                        for (Column currCell : columnHeaders) {
-                            columnHeaderNames.add(currCell.getColumnHeader());
+                        for (Column currColumn : columns) {
+                            columnHeaderNames.add(currColumn.getColumnHeader());
                         }
                         module.startTable(columnHeaderNames);
                         tableProgress.get(module).updateStatusLabel(
@@ -1218,917 +1218,913 @@ class ReportGenerator {
      *
      * @return List<String> row titles
      */
-    private List<Column> getArtifactTableColumnHeaders(int artifactTypeId, Set<BlackboardAttribute.Type> types) {
-        ArrayList<Column> columnHeaders = new ArrayList<>();
+    private List<Column> getArtifactTableColumns(int artifactTypeId, Set<BlackboardAttribute.Type> types) {
+        ArrayList<Column> columns = new ArrayList<>();
         if (ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID() == artifactTypeId) {
-            columnHeaders.add(
-                    new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.url"),
-                            new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
-                                    ATTRIBUTE_TYPE.TSK_URL.getLabel(),
-                                    ATTRIBUTE_TYPE.TSK_URL.getDisplayName(),
-                                    ATTRIBUTE_TYPE.TSK_URL.getValueType())));
-
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.title"),
-                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_TITLE.getTypeID(),
-                            ATTRIBUTE_TYPE.TSK_TITLE.getLabel(),
-                            ATTRIBUTE_TYPE.TSK_TITLE.getDisplayName(),
-                            ATTRIBUTE_TYPE.TSK_TITLE.getValueType())));
-
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateCreated"),
-                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(),
-                            ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getLabel(),
-                            ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getDisplayName(),
-                            ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getValueType())));
-
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program"),
-                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
-                            ATTRIBUTE_TYPE.TSK_PROG_NAME.getLabel(),
-                            ATTRIBUTE_TYPE.TSK_PROG_NAME.getDisplayName(),
-                            ATTRIBUTE_TYPE.TSK_PROG_NAME.getValueType())));
-
-            columnHeaders.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
-
-        } else if (ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID() == artifactTypeId) {
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.url"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.url"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_URL.getLabel(),
                             ATTRIBUTE_TYPE.TSK_URL.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_URL.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.title"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_TITLE.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_TITLE.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_TITLE.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_TITLE.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateCreated"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_PROG_NAME.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_PROG_NAME.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_PROG_NAME.getValueType())));
+
+            columns.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
+
+        } else if (ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID() == artifactTypeId) {
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.url"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_URL.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_URL.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_URL.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_DATETIME.getLabel(),
                             ATTRIBUTE_TYPE.TSK_DATETIME.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_DATETIME.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_NAME.getLabel(),
                             ATTRIBUTE_TYPE.TSK_NAME.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_NAME.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.value"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.value"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_VALUE.getLabel(),
                             ATTRIBUTE_TYPE.TSK_VALUE.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_VALUE.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_PROG_NAME.getLabel(),
                             ATTRIBUTE_TYPE.TSK_PROG_NAME.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_PROG_NAME.getValueType())));
 
-            columnHeaders.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
+            columns.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
 
         } else if (ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID() == artifactTypeId) {
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.url"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.url"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_URL.getLabel(),
                             ATTRIBUTE_TYPE.TSK_URL.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_URL.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateAccessed"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateAccessed"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getLabel(),
                             ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.referrer"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.referrer"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_REFERRER.getLabel(),
                             ATTRIBUTE_TYPE.TSK_REFERRER.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_REFERRER.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.title"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.title"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_TITLE.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_TITLE.getLabel(),
                             ATTRIBUTE_TYPE.TSK_TITLE.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_TITLE.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_PROG_NAME.getLabel(),
                             ATTRIBUTE_TYPE.TSK_PROG_NAME.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_PROG_NAME.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.urlDomainDecoded"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.urlDomainDecoded"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_URL_DECODED.getLabel(),
                             ATTRIBUTE_TYPE.TSK_URL_DECODED.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_URL_DECODED.getValueType())));
 
-            columnHeaders.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
+            columns.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
 
         } else if (ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID() == artifactTypeId) {
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dest"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dest"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_PATH.getLabel(),
                             ATTRIBUTE_TYPE.TSK_PATH.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_PATH.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.sourceUrl"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.sourceUrl"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_URL.getLabel(),
                             ATTRIBUTE_TYPE.TSK_URL.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_URL.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateAccessed"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateAccessed"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getLabel(),
                             ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_PROG_NAME.getLabel(),
                             ATTRIBUTE_TYPE.TSK_PROG_NAME.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_PROG_NAME.getValueType())));
 
-            columnHeaders.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
+            columns.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
 
         } else if (ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID() == artifactTypeId) {
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.path"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.path"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_PATH.getLabel(),
                             ATTRIBUTE_TYPE.TSK_PATH.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_PATH.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_DATETIME.getLabel(),
                             ATTRIBUTE_TYPE.TSK_DATETIME.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_DATETIME.getValueType())));
 
-            columnHeaders.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
+            columns.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
         } else if (ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID() == artifactTypeId) {
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.progName"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.progName"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_PROG_NAME.getLabel(),
                             ATTRIBUTE_TYPE.TSK_PROG_NAME.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_PROG_NAME.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.instDateTime"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.instDateTime"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_DATETIME.getLabel(),
                             ATTRIBUTE_TYPE.TSK_DATETIME.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_DATETIME.getValueType())));
 
-            columnHeaders.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
+            columns.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
 
         } else if (ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID() == artifactTypeId) {
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.devMake"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.devMake"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getLabel(),
                             ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.devModel"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.devModel"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getLabel(),
                             ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.deviceId"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.deviceId"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_DEVICE_ID.getLabel(),
                             ATTRIBUTE_TYPE.TSK_DEVICE_ID.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_DEVICE_ID.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_DATETIME.getLabel(),
                             ATTRIBUTE_TYPE.TSK_DATETIME.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_DATETIME.getValueType())));
 
-            columnHeaders.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
+            columns.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
 
         } else if (ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID() == artifactTypeId) {
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.text"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.text"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_TEXT.getLabel(),
                             ATTRIBUTE_TYPE.TSK_TEXT.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_TEXT.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.domain"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.domain"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_DOMAIN.getLabel(),
                             ATTRIBUTE_TYPE.TSK_DOMAIN.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_DOMAIN.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateAccessed"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateAccessed"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getLabel(),
                             ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.progName"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.progName"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_PROG_NAME.getLabel(),
                             ATTRIBUTE_TYPE.TSK_PROG_NAME.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_PROG_NAME.getValueType())));
 
-            columnHeaders.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
+            columns.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
 
         } else if (ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID() == artifactTypeId) {
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTaken"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTaken"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getLabel(),
                             ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.devManufacturer"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.devManufacturer"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getLabel(),
                             ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.devModel"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.devModel"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getLabel(),
                             ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.latitude"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.latitude"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getLabel(),
                             ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.longitude"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.longitude"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getLabel(),
                             ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.altitude"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.altitude"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getLabel(),
                             ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getValueType())));
 
-            columnHeaders.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
+            columns.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
 
         } else if (ARTIFACT_TYPE.TSK_CONTACT.getTypeID() == artifactTypeId) {
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.personName"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.personName"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_NAME.getLabel(),
                             ATTRIBUTE_TYPE.TSK_NAME.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_NAME.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.phoneNumber"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.phoneNumber"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getLabel(),
                             ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.phoneNumHome"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.phoneNumHome"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_HOME.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_HOME.getLabel(),
                             ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_HOME.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_HOME.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.phoneNumOffice"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.phoneNumOffice"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_OFFICE.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_OFFICE.getLabel(),
                             ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_OFFICE.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_OFFICE.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.phoneNumMobile"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.phoneNumMobile"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_MOBILE.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_MOBILE.getLabel(),
                             ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_MOBILE.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_MOBILE.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.email"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.email"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_EMAIL.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_EMAIL.getLabel(),
                             ATTRIBUTE_TYPE.TSK_EMAIL.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_EMAIL.getValueType())));
 
-            columnHeaders.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
+            columns.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
 
         } else if (ARTIFACT_TYPE.TSK_MESSAGE.getTypeID() == artifactTypeId) {
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.msgType"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.msgType"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getLabel(),
                             ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.direction"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.direction"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_DIRECTION.getLabel(),
                             ATTRIBUTE_TYPE.TSK_DIRECTION.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_DIRECTION.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.readStatus"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.readStatus"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_READ_STATUS.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_READ_STATUS.getLabel(),
                             ATTRIBUTE_TYPE.TSK_READ_STATUS.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_READ_STATUS.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_DATETIME.getLabel(),
                             ATTRIBUTE_TYPE.TSK_DATETIME.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_DATETIME.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.fromPhoneNum"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.fromPhoneNum"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getLabel(),
                             ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.fromEmail"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.fromEmail"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getLabel(),
                             ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.toPhoneNum"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.toPhoneNum"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getLabel(),
                             ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.toEmail"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.toEmail"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_EMAIL_TO.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_EMAIL_TO.getLabel(),
                             ATTRIBUTE_TYPE.TSK_EMAIL_TO.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_EMAIL_TO.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.subject"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.subject"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_SUBJECT.getLabel(),
                             ATTRIBUTE_TYPE.TSK_SUBJECT.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_SUBJECT.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.text"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.text"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_TEXT.getLabel(),
                             ATTRIBUTE_TYPE.TSK_TEXT.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_TEXT.getValueType())));
 
-            columnHeaders.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
+            columns.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
 
         } else if (ARTIFACT_TYPE.TSK_CALLLOG.getTypeID() == artifactTypeId) {
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.personName"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.personName"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_NAME.getLabel(),
                             ATTRIBUTE_TYPE.TSK_NAME.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_NAME.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.fromPhoneNum"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.fromPhoneNum"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getLabel(),
                             ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.toPhoneNum"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.toPhoneNum"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getLabel(),
                             ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_DATETIME_START.getLabel(),
                             ATTRIBUTE_TYPE.TSK_DATETIME_START.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_DATETIME_START.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.direction"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.direction"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_DIRECTION.getLabel(),
                             ATTRIBUTE_TYPE.TSK_DIRECTION.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_DIRECTION.getValueType())));
 
-            columnHeaders.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
+            columns.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
 
         } else if (ARTIFACT_TYPE.TSK_CALENDAR_ENTRY.getTypeID() == artifactTypeId) {
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.calendarEntryType"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.calendarEntryType"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CALENDAR_ENTRY_TYPE.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_CALENDAR_ENTRY_TYPE.getLabel(),
                             ATTRIBUTE_TYPE.TSK_CALENDAR_ENTRY_TYPE.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_CALENDAR_ENTRY_TYPE.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.description"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.description"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_DESCRIPTION.getLabel(),
                             ATTRIBUTE_TYPE.TSK_DESCRIPTION.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_DESCRIPTION.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.startDateTime"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.startDateTime"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_DATETIME_START.getLabel(),
                             ATTRIBUTE_TYPE.TSK_DATETIME_START.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_DATETIME_START.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.endDateTime"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.endDateTime"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_DATETIME_END.getLabel(),
                             ATTRIBUTE_TYPE.TSK_DATETIME_END.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_DATETIME_END.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.location"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.location"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_LOCATION.getLabel(),
                             ATTRIBUTE_TYPE.TSK_LOCATION.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_LOCATION.getValueType())));
 
-            columnHeaders.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
+            columns.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
 
         } else if (ARTIFACT_TYPE.TSK_SPEED_DIAL_ENTRY.getTypeID() == artifactTypeId) {
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.shortCut"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.shortCut"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SHORTCUT.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_SHORTCUT.getLabel(),
                             ATTRIBUTE_TYPE.TSK_SHORTCUT.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_SHORTCUT.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.personName"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.personName"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_NAME_PERSON.getLabel(),
                             ATTRIBUTE_TYPE.TSK_NAME_PERSON.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_NAME_PERSON.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.phoneNumber"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.phoneNumber"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getLabel(),
                             ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getValueType())));
 
-            columnHeaders.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
+            columns.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
 
         } else if (ARTIFACT_TYPE.TSK_BLUETOOTH_PAIRING.getTypeID() == artifactTypeId) {
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.deviceName"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.deviceName"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DEVICE_NAME.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_DEVICE_NAME.getLabel(),
                             ATTRIBUTE_TYPE.TSK_DEVICE_NAME.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_DEVICE_NAME.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.deviceAddress"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.deviceAddress"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_DEVICE_ID.getLabel(),
                             ATTRIBUTE_TYPE.TSK_DEVICE_ID.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_DEVICE_ID.getValueType())));
 
-            columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
                             ATTRIBUTE_TYPE.TSK_DATETIME.getLabel(),
                             ATTRIBUTE_TYPE.TSK_DATETIME.getDisplayName(),
                             ATTRIBUTE_TYPE.TSK_DATETIME.getValueType())));
 
-            columnHeaders.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
+            columns.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
 
         } else if (ARTIFACT_TYPE.TSK_GPS_TRACKPOINT.getTypeID() == artifactTypeId) {
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.latitude"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getLabel(),
-                ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.longitude"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getLabel(),
-                ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_DATETIME.getLabel(),
-                ATTRIBUTE_TYPE.TSK_DATETIME.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_DATETIME.getValueType())));
-                
-                columnHeaders.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
-                
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.latitude"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.longitude"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_DATETIME.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_DATETIME.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_DATETIME.getValueType())));
+
+            columns.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
+
         } else if (ARTIFACT_TYPE.TSK_GPS_BOOKMARK.getTypeID() == artifactTypeId) {
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.latitude"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getLabel(),
-                ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.longitude"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getLabel(),
-                ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.altitude"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getLabel(),
-                ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_NAME.getLabel(),
-                ATTRIBUTE_TYPE.TSK_NAME.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_NAME.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.locationAddress"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_LOCATION.getLabel(),
-                ATTRIBUTE_TYPE.TSK_LOCATION.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_LOCATION.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_DATETIME.getLabel(),
-                ATTRIBUTE_TYPE.TSK_DATETIME.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_DATETIME.getValueType())));
-                
-                columnHeaders.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
-                
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.latitude"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.longitude"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.altitude"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_NAME.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_NAME.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_NAME.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.locationAddress"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_LOCATION.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_LOCATION.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_LOCATION.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_DATETIME.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_DATETIME.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_DATETIME.getValueType())));
+
+            columns.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
+
         } else if (ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION.getTypeID() == artifactTypeId) {
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.latitude"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getLabel(),
-                ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.longitude"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getLabel(),
-                ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.altitude"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getLabel(),
-                ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_NAME.getLabel(),
-                ATTRIBUTE_TYPE.TSK_NAME.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_NAME.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.locationAddress"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_LOCATION.getLabel(),
-                ATTRIBUTE_TYPE.TSK_LOCATION.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_LOCATION.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_DATETIME.getLabel(),
-                ATTRIBUTE_TYPE.TSK_DATETIME.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_DATETIME.getValueType())));
-                
-                columnHeaders.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.latitude"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.longitude"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.altitude"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_NAME.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_NAME.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_NAME.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.locationAddress"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_LOCATION.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_LOCATION.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_LOCATION.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_DATETIME.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_DATETIME.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_DATETIME.getValueType())));
+
+            columns.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
         } else if (ARTIFACT_TYPE.TSK_GPS_SEARCH.getTypeID() == artifactTypeId) {
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.latitude"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getLabel(),
-                ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.longitude"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getLabel(),
-                ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.altitude"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getLabel(),
-                ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_NAME.getLabel(),
-                ATTRIBUTE_TYPE.TSK_NAME.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_NAME.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.locationAddress"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_LOCATION.getLabel(),
-                ATTRIBUTE_TYPE.TSK_LOCATION.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_LOCATION.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_DATETIME.getLabel(),
-                ATTRIBUTE_TYPE.TSK_DATETIME.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_DATETIME.getValueType())));
-                
-                columnHeaders.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
-                
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.latitude"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.longitude"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.altitude"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_NAME.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_NAME.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_NAME.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.locationAddress"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_LOCATION.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_LOCATION.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_LOCATION.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_DATETIME.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_DATETIME.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_DATETIME.getValueType())));
+
+            columns.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
+
         } else if (ARTIFACT_TYPE.TSK_SERVICE_ACCOUNT.getTypeID() == artifactTypeId) {
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.category"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_CATEGORY.getLabel(),
-                ATTRIBUTE_TYPE.TSK_CATEGORY.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_CATEGORY.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.userId"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_ID.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_USER_ID.getLabel(),
-                ATTRIBUTE_TYPE.TSK_USER_ID.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_USER_ID.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.password"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PASSWORD.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_PASSWORD.getLabel(),
-                ATTRIBUTE_TYPE.TSK_PASSWORD.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_PASSWORD.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.personName"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_NAME.getLabel(),
-                ATTRIBUTE_TYPE.TSK_NAME.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_NAME.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.appName"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_PROG_NAME.getLabel(),
-                ATTRIBUTE_TYPE.TSK_PROG_NAME.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_PROG_NAME.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.url"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_URL.getLabel(),
-                ATTRIBUTE_TYPE.TSK_URL.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_URL.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.appPath"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_PATH.getLabel(),
-                ATTRIBUTE_TYPE.TSK_PATH.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_PATH.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.description"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_DESCRIPTION.getLabel(),
-                ATTRIBUTE_TYPE.TSK_DESCRIPTION.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_DESCRIPTION.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.replytoAddress"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_EMAIL_REPLYTO.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_EMAIL_REPLYTO.getLabel(),
-                ATTRIBUTE_TYPE.TSK_EMAIL_REPLYTO.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_EMAIL_REPLYTO.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.mailServer"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SERVER_NAME.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_SERVER_NAME.getLabel(),
-                ATTRIBUTE_TYPE.TSK_SERVER_NAME.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_SERVER_NAME.getValueType())));
-                
-                columnHeaders.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
-                
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.category"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_CATEGORY.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_CATEGORY.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_CATEGORY.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.userId"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_ID.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_USER_ID.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_USER_ID.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_USER_ID.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.password"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PASSWORD.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_PASSWORD.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_PASSWORD.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_PASSWORD.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.personName"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_NAME.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_NAME.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_NAME.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.appName"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_PROG_NAME.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_PROG_NAME.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_PROG_NAME.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.url"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_URL.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_URL.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_URL.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.appPath"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_PATH.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_PATH.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_PATH.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.description"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_DESCRIPTION.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_DESCRIPTION.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_DESCRIPTION.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.replytoAddress"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_EMAIL_REPLYTO.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_EMAIL_REPLYTO.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_EMAIL_REPLYTO.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_EMAIL_REPLYTO.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.mailServer"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SERVER_NAME.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_SERVER_NAME.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_SERVER_NAME.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_SERVER_NAME.getValueType())));
+
+            columns.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
+
         } else if (ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID() == artifactTypeId) {
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_NAME.getLabel(),
-                ATTRIBUTE_TYPE.TSK_NAME.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_NAME.getValueType())));
-                
-                columnHeaders.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
-                
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_NAME.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_NAME.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_NAME.getValueType())));
+
+            columns.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
+
         } else if (ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID() == artifactTypeId) {
-                columnHeaders.add(new UnspecifiedColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.file")));
-                
-                columnHeaders.add(new UnspecifiedColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.extension.text")));
-                
-                columnHeaders.add(new UnspecifiedColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.mimeType.text")));
-                
-                columnHeaders.add(new UnspecifiedColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.path")));
-                
+            columns.add(new UnspecifiedColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.file")));
+
+            columns.add(new UnspecifiedColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.extension.text")));
+
+            columns.add(new UnspecifiedColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.mimeType.text")));
+
+            columns.add(new UnspecifiedColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.path")));
+
         } else if (ARTIFACT_TYPE.TSK_OS_INFO.getTypeID() == artifactTypeId) {
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.processorArchitecture.text"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PROCESSOR_ARCHITECTURE.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_PROCESSOR_ARCHITECTURE.getLabel(),
-                ATTRIBUTE_TYPE.TSK_PROCESSOR_ARCHITECTURE.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_PROCESSOR_ARCHITECTURE.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.osName.text"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_PROG_NAME.getLabel(),
-                ATTRIBUTE_TYPE.TSK_PROG_NAME.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_PROG_NAME.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.osInstallDate.text"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_DATETIME.getLabel(),
-                ATTRIBUTE_TYPE.TSK_DATETIME.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_DATETIME.getValueType())));
-                
-                columnHeaders.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
-                
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.processorArchitecture.text"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PROCESSOR_ARCHITECTURE.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_PROCESSOR_ARCHITECTURE.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_PROCESSOR_ARCHITECTURE.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_PROCESSOR_ARCHITECTURE.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.osName.text"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_PROG_NAME.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_PROG_NAME.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_PROG_NAME.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.osInstallDate.text"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_DATETIME.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_DATETIME.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_DATETIME.getValueType())));
+
+            columns.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
+
         } else if (ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID() == artifactTypeId) {
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskEmailTo"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_EMAIL_TO.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_EMAIL_TO.getLabel(),
-                ATTRIBUTE_TYPE.TSK_EMAIL_TO.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_EMAIL_TO.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskEmailFrom"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getLabel(),
-                ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskSubject"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_SUBJECT.getLabel(),
-                ATTRIBUTE_TYPE.TSK_SUBJECT.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_SUBJECT.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskDateTimeSent"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getLabel(),
-                ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskDateTimeRcvd"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getLabel(),
-                ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskPath"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_PATH.getLabel(),
-                ATTRIBUTE_TYPE.TSK_PATH.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_PATH.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskEmailCc"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_EMAIL_CC.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_EMAIL_CC.getLabel(),
-                ATTRIBUTE_TYPE.TSK_EMAIL_CC.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_EMAIL_CC.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskEmailBcc"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getLabel(),
-                ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskMsgId"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_MSG_ID.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_MSG_ID.getLabel(),
-                ATTRIBUTE_TYPE.TSK_MSG_ID.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_MSG_ID.getValueType())));
-                
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskEmailTo"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_EMAIL_TO.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_EMAIL_TO.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_EMAIL_TO.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_EMAIL_TO.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskEmailFrom"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskSubject"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_SUBJECT.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_SUBJECT.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_SUBJECT.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskDateTimeSent"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskDateTimeRcvd"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskPath"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_PATH.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_PATH.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_PATH.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskEmailCc"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_EMAIL_CC.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_EMAIL_CC.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_EMAIL_CC.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_EMAIL_CC.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskEmailBcc"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskMsgId"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_MSG_ID.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_MSG_ID.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_MSG_ID.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_MSG_ID.getValueType())));
+
         } else if (ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() == artifactTypeId) {
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskSetName"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_SET_NAME.getLabel(),
-                ATTRIBUTE_TYPE.TSK_SET_NAME.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_SET_NAME.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskInterestingFilesCategory"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_CATEGORY.getLabel(),
-                ATTRIBUTE_TYPE.TSK_CATEGORY.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_CATEGORY.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskPath"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_PATH.getLabel(),
-                ATTRIBUTE_TYPE.TSK_PATH.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_PATH.getValueType())));
-                
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskSetName"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_SET_NAME.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_SET_NAME.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_SET_NAME.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskInterestingFilesCategory"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_CATEGORY.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_CATEGORY.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_CATEGORY.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskPath"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_PATH.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_PATH.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_PATH.getValueType())));
+
         } else if (ARTIFACT_TYPE.TSK_GPS_ROUTE.getTypeID() == artifactTypeId) {
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskGpsRouteCategory"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_CATEGORY.getLabel(),
-                ATTRIBUTE_TYPE.TSK_CATEGORY.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_CATEGORY.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_DATETIME.getLabel(),
-                ATTRIBUTE_TYPE.TSK_DATETIME.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_DATETIME.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.latitudeEnd"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END.getLabel(),
-                ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.longitudeEnd"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END.getLabel(),
-                ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.latitudeStart"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START.getLabel(),
-                ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.longitudeStart"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START.getLabel(),
-                ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_NAME.getLabel(),
-                ATTRIBUTE_TYPE.TSK_NAME.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_NAME.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.location"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_LOCATION.getLabel(),
-                ATTRIBUTE_TYPE.TSK_LOCATION.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_LOCATION.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_PROG_NAME.getLabel(),
-                ATTRIBUTE_TYPE.TSK_PROG_NAME.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_PROG_NAME.getValueType())));
-                
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskGpsRouteCategory"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_CATEGORY.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_CATEGORY.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_CATEGORY.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_DATETIME.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_DATETIME.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_DATETIME.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.latitudeEnd"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.longitudeEnd"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.latitudeStart"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.longitudeStart"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_NAME.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_NAME.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_NAME.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.location"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_LOCATION.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_LOCATION.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_LOCATION.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_PROG_NAME.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_PROG_NAME.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_PROG_NAME.getValueType())));
+
         } else if (ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == artifactTypeId) {
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskSetName"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_SET_NAME.getLabel(),
-                ATTRIBUTE_TYPE.TSK_SET_NAME.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_SET_NAME.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.associatedArtifact"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getLabel(),
-                ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_PROG_NAME.getLabel(),
-                ATTRIBUTE_TYPE.TSK_PROG_NAME.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_PROG_NAME.getValueType())));
-                
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskSetName"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_SET_NAME.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_SET_NAME.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_SET_NAME.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.associatedArtifact"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_PROG_NAME.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_PROG_NAME.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_PROG_NAME.getValueType())));
+
         } else if (ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID() == artifactTypeId) {
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_PROG_NAME.getLabel(),
-                ATTRIBUTE_TYPE.TSK_PROG_NAME.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_PROG_NAME.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.associatedArtifact"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getLabel(),
-                ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_DATETIME.getLabel(),
-                ATTRIBUTE_TYPE.TSK_DATETIME.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_DATETIME.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.count"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_COUNT.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_COUNT.getLabel(),
-                ATTRIBUTE_TYPE.TSK_COUNT.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_COUNT.getValueType())));
-                
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_PROG_NAME.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_PROG_NAME.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_PROG_NAME.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.associatedArtifact"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_DATETIME.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_DATETIME.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_DATETIME.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.count"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_COUNT.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_COUNT.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_COUNT.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_COUNT.getValueType())));
+
         } else if (ARTIFACT_TYPE.TSK_OS_ACCOUNT.getTypeID() == artifactTypeId) {
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.userName"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_NAME.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_USER_NAME.getLabel(),
-                ATTRIBUTE_TYPE.TSK_USER_NAME.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_USER_NAME.getValueType())));
-                
-                columnHeaders.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.userId"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_ID.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_USER_ID.getLabel(),
-                ATTRIBUTE_TYPE.TSK_USER_ID.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_USER_ID.getValueType())));
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.userName"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_NAME.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_USER_NAME.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_USER_NAME.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_USER_NAME.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.userId"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_ID.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_USER_ID.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_USER_ID.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_USER_ID.getValueType())));
+
         } else if (ARTIFACT_TYPE.TSK_REMOTE_DRIVE.getTypeID() == artifactTypeId) {
-            /*
-             orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_LOCAL_PATH.getTypeID()));
-             orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_REMOTE_PATH.getTypeID()));
-             */
-            columnHeaders = new ArrayList<>(Arrays.asList(new Column[]{
-                new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.localPath"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_LOCAL_PATH.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_LOCAL_PATH.getLabel(),
-                ATTRIBUTE_TYPE.TSK_LOCAL_PATH.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_LOCAL_PATH.getValueType())), //TSK_LOCAL_PATH
-                new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.remotePath"),
-                new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_REMOTE_PATH.getTypeID(),
-                ATTRIBUTE_TYPE.TSK_REMOTE_PATH.getLabel(),
-                ATTRIBUTE_TYPE.TSK_REMOTE_PATH.getDisplayName(),
-                ATTRIBUTE_TYPE.TSK_REMOTE_PATH.getValueType()))})); //TSK_REMOTE_PATH
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.localPath"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_LOCAL_PATH.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_LOCAL_PATH.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_LOCAL_PATH.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_LOCAL_PATH.getValueType())));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.remotePath"),
+                    new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_REMOTE_PATH.getTypeID(),
+                            ATTRIBUTE_TYPE.TSK_REMOTE_PATH.getLabel(),
+                            ATTRIBUTE_TYPE.TSK_REMOTE_PATH.getDisplayName(),
+                            ATTRIBUTE_TYPE.TSK_REMOTE_PATH.getValueType())));
         } else {
             for (BlackboardAttribute.Type type : types) {
-                columnHeaders.add(new AttributeColumn(type.getDisplayName(), type));
+                columns.add(new AttributeColumn(type.getDisplayName(), type));
             }
-            columnHeaders.add(new OtherCell(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
+            columns.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
         }
-        columnHeaders.add(
-                new OtherCell(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tags")));
+        columns.add(
+                new TaggedResultsColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tags")));
 
-        return columnHeaders;
+        return columns;
     }
 
     /**
@@ -2227,7 +2223,7 @@ class ReportGenerator {
         private List<BlackboardAttribute> attributes;
         private HashSet<String> tags;
         private List<String> rowData = null;
-        private List<Column> columnHeaders = new ArrayList<>();
+        private List<Column> columns = new ArrayList<>();
 
         ArtifactData(BlackboardArtifact artifact, List<BlackboardAttribute> attrs, HashSet<String> tags) {
             this.artifact = artifact;
@@ -2255,8 +2251,8 @@ class ReportGenerator {
             return artifact.getObjectID();
         }
 
-        public void setColumnHeaders(List<Column> columnHeaders) {
-            this.columnHeaders = columnHeaders;
+        public void setColumns(List<Column> columns) {
+            this.columns = columns;
         }
 
         /**
@@ -2270,7 +2266,7 @@ class ReportGenerator {
          */
         @Override
         public int compareTo(ArtifactData otherArtifactData) {
-            if (columnHeaders != null) {
+            if (columns != null) {
                 List<String> thisRow = getRow();
                 List<String> otherRow = otherArtifactData.getRow();
                 for (int i = 0; i < thisRow.size(); i++) {
@@ -2327,154 +2323,7 @@ class ReportGenerator {
         private List<String> getOrderedRowDataAsStrings() throws TskCoreException {
             Map<Integer, String> mappedAttributes = getMappedAttributes();
             List<String> orderedRowData = new ArrayList<>();
-            if (ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID() == getArtifact().getArtifactTypeID()) {
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_TITLE.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-                orderedRowData.add(getFileUniquePath(getObjectID()));
-            } else if (ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID() == getArtifact().getArtifactTypeID()) {
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-                orderedRowData.add(getFileUniquePath(getObjectID()));
-            } else if (ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID() == getArtifact().getArtifactTypeID()) {
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_TITLE.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-                orderedRowData.add(getFileUniquePath(getObjectID()));
-            } else if (ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID() == getArtifact().getArtifactTypeID()) {
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PATH.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-                orderedRowData.add(getFileUniquePath(getObjectID()));
-            } else if (ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID() == getArtifact().getArtifactTypeID()) {
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PATH.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                orderedRowData.add(getFileUniquePath(getObjectID()));
-            } else if (ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID() == getArtifact().getArtifactTypeID()) {
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                orderedRowData.add(getFileUniquePath(getObjectID()));
-            } else if (ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID() == getArtifact().getArtifactTypeID()) {
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                orderedRowData.add(getFileUniquePath(getObjectID()));
-            } else if (ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID() == getArtifact().getArtifactTypeID()) {
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-                orderedRowData.add(getFileUniquePath(getObjectID()));
-            } else if (ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID() == getArtifact().getArtifactTypeID()) {
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID()));
-                orderedRowData.add(getFileUniquePath(getObjectID()));
-            } else if (ARTIFACT_TYPE.TSK_CONTACT.getTypeID() == getArtifact().getArtifactTypeID()) {
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_HOME.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_OFFICE.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_MOBILE.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_EMAIL.getTypeID()));
-                orderedRowData.add(getFileUniquePath(getObjectID()));
-            } else if (ARTIFACT_TYPE.TSK_MESSAGE.getTypeID() == getArtifact().getArtifactTypeID()) {
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_READ_STATUS.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_TO.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()));
-                orderedRowData.add(getFileUniquePath(getObjectID()));
-            } else if (ARTIFACT_TYPE.TSK_CALLLOG.getTypeID() == getArtifact().getArtifactTypeID()) {
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID()));
-                orderedRowData.add(getFileUniquePath(getObjectID()));
-            } else if (ARTIFACT_TYPE.TSK_CALENDAR_ENTRY.getTypeID() == getArtifact().getArtifactTypeID()) {
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_CALENDAR_ENTRY_TYPE.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
-                orderedRowData.add(getFileUniquePath(getObjectID()));
-            } else if (ARTIFACT_TYPE.TSK_SPEED_DIAL_ENTRY.getTypeID() == getArtifact().getArtifactTypeID()) {
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_SHORTCUT.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID()));
-                orderedRowData.add(getFileUniquePath(getObjectID()));
-            } else if (ARTIFACT_TYPE.TSK_BLUETOOTH_PAIRING.getTypeID() == getArtifact().getArtifactTypeID()) {
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_NAME.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                orderedRowData.add(getFileUniquePath(getObjectID()));
-            } else if (ARTIFACT_TYPE.TSK_GPS_TRACKPOINT.getTypeID() == getArtifact().getArtifactTypeID()) {
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                orderedRowData.add(getFileUniquePath(getObjectID()));
-            } else if (ARTIFACT_TYPE.TSK_GPS_BOOKMARK.getTypeID() == getArtifact().getArtifactTypeID()) {
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                orderedRowData.add(getFileUniquePath(getObjectID()));
-            } else if (ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION.getTypeID() == getArtifact().getArtifactTypeID()) {
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                orderedRowData.add(getFileUniquePath(getObjectID()));
-            } else if (ARTIFACT_TYPE.TSK_GPS_SEARCH.getTypeID() == getArtifact().getArtifactTypeID()) {
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                orderedRowData.add(getFileUniquePath(getObjectID()));
-            } else if (ARTIFACT_TYPE.TSK_SERVICE_ACCOUNT.getTypeID() == getArtifact().getArtifactTypeID()) {
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_USER_ID.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PASSWORD.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PATH.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_REPLYTO.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_SERVER_NAME.getTypeID()));
-                orderedRowData.add(getFileUniquePath(getObjectID()));
-            } else if (ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getTypeID() == getArtifact().getArtifactTypeID()) {
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()));
-                orderedRowData.add(getFileUniquePath(getObjectID()));
-            } else if (ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID() == getArtifact().getArtifactTypeID()) {
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
-                orderedRowData.add(getFileUniquePath(getObjectID()));
-            } else if (ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID() == getArtifact().getArtifactTypeID()) {
+            if (ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID() == getArtifact().getArtifactTypeID()) {
                 AbstractFile file = skCase.getAbstractFileById(getObjectID());
                 if (file != null) {
                     orderedRowData.add(file.getName());
@@ -2493,21 +2342,6 @@ class ReportGenerator {
                     orderedRowData.add(null);
                     orderedRowData.add(null);
                 }
-            } else if (ARTIFACT_TYPE.TSK_OS_INFO.getTypeID() == getArtifact().getArtifactTypeID()) {
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROCESSOR_ARCHITECTURE.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                orderedRowData.add(getFileUniquePath(getObjectID()));
-            } else if (ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID() == getArtifact().getArtifactTypeID()) {
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_TO.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PATH.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_CC.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_MSG_ID.getTypeID()));
             } else if (ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() == getArtifact().getArtifactTypeID()) {
                 orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()));
                 orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID()));
@@ -2516,36 +2350,14 @@ class ReportGenerator {
                     pathToShow = getFileUniquePath(getObjectID());
                 }
                 orderedRowData.add(pathToShow);
-            } else if (ARTIFACT_TYPE.TSK_GPS_ROUTE.getTypeID() == getArtifact().getArtifactTypeID()) {
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-            } else if (ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == getArtifact().getArtifactTypeID()) {
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-            } else if (ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID() == getArtifact().getArtifactTypeID()) {
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_COUNT.getTypeID()));
-            } else if (ARTIFACT_TYPE.TSK_OS_ACCOUNT.getTypeID() == getArtifact().getArtifactTypeID()) {
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_USER_NAME.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_USER_ID.getTypeID()));
-            } else if (ARTIFACT_TYPE.TSK_REMOTE_DRIVE.getTypeID() == getArtifact().getArtifactTypeID()) {
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_LOCAL_PATH.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_REMOTE_PATH.getTypeID()));
             } else {
-                for (Column currCell : this.columnHeaders) {
-                    String cellData = currCell.getCellData(this);
+                for (Column currColumn : this.columns) {
+                    String cellData = currColumn.getCellData(this);
                     orderedRowData.add(cellData);
                 }
+                /*
+                Short circuits so that the tag list is not added twice (the tag column is represented in the column list)
+                */
                 return orderedRowData;
             }
             orderedRowData.add(makeCommaSeparatedList(getTags()));
@@ -2606,7 +2418,7 @@ class ReportGenerator {
         /**
          * Constructs an ArtifactCell
          *
-         * @param columnHeader The header text of this cell's column
+         * @param columnHeader The header text of this column
          * @param attributeType The attribute type associated with this column
          */
         AttributeColumn(String columnHeader, BlackboardAttribute.Type attributeType) {
@@ -2672,9 +2484,11 @@ class ReportGenerator {
             return makeCommaSeparatedList(artData.getTags());
         }
     }
+
     private class UnspecifiedColumn implements Column {
+
         private String columnHeader;
-        
+
         UnspecifiedColumn(String columnHeader) {
             this.columnHeader = columnHeader;
         }
