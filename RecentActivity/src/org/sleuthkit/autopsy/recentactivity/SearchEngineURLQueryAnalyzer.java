@@ -309,7 +309,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
                 Collection<BlackboardAttribute> listAttributes = currentCase.getSleuthkitCase().getMatchingAttributes("WHERE artifact_id = " + artifact.getArtifactID()); //NON-NLS
 
                 for (BlackboardAttribute attribute : listAttributes) {
-                    if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID()) {
+                    if (attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID()) {
                         final String urlString = attribute.getValueString();
                         se = getSearchEngineFromUrl(urlString);
                         if (se == null) {
@@ -322,11 +322,11 @@ class SearchEngineURLQueryAnalyzer extends Extract {
                             break;
                         }
 
-                    } else if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()) {
+                    } else if (attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()) {
                         browser = attribute.getValueString();
-                    } else if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID()) {
+                    } else if (attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID()) {
                         searchEngineDomain = attribute.getValueString();
-                    } else if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()) {
+                    } else if (attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()) {
                         last_accessed = attribute.getValueLong();
                     }
                 }
