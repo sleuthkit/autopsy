@@ -71,8 +71,9 @@ final public class GroupTree extends NavPanel<TreeItem<GroupTreeNode>> {
         BooleanBinding groupedByPath = Bindings.equal(getGroupManager().getGroupByProperty(), DrawableAttribute.PATH);
         getToolBar().visibleProperty().bind(groupedByPath.not());
         getToolBar().managedProperty().bind(groupedByPath.not());
+        GroupCellFactory groupCellFactory = new GroupCellFactory(getController(), getSortByBox().getSelectionModel().selectedItemProperty());
 
-        groupTree.setCellFactory(treeView -> new GroupTreeCell(getController(), getSortByBox().getSelectionModel().selectedItemProperty()));
+        groupTree.setCellFactory(groupCellFactory::getTreeCell);
         groupTree.setShowRoot(false);
 
         getGroupManager().getAnalyzedGroups().addListener((ListChangeListener.Change<? extends DrawableGroup> change) -> {
