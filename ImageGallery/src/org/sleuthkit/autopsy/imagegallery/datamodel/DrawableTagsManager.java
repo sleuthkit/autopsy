@@ -45,13 +45,24 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Manages Tags, Tagging, and the relationship between Categories and Tags in
  * the autopsy Db. Delegates some work to the backing {@link TagsManager}.
  */
-@NbBundle.Messages({"DrawableTagsManager.followUp=Follow Up"})
+@NbBundle.Messages({"DrawableTagsManager.followUp=Follow Up",
+    "DrawableTagsManager.bookMark=Bookmark"})
 public class DrawableTagsManager {
 
     private static final Logger LOGGER = Logger.getLogger(DrawableTagsManager.class.getName());
 
     private static final String FOLLOW_UP = Bundle.DrawableTagsManager_followUp();
+    private static final String BOOKMARK = Bundle.DrawableTagsManager_bookMark();
     private static Image FOLLOW_UP_IMAGE;
+    private static Image BOOKMARK_IMAGE;
+
+    public static String getFollowUpText() {
+        return FOLLOW_UP;
+    }
+
+    public static String getBookmarkText() {
+        return BOOKMARK;
+    }
 
     final private Object autopsyTagsManagerLock = new Object();
     private TagsManager autopsyTagsManager;
@@ -70,6 +81,7 @@ public class DrawableTagsManager {
      * The tag name corresponding to the "built-in" tag "Follow Up"
      */
     private TagName followUpTagName;
+    private TagName bookmarkTagName;
 
     public DrawableTagsManager(TagsManager autopsyTagsManager) {
         this.autopsyTagsManager = autopsyTagsManager;
@@ -138,6 +150,15 @@ public class DrawableTagsManager {
                 followUpTagName = getTagName(FOLLOW_UP);
             }
             return followUpTagName;
+        }
+    }
+
+    private Object getBookmarkTagName() throws TskCoreException {
+        synchronized (autopsyTagsManagerLock) {
+            if (Objects.isNull(bookmarkTagName)) {
+                bookmarkTagName = getTagName(BOOKMARK);
+            }
+            return bookmarkTagName;
         }
     }
 
@@ -241,9 +262,11 @@ public class DrawableTagsManager {
         try {
             if (tagname.equals(getFollowUpTagName())) {
                 return new ImageView(getFollowUpImage());
+            } else if (tagname.equals(getBookmarkTagName())) {
+                return new ImageView(getBookmarkImage());
             }
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to get \"Follow Up\" tag name from db.", ex);
+            LOGGER.log(Level.SEVERE, "Failed to get \"Follow Up\" or \"Bookmark\"tag name from db.", ex);
         }
         return DrawableAttribute.TAGS.getGraphicForValue(tagname);
     }
@@ -254,4 +277,12 @@ public class DrawableTagsManager {
         }
         return FOLLOW_UP_IMAGE;
     }
+
+    synchronized private static Image getBookmarkImage() {
+        if (BOOKMARK_IMAGE == null) {
+            BOOKMARK_IMAGE = new Image("/org/sleuthkit/autopsy/images/star-bookmark-icon-16.png");
+        }
+        return BOOKMARK_IMAGE;
+    }
+
 }

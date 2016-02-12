@@ -19,19 +19,15 @@
 package org.sleuthkit.autopsy.imagegallery.actions;
 
 import java.util.HashSet;
-import org.controlsfx.control.action.Action;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 
 /**
  *
  */
-public class CategorizeGroupAction extends Action {
+public class CategorizeGroupAction extends CategorizeAction {
 
     public CategorizeGroupAction(Category cat, ImageGalleryController controller) {
-        super(cat.getDisplayName(), actionEvent ->
-                new CategorizeAction(controller, cat, new HashSet<>(controller.viewState().get().getGroup().getFileIDs()))
-                .handle(actionEvent)
-        );
+        super(controller, cat, new HashSet<>(controller.viewState().get().getGroup().getFileIDs()));
     }
 }
