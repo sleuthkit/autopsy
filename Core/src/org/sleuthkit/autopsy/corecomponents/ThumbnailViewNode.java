@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -95,16 +95,18 @@ class ThumbnailViewNode extends FilterNode {
                         super.done();
                         try {
                             iconCache = new SoftReference<>(super.get());
-                            progressHandle.finish();
                             fireIconChange();
+                        } catch (InterruptedException | ExecutionException ex) {
+                            Logger.getLogger(ThumbnailViewNode.class.getName()).log(Level.SEVERE, "Error getting thumbnail icon", ex); //NON-NLS
+                        } finally {
+                            progressHandle.finish();
                             if (timer != null) {
                                 timer.stop();
                                 timer = null;
+
                             }
-                        } catch (InterruptedException | ExecutionException ex) {
-                            Logger.getLogger(ThumbnailViewNode.class.getName()).log(Level.SEVERE, "Error getting thumbnail icon", ex); //NON-NLS
+                            swingWorker = null;
                         }
-                        swingWorker = null;
                     }
                 };
                 swingWorker.execute();
