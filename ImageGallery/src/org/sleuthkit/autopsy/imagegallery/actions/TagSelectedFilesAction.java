@@ -27,6 +27,10 @@ import org.sleuthkit.datamodel.TagName;
 public class TagSelectedFilesAction extends AddTagAction {
 
     public TagSelectedFilesAction(final TagName tagName, ImageGalleryController controller) {
-        super(controller, tagName, controller.getSelectionModel().getSelected());
+        super(controller, tagName, null);
+        setEventHandler(actionEvent ->
+                new AddTagAction(controller, tagName, controller.getSelectionModel().getSelected()).
+                handle(actionEvent)
+        );
     }
 }

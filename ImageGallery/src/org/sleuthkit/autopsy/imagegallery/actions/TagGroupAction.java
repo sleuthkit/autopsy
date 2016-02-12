@@ -28,6 +28,10 @@ import org.sleuthkit.datamodel.TagName;
 public class TagGroupAction extends AddTagAction {
 
     public TagGroupAction(final TagName tagName, ImageGalleryController controller) {
-        super(controller, tagName, ImmutableSet.copyOf(controller.viewState().get().getGroup().getFileIDs()));
+        super(controller, tagName, null);
+        setEventHandler(actionEvent ->
+                new AddTagAction(controller, tagName, ImmutableSet.copyOf(controller.viewState().get().getGroup().getFileIDs())).
+                handle(actionEvent)
+        );
     }
 }
