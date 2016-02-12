@@ -652,7 +652,7 @@ public class ImageUtils {
         @NbBundle.Messages({"# {0} - file name",
             "GetOrGenerateThumbnailTask.loadingThumbnailFor=Loading thumbnail for {0}",
             "# {0} - file name",
-            "GetOrGenerateThumbnailTask.generatingPreviewFor=Generating preview for video {0}"})
+            "GetOrGenerateThumbnailTask.generatingPreviewFor=Generating preview for {0}"})
         private GetThumbnailTask(AbstractFile file, int iconSize, boolean defaultOnFailure) {
             super(file);
             updateMessage(Bundle.GetOrGenerateThumbnailTask_loadingThumbnailFor(file.getName()));
@@ -791,12 +791,12 @@ public class ImageUtils {
      */
     @NbBundle.Messages({
         "# {0} - file name",
-        "LoadImageTask.mesageText=Reading image: {0}"})
+        "ReadImageTask.mesageText=Reading image: {0}"})
     static private class ReadImageTask extends ReadImageTaskBase {
 
         ReadImageTask(AbstractFile file) {
             super(file);
-            updateMessage(Bundle.LoadImageTask_mesageText(file.getName()));
+            updateMessage(Bundle.ReadImageTask_mesageText(file.getName()));
         }
 
         @Override
@@ -934,7 +934,7 @@ public class ImageUtils {
      *
      * @return
      */
-    private static String getContentPathSafe(Content content) {
+     static String getContentPathSafe(Content content) {
         try {
             return content.getUniquePath();
         } catch (TskCoreException tskCoreException) {
