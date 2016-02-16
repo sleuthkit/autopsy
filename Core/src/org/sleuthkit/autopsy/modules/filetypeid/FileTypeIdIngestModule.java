@@ -29,6 +29,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData.FileKnown;
 import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 
 /**
@@ -38,7 +39,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 public class FileTypeIdIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(FileTypeIdIngestModule.class.getName());
-    private final FileTypeIdModuleSettings settings;
+    private final IngestModuleIngestJobSettings settings;
     private long jobId;
     private static final HashMap<Long, IngestJobTotals> totalsForIngestJobs = new HashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
@@ -69,7 +70,7 @@ public class FileTypeIdIngestModule implements FileIngestModule {
      *
      * @param settings The ingest module settings.
      */
-    FileTypeIdIngestModule(FileTypeIdModuleSettings settings) {
+    FileTypeIdIngestModule(IngestModuleIngestJobSettings settings) {
         this.settings = settings;
     }
 
@@ -92,13 +93,6 @@ public class FileTypeIdIngestModule implements FileIngestModule {
      */
     @Override
     public ProcessResult process(AbstractFile file) {
-
-        /**
-         * Skip known files if configured to do so.
-         */
-        if (settings.skipKnownFiles() && (file.getKnown() == FileKnown.KNOWN)) {
-            return ProcessResult.OK;
-        }
 
         /**
          * Attempt to detect the file type. Do it within an exception firewall,

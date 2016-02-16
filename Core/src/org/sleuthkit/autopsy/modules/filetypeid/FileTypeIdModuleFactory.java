@@ -96,35 +96,6 @@ public class FileTypeIdModuleFactory extends IngestModuleFactoryAdapter {
      * @inheritDoc
      */
     @Override
-    public IngestModuleIngestJobSettings getDefaultIngestJobSettings() {
-        return new FileTypeIdModuleSettings();
-    }
-
-    /**
-     * @inheritDoc
-     */
-    @Override
-    public boolean hasIngestJobSettingsPanel() {
-        return true;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    @Override
-    public IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings) {
-        assert settings instanceof FileTypeIdModuleSettings;
-        if (!(settings instanceof FileTypeIdModuleSettings)) {
-            throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(),
-                    "FileTypeIdModuleFactory.getIngestJobSettingsPanel.exception.msg"));
-        }
-        return new FileTypeIdIngestJobSettingsPanel((FileTypeIdModuleSettings) settings);
-    }
-
-    /**
-     * @inheritDoc
-     */
-    @Override
     public boolean isFileIngestModuleFactory() {
         return true;
     }
@@ -134,11 +105,6 @@ public class FileTypeIdModuleFactory extends IngestModuleFactoryAdapter {
      */
     @Override
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
-        assert settings instanceof FileTypeIdModuleSettings;
-        if (!(settings instanceof FileTypeIdModuleSettings)) {
-            throw new IllegalArgumentException(
-                    NbBundle.getMessage(this.getClass(), "FileTypeIdModuleFactory.createFileIngestModule.exception.msg"));
-        }
-        return new FileTypeIdIngestModule((FileTypeIdModuleSettings) settings);
+        return new FileTypeIdIngestModule(settings);
     }
 }
