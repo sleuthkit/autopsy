@@ -46,6 +46,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
     private String deviceId;
     private List<String> localFilePaths;
     private boolean setDataSourceOptionsCalled;
+    private String fileSetName;
 
     /**
      * Constructs a local/logical files and/or directories data source processor
@@ -120,8 +121,9 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
         if (!setDataSourceOptionsCalled) {
             deviceId = UUID.randomUUID().toString();
             localFilePaths = Arrays.asList(configPanel.getContentPaths().split(LocalFilesPanel.FILES_SEP));
+            fileSetName = configPanel.getFileSetName();
         }
-        run(deviceId, "", localFilePaths, progressMonitor, callback);
+        run(deviceId, fileSetName, localFilePaths, progressMonitor, callback);
     }
 
     /**
