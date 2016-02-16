@@ -142,7 +142,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            throw new IngestModuleException(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.startUp.fileTypeDetectorInitializationException.msg"));
+            throw new IngestModuleException(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.startUp.fileTypeDetectorInitializationException.msg"), ex);
         }
         ingester = Server.getIngester();
         this.context = context;
@@ -162,7 +162,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     String details = NbBundle.getMessage(this.getClass(), "SolrConnectionCheck.Port");
                     logger.log(Level.SEVERE, "{0}: {1} {2}", new Object[]{msg, details, ex.toString()});
                     services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), msg, details));
-                    throw new IngestModuleException(msg);
+                    throw new IngestModuleException(msg, ex);
                 }
                 try {
                     kwsService.tryConnect(UserPreferences.getIndexingServerHost(), port);
@@ -171,7 +171,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     String details = ex.getMessage();
                     logger.log(Level.SEVERE, "{0}: {1} {2}", new Object[]{msg, details, ex.toString()});
                     services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), msg, details));
-                    throw new IngestModuleException(msg);
+                    throw new IngestModuleException(msg, ex);
                 }
             } else {
                 // for single-user cases need to verify connection to local SOLR service
@@ -189,7 +189,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
                     String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
                     services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), msg, details));
-                    throw new IngestModuleException(msg);
+                    throw new IngestModuleException(msg, ex);
                 }
                 try {
                     // make an actual query to verify that server is responding
@@ -198,7 +198,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
                     throw new IngestModuleException(
                             NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.exception.errConnToSolr.msg",
-                                    ex.getMessage()));
+                                    ex.getMessage()), ex);
                 }
 
                 // check if this job has any searchable keywords    
