@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.awt.Dialog;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
@@ -32,6 +33,10 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import java.util.logging.Level;
+import javax.swing.JOptionPane;
+import org.openide.DialogDescriptor;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
@@ -47,7 +52,7 @@ class LocalFilesPanel extends JPanel {
     private static LocalFilesPanel instance;
     public static final String FILES_SEP = ",";
     private static final Logger logger = Logger.getLogger(LocalFilesPanel.class.getName());
-    private String displayName;
+    private String displayName = "";
 
     /**
      * Creates new form LocalFilesPanel
@@ -68,7 +73,7 @@ class LocalFilesPanel extends JPanel {
         localFileChooser.setMultiSelectionEnabled(true);
         errorLabel.setVisible(false);
         selectedPaths.setText("");
-        this.fileSetNameLabel.setText("Display Name: Default");
+        this.displayNameField.setText("Display Name: Default");
     }
 
     //@Override
@@ -158,17 +163,15 @@ class LocalFilesPanel extends JPanel {
 
         pcs.removePropertyChangeListener(pcl);
     }
-        
+
     public String getFileSetName() {
         return this.displayName;
     }
-    
 
     @Override
     public String toString() {
         return NbBundle.getMessage(this.getClass(), "LocalFilesDSProcessor.toString.text");
     }
-
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -188,8 +191,8 @@ class LocalFilesPanel extends JPanel {
         jScrollPane2 = new javax.swing.JScrollPane();
         selectedPaths = new javax.swing.JTextArea();
         errorLabel = new javax.swing.JLabel();
-        fileSetNameLabel = new javax.swing.JLabel();
         jButton1 = new javax.swing.JButton();
+        displayNameField = new javax.swing.JTextField();
 
         localFileChooser.setApproveButtonText(org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.localFileChooser.approveButtonText")); // NOI18N
         localFileChooser.setApproveButtonToolTipText(org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.localFileChooser.approveButtonToolTipText")); // NOI18N
@@ -228,8 +231,6 @@ class LocalFilesPanel extends JPanel {
         errorLabel.setForeground(new java.awt.Color(255, 0, 0));
         org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.errorLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(fileSetNameLabel, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.fileSetNameLabel.text")); // NOI18N
-
         org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.jButton1.text")); // NOI18N
         jButton1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -237,29 +238,29 @@ class LocalFilesPanel extends JPanel {
             }
         });
 
+        displayNameField.setEditable(false);
+        displayNameField.setText(org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.displayNameField.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
+                .addComponent(errorLabel)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 348, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(infoLabel)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(fileSetNameLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jButton1)))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addComponent(infoLabel)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 378, Short.MAX_VALUE)
+                    .addComponent(displayNameField))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(selectButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(clearButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(clearButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jButton1, javax.swing.GroupLayout.Alignment.TRAILING))
                 .addGap(2, 2, 2))
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(errorLabel)
-                .addContainerGap(361, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -272,13 +273,13 @@ class LocalFilesPanel extends JPanel {
                         .addGap(36, 36, 36)
                         .addComponent(clearButton))
                     .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(fileSetNameLabel)
-                    .addComponent(jButton1))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 17, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jButton1, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(displayNameField, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(errorLabel)
-                .addContainerGap())
+                .addGap(7, 7, 7))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -322,13 +323,17 @@ class LocalFilesPanel extends JPanel {
     }//GEN-LAST:event_clearButtonActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        // TODO add your handling code here:
+        String displayName = JOptionPane.showInputDialog("New Display Name: ");
+        if(displayName != null && !displayName.equals("")) {
+            this.displayName = displayName;
+            this.displayNameField.setText("Display Name: " + this.displayName);
+        }
     }//GEN-LAST:event_jButton1ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton clearButton;
+    private javax.swing.JTextField displayNameField;
     private javax.swing.JLabel errorLabel;
-    private javax.swing.JLabel fileSetNameLabel;
     private javax.swing.JLabel infoLabel;
     private javax.swing.JButton jButton1;
     private javax.swing.JScrollPane jScrollPane1;
