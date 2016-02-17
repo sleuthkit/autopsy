@@ -83,11 +83,7 @@ public class CategorizeAction extends Action {
     static public Menu getCategoriesMenu(ImageGalleryController controller) {
         return new CategoryMenu(controller);
     }
-//
-//    private void addCatToFiles() {
-//        Logger.getAnonymousLogger().log(Level.INFO, "categorizing{0} as {1}", new Object[]{selectedFileIDs.toString(), cat.getDisplayName()}); //NON-NLS
-//        controller.queueDBWorkerTask(new CategorizeTask(selectedFileIDs, cat, createUndo));
-//    }
+
 
     final void addCatToFiles(Set<Long> ids) {
         Logger.getAnonymousLogger().log(Level.INFO, "categorizing{0} as {1}", new Object[]{ids.toString(), cat.getDisplayName()}); //NON-NLS

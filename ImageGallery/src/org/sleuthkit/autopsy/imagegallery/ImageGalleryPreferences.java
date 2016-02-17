@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,7 @@ import java.util.prefs.Preferences;
 import org.openide.util.NbPreferences;
 
 /**
- * Persists Image Analyzer preference to a per user .properties file
+ * Persists Image Gallery preference to a per user .properties file
  */
 public class ImageGalleryPreferences {
 
