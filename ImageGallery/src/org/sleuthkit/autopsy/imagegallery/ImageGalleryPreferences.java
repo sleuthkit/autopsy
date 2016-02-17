@@ -54,6 +54,12 @@ public class ImageGalleryPreferences {
         preferences.putBoolean(ENABLED_BY_DEFAULT, b);
     }
 
+    /**
+     * Return whether the warning about overwriting categories when acting on an
+     * entire group is disabled.
+     *
+     * @return true if the warning is disabled.
+     */
     public static boolean isGroupCategorizationWarningDisabled() {
         final boolean aBoolean = preferences.getBoolean(GROUP_CATEGORIZATION_WARNING_DISABLED, false);
         return aBoolean;

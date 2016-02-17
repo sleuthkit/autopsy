@@ -53,7 +53,7 @@ public class CategorizeGroupAction extends CategorizeAction {
             ObservableList<Long> fileIDs = controller.viewState().get().getGroup().getFileIDs();
 
             if (ImageGalleryPreferences.isGroupCategorizationWarningDisabled()) {
-                //if they have preveiously disabled the wrning, just go ahead and apply categories.
+                //if they have preveiously disabled the warning, just go ahead and apply categories.
                 addCatToFiles(ImmutableSet.copyOf(fileIDs));
             } else {
                 final Map<Category, Long> catCountMap = new HashMap<>();
