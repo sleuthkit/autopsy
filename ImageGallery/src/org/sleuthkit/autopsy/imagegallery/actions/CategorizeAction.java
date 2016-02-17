@@ -35,7 +35,6 @@ import javafx.scene.input.KeyCodeCombination;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
 import javax.swing.JOptionPane;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
@@ -146,7 +145,7 @@ public class CategorizeAction extends AddTagAction {
             Map<Long, TagName> oldCats = new HashMap<>();
             for (long fileID : fileIDs) {
                 try {
-                    DrawableFile<?> file = controller.getFileFromId(fileID);   //drawable db access
+                    DrawableFile file = controller.getFileFromId(fileID);   //drawable db access
                     if (createUndo) {
                         Category oldCat = file.getCategory();  //drawable db access
                         TagName oldCatTagName = categoryManager.getTagName(oldCat);
@@ -155,7 +154,7 @@ public class CategorizeAction extends AddTagAction {
                         }
                     }
 
-                    final List<ContentTag> fileTags = tagsManager.getContentTagsByContent(file);
+                    final List<ContentTag> fileTags = tagsManager.getContentTags(file);
                     if (tagName == categoryManager.getTagName(Category.ZERO)) {
                         // delete all cat tags for cat-0
                         fileTags.stream()

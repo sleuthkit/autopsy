@@ -201,7 +201,7 @@ public class MetaDataPane extends DrawableUIBase {
     }
 
     @Override
-    Task<Image> newReadImageTask(DrawableFile<?> file) {
+    Task<Image> newReadImageTask(DrawableFile file) {
         return file.getThumbnailTask();
     }
 

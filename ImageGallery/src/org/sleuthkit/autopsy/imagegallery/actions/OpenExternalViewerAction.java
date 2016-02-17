@@ -39,7 +39,7 @@ public class OpenExternalViewerAction extends Action {
     private static final Image EXTERNAL = new Image(OpenExternalViewerAction.class.getResource("/org/sleuthkit/autopsy/imagegallery/images/external.png").toExternalForm()); //NON-NLS
     private static final ActionEvent ACTION_EVENT = new ActionEvent(OpenExternalViewerAction.class, ActionEvent.ACTION_PERFORMED, ""); //Swing ActionEvent //NOI18N
 
-    public OpenExternalViewerAction(DrawableFile<?> file) {
+    public OpenExternalViewerAction(DrawableFile file) {
         super(Bundle.OpenExternalViewerAction_displayName());
 
         /**

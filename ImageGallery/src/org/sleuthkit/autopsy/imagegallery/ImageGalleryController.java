@@ -441,7 +441,7 @@ public final class ImageGalleryController implements Executor {
     }
 
     @Nullable
-    synchronized public DrawableFile<?> getFileFromId(Long fileID) throws TskCoreException {
+    synchronized public DrawableFile getFileFromId(Long fileID) throws TskCoreException {
         if (Objects.isNull(db)) {
             LOGGER.log(Level.WARNING, "Could not get file from id, no DB set.  The case is probably closed."); //NON-NLS
             return null;
@@ -662,7 +662,7 @@ public final class ImageGalleryController implements Executor {
         @Override
         public void run() {
             try {
-                DrawableFile<?> drawableFile = DrawableFile.create(getFile(), true, getTaskDB().isVideoFile(getFile()));
+                DrawableFile drawableFile = DrawableFile.create(getFile(), true, false);
                 getTaskDB().updateFile(drawableFile);
             } catch (NullPointerException ex) {
                 // This is one of the places where we get many errors if the case is closed during processing.
