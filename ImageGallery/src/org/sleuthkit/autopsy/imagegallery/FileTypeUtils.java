@@ -107,6 +107,8 @@ public enum FileTypeUtils {
                 , "sn", "ras" //sun raster NON-NLS
                 , "ico" //windows icons NON-NLS
                 , "tga" //targa NON-NLS
+                , "wmf", "emf" // windows meta file NON-NLS
+                , "wmz", "emz" //compressed windows meta file NON-NLS
         ));
 
         //add list of known video extensions
@@ -129,6 +131,8 @@ public enum FileTypeUtils {
          * mime types.
          */
         supportedMimeTypes.addAll(Arrays.asList("application/x-123")); //NON-NLS
+        supportedMimeTypes.addAll(Arrays.asList("application/x-wmf")); //NON-NLS
+        supportedMimeTypes.addAll(Arrays.asList("application/x-emf")); //NON-NLS
 
         //add list of mimetypes ImageIO claims to support
         supportedMimeTypes.addAll(Stream.of(ImageIO.getReaderMIMETypes())

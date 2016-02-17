@@ -18,22 +18,16 @@
  */
 package org.sleuthkit.autopsy.imagegallery.actions;
 
-import com.google.common.collect.ImmutableSet;
-import java.util.Set;
-import org.controlsfx.control.action.Action;
+import java.util.HashSet;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 
 /**
  *
  */
-public class CategorizeGroupAction extends Action {
+public class CategorizeGroupAction extends CategorizeAction {
 
     public CategorizeGroupAction(Category cat, ImageGalleryController controller) {
-        super(cat.getDisplayName(), (javafx.event.ActionEvent actionEvent) -> {
-            Set<Long> fileIdSet = ImmutableSet.copyOf(controller.viewState().get().getGroup().getFileIDs());
-            new CategorizeAction(controller).addTagsToFiles(controller.getTagsManager().getTagName(cat), "", fileIdSet);
-        });
-        setGraphic(cat.getGraphic());
+        super(controller, cat, new HashSet<>(controller.viewState().get().getGroup().getFileIDs()));
     }
 }

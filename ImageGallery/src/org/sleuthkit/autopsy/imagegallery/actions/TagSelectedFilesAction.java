@@ -18,17 +18,15 @@
  */
 package org.sleuthkit.autopsy.imagegallery.actions;
 
-import org.controlsfx.control.action.Action;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.datamodel.TagName;
 
 /**
  *
  */
-public class TagSelectedFilesAction extends Action {
+public class TagSelectedFilesAction extends AddTagAction {
 
     public TagSelectedFilesAction(final TagName tagName, ImageGalleryController controller) {
-        super(tagName.getDisplayName(), actionEvent -> new AddDrawableTagAction(controller).addTag(tagName, ""));
-        setGraphic(controller.getTagsManager().getGraphic(tagName));
+        super(controller, tagName, controller.getSelectionModel().getSelected());
     }
 }
