@@ -251,7 +251,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             return caseType;
         }
 
-        public String getInternationalizedDisplayName() {
+        String getLocalizedDisplayName() {
             if (fromString(caseType) == SINGLE_USER_CASE) {
                 return Bundle.Case_caseType_singleUser();
             } else {
