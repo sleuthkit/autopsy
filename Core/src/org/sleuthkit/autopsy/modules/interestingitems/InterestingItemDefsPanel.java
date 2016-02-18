@@ -177,8 +177,8 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         this.fileNameRadioButton.setSelected(true);
         this.fileNameRegexCheckbox.setSelected(false);
         this.filesRadioButton.setSelected(true);
-        this.rulePathFilterTextField.setText("");
-        this.rulePathFilterRegexCheckBox.setSelected(false);
+        this.rulePathConditionTextField.setText("");
+        this.rulePathConditionRegexCheckBox.setSelected(false);
         this.newRuleButton.setEnabled(!this.setsListModel.isEmpty());
         this.editRuleButton.setEnabled(false);
         this.deleteRuleButton.setEnabled(false);
@@ -242,19 +242,19 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             // Get the selected rule and populate the rule components.
             FilesSet.Rule rule = InterestingItemDefsPanel.this.rulesList.getSelectedValue();
             if (rule != null) {
-                // Get the filters that make up the rule.
-                FilesSet.Rule.FileNameFilter nameFilter = rule.getFileNameFilter();
-                FilesSet.Rule.MetaTypeCondition typeFilter = rule.getMetaTypeFilter();
-                FilesSet.Rule.ParentPathFilter pathFilter = rule.getPathFilter();
-                FilesSet.Rule.MimeTypeCondition mimeTypeFilter = rule.getMimeTypeFilter();
+                // Get the conditions that make up the rule.
+                FilesSet.Rule.FileNameCondition nameCondition = rule.getFileNameCondition();
+                FilesSet.Rule.MetaTypeCondition typeCondition = rule.getMetaTypeCondition();
+                FilesSet.Rule.ParentPathCondition pathCondition = rule.getPathCondition();
+                FilesSet.Rule.MimeTypeCondition mimeTypeCondition = rule.getMimeTypeCondition();
 
                 // Populate the components that display the properties of the 
                 // selected rule.
-                InterestingItemDefsPanel.this.fileNameTextField.setText(nameFilter.getTextToMatch());
-                InterestingItemDefsPanel.this.fileNameRadioButton.setSelected(nameFilter instanceof FilesSet.Rule.FullNameFilter);
-                InterestingItemDefsPanel.this.fileNameExtensionRadioButton.setSelected(nameFilter instanceof FilesSet.Rule.ExtensionFilter);
-                InterestingItemDefsPanel.this.fileNameRegexCheckbox.setSelected(nameFilter.isRegex());
-                switch (typeFilter.getMetaType()) {
+                InterestingItemDefsPanel.this.fileNameTextField.setText(nameCondition.getTextToMatch());
+                InterestingItemDefsPanel.this.fileNameRadioButton.setSelected(nameCondition instanceof FilesSet.Rule.FullNameCondition);
+                InterestingItemDefsPanel.this.fileNameExtensionRadioButton.setSelected(nameCondition instanceof FilesSet.Rule.ExtensionCondition);
+                InterestingItemDefsPanel.this.fileNameRegexCheckbox.setSelected(nameCondition.isRegex());
+                switch (typeCondition.getMetaType()) {
                     case FILES:
                         InterestingItemDefsPanel.this.filesRadioButton.setSelected(true);
                         break;
@@ -265,14 +265,14 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
                         InterestingItemDefsPanel.this.bothRadioButton.setSelected(true);
                         break;
                 }
-                if (pathFilter != null) {
-                    InterestingItemDefsPanel.this.rulePathFilterTextField.setText(pathFilter.getTextToMatch());
-                    InterestingItemDefsPanel.this.rulePathFilterRegexCheckBox.setSelected(pathFilter.isRegex());
+                if (pathCondition != null) {
+                    InterestingItemDefsPanel.this.rulePathConditionTextField.setText(pathCondition.getTextToMatch());
+                    InterestingItemDefsPanel.this.rulePathConditionRegexCheckBox.setSelected(pathCondition.isRegex());
                 } else {
-                    InterestingItemDefsPanel.this.rulePathFilterTextField.setText("");
-                    InterestingItemDefsPanel.this.rulePathFilterRegexCheckBox.setSelected(false);
+                    InterestingItemDefsPanel.this.rulePathConditionTextField.setText("");
+                    InterestingItemDefsPanel.this.rulePathConditionRegexCheckBox.setSelected(false);
                 }
-                InterestingItemDefsPanel.this.mimeTypeComboBox.setSelectedItem(mimeTypeFilter.getMimeType());
+                InterestingItemDefsPanel.this.mimeTypeComboBox.setSelectedItem(mimeTypeCondition.getMimeType());
 
                 // Enable the new, edit and delete rule buttons.
                 InterestingItemDefsPanel.this.newRuleButton.setEnabled(true);
@@ -371,7 +371,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             if (selectedRule != null) {
                 rules.remove(selectedRule.getUuid());
             }
-            FilesSet.Rule newRule = new FilesSet.Rule(panel.getRuleName(), panel.getFileNameFilter(), panel.getMetaTypeFilter(), panel.getPathFilter(), panel.getMimeTypeCondition(), panel.getFileSizeCondition());
+            FilesSet.Rule newRule = new FilesSet.Rule(panel.getRuleName(), panel.getFileNameCondition(), panel.getMetaTypeCondition(), panel.getPathCondition(), panel.getMimeTypeCondition(), panel.getFileSizeCondition());
             rules.put(newRule.getUuid(), newRule);
 
             // Add the new/edited files set definition, replacing any previous 
@@ -454,7 +454,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         fileNameTextField = new javax.swing.JTextField();
         jLabel5 = new javax.swing.JLabel();
         fileNameRadioButton = new javax.swing.JRadioButton();
-        rulePathFilterTextField = new javax.swing.JTextField();
+        rulePathConditionTextField = new javax.swing.JTextField();
         ignoreKnownFilesCheckbox = new javax.swing.JCheckBox();
         fileNameRegexCheckbox = new javax.swing.JCheckBox();
         separator = new javax.swing.JSeparator();
@@ -467,7 +467,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         dirsRadioButton = new javax.swing.JRadioButton();
         jLabel1 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
-        rulePathFilterRegexCheckBox = new javax.swing.JCheckBox();
+        rulePathConditionRegexCheckBox = new javax.swing.JCheckBox();
         jScrollPane2 = new javax.swing.JScrollPane();
         jTextArea1 = new javax.swing.JTextArea();
         jLabel7 = new javax.swing.JLabel();
@@ -566,9 +566,9 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         org.openide.awt.Mnemonics.setLocalizedText(fileNameRadioButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.fileNameRadioButton.text")); // NOI18N
         fileNameRadioButton.setEnabled(false);
 
-        rulePathFilterTextField.setEditable(false);
-        rulePathFilterTextField.setFont(rulePathFilterTextField.getFont().deriveFont(rulePathFilterTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        rulePathFilterTextField.setText(org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.rulePathFilterTextField.text")); // NOI18N
+        rulePathConditionTextField.setEditable(false);
+        rulePathConditionTextField.setFont(rulePathConditionTextField.getFont().deriveFont(rulePathConditionTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        rulePathConditionTextField.setText(org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.rulePathConditionTextField.text")); // NOI18N
 
         ignoreKnownFilesCheckbox.setFont(ignoreKnownFilesCheckbox.getFont().deriveFont(ignoreKnownFilesCheckbox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(ignoreKnownFilesCheckbox, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.ignoreKnownFilesCheckbox.text")); // NOI18N
@@ -639,9 +639,9 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         jLabel4.setFont(jLabel4.getFont().deriveFont(jLabel4.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(jLabel4, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.jLabel4.text")); // NOI18N
 
-        rulePathFilterRegexCheckBox.setFont(rulePathFilterRegexCheckBox.getFont().deriveFont(rulePathFilterRegexCheckBox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        org.openide.awt.Mnemonics.setLocalizedText(rulePathFilterRegexCheckBox, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.rulePathFilterRegexCheckBox.text")); // NOI18N
-        rulePathFilterRegexCheckBox.setEnabled(false);
+        rulePathConditionRegexCheckBox.setFont(rulePathConditionRegexCheckBox.getFont().deriveFont(rulePathConditionRegexCheckBox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        org.openide.awt.Mnemonics.setLocalizedText(rulePathConditionRegexCheckBox, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.rulePathConditionRegexCheckBox.text")); // NOI18N
+        rulePathConditionRegexCheckBox.setEnabled(false);
 
         jScrollPane2.setFont(jScrollPane2.getFont().deriveFont(jScrollPane2.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
 
@@ -713,7 +713,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
                                 .addComponent(fileNameExtensionRadioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(fileNameRegexCheckbox))
-                            .addComponent(rulePathFilterRegexCheckBox)))
+                            .addComponent(rulePathConditionRegexCheckBox)))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(354, 354, 354)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -722,7 +722,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
                             .addComponent(jLabel8))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(rulePathFilterTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(rulePathConditionTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(mimeTypeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 248, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(fileNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 244, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(jPanel1Layout.createSequentialGroup()
@@ -762,7 +762,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 .addContainerGap(26, Short.MAX_VALUE))
         );
 
-        jPanel1Layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {fileNameTextField, mimeTypeComboBox, rulePathFilterTextField});
+        jPanel1Layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {fileNameTextField, mimeTypeComboBox, rulePathConditionTextField});
 
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -806,9 +806,9 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel4)
-                            .addComponent(rulePathFilterTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(rulePathConditionTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(rulePathFilterRegexCheckBox)
+                        .addComponent(rulePathConditionRegexCheckBox)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel7)
@@ -937,8 +937,8 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
     private javax.swing.JComboBox mimeTypeComboBox;
     private javax.swing.JButton newRuleButton;
     private javax.swing.JButton newSetButton;
-    private javax.swing.JCheckBox rulePathFilterRegexCheckBox;
-    private javax.swing.JTextField rulePathFilterTextField;
+    private javax.swing.JCheckBox rulePathConditionRegexCheckBox;
+    private javax.swing.JTextField rulePathConditionTextField;
     private javax.swing.JList<FilesSet.Rule> rulesList;
     private javax.swing.JLabel rulesListLabel;
     private javax.swing.JScrollPane rulesListScrollPane;

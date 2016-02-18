@@ -71,9 +71,9 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
     FilesSetRulePanel(FilesSet.Rule rule) {
         initComponents();
         populateRuleNameComponent(rule);
-        populateTypeFilterComponents(rule);
-        populateNameFilterComponents(rule);
-        populatePathFilterComponents(rule);
+        populateTypeConditionComponents(rule);
+        populateNameConditionComponents(rule);
+        populatePathConditionComponents(rule);
         customInit();
     }
 
@@ -131,9 +131,9 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
      *
      * @param rule The files set rule to be edited.
      */
-    private void populateTypeFilterComponents(FilesSet.Rule rule) {
-        FilesSet.Rule.MetaTypeCondition typeFilter = rule.getMetaTypeFilter();
-        switch (typeFilter.getMetaType()) {
+    private void populateTypeConditionComponents(FilesSet.Rule rule) {
+        FilesSet.Rule.MetaTypeCondition typeCondition = rule.getMetaTypeCondition();
+        switch (typeCondition.getMetaType()) {
             case FILES:
                 this.filesRadioButton.setSelected(true);
                 break;
@@ -151,11 +151,11 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
      *
      * @param rule The files set rule to be edited.
      */
-    private void populateNameFilterComponents(FilesSet.Rule rule) {
-        FilesSet.Rule.FileNameFilter nameFilter = rule.getFileNameFilter();
-        this.nameTextField.setText(nameFilter.getTextToMatch());
-        this.nameRegexCheckbox.setSelected(nameFilter.isRegex());
-        if (nameFilter instanceof FilesSet.Rule.FullNameFilter) {
+    private void populateNameConditionComponents(FilesSet.Rule rule) {
+        FilesSet.Rule.FileNameCondition nameCondition = rule.getFileNameCondition();
+        this.nameTextField.setText(nameCondition.getTextToMatch());
+        this.nameRegexCheckbox.setSelected(nameCondition.isRegex());
+        if (nameCondition instanceof FilesSet.Rule.FullNameCondition) {
             this.fullNameRadioButton.setSelected(true);
         } else {
             this.extensionRadioButton.setSelected(true);
@@ -168,11 +168,11 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
      *
      * @param rule The files set rule to be edited.
      */
-    private void populatePathFilterComponents(FilesSet.Rule rule) {
-        FilesSet.Rule.ParentPathFilter pathFilter = rule.getPathFilter();
-        if (pathFilter != null) {
-            this.pathTextField.setText(pathFilter.getTextToMatch());
-            this.pathRegexCheckBox.setSelected(pathFilter.isRegex());
+    private void populatePathConditionComponents(FilesSet.Rule rule) {
+        FilesSet.Rule.ParentPathCondition pathCondition = rule.getPathCondition();
+        if (pathCondition != null) {
+            this.pathTextField.setText(pathCondition.getTextToMatch());
+            this.pathRegexCheckBox.setSelected(pathCondition.isRegex());
         }
     }
 
@@ -188,7 +188,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         // The rule must have name condition text.
         if (this.nameTextField.getText().isEmpty()) {
             NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
-                    NbBundle.getMessage(FilesSetPanel.class, "FilesSetRulePanel.messages.emptyNameFilter"),
+                    NbBundle.getMessage(FilesSetPanel.class, "FilesSetRulePanel.messages.emptyNameCondition"),
                     NotifyDescriptor.WARNING_MESSAGE);
             DialogDisplayer.getDefault().notify(notifyDesc);
             return false;
@@ -260,35 +260,35 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
      *
      * @throws IllegalStateException if the specified name condition is not valid.
      */
-    FilesSet.Rule.FileNameFilter getFileNameFilter() throws IllegalStateException {
-        FilesSet.Rule.FileNameFilter filter = null;
+    FilesSet.Rule.FileNameCondition getFileNameCondition() throws IllegalStateException {
+        FilesSet.Rule.FileNameCondition condition = null;
         if (!this.nameTextField.getText().isEmpty()) {
             if (this.nameRegexCheckbox.isSelected()) {
                 try {
                     Pattern pattern = Pattern.compile(this.nameTextField.getText());
                     if (this.fullNameRadioButton.isSelected()) {
-                        filter = new FilesSet.Rule.FullNameFilter(pattern);
+                        condition = new FilesSet.Rule.FullNameCondition(pattern);
                     } else {
-                        filter = new FilesSet.Rule.ExtensionFilter(pattern);
+                        condition = new FilesSet.Rule.ExtensionCondition(pattern);
                     }
                 } catch (PatternSyntaxException ex) {
-                    logger.log(Level.SEVERE, "Attempt to get regex name filter that does not compile", ex); // NON-NLS
-                    throw new IllegalStateException("The files set rule panel name filter is not in a valid state"); // NON-NLS
+                    logger.log(Level.SEVERE, "Attempt to get regex name condition that does not compile", ex); // NON-NLS
+                    throw new IllegalStateException("The files set rule panel name condition is not in a valid state"); // NON-NLS
                 }
             } else {
                 if (FilesSetRulePanel.containsOnlyLegalChars(this.nameTextField.getText(), FilesSetRulePanel.ILLEGAL_FILE_NAME_CHARS)) {
                     if (this.fullNameRadioButton.isSelected()) {
-                        filter = new FilesSet.Rule.FullNameFilter(this.nameTextField.getText());
+                        condition = new FilesSet.Rule.FullNameCondition(this.nameTextField.getText());
                     } else {
-                        filter = new FilesSet.Rule.ExtensionFilter(this.nameTextField.getText());
+                        condition = new FilesSet.Rule.ExtensionCondition(this.nameTextField.getText());
                     }
                 } else {
-                    logger.log(Level.SEVERE, "Attempt to get name filter with illegal chars"); // NON-NLS
-                    throw new IllegalStateException("The files set rule panel name filter is not in a valid state"); // NON-NLS                    
+                    logger.log(Level.SEVERE, "Attempt to get name condition with illegal chars"); // NON-NLS
+                    throw new IllegalStateException("The files set rule panel name condition is not in a valid state"); // NON-NLS                    
                 }
             }
         }
-        return filter;
+        return condition;
     }
 
     /**
@@ -329,7 +329,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
      *
      * @return A type condition.
      */
-    FilesSet.Rule.MetaTypeCondition getMetaTypeFilter() {
+    FilesSet.Rule.MetaTypeCondition getMetaTypeCondition() {
         if (this.filesRadioButton.isSelected()) {
             return new FilesSet.Rule.MetaTypeCondition(FilesSet.Rule.MetaTypeCondition.Type.FILES);
         } else if (this.dirsRadioButton.isSelected()) {
@@ -347,15 +347,15 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
      *
      * @throws IllegalStateException if the specified path condition is not valid.
      */
-    FilesSet.Rule.ParentPathFilter getPathFilter() throws IllegalStateException {
-        FilesSet.Rule.ParentPathFilter filter = null;
+    FilesSet.Rule.ParentPathCondition getPathCondition() throws IllegalStateException {
+        FilesSet.Rule.ParentPathCondition condition = null;
         if (!this.pathTextField.getText().isEmpty()) {
             if (this.pathRegexCheckBox.isSelected()) {
                 try {
-                    filter = new FilesSet.Rule.ParentPathFilter(Pattern.compile(this.pathTextField.getText()));
+                    condition = new FilesSet.Rule.ParentPathCondition(Pattern.compile(this.pathTextField.getText()));
                 } catch (PatternSyntaxException ex) {
-                    logger.log(Level.SEVERE, "Attempt to get malformed path filter", ex); // NON-NLS
-                    throw new IllegalStateException("The files set rule panel path filter is not in a valid state"); // NON-NLS
+                    logger.log(Level.SEVERE, "Attempt to get malformed path condition", ex); // NON-NLS
+                    throw new IllegalStateException("The files set rule panel path condition is not in a valid state"); // NON-NLS
                 }
             } else {
                 String path = this.pathTextField.getText();
@@ -368,14 +368,14 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
                     if (!path.endsWith(FilesSetRulePanel.SLEUTHKIT_PATH_SEPARATOR)) {
                         path += FilesSetRulePanel.SLEUTHKIT_PATH_SEPARATOR;
                     }
-                    filter = new FilesSet.Rule.ParentPathFilter(path);
+                    condition = new FilesSet.Rule.ParentPathCondition(path);
                 } else {
-                    logger.log(Level.SEVERE, "Attempt to get path filter with illegal chars"); // NON-NLS
-                    throw new IllegalStateException("The files set rule panel path filter is not in a valid state"); // NON-NLS                    
+                    logger.log(Level.SEVERE, "Attempt to get path condition with illegal chars"); // NON-NLS
+                    throw new IllegalStateException("The files set rule panel path condition is not in a valid state"); // NON-NLS                    
                 }
             }
         }
-        return filter;
+        return condition;
     }
 
     /**

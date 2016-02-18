@@ -140,11 +140,11 @@ final class InterestingItemDefsManager extends Observable {
         // to allow Autopsy to use TSK Framework interesting files set 
         // definitions.
         // 2. The TSK Framework has an interesting files module that supports
-        // simple globbing with "*" characters. Name rules and path filters with 
+        // simple globbing with "*" characters. Name rules and path conditions with 
         // "*" characters will be converted to regexes to allow Autopsy to use 
         // TSK Framework interesting files set definitions.
-        // 3. Type filters are required by Autopsy, but not by TSK Frmaework.
-        // Missing type filters will defualt to "files" filters.
+        // 3. Type conditions are required by Autopsy, but not by TSK Frmaework.
+        // Missing type conditions will defualt to "files" conditions.
         private static final String REGEX_ATTR = "regex"; //NON-NLS
         private static final String PATH_REGEX_ATTR = "pathRegex"; //NON-NLS
         private static final String TYPE_FILTER_VALUE_FILES_AND_DIRS = "files_and_dirs"; //NON-NLS
@@ -288,16 +288,16 @@ final class InterestingItemDefsManager extends Observable {
         private static FilesSet.Rule readFileNameRule(Element elem) {
             String ruleName = FilesSetXML.readRuleName(elem);
 
-            // The content of the rule tag is a file name filter. It may be a  
+            // The content of the rule tag is a file name condition. It may be a  
             // regex, or it may be from a TSK Framework rule definition with a 
             // "*" globbing char, or it may be simple text.
             String content = elem.getTextContent();
-            FilesSet.Rule.FullNameFilter nameFilter;
+            FilesSet.Rule.FullNameCondition namecondition;
             String regex = elem.getAttribute(FilesSetXML.REGEX_ATTR);
             if ((!regex.isEmpty() && regex.equalsIgnoreCase("true")) || content.contains("*")) { // NON-NLS
                 Pattern pattern = compileRegex(content);
                 if (pattern != null) {
-                    nameFilter = new FilesSet.Rule.FullNameFilter(pattern);
+                    namecondition = new FilesSet.Rule.FullNameCondition(pattern);
                 } else {
                     logger.log(Level.SEVERE, "Error compiling " + FilesSetXML.NAME_RULE_TAG + " regex, ignoring malformed '{0}' rule definition", ruleName); // NON-NLS
                     return null;
@@ -309,29 +309,29 @@ final class InterestingItemDefsManager extends Observable {
                         return null;
                     }
                 }
-                nameFilter = new FilesSet.Rule.FullNameFilter(content);
+                namecondition = new FilesSet.Rule.FullNameCondition(content);
             }
 
-            // Read in the type filter.
-            FilesSet.Rule.MetaTypeCondition metaTypeFilter = FilesSetXML.readMetaTypeFilter(elem);
-            if (metaTypeFilter == null) {
+            // Read in the type condition.
+            FilesSet.Rule.MetaTypeCondition metaTypecondition = FilesSetXML.readMetaTypecondition(elem);
+            if (metaTypecondition == null) {
                 // Malformed attribute.
                 return null;
             }
 
-            // Read in the optional path filter. Null is o.k., but if the attribute
+            // Read in the optional path condition. Null is o.k., but if the attribute
             // is there, be sure it is not malformed.
-            FilesSet.Rule.ParentPathFilter pathFilter = null;
+            FilesSet.Rule.ParentPathCondition pathcondition = null;
             if (!elem.getAttribute(FilesSetXML.PATH_FILTER_ATTR).isEmpty()
                     || !elem.getAttribute(FilesSetXML.PATH_REGEX_ATTR).isEmpty()) {
-                pathFilter = FilesSetXML.readPathFilter(elem);
-                if (pathFilter == null) {
+                pathcondition = FilesSetXML.readPathcondition(elem);
+                if (pathcondition == null) {
                     // Malformed attribute.
                     return null;
                 }
             }
 
-            return new FilesSet.Rule(ruleName, nameFilter, metaTypeFilter, pathFilter, null, null);
+            return new FilesSet.Rule(ruleName, namecondition, metaTypecondition, pathcondition, null, null);
         }
 
         /**
@@ -346,16 +346,16 @@ final class InterestingItemDefsManager extends Observable {
         private static FilesSet.Rule readFileExtensionRule(Element elem) {
             String ruleName = FilesSetXML.readRuleName(elem);
 
-            // The content of the rule tag is a file name extension filter. It may 
+            // The content of the rule tag is a file name extension condition. It may 
             // be a regex, or it may be from a TSK Framework rule definition 
             // with a "*" globbing char.
             String content = elem.getTextContent();
-            FilesSet.Rule.ExtensionFilter extFilter;
+            FilesSet.Rule.ExtensionCondition extcondition;
             String regex = elem.getAttribute(FilesSetXML.REGEX_ATTR);
             if ((!regex.isEmpty() && regex.equalsIgnoreCase("true")) || content.contains("*")) { // NON-NLS
                 Pattern pattern = compileRegex(content);
                 if (pattern != null) {
-                    extFilter = new FilesSet.Rule.ExtensionFilter(pattern);
+                    extcondition = new FilesSet.Rule.ExtensionCondition(pattern);
                 } else {
                     logger.log(Level.SEVERE, "Error compiling " + FilesSetXML.EXTENSION_RULE_TAG + " regex, ignoring malformed {0} rule definition", ruleName); // NON-NLS
                     return null;
@@ -367,35 +367,35 @@ final class InterestingItemDefsManager extends Observable {
                         return null;
                     }
                 }
-                extFilter = new FilesSet.Rule.ExtensionFilter(content);
+                extcondition = new FilesSet.Rule.ExtensionCondition(content);
             }
 
-            // The rule must have a meta-type filter, unless a TSK Framework
+            // The rule must have a meta-type condition, unless a TSK Framework
             // definitions file is being read.
-            FilesSet.Rule.MetaTypeCondition metaTypeFilter = null;
+            FilesSet.Rule.MetaTypeCondition metaTypecondition = null;
             if (!elem.getAttribute(FilesSetXML.TYPE_FILTER_ATTR).isEmpty()) {
-                metaTypeFilter = FilesSetXML.readMetaTypeFilter(elem);
-                if (metaTypeFilter == null) {
+                metaTypecondition = FilesSetXML.readMetaTypecondition(elem);
+                if (metaTypecondition == null) {
                     // Malformed attribute.
                     return null;
                 }
             } else {
-                metaTypeFilter = new FilesSet.Rule.MetaTypeCondition(FilesSet.Rule.MetaTypeCondition.Type.FILES);
+                metaTypecondition = new FilesSet.Rule.MetaTypeCondition(FilesSet.Rule.MetaTypeCondition.Type.FILES);
             }
 
-            // The rule may have a path filter. Null is o.k., but if the attribute
+            // The rule may have a path condition. Null is o.k., but if the attribute
             // is there, it must not be malformed.
-            FilesSet.Rule.ParentPathFilter pathFilter = null;
+            FilesSet.Rule.ParentPathCondition pathcondition = null;
             if (!elem.getAttribute(FilesSetXML.PATH_FILTER_ATTR).isEmpty()
                     || !elem.getAttribute(FilesSetXML.PATH_REGEX_ATTR).isEmpty()) {
-                pathFilter = FilesSetXML.readPathFilter(elem);
-                if (pathFilter == null) {
+                pathcondition = FilesSetXML.readPathcondition(elem);
+                if (pathcondition == null) {
                     // Malformed attribute.
                     return null;
                 }
             }
 
-            return new FilesSet.Rule(ruleName, extFilter, metaTypeFilter, pathFilter, null, null);
+            return new FilesSet.Rule(ruleName, extcondition, metaTypecondition, pathcondition, null, null);
         }
 
         /**
@@ -428,62 +428,62 @@ final class InterestingItemDefsManager extends Observable {
         }
 
         /**
-         * Construct a meta-type filter for an interesting files set membership
+         * Construct a meta-type condition for an interesting files set membership
          * rule from data in an XML element.
          *
          * @param ruleElement The XML element.
          *
-         * @return The meta-type filter, or null if there is an error (logged).
+         * @return The meta-type condition, or null if there is an error (logged).
          */
-        private static FilesSet.Rule.MetaTypeCondition readMetaTypeFilter(Element ruleElement) {
-            FilesSet.Rule.MetaTypeCondition filter = null;
-            String filterAttribute = ruleElement.getAttribute(FilesSetXML.TYPE_FILTER_ATTR);
-            if (!filterAttribute.isEmpty()) {
-                switch (filterAttribute) {
+        private static FilesSet.Rule.MetaTypeCondition readMetaTypecondition(Element ruleElement) {
+            FilesSet.Rule.MetaTypeCondition condition = null;
+            String conditionAttribute = ruleElement.getAttribute(FilesSetXML.TYPE_FILTER_ATTR);
+            if (!conditionAttribute.isEmpty()) {
+                switch (conditionAttribute) {
                     case FilesSetXML.TYPE_FILTER_VALUE_FILES:
-                        filter = new FilesSet.Rule.MetaTypeCondition(FilesSet.Rule.MetaTypeCondition.Type.FILES);
+                        condition = new FilesSet.Rule.MetaTypeCondition(FilesSet.Rule.MetaTypeCondition.Type.FILES);
                         break;
                     case FilesSetXML.TYPE_FILTER_VALUE_DIRS:
-                        filter = new FilesSet.Rule.MetaTypeCondition(FilesSet.Rule.MetaTypeCondition.Type.DIRECTORIES);
+                        condition = new FilesSet.Rule.MetaTypeCondition(FilesSet.Rule.MetaTypeCondition.Type.DIRECTORIES);
                         break;
                     case FilesSetXML.TYPE_FILTER_VALUE_FILES_AND_DIRS:
-                        filter = new FilesSet.Rule.MetaTypeCondition(FilesSet.Rule.MetaTypeCondition.Type.FILES_AND_DIRECTORIES);
+                        condition = new FilesSet.Rule.MetaTypeCondition(FilesSet.Rule.MetaTypeCondition.Type.FILES_AND_DIRECTORIES);
                         break;
                     default:
-                        logger.log(Level.SEVERE, "Found {0} " + FilesSetXML.TYPE_FILTER_ATTR + " attribute with unrecognized value ''{0}'', ignoring malformed rule definition", filterAttribute); // NON-NLS
+                        logger.log(Level.SEVERE, "Found {0} " + FilesSetXML.TYPE_FILTER_ATTR + " attribute with unrecognized value ''{0}'', ignoring malformed rule definition", conditionAttribute); // NON-NLS
                         break;
                 }
             } else {
                 // Accept TSK Framework interesting files set definitions, 
                 // default to files.
-                filter = new FilesSet.Rule.MetaTypeCondition(FilesSet.Rule.MetaTypeCondition.Type.FILES);
+                condition = new FilesSet.Rule.MetaTypeCondition(FilesSet.Rule.MetaTypeCondition.Type.FILES);
             }
-            return filter;
+            return condition;
         }
 
         /**
-         * Construct a path filter for an interesting files set membership rule
+         * Construct a path condition for an interesting files set membership rule
          * from data in an XML element.
          *
          * @param ruleElement The XML element.
          *
-         * @return The path filter, or null if there is an error (logged).
+         * @return The path condition, or null if there is an error (logged).
          */
-        private static FilesSet.Rule.ParentPathFilter readPathFilter(Element ruleElement) {
-            FilesSet.Rule.ParentPathFilter filter = null;
+        private static FilesSet.Rule.ParentPathCondition readPathcondition(Element ruleElement) {
+            FilesSet.Rule.ParentPathCondition condition = null;
             String path = ruleElement.getAttribute(FilesSetXML.PATH_FILTER_ATTR);
             String pathRegex = ruleElement.getAttribute(FilesSetXML.PATH_REGEX_ATTR);
             if (!pathRegex.isEmpty() && path.isEmpty()) {
                 try {
                     Pattern pattern = Pattern.compile(pathRegex);
-                    filter = new FilesSet.Rule.ParentPathFilter(pattern);
+                    condition = new FilesSet.Rule.ParentPathCondition(pattern);
                 } catch (PatternSyntaxException ex) {
-                    logger.log(Level.SEVERE, "Error compiling " + FilesSetXML.PATH_REGEX_ATTR + " regex, ignoring malformed path filter definition", ex); // NON-NLS
+                    logger.log(Level.SEVERE, "Error compiling " + FilesSetXML.PATH_REGEX_ATTR + " regex, ignoring malformed path condition definition", ex); // NON-NLS
                 }
             } else if (!path.isEmpty() && pathRegex.isEmpty()) {
-                filter = new FilesSet.Rule.ParentPathFilter(path);
+                condition = new FilesSet.Rule.ParentPathCondition(path);
             }
-            return filter;
+            return condition;
         }
 
         /**
@@ -517,11 +517,11 @@ final class InterestingItemDefsManager extends Observable {
 
                     // Add the child elements for the set membership rules.
                     for (FilesSet.Rule rule : set.getRules().values()) {
-                        // Add a rule element with the appropriate name filter 
+                        // Add a rule element with the appropriate name condition 
                         // type tag.
-                        FilesSet.Rule.FileNameFilter nameFilter = rule.getFileNameFilter();
+                        FilesSet.Rule.FileNameCondition namecondition = rule.getFileNameCondition();
                         Element ruleElement;
-                        if (nameFilter instanceof FilesSet.Rule.FullNameFilter) {
+                        if (namecondition instanceof FilesSet.Rule.FullNameCondition) {
                             ruleElement = doc.createElement(FilesSetXML.NAME_RULE_TAG);
                         } else {
                             ruleElement = doc.createElement(FilesSetXML.EXTENSION_RULE_TAG);
@@ -530,12 +530,12 @@ final class InterestingItemDefsManager extends Observable {
                         // Add the rule name attribute.
                         ruleElement.setAttribute(FilesSetXML.NAME_ATTR, rule.getName());
 
-                        // Add the name filter regex attribute
-                        ruleElement.setAttribute(FilesSetXML.REGEX_ATTR, Boolean.toString(nameFilter.isRegex()));
+                        // Add the name condition regex attribute
+                        ruleElement.setAttribute(FilesSetXML.REGEX_ATTR, Boolean.toString(namecondition.isRegex()));
 
-                        // Add the type filter attribute.
-                        FilesSet.Rule.MetaTypeCondition typeFilter = rule.getMetaTypeFilter();
-                        switch (typeFilter.getMetaType()) {
+                        // Add the type condition attribute.
+                        FilesSet.Rule.MetaTypeCondition typecondition = rule.getMetaTypeCondition();
+                        switch (typecondition.getMetaType()) {
                             case FILES:
                                 ruleElement.setAttribute(FilesSetXML.TYPE_FILTER_ATTR, FilesSetXML.TYPE_FILTER_VALUE_FILES);
                                 break;
@@ -547,18 +547,18 @@ final class InterestingItemDefsManager extends Observable {
                                 break;
                         }
 
-                        // Add the optional path filter.
-                        FilesSet.Rule.ParentPathFilter pathFilter = rule.getPathFilter();
-                        if (pathFilter != null) {
-                            if (pathFilter.isRegex()) {
-                                ruleElement.setAttribute(FilesSetXML.PATH_REGEX_ATTR, pathFilter.getTextToMatch());
+                        // Add the optional path condition.
+                        FilesSet.Rule.ParentPathCondition pathcondition = rule.getPathCondition();
+                        if (pathcondition != null) {
+                            if (pathcondition.isRegex()) {
+                                ruleElement.setAttribute(FilesSetXML.PATH_REGEX_ATTR, pathcondition.getTextToMatch());
                             } else {
-                                ruleElement.setAttribute(FilesSetXML.PATH_FILTER_ATTR, pathFilter.getTextToMatch());
+                                ruleElement.setAttribute(FilesSetXML.PATH_FILTER_ATTR, pathcondition.getTextToMatch());
                             }
                         }
 
-                        // Add the name filter text as the rule element content.
-                        ruleElement.setTextContent(nameFilter.getTextToMatch());
+                        // Add the name condition text as the rule element content.
+                        ruleElement.setTextContent(namecondition.getTextToMatch());
 
                         setElement.appendChild(ruleElement);
                     }

@@ -113,7 +113,7 @@
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="fileNameRegexCheckbox" min="-2" max="-2" attributes="0"/>
                                   </Group>
-                                  <Component id="rulePathFilterRegexCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="rulePathConditionRegexCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
                               </Group>
                           </Group>
                           <Group type="102" attributes="0">
@@ -125,7 +125,7 @@
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                                  <Component id="rulePathFilterTextField" linkSize="4" alignment="0" min="-2" pref="250" max="-2" attributes="0"/>
+                                  <Component id="rulePathConditionTextField" linkSize="4" alignment="0" min="-2" pref="250" max="-2" attributes="0"/>
                                   <Component id="mimeTypeComboBox" linkSize="4" alignment="0" min="-2" pref="248" max="-2" attributes="0"/>
                                   <Component id="fileNameTextField" linkSize="4" alignment="0" min="-2" pref="244" max="-2" attributes="0"/>
                                   <Group type="102" attributes="0">
@@ -224,10 +224,10 @@
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="jLabel4" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="rulePathFilterTextField" alignment="3" min="-2" pref="20" max="-2" attributes="0"/>
+                                  <Component id="rulePathConditionTextField" alignment="3" min="-2" pref="20" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="rulePathFilterRegexCheckBox" min="-2" max="-2" attributes="0"/>
+                              <Component id="rulePathConditionRegexCheckBox" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="jLabel7" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -518,16 +518,16 @@
                 <Property name="enabled" type="boolean" value="false"/>
               </Properties>
             </Component>
-            <Component class="javax.swing.JTextField" name="rulePathFilterTextField">
+            <Component class="javax.swing.JTextField" name="rulePathConditionTextField">
               <Properties>
                 <Property name="editable" type="boolean" value="false"/>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                   <FontInfo relative="true">
-                    <Font bold="false" component="rulePathFilterTextField" property="font" relativeSize="false" size="11"/>
+                    <Font bold="false" component="rulePathConditionTextField" property="font" relativeSize="false" size="11"/>
                   </FontInfo>
                 </Property>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/modules/interestingitems/Bundle.properties" key="InterestingItemDefsPanel.rulePathFilterTextField.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/modules/interestingitems/Bundle.properties" key="InterestingItemDefsPanel.rulePathConditionTextField.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
             </Component>
@@ -698,15 +698,15 @@
                 </Property>
               </Properties>
             </Component>
-            <Component class="javax.swing.JCheckBox" name="rulePathFilterRegexCheckBox">
+            <Component class="javax.swing.JCheckBox" name="rulePathConditionRegexCheckBox">
               <Properties>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                   <FontInfo relative="true">
-                    <Font bold="false" component="rulePathFilterRegexCheckBox" property="font" relativeSize="false" size="11"/>
+                    <Font bold="false" component="rulePathConditionRegexCheckBox" property="font" relativeSize="false" size="11"/>
                   </FontInfo>
                 </Property>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/modules/interestingitems/Bundle.properties" key="InterestingItemDefsPanel.rulePathFilterRegexCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/modules/interestingitems/Bundle.properties" key="InterestingItemDefsPanel.rulePathConditionRegexCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
                 <Property name="enabled" type="boolean" value="false"/>
               </Properties>
