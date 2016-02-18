@@ -27,7 +27,7 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 /**
  * A interface for groups of events that share some attributes in common.
  */
-public interface EventBundle<ParentType extends EventBundle<?>> {
+public interface MultiEvent<ParentType extends MultiEvent<?>> extends Event {
 
     String getDescription();
 

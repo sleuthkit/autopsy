@@ -25,7 +25,8 @@ import java.util.Map;
 import javafx.collections.FXCollections;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
+import org.sleuthkit.autopsy.timeline.datamodel.MultiEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.Event;
 
 class EventTypeTreeItem extends NavTreeItem {
 
@@ -34,9 +35,9 @@ class EventTypeTreeItem extends NavTreeItem {
      */
     private final Map<String, EventDescriptionTreeItem> childMap = new HashMap<>();
 
-    private Comparator<TreeItem<EventBundle<?>>> comparator = TreeComparator.Description;
+    private Comparator<TreeItem<Event>> comparator = TreeComparator.Description;
 
-    EventTypeTreeItem(EventBundle<?> g, Comparator<TreeItem<EventBundle<?>>> comp) {
+    EventTypeTreeItem(MultiEvent<?> g, Comparator<TreeItem<Event>> comp) {
         setValue(g);
         comparator = comp;
     }
@@ -47,8 +48,8 @@ class EventTypeTreeItem extends NavTreeItem {
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    public void insert(Deque<EventBundle<?>> path) {
-        EventBundle<?> head = path.removeFirst();
+    public void insert(Deque<MultiEvent<?>> path) {
+        MultiEvent<?> head = path.removeFirst();
         EventDescriptionTreeItem treeItem = childMap.computeIfAbsent(head.getDescription(), description -> {
             EventDescriptionTreeItem newTreeItem = new EventDescriptionTreeItem(head, comparator);
             newTreeItem.setExpanded(true);
@@ -63,8 +64,8 @@ class EventTypeTreeItem extends NavTreeItem {
         }
     }
 
-    void remove(Deque<EventBundle<?>> path) {
-        EventBundle<?> head = path.removeFirst();
+    void remove(Deque<MultiEvent<?>> path) {
+        MultiEvent<?> head = path.removeFirst();
         EventDescriptionTreeItem descTreeItem = childMap.get(head.getDescription());
         if (descTreeItem != null) {
             if (path.isEmpty() == false) {
@@ -78,7 +79,7 @@ class EventTypeTreeItem extends NavTreeItem {
     }
 
     @Override
-    public NavTreeItem findTreeItemForEvent(EventBundle<?> t) {
+    public NavTreeItem findTreeItemForEvent(Event t) {
         if (t.getEventType().getBaseType() == getValue().getEventType().getBaseType()) {
 
             for (EventDescriptionTreeItem child : childMap.values()) {
@@ -92,7 +93,7 @@ class EventTypeTreeItem extends NavTreeItem {
     }
 
     @Override
-    void resort(Comparator<TreeItem<EventBundle<?>>> comp, Boolean recursive) {
+    void resort(Comparator<TreeItem<Event>> comp, Boolean recursive) {
         this.comparator = comp;
         FXCollections.sort(getChildren(), comp);
         if (recursive) {

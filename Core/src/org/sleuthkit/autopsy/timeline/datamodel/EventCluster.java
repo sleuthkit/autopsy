@@ -33,12 +33,12 @@ import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 /**
- * Represents a set of other (TimeLineEvent) events clustered together. All the
+ * Represents a set of other events clustered together. All the
  * sub events should have the same type and matching descriptions at the
  * designated 'zoom level', and be 'close together' in time.
  */
 @Immutable
-public class EventCluster implements EventBundle<EventStripe> {
+public class EventCluster implements MultiEvent<EventStripe> {
 
     /**
      * merge two event clusters into one new event cluster.
@@ -192,4 +192,5 @@ public class EventCluster implements EventBundle<EventStripe> {
         return ImmutableSortedSet.orderedBy(Comparator.comparing(EventCluster::getStartMillis)).add(this).build();
     }
 
+   
 }

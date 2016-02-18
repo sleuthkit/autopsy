@@ -155,6 +155,8 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
         return new CountsIntervalSelector(this);
     }
 
+   
+
     /**
      * used by {@link CountsViewPane#BarClickHandler} to close the context menu
      * when the bar menu is requested

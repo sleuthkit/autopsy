@@ -26,7 +26,8 @@ import java.util.Map;
 import java.util.Optional;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
+import org.sleuthkit.autopsy.timeline.datamodel.MultiEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.Event;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 
 /**
@@ -42,10 +43,10 @@ class RootItem extends NavTreeItem {
     /**
      * the comparator if any used to sort the children of this item
      */
-    private Comparator<TreeItem<EventBundle<?>>> comparator = TreeComparator.Type.reversed();
+    private Comparator<TreeItem<Event>> comparator = TreeComparator.Type.reversed();
 
-    RootItem(Comparator<TreeItem<EventBundle<?>>> comp) {
-        comp = comp;
+    RootItem(Comparator<TreeItem<Event>> comp) {
+        this.comparator = comp;
     }
 
     @Override
@@ -59,7 +60,7 @@ class RootItem extends NavTreeItem {
      * @param bundle bundle to add
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    public void insert(EventBundle<?> bundle) {
+    public void insert(MultiEvent<?> bundle) {
 
         EventTypeTreeItem treeItem = childMap.computeIfAbsent(bundle.getEventType().getBaseType(),
                 baseType -> {
@@ -72,7 +73,7 @@ class RootItem extends NavTreeItem {
 
     }
 
-    void remove(EventBundle<?> bundle) {
+    void remove(MultiEvent<?> bundle) {
         EventTypeTreeItem typeTreeItem = childMap.get(bundle.getEventType().getBaseType());
         if (typeTreeItem != null) {
             typeTreeItem.remove(getTreePath(bundle));
@@ -84,12 +85,12 @@ class RootItem extends NavTreeItem {
         }
     }
 
-    static Deque< EventBundle<?>> getTreePath(EventBundle<?> g) {
-        Deque<EventBundle<?>> path = new ArrayDeque<>();
-        Optional<? extends EventBundle<?>> p = Optional.of(g);
+    static Deque< MultiEvent<?>> getTreePath(MultiEvent<?> g) {
+        Deque<MultiEvent<?>> path = new ArrayDeque<>();
+        Optional<? extends MultiEvent<?>> p = Optional.of(g);
 
         while (p.isPresent()) {
-            EventBundle<?> parent = p.get();
+            MultiEvent<?> parent = p.get();
             path.addFirst(parent);
             p = parent.getParentBundle();
         }
@@ -98,13 +99,13 @@ class RootItem extends NavTreeItem {
     }
 
     @Override
-    void resort(Comparator<TreeItem<EventBundle<?>>> comp, Boolean recursive) {
+    void resort(Comparator<TreeItem<Event>> comp, Boolean recursive) {
         comparator = comp;
         childMap.values().forEach(ti -> ti.resort(comp, true));
     }
 
     @Override
-    public NavTreeItem findTreeItemForEvent(EventBundle<?> t) {
+    public NavTreeItem findTreeItemForEvent(Event t) {
         for (EventTypeTreeItem child : childMap.values()) {
             final NavTreeItem findTreeItemForEvent = child.findTreeItemForEvent(t);
             if (findTreeItemForEvent != null) {

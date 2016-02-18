@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Range;
 import com.google.common.collect.TreeRangeMap;
 import java.util.Arrays;
@@ -43,10 +44,10 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.chart.Axis;
 import javafx.scene.chart.NumberAxis;
@@ -73,7 +74,6 @@ import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
 import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 /**
  * Custom implementation of {@link XYChart} to graph events on a horizontal
@@ -94,11 +94,10 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
  *
  * //TODO: refactor the projected lines to a separate class. -jm
  */
-public final class EventDetailsChart extends XYChart<DateTime, EventStripe> implements TimeLineChart<DateTime> {
+public final class EventDetailsChart extends XYChart<DateTime, EventStripe> implements DetailsChart {
 
     private static final String styleSheet = GuideLine.class.getResource("EventsDetailsChart.css").toExternalForm(); //NON-NLS
-    private static final Image HIDE = new Image("/org/sleuthkit/autopsy/timeline/images/eye--minus.png"); // NON-NLS
-    private static final Image SHOW = new Image("/org/sleuthkit/autopsy/timeline/images/eye--plus.png"); // NON-NLS
+  
     private static final Image MARKER = new Image("/org/sleuthkit/autopsy/timeline/images/marker.png", 16, 16, true, true, true); //NON-NLS
     private static final int PROJECTED_LINE_Y_OFFSET = 5;
     private static final int PROJECTED_LINE_STROKE_WIDTH = 5;
@@ -145,7 +144,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
      */
     private final ReadOnlyDoubleWrapper maxY = new ReadOnlyDoubleWrapper(0.0);
 
-    final ObservableList<EventBundleNodeBase<?, ?, ?>> selectedNodes;
+    final ObservableList<EventNodeBase<?>> selectedNodes;
     /**
      * the group that all event nodes are added to. This facilitates scrolling
      * by allowing a single translation of this group.
@@ -154,8 +153,8 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private final ObservableList<EventStripe> eventStripes = FXCollections.observableArrayList();
-    private final ObservableList< EventStripeNode> stripeNodes = FXCollections.observableArrayList();
-    private final ObservableList< EventStripeNode> sortedStripeNodes = stripeNodes.sorted(Comparator.comparing(EventStripeNode::getStartMillis));
+    private final ObservableList< EventNodeBase<?>> stripeNodes = FXCollections.observableArrayList();
+    private final ObservableList<  EventNodeBase<?>> sortedStripeNodes = stripeNodes.sorted(Comparator.comparing(EventNodeBase<?>::getStartMillis));
     private final Map<EventCluster, Line> projectionMap = new ConcurrentHashMap<>();
 
     /**
@@ -190,7 +189,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
      */
     final SimpleDoubleProperty truncateWidth = new SimpleDoubleProperty(200.0);
 
-    EventDetailsChart(TimeLineController controller, DateAxis dateAxis, final Axis<EventStripe> verticalAxis, ObservableList<EventBundleNodeBase<?, ?, ?>> selectedNodes) {
+    EventDetailsChart(TimeLineController controller, DateAxis dateAxis, final Axis<EventStripe> verticalAxis, ObservableList<EventNodeBase<?>> selectedNodes) {
         super(dateAxis, verticalAxis);
 
         this.controller = controller;
@@ -249,7 +248,21 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
         this.selectedNodes.addListener(new SelectionChangeHandler());
     }
 
-    ObservableList<EventStripe> getEventStripes() {
+    @Override
+    public void requestTimelineChartLayout() {
+        requestChartLayout();
+    }
+
+    public ObservableList<EventNodeBase<?>> getSelectedNodes() {
+        return selectedNodes;
+    }
+
+    @Override
+    public Node asNode() {
+        return this;
+    }
+
+    public ObservableList<EventStripe> getEventStripes() {
         return eventStripes;
     }
 
@@ -390,14 +403,17 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
      */
     void addDataItem(Data<DateTime, EventStripe> data) {
         final EventStripe eventStripe = data.getYValue();
-
-        EventStripeNode stripeNode = new EventStripeNode(EventDetailsChart.this, eventStripe, null);
-
+        EventNodeBase<?> newNode;
+        if (eventStripe.getEventIDs().size() == 1) {
+            newNode = new SingleEventNode(this, controller.getEventsModel().getEventById(Iterables.getOnlyElement(eventStripe.getEventIDs())), null);
+        } else {
+            newNode = new EventStripeNode(EventDetailsChart.this, eventStripe, null);
+        }
         Platform.runLater(() -> {
             eventStripes.add(eventStripe);
-            stripeNodes.add(stripeNode);
-            nodeGroup.getChildren().add(stripeNode);
-            data.setNode(stripeNode);
+            stripeNodes.add(newNode);
+            nodeGroup.getChildren().add(newNode);
+            data.setNode(newNode);
         });
     }
 
@@ -410,7 +426,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
      */
     void removeDataItem(Data<DateTime, EventStripe> data) {
         Platform.runLater(() -> {
-            EventStripeNode removedNode = (EventStripeNode) data.getNode();
+            EventNodeBase<?> removedNode = (EventNodeBase<?>) data.getNode();
             eventStripes.removeAll(new StripeFlattener().apply(removedNode).collect(Collectors.toList()));
             stripeNodes.removeAll(removedNode);
             nodeGroup.getChildren().removeAll(removedNode);
@@ -434,10 +450,10 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
 
         if (bandByType.get()) {
             sortedStripeNodes.stream()
-                    .collect(Collectors.groupingBy(EventStripeNode::getEventType)).values()
+                    .collect(Collectors.groupingBy(EventNodeBase<?>::getEventType)).values()
                     .forEach(inputNodes -> maxY.set(layoutEventBundleNodes(inputNodes, maxY.get())));
         } else {
-            maxY.set(layoutEventBundleNodes(sortedStripeNodes.sorted(Comparator.comparing(EventStripeNode::getStartMillis)), 0));
+            maxY.set(layoutEventBundleNodes(sortedStripeNodes.sorted(Comparator.comparing(EventNodeBase<?>::getStartMillis)), 0));
         }
         layoutProjectionMap();
         setCursor(null);
@@ -450,12 +466,12 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
     /**
      * @return all the nodes that pass the given predicate
      */
-    synchronized Iterable<EventBundleNodeBase<?, ?, ?>> getNodes(Predicate<EventBundleNodeBase<?, ?, ?>> p) {
+    synchronized Iterable<EventNodeBase<?>> getNodes(Predicate<EventNodeBase<?>> p) {
         //use this recursive function to flatten the tree of nodes into an single stream.
-        Function<EventBundleNodeBase<?, ?, ?>, Stream<EventBundleNodeBase<?, ?, ?>>> stripeFlattener =
-                new Function<EventBundleNodeBase<?, ?, ?>, Stream<EventBundleNodeBase<?, ?, ?>>>() {
+        Function<EventNodeBase<?>, Stream<EventNodeBase<?>>> stripeFlattener =
+                new Function<EventNodeBase<?>, Stream<EventNodeBase<?>>>() {
                     @Override
-                    public Stream<EventBundleNodeBase<?, ?, ?>> apply(EventBundleNodeBase<?, ?, ?> node) {
+                    public Stream<EventNodeBase<?>> apply(EventNodeBase<?> node) {
                         return Stream.concat(
                                 Stream.of(node),
                                 node.getSubNodes().stream().flatMap(this::apply));
@@ -506,7 +522,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
      *
      * @return the maximum y coordinate used by any of the layed out nodes.
      */
-    double layoutEventBundleNodes(final Collection<? extends EventBundleNodeBase<?, ?, ?>> nodes, final double minY) {
+    public double layoutEventBundleNodes(final Collection<? extends EventNodeBase<?>> nodes, final double minY) {
         // map from y-ranges to maximum x
         TreeRangeMap<Double, Double> maxXatY = TreeRangeMap.create();
 
@@ -514,7 +530,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
         double localMax = minY;
 
         //for each node do a recursive layout to size it and then position it in first available slot
-        for (EventBundleNodeBase<?, ?, ?> bundleNode : nodes) {
+        for (EventNodeBase<?> bundleNode : nodes) {
             //is the node hiden by a quick hide filter?
             boolean quickHide = activeQuickHidefilters.contains(bundleNode.getDescription());
             if (quickHide) {
@@ -594,7 +610,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
      * @param bundleNode       the Node to layout
      * @param descriptionWdith the maximum width for the description text
      */
-    private void layoutBundleHelper(final EventBundleNodeBase<?, ?, ?> bundleNode) {
+    private void layoutBundleHelper(final EventNodeBase< ?> bundleNode) {
         //make sure it is shown
         bundleNode.setVisible(true);
         bundleNode.setManaged(true);
@@ -686,7 +702,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
         }
     }
 
-    private class SelectionChangeHandler implements ListChangeListener<EventBundleNodeBase<?, ?, ?>> {
+    private class SelectionChangeHandler implements ListChangeListener<EventNodeBase<?>> {
 
         private final Axis<DateTime> dateAxis;
 
@@ -695,18 +711,18 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
         }
 
         @Override
-        public void onChanged(ListChangeListener.Change<? extends EventBundleNodeBase<?, ?, ?>> change) {
+        public void onChanged(ListChangeListener.Change<? extends EventNodeBase<?>> change) {
             while (change.next()) {
-                change.getRemoved().forEach((EventBundleNodeBase<?, ?, ?> removedNode) -> {
-                    removedNode.getEventBundle().getClusters().forEach(cluster -> {
+                change.getRemoved().forEach((EventNodeBase<?> removedNode) -> {
+                    removedNode.getEvent().getClusters().forEach(cluster -> {
                         Line removedLine = projectionMap.remove(cluster);
                         getChartChildren().removeAll(removedLine);
                     });
 
                 });
-                change.getAddedSubList().forEach((EventBundleNodeBase<?, ?, ?> addedNode) -> {
+                change.getAddedSubList().forEach((EventNodeBase<?> addedNode) -> {
 
-                    for (EventCluster range : addedNode.getEventBundle().getClusters()) {
+                    for (EventCluster range : addedNode.getEvent().getClusters()) {
 
                         Line line = new Line(dateAxis.localToParent(dateAxis.getDisplayPosition(new DateTime(range.getStartMillis(), TimeLineController.getJodaTimeZone())), 0).getX(), dateAxis.getLayoutY() + PROJECTED_LINE_Y_OFFSET,
                                 dateAxis.localToParent(dateAxis.getDisplayPosition(new DateTime(range.getEndMillis(), TimeLineController.getJodaTimeZone())), 0).getX(), dateAxis.getLayoutY() + PROJECTED_LINE_Y_OFFSET
@@ -725,44 +741,4 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
         }
     }
 
-    @NbBundle.Messages({"HideDescriptionAction.displayName=Hide",
-            "HideDescriptionAction.displayMsg=Hide this group from the details view."})
-    class HideDescriptionAction extends Action {
-
-        HideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
-            super(Bundle.HideDescriptionAction_displayName());
-            setLongText(Bundle.HideDescriptionAction_displayMsg());
-            setGraphic(new ImageView(HIDE));
-            setEventHandler((ActionEvent t) -> {
-                final DescriptionFilter testFilter = new DescriptionFilter(
-                        descriptionLoD,
-                        description,
-                        DescriptionFilter.FilterMode.EXCLUDE);
-
-                DescriptionFilter descriptionFilter = getController().getQuickHideFilters().stream()
-                        .filter(testFilter::equals)
-                        .findFirst().orElseGet(() -> {
-                            testFilter.selectedProperty().addListener(observable -> requestChartLayout());
-                            getController().getQuickHideFilters().add(testFilter);
-                            return testFilter;
-                        });
-                descriptionFilter.setSelected(true);
-            });
-        }
-    }
-
-    @NbBundle.Messages({"UnhideDescriptionAction.displayName=Unhide"})
-    class UnhideDescriptionAction extends Action {
-
-        UnhideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
-            super(Bundle.UnhideDescriptionAction_displayName());
-            setGraphic(new ImageView(SHOW));
-            setEventHandler((ActionEvent t) ->
-                    getController().getQuickHideFilters().stream()
-                    .filter(descriptionFilter -> descriptionFilter.getDescriptionLoD().equals(descriptionLoD)
-                            && descriptionFilter.getDescription().equals(description))
-                    .forEach(descriptionfilter -> descriptionfilter.setSelected(false))
-            );
-        }
-    }
 }

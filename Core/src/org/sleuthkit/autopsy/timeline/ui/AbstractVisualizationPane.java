@@ -512,12 +512,13 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
                 MaskerPane maskerPane = new MaskerPane();
                 maskerPane.textProperty().bind(messageProperty());
                 maskerPane.progressProperty().bind(progressProperty());
-                setCenter(new StackPane(chart, maskerPane));
+                setCenter(new StackPane(center, maskerPane));
                 setCursor(Cursor.WAIT);
             });
 
             return true;
         }
+        private final Node center = getCenter();
 
         /**
          * updates the horisontal axis and removes the blocking progress
@@ -530,7 +531,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
             layoutDateLabels();
 
             Platform.runLater(() -> {
-                setCenter(chart); //clear masker pane
+                setCenter(center); //clear masker pane
                 setCursor(Cursor.DEFAULT);
             });
         }

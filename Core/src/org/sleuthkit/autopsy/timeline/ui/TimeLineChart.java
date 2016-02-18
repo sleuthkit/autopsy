@@ -39,6 +39,10 @@ import org.sleuthkit.autopsy.timeline.actions.Forward;
  */
 public interface TimeLineChart<X> {
 
+
+  
+
+
 //    void setController(TimeLineController controller);
     IntervalSelector<? extends X> getIntervalSelector();
 
@@ -61,6 +65,7 @@ public interface TimeLineChart<X> {
     public Axis<X> getXAxis();
 
     public TimeLineController getController();
+
 
     ContextMenu getChartContextMenu();
 

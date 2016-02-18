@@ -58,7 +58,7 @@ import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.BaseTypes;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
@@ -323,8 +323,8 @@ public class EventDB {
         return null;
     }
 
-    TimeLineEvent getEventById(Long eventID) {
-        TimeLineEvent result = null;
+    SingleEvent getEventById(Long eventID) {
+        SingleEvent result = null;
         DBLock.lock();
         try {
             getEventByIDStmt.clearParameters();
@@ -939,8 +939,8 @@ public class EventDB {
         }
     }
 
-    private TimeLineEvent constructTimeLineEvent(ResultSet rs) throws SQLException {
-        return new TimeLineEvent(rs.getLong("event_id"), //NON-NLS
+    private SingleEvent constructTimeLineEvent(ResultSet rs) throws SQLException {
+        return new SingleEvent(rs.getLong("event_id"), //NON-NLS
                 rs.getLong("datasource_id"), //NON-NLS
                 rs.getLong("file_id"), //NON-NLS
                 rs.getLong("artifact_id"), //NON-NLS

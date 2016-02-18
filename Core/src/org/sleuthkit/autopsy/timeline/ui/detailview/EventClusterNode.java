@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import java.util.Arrays;
 import java.util.Collection;
@@ -33,7 +34,6 @@ import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.Button;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Border;
@@ -49,13 +49,14 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.timeline.datamodel.Event;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
-import static org.sleuthkit.autopsy.timeline.ui.detailview.EventBundleNodeBase.configureLoDButton;
-import static org.sleuthkit.autopsy.timeline.ui.detailview.EventBundleNodeBase.show;
+import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.configureActionButton;
+import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.show;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
@@ -63,13 +64,12 @@ import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 /**
  *
  */
-final public class EventClusterNode extends EventBundleNodeBase<EventCluster, EventStripe, EventStripeNode> {
+final public class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStripe, EventStripeNode> {
 
     private static final Logger LOGGER = Logger.getLogger(EventClusterNode.class.getName());
 
     private static final BorderWidths CLUSTER_BORDER_WIDTHS = new BorderWidths(2, 1, 2, 1);
-    private static final Image PLUS = new Image("/org/sleuthkit/autopsy/timeline/images/plus-button.png"); // NON-NLS //NOI18N
-    private static final Image MINUS = new Image("/org/sleuthkit/autopsy/timeline/images/minus-button.png"); // NON-NLS //NOI18N
+
     private final Border clusterBorder = new Border(new BorderStroke(evtColor.deriveColor(0, 1, 1, .4), BorderStrokeStyle.SOLID, CORNER_RADII_1, CLUSTER_BORDER_WIDTHS));
 
     private Button plusButton;
@@ -80,14 +80,31 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
         if (plusButton == null) {
             plusButton = ActionUtils.createButton(new ExpandClusterAction(), ActionUtils.ActionTextBehavior.HIDE);
             minusButton = ActionUtils.createButton(new CollapseClusterAction(), ActionUtils.ActionTextBehavior.HIDE);
-
-            configureLoDButton(plusButton);
-            configureLoDButton(minusButton);
             infoHBox.getChildren().addAll(minusButton, plusButton);
+
+            configureActionButton(plusButton);
+            configureActionButton(minusButton);
+
+//            if (getEventCluster().getEventIDs().size() == 1) {
+//                long eventID = Iterables.getOnlyElement(getEventCluster().getEventIDs());
+//                infoHBox.getChildren().add(pinButton);
+//
+//                pinButton.setOnAction(actionEvent -> {
+//                    TimeLineController controller = getChart().getController();
+//                    if (controller.getPinnedEventIDs().contains(eventID)) {
+//                        new UnPinEventAction(controller, getEventCluster().getEventIDs()).handle(actionEvent);
+//                        pinButton.setGraphic(new ImageView(PIN));
+//                    } else {
+//                        new PinEventAction(controller, getEventCluster().getEventIDs()).handle(actionEvent);
+//                        pinButton.setGraphic(new ImageView(UNPIN));
+//                    }
+//                });
+//                configureActionButton(pinButton);
+//            }
         }
     }
 
-    public EventClusterNode(EventDetailsChart chart, EventCluster eventCluster, EventStripeNode parentNode) {
+    public EventClusterNode(DetailsChart chart, EventCluster eventCluster, EventStripeNode parentNode) {
         super(chart, eventCluster, parentNode);
 
         subNodePane.setBorder(clusterBorder);
@@ -98,7 +115,6 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
         setAlignment(Pos.CENTER_LEFT);
 
         setCursor(Cursor.HAND);
-
         getChildren().addAll(subNodePane, infoHBox);
 
     }
@@ -109,6 +125,9 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
         installActionButtons();
         show(plusButton, showControls);
         show(minusButton, showControls);
+//        if (getEventCluster().getEventIDs().size() == 1) {
+//            show(pinButton, showControls);
+//        }
     }
 
     @Override
@@ -149,7 +168,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
     @NbBundle.Messages(value = "EventStripeNode.loggedTask.name=Load sub clusters")
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private synchronized void loadSubBundles(DescriptionLoD.RelativeDetail relativeDetail) {
-        chart.setCursor(Cursor.WAIT);
+        getChart().asNode().setCursor(Cursor.WAIT);
 
 
         /*
@@ -194,14 +213,14 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
                     List<EventStripe> bundles = get();
 
                     //clear the existing subnodes
-                    List<EventStripe> transform = subNodes.stream().flatMap(new StripeFlattener()).collect(Collectors.toList());
-                    chart.getEventStripes().removeAll(transform);
+                    List<Event> transform = subNodes.stream().flatMap(new StripeFlattener()).collect(Collectors.toList());
+                    ((EventDetailsChart) getChart()).getEventStripes().removeAll(transform);
                     subNodes.clear();
                     if (bundles.isEmpty()) {
                         getChildren().setAll(subNodePane, infoHBox);
                         descLOD.set(getEventBundle().getDescriptionLoD());
                     } else {
-                        chart.getEventStripes().addAll(bundles);
+                        ((EventDetailsChart) getChart()).getEventStripes().addAll(bundles);
                         subNodes.addAll(Lists.transform(bundles, EventClusterNode.this::createChildNode));
                         getChildren().setAll(new VBox(infoHBox, subNodePane));
                         descLOD.set(loadedDescriptionLoD);
@@ -209,19 +228,25 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
                 } catch (InterruptedException | ExecutionException ex) {
                     LOGGER.log(Level.SEVERE, "Error loading subnodes", ex); //NON-NLS
                 }
-                chart.requestChartLayout();
-                chart.setCursor(null);
+                getChart().requestTimelineChartLayout();
+                getChart().asNode().setCursor(null);
             }
         };
 
         new Thread(loggedTask).start();
         //start task
-        chart.getController().monitorTask(loggedTask);
+        getChart().getController().monitorTask(loggedTask);
     }
 
     @Override
-    EventStripeNode createChildNode(EventStripe stripe) {
-        return new EventStripeNode(chart, stripe, this);
+    EventNodeBase<?> createChildNode(EventStripe stripe) {
+//        return new EventStripeNode(getChart(), stripe, this);
+
+        if (stripe.getEventIDs().size() == 1) {
+            return new SingleEventNode(getChart(), getChart().getController().getEventsModel().getEventById(Iterables.getOnlyElement(stripe.getEventIDs())), this);
+        } else {
+            return new EventStripeNode(getChart(), stripe, this);
+        }
     }
 
     EventCluster getEventCluster() {
@@ -230,8 +255,8 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
 
     @Override
     protected void layoutChildren() {
-        double chartX = chart.getXAxis().getDisplayPosition(new DateTime(getStartMillis()));
-        double w = chart.getXAxis().getDisplayPosition(new DateTime(getEndMillis())) - chartX;
+        double chartX = getChart().getXAxis().getDisplayPosition(new DateTime(getStartMillis()));
+        double w = getChart().getXAxis().getDisplayPosition(new DateTime(getEndMillis())) - chartX;
         subNodePane.setPrefWidth(Math.max(1, w));
         super.layoutChildren();
     }
@@ -262,7 +287,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
 
     private class ExpandClusterAction extends Action {
 
-        @NbBundle.Messages(value = "ExpandClusterAction.text=Expand")
+        @NbBundle.Messages({"ExpandClusterAction.text=Expand"})
         ExpandClusterAction() {
             super(Bundle.ExpandClusterAction_text());
 
@@ -278,7 +303,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
 
     private class CollapseClusterAction extends Action {
 
-        @NbBundle.Messages(value = "CollapseClusterAction.text=Collapse")
+        @NbBundle.Messages({"CollapseClusterAction.text=Collapse"})
         CollapseClusterAction() {
             super(Bundle.CollapseClusterAction_text());
 

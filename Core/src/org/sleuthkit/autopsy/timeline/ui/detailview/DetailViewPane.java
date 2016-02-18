@@ -43,6 +43,7 @@ import javafx.scene.control.RadioButton;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.Slider;
+import javafx.scene.control.SplitPane;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.TreeItem;
 import javafx.scene.effect.Effect;
@@ -66,10 +67,12 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.datamodel.Event;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
+import org.sleuthkit.autopsy.timeline.ui.detailview.DetailsChart.HideDescriptionAction;
+import org.sleuthkit.autopsy.timeline.ui.detailview.DetailsChart.UnhideDescriptionAction;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 /**
@@ -84,20 +87,21 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
  * EventTypeMap, and dataSets is all linked directly to the ClusterChart which
  * must only be manipulated on the JavaFx thread.
  */
-public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStripe, EventBundleNodeBase<?, ?, ?>, EventDetailsChart> {
+public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStripe, EventNodeBase<?>, EventDetailsChart> {
 
     private final static Logger LOGGER = Logger.getLogger(DetailViewPane.class.getName());
 
     private static final double LINE_SCROLL_PERCENTAGE = .10;
     private static final double PAGE_SCROLL_PERCENTAGE = .70;
 
-    private final DateAxis dateAxis = new DateAxis();
-    private final Axis<EventStripe> verticalAxis = new EventAxis();
+    private final DateAxis detailsChartDateAxis = new DateAxis();
+    private final DateAxis pinnedDateAxis = new DateAxis();
+    private final Axis<EventStripe> verticalAxis = new EventAxis<>();
     private final ScrollBar vertScrollBar = new ScrollBar();
     private final Region scrollBarSpacer = new Region();
 
-    private MultipleSelectionModel<TreeItem<EventBundle<?>>> treeSelectionModel;
-    private final ObservableList<EventBundleNodeBase<?, ?, ?>> highlightedNodes = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
+    private MultipleSelectionModel<TreeItem<Event>> treeSelectionModel;
+    private final ObservableList<EventNodeBase<?>> highlightedNodes = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
 
     public ObservableList<EventStripe> getEventStripes() {
         return chart.getEventStripes();
@@ -118,25 +122,27 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
     public DetailViewPane(TimeLineController controller, Pane partPane, Pane contextPane, Region bottomLeftSpacer) {
         super(controller, partPane, contextPane, bottomLeftSpacer);
         //initialize chart;
-        chart = new EventDetailsChart(controller, dateAxis, verticalAxis, selectedNodes);
+        chart = new EventDetailsChart(controller, detailsChartDateAxis, verticalAxis, selectedNodes);
+
+        PinnedEventsChart pinnedChart = new PinnedEventsChart(controller, pinnedDateAxis, new EventAxis<>());
+        pinnedChart.setMinSize(100, 100);
         setChartClickHandler(); //can we push this into chart
+        SplitPane splitPane = new SplitPane(pinnedChart, chart);
+        splitPane.setOrientation(Orientation.VERTICAL);
         chart.setData(dataSeries);
-        setCenter(chart);
+        setCenter(splitPane);
 
         settingsNodes = new ArrayList<>(new DetailViewSettingsPane().getChildrenUnmodifiable());
         //bind layout fo axes and spacers
-        dateAxis.setTickLabelGap(0);
-        dateAxis.setAutoRanging(false);
-        dateAxis.setTickLabelsVisible(false);
-        dateAxis.getTickMarks().addListener((Observable observable) -> layoutDateLabels());
-        dateAxis.getTickSpacing().addListener(observable -> layoutDateLabels());
+        detailsChartDateAxis.getTickMarks().addListener((Observable observable) -> layoutDateLabels());
+        detailsChartDateAxis.getTickSpacing().addListener(observable -> layoutDateLabels());
 
         verticalAxis.setAutoRanging(false); //prevent XYChart.updateAxisRange() from accessing dataSeries on JFX thread causing ConcurrentModificationException
         bottomLeftSpacer.minWidthProperty().bind(verticalAxis.widthProperty().add(verticalAxis.tickLengthProperty()));
         bottomLeftSpacer.prefWidthProperty().bind(verticalAxis.widthProperty().add(verticalAxis.tickLengthProperty()));
         bottomLeftSpacer.maxWidthProperty().bind(verticalAxis.widthProperty().add(verticalAxis.tickLengthProperty()));
 
-        scrollBarSpacer.minHeightProperty().bind(dateAxis.heightProperty());
+        scrollBarSpacer.minHeightProperty().bind(detailsChartDateAxis.heightProperty());
 
         //configure scrollbar
         vertScrollBar.setOrientation(Orientation.VERTICAL);
@@ -181,21 +187,17 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
         this.vertScrollBar.valueProperty().addListener(observable -> chart.setVScroll(vertScrollBar.getValue()));
 
         //maintain highlighted effect on correct nodes
-        highlightedNodes.addListener((ListChangeListener.Change<? extends EventBundleNodeBase<?, ?, ?>> change) -> {
+        highlightedNodes.addListener((ListChangeListener.Change<? extends EventNodeBase<?>> change) -> {
             while (change.next()) {
-                change.getAddedSubList().forEach(node -> {
-                    node.applyHighlightEffect(true);
-                });
-                change.getRemoved().forEach(node -> {
-                    node.applyHighlightEffect(false);
-                });
+                change.getAddedSubList().forEach(EventNodeBase::applyHighlightEffect);
+                change.getRemoved().forEach(EventNodeBase::clearHighlightEffect);
             }
         });
 
         selectedNodes.addListener((Observable observable) -> {
             highlightedNodes.clear();
             selectedNodes.stream().forEach((tn) -> {
-                for (EventBundleNodeBase<?, ?, ?> n : chart.getNodes((EventBundleNodeBase<?, ?, ?> t) ->
+                for (EventNodeBase<?> n : chart.getNodes((EventNodeBase<?> t) ->
                         t.getDescription().equals(tn.getDescription()))) {
                     highlightedNodes.add(n);
                 }
@@ -211,14 +213,14 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
         return Math.max(0, Math.min(vertScrollBar.getMax() + 50, value));
     }
 
-    public void setSelectionModel(MultipleSelectionModel<TreeItem<EventBundle<?>>> selectionModel) {
+    public void setSelectionModel(MultipleSelectionModel<TreeItem<Event>> selectionModel) {
         this.treeSelectionModel = selectionModel;
 
         treeSelectionModel.getSelectedItems().addListener((Observable observable) -> {
             highlightedNodes.clear();
-            for (TreeItem<EventBundle<?>> tn : treeSelectionModel.getSelectedItems()) {
+            for (TreeItem<Event> tn : treeSelectionModel.getSelectedItems()) {
 
-                for (EventBundleNodeBase<?, ?, ?> n : chart.getNodes((EventBundleNodeBase<?, ?, ?> t) ->
+                for (EventNodeBase<?> n : chart.getNodes((EventNodeBase<?> t) ->
                         t.getDescription().equals(tn.getValue().getDescription()))) {
                     highlightedNodes.add(n);
                 }
@@ -238,17 +240,17 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
 
     @Override
     protected Axis<DateTime> getXAxis() {
-        return dateAxis;
+        return detailsChartDateAxis;
     }
 
     @Override
     protected double getTickSpacing() {
-        return dateAxis.getTickSpacing().get();
+        return detailsChartDateAxis.getTickSpacing().get();
     }
 
     @Override
     protected String getTickMarkLabel(DateTime value) {
-        return dateAxis.getTickMarkLabel(value);
+        return detailsChartDateAxis.getTickMarkLabel(value);
     }
 
     @Override
@@ -262,7 +264,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
     }
 
     @Override
-    protected void applySelectionEffect(EventBundleNodeBase<?, ?, ?> c1, Boolean selected) {
+    protected void applySelectionEffect(EventNodeBase<?> c1, Boolean selected) {
         c1.applySelectionEffect(selected);
     }
 
@@ -380,11 +382,11 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
     }
 
     public Action newUnhideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
-        return chart.new UnhideDescriptionAction(description, descriptionLoD);
+        return new UnhideDescriptionAction(description, descriptionLoD, chart);
     }
 
     public Action newHideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
-        return chart.new HideDescriptionAction(description, descriptionLoD);
+        return new HideDescriptionAction(description, descriptionLoD, chart);
     }
 
     @NbBundle.Messages({
@@ -458,7 +460,8 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
 
         @Override
         protected void setDateAxisValues(Interval timeRange) {
-            dateAxis.setRange(timeRange, true);
+            detailsChartDateAxis.setRange(timeRange, true);
+            pinnedDateAxis.setRange(timeRange, true);
         }
     }
 }

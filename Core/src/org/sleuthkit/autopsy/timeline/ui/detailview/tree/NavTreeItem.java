@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
 import java.util.Comparator;
 import javafx.scene.control.TreeItem;
-import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
+import org.sleuthkit.autopsy.timeline.datamodel.Event;
 
 /**
  * A node in the nav tree. Manages inserts and resorts. Has parents and
@@ -28,12 +28,12 @@ import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
  * {@link EventTreeCell}. Each NavTreeItem has a EventBundle which has a type,
  * description , count, etc.
  */
-abstract class NavTreeItem extends TreeItem<EventBundle<?>> {
+abstract class NavTreeItem extends TreeItem<Event> {
 
     abstract long getCount();
 
-    abstract void resort(Comparator<TreeItem<EventBundle<?>>> comp, Boolean recursive);
+    abstract void resort(Comparator<TreeItem<Event>> comp, Boolean recursive);
 
-    abstract NavTreeItem findTreeItemForEvent(EventBundle<?> t);
+    abstract NavTreeItem findTreeItemForEvent(Event t);
 
 }

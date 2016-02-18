@@ -47,6 +47,7 @@ import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.ObservableSet;
 import javafx.concurrent.Task;
 import javafx.concurrent.Worker;
 import javax.annotation.concurrent.GuardedBy;
@@ -288,6 +289,21 @@ public class TimeLineController {
     public void zoomOutToActivity() {
         Interval boundingEventsInterval = filteredEvents.getBoundingEventsInterval();
         advance(filteredEvents.zoomParametersProperty().get().withTimeRange(boundingEventsInterval));
+    }
+
+    private final ObservableSet<Long> pinnedEventIDs = FXCollections.observableSet();
+    private final ObservableSet<Long> pinnedEventIDsUnmodifiable = FXCollections.unmodifiableObservableSet(pinnedEventIDs);
+
+    public void pinEvents(Collection<Long> eventIDs) {
+        pinnedEventIDs.addAll(eventIDs);
+    }
+
+    public void unPinEvents(Collection<Long> eventIDs) {
+        pinnedEventIDs.removeAll(eventIDs);
+    }
+
+    public ObservableSet<Long> getPinnedEventIDs() {
+        return pinnedEventIDsUnmodifiable;
     }
 
     /**

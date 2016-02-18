@@ -19,6 +19,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
+import com.google.common.collect.Iterables;
 import java.util.Arrays;
 import java.util.Collection;
 import javafx.event.EventHandler;
@@ -34,12 +35,13 @@ import org.controlsfx.control.action.ActionUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
-import static org.sleuthkit.autopsy.timeline.ui.detailview.EventBundleNodeBase.configureLoDButton;
+import org.sleuthkit.autopsy.timeline.ui.detailview.DetailsChart.HideDescriptionAction;
+import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.configureActionButton;
 
 /**
  * Node used in {@link EventDetailsChart} to represent an EventStripe.
  */
-final public class EventStripeNode extends EventBundleNodeBase<EventStripe, EventCluster, EventClusterNode> {
+final public class EventStripeNode extends MultiEventNodeBase<EventStripe, EventCluster, EventClusterNode> {
 
     private static final Logger LOGGER = Logger.getLogger(EventStripeNode.class.getName());
     private Button hideButton;
@@ -56,17 +58,16 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
     @Override
     void installActionButtons() {
         if (hideButton == null) {
-            hideButton = ActionUtils.createButton(chart.new HideDescriptionAction(getDescription(), eventBundle.getDescriptionLoD()),
+            hideButton = ActionUtils.createButton(new HideDescriptionAction(getDescription(), ievent.getDescriptionLoD(), chart),
                     ActionUtils.ActionTextBehavior.HIDE);
-            configureLoDButton(hideButton);
+            configureActionButton(hideButton);
 
             infoHBox.getChildren().add(hideButton);
         }
     }
 
-    public EventStripeNode(EventDetailsChart chart, EventStripe eventStripe, EventClusterNode parentNode) {
+    public EventStripeNode(DetailsChart chart, EventStripe eventStripe, EventClusterNode parentNode) {
         super(chart, eventStripe, parentNode);
-
         setMinHeight(48);
         //setup description label
         eventTypeImageView.setImage(getEventType().getFXImage());
@@ -83,8 +84,12 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
     }
 
     @Override
-    EventClusterNode createChildNode(EventCluster cluster) {
-        return new EventClusterNode(chart, cluster, this);
+    EventNodeBase<?> createChildNode(EventCluster cluster) {
+        if (cluster.getEventIDs().size() == 1) {
+            return new SingleEventNode(getChart(), getChart().getController().getEventsModel().getEventById(Iterables.getOnlyElement(cluster.getEventIDs())), this);
+        } else {
+            return new EventClusterNode(getChart(), cluster, this);
+        }
     }
 
     @Override
@@ -155,6 +160,6 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
 
     @Override
     Collection<? extends Action> getActions() {
-        return Arrays.asList(chart.new HideDescriptionAction(getDescription(), eventBundle.getDescriptionLoD()));
+        return Arrays.asList(new HideDescriptionAction(getDescription(), ievent.getDescriptionLoD(), chart));
     }
 }

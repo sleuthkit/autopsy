@@ -34,7 +34,7 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
  * description, and zoom levels, but not necessarily close together in time.
  */
 @Immutable
-public final class EventStripe implements EventBundle<EventCluster> {
+public final class EventStripe implements MultiEvent<EventCluster> {
 
     public static EventStripe merge(EventStripe u, EventStripe v) {
         Preconditions.checkNotNull(u);
@@ -193,4 +193,6 @@ public final class EventStripe implements EventBundle<EventCluster> {
     public String toString() {
         return "EventStripe{" + "description=" + description + ", eventIDs=" + eventIDs.size() + '}'; //NON-NLS
     }
+
+  
 }

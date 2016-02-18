@@ -23,7 +23,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -32,7 +31,6 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -40,17 +38,9 @@ import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
-import javafx.scene.control.Button;
-import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
-import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.Tooltip;
-import javafx.scene.effect.DropShadow;
-import javafx.scene.effect.Effect;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
@@ -61,22 +51,20 @@ import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
 import org.controlsfx.control.action.Action;
-import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
+import org.sleuthkit.autopsy.timeline.datamodel.MultiEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
-import static org.sleuthkit.autopsy.timeline.ui.detailview.EventBundleNodeBase.show;
+import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.show;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -85,36 +73,17 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  */
 @NbBundle.Messages({"EventBundleNodeBase.toolTip.loading=loading..."})
-public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentType>, ParentType extends EventBundle<BundleType>, ParentNodeType extends EventBundleNodeBase<ParentType, BundleType, ?>> extends StackPane {
+public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentType>, ParentType extends MultiEvent<BundleType>, ParentNodeType extends MultiEventNodeBase<
+        ParentType, BundleType, ?>> extends EventNodeBase<BundleType> {
 
-    private static final Logger LOGGER = Logger.getLogger(EventBundleNodeBase.class.getName());
-    private static final Image HASH_PIN = new Image("/org/sleuthkit/autopsy/images/hashset_hits.png"); //NOI18N NON-NLS
-    private static final Image TAG = new Image("/org/sleuthkit/autopsy/images/green-tag-icon-16.png"); // NON-NLS //NOI18N
+    private static final Logger LOGGER = Logger.getLogger(MultiEventNodeBase.class.getName());
+//    private static final Image HASH_PIN = new Image("/org/sleuthkit/autopsy/images/hashset_hits.png"); //NOI18N NON-NLS
+//    private static final Image TAG = new Image("/org/sleuthkit/autopsy/images/green-tag-icon-16.png"); // NON-NLS //NOI18N
 
     static final CornerRadii CORNER_RADII_3 = new CornerRadii(3);
     static final CornerRadii CORNER_RADII_1 = new CornerRadii(1);
 
     private final Border SELECTION_BORDER;
-    private static final Map<EventType, Effect> dropShadowMap = new ConcurrentHashMap<>();
-
-    static void configureLoDButton(Button b) {
-        b.setMinSize(16, 16);
-        b.setMaxSize(16, 16);
-        b.setPrefSize(16, 16);
-        show(b, false);
-    }
-
-    static void show(Node b, boolean show) {
-        b.setVisible(show);
-        b.setManaged(show);
-    }
-
-    protected final EventDetailsChart chart;
-    final SimpleObjectProperty<DescriptionLoD> descLOD = new SimpleObjectProperty<>();
-    final SimpleObjectProperty<DescriptionVisibility> descVisibility = new SimpleObjectProperty<>();
-    protected final BundleType eventBundle;
-
-    protected final ParentNodeType parentNode;
 
     final SleuthkitCase sleuthkitCase;
     final FilteredEventsModel eventsModel;
@@ -123,9 +92,9 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
     final Background defaultBackground;
     final Color evtColor;
 
-    final ObservableList<ParentNodeType> subNodes = FXCollections.observableArrayList();
+    final ObservableList<EventNodeBase<?>> subNodes = FXCollections.observableArrayList();
     final Pane subNodePane = new Pane();
-    final Label descrLabel = new Label();
+
     final Label countLabel = new Label();
 
     final ImageView hashIV = new ImageView(HASH_PIN);
@@ -135,10 +104,8 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
     private final Tooltip tooltip = new Tooltip(Bundle.EventBundleNodeBase_toolTip_loading());
     private Timeline timeline;
 
-    public EventBundleNodeBase(EventDetailsChart chart, BundleType eventBundle, ParentNodeType parentNode) {
-        this.eventBundle = eventBundle;
-        this.parentNode = parentNode;
-        this.chart = chart;
+    public MultiEventNodeBase(DetailsChart chart, BundleType eventBundle, ParentNodeType parentNode) {
+        super(eventBundle, parentNode, chart);
         this.descLOD.set(eventBundle.getDescriptionLoD());
         sleuthkitCase = chart.getController().getAutopsyCase().getSleuthkitCase();
         eventsModel = chart.getController().getEventsModel();
@@ -164,7 +131,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
          * This triggers the layout when a mousover causes the action buttons to
          * interesect with another node, forcing it down.
          */
-        heightProperty().addListener(heightProp -> chart.requestChartLayout());
+        heightProperty().addListener(heightProp -> chart.requestTimelineChartLayout());
         Platform.runLater(() ->
                 setLayoutX(chart.getXAxis().getDisplayPosition(new DateTime(eventBundle.getStartMillis())) - getLayoutXCompensation())
         );
@@ -178,7 +145,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         //set up mouse hover effect and tooltip
         setOnMouseEntered((MouseEvent e) -> {
 
-            Tooltip.uninstall(chart, AbstractVisualizationPane.getDefaultTooltip());
+            Tooltip.uninstall(chart.asNode(), AbstractVisualizationPane.getDefaultTooltip());
             showHoverControls(true);
             toFront();
         });
@@ -187,14 +154,21 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
             if (parentNode != null) {
                 parentNode.showHoverControls(true);
             } else {
-                Tooltip.install(chart, AbstractVisualizationPane.getDefaultTooltip());
+                Tooltip.install(chart.asNode(), AbstractVisualizationPane.getDefaultTooltip());
             }
         });
         setOnMouseClicked(new ClickHandler());
-        descVisibility.addListener(observable -> setDescriptionVisibiltiyImpl(descVisibility.get()));
-        descVisibility.set(DescriptionVisibility.SHOWN); //trigger listener for initial value
 
         Bindings.bindContent(subNodePane.getChildren(), subNodes);
+    }
+
+    @Override
+    void requestChartLayout() {
+        getChart().requestTimelineChartLayout();
+    }
+
+    public DetailsChart getChart() {
+        return chart;
     }
 
     final DescriptionLoD getDescriptionLoD() {
@@ -202,13 +176,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
     }
 
     public final BundleType getEventBundle() {
-        return eventBundle;
-    }
-
-    final double getLayoutXCompensation() {
-        return parentNode != null
-                ? chart.getXAxis().getDisplayPosition(new DateTime(parentNode.getStartMillis()))
-                : 0;
+        return ievent;
     }
 
     /**
@@ -234,7 +202,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         "# {0} - tag count string",
         "EventBundleNodeBase.toolTip.tags=\n\nTags\n{0}"})
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private void installTooltip() {
+    void installTooltip() {
         if (tooltip.getText().equalsIgnoreCase(Bundle.EventBundleNodeBase_toolTip_loading())) {
             final Task<String> tooltTipTask = new Task<String>() {
                 {
@@ -244,10 +212,10 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
                 @Override
                 protected String call() throws Exception {
                     HashMap<String, Long> hashSetCounts = new HashMap<>();
-                    if (eventBundle.getEventIDsWithHashHits().isEmpty() == false) {
+                    if (ievent.getEventIDsWithHashHits().isEmpty() == false) {
                         try {
                             //TODO:push this to DB
-                            for (TimeLineEvent tle : eventsModel.getEventsById(eventBundle.getEventIDsWithHashHits())) {
+                            for (SingleEvent tle : eventsModel.getEventsById(ievent.getEventIDsWithHashHits())) {
                                 Set<String> hashSetNames = sleuthkitCase.getAbstractFileById(tle.getFileID()).getHashSetNames();
                                 for (String hashSetName : hashSetNames) {
                                     hashSetCounts.merge(hashSetName, 1L, Long::sum);
@@ -262,8 +230,8 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
                             .collect(Collectors.joining("\n"));
 
                     Map<String, Long> tagCounts = new HashMap<>();
-                    if (eventBundle.getEventIDsWithTags().isEmpty() == false) {
-                        tagCounts.putAll(eventsModel.getTagCountsByTagName(eventBundle.getEventIDsWithTags()));
+                    if (ievent.getEventIDsWithTags().isEmpty() == false) {
+                        tagCounts.putAll(eventsModel.getTagCountsByTagName(ievent.getEventIDsWithTags()));
                     }
                     String tagCountsString = tagCounts.entrySet().stream()
                             .map((Map.Entry<String, Long> t) -> t.getKey() + " : " + t.getValue())
@@ -309,21 +277,8 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
     abstract void applyHighlightEffect(boolean applied);
 
     @SuppressWarnings("unchecked")
-    public List<ParentNodeType> getSubNodes() {
+    public List<EventNodeBase<?>> getSubNodes() {
         return subNodes;
-    }
-
-    abstract void setDescriptionVisibiltiyImpl(DescriptionVisibility get);
-
-    void showHoverControls(final boolean showControls) {
-        Effect dropShadow = dropShadowMap.computeIfAbsent(getEventType(),
-                eventType -> new DropShadow(-10, eventType.getColor()));
-        setEffect(showControls ? dropShadow : null);
-        installTooltip();
-        enableTooltip(showControls);
-        if (parentNode != null) {
-            parentNode.showHoverControls(false);
-        }
     }
 
     final EventType getEventType() {
@@ -357,77 +312,28 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         super.layoutChildren();
     }
 
-    abstract ParentNodeType createChildNode(ParentType rawChild);
+    abstract EventNodeBase<?> createChildNode(ParentType rawChild);
 
     /**
      * @param w the maximum width the description label should have
      */
     abstract void setMaxDescriptionWidth(double w);
 
-    void setDescriptionVisibility(DescriptionVisibility get) {
-        descVisibility.set(get);
-    }
-
-    void enableTooltip(boolean toolTipEnabled) {
-        if (toolTipEnabled) {
-            Tooltip.install(this, tooltip);
-        } else {
-            Tooltip.uninstall(this, tooltip);
-        }
-    }
-
     void animateTo(double xLeft, double yTop) {
         if (timeline != null) {
             timeline.stop();
-            Platform.runLater(chart::requestChartLayout);
+            Platform.runLater(chart::requestTimelineChartLayout);
         }
         timeline = new Timeline(new KeyFrame(Duration.millis(100),
                 new KeyValue(layoutXProperty(), xLeft),
                 new KeyValue(layoutYProperty(), yTop))
         );
-        timeline.setOnFinished(finished -> Platform.runLater(chart::requestChartLayout));
+        timeline.setOnFinished(finished -> Platform.runLater(chart::requestTimelineChartLayout));
         timeline.play();
     }
 
     abstract EventHandler<MouseEvent> getDoubleClickHandler();
 
     abstract Collection<? extends Action> getActions();
-
-    /**
-     * event handler used for mouse events on {@link EventStripeNode}s
-     */
-    private class ClickHandler implements EventHandler<MouseEvent> {
-
-        private ContextMenu contextMenu;
-
-        @Override
-        public void handle(MouseEvent t) {
-            if (t.getButton() == MouseButton.PRIMARY) {
-                if (t.getClickCount() > 1) {
-                    getDoubleClickHandler().handle(t);
-                } else if (t.isShiftDown()) {
-                    chart.selectedNodes.add(EventBundleNodeBase.this);
-                } else if (t.isShortcutDown()) {
-                    chart.selectedNodes.removeAll(EventBundleNodeBase.this);
-                } else {
-                    chart.selectedNodes.setAll(EventBundleNodeBase.this);
-                }
-                t.consume();
-            } else if (t.getButton() == MouseButton.SECONDARY) {
-                ContextMenu chartContextMenu = chart.getChartContextMenu(t);
-                if (contextMenu == null) {
-                    contextMenu = new ContextMenu();
-                    contextMenu.setAutoHide(true);
-
-                    contextMenu.getItems().addAll(ActionUtils.createContextMenu(getActions()).getItems());
-
-                    contextMenu.getItems().add(new SeparatorMenuItem());
-                    contextMenu.getItems().addAll(chartContextMenu.getItems());
-                }
-                contextMenu.show(EventBundleNodeBase.this, t.getScreenX(), t.getScreenY());
-                t.consume();
-            }
-        }
-    }
 
 }

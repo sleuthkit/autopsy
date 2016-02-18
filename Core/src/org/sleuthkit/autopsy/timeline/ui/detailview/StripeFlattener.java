@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.timeline.ui.detailview;
 
 import java.util.function.Function;
 import java.util.stream.Stream;
-import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
+import org.sleuthkit.autopsy.timeline.datamodel.Event;
 
 /**
  * Use this recursive function to flatten a tree of nodes into an single stream.
@@ -28,12 +28,12 @@ import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
  * EventStripes containing the stripes for the given node and all child
  * eventStripes, ignoring intervening EventCluster nodes.
  */
-class StripeFlattener implements Function<EventStripeNode, Stream<EventStripe>> {
+class StripeFlattener implements Function<EventNodeBase<?>, Stream<Event>> {
 
     @Override
-    public Stream<EventStripe> apply(EventStripeNode node) {
+    public Stream<Event> apply(EventNodeBase<?> node) {
         return Stream.concat(
-                Stream.of(node.getEventStripe()),
+                Stream.of(node.getEvent()),
                 node.getSubNodes().stream().flatMap(clusterNode ->
                         clusterNode.getSubNodes().stream().flatMap(this)));
     }

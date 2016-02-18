@@ -48,7 +48,8 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
+import org.sleuthkit.autopsy.timeline.datamodel.MultiEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.Event;
 import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
 import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
@@ -66,7 +67,7 @@ final public class EventsTree extends BorderPane {
     private DetailViewPane detailViewPane;
 
     @FXML
-    private TreeView<EventBundle<?>> eventsTree;
+    private TreeView<Event> eventsTree;
 
     @FXML
     private Label eventsTreeLabel;
@@ -84,13 +85,13 @@ final public class EventsTree extends BorderPane {
         this.detailViewPane = detailViewPane;
         detailViewPane.setSelectionModel(eventsTree.getSelectionModel());
 
-        detailViewPane.getEventStripes().addListener((ListChangeListener.Change<? extends EventBundle<?>> c) -> {
+        detailViewPane.getEventStripes().addListener((ListChangeListener.Change<? extends MultiEvent<?>> c) -> {
             //on jfx thread
             while (c.next()) {
-                for (EventBundle<?> bundle : c.getAddedSubList()) {
+                for (MultiEvent<?> bundle : c.getAddedSubList()) {
                     getRoot().insert(bundle);
                 }
-                for (EventBundle<?> bundle : c.getRemoved()) {
+                for (MultiEvent<?> bundle : c.getRemoved()) {
                     getRoot().remove(bundle);
                 }
             }
@@ -101,7 +102,7 @@ final public class EventsTree extends BorderPane {
         detailViewPane.getSelectedNodes().addListener((Observable observable) -> {
             eventsTree.getSelectionModel().clearSelection();
             detailViewPane.getSelectedNodes().forEach(eventBundleNode -> {
-                eventsTree.getSelectionModel().select(getRoot().findTreeItemForEvent(eventBundleNode.getEventBundle()));
+                eventsTree.getSelectionModel().select(getRoot().findTreeItemForEvent(eventBundleNode.getEvent()));
             });
         });
 
@@ -114,7 +115,7 @@ final public class EventsTree extends BorderPane {
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void setRoot() {
         RootItem root = new RootItem(TreeComparator.Type.reversed().thenComparing(sortByBox.getSelectionModel().getSelectedItem()));
-        for (EventBundle<?> bundle : detailViewPane.getEventStripes()) {
+        for (MultiEvent<?> bundle : detailViewPane.getEventStripes()) {
             root.insert(bundle);
         }
         eventsTree.setRoot(root);
@@ -142,10 +143,10 @@ final public class EventsTree extends BorderPane {
     }
 
     /**
-     * A tree cell to display {@link EventBundle}s. Shows the description, and
+     * A tree cell to display {@link MultiEvent}s. Shows the description, and
      * count, as well a a "legend icon" for the event type.
      */
-    private class EventBundleTreeCell extends TreeCell<EventBundle<?>> {
+    private class EventBundleTreeCell extends TreeCell<Event> {
 
         private static final double HIDDEN_MULTIPLIER = .6;
         private final Rectangle rect = new Rectangle(24, 24);
@@ -160,7 +161,7 @@ final public class EventsTree extends BorderPane {
         }
 
         @Override
-        protected void updateItem(EventBundle<?> item, boolean empty) {
+        protected void updateItem(Event item, boolean empty) {
             super.updateItem(item, empty);
             if (item == null || empty) {
                 setText(null);
@@ -185,7 +186,7 @@ final public class EventsTree extends BorderPane {
                 } else {
                     setDisable(false);
                     text = item.getDescription() + " (" + item.getCount() + ")"; // NON-NLS
-                    TreeItem<EventBundle<?>> parent = getTreeItem().getParent();
+                    TreeItem<Event> parent = getTreeItem().getParent();
                     if (parent != null && parent.getValue() != null && (parent instanceof EventDescriptionTreeItem)) {
                         text = StringUtils.substringAfter(text, parent.getValue().getDescription());
                     }
@@ -213,7 +214,7 @@ final public class EventsTree extends BorderPane {
             }
         }
 
-        private void registerListeners(Collection<? extends DescriptionFilter> filters, EventBundle<?> item) {
+        private void registerListeners(Collection<? extends DescriptionFilter> filters, Event item) {
             for (DescriptionFilter filter : filters) {
                 if (filter.getDescription().equals(item.getDescription())) {
                     filter.activeProperty().addListener(filterStateChangeListener);
@@ -229,8 +230,8 @@ final public class EventsTree extends BorderPane {
             }
         }
 
-        private void updateHiddenState(EventBundle<?> item) {
-            TreeItem<EventBundle<?>> treeItem = getTreeItem();
+        private void updateHiddenState(Event item) {
+            TreeItem<Event> treeItem = getTreeItem();
 
             hidden.set(controller.getQuickHideFilters().stream().
                     filter(AbstractFilter::isActive)

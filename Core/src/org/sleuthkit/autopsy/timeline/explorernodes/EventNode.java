@@ -37,30 +37,30 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * * Explorer Node for {@link TimeLineEvent}s.
+ * * Explorer Node for {@link SingleEvent}s.
  */
 class EventNode extends DisplayableItemNode {
 
     private static final Logger LOGGER = Logger.getLogger(EventNode.class.getName());
 
-    private final TimeLineEvent e;
+    private final SingleEvent e;
 
-    EventNode(TimeLineEvent eventById, AbstractFile file, BlackboardArtifact artifact) {
+    EventNode(SingleEvent eventById, AbstractFile file, BlackboardArtifact artifact) {
         super(Children.LEAF, Lookups.fixed(eventById, file, artifact));
         this.e = eventById;
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/timeline/images/" + e.getType().getIconBase()); // NON-NLS
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/timeline/images/" + e.getEventType().getIconBase()); // NON-NLS
     }
 
-    EventNode(TimeLineEvent eventById, AbstractFile file) {
+    EventNode(SingleEvent eventById, AbstractFile file) {
         super(Children.LEAF, Lookups.fixed(eventById, file));
         this.e = eventById;
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/timeline/images/" + e.getType().getIconBase()); // NON-NLS
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/timeline/images/" + e.getEventType().getIconBase()); // NON-NLS
     }
 
     @Override
@@ -85,15 +85,15 @@ class EventNode extends DisplayableItemNode {
         properties.put(new NodeProperty<>("icon", "Icon", "icon", true)); // NON-NLS //gets overridden with icon
         properties.put(timePropery);
         properties.put(new NodeProperty<>("description", "Description", "description", e.getFullDescription())); // NON-NLS
-        properties.put(new NodeProperty<>("eventBaseType", "Base Type", "base type", e.getType().getSuperType().getDisplayName())); // NON-NLS
-        properties.put(new NodeProperty<>("eventSubType", "Sub Type", "sub type", e.getType().getDisplayName())); // NON-NLS
+        properties.put(new NodeProperty<>("eventBaseType", "Base Type", "base type", e.getEventType().getSuperType().getDisplayName())); // NON-NLS
+        properties.put(new NodeProperty<>("eventSubType", "Sub Type", "sub type", e.getEventType().getDisplayName())); // NON-NLS
         properties.put(new NodeProperty<>("Known", "Known", "known", e.getKnown().toString())); // NON-NLS
 
         return s;
     }
 
     private String getDateTimeString() {
-        return new DateTime(e.getTime() * 1000, DateTimeZone.UTC).toString(TimeLineController.getZonedFormatter());
+        return new DateTime(e.getStartMillis(), DateTimeZone.UTC).toString(TimeLineController.getZonedFormatter());
     }
 
     @Override

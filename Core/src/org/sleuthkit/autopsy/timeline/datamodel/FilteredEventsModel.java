@@ -232,11 +232,11 @@ public final class FilteredEventsModel {
         return repo.getBoundingEventsInterval(zoomParametersProperty().get().getTimeRange(), zoomParametersProperty().get().getFilter());
     }
 
-    public TimeLineEvent getEventById(Long eventID) {
+    public SingleEvent getEventById(Long eventID) {
         return repo.getEventById(eventID);
     }
 
-    public Set<TimeLineEvent> getEventsById(Collection<Long> eventIDs) {
+    public Set<SingleEvent> getEventsById(Collection<Long> eventIDs) {
         return repo.getEventsById(eventIDs);
     }
 

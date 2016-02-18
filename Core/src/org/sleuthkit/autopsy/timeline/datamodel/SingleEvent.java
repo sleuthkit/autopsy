@@ -19,8 +19,14 @@
 package org.sleuthkit.autopsy.timeline.datamodel;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedSet;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Set;
+import java.util.SortedSet;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
+import org.joda.time.Interval;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import org.sleuthkit.datamodel.TskData;
@@ -29,7 +35,7 @@ import org.sleuthkit.datamodel.TskData;
  * A single event.
  */
 @Immutable
-public class TimeLineEvent {
+public class SingleEvent implements Event {
 
     private final long eventID;
     private final long fileID;
@@ -44,7 +50,7 @@ public class TimeLineEvent {
     private final boolean hashHit;
     private final boolean tagged;
 
-    public TimeLineEvent(long eventID, long dataSourceID, long objID, @Nullable Long artifactID, long time, EventType type, String fullDescription, String medDescription, String shortDescription, TskData.FileKnown known, boolean hashHit, boolean tagged) {
+    public SingleEvent(long eventID, long dataSourceID, long objID, @Nullable Long artifactID, long time, EventType type, String fullDescription, String medDescription, String shortDescription, TskData.FileKnown known, boolean hashHit, boolean tagged) {
         this.eventID = eventID;
         this.fileID = objID;
         this.artifactID = artifactID == 0 ? null : artifactID;
@@ -88,7 +94,7 @@ public class TimeLineEvent {
         return time;
     }
 
-    public EventType getType() {
+    public EventType getEventType() {
         return subType;
     }
 
@@ -114,5 +120,68 @@ public class TimeLineEvent {
 
     public long getDataSourceID() {
         return dataSourceID;
+    }
+
+    @Override
+    public Set<Long> getEventIDs() {
+        return Collections.singleton(eventID);
+    }
+
+    @Override
+    public Set<Long> getEventIDsWithHashHits() {
+        return isHashHit() ? Collections.singleton(eventID) : Collections.emptySet();
+    }
+
+    @Override
+    public Set<Long> getEventIDsWithTags() {
+        return isTagged() ? Collections.singleton(eventID) : Collections.emptySet();
+    }
+
+    @Override
+    public long getEndMillis() {
+        return time * 1000;
+    }
+
+    @Override
+    public long getStartMillis() {
+        return time * 1000;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 13 * hash + (int) (this.eventID ^ (this.eventID >>> 32));
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final SingleEvent other = (SingleEvent) obj;
+        if (this.eventID != other.eventID) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public SortedSet<EventCluster> getClusters() {
+        EventCluster eventCluster = new EventCluster(new Interval(time * 1000, time * 1000), subType, getEventIDs(), getEventIDsWithHashHits(), getEventIDsWithTags(), getFullDescription(), DescriptionLoD.FULL);
+        return ImmutableSortedSet.orderedBy(Comparator.comparing(EventCluster::getStartMillis)).add(eventCluster).build();
+    }
+
+    @Override
+    public String getDescription() {
+        return getFullDescription();
+    }
+
+    @Override
+    public DescriptionLoD getDescriptionLoD() {
+        return DescriptionLoD.FULL;
     }
 }

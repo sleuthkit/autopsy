@@ -114,7 +114,9 @@ final class DateAxis extends Axis<DateTime> {
      * by the data.
      */
     DateAxis() {
+        setTickLabelGap(0);
         setAutoRanging(false);
+        setTickLabelsVisible(false);
     }
 
     @Override
