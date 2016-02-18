@@ -28,7 +28,6 @@ import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Menu;
 import javax.swing.SwingWorker;
-
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -85,12 +84,12 @@ public class AddDrawableTagAction extends AddTagAction {
             protected Void doInBackground() throws Exception {
                 for (Long fileID : selectedFiles) {
                     try {
-                        final DrawableFile<?> file = controller.getFileFromId(fileID);
+                        final DrawableFile file = controller.getFileFromId(fileID);
                         LOGGER.log(Level.INFO, "tagging {0} with {1} and comment {2}", new Object[]{file.getName(), tagName.getDisplayName(), comment}); //NON-NLS
 
                         // check if the same tag is being added for the same abstract file.
                         DrawableTagsManager tagsManager = controller.getTagsManager();
-                        List<ContentTag> contentTags = tagsManager.getContentTagsByContent(file);
+                        List<ContentTag> contentTags = tagsManager.getContentTags(file);
                         Optional<TagName> duplicateTagName = contentTags.stream()
                                 .map(ContentTag::getName)
                                 .filter(tagName::equals)
