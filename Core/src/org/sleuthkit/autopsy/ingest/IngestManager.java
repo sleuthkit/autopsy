@@ -329,7 +329,7 @@ public class IngestManager {
             public void propertyChange(PropertyChangeEvent evt) {
                 if (evt.getNewValue().equals(ServicesMonitor.ServiceStatus.DOWN.toString())) {
 
-                    // check whether a milti-user case is currently being processed
+                    // check whether a multi-user case is currently being processed
                     try {
                         if (!Case.isCaseOpen() || Case.getCurrentCase().getCaseType() != Case.CaseType.MULTI_USER_CASE) {
                             return;
