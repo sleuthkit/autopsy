@@ -66,7 +66,7 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
 
     private final ImageGalleryController controller;
 
-    private Optional<DrawableFile<?>> fileOpt = Optional.empty();
+    private Optional<DrawableFile> fileOpt = Optional.empty();
 
     private Optional<Long> fileIDOpt = Optional.empty();
     private volatile Task<Image> imageTask;
@@ -89,12 +89,12 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
         this.fileIDOpt = fileIDOpt;
     }
 
-    synchronized void setFileOpt(Optional<DrawableFile<?>> fileOpt) {
+    synchronized void setFileOpt(Optional<DrawableFile> fileOpt) {
         this.fileOpt = fileOpt;
     }
 
     @Override
-    synchronized public Optional<DrawableFile<?>> getFile() {
+    synchronized public Optional<DrawableFile> getFile() {
         if (fileIDOpt.isPresent()) {
             if (fileOpt.isPresent() && fileOpt.get().getId() == fileIDOpt.get()) {
                 return fileOpt;
@@ -131,7 +131,7 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
         }
     }
 
-    synchronized Node doReadImageTask(DrawableFile<?> file) {
+    synchronized Node doReadImageTask(DrawableFile file) {
         Task<Image> myTask = newReadImageTask(file);
         imageTask = myTask;
         Node progressNode = newProgressIndicator(myTask);
@@ -191,7 +191,7 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private void showImage(DrawableFile<?> file, Task<Image> imageTask) {
+    private void showImage(DrawableFile file, Task<Image> imageTask) {
         //Note that all error conditions are allready logged in readImageTask.succeeded()
         try {
             Image fxImage = imageTask.get();
@@ -210,7 +210,7 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    void showErrorNode(String errorMessage, DrawableFile<?> file) {
+    void showErrorNode(String errorMessage, DrawableFile file) {
         Button createButton = ActionUtils.createButton(new OpenExternalViewerAction(file));
 
         VBox vBox = new VBox(10, new Label(errorMessage), createButton);
@@ -218,5 +218,5 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
         imageBorder.setCenter(vBox);
     }
 
-    abstract Task<Image> newReadImageTask(DrawableFile<?> file);
+    abstract Task<Image> newReadImageTask(DrawableFile file);
 }

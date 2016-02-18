@@ -306,7 +306,7 @@ public class GroupPane extends BorderPane {
 
     }
 
-    void syncCatToggle(DrawableFile<?> file) {
+    void syncCatToggle(DrawableFile file) {
         getToggleForCategory(file.getCategory()).setSelected(true);
     }
 
