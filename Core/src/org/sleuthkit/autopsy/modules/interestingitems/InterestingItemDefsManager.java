@@ -313,7 +313,7 @@ final class InterestingItemDefsManager extends Observable {
             }
 
             // Read in the type filter.
-            FilesSet.Rule.MetaTypeFilter metaTypeFilter = FilesSetXML.readMetaTypeFilter(elem);
+            FilesSet.Rule.MetaTypeCondition metaTypeFilter = FilesSetXML.readMetaTypeFilter(elem);
             if (metaTypeFilter == null) {
                 // Malformed attribute.
                 return null;
@@ -331,7 +331,7 @@ final class InterestingItemDefsManager extends Observable {
                 }
             }
 
-            return new FilesSet.Rule(ruleName, nameFilter, metaTypeFilter, pathFilter);
+            return new FilesSet.Rule(ruleName, nameFilter, metaTypeFilter, pathFilter, null, null);
         }
 
         /**
@@ -372,7 +372,7 @@ final class InterestingItemDefsManager extends Observable {
 
             // The rule must have a meta-type filter, unless a TSK Framework
             // definitions file is being read.
-            FilesSet.Rule.MetaTypeFilter metaTypeFilter = null;
+            FilesSet.Rule.MetaTypeCondition metaTypeFilter = null;
             if (!elem.getAttribute(FilesSetXML.TYPE_FILTER_ATTR).isEmpty()) {
                 metaTypeFilter = FilesSetXML.readMetaTypeFilter(elem);
                 if (metaTypeFilter == null) {
@@ -380,7 +380,7 @@ final class InterestingItemDefsManager extends Observable {
                     return null;
                 }
             } else {
-                metaTypeFilter = new FilesSet.Rule.MetaTypeFilter(FilesSet.Rule.MetaTypeFilter.Type.FILES);
+                metaTypeFilter = new FilesSet.Rule.MetaTypeCondition(FilesSet.Rule.MetaTypeCondition.Type.FILES);
             }
 
             // The rule may have a path filter. Null is o.k., but if the attribute
@@ -395,7 +395,7 @@ final class InterestingItemDefsManager extends Observable {
                 }
             }
 
-            return new FilesSet.Rule(ruleName, extFilter, metaTypeFilter, pathFilter);
+            return new FilesSet.Rule(ruleName, extFilter, metaTypeFilter, pathFilter, null, null);
         }
 
         /**
@@ -435,19 +435,19 @@ final class InterestingItemDefsManager extends Observable {
          *
          * @return The meta-type filter, or null if there is an error (logged).
          */
-        private static FilesSet.Rule.MetaTypeFilter readMetaTypeFilter(Element ruleElement) {
-            FilesSet.Rule.MetaTypeFilter filter = null;
+        private static FilesSet.Rule.MetaTypeCondition readMetaTypeFilter(Element ruleElement) {
+            FilesSet.Rule.MetaTypeCondition filter = null;
             String filterAttribute = ruleElement.getAttribute(FilesSetXML.TYPE_FILTER_ATTR);
             if (!filterAttribute.isEmpty()) {
                 switch (filterAttribute) {
                     case FilesSetXML.TYPE_FILTER_VALUE_FILES:
-                        filter = new FilesSet.Rule.MetaTypeFilter(FilesSet.Rule.MetaTypeFilter.Type.FILES);
+                        filter = new FilesSet.Rule.MetaTypeCondition(FilesSet.Rule.MetaTypeCondition.Type.FILES);
                         break;
                     case FilesSetXML.TYPE_FILTER_VALUE_DIRS:
-                        filter = new FilesSet.Rule.MetaTypeFilter(FilesSet.Rule.MetaTypeFilter.Type.DIRECTORIES);
+                        filter = new FilesSet.Rule.MetaTypeCondition(FilesSet.Rule.MetaTypeCondition.Type.DIRECTORIES);
                         break;
                     case FilesSetXML.TYPE_FILTER_VALUE_FILES_AND_DIRS:
-                        filter = new FilesSet.Rule.MetaTypeFilter(FilesSet.Rule.MetaTypeFilter.Type.FILES_AND_DIRECTORIES);
+                        filter = new FilesSet.Rule.MetaTypeCondition(FilesSet.Rule.MetaTypeCondition.Type.FILES_AND_DIRECTORIES);
                         break;
                     default:
                         logger.log(Level.SEVERE, "Found {0} " + FilesSetXML.TYPE_FILTER_ATTR + " attribute with unrecognized value ''{0}'', ignoring malformed rule definition", filterAttribute); // NON-NLS
@@ -456,7 +456,7 @@ final class InterestingItemDefsManager extends Observable {
             } else {
                 // Accept TSK Framework interesting files set definitions, 
                 // default to files.
-                filter = new FilesSet.Rule.MetaTypeFilter(FilesSet.Rule.MetaTypeFilter.Type.FILES);
+                filter = new FilesSet.Rule.MetaTypeCondition(FilesSet.Rule.MetaTypeCondition.Type.FILES);
             }
             return filter;
         }
@@ -534,7 +534,7 @@ final class InterestingItemDefsManager extends Observable {
                         ruleElement.setAttribute(FilesSetXML.REGEX_ATTR, Boolean.toString(nameFilter.isRegex()));
 
                         // Add the type filter attribute.
-                        FilesSet.Rule.MetaTypeFilter typeFilter = rule.getMetaTypeFilter();
+                        FilesSet.Rule.MetaTypeCondition typeFilter = rule.getMetaTypeFilter();
                         switch (typeFilter.getMetaType()) {
                             case FILES:
                                 ruleElement.setAttribute(FilesSetXML.TYPE_FILTER_ATTR, FilesSetXML.TYPE_FILTER_VALUE_FILES);
