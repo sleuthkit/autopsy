@@ -213,7 +213,7 @@ public class DrawableTagsManager {
                 } catch (TagsManager.TagNameAlreadyExistsException ex) {
                     throw new TskCoreException("tagame exists but wasn't found", ex);
                 }
-            } catch (IllegalStateException ex) {
+            } catch (NullPointerException | IllegalStateException ex) {
                 LOGGER.log(Level.SEVERE, "Case was closed out from underneath", ex); //NON-NLS
                 throw new TskCoreException("Case was closed out from underneath", ex);
             }

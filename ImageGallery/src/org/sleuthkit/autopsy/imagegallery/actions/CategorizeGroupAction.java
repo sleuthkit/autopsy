@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.imagegallery.actions;
 
-import java.util.HashSet;
+import com.google.common.collect.ImmutableSet;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 
@@ -28,6 +28,10 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 public class CategorizeGroupAction extends CategorizeAction {
 
     public CategorizeGroupAction(Category cat, ImageGalleryController controller) {
-        super(controller, cat, new HashSet<>(controller.viewState().get().getGroup().getFileIDs()));
+        super(controller, cat, null);
+        setEventHandler(actionEvent ->
+                new CategorizeAction(controller, cat, ImmutableSet.copyOf(controller.viewState().get().getGroup().getFileIDs()))
+                .handle(actionEvent)
+        );
     }
 }

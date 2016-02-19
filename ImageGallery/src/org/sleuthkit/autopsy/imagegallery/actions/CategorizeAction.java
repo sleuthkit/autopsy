@@ -112,7 +112,7 @@ public class CategorizeAction extends Action {
     @NbBundle.Messages({"# {0} - fileID number",
         "CategorizeTask.errorUnable.msg=Unable to categorize {0}.",
         "CategorizeTask.errorUnable.title=Categorizing Error"})
-    private class CategorizeTask extends ImageGalleryController.InnerTask {
+    private class CategorizeTask extends ImageGalleryController.BackgroundTask {
 
         private final Set<Long> fileIDs;
 
