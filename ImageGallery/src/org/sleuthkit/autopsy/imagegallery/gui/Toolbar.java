@@ -36,7 +36,6 @@ import javafx.scene.control.Slider;
 import javafx.scene.control.SplitMenuButton;
 import javafx.scene.control.ToolBar;
 import javax.swing.SortOrder;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
@@ -73,8 +72,6 @@ public class Toolbar extends ToolBar {
 
     @FXML
     private Label groupByLabel;
-
-  
 
     @FXML
     private Label tagImageViewLabel;
@@ -115,12 +112,12 @@ public class Toolbar extends ToolBar {
 
     @FXML
     @NbBundle.Messages({"Toolbar.groupByLabel=Group By:",
-            "Toolbar.sortByLabel=Sort By:",
-            "Toolbar.ascRadio=Ascending",
-            "Toolbar.descRadio=Descending",
-            "Toolbar.tagImageViewLabel=Tag Group's Files:",
-            "Toolbar.categoryImageViewLabel=Categorize Group's Files:",
-            "Toolbar.thumbnailSizeLabel=Thumbnail Size (px):"})
+        "Toolbar.sortByLabel=Sort By:",
+        "Toolbar.ascRadio=Ascending",
+        "Toolbar.descRadio=Descending",
+        "Toolbar.tagImageViewLabel=Tag Group's Files:",
+        "Toolbar.categoryImageViewLabel=Categorize Group's Files:",
+        "Toolbar.thumbnailSizeLabel=Thumbnail Size (px):"})
     void initialize() {
         assert catGroupMenuButton != null : "fx:id=\"catSelectedMenubutton\" was not injected: check your FXML file 'Toolbar.fxml'.";
         assert groupByBox != null : "fx:id=\"groupByBox\" was not injected: check your FXML file 'Toolbar.fxml'.";
@@ -148,11 +145,6 @@ public class Toolbar extends ToolBar {
             }
         });
 
-        groupByLabel.setText(Bundle.Toolbar_groupByLabel());
-        tagImageViewLabel.setText(Bundle.Toolbar_tagImageViewLabel());
-        categoryImageViewLabel.setText(Bundle.Toolbar_categoryImageViewLabel());
-        thumbnailSizeLabel.setText(Bundle.Toolbar_thumbnailSizeLabel());
-
         CategorizeGroupAction cat5GroupAction = new CategorizeGroupAction(Category.FIVE, controller);
         catGroupMenuButton.setOnAction(cat5GroupAction);
         catGroupMenuButton.setText(cat5GroupAction.getText());
@@ -164,6 +156,12 @@ public class Toolbar extends ToolBar {
                 catGroupMenuButton.getItems().setAll(categoryMenues);
             }
         });
+    
+
+        groupByLabel.setText(Bundle.Toolbar_groupByLabel());
+        tagImageViewLabel.setText(Bundle.Toolbar_tagImageViewLabel());
+        categoryImageViewLabel.setText(Bundle.Toolbar_categoryImageViewLabel());
+        thumbnailSizeLabel.setText(Bundle.Toolbar_thumbnailSizeLabel());
 
         groupByBox.setItems(FXCollections.observableList(DrawableAttribute.getGroupableAttrs()));
         groupByBox.getSelectionModel().select(DrawableAttribute.PATH);
@@ -181,8 +179,6 @@ public class Toolbar extends ToolBar {
             sortChooser.setValueType(valueType);
             queryInvalidationListener.invalidated(observable);
         });
-
-     
 
         sortChooser.sortOrderProperty().addListener(queryInvalidationListener);
         sortChooser.setComparator(GroupSortBy.PRIORITY);
@@ -202,8 +198,6 @@ public class Toolbar extends ToolBar {
     public void reset() {
         Platform.runLater(() -> {
             groupByBox.getSelectionModel().select(DrawableAttribute.PATH);
-//            sortByBox.getSelectionModel().select(GroupSortBy.NONE);
-//            orderGroup.selectToggle(ascRadio);
             sizeSlider.setValue(SIZE_SLIDER_DEFAULT);
         });
     }
