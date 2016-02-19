@@ -30,6 +30,7 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import javax.swing.DefaultListModel;
+import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -43,22 +44,24 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MimeTypes;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
-
 /**
  * A panel that allows a user to make interesting item definitions.
  */
 final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
+
     @NbBundle.Messages({
-         "InterestingItemDefsPanel.bytes=Bytes",
-         "InterestingItemDefsPanel.kiloBytes=Kilobytes",
-         "InterestingItemDefsPanel.megaBytes=Megabytes",
-         "InterestingItemDefsPanel.gigaBytes=Gigabytes"
-     })
+        "InterestingItemDefsPanel.bytes=Bytes",
+        "InterestingItemDefsPanel.kiloBytes=Kilobytes",
+        "InterestingItemDefsPanel.megaBytes=Megabytes",
+        "InterestingItemDefsPanel.gigaBytes=Gigabytes"
+    })
 
     private static final SortedSet<MediaType> mediaTypes = MimeTypes.getDefaultMimeTypes().getMediaTypeRegistry().getTypes();
     private final DefaultListModel<FilesSet> setsListModel = new DefaultListModel<>();
     private final DefaultListModel<FilesSet.Rule> rulesListModel = new DefaultListModel<>();
     private final Logger logger = Logger.getLogger(InterestingItemDefsPanel.class.getName());
+    private JButton okButton = new JButton("OK");
+    private JButton cancelButton = new JButton("Cancel");
 
     // The following is a map of interesting files set names to interesting 
     // files set definitions. It is a snapshot of the files set definitions 
@@ -80,7 +83,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         this.rulesList.setModel(rulesListModel);
         this.rulesList.addListSelectionListener(new InterestingItemDefsPanel.RulesListSelectionListener());
     }
-    
+
     private void customInit() {
         Set<String> fileTypesCollated = new HashSet<>();
         for (MediaType mediaType : mediaTypes) {
@@ -290,8 +293,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
      * respond to user interactions with the dialog.
      *
      * @param selectedSet The currently selected files set, may be null to
-     *                    indicate a new interesting files set definition is to
-     *                    be created.
+     * indicate a new interesting files set definition is to be created.
      */
     private void doFileSetsDialog(FilesSet selectedSet) {
         // Create a files set defintion panle.
@@ -338,7 +340,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
      * dialog box and respond to user interactions with the dialog.
      *
      * @param selectedRule The currently selected rule, may be null to indicate
-     *                     a new rule definition is to be created.
+     * a new rule definition is to be created.
      */
     private void doFilesSetRuleDialog(FilesSet.Rule selectedRule) {
         // Create a files set rule panel.
@@ -350,13 +352,13 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             // Creating a new rule definition.
             panel = new FilesSetRulePanel();
         }
-
+        panel.setButtons(okButton, cancelButton);
         // Do a dialog box with the files set panel until the user either enters 
         // a valid definition or cancels. Note that the panel gives the user
         // feedback when isValidDefinition() is called.
         int option = JOptionPane.OK_OPTION;
         do {
-            option = JOptionPane.showConfirmDialog(null, panel, NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.title"), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            option = JOptionPane.showOptionDialog(null, panel, NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.title"), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, new Object[]{okButton, cancelButton}, okButton);
         } while (option == JOptionPane.OK_OPTION && !panel.isValidRuleDefinition());
 
         if (option == JOptionPane.OK_OPTION) {
@@ -392,13 +394,12 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
      * owned by this panel. If there is a definition with the same name, it will
      * be replaced, so this is an add/edit operation.
      *
-     * @param oldSet            A set to replace, null if the new set is not a
-     *                          replacement.
-     * @param name              The name of the files set.
-     * @param description       The description of the files set.
+     * @param oldSet A set to replace, null if the new set is not a replacement.
+     * @param name The name of the files set.
+     * @param description The description of the files set.
      * @param ignoresKnownFiles Whether or not the files set ignores known
-     *                          files.
-     * @param rules             The set membership rules for the set.
+     * files.
+     * @param rules The set membership rules for the set.
      */
     void replaceFilesSet(FilesSet oldSet, String name, String description, boolean ignoresKnownFiles, Map<String, FilesSet.Rule> rules) {
         if (oldSet != null) {
@@ -489,7 +490,6 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         newRuleButton.setFont(newRuleButton.getFont().deriveFont(newRuleButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         newRuleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(newRuleButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.newRuleButton.text")); // NOI18N
-        newRuleButton.setEnabled(false);
         newRuleButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 newRuleButtonActionPerformed(evt);
