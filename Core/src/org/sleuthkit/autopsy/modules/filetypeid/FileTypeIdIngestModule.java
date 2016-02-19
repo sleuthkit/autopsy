@@ -83,7 +83,7 @@ public class FileTypeIdIngestModule implements FileIngestModule {
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            throw new IngestModuleException(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.startUp.fileTypeDetectorInitializationException.msg"));
+            throw new IngestModuleException(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.startUp.fileTypeDetectorInitializationException.msg"), ex);
         }
     }
 
