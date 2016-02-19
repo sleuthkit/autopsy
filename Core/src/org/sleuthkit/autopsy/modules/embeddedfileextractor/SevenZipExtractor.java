@@ -133,7 +133,7 @@ class SevenZipExtractor {
                 String details = NbBundle.getMessage(SevenZipExtractor.class, "EmbeddedFileExtractorIngestModule.ArchiveExtractor.init.errCantInitLib",
                         e.getMessage());
                 services.postMessage(IngestMessage.createErrorMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), msg, details));
-                throw new IngestModuleException(e.getMessage());
+                throw new IngestModuleException(e.getMessage(), e);
             }
         }
         this.context = context;
