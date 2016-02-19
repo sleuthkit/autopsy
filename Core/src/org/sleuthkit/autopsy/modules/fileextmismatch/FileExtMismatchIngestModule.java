@@ -95,7 +95,7 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
         try {
             this.detector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            throw new IngestModuleException("Could not create file extension mismatch module.", ex);
+            throw new IngestModuleException("Could not create file detector.", ex);
         }
 
     }
