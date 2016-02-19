@@ -105,6 +105,6 @@ public class FileTypeIdModuleFactory extends IngestModuleFactoryAdapter {
      */
     @Override
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
-        return new FileTypeIdIngestModule(settings);
+        return new FileTypeIdIngestModule();
     }
 }
