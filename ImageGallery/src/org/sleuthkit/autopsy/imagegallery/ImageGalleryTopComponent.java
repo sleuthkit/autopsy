@@ -157,14 +157,15 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             hashHitList = new HashHitGroupList(controller);
 
             TabPane tabPane = new TabPane(groupTree, hashHitList);
-
+            tabPane.setPrefWidth(TabPane.USE_COMPUTED_SIZE);
+            tabPane.setMinWidth(TabPane.USE_PREF_SIZE);
             VBox.setVgrow(tabPane, Priority.ALWAYS);
             leftPane = new VBox(tabPane, new SummaryTablePane(controller));
             SplitPane.setResizableWithParent(leftPane, Boolean.FALSE);
             SplitPane.setResizableWithParent(groupPane, Boolean.TRUE);
             SplitPane.setResizableWithParent(metaDataTable, Boolean.FALSE);
             splitPane.getItems().addAll(leftPane, centralStack, metaDataTable);
-            splitPane.setDividerPositions(0.0, 1.0);
+            splitPane.setDividerPositions(0.1, 1.0);
 
             ImageGalleryController.getDefault().setStacks(fullUIStack, centralStack);
             ImageGalleryController.getDefault().setShowTree(() -> tabPane.getSelectionModel().select(groupTree));

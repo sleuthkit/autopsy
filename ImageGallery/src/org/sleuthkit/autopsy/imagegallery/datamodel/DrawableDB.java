@@ -903,16 +903,11 @@ public final class DrawableDB {
                 StringBuilder query = new StringBuilder("SELECT " + groupBy.attrName.toString() + ", COUNT(*) FROM drawable_files GROUP BY " + groupBy.attrName.toString()); //NON-NLS
 
                 String orderByClause = "";
-                switch (sortBy) {
-                    case GROUP_BY_VALUE:
-                        orderByClause = " ORDER BY " + groupBy.attrName.toString(); //NON-NLS
-                        break;
-                    case FILE_COUNT:
-                        orderByClause = " ORDER BY COUNT(*)"; //NON-NLS
-                        break;
-                    case NONE:
-//                    case PRIORITY:
-                        break;
+
+                if (sortBy == GROUP_BY_VALUE) {
+                    orderByClause = " ORDER BY " + groupBy.attrName.toString();
+                } else if (sortBy == GroupSortBy.FILE_COUNT) {
+                    orderByClause = " ORDER BY COUNT(*)";
                 }
 
                 query.append(orderByClause);
