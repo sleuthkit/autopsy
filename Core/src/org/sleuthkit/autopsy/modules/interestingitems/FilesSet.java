@@ -257,23 +257,19 @@ final class FilesSet implements Serializable {
         public String toString() {
             // This override is designed to provide a display name for use with 
             // javax.swing.DefaultListModel<E>.
-            if(fileNameCondition != null) {
+            if (fileNameCondition != null) {
                 return this.ruleName + " (" + fileNameCondition.getTextToMatch() + ")";
-            }
-            else if (this.pathCondition != null) {
+            } else if (this.pathCondition != null) {
                 return this.ruleName + " (" + pathCondition.getTextToMatch() + ")";
-            }
-            else if (this.mimeTypeCondition != null) {
+            } else if (this.mimeTypeCondition != null) {
                 return this.ruleName + " (" + mimeTypeCondition.getMimeType() + ")";
-            }
-            else if (this.fileSizeCondition != null) {
+            } else if (this.fileSizeCondition != null) {
                 return this.ruleName + " (" + fileSizeCondition.getComparator().getSymbol() + " " + fileSizeCondition.getSizeValue()
                         + " " + fileSizeCondition.getUnit().getName() + ")";
-            }
-            else {
+            } else {
                 return this.ruleName + " ()";
             }
-            
+
         }
 
         /**
@@ -350,11 +346,17 @@ final class FilesSet implements Serializable {
 
         }
 
+        /**
+         * A class for checking whether a file's size is within the
+         * specifications given (i.e. < N Bytes).
+         */
         static final class FileSizeCondition implements FileAttributeCondition {
 
             private static final long serialVersionUID = 1L;
 
             /**
+             * Gets the comparator of this condition
+             *
              * @return the comparator
              */
             public COMPARATOR getComparator() {
@@ -362,6 +364,8 @@ final class FilesSet implements Serializable {
             }
 
             /**
+             * Gets the unit for the size of this condition
+             *
              * @return the unit
              */
             public SIZE_UNIT getUnit() {
@@ -369,12 +373,17 @@ final class FilesSet implements Serializable {
             }
 
             /**
-             * @return the sizeValue
+             * Gets the size value of this condition
+             *
+             * @return the size value
              */
             public int getSizeValue() {
                 return sizeValue;
             }
 
+            /**
+             * Represents a comparison item for file size
+             */
             static enum COMPARATOR {
 
                 LESS_THAN("<"),
@@ -413,6 +422,9 @@ final class FilesSet implements Serializable {
                 }
             }
 
+            /**
+             * Represents the units of size
+             */
             static enum SIZE_UNIT {
 
                 BYTE(1, "Bytes"),

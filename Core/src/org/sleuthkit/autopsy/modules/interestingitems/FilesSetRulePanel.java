@@ -139,6 +139,10 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         this.ruleNameTextField.setText(rule.getName());
     }
 
+    /**
+     * Sets whether or not the OK button should be enabled based upon other UI
+     * elements
+     */
     private void setOkButton() {
         if (this.okButton != null) {
             if (!(this.fileSizeCheck.isSelected() || this.mimeCheck.isSelected()
@@ -150,6 +154,12 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         }
     }
 
+    /**
+     * Gets the JOptionPane that is used to contain this panel if there is one
+     *
+     * @param parent
+     * @return
+     */
     private JOptionPane getOptionPane(JComponent parent) {
         JOptionPane pane = null;
         if (!(parent instanceof JOptionPane)) {
