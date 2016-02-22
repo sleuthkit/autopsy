@@ -33,17 +33,17 @@
                               <Component id="ruleNameTextField" min="-2" pref="234" max="-2" attributes="0"/>
                           </Group>
                           <Group type="102" attributes="0">
-                              <Group type="103" groupAlignment="0" attributes="0">
-                                  <Group type="102" alignment="0" attributes="0">
-                                      <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace min="-2" pref="64" max="-2" attributes="0"/>
-                                      <Component id="filesCheck" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="directoriesCheck" min="-2" max="-2" attributes="0"/>
-                                  </Group>
-                                  <Component id="jLabel5" min="-2" max="-2" attributes="0"/>
-                              </Group>
+                              <Component id="jLabel5" min="-2" max="-2" attributes="0"/>
                               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                          </Group>
+                          <Group type="102" attributes="0">
+                              <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace min="-2" pref="65" max="-2" attributes="0"/>
+                              <Component id="filesRadio" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="dirsRadio" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="filesAndDirsRadio" min="-2" max="-2" attributes="0"/>
                           </Group>
                       </Group>
                   </Group>
@@ -107,10 +107,11 @@
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="jLabel1" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="filesCheck" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="directoriesCheck" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="filesRadio" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="dirsRadio" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="filesAndDirsRadio" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="5" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="nameTextField" alignment="3" min="-2" pref="20" max="-2" attributes="0"/>
                   <Component id="nameCheck" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -131,7 +132,7 @@
                   <Component id="pathRegexCheckBox" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="pathSeparatorInfoLabel" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace pref="7" max="32767" attributes="0"/>
+              <EmptySpace pref="8" max="32767" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="mimeTypeComboBox" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="mimeCheck" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -339,26 +340,35 @@
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="fileSizeCheckActionPerformed"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JCheckBox" name="filesCheck">
+    <Component class="javax.swing.JRadioButton" name="filesRadio">
       <Properties>
-        <Property name="selected" type="boolean" value="true"/>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/modules/interestingitems/Bundle.properties" key="FilesSetRulePanel.filesCheck.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/modules/interestingitems/Bundle.properties" key="FilesSetRulePanel.filesRadio.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
-      <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="filesCheckActionPerformed"/>
-      </Events>
+      <BindingProperties>
+        <BindingProperty name="selected" source="typeButtonGroup" target="filesRadio" targetPath="selected" updateStrategy="0" immediately="false"/>
+      </BindingProperties>
     </Component>
-    <Component class="javax.swing.JCheckBox" name="directoriesCheck">
+    <Component class="javax.swing.JRadioButton" name="dirsRadio">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/modules/interestingitems/Bundle.properties" key="FilesSetRulePanel.directoriesCheck.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/modules/interestingitems/Bundle.properties" key="FilesSetRulePanel.dirsRadio.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
-      <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="directoriesCheckActionPerformed"/>
-      </Events>
+      <BindingProperties>
+        <BindingProperty name="selected" source="typeButtonGroup" target="dirsRadio" targetPath="selected" updateStrategy="0" immediately="false"/>
+      </BindingProperties>
+    </Component>
+    <Component class="javax.swing.JRadioButton" name="filesAndDirsRadio">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/modules/interestingitems/Bundle.properties" key="FilesSetRulePanel.filesAndDirsRadio.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+      <BindingProperties>
+        <BindingProperty name="selected" source="typeButtonGroup" target="filesAndDirsRadio" targetPath="selected" updateStrategy="0" immediately="false"/>
+      </BindingProperties>
     </Component>
   </SubComponents>
 </Form>
