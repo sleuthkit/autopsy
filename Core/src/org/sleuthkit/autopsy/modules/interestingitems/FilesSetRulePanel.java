@@ -50,7 +50,12 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         "FilesSetRulePanel.bytes=Bytes",
         "FilesSetRulePanel.kiloBytes=Kilobytes",
         "FilesSetRulePanel.megaBytes=Megabytes",
-        "FilesSetRulePanel.gigaBytes=Gigabytes"
+        "FilesSetRulePanel.gigaBytes=Gigabytes",
+        "FilesSetRulePanel.NoConditionError=Must have at least one condition to make a rule.",
+        "FilesSetRulePanel.NoMimeTypeError=Please select a valid MIME type.",
+        "FilesSetRulePanel.NoNameError=Name cannot be empty",
+        "FilesSetRulePanel.NoPathError=Path cannot be empty",
+        "FilesSetRulePanel.ZeroFileSizeError=File size condition value must not be 0."
     })
 
     private static final SortedSet<MediaType> mediaTypes = MimeTypes.getDefaultMimeTypes().getMediaTypeRegistry().getTypes();
@@ -139,8 +144,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
             if (!(this.fileSizeCheck.isSelected() || this.mimeCheck.isSelected()
                     || this.nameCheck.isSelected() || this.pathCheck.isSelected())) {
                 this.okButton.setEnabled(false);
-            }
-            else {
+            } else {
                 this.okButton.setEnabled(true);
             }
         }
@@ -242,40 +246,55 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
      */
     boolean isValidRuleDefinition() {
 
-        // The rule must have name condition text.
-        if (this.nameTextField.getText().isEmpty()) {
+        if (!(this.mimeCheck.isSelected() || this.fileSizeCheck.isSelected() || this.pathCheck.isSelected() || this.nameCheck.isSelected())) {
             NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
-                    NbBundle.getMessage(FilesSetPanel.class, "FilesSetRulePanel.messages.emptyNameCondition"),
+                    Bundle.FilesSetRulePanel_NoConditionError(),
                     NotifyDescriptor.WARNING_MESSAGE);
             DialogDisplayer.getDefault().notify(notifyDesc);
             return false;
         }
 
-        // The name condition must either be a regular expression that compiles or
-        // a string without illegal file name chars. 
-        if (this.nameRegexCheckbox.isSelected()) {
-            try {
-                Pattern.compile(this.nameTextField.getText());
-            } catch (PatternSyntaxException ex) {
+        if (this.nameCheck.isSelected()) {
+            // The name condition must either be a regular expression that compiles or
+            // a string without illegal file name chars.
+            if (this.nameTextField.getText().isEmpty()) {
                 NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
-                        NbBundle.getMessage(FilesSetPanel.class, "FilesSetRulePanel.messages.invalidNameRegex", ex.getLocalizedMessage()),
+                        Bundle.FilesSetRulePanel_NoNameError(),
                         NotifyDescriptor.WARNING_MESSAGE);
                 DialogDisplayer.getDefault().notify(notifyDesc);
                 return false;
             }
-        } else {
-            if (!FilesSetRulePanel.containsOnlyLegalChars(this.nameTextField.getText(), FilesSetRulePanel.ILLEGAL_FILE_NAME_CHARS)) {
-                NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
-                        NbBundle.getMessage(FilesSetPanel.class, "FilesSetRulePanel.messages.invalidCharInName"),
-                        NotifyDescriptor.WARNING_MESSAGE);
-                DialogDisplayer.getDefault().notify(notifyDesc);
-                return false;
+            if (this.nameRegexCheckbox.isSelected()) {
+                try {
+                    Pattern.compile(this.nameTextField.getText());
+                } catch (PatternSyntaxException ex) {
+                    NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
+                            NbBundle.getMessage(FilesSetPanel.class, "FilesSetRulePanel.messages.invalidNameRegex", ex.getLocalizedMessage()),
+                            NotifyDescriptor.WARNING_MESSAGE);
+                    DialogDisplayer.getDefault().notify(notifyDesc);
+                    return false;
+                }
+            } else {
+                if (this.nameTextField.getText().isEmpty() || !FilesSetRulePanel.containsOnlyLegalChars(this.nameTextField.getText(), FilesSetRulePanel.ILLEGAL_FILE_NAME_CHARS)) {
+                    NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
+                            NbBundle.getMessage(FilesSetPanel.class, "FilesSetRulePanel.messages.invalidCharInName"),
+                            NotifyDescriptor.WARNING_MESSAGE);
+                    DialogDisplayer.getDefault().notify(notifyDesc);
+                    return false;
+                }
             }
         }
 
         // The path condition, if specified, must either be a regular expression 
-        // that compiles or a string without illegal file path chars. 
-        if (!this.pathTextField.getText().isEmpty()) {
+        // that compiles or a string without illegal file path chars.
+        if (this.pathCheck.isSelected()) {
+            if (this.pathTextField.getText().isEmpty()) {
+                NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
+                        Bundle.FilesSetRulePanel_NoPathError(),
+                        NotifyDescriptor.WARNING_MESSAGE);
+                DialogDisplayer.getDefault().notify(notifyDesc);
+                return false;
+            }
             if (this.pathRegexCheckBox.isSelected()) {
                 try {
                     Pattern.compile(this.pathTextField.getText());
@@ -287,13 +306,31 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
                     return false;
                 }
             } else {
-                if (!FilesSetRulePanel.containsOnlyLegalChars(this.pathTextField.getText(), FilesSetRulePanel.ILLEGAL_FILE_PATH_CHARS)) {
+                if (this.pathTextField.getText().isEmpty() || !FilesSetRulePanel.containsOnlyLegalChars(this.pathTextField.getText(), FilesSetRulePanel.ILLEGAL_FILE_PATH_CHARS)) {
                     NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
                             NbBundle.getMessage(FilesSetPanel.class, "FilesSetRulePanel.messages.invalidCharInPath"),
                             NotifyDescriptor.WARNING_MESSAGE);
                     DialogDisplayer.getDefault().notify(notifyDesc);
                     return false;
                 }
+            }
+        }
+        if (this.mimeCheck.isSelected()) {
+            if (this.mimeTypeComboBox.getSelectedIndex() == 0) {
+                NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
+                        Bundle.FilesSetRulePanel_NoMimeTypeError(),
+                        NotifyDescriptor.WARNING_MESSAGE);
+                DialogDisplayer.getDefault().notify(notifyDesc);
+                return false;
+            }
+        }
+        if (this.fileSizeCheck.isSelected()) {
+            if ((Integer) this.fileSizeSpinner.getValue() == 0) {
+                NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
+                        Bundle.FilesSetRulePanel_ZeroFileSizeError(),
+                        NotifyDescriptor.WARNING_MESSAGE);
+                DialogDisplayer.getDefault().notify(notifyDesc);
+                return false;
             }
         }
 
@@ -461,7 +498,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
      * state of the UI components in the type button group.
      */
     private void setComponentsForSearchType() {
-        if (this.dirsRadio.isSelected()) {
+        if (!this.filesRadio.isSelected()) {
             this.fullNameRadioButton.setSelected(true);
             this.extensionRadioButton.setEnabled(false);
             this.mimeTypeComboBox.setEnabled(false);
@@ -601,12 +638,27 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
 
         typeButtonGroup.add(filesRadio);
         org.openide.awt.Mnemonics.setLocalizedText(filesRadio, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.filesRadio.text")); // NOI18N
+        filesRadio.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                filesRadioActionPerformed(evt);
+            }
+        });
 
         typeButtonGroup.add(dirsRadio);
         org.openide.awt.Mnemonics.setLocalizedText(dirsRadio, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.dirsRadio.text")); // NOI18N
+        dirsRadio.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                dirsRadioActionPerformed(evt);
+            }
+        });
 
         typeButtonGroup.add(filesAndDirsRadio);
         org.openide.awt.Mnemonics.setLocalizedText(filesAndDirsRadio, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.filesAndDirsRadio.text")); // NOI18N
+        filesAndDirsRadio.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                filesAndDirsRadioActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -779,6 +831,19 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
     private void mimeTypeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mimeTypeComboBoxActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_mimeTypeComboBoxActionPerformed
+
+    private void filesRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_filesRadioActionPerformed
+
+        this.setComponentsForSearchType();
+    }//GEN-LAST:event_filesRadioActionPerformed
+
+    private void dirsRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dirsRadioActionPerformed
+        this.setComponentsForSearchType();
+    }//GEN-LAST:event_dirsRadioActionPerformed
+
+    private void filesAndDirsRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_filesAndDirsRadioActionPerformed
+        this.setComponentsForSearchType();
+    }//GEN-LAST:event_filesAndDirsRadioActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JRadioButton dirsRadio;

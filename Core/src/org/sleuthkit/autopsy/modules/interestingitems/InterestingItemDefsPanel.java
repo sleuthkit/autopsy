@@ -250,13 +250,22 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 FilesSet.Rule.MetaTypeCondition typeCondition = rule.getMetaTypeCondition();
                 FilesSet.Rule.ParentPathCondition pathCondition = rule.getPathCondition();
                 FilesSet.Rule.MimeTypeCondition mimeTypeCondition = rule.getMimeTypeCondition();
+                FilesSet.Rule.FileSizeCondition fileSizeCondition = rule.getFileSizeCondition();
 
                 // Populate the components that display the properties of the 
                 // selected rule.
-                InterestingItemDefsPanel.this.fileNameTextField.setText(nameCondition.getTextToMatch());
-                InterestingItemDefsPanel.this.fileNameRadioButton.setSelected(nameCondition instanceof FilesSet.Rule.FullNameCondition);
-                InterestingItemDefsPanel.this.fileNameExtensionRadioButton.setSelected(nameCondition instanceof FilesSet.Rule.ExtensionCondition);
-                InterestingItemDefsPanel.this.fileNameRegexCheckbox.setSelected(nameCondition.isRegex());
+                if (nameCondition != null) {
+                    InterestingItemDefsPanel.this.fileNameTextField.setText(nameCondition.getTextToMatch());
+                    InterestingItemDefsPanel.this.fileNameRadioButton.setSelected(nameCondition instanceof FilesSet.Rule.FullNameCondition);
+                    InterestingItemDefsPanel.this.fileNameExtensionRadioButton.setSelected(nameCondition instanceof FilesSet.Rule.ExtensionCondition);
+                    InterestingItemDefsPanel.this.fileNameRegexCheckbox.setSelected(nameCondition.isRegex());
+                }
+                else {
+                    InterestingItemDefsPanel.this.fileNameTextField.setText("");
+                    InterestingItemDefsPanel.this.fileNameRadioButton.setSelected(true);
+                    InterestingItemDefsPanel.this.fileNameExtensionRadioButton.setSelected(false);
+                    InterestingItemDefsPanel.this.fileNameRegexCheckbox.setSelected(false);
+                }
                 switch (typeCondition.getMetaType()) {
                     case FILES:
                         InterestingItemDefsPanel.this.filesRadioButton.setSelected(true);
@@ -275,7 +284,20 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
                     InterestingItemDefsPanel.this.rulePathConditionTextField.setText("");
                     InterestingItemDefsPanel.this.rulePathConditionRegexCheckBox.setSelected(false);
                 }
-                InterestingItemDefsPanel.this.mimeTypeComboBox.setSelectedItem(mimeTypeCondition.getMimeType());
+                if (mimeTypeCondition != null) {
+                    InterestingItemDefsPanel.this.mimeTypeComboBox.setSelectedItem(mimeTypeCondition.getMimeType());
+                } else {
+                    InterestingItemDefsPanel.this.mimeTypeComboBox.setSelectedIndex(0);
+                }
+                if (fileSizeCondition != null) {
+                    InterestingItemDefsPanel.this.fileSizeUnitComboBox.setSelectedItem(fileSizeCondition.getUnit().getName());
+                    InterestingItemDefsPanel.this.equalitySignComboBox.setSelectedItem(fileSizeCondition.getComparator().getSymbol());
+                    InterestingItemDefsPanel.this.jSpinner1.setValue(fileSizeCondition.getSizeValue());
+                } else {
+                    InterestingItemDefsPanel.this.fileSizeUnitComboBox.setSelectedIndex(1);
+                    InterestingItemDefsPanel.this.equalitySignComboBox.setSelectedIndex(2);
+                    InterestingItemDefsPanel.this.jSpinner1.setValue(0);
+                }
 
                 // Enable the new, edit and delete rule buttons.
                 InterestingItemDefsPanel.this.newRuleButton.setEnabled(true);

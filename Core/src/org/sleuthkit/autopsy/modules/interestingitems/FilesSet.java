@@ -257,7 +257,23 @@ final class FilesSet implements Serializable {
         public String toString() {
             // This override is designed to provide a display name for use with 
             // javax.swing.DefaultListModel<E>.
-            return this.ruleName + " (" + fileNameCondition.getTextToMatch() + ")";
+            if(fileNameCondition != null) {
+                return this.ruleName + " (" + fileNameCondition.getTextToMatch() + ")";
+            }
+            else if (this.pathCondition != null) {
+                return this.ruleName + " (" + pathCondition.getTextToMatch() + ")";
+            }
+            else if (this.mimeTypeCondition != null) {
+                return this.ruleName + " (" + mimeTypeCondition.getMimeType() + ")";
+            }
+            else if (this.fileSizeCondition != null) {
+                return this.ruleName + " (" + fileSizeCondition.getComparator().getSymbol() + " " + fileSizeCondition.getSizeValue()
+                        + " " + fileSizeCondition.getUnit().getName() + ")";
+            }
+            else {
+                return this.ruleName + " ()";
+            }
+            
         }
 
         /**
@@ -272,6 +288,13 @@ final class FilesSet implements Serializable {
          */
         public MimeTypeCondition getMimeTypeCondition() {
             return mimeTypeCondition;
+        }
+
+        /**
+         * @return the fileSizeCondition
+         */
+        public FileSizeCondition getFileSizeCondition() {
+            return fileSizeCondition;
         }
 
         /**
@@ -331,13 +354,40 @@ final class FilesSet implements Serializable {
 
             private static final long serialVersionUID = 1L;
 
+            /**
+             * @return the comparator
+             */
+            public COMPARATOR getComparator() {
+                return comparator;
+            }
+
+            /**
+             * @return the unit
+             */
+            public SIZE_UNIT getUnit() {
+                return unit;
+            }
+
+            /**
+             * @return the sizeValue
+             */
+            public int getSizeValue() {
+                return sizeValue;
+            }
+
             static enum COMPARATOR {
 
-                LESS_THAN,
-                LESS_THAN_EQUAL,
-                EQUAL,
-                GREATER_THAN,
-                GREATER_THAN_EQUAL;
+                LESS_THAN("<"),
+                LESS_THAN_EQUAL("≤"),
+                EQUAL("="),
+                GREATER_THAN(">"),
+                GREATER_THAN_EQUAL("≥");
+
+                private String symbol;
+
+                COMPARATOR(String symbol) {
+                    this.symbol = symbol;
+                }
 
                 public static COMPARATOR fromSymbol(String symbol) {
                     if (symbol.equals("<=") || symbol.equals("≤")) {
@@ -354,18 +404,27 @@ final class FilesSet implements Serializable {
                         throw new IllegalArgumentException("Invalid symbol");
                     }
                 }
+
+                /**
+                 * @return the symbol
+                 */
+                public String getSymbol() {
+                    return symbol;
+                }
             }
 
             static enum SIZE_UNIT {
 
-                BYTE(1),
-                KILOBYTE(1024),
-                MEGABYTE(1024 * 1024),
-                GIGABYTE(1024 * 1024 * 1024);
+                BYTE(1, "Bytes"),
+                KILOBYTE(1024, "Kilobytes"),
+                MEGABYTE(1024 * 1024, "Megabytes"),
+                GIGABYTE(1024 * 1024 * 1024, "Gigabytes");
                 private long size;
+                private String name;
 
-                private SIZE_UNIT(long size) {
+                private SIZE_UNIT(long size, String name) {
                     this.size = size;
+                    this.name = name;
                 }
 
                 public long getSize() {
@@ -373,24 +432,26 @@ final class FilesSet implements Serializable {
                 }
 
                 public static SIZE_UNIT fromName(String name) {
-                    if (name.equals("Bytes")) {
-                        return BYTE;
-                    } else if (name.equals("Kilobytes")) {
-                        return KILOBYTE;
-                    } else if (name.equals("Megabytes")) {
-                        return MEGABYTE;
-                    } else if (name.equals("Gigabytes")) {
-                        return GIGABYTE;
-                    } else {
-                        throw new IllegalArgumentException("Invalid symbol");
+                    for (SIZE_UNIT unit : SIZE_UNIT.values()) {
+                        if (unit.getName().equals(name)) {
+                            return unit;
+                        }
                     }
+                    throw new IllegalArgumentException("Invalid name for size unit.");
+                }
+
+                /**
+                 * @return the name
+                 */
+                public String getName() {
+                    return name;
                 }
             }
             private COMPARATOR comparator;
             private SIZE_UNIT unit;
             private int sizeValue;
 
-            FileSizeCondition(COMPARATOR comparator, SIZE_UNIT uint, int sizeValue) {
+            FileSizeCondition(COMPARATOR comparator, SIZE_UNIT unit, int sizeValue) {
                 this.comparator = comparator;
                 this.unit = unit;
                 this.sizeValue = sizeValue;
@@ -399,8 +460,8 @@ final class FilesSet implements Serializable {
             @Override
             public boolean passes(AbstractFile file) {
                 long fileSize = file.getSize();
-                long conditionSize = this.unit.getSize() * this.sizeValue;
-                switch (this.comparator) {
+                long conditionSize = this.getUnit().getSize() * this.getSizeValue();
+                switch (this.getComparator()) {
                     case GREATER_THAN:
                         return fileSize > conditionSize;
                     case GREATER_THAN_EQUAL:
@@ -508,7 +569,6 @@ final class FilesSet implements Serializable {
          */
         private static abstract class AbstractTextCondition implements TextCondition {
 
-            private static final long serialVersionUID = 1L;
             private final TextMatcher textMatcher;
 
             /**
@@ -702,7 +762,7 @@ final class FilesSet implements Serializable {
          * An interface for objects that do textual matches, used to compose a
          * text condition.
          */
-        private static interface TextMatcher {
+        private static interface TextMatcher extends Serializable {
 
             /**
              * Get the text the matcher examines.
@@ -736,6 +796,7 @@ final class FilesSet implements Serializable {
          */
         private static class CaseInsensitiveStringComparisionMatcher implements TextMatcher {
 
+            private static final long serialVersionUID = 1L;
             private final String textToMatch;
 
             /**
@@ -779,6 +840,7 @@ final class FilesSet implements Serializable {
          */
         private static class CaseInsensitivePartialStringComparisionMatcher implements TextMatcher {
 
+            private static final long serialVersionUID = 1L;
             private final String textToMatch;
             private final Pattern pattern;
 
@@ -823,6 +885,7 @@ final class FilesSet implements Serializable {
          */
         private static class RegexMatcher implements TextMatcher {
 
+            private static final long serialVersionUID = 1L;
             private final Pattern regex;
 
             /**
