@@ -4,6 +4,8 @@
   <NonVisualComponents>
     <Component class="javax.swing.ButtonGroup" name="fileNameButtonGroup">
     </Component>
+    <Component class="javax.swing.ButtonGroup" name="typeButtonGroup">
+    </Component>
   </NonVisualComponents>
   <Properties>
     <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
@@ -300,6 +302,9 @@
             </Component>
             <Component class="javax.swing.JRadioButton" name="filesRadioButton">
               <Properties>
+                <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+                  <ComponentRef name="typeButtonGroup"/>
+                </Property>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                   <FontInfo relative="true">
                     <Font bold="false" component="filesRadioButton" property="font" relativeSize="false" size="11"/>
@@ -585,6 +590,9 @@
             </Component>
             <Component class="javax.swing.JRadioButton" name="bothRadioButton">
               <Properties>
+                <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+                  <ComponentRef name="typeButtonGroup"/>
+                </Property>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                   <FontInfo relative="true">
                     <Font bold="false" component="bothRadioButton" property="font" relativeSize="false" size="11"/>
@@ -666,6 +674,9 @@
             </Component>
             <Component class="javax.swing.JRadioButton" name="dirsRadioButton">
               <Properties>
+                <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+                  <ComponentRef name="typeButtonGroup"/>
+                </Property>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                   <FontInfo relative="true">
                     <Font bold="false" component="dirsRadioButton" property="font" relativeSize="false" size="11"/>

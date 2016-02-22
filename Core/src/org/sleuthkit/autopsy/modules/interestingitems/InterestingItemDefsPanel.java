@@ -436,6 +436,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
     private void initComponents() {
 
         fileNameButtonGroup = new javax.swing.ButtonGroup();
+        typeButtonGroup = new javax.swing.ButtonGroup();
         jScrollPane1 = new javax.swing.JScrollPane();
         jPanel1 = new javax.swing.JPanel();
         jLabel6 = new javax.swing.JLabel();
@@ -496,6 +497,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             }
         });
 
+        typeButtonGroup.add(filesRadioButton);
         filesRadioButton.setFont(filesRadioButton.getFont().deriveFont(filesRadioButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         filesRadioButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(filesRadioButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.filesRadioButton.text")); // NOI18N
@@ -593,6 +595,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         setsListLabel.setFont(setsListLabel.getFont().deriveFont(setsListLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(setsListLabel, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.setsListLabel.text")); // NOI18N
 
+        typeButtonGroup.add(bothRadioButton);
         bothRadioButton.setFont(bothRadioButton.getFont().deriveFont(bothRadioButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(bothRadioButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.bothRadioButton.text")); // NOI18N
         bothRadioButton.setEnabled(false);
@@ -629,6 +632,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.jLabel2.text")); // NOI18N
 
+        typeButtonGroup.add(dirsRadioButton);
         dirsRadioButton.setFont(dirsRadioButton.getFont().deriveFont(dirsRadioButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(dirsRadioButton, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.dirsRadioButton.text")); // NOI18N
         dirsRadioButton.setEnabled(false);
@@ -957,6 +961,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
     private javax.swing.JList<FilesSet> setsList;
     private javax.swing.JLabel setsListLabel;
     private javax.swing.JScrollPane setsListScrollPane;
+    private javax.swing.ButtonGroup typeButtonGroup;
     // End of variables declaration//GEN-END:variables
 
 }
