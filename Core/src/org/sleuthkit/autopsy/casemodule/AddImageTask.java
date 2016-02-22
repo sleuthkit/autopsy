@@ -252,10 +252,7 @@ class AddImageTask implements Runnable {
             }
         }
 
-        // invoke the callBack, unless the caller cancelled 
-        if (!cancelRequested()) {
-            doCallBack();
-        }
+        doCallBack();
     }
 
     /*
@@ -263,16 +260,15 @@ class AddImageTask implements Runnable {
      */
     private void doCallBack() {
         DataSourceProcessorCallback.DataSourceProcessorResult result;
-
-        if (hasCritError) {
+        if (cancelRequested) {
+            result = DataSourceProcessorCallback.DataSourceProcessorResult.CANCELLED;
+        } else if (hasCritError) {
             result = DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS;
         } else if (!errorList.isEmpty()) {
             result = DataSourceProcessorCallback.DataSourceProcessorResult.NONCRITICAL_ERRORS;
         } else {
             result = DataSourceProcessorCallback.DataSourceProcessorResult.NO_ERRORS;
         }
-
-        // invoke the callback, passing it the result, list of new contents, and list of errors
         callbackObj.done(result, errorList, newContents);
     }
 

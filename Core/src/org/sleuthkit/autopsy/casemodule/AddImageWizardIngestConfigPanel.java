@@ -272,6 +272,11 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
         // disable the cleanup task
         cleanupTask.disable();
 
+        // If the user cancelled, the wizard is already closed, so exit.
+        if (result == DataSourceProcessorCallback.DataSourceProcessorResult.CANCELLED) {
+            return;
+        }
+        
         // Get attention for the process finish
         java.awt.Toolkit.getDefaultToolkit().beep(); //BEEP!
         AddImageWizardAddingProgressVisual panel = progressPanel.getComponent();

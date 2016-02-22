@@ -36,6 +36,10 @@ public abstract class DataSourceProcessorCallback {
         NO_ERRORS, ///< No errors were encountered while ading the data source
         CRITICAL_ERRORS, ///< No data was added to the database. There were fundamental errors processing the data (such as no data or system failure).  
         NONCRITICAL_ERRORS, ///< There was data added to the database, but there were errors from data corruption or a small number of minor issues. 
+        /**
+         * Adding the data source was cancelled.
+         */
+        CANCELLED
     };
 
     /**
