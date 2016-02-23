@@ -42,7 +42,6 @@ class AddLocalFilesTask implements Runnable {
     private final List<String> localFilePaths;
     private final DataSourceProcessorProgressMonitor progress;
     private final DataSourceProcessorCallback callback;
-    private volatile boolean cancellationRequested;
 
     /**
      * Constructs a runnable that adds a set of local/logical files and/or
@@ -92,25 +91,13 @@ class AddLocalFilesTask implements Runnable {
             errors.add(ex.getMessage());
         } finally {
             DataSourceProcessorCallback.DataSourceProcessorResult result;
-            if (cancellationRequested) {
-                result = DataSourceProcessorCallback.DataSourceProcessorResult.CANCELLED;
-            } else if (!errors.isEmpty()) {
+            if (!errors.isEmpty()) {
                 result = DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS;
             } else {
                 result = DataSourceProcessorCallback.DataSourceProcessorResult.NO_ERRORS;
             }
             callback.done(result, errors, newDataSources);
         }
-    }
-
-    /**
-     * Cancels adding the data source.
-     *
-     * TODO (AUT-1907): Implement cancellation by deleting rows added to the
-     * case database.
-     */
-    void cancel() {
-        cancellationRequested = true;
     }
 
     /**

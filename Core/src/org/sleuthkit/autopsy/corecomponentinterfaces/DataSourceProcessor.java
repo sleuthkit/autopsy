@@ -31,11 +31,15 @@ import javax.swing.JPanel;
  * provide a UI panel to allow a user to select a data source and do any
  * configuration required by the data source processor. The selection and
  * configuration panel should support addition of the add data source wizard as
- * a property change listener and should fire DSP_PANEL_EVENT property changes
- * to communicate with the wizard.
+ * a property change listener and should fire DSP_PANEL_EVENT property change
+ * events to communicate with the wizard.
  *
- * Data source processors should perform all processing on a separate thread,
- * reporting results using a callback object.
+ * Data source processors should perform all processing in a background task in
+ * a separate thread, reporting results using a callback object.
+ *
+ * It is recommended that implementers provide an overload of the run method
+ * that allows the data source processor to be run independently of the
+ * selection and configuration panel.
  */
 public interface DataSourceProcessor {
 
@@ -58,7 +62,9 @@ public interface DataSourceProcessor {
         /**
          * This event is fired to make the add data source wizard move focus to
          * the wizard's next button.
+         * @deprecated Use UPDATE_UI.
          */
+        @Deprecated
         FOCUS_NEXT
     };
 
@@ -86,15 +92,16 @@ public interface DataSourceProcessor {
      * are valid and complete.
      *
      * @return True if the settings are valid and complete and the processor is
-     *         ready to have its run method called; false otherwise.
+     *         ready to have its run method called, false otherwise.
      */
     boolean isPanelValid();
 
     /**
-     * Adds a data source to the case database using a separate thread and the
-     * settings provided by the selection and configuration panel. Returns as
-     * soon as the background task is started. The background task uses the
-     * callback object to signal task completion and return results.
+     * Adds a data source to the case database using a background task in a
+     * separate thread and the settings provided by the selection and
+     * configuration panel. Returns as soon as the background task is started.
+     * The background task uses a callback object to signal task completion and
+     * return results.
      *
      * This method should not be called unless isPanelValid returns true.
      *
@@ -109,7 +116,8 @@ public interface DataSourceProcessor {
      * Requests cancellation of the background task that adds a data source to
      * the case database, after the task is started using the run method. This
      * is a "best effort" cancellation, with no guarantees that the case
-     * database will be unchanged.
+     * database will be unchanged. If cancellation succeeded, the list of new
+     * data sources returned by the background task will be empty.
      */
     void cancel();
 

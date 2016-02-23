@@ -39,7 +39,6 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
 
     private static final String DATA_SOURCE_TYPE = NbBundle.getMessage(LocalFilesDSProcessor.class, "LocalFilesDSProcessor.dsType");
     private final LocalFilesPanel configPanel;
-    private AddLocalFilesTask backgroundTask;
     /*
      * TODO: Remove the setDataSourceOptionsCalled flag and the settings fields
      * when the deprecated method setDataSourceOptions is removed.
@@ -100,7 +99,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
      * are valid and complete.
      *
      * @return True if the settings are valid and complete and the processor is
-     *         ready to have its run method called; false otherwise.
+     *         ready to have its run method called, false otherwise.
      */
     @Override
     public boolean isPanelValid() {
@@ -108,10 +107,11 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
     }
 
     /**
-     * Adds a data source to the case database using a separate thread and the
-     * settings provided by the selection and configuration panel. Returns as
-     * soon as the background task is started. The background task uses the
-     * callback object to signal task completion and return results.
+     * Adds a data source to the case database using a background task in a
+     * separate thread and the settings provided by the selection and
+     * configuration panel. Returns as soon as the background task is started.
+     * The background task uses a callback object to signal task completion and
+     * return results.
      *
      * This method should not be called unless isPanelValid returns true.
      *
@@ -130,11 +130,11 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
     }
 
     /**
-     * Adds a data source to the case database using a separate thread and the
-     * given settings instead of those provided by the selection and
-     * configuration panel. Returns as soon as the background task is started
-     * and uses the callback object to signal task completion and return
-     * results.
+     * Adds a data source to the case database using a background task in a
+     * separate thread and the given settings instead of those provided by the
+     * selection and configuration panel. Returns as soon as the background task
+     * is started and uses the callback object to signal task completion and
+     * return results.
      *
      * @param deviceId                 An ASCII-printable identifier for the
      *                                 device associated with the data source
@@ -153,22 +153,21 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
      * @param callback                 Callback to call when processing is done.
      */
     public void run(String deviceId, String rootVirtualDirectoryName, List<String> localFilePaths, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        backgroundTask = new AddLocalFilesTask(deviceId, rootVirtualDirectoryName, localFilePaths, progressMonitor, callback); 
-        new Thread(backgroundTask).start();
+        new Thread(new AddLocalFilesTask(deviceId, rootVirtualDirectoryName, localFilePaths, progressMonitor, callback)).start();
     }
 
     /**
      * Requests cancellation of the background task that adds a data source to
-     * the case database, after the task is started using the run method.
-     * This is a "best effort" cancellation, with no guarantees that the case
-     * database will be unchanged.
+     * the case database, after the task is started using the run method. This
+     * is a "best effort" cancellation, with no guarantees that the case
+     * database will be unchanged. If cancellation succeeded, the list of new
+     * data sources returned by the background task will be empty.
      * 
      * TODO (AUT-1907): Implement cancellation by deleting rows added to the
      * case database.
      */
     @Override
     public void cancel() {
-        backgroundTask.cancel();
     }
 
     /**
