@@ -172,7 +172,12 @@ class PstParser {
         email.setBcc(msg.getDisplayBCC());
         email.setSender(getSender(msg.getSenderName(), msg.getSenderEmailAddress()));
         email.setSentDate(msg.getMessageDeliveryTime());
-        email.setTextBody(msg.getBody());
+        if(msg.getTransportMessageHeaders().isEmpty()) {
+            email.setTextBody(msg.getBody());
+        } else {
+            email.setTextBody(msg.getBody() + "---" + msg.getTransportMessageHeaders());
+        }
+        
         email.setHtmlBody(msg.getBodyHTML());
         String rtf = "";
         try {

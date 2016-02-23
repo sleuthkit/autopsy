@@ -51,6 +51,7 @@ import org.apache.james.mime4j.dom.field.ContentTypeField;
 import org.apache.james.mime4j.mboxiterator.CharBufferWrapper;
 import org.apache.james.mime4j.mboxiterator.MboxIterator;
 import org.apache.james.mime4j.message.DefaultMessageBuilder;
+import org.apache.james.mime4j.stream.Field;
 import org.apache.james.mime4j.stream.MimeConfig;
 import org.apache.tika.parser.txt.CharsetDetector;
 import org.apache.tika.parser.txt.CharsetMatch;
@@ -179,7 +180,7 @@ class MboxParser {
         if (msg.isMultipart()) {
             handleMultipart(email, (Multipart) msg.getBody(), fileID);
         } else {
-            handleTextBody(email, (TextBody) msg.getBody(), msg.getMimeType());
+            handleTextBody(email, (TextBody) msg.getBody(), msg.getMimeType(), msg.getHeader().getFields());
         }
 
         return email;
@@ -204,7 +205,7 @@ class MboxParser {
                 handleAttachment(email, e, fileID, index);
             } else if (e.getMimeType().equals(HTML_TYPE)
                     || e.getMimeType().equals(ContentTypeField.TYPE_TEXT_PLAIN)) {
-                handleTextBody(email, (TextBody) e.getBody(), e.getMimeType());
+                handleTextBody(email, (TextBody) e.getBody(), e.getMimeType(), e.getHeader().getFields());
             } else {
                 // Ignore other types.
             }
@@ -221,7 +222,7 @@ class MboxParser {
      * @param tb
      * @param type The Mime type of the body.
      */
-    private void handleTextBody(EmailMessage email, TextBody tb, String type) {
+    private void handleTextBody(EmailMessage email, TextBody tb, String type, List<Field> fields) {
         BufferedReader r;
         try {
             r = new BufferedReader(tb.getReader());
@@ -229,6 +230,9 @@ class MboxParser {
             String line;
             while ((line = r.readLine()) != null) {
                 bodyString.append(line).append("\n");
+            }
+            for(Field field: fields) {
+                bodyString.append("---").append(field.getBody());
             }
 
             switch (type) {
