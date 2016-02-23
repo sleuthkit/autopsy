@@ -29,6 +29,7 @@ import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.EventHandler;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBase;
@@ -42,8 +43,15 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.Border;
+import javafx.scene.layout.BorderStroke;
+import javafx.scene.layout.BorderStrokeStyle;
+import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
 import javafx.util.Duration;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
@@ -55,7 +63,9 @@ import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.show;
+import static org.sleuthkit.autopsy.timeline.ui.detailview.MultiEventNodeBase.CORNER_RADII_3;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
+import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 
 /**
  *
@@ -71,40 +81,68 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
 
     static final Map<EventType, Effect> dropShadowMap = new ConcurrentHashMap<>();
 
-    private final Tooltip tooltip = new Tooltip(Bundle.EventBundleNodeBase_toolTip_loading());
-
-    final Type tlEvent;
-
-    final EventNodeBase<?> parentNode;
-    final Label descrLabel = new Label();
-    final SimpleObjectProperty<DescriptionLoD> descLOD = new SimpleObjectProperty<>();
-    final SimpleObjectProperty<DescriptionVisibility> descVisibility = new SimpleObjectProperty<>();
-
     static void configureActionButton(ButtonBase b) {
         b.setMinSize(16, 16);
         b.setMaxSize(16, 16);
         b.setPrefSize(16, 16);
-        show(b, false);
+//        show(b, false);
     }
 
     static void show(Node b, boolean show) {
         b.setVisible(show);
         b.setManaged(show);
     }
-    private Timeline timeline;
-    final DetailsChart chart;
 
-    public EventNodeBase(Type ievent, EventNodeBase<?> parent, DetailsChart chart) {
+    final Type tlEvent;
+
+    final EventNodeBase<?> parentNode;
+
+    final SimpleObjectProperty<DescriptionLoD> descLOD = new SimpleObjectProperty<>();
+    final SimpleObjectProperty<DescriptionVisibility> descVisibility = new SimpleObjectProperty<>();
+
+    final DetailsChart chart;
+    final Background highlightedBackground;
+    final Background defaultBackground;
+    final Color evtColor;
+
+    final Label countLabel = new Label();
+    final Label descrLabel = new Label();
+    final ImageView hashIV = new ImageView(HASH_PIN);
+    final ImageView tagIV = new ImageView(TAG);
+
+    final HBox controlsHBox = new HBox(5);
+    final HBox infoHBox = new HBox(5, descrLabel, countLabel, hashIV, tagIV, controlsHBox);
+
+    private final Tooltip tooltip = new Tooltip(Bundle.EventBundleNodeBase_toolTip_loading());
+
+    private Timeline timeline;
+    private Button pinButton;
+    private final Border SELECTION_BORDER;
+    final ImageView eventTypeImageView = new ImageView();
+
+    EventNodeBase(Type ievent, EventNodeBase<?> parent, DetailsChart chart) {
         this.chart = chart;
         this.tlEvent = ievent;
         this.parentNode = parent;
+        eventTypeImageView.setImage(getEventType().getFXImage());
 
+        descrLabel.setGraphic(eventTypeImageView);
+
+        if (chart.getController().getEventsModel().getEventTypeZoom() == EventTypeZoomLevel.SUB_TYPE) {
+            evtColor = getEventType().getColor();
+        } else {
+            evtColor = getEventType().getBaseType().getColor();
+        }
+        SELECTION_BORDER = new Border(new BorderStroke(evtColor.darker().desaturate(), BorderStrokeStyle.SOLID, CORNER_RADII_3, new BorderWidths(2)));
+
+        defaultBackground = new Background(new BackgroundFill(evtColor.deriveColor(0, 1, 1, .1), CORNER_RADII_3, Insets.EMPTY));
+        highlightedBackground = new Background(new BackgroundFill(evtColor.deriveColor(0, 1.1, 1.1, .3), CORNER_RADII_3, Insets.EMPTY));
         descVisibility.addListener(observable -> setDescriptionVisibiltiyImpl(descVisibility.get()));
 //        descVisibility.set(DescriptionVisibility.SHOWN); //trigger listener for initial value
+        setBackground(defaultBackground);
 
         //set up mouse hover effect and tooltip
         setOnMouseEntered(mouseEntered -> {
-
             Tooltip.uninstall(chart.asNode(), AbstractVisualizationPane.getDefaultTooltip());
             showHoverControls(true);
             toFront();
@@ -118,10 +156,31 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
             }
         });
         setOnMouseClicked(new ClickHandler());
+        show(controlsHBox, false);
     }
 
     public Type getEvent() {
         return tlEvent;
+    }
+
+    public abstract TimeLineChart<DateTime> getChart();
+
+    /**
+     * @param w the maximum width the description label should have
+     */
+    public void setMaxDescriptionWidth(double w) {
+        descrLabel.setMaxWidth(w);
+    }
+
+    public abstract List<EventNodeBase<?>> getSubNodes();
+
+    /**
+     * apply the 'effect' to visually indicate selection
+     *
+     * @param applied true to apply the selection 'effect', false to remove it
+     */
+    public void applySelectionEffect(boolean applied) {
+        setBorder(applied ? SELECTION_BORDER : null);
     }
 
     protected void layoutChildren() {
@@ -129,38 +188,17 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
     }
 
     /**
-     * install whatever buttons are visible on hover for this node. likes
+     * Install whatever buttons are visible on hover for this node. likes
      * tooltips, this had a surprisingly large impact on speed of loading the
      * chart
      */
     void installActionButtons() {
         if (pinButton == null) {
-            pinButton = new Button("", new ImageView(PIN));
-            infoHBox.getChildren().add(pinButton);
+            pinButton = new Button();
+            controlsHBox.getChildren().add(pinButton);
             configureActionButton(pinButton);
-
-            pinButton.setOnAction(actionEvent -> {
-                TimeLineController controller = getChart().getController();
-                if (controller.getPinnedEvents().contains(tlEvent)) {
-                    new UnPinEventAction(controller, tlEvent).handle(actionEvent);
-                    pinButton.setGraphic(new ImageView(PIN));
-                } else {
-                    new PinEventAction(controller, tlEvent).handle(actionEvent);
-                    pinButton.setGraphic(new ImageView(UNPIN));
-                }
-            });
-
         }
     }
-
-    final Label countLabel = new Label();
-
-    final ImageView hashIV = new ImageView(HASH_PIN);
-    final ImageView tagIV = new ImageView(TAG);
-    final HBox infoHBox = new HBox(5, descrLabel, countLabel, hashIV, tagIV);
-    private Button pinButton;
-
-    abstract public TimeLineChart<DateTime> getChart();
 
     void showHoverControls(final boolean showControls) {
         Effect dropShadow = dropShadowMap.computeIfAbsent(getEventType(),
@@ -169,7 +207,24 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
         installTooltip();
         enableTooltip(showControls);
         installActionButtons();
-        show(pinButton, showControls);
+
+        TimeLineController controller = getChart().getController();
+
+        if (controller.getPinnedEvents().contains(tlEvent)) {
+            pinButton.setOnAction(actionEvent -> {
+                new UnPinEventAction(controller, tlEvent).handle(actionEvent);
+                showHoverControls(true);
+            });
+            pinButton.setGraphic(new ImageView(UNPIN));
+        } else {
+            pinButton.setOnAction(actionEvent -> {
+                new PinEventAction(controller, tlEvent).handle(actionEvent);
+                showHoverControls(true);
+            });
+            pinButton.setGraphic(new ImageView(PIN));
+        }
+
+        show(controlsHBox, showControls);
         if (parentNode != null) {
             parentNode.showHoverControls(false);
         }
@@ -185,7 +240,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
         }
     }
 
-    EventType getEventType() {
+    final EventType getEventType() {
         return tlEvent.getEventType();
     }
 
@@ -222,10 +277,6 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
 
     abstract void setDescriptionVisibiltiyImpl(DescriptionVisibility get);
 
-    abstract void setMaxDescriptionWidth(double descriptionWidth);
-
-    abstract public List<EventNodeBase<?>> getSubNodes();
-
     abstract void applyHighlightEffect(boolean b);
 
     void applyHighlightEffect() {
@@ -238,9 +289,9 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
 
     abstract Collection<Long> getEventIDs();
 
-    void applySelectionEffect(Boolean selected) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
+    abstract EventHandler<MouseEvent> getDoubleClickHandler();
+
+    abstract Collection<? extends Action> getActions();
 
     static class PinEventAction extends Action {
 
@@ -299,9 +350,5 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
         }
 
     }
-
-    abstract EventHandler<MouseEvent> getDoubleClickHandler();
-
-    abstract Collection<? extends Action> getActions();
 
 }

@@ -51,7 +51,7 @@ class RootItem extends NavTreeItem {
 
     @Override
     public long getCount() {
-        return getValue().getCount();
+        return getValue().getSize();
     }
 
     /**

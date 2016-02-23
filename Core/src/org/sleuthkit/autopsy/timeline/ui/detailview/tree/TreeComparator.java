@@ -38,7 +38,7 @@ enum TreeComparator implements Comparator<TreeItem<TimeLineEvent>> {
     Count(Bundle.TreeComparator_Count_displayName()) {
                 @Override
         public int compare(TreeItem<TimeLineEvent> o1, TreeItem<TimeLineEvent> o2) {
-                    return Long.compare(o2.getValue().getCount(), o1.getValue().getCount());
+                    return Long.compare(o2.getValue().getSize(), o1.getValue().getSize());
                 }
             },
     Type(Bundle.TreeComparator_Type_displayName()) {

@@ -47,7 +47,7 @@ public interface MultiEvent<ParentType extends MultiEvent<?>> extends TimeLineEv
 
     Optional<ParentType> getParentBundle();
 
-    default int getCount() {
+    default int getSize() {
         return getEventIDs().size();
     }
 

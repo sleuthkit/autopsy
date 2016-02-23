@@ -44,7 +44,7 @@ class EventTypeTreeItem extends NavTreeItem {
 
     @Override
     public long getCount() {
-        return getValue().getCount();
+        return getValue().getSize();
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)

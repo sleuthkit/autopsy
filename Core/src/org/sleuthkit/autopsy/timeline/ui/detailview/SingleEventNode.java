@@ -23,29 +23,23 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import javafx.event.EventHandler;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.OverrunStyle;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderStroke;
 import javafx.scene.layout.BorderStrokeStyle;
 import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.CornerRadii;
 import static javafx.scene.layout.Region.USE_PREF_SIZE;
-import javafx.scene.paint.Color;
 import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.control.action.Action;
 import org.joda.time.DateTime;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
-import static org.sleuthkit.autopsy.timeline.ui.detailview.MultiEventNodeBase.CORNER_RADII_3;
-import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 
 /**
  *
@@ -53,10 +47,6 @@ import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 final class SingleEventNode extends EventNodeBase<SingleEvent> {
 
     private final DetailsChart chart;
-    final Background defaultBackground;
-    private final Color evtColor;
-
- 
 
     static void show(Node b, boolean show) {
         b.setVisible(show);
@@ -65,7 +55,6 @@ final class SingleEventNode extends EventNodeBase<SingleEvent> {
     static final CornerRadii CORNER_RADII_1 = new CornerRadii(1);
     private static final BorderWidths CLUSTER_BORDER_WIDTHS = new BorderWidths(0, 0, 0, 2);
     private final ImageView eventTypeImageView = new ImageView();
- 
 
     @Override
     EventHandler<MouseEvent> getDoubleClickHandler() {
@@ -100,19 +89,12 @@ final class SingleEventNode extends EventNodeBase<SingleEvent> {
             show(tagIV, false);
         }
 
-        if (chart.getController().getEventsModel().getEventTypeZoom() == EventTypeZoomLevel.SUB_TYPE) {
-            evtColor = getEventType().getColor();
-        } else {
-            evtColor = getEventType().getBaseType().getColor();
-        }
         final Border clusterBorder = new Border(new BorderStroke(evtColor.deriveColor(0, 1, 1, .4), BorderStrokeStyle.SOLID, CORNER_RADII_1, CLUSTER_BORDER_WIDTHS));
         setBorder(clusterBorder);
-        defaultBackground = new Background(new BackgroundFill(evtColor.deriveColor(0, 1, 1, .1), CORNER_RADII_3, Insets.EMPTY));
-        setBackground(defaultBackground);
+
         setMaxWidth(USE_PREF_SIZE);
         infoHBox.setMaxWidth(USE_PREF_SIZE);
         getChildren().add(infoHBox);
-
     }
 
     @Override
@@ -123,14 +105,6 @@ final class SingleEventNode extends EventNodeBase<SingleEvent> {
     @Override
     public List<EventNodeBase<?>> getSubNodes() {
         return Collections.emptyList();
-    }
-
-   
-
-    @Override
-    void showHoverControls(final boolean showControls) {
-        super.showHoverControls(showControls);
-       
     }
 
     @Override
@@ -153,14 +127,28 @@ final class SingleEventNode extends EventNodeBase<SingleEvent> {
         chart.requestTimelineChartLayout();
     }
 
+    /**
+     * apply the 'effect' to visually indicate highlighted nodes
+     *
+     * @param applied true to apply the highlight 'effect', false to remove it
+     */
     @Override
-    void applyHighlightEffect(boolean b) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public synchronized void applyHighlightEffect(boolean applied) {
+        if (applied) {
+            descrLabel.setStyle("-fx-font-weight: bold;"); // NON-NLS
+            setBackground(highlightedBackground);
+        } else {
+            descrLabel.setStyle("-fx-font-weight: normal;"); // NON-NLS
+            setBackground(defaultBackground);
+        }
     }
 
+    /**
+     * @param w the maximum width the description label should have
+     */
     @Override
-    void setMaxDescriptionWidth(double descriptionWidth) {
-//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void setMaxDescriptionWidth(double w) {
+        descrLabel.setMaxWidth(w);
     }
 
     @Override
@@ -168,13 +156,16 @@ final class SingleEventNode extends EventNodeBase<SingleEvent> {
 
         switch (descrVis) {
             case HIDDEN:
+                countLabel.setText(null);
                 descrLabel.setText("");
                 break;
             case COUNT_ONLY:
+                countLabel.setText(null);
                 descrLabel.setText("");
                 break;
             default:
             case SHOWN:
+                countLabel.setText(null);
                 String description = tlEvent.getFullDescription();
                 description = parentNode != null
                         ? "    ..." + StringUtils.substringAfter(description, parentNode.getDescription())

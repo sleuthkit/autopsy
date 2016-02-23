@@ -40,15 +40,8 @@ import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.Border;
-import javafx.scene.layout.BorderStroke;
-import javafx.scene.layout.BorderStrokeStyle;
-import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Pane;
-import javafx.scene.paint.Color;
 import javafx.util.Duration;
 import org.controlsfx.control.action.Action;
 import org.joda.time.DateTime;
@@ -59,7 +52,6 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.MultiEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.show;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
@@ -80,32 +72,21 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
     static final CornerRadii CORNER_RADII_3 = new CornerRadii(3);
     static final CornerRadii CORNER_RADII_1 = new CornerRadii(1);
 
-    private final Border SELECTION_BORDER;
-
     final SleuthkitCase sleuthkitCase;
     final FilteredEventsModel eventsModel;
-
-    final Background highlightedBackground;
-    final Background defaultBackground;
-    final Color evtColor;
 
     final ObservableList<EventNodeBase<?>> subNodes = FXCollections.observableArrayList();
     final Pane subNodePane = new Pane();
 
-  
-
     private final Tooltip tooltip = new Tooltip(Bundle.EventBundleNodeBase_toolTip_loading());
     private Timeline timeline;
 
-    public MultiEventNodeBase(DetailsChart chart, BundleType eventBundle, ParentNodeType parentNode) {
+    MultiEventNodeBase(DetailsChart chart, BundleType eventBundle, ParentNodeType parentNode) {
         super(eventBundle, parentNode, chart);
         this.descLOD.set(eventBundle.getDescriptionLoD());
         sleuthkitCase = chart.getController().getAutopsyCase().getSleuthkitCase();
         eventsModel = chart.getController().getEventsModel();
-        evtColor = getEventType().getColor();
-        defaultBackground = new Background(new BackgroundFill(evtColor.deriveColor(0, 1, 1, .1), CORNER_RADII_3, Insets.EMPTY));
-        highlightedBackground = new Background(new BackgroundFill(evtColor.deriveColor(0, 1.1, 1.1, .3), CORNER_RADII_3, Insets.EMPTY));
-        SELECTION_BORDER = new Border(new BorderStroke(evtColor.darker().desaturate(), BorderStrokeStyle.SOLID, CORNER_RADII_3, new BorderWidths(2)));
+
         if (eventBundle.getEventIDsWithHashHits().isEmpty()) {
             show(hashIV, false);
         }
@@ -113,7 +94,6 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
             show(tagIV, false);
         }
 
-        setBackground(defaultBackground);
         setAlignment(Pos.TOP_LEFT);
         setMaxWidth(USE_PREF_SIZE);
         infoHBox.setMaxWidth(USE_PREF_SIZE);
@@ -171,7 +151,6 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
         return tlEvent;
     }
 
-  
     /**
      * defer tooltip content creation till needed, this had a surprisingly large
      * impact on speed of loading the chart
@@ -247,15 +226,6 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
     }
 
     /**
-     * apply the 'effect' to visually indicate selection
-     *
-     * @param applied true to apply the selection 'effect', false to remove it
-     */
-    public void applySelectionEffect(boolean applied) {
-        setBorder(applied ? SELECTION_BORDER : null);
-    }
-
-    /**
      * apply the 'effect' to visually indicate highlighted nodes
      *
      * @param applied true to apply the highlight 'effect', false to remove it
@@ -265,10 +235,6 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
     @SuppressWarnings("unchecked")
     public List<EventNodeBase<?>> getSubNodes() {
         return subNodes;
-    }
-
-    final EventType getEventType() {
-        return getEventBundle().getEventType();
     }
 
     final String getDescription() {
@@ -299,11 +265,6 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
     }
 
     abstract EventNodeBase<?> createChildNode(ParentType rawChild);
-
-    /**
-     * @param w the maximum width the description label should have
-     */
-    abstract void setMaxDescriptionWidth(double w);
 
     void animateTo(double xLeft, double yTop) {
         if (timeline != null) {

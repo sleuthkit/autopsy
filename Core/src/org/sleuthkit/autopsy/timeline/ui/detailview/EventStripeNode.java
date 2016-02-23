@@ -25,7 +25,6 @@ import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.OverrunStyle;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
 import org.apache.commons.lang3.StringUtils;
@@ -44,71 +43,45 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
 
     private static final Logger LOGGER = Logger.getLogger(EventStripeNode.class.getName());
     private Button hideButton;
-    /**
-     * Pane that contains EventStripeNodes for any 'subevents' if they are
-     * displayed
-     *
-     * //TODO: move more of the control of subnodes/events here and out of
-     * EventDetail Chart
-     */
-//    private final HBox clustersHBox = new HBox();
-    private final ImageView eventTypeImageView = new ImageView();
 
-    @Override
-    void installActionButtons() {
-        super.installActionButtons();
-        if (hideButton == null) {
-            hideButton = ActionUtils.createButton(new HideDescriptionAction(getDescription(), tlEvent.getDescriptionLoD(), chart),
-                    ActionUtils.ActionTextBehavior.HIDE);
-            configureActionButton(hideButton);
 
-            infoHBox.getChildren().add(hideButton);
-        }
-    }
-
-    public EventStripeNode(DetailsChart chart, EventStripe eventStripe, EventClusterNode parentNode) {
+    EventStripeNode(DetailsChart chart, EventStripe eventStripe, EventClusterNode parentNode) {
         super(chart, eventStripe, parentNode);
-        setMinHeight(48);
+        setMinHeight(24);
         //setup description label
-        eventTypeImageView.setImage(getEventType().getFXImage());
+       
         descrLabel.setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
-        descrLabel.setGraphic(eventTypeImageView);
+     
         descrLabel.setPrefWidth(USE_COMPUTED_SIZE);
         setAlignment(subNodePane, Pos.BOTTOM_LEFT);
 
-        for (EventCluster cluster : eventStripe.getClusters()) {
-            subNodes.add(createChildNode(cluster));
-        }
-
-        getChildren().addAll(new VBox(infoHBox, subNodePane));
-    }
-
-    @Override
-    EventNodeBase<?> createChildNode(EventCluster cluster) {
-        if (cluster.getEventIDs().size() == 1) {
-            return new SingleEventNode(getChart(), getChart().getController().getEventsModel().getEventById(Iterables.getOnlyElement(cluster.getEventIDs())), this);
+        if (eventStripe.getClusters().size() > 1) {
+            for (EventCluster cluster : eventStripe.getClusters()) {
+                subNodes.add(createChildNode(cluster));
+            }
+            getChildren().addAll(new VBox(infoHBox, subNodePane));
         } else {
-            return new EventClusterNode(getChart(), cluster, this);
-        }
-    }
+            EventNodeBase<?> childNode;
+            EventCluster cluster = Iterables.getOnlyElement(eventStripe.getClusters());
+            if (cluster.getEventIDs().size() == 1) {
+                SingleEventNode singleEventNode = new SingleEventNode(getChart(), getChart().getController().getEventsModel().getEventById(Iterables.getOnlyElement(cluster.getEventIDs())), this);
+                childNode = singleEventNode;
+            } else {
+                EventClusterNode eventClusterNode = new EventClusterNode(getChart(), cluster, this);
+                eventClusterNode.installActionButtons();
+                eventClusterNode.infoHBox.getChildren().remove(eventClusterNode.countLabel);
+                controlsHBox.getChildren().addAll(eventClusterNode.minusButton, eventClusterNode.plusButton);
+                childNode = eventClusterNode;
+            }
 
-    @Override
-    void showHoverControls(final boolean showControls) {
-        super.showHoverControls(showControls);
-        installActionButtons();
-        show(hideButton, showControls);
+            childNode.setDescriptionVisibiltiyImpl(DescriptionVisibility.HIDDEN);
+            subNodes.add(childNode);
+            getChildren().addAll(infoHBox, subNodePane);
+        }
     }
 
     public EventStripe getEventStripe() {
         return getEventBundle();
-    }
-
-    /**
-     * @param w the maximum width the description label should have
-     */
-    @Override
-    public void setMaxDescriptionWidth(double w) {
-        descrLabel.setMaxWidth(w);
     }
 
     /**
@@ -128,8 +101,31 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
     }
 
     @Override
+    void installActionButtons() {
+        super.installActionButtons();
+        if (hideButton == null) {
+            hideButton = ActionUtils.createButton(new HideDescriptionAction(getDescription(), tlEvent.getDescriptionLoD(), chart),
+                    ActionUtils.ActionTextBehavior.HIDE);
+            configureActionButton(hideButton);
+
+            controlsHBox.getChildren().add(hideButton);
+        }
+    }
+
+    @Override
+    EventNodeBase<?> createChildNode(EventCluster cluster) {
+        if (cluster.getEventIDs().size() == 1) {
+            return new SingleEventNode(getChart(), getChart().getController().getEventsModel().getEventById(Iterables.getOnlyElement(cluster.getEventIDs())), this);
+        } else {
+            return new EventClusterNode(getChart(), cluster, this);
+        }
+    }
+
+
+
+    @Override
     void setDescriptionVisibiltiyImpl(DescriptionVisibility descrVis) {
-        final int size = getEventStripe().getCount();
+        final int size = getEventStripe().getSize();
 
         switch (descrVis) {
             case HIDDEN:

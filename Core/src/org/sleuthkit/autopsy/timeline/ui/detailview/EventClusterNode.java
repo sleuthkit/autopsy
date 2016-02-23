@@ -56,7 +56,6 @@ import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.configureActionButton;
-import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.show;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
@@ -72,8 +71,8 @@ final public class EventClusterNode extends MultiEventNodeBase<EventCluster, Eve
 
     private final Border clusterBorder = new Border(new BorderStroke(evtColor.deriveColor(0, 1, 1, .4), BorderStrokeStyle.SOLID, CORNER_RADII_1, CLUSTER_BORDER_WIDTHS));
 
-    private Button plusButton;
-    private Button minusButton;
+    Button plusButton;
+    Button minusButton;
 
     @Override
     void installActionButtons() {
@@ -81,15 +80,14 @@ final public class EventClusterNode extends MultiEventNodeBase<EventCluster, Eve
         if (plusButton == null) {
             plusButton = ActionUtils.createButton(new ExpandClusterAction(), ActionUtils.ActionTextBehavior.HIDE);
             minusButton = ActionUtils.createButton(new CollapseClusterAction(), ActionUtils.ActionTextBehavior.HIDE);
-            infoHBox.getChildren().addAll(minusButton, plusButton);
+            controlsHBox.getChildren().addAll(minusButton, plusButton);
 
             configureActionButton(plusButton);
             configureActionButton(minusButton);
-
         }
     }
 
-    public EventClusterNode(DetailsChart chart, EventCluster eventCluster, EventStripeNode parentNode) {
+    EventClusterNode(DetailsChart chart, EventCluster eventCluster, EventStripeNode parentNode) {
         super(chart, eventCluster, parentNode);
 
         subNodePane.setBorder(clusterBorder);
@@ -102,17 +100,10 @@ final public class EventClusterNode extends MultiEventNodeBase<EventCluster, Eve
         setCursor(Cursor.HAND);
         getChildren().addAll(subNodePane, infoHBox);
 
-    }
+        if (parentNode == null) {
 
-    @Override
-    void showHoverControls(final boolean showControls) {
-        super.showHoverControls(showControls);
-        installActionButtons();
-        show(plusButton, showControls);
-        show(minusButton, showControls);
-//        if (getEventCluster().getEventIDs().size() == 1) {
-//            show(pinButton, showControls);
-//        }
+            setDescriptionVisibiltiyImpl(DescriptionVisibility.SHOWN);
+        }
     }
 
     @Override
@@ -121,13 +112,8 @@ final public class EventClusterNode extends MultiEventNodeBase<EventCluster, Eve
     }
 
     @Override
-    void setMaxDescriptionWidth(double max) {
-//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
     void setDescriptionVisibiltiyImpl(DescriptionVisibility descrVis) {
-        final int size = getEventCluster().getCount();
+        final int size = getEventCluster().getSize();
         switch (descrVis) {
             case HIDDEN:
                 countLabel.setText("");
@@ -137,9 +123,20 @@ final public class EventClusterNode extends MultiEventNodeBase<EventCluster, Eve
                 descrLabel.setText("");
                 countLabel.setText(String.valueOf(size));
                 break;
-            default:
             case SHOWN:
-                countLabel.setText(String.valueOf(size));
+            default:
+                String count;
+                String description;
+                if (parentNode == null) {
+                    description = tlEvent.getDescription();
+                    count = "(" + size + ")";
+                } else {
+                    description = "";
+                    count = String.valueOf(size);
+                }
+
+                descrLabel.setText(description);
+                countLabel.setText(count);
                 break;
         }
     }
@@ -225,8 +222,6 @@ final public class EventClusterNode extends MultiEventNodeBase<EventCluster, Eve
 
     @Override
     EventNodeBase<?> createChildNode(EventStripe stripe) {
-//        return new EventStripeNode(getChart(), stripe, this);
-
         if (stripe.getEventIDs().size() == 1) {
             return new SingleEventNode(getChart(), getChart().getController().getEventsModel().getEventById(Iterables.getOnlyElement(stripe.getEventIDs())), this);
         } else {
@@ -270,7 +265,7 @@ final public class EventClusterNode extends MultiEventNodeBase<EventCluster, Eve
         return mouseEvent -> new ExpandClusterAction().handle(null);
     }
 
-    private class ExpandClusterAction extends Action {
+    class ExpandClusterAction extends Action {
 
         @NbBundle.Messages({"ExpandClusterAction.text=Expand"})
         ExpandClusterAction() {
@@ -286,7 +281,7 @@ final public class EventClusterNode extends MultiEventNodeBase<EventCluster, Eve
         }
     }
 
-    private class CollapseClusterAction extends Action {
+    class CollapseClusterAction extends Action {
 
         @NbBundle.Messages({"CollapseClusterAction.text=Collapse"})
         CollapseClusterAction() {

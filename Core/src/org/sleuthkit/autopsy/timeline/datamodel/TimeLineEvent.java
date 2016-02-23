@@ -44,7 +44,7 @@ public interface TimeLineEvent {
 
     long getStartMillis();
 
-    default int getCount() {
+    default int getSize() {
         return getEventIDs().size();
     }
 

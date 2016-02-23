@@ -346,8 +346,8 @@ public final class PinnedEventsChart extends XYChart<DateTime, TimeLineEvent> im
         eventNode.setVisible(true);
         eventNode.setManaged(true);
         //apply advanced layout description visibility options
-//        eventNode.setDescriptionVisibility(descrVisibility.get());
-//        eventNode.setMaxDescriptionWidth(descriptionWidth);
+        eventNode.setDescriptionVisibility(DescriptionVisibility.SHOWN);
+        eventNode.setMaxDescriptionWidth(USE_PREF_SIZE);
 
         //do recursive layout
         eventNode.layoutChildren();

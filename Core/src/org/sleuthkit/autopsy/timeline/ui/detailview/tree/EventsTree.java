@@ -185,7 +185,7 @@ final public class EventsTree extends BorderPane {
                     setDisable(true);
                 } else {
                     setDisable(false);
-                    text = item.getDescription() + " (" + item.getCount() + ")"; // NON-NLS
+                    text = item.getDescription() + " (" + item.getSize() + ")"; // NON-NLS
                     TreeItem<TimeLineEvent> parent = getTreeItem().getParent();
                     if (parent != null && parent.getValue() != null && (parent instanceof EventDescriptionTreeItem)) {
                         text = StringUtils.substringAfter(text, parent.getValue().getDescription());
