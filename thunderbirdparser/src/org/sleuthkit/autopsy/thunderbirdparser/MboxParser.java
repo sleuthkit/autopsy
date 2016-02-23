@@ -232,7 +232,8 @@ class MboxParser {
                 bodyString.append(line).append("\n");
             }
             for(Field field: fields) {
-                bodyString.append("---").append(field.getBody());
+                String body = field.getBody();
+                bodyString.append("---").append(body);
             }
 
             switch (type) {
