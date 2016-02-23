@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,13 +22,13 @@ import java.util.Collections;
 import java.util.List;
 import javafx.scene.chart.Axis;
 import javafx.scene.chart.XYChart;
-import org.sleuthkit.autopsy.timeline.datamodel.Event;
+import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 
 /**
  * No-Op axis that doesn't do anything usefull but is necessary to pass
  * AggregateEvent as the second member of {@link XYChart.Data} objects
  */
-class EventAxis<Type extends Event> extends Axis<Type> {
+class EventAxis<Type extends TimeLineEvent> extends Axis<Type> {
 
     @Override
     public double getDisplayPosition(Type value) {

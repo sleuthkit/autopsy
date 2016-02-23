@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2016 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
@@ -13,7 +26,6 @@ import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Button;
 import javafx.scene.control.OverrunStyle;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
@@ -24,7 +36,6 @@ import javafx.scene.layout.BorderStroke;
 import javafx.scene.layout.BorderStrokeStyle;
 import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.HBox;
 import static javafx.scene.layout.Region.USE_PREF_SIZE;
 import javafx.scene.paint.Color;
 import org.apache.commons.lang3.StringUtils;
@@ -33,7 +44,6 @@ import org.joda.time.DateTime;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
-import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.configureActionButton;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.MultiEventNodeBase.CORNER_RADII_3;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 
@@ -46,9 +56,7 @@ final class SingleEventNode extends EventNodeBase<SingleEvent> {
     final Background defaultBackground;
     private final Color evtColor;
 
-    final ImageView hashIV = new ImageView(HASH_PIN);
-    final ImageView tagIV = new ImageView(TAG);
-    final HBox infoHBox = new HBox(5, descrLabel, hashIV, tagIV);
+ 
 
     static void show(Node b, boolean show) {
         b.setVisible(show);
@@ -57,7 +65,7 @@ final class SingleEventNode extends EventNodeBase<SingleEvent> {
     static final CornerRadii CORNER_RADII_1 = new CornerRadii(1);
     private static final BorderWidths CLUSTER_BORDER_WIDTHS = new BorderWidths(0, 0, 0, 2);
     private final ImageView eventTypeImageView = new ImageView();
-    private Button pinButton;
+ 
 
     @Override
     EventHandler<MouseEvent> getDoubleClickHandler() {
@@ -68,10 +76,10 @@ final class SingleEventNode extends EventNodeBase<SingleEvent> {
     @Override
     Collection<? extends Action> getActions() {
         TimeLineController controller = getChart().getController();
-        if (controller.getPinnedEventIDs().contains(ievent.getEventID())) {
-            return Arrays.asList(new UnPinEventAction(controller, ievent.getEventIDs()));
+        if (controller.getPinnedEvents().contains(tlEvent)) {
+            return Arrays.asList(new UnPinEventAction(controller, tlEvent));
         } else {
-            return Arrays.asList(new PinEventAction(controller, ievent.getEventIDs()));
+            return Arrays.asList(new PinEventAction(controller, tlEvent));
         }
     }
 
@@ -117,31 +125,12 @@ final class SingleEventNode extends EventNodeBase<SingleEvent> {
         return Collections.emptyList();
     }
 
-    void installActionButtons() {
-        if (pinButton == null) {
-            pinButton = new Button("", new ImageView(PIN));
-            infoHBox.getChildren().add(pinButton);
-            configureActionButton(pinButton);
-
-            pinButton.setOnAction(actionEvent -> {
-                TimeLineController controller = getChart().getController();
-                if (controller.getPinnedEventIDs().contains(ievent.getEventID())) {
-                    new UnPinEventAction(controller, ievent.getEventIDs()).handle(actionEvent);
-                    pinButton.setGraphic(new ImageView(PIN));
-                } else {
-                    new PinEventAction(controller, ievent.getEventIDs()).handle(actionEvent);
-                    pinButton.setGraphic(new ImageView(UNPIN));
-                }
-            });
-
-        }
-    }
+   
 
     @Override
     void showHoverControls(final boolean showControls) {
         super.showHoverControls(showControls);
-        installActionButtons();
-        show(pinButton, showControls);
+       
     }
 
     @Override
@@ -156,7 +145,7 @@ final class SingleEventNode extends EventNodeBase<SingleEvent> {
 
     @Override
     String getDescription() {
-        return ievent.getFullDescription();
+        return tlEvent.getFullDescription();
     }
 
     @Override
@@ -186,7 +175,7 @@ final class SingleEventNode extends EventNodeBase<SingleEvent> {
                 break;
             default:
             case SHOWN:
-                String description = ievent.getFullDescription();
+                String description = tlEvent.getFullDescription();
                 description = parentNode != null
                         ? "    ..." + StringUtils.substringAfter(description, parentNode.getDescription())
                         : description;

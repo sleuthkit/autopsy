@@ -49,7 +49,7 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.MultiEvent;
-import org.sleuthkit.autopsy.timeline.datamodel.Event;
+import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
 import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
@@ -67,7 +67,7 @@ final public class EventsTree extends BorderPane {
     private DetailViewPane detailViewPane;
 
     @FXML
-    private TreeView<Event> eventsTree;
+    private TreeView<TimeLineEvent> eventsTree;
 
     @FXML
     private Label eventsTreeLabel;
@@ -146,7 +146,7 @@ final public class EventsTree extends BorderPane {
      * A tree cell to display {@link MultiEvent}s. Shows the description, and
      * count, as well a a "legend icon" for the event type.
      */
-    private class EventBundleTreeCell extends TreeCell<Event> {
+    private class EventBundleTreeCell extends TreeCell<TimeLineEvent> {
 
         private static final double HIDDEN_MULTIPLIER = .6;
         private final Rectangle rect = new Rectangle(24, 24);
@@ -161,7 +161,7 @@ final public class EventsTree extends BorderPane {
         }
 
         @Override
-        protected void updateItem(Event item, boolean empty) {
+        protected void updateItem(TimeLineEvent item, boolean empty) {
             super.updateItem(item, empty);
             if (item == null || empty) {
                 setText(null);
@@ -186,7 +186,7 @@ final public class EventsTree extends BorderPane {
                 } else {
                     setDisable(false);
                     text = item.getDescription() + " (" + item.getCount() + ")"; // NON-NLS
-                    TreeItem<Event> parent = getTreeItem().getParent();
+                    TreeItem<TimeLineEvent> parent = getTreeItem().getParent();
                     if (parent != null && parent.getValue() != null && (parent instanceof EventDescriptionTreeItem)) {
                         text = StringUtils.substringAfter(text, parent.getValue().getDescription());
                     }
@@ -214,7 +214,7 @@ final public class EventsTree extends BorderPane {
             }
         }
 
-        private void registerListeners(Collection<? extends DescriptionFilter> filters, Event item) {
+        private void registerListeners(Collection<? extends DescriptionFilter> filters, TimeLineEvent item) {
             for (DescriptionFilter filter : filters) {
                 if (filter.getDescription().equals(item.getDescription())) {
                     filter.activeProperty().addListener(filterStateChangeListener);
@@ -230,8 +230,8 @@ final public class EventsTree extends BorderPane {
             }
         }
 
-        private void updateHiddenState(Event item) {
-            TreeItem<Event> treeItem = getTreeItem();
+        private void updateHiddenState(TimeLineEvent item) {
+            TreeItem<TimeLineEvent> treeItem = getTreeItem();
 
             hidden.set(controller.getQuickHideFilters().stream().
                     filter(AbstractFilter::isActive)

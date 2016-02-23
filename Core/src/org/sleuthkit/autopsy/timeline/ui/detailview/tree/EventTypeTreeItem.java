@@ -26,7 +26,7 @@ import javafx.collections.FXCollections;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.datamodel.MultiEvent;
-import org.sleuthkit.autopsy.timeline.datamodel.Event;
+import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 
 class EventTypeTreeItem extends NavTreeItem {
 
@@ -35,9 +35,9 @@ class EventTypeTreeItem extends NavTreeItem {
      */
     private final Map<String, EventDescriptionTreeItem> childMap = new HashMap<>();
 
-    private Comparator<TreeItem<Event>> comparator = TreeComparator.Description;
+    private Comparator<TreeItem<TimeLineEvent>> comparator = TreeComparator.Description;
 
-    EventTypeTreeItem(MultiEvent<?> g, Comparator<TreeItem<Event>> comp) {
+    EventTypeTreeItem(MultiEvent<?> g, Comparator<TreeItem<TimeLineEvent>> comp) {
         setValue(g);
         comparator = comp;
     }
@@ -79,7 +79,7 @@ class EventTypeTreeItem extends NavTreeItem {
     }
 
     @Override
-    public NavTreeItem findTreeItemForEvent(Event t) {
+    public NavTreeItem findTreeItemForEvent(TimeLineEvent t) {
         if (t.getEventType().getBaseType() == getValue().getEventType().getBaseType()) {
 
             for (EventDescriptionTreeItem child : childMap.values()) {
@@ -93,7 +93,7 @@ class EventTypeTreeItem extends NavTreeItem {
     }
 
     @Override
-    void resort(Comparator<TreeItem<Event>> comp, Boolean recursive) {
+    void resort(Comparator<TreeItem<TimeLineEvent>> comp, Boolean recursive) {
         this.comparator = comp;
         FXCollections.sort(getChildren(), comp);
         if (recursive) {

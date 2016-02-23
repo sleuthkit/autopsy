@@ -27,7 +27,7 @@ import java.util.Optional;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.datamodel.MultiEvent;
-import org.sleuthkit.autopsy.timeline.datamodel.Event;
+import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 
 /**
@@ -43,9 +43,9 @@ class RootItem extends NavTreeItem {
     /**
      * the comparator if any used to sort the children of this item
      */
-    private Comparator<TreeItem<Event>> comparator = TreeComparator.Type.reversed();
+    private Comparator<TreeItem<TimeLineEvent>> comparator = TreeComparator.Type.reversed();
 
-    RootItem(Comparator<TreeItem<Event>> comp) {
+    RootItem(Comparator<TreeItem<TimeLineEvent>> comp) {
         this.comparator = comp;
     }
 
@@ -99,13 +99,13 @@ class RootItem extends NavTreeItem {
     }
 
     @Override
-    void resort(Comparator<TreeItem<Event>> comp, Boolean recursive) {
+    void resort(Comparator<TreeItem<TimeLineEvent>> comp, Boolean recursive) {
         comparator = comp;
         childMap.values().forEach(ti -> ti.resort(comp, true));
     }
 
     @Override
-    public NavTreeItem findTreeItemForEvent(Event t) {
+    public NavTreeItem findTreeItemForEvent(TimeLineEvent t) {
         for (EventTypeTreeItem child : childMap.values()) {
             final NavTreeItem findTreeItemForEvent = child.findTreeItemForEvent(t);
             if (findTreeItemForEvent != null) {

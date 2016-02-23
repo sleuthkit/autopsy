@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,9 +38,7 @@ import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
-import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
@@ -49,7 +47,6 @@ import javafx.scene.layout.BorderStroke;
 import javafx.scene.layout.BorderStrokeStyle;
 import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
@@ -59,8 +56,8 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.MultiEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.datamodel.MultiEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
@@ -95,11 +92,7 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
     final ObservableList<EventNodeBase<?>> subNodes = FXCollections.observableArrayList();
     final Pane subNodePane = new Pane();
 
-    final Label countLabel = new Label();
-
-    final ImageView hashIV = new ImageView(HASH_PIN);
-    final ImageView tagIV = new ImageView(TAG);
-    final HBox infoHBox = new HBox(5, descrLabel, countLabel, hashIV, tagIV);
+  
 
     private final Tooltip tooltip = new Tooltip(Bundle.EventBundleNodeBase_toolTip_loading());
     private Timeline timeline;
@@ -144,7 +137,6 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
 
         //set up mouse hover effect and tooltip
         setOnMouseEntered((MouseEvent e) -> {
-
             Tooltip.uninstall(chart.asNode(), AbstractVisualizationPane.getDefaultTooltip());
             showHoverControls(true);
             toFront();
@@ -176,16 +168,10 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
     }
 
     public final BundleType getEventBundle() {
-        return ievent;
+        return tlEvent;
     }
 
-    /**
-     * install whatever buttons are visible on hover for this node. likes
-     * tooltips, this had a surprisingly large impact on speed of loading the
-     * chart
-     */
-    abstract void installActionButtons();
-
+  
     /**
      * defer tooltip content creation till needed, this had a surprisingly large
      * impact on speed of loading the chart
@@ -212,10 +198,10 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
                 @Override
                 protected String call() throws Exception {
                     HashMap<String, Long> hashSetCounts = new HashMap<>();
-                    if (ievent.getEventIDsWithHashHits().isEmpty() == false) {
+                    if (tlEvent.getEventIDsWithHashHits().isEmpty() == false) {
                         try {
                             //TODO:push this to DB
-                            for (SingleEvent tle : eventsModel.getEventsById(ievent.getEventIDsWithHashHits())) {
+                            for (SingleEvent tle : eventsModel.getEventsById(tlEvent.getEventIDsWithHashHits())) {
                                 Set<String> hashSetNames = sleuthkitCase.getAbstractFileById(tle.getFileID()).getHashSetNames();
                                 for (String hashSetName : hashSetNames) {
                                     hashSetCounts.merge(hashSetName, 1L, Long::sum);
@@ -230,8 +216,8 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
                             .collect(Collectors.joining("\n"));
 
                     Map<String, Long> tagCounts = new HashMap<>();
-                    if (ievent.getEventIDsWithTags().isEmpty() == false) {
-                        tagCounts.putAll(eventsModel.getTagCountsByTagName(ievent.getEventIDsWithTags()));
+                    if (tlEvent.getEventIDsWithTags().isEmpty() == false) {
+                        tagCounts.putAll(eventsModel.getTagCountsByTagName(tlEvent.getEventIDsWithTags()));
                     }
                     String tagCountsString = tagCounts.entrySet().stream()
                             .map((Map.Entry<String, Long> t) -> t.getKey() + " : " + t.getValue())

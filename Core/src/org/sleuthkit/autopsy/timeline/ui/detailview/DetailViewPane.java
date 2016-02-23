@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-15 Basis Technology Corp.
+ * Copyright 2014-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -69,7 +69,7 @@ import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.Event;
+import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailsChart.HideDescriptionAction;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailsChart.UnhideDescriptionAction;
@@ -100,7 +100,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
     private final ScrollBar vertScrollBar = new ScrollBar();
     private final Region scrollBarSpacer = new Region();
 
-    private MultipleSelectionModel<TreeItem<Event>> treeSelectionModel;
+    private MultipleSelectionModel<TreeItem<TimeLineEvent>> treeSelectionModel;
     private final ObservableList<EventNodeBase<?>> highlightedNodes = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
 
     public ObservableList<EventStripe> getEventStripes() {
@@ -213,12 +213,12 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
         return Math.max(0, Math.min(vertScrollBar.getMax() + 50, value));
     }
 
-    public void setSelectionModel(MultipleSelectionModel<TreeItem<Event>> selectionModel) {
+    public void setSelectionModel(MultipleSelectionModel<TreeItem<TimeLineEvent>> selectionModel) {
         this.treeSelectionModel = selectionModel;
 
         treeSelectionModel.getSelectedItems().addListener((Observable observable) -> {
             highlightedNodes.clear();
-            for (TreeItem<Event> tn : treeSelectionModel.getSelectedItems()) {
+            for (TreeItem<TimeLineEvent> tn : treeSelectionModel.getSelectedItems()) {
 
                 for (EventNodeBase<?> n : chart.getNodes((EventNodeBase<?> t) ->
                         t.getDescription().equals(tn.getValue().getDescription()))) {

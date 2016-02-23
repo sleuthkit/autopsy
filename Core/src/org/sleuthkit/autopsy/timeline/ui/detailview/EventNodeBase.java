@@ -1,14 +1,27 @@
+
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2016 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -17,6 +30,7 @@ import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
+import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBase;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
@@ -28,6 +42,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 import org.controlsfx.control.action.Action;
@@ -35,7 +50,7 @@ import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.Event;
+import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
@@ -45,7 +60,7 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 /**
  *
  */
-public abstract class EventNodeBase<Type extends Event> extends StackPane {
+public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPane {
 
     static final Image HASH_PIN = new Image("/org/sleuthkit/autopsy/images/hashset_hits.png"); //NOI18N NON-NLS
     static final Image TAG = new Image("/org/sleuthkit/autopsy/images/green-tag-icon-16.png"); // NON-NLS //NOI18N
@@ -58,7 +73,7 @@ public abstract class EventNodeBase<Type extends Event> extends StackPane {
 
     private final Tooltip tooltip = new Tooltip(Bundle.EventBundleNodeBase_toolTip_loading());
 
-    final Type ievent;
+    final Type tlEvent;
 
     final EventNodeBase<?> parentNode;
     final Label descrLabel = new Label();
@@ -81,7 +96,7 @@ public abstract class EventNodeBase<Type extends Event> extends StackPane {
 
     public EventNodeBase(Type ievent, EventNodeBase<?> parent, DetailsChart chart) {
         this.chart = chart;
-        this.ievent = ievent;
+        this.tlEvent = ievent;
         this.parentNode = parent;
 
         descVisibility.addListener(observable -> setDescriptionVisibiltiyImpl(descVisibility.get()));
@@ -106,12 +121,44 @@ public abstract class EventNodeBase<Type extends Event> extends StackPane {
     }
 
     public Type getEvent() {
-        return ievent;
+        return tlEvent;
     }
 
     protected void layoutChildren() {
         super.layoutChildren();
     }
+
+    /**
+     * install whatever buttons are visible on hover for this node. likes
+     * tooltips, this had a surprisingly large impact on speed of loading the
+     * chart
+     */
+    void installActionButtons() {
+        if (pinButton == null) {
+            pinButton = new Button("", new ImageView(PIN));
+            infoHBox.getChildren().add(pinButton);
+            configureActionButton(pinButton);
+
+            pinButton.setOnAction(actionEvent -> {
+                TimeLineController controller = getChart().getController();
+                if (controller.getPinnedEvents().contains(tlEvent)) {
+                    new UnPinEventAction(controller, tlEvent).handle(actionEvent);
+                    pinButton.setGraphic(new ImageView(PIN));
+                } else {
+                    new PinEventAction(controller, tlEvent).handle(actionEvent);
+                    pinButton.setGraphic(new ImageView(UNPIN));
+                }
+            });
+
+        }
+    }
+
+    final Label countLabel = new Label();
+
+    final ImageView hashIV = new ImageView(HASH_PIN);
+    final ImageView tagIV = new ImageView(TAG);
+    final HBox infoHBox = new HBox(5, descrLabel, countLabel, hashIV, tagIV);
+    private Button pinButton;
 
     abstract public TimeLineChart<DateTime> getChart();
 
@@ -121,6 +168,8 @@ public abstract class EventNodeBase<Type extends Event> extends StackPane {
         setEffect(showControls ? dropShadow : null);
         installTooltip();
         enableTooltip(showControls);
+        installActionButtons();
+        show(pinButton, showControls);
         if (parentNode != null) {
             parentNode.showHoverControls(false);
         }
@@ -137,11 +186,11 @@ public abstract class EventNodeBase<Type extends Event> extends StackPane {
     }
 
     EventType getEventType() {
-        return ievent.getEventType();
+        return tlEvent.getEventType();
     }
 
     long getStartMillis() {
-        return ievent.getStartMillis();
+        return tlEvent.getStartMillis();
     }
 
     final double getLayoutXCompensation() {
@@ -196,9 +245,9 @@ public abstract class EventNodeBase<Type extends Event> extends StackPane {
     static class PinEventAction extends Action {
 
         @NbBundle.Messages({"PinEventAction.text=Pin"})
-        PinEventAction(TimeLineController controller, Set<Long> eventIds) {
+        PinEventAction(TimeLineController controller, TimeLineEvent event) {
             super(Bundle.PinEventAction_text());
-            setEventHandler(actionEvent -> controller.pinEvents(eventIds));
+            setEventHandler(actionEvent -> controller.pinEvent(event));
             setGraphic(new ImageView(PIN));
         }
     }
@@ -206,9 +255,9 @@ public abstract class EventNodeBase<Type extends Event> extends StackPane {
     static class UnPinEventAction extends Action {
 
         @NbBundle.Messages({"UnPinEventAction.text=Unpin"})
-        UnPinEventAction(TimeLineController controller, Set<Long> eventIds) {
+        UnPinEventAction(TimeLineController controller, TimeLineEvent event) {
             super(Bundle.UnPinEventAction_text());
-            setEventHandler(actionEvent -> controller.unPinEvents(eventIds));
+            setEventHandler(actionEvent -> controller.unPinEvent(event));
             setGraphic(new ImageView(UNPIN));
         }
     }

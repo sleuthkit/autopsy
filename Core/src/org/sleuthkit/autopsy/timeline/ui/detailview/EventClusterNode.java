@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,9 +49,9 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.timeline.datamodel.Event;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
+import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
@@ -77,6 +77,7 @@ final public class EventClusterNode extends MultiEventNodeBase<EventCluster, Eve
 
     @Override
     void installActionButtons() {
+        super.installActionButtons();
         if (plusButton == null) {
             plusButton = ActionUtils.createButton(new ExpandClusterAction(), ActionUtils.ActionTextBehavior.HIDE);
             minusButton = ActionUtils.createButton(new CollapseClusterAction(), ActionUtils.ActionTextBehavior.HIDE);
@@ -85,22 +86,6 @@ final public class EventClusterNode extends MultiEventNodeBase<EventCluster, Eve
             configureActionButton(plusButton);
             configureActionButton(minusButton);
 
-//            if (getEventCluster().getEventIDs().size() == 1) {
-//                long eventID = Iterables.getOnlyElement(getEventCluster().getEventIDs());
-//                infoHBox.getChildren().add(pinButton);
-//
-//                pinButton.setOnAction(actionEvent -> {
-//                    TimeLineController controller = getChart().getController();
-//                    if (controller.getPinnedEventIDs().contains(eventID)) {
-//                        new UnPinEventAction(controller, getEventCluster().getEventIDs()).handle(actionEvent);
-//                        pinButton.setGraphic(new ImageView(PIN));
-//                    } else {
-//                        new PinEventAction(controller, getEventCluster().getEventIDs()).handle(actionEvent);
-//                        pinButton.setGraphic(new ImageView(UNPIN));
-//                    }
-//                });
-//                configureActionButton(pinButton);
-//            }
         }
     }
 
@@ -213,14 +198,14 @@ final public class EventClusterNode extends MultiEventNodeBase<EventCluster, Eve
                     List<EventStripe> bundles = get();
 
                     //clear the existing subnodes
-                    List<Event> transform = subNodes.stream().flatMap(new StripeFlattener()).collect(Collectors.toList());
-                    ((EventDetailsChart) getChart()).getEventStripes().removeAll(transform);
+                    List<TimeLineEvent> transform = subNodes.stream().flatMap(new StripeFlattener()).collect(Collectors.toList());
+//                    ((EventDetailsChart) getChart()).getEventStripes().removeAll(transform);
                     subNodes.clear();
                     if (bundles.isEmpty()) {
                         getChildren().setAll(subNodePane, infoHBox);
                         descLOD.set(getEventBundle().getDescriptionLoD());
                     } else {
-                        ((EventDetailsChart) getChart()).getEventStripes().addAll(bundles);
+//                        ((EventDetailsChart) getChart()).getEventStripes().addAll(bundles);
                         subNodes.addAll(Lists.transform(bundles, EventClusterNode.this::createChildNode));
                         getChildren().setAll(new VBox(infoHBox, subNodePane));
                         descLOD.set(loadedDescriptionLoD);

@@ -26,7 +26,7 @@ import javafx.collections.FXCollections;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.datamodel.MultiEvent;
-import org.sleuthkit.autopsy.timeline.datamodel.Event;
+import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 
 /**
  *
@@ -37,14 +37,14 @@ class EventDescriptionTreeItem extends NavTreeItem {
      * maps a description to the child item of this item with that description
      */
     private final Map<String, EventDescriptionTreeItem> childMap = new HashMap<>();
-    private final Event bundle;
-    private Comparator<TreeItem<Event>> comparator = TreeComparator.Description;
+    private final TimeLineEvent bundle;
+    private Comparator<TreeItem<TimeLineEvent>> comparator = TreeComparator.Description;
 
-    public Event getEvent() {
+    public TimeLineEvent getEvent() {
         return bundle;
     }
 
-    EventDescriptionTreeItem(Event g, Comparator<TreeItem<Event>> comp) {
+    EventDescriptionTreeItem(TimeLineEvent g, Comparator<TreeItem<TimeLineEvent>> comp) {
         bundle = g;
         comparator = comp;
         setValue(g);
@@ -85,7 +85,7 @@ class EventDescriptionTreeItem extends NavTreeItem {
     }
 
     @Override
-    void resort(Comparator<TreeItem<Event>> comp, Boolean recursive) {
+    void resort(Comparator<TreeItem<TimeLineEvent>> comp, Boolean recursive) {
         this.comparator = comp;
         FXCollections.sort(getChildren(), comp);
         if (recursive) {
@@ -94,7 +94,7 @@ class EventDescriptionTreeItem extends NavTreeItem {
     }
 
     @Override
-    public NavTreeItem findTreeItemForEvent(Event t) {
+    public NavTreeItem findTreeItemForEvent(TimeLineEvent t) {
 
         if (getValue().getEventType() == t.getEventType()
                 && getValue().getDescription().equals(t.getDescription())) {

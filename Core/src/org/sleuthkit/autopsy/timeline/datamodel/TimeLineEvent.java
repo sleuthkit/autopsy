@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-16 Basis Technology Corp.
+ * Copyright 2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,20 +18,19 @@
  */
 package org.sleuthkit.autopsy.timeline.datamodel;
 
-import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 /**
- * A interface for groups of events that share some attributes in common.
+ *
  */
-public interface MultiEvent<ParentType extends MultiEvent<?>> extends TimeLineEvent {
+public interface TimeLineEvent {
 
-    String getDescription();
+    public String getDescription();
 
-    DescriptionLoD getDescriptionLoD();
+    public DescriptionLoD getDescriptionLoD();
 
     Set<Long> getEventIDs();
 
@@ -45,11 +44,10 @@ public interface MultiEvent<ParentType extends MultiEvent<?>> extends TimeLineEv
 
     long getStartMillis();
 
-    Optional<ParentType> getParentBundle();
-
     default int getCount() {
         return getEventIDs().size();
     }
+
 
     SortedSet<EventCluster> getClusters();
 }

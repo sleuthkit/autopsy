@@ -1,8 +1,7 @@
 /*
-
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -57,8 +56,9 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
 
     @Override
     void installActionButtons() {
+        super.installActionButtons();
         if (hideButton == null) {
-            hideButton = ActionUtils.createButton(new HideDescriptionAction(getDescription(), ievent.getDescriptionLoD(), chart),
+            hideButton = ActionUtils.createButton(new HideDescriptionAction(getDescription(), tlEvent.getDescriptionLoD(), chart),
                     ActionUtils.ActionTextBehavior.HIDE);
             configureActionButton(hideButton);
 
@@ -160,6 +160,6 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
 
     @Override
     Collection<? extends Action> getActions() {
-        return Arrays.asList(new HideDescriptionAction(getDescription(), ievent.getDescriptionLoD(), chart));
+        return Arrays.asList(new HideDescriptionAction(getDescription(), tlEvent.getDescriptionLoD(), chart));
     }
 }

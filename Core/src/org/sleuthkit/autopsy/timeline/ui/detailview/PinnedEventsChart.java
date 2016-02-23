@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2016 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
@@ -33,9 +46,11 @@ import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
 import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
@@ -43,7 +58,7 @@ import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
 /**
  *
  */
-public final class PinnedEventsChart extends XYChart<DateTime, SingleEvent> implements DetailsChart {
+public final class PinnedEventsChart extends XYChart<DateTime, TimeLineEvent> implements DetailsChart {
 
     @Override
     public ContextMenu getChartContextMenu() {
@@ -74,12 +89,12 @@ public final class PinnedEventsChart extends XYChart<DateTime, SingleEvent> impl
      */
     private final Group nodeGroup = new Group();
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private final ObservableList<SingleEvent> events = FXCollections.observableArrayList();
-    private final ObservableList< SingleEventNode> eventNodes = FXCollections.observableArrayList();
-    private final ObservableList< SingleEventNode> sortedEventNodes = eventNodes.sorted(Comparator.comparing(SingleEventNode::getStartMillis));
+    private final ObservableList<TimeLineEvent> events = FXCollections.observableArrayList();
+    private final ObservableList< EventNodeBase<?>> eventNodes = FXCollections.observableArrayList();
+    private final ObservableList< EventNodeBase<?>> sortedEventNodes = eventNodes.sorted(Comparator.comparing(EventNodeBase::getStartMillis));
     private double descriptionWidth;
 
-    Map<Long, SingleEventNode> eventMap = new HashMap<>();
+    Map<TimeLineEvent, EventNodeBase<?>> eventMap = new HashMap<>();
 
     /**
      *
@@ -88,7 +103,7 @@ public final class PinnedEventsChart extends XYChart<DateTime, SingleEvent> impl
      * @param verticalAxis   the value of verticalAxis
      * @param selectedNodes1 the value of selectedNodes1
      */
-    PinnedEventsChart(TimeLineController controller, DateAxis dateAxis, final Axis<SingleEvent> verticalAxis) {
+    PinnedEventsChart(TimeLineController controller, DateAxis dateAxis, final Axis<TimeLineEvent> verticalAxis) {
         super(dateAxis, verticalAxis);
 
         this.controller = controller;
@@ -116,7 +131,7 @@ public final class PinnedEventsChart extends XYChart<DateTime, SingleEvent> impl
 
         //all nodes are added to nodeGroup to facilitate scrolling rather than to getPlotChildren() directly
         getPlotChildren().add(nodeGroup);
-        final Series<DateTime, SingleEvent> series = new Series<>();
+        final Series<DateTime, TimeLineEvent> series = new Series<>();
         setData(FXCollections.observableArrayList());
         getData().add(series);
 //        //add listener for events that should trigger layout
@@ -138,17 +153,17 @@ public final class PinnedEventsChart extends XYChart<DateTime, SingleEvent> impl
 //        setOnMouseDragged(chartDragHandler);
 //
 //        setOnMouseClicked(new MouseClickedHandler<>(this));
-        controller.getPinnedEventIDs().addListener((SetChangeListener.Change<? extends Long> change) -> {
+        controller.getPinnedEvents().addListener((SetChangeListener.Change<? extends TimeLineEvent> change) -> {
             if (change.wasAdded()) {
-                SingleEvent eventById = controller.getEventsModel().getEventById(change.getElementAdded());
-                Data<DateTime, SingleEvent> data1 = new Data<>(new DateTime(eventById.getStartMillis()), eventById);
+                TimeLineEvent elementAdded = change.getElementAdded();
+                Data<DateTime, TimeLineEvent> data1 = new Data<>(new DateTime(elementAdded.getStartMillis()), elementAdded);
                 series.getData().add(data1);
                 addDataItem(data1);
             }
             if (change.wasRemoved()) {
-                final SingleEvent eventById = controller.getEventsModel().getEventById(change.getElementRemoved());
-                Data<DateTime, SingleEvent> data1 = new Data<>(new DateTime(eventById.getStartMillis()), eventById);
-                series.getData().removeIf(t -> eventById.equals(t.getYValue()));
+                TimeLineEvent elementRemoved = change.getElementRemoved();
+                Data<DateTime, TimeLineEvent> data1 = new Data<>(new DateTime(elementRemoved.getStartMillis()), elementRemoved);
+                series.getData().removeIf(t -> elementRemoved.equals(t.getYValue()));
                 removeDataItem(data1);
             }
 
@@ -193,7 +208,6 @@ public final class PinnedEventsChart extends XYChart<DateTime, SingleEvent> impl
     public TimeLineController getController() {
         return controller;
     }
-  
 
     @Override
     public void requestTimelineChartLayout() {
@@ -206,23 +220,23 @@ public final class PinnedEventsChart extends XYChart<DateTime, SingleEvent> impl
     }
 
     @Override
-    protected void dataItemAdded(Series<DateTime, SingleEvent> series, int itemIndex, Data<DateTime, SingleEvent> item) {
+    protected void dataItemAdded(Series<DateTime, TimeLineEvent> series, int itemIndex, Data<DateTime, TimeLineEvent> item) {
     }
 
     @Override
-    protected void dataItemRemoved(Data<DateTime, SingleEvent> item, Series<DateTime, SingleEvent> series) {
+    protected void dataItemRemoved(Data<DateTime, TimeLineEvent> item, Series<DateTime, TimeLineEvent> series) {
     }
 
     @Override
-    protected void dataItemChanged(Data<DateTime, SingleEvent> item) {
+    protected void dataItemChanged(Data<DateTime, TimeLineEvent> item) {
     }
 
     @Override
-    protected void seriesAdded(Series<DateTime, SingleEvent> series, int seriesIndex) {
+    protected void seriesAdded(Series<DateTime, TimeLineEvent> series, int seriesIndex) {
     }
 
     @Override
-    protected void seriesRemoved(Series<DateTime, SingleEvent> series) {
+    protected void seriesRemoved(Series<DateTime, TimeLineEvent> series) {
     }
     /**
      * the maximum y value used so far during the most recent layout pass
@@ -249,7 +263,7 @@ public final class PinnedEventsChart extends XYChart<DateTime, SingleEvent> impl
 //                    .collect(Collectors.groupingBy(EventStripeNode::getEventType)).values()
 //                    .forEach(inputNodes -> maxY.set(layoutEventBundleNodes(inputNodes, maxY.get())));
 //        } else {
-        maxY.set(layoutEventBundleNodes(sortedEventNodes.sorted(Comparator.comparing(SingleEventNode::getStartMillis)), 0));
+        maxY.set(layoutEventBundleNodes(sortedEventNodes.sorted(Comparator.comparing(EventNodeBase::getStartMillis)), 0));
 //        }
         setCursor(null);
     }
@@ -346,11 +360,11 @@ public final class PinnedEventsChart extends XYChart<DateTime, SingleEvent> impl
      *
      * @param data
      */
-    void addDataItem(Data<DateTime, SingleEvent> data) {
-        final SingleEvent event = data.getYValue();
+    void addDataItem(Data<DateTime, TimeLineEvent> data) {
+        final TimeLineEvent event = data.getYValue();
 
-        SingleEventNode eventNode = new SingleEventNode(PinnedEventsChart.this, event, null);
-        eventMap.put(event.getEventID(), eventNode);
+        EventNodeBase<?> eventNode = createNode(PinnedEventsChart.this, event);
+        eventMap.put(event, eventNode);
         Platform.runLater(() -> {
             events.add(event);
             eventNodes.add(eventNode);
@@ -367,8 +381,8 @@ public final class PinnedEventsChart extends XYChart<DateTime, SingleEvent> impl
      *
      * @param data
      */
-    void removeDataItem(Data<DateTime, SingleEvent> data) {
-        SingleEventNode removedNode = eventMap.remove(data.getYValue().getEventID());
+    void removeDataItem(Data<DateTime, TimeLineEvent> data) {
+        EventNodeBase<?> removedNode = eventMap.remove(data.getYValue());
         Platform.runLater(() -> {
             events.removeAll(data.getYValue());
             eventNodes.removeAll(removedNode);
@@ -377,4 +391,13 @@ public final class PinnedEventsChart extends XYChart<DateTime, SingleEvent> impl
         });
     }
 
+    static private EventNodeBase<?> createNode(PinnedEventsChart chart, TimeLineEvent event) {
+        if (event instanceof SingleEvent) {
+            return new SingleEventNode(chart, (SingleEvent) event, null);
+        } else if (event instanceof EventCluster) {
+            return new EventClusterNode(chart, (EventCluster) event, null);
+        } else {
+            return new EventStripeNode(chart, (EventStripe) event, null);
+        }
+    }
 }

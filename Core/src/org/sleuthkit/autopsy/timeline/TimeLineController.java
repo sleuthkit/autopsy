@@ -74,6 +74,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.db.EventsRepository;
 import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
@@ -291,19 +292,19 @@ public class TimeLineController {
         advance(filteredEvents.zoomParametersProperty().get().withTimeRange(boundingEventsInterval));
     }
 
-    private final ObservableSet<Long> pinnedEventIDs = FXCollections.observableSet();
-    private final ObservableSet<Long> pinnedEventIDsUnmodifiable = FXCollections.unmodifiableObservableSet(pinnedEventIDs);
+    private final ObservableSet<TimeLineEvent> pinnedEvents = FXCollections.observableSet();
+    private final ObservableSet<TimeLineEvent> pinnedEventsUnmodifiable = FXCollections.unmodifiableObservableSet(pinnedEvents);
 
-    public void pinEvents(Collection<Long> eventIDs) {
-        pinnedEventIDs.addAll(eventIDs);
+    public void pinEvent(TimeLineEvent event) {
+        pinnedEvents.add(event);
     }
 
-    public void unPinEvents(Collection<Long> eventIDs) {
-        pinnedEventIDs.removeAll(eventIDs);
+    public void unPinEvent(TimeLineEvent event) {
+        pinnedEvents.removeIf(event::equals);
     }
 
-    public ObservableSet<Long> getPinnedEventIDs() {
-        return pinnedEventIDsUnmodifiable;
+    public ObservableSet<TimeLineEvent> getPinnedEvents() {
+        return pinnedEventsUnmodifiable;
     }
 
     /**
