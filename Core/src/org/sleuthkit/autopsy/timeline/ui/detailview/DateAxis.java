@@ -50,7 +50,7 @@ import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
  * @author Diego Cirujano
  */
 final class DateAxis extends Axis<DateTime> {
-
+    
     private ObjectProperty<DateTime> lowerBound = new ObjectPropertyBase<DateTime>() {
         @Override
         protected void invalidated() {
@@ -59,12 +59,12 @@ final class DateAxis extends Axis<DateTime> {
                 requestAxisLayout();
             }
         }
-
+        
         @Override
         public Object getBean() {
             return DateAxis.this;
         }
-
+        
         @Override
         public String getName() {
             return "lowerBound"; // NON-NLS
@@ -84,11 +84,11 @@ final class DateAxis extends Axis<DateTime> {
      * bounds.
      */
     private DateTime minDate;
-
+    
     private RangeDivisionInfo rangeDivisionInfo;
-
+    
     private final ReadOnlyDoubleWrapper tickSpacing = new ReadOnlyDoubleWrapper();
-
+    
     private final ObjectProperty<DateTime> upperBound = new ObjectPropertyBase<DateTime>() {
         @Override
         protected void invalidated() {
@@ -97,12 +97,12 @@ final class DateAxis extends Axis<DateTime> {
                 requestAxisLayout();
             }
         }
-
+        
         @Override
         public Object getBean() {
             return DateAxis.this;
         }
-
+        
         @Override
         public String getName() {
             return "upperBound"; // NON-NLS
@@ -117,8 +117,10 @@ final class DateAxis extends Axis<DateTime> {
         setTickLabelGap(0);
         setAutoRanging(false);
         setTickLabelsVisible(false);
+        setTickLength(0);
+        setTickMarkVisible(false);
     }
-
+    
     @Override
     public double getDisplayPosition(DateTime date) {
         final double length = -200 + (getSide().isHorizontal() ? getWidth() : getHeight());
@@ -149,7 +151,7 @@ final class DateAxis extends Axis<DateTime> {
      *
      * @see #lowerBoundProperty()
      */
-    public final DateTime getLowerBound() {
+    public DateTime getLowerBound() {
         return lowerBound.get();
     }
 
@@ -160,7 +162,7 @@ final class DateAxis extends Axis<DateTime> {
      *
      * @see #lowerBoundProperty()
      */
-    public final void setLowerBound(DateTime date) {
+    public void setLowerBound(DateTime date) {
         lowerBound.set(date);
     }
 
@@ -171,7 +173,7 @@ final class DateAxis extends Axis<DateTime> {
      *
      * @see #upperBoundProperty()
      */
-    public final DateTime getUpperBound() {
+    public DateTime getUpperBound() {
         return upperBound.get();
     }
 
@@ -182,10 +184,10 @@ final class DateAxis extends Axis<DateTime> {
      *
      * @see #upperBoundProperty() ()
      */
-    public final void setUpperBound(DateTime date) {
+    public void setUpperBound(DateTime date) {
         upperBound.set(date);
     }
-
+    
     @Override
     public DateTime getValueForDisplay(double displayPosition) {
         final double length = - 200 + (getSide().isHorizontal() ? getWidth() : getHeight());
@@ -196,7 +198,7 @@ final class DateAxis extends Axis<DateTime> {
         // Get the actual range of the visible area.
         // The minimal date should start at the zero position, that's why we subtract it.
         double range = length - getZeroPosition();
-
+        
         if (getSide().isVertical()) {
             // displayPosition = getHeight() - ((date - lowerBound) / diff) * range + getZero
             // date = displayPosition - getZero - getHeight())/range * diff + lowerBound
@@ -207,16 +209,16 @@ final class DateAxis extends Axis<DateTime> {
             return new DateTime((long) ((displayPosition - getZeroPosition()) / range * diff + getLowerBound().getMillis()), TimeLineController.getJodaTimeZone());
         }
     }
-
+    
     @Override
     public double getZeroPosition() {
         return 0;
     }
-
+    
     @Override
     public void invalidateRange(List<DateTime> list) {
         super.invalidateRange(list);
-
+        
         Collections.sort(list);
         if (list.isEmpty()) {
             minDate = maxDate = new DateTime();
@@ -227,22 +229,22 @@ final class DateAxis extends Axis<DateTime> {
             maxDate = list.get(list.size() - 1);
         }
     }
-
+    
     @Override
     public boolean isValueOnAxis(DateTime date) {
         return date.getMillis() > getLowerBound().getMillis() && date.getMillis() < getUpperBound().getMillis();
     }
-
+    
     @Override
     public double toNumericValue(DateTime date) {
         return date.getMillis();
     }
-
+    
     @Override
     public DateTime toRealValue(double v) {
         return new DateTime((long) v);
     }
-
+    
     @Override
     protected Interval autoRange(double length) {
         if (isAutoRanging()) {
@@ -254,7 +256,7 @@ final class DateAxis extends Axis<DateTime> {
             return getRange();
         }
     }
-
+    
     @Override
     protected List<DateTime> calculateTickValues(double length, Object range) {
         List<DateTime> tickDates = new ArrayList<>();
@@ -264,13 +266,13 @@ final class DateAxis extends Axis<DateTime> {
         rangeDivisionInfo = RangeDivisionInfo.getRangeDivisionInfo((Interval) range);
         final DateTime lowerBound1 = getLowerBound();
         final DateTime upperBound1 = getUpperBound();
-
+        
         if (lowerBound1 == null || upperBound1 == null) {
             return tickDates;
         }
         DateTime lower = lowerBound1.withZone(TimeLineController.getJodaTimeZone());
         DateTime upper = upperBound1.withZone(TimeLineController.getJodaTimeZone());
-
+        
         DateTime current = lower;
         // Loop as long we exceeded the upper bound.
         while (current.isBefore(upper)) {
@@ -302,7 +304,7 @@ final class DateAxis extends Axis<DateTime> {
                 tickDates.remove(lastDate);
             }
         }
-
+        
         if (tickDates.size() >= 2) {
             tickSpacing.set(getDisplayPosition(tickDates.get(1)) - getDisplayPosition(tickDates.get(0)));
         } else if (tickDates.size() >= 4) {
@@ -310,17 +312,17 @@ final class DateAxis extends Axis<DateTime> {
         }
         return tickDates;
     }
-
+    
     @Override
     protected Interval getRange() {
         return new Interval(getLowerBound(), getUpperBound());
     }
-
+    
     @Override
     protected String getTickMarkLabel(DateTime date) {
         return rangeDivisionInfo.getTickFormatter().print(date);
     }
-
+    
     @Override
     protected void layoutChildren() {
         super.layoutChildren();
@@ -337,7 +339,7 @@ final class DateAxis extends Axis<DateTime> {
         setLowerBound(new DateTime(rangeDivisionInfo.getLowerBound(), TimeLineController.getJodaTimeZone()));
         setUpperBound(new DateTime(rangeDivisionInfo.getUpperBound(), TimeLineController.getJodaTimeZone()));
     }
-
+    
     ReadOnlyDoubleProperty getTickSpacing() {
         return tickSpacing.getReadOnlyProperty();
     }

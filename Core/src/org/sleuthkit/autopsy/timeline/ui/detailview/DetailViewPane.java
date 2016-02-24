@@ -117,10 +117,12 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
         mainView = new ScrollingWrapper<>(chart);
         pinnedChart = new PinnedEventsChart(controller, pinnedDateAxis, new EventAxis<>(), selectedNodes, layoutSettings);
         pinnedView = new ScrollingWrapper<>(pinnedChart);
-        pinnedChart.setMinSize(100, 100);
+        pinnedChart.setMinSize(65, 100);
         setChartClickHandler(); //can we push this into chart
         SplitPane splitPane = new SplitPane(pinnedView, mainView);
         splitPane.setOrientation(Orientation.VERTICAL);
+        splitPane.setDividerPositions(.1);
+        SplitPane.setResizableWithParent(pinnedView, Boolean.FALSE);
         chart.setData(dataSeries);
         setCenter(splitPane);
 
