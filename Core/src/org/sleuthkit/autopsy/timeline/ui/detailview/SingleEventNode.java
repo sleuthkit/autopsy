@@ -26,7 +26,6 @@ import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.OverrunStyle;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderStroke;
@@ -37,6 +36,7 @@ import static javafx.scene.layout.Region.USE_PREF_SIZE;
 import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.control.action.Action;
 import org.joda.time.DateTime;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
@@ -45,8 +45,7 @@ import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
  *
  */
 final class SingleEventNode extends EventNodeBase<SingleEvent> {
-
-    private final DetailsChart chart;
+    private static final Logger LOGGER = Logger.getLogger(SingleEventNode.class.getName());
 
     static void show(Node b, boolean show) {
         b.setVisible(show);
@@ -54,7 +53,6 @@ final class SingleEventNode extends EventNodeBase<SingleEvent> {
     }
     static final CornerRadii CORNER_RADII_1 = new CornerRadii(1);
     private static final BorderWidths CLUSTER_BORDER_WIDTHS = new BorderWidths(0, 0, 0, 2);
-    private final ImageView eventTypeImageView = new ImageView();
 
     @Override
     EventHandler<MouseEvent> getDoubleClickHandler() {
@@ -74,7 +72,6 @@ final class SingleEventNode extends EventNodeBase<SingleEvent> {
 
     SingleEventNode(DetailsChart chart, SingleEvent event, MultiEventNodeBase<?, ?, ?> parent) {
         super(event, parent, chart);
-        this.chart = chart;
         this.descrLabel.setText(event.getFullDescription());
         eventTypeImageView.setImage(getEventType().getFXImage());
         descrLabel.setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
@@ -112,11 +109,7 @@ final class SingleEventNode extends EventNodeBase<SingleEvent> {
         super.layoutChildren(); //To change body of generated methods, choose Tools | Templates.
     }
 
-    @Override
-    void installTooltip() {
-//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
+    
     @Override
     String getDescription() {
         return tlEvent.getFullDescription();

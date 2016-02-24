@@ -29,7 +29,7 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
-import javafx.geometry.Orientation;
+import javafx.geometry.Side;
 import javafx.scene.chart.Axis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Alert;
@@ -43,7 +43,7 @@ import javafx.scene.control.MultipleSelectionModel;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.Slider;
-import javafx.scene.control.SplitPane;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.TreeItem;
 import javafx.scene.effect.Effect;
@@ -51,6 +51,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.stage.Modality;
+import org.controlsfx.control.MasterDetailPane;
 import org.controlsfx.control.action.Action;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
@@ -92,6 +93,9 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
     private final ScrollingWrapper<TimeLineEvent, PinnedEventsChart> pinnedView;
     private final DetailViewLayoutSettings layoutSettings;
     private final PinnedEventsChart pinnedChart;
+    private final MasterDetailPane masterDetailPane;
+    private double dividerPosition = .1;
+    private static final int MIN_PINNED_LANE_HEIGHT = 50;
 
     public ObservableList<EventStripe> getEventStripes() {
         return chart.getEventStripes();
@@ -117,14 +121,15 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
         mainView = new ScrollingWrapper<>(chart);
         pinnedChart = new PinnedEventsChart(controller, pinnedDateAxis, new EventAxis<>(), selectedNodes, layoutSettings);
         pinnedView = new ScrollingWrapper<>(pinnedChart);
-        pinnedChart.setMinSize(65, 100);
+        pinnedChart.setMinHeight(MIN_PINNED_LANE_HEIGHT);
+        pinnedView.setMinHeight(MIN_PINNED_LANE_HEIGHT);
         setChartClickHandler(); //can we push this into chart
-        SplitPane splitPane = new SplitPane(pinnedView, mainView);
-        splitPane.setOrientation(Orientation.VERTICAL);
-        splitPane.setDividerPositions(.1);
-        SplitPane.setResizableWithParent(pinnedView, Boolean.FALSE);
+        masterDetailPane = new MasterDetailPane(Side.TOP, mainView, pinnedView, false);
+        masterDetailPane.setDividerPosition(dividerPosition);
+//        SplitPane.setResizableWithParent(pinnedChart, Boolean.FALSE);
+//        SplitPane.setResizableWithParent(pinnedView, Boolean.FALSE);
         chart.setData(dataSeries);
-        setCenter(splitPane);
+        setCenter(masterDetailPane);
 
         settingsNodes = new ArrayList<>(new DetailViewSettingsPane().getChildrenUnmodifiable());
         //bind layout fo axes and spacers
@@ -268,6 +273,9 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
         @FXML
         private SeparatorMenuItem descVisibilitySeparatorMenuItem;
 
+        @FXML
+        private ToggleButton pinnedEventsToggle;
+
         DetailViewSettingsPane() {
             FXMLConstructor.construct(DetailViewSettingsPane.this, "DetailViewSettingsPane.fxml"); // NON-NLS
         }
@@ -322,6 +330,18 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
             countsRadio.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.countsRadio.text"));
             hiddenRadioMenuItem.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.hiddenRadioMenuItem.text"));
             hiddenRadio.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.hiddenRadio.text"));
+
+            pinnedEventsToggle.setOnAction(event -> {
+                boolean selected = pinnedEventsToggle.isSelected();
+                if (selected == false) {
+                    dividerPosition = masterDetailPane.getDividerPosition();
+                }
+                masterDetailPane.setShowDetailNode(selected);
+                if (selected) {
+                    pinnedView.setMinHeight(MIN_PINNED_LANE_HEIGHT);
+                    masterDetailPane.setDividerPosition(dividerPosition);
+                }
+            });
         }
     }
 

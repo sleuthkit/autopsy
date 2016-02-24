@@ -80,7 +80,7 @@ public final class PinnedEventsChart extends XYChart<DateTime, TimeLineEvent> im
             return new EventStripeNode(chart, (EventStripe) event, null);
         }
     }
-    Map<TimeLineEvent, EventNodeBase<?>> eventMap = new HashMap<>();
+    private Map<TimeLineEvent, EventNodeBase<?>> eventMap = new HashMap<>();
     private ContextMenu chartContextMenu;
 
     private final TimeLineController controller;

@@ -20,14 +20,20 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.concurrent.Task;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
@@ -57,7 +63,11 @@ import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
@@ -66,26 +76,27 @@ import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.show;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.MultiEventNodeBase.CORNER_RADII_3;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
  */
 public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPane {
-
-    static final Image HASH_PIN = new Image("/org/sleuthkit/autopsy/images/hashset_hits.png"); //NOI18N NON-NLS
-    static final Image TAG = new Image("/org/sleuthkit/autopsy/images/green-tag-icon-16.png"); // NON-NLS //NOI18N
-    static final Image PLUS = new Image("/org/sleuthkit/autopsy/timeline/images/plus-button.png"); // NON-NLS //NOI18N
-    static final Image MINUS = new Image("/org/sleuthkit/autopsy/timeline/images/minus-button.png"); // NON-NLS //NOI18N
-    static final Image PIN = new Image("/org/sleuthkit/autopsy/timeline/images/marker--plus.png"); // NON-NLS //NOI18N
-    static final Image UNPIN = new Image("/org/sleuthkit/autopsy/timeline/images/marker--minus.png"); // NON-NLS //NOI18N
-
     static final Map<EventType, Effect> dropShadowMap = new ConcurrentHashMap<>();
+
+    private static final Logger LOGGER = Logger.getLogger(EventNodeBase.class.getName());
+
+    private static final Image HASH_PIN = new Image("/org/sleuthkit/autopsy/images/hashset_hits.png"); //NOI18N NON-NLS
+    private static final Image TAG = new Image("/org/sleuthkit/autopsy/images/green-tag-icon-16.png"); // NON-NLS //NOI18N
+  
+    private static final Image PIN = new Image("/org/sleuthkit/autopsy/timeline/images/marker--plus.png"); // NON-NLS //NOI18N
+    private static final Image UNPIN = new Image("/org/sleuthkit/autopsy/timeline/images/marker--minus.png"); // NON-NLS //NOI18N
 
     static void configureActionButton(ButtonBase b) {
         b.setMinSize(16, 16);
         b.setMaxSize(16, 16);
         b.setPrefSize(16, 16);
-//        show(b, false);
     }
 
     static void show(Node b, boolean show) {
@@ -113,17 +124,22 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
     final HBox controlsHBox = new HBox(5);
     final HBox infoHBox = new HBox(5, descrLabel, countLabel, hashIV, tagIV, controlsHBox);
 
-    private final Tooltip tooltip = new Tooltip(Bundle.EventBundleNodeBase_toolTip_loading());
+    final Tooltip tooltip = new Tooltip(Bundle.EventBundleNodeBase_toolTip_loading());
 
+    final ImageView eventTypeImageView = new ImageView();
+    final SleuthkitCase sleuthkitCase;
+    final FilteredEventsModel eventsModel;
     private Timeline timeline;
     private Button pinButton;
     private final Border SELECTION_BORDER;
-    final ImageView eventTypeImageView = new ImageView();
 
     EventNodeBase(Type ievent, EventNodeBase<?> parent, DetailsChart chart) {
         this.chart = chart;
         this.tlEvent = ievent;
         this.parentNode = parent;
+
+        sleuthkitCase = chart.getController().getAutopsyCase().getSleuthkitCase();
+        eventsModel = chart.getController().getEventsModel();
         eventTypeImageView.setImage(getEventType().getFXImage());
 
         descrLabel.setGraphic(eventTypeImageView);
@@ -200,7 +216,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
         }
     }
 
-    void showHoverControls(final boolean showControls) {
+    final void showHoverControls(final boolean showControls) {
         Effect dropShadow = dropShadowMap.computeIfAbsent(getEventType(),
                 eventType -> new DropShadow(-10, eventType.getColor()));
         setEffect(showControls ? dropShadow : null);
@@ -230,7 +246,79 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
         }
     }
 
-    abstract void installTooltip();
+    /**
+     * defer tooltip content creation till needed, this had a surprisingly large
+     * impact on speed of loading the chart
+     */
+    @NbBundle.Messages({"# {0} - counts",
+        "# {1} - event type",
+        "# {2} - description",
+        "# {3} - start date/time",
+        "# {4} - end date/time",
+        "EventNodeBase.tooltip.text={0} {1} events\n{2}\nbetween\t{3}\nand   \t{4}",
+        "EventNodeBase.toolTip.loading2=loading tooltip",
+        "# {0} - hash set count string",
+        "EventNodeBase.toolTip.hashSetHits=\n\nHash Set Hits\n{0}",
+        "# {0} - tag count string",
+        "EventNodeBase.toolTip.tags=\n\nTags\n{0}"})
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    void installTooltip() {
+        if (tooltip.getText().equalsIgnoreCase(Bundle.EventBundleNodeBase_toolTip_loading())) {
+            final Task<String> tooltTipTask = new Task<String>() {
+                {
+                    updateTitle(Bundle.EventNodeBase_toolTip_loading2());
+                }
+
+                @Override
+                protected String call() throws Exception {
+                    HashMap<String, Long> hashSetCounts = new HashMap<>();
+                    if (tlEvent.getEventIDsWithHashHits().isEmpty() == false) {
+                        try {
+                            //TODO:push this to DB
+                            for (SingleEvent tle : eventsModel.getEventsById(tlEvent.getEventIDsWithHashHits())) {
+                                Set<String> hashSetNames = sleuthkitCase.getAbstractFileById(tle.getFileID()).getHashSetNames();
+                                for (String hashSetName : hashSetNames) {
+                                    hashSetCounts.merge(hashSetName, 1L, Long::sum);
+                                }
+                            }
+                        } catch (TskCoreException ex) {
+                            LOGGER.log(Level.SEVERE, "Error getting hashset hit info for event.", ex); //NON-NLS
+                        }
+                    }
+                    String hashSetCountsString = hashSetCounts.entrySet().stream()
+                            .map((Map.Entry<String, Long> t) -> t.getKey() + " : " + t.getValue())
+                            .collect(Collectors.joining("\n"));
+
+                    Map<String, Long> tagCounts = new HashMap<>();
+                    if (tlEvent.getEventIDsWithTags().isEmpty() == false) {
+                        tagCounts.putAll(eventsModel.getTagCountsByTagName(tlEvent.getEventIDsWithTags()));
+                    }
+                    String tagCountsString = tagCounts.entrySet().stream()
+                            .map((Map.Entry<String, Long> t) -> t.getKey() + " : " + t.getValue())
+                            .collect(Collectors.joining("\n"));
+
+                    return Bundle.EventNodeBase_tooltip_text(getEventIDs().size(), getEventType(), getDescription(),
+                            TimeLineController.getZonedFormatter().print(getStartMillis()),
+                            TimeLineController.getZonedFormatter().print(getEndMillis() + 1000))
+                            + (hashSetCountsString.isEmpty() ? "" : Bundle.EventNodeBase_toolTip_hashSetHits(hashSetCountsString))
+                            + (tagCountsString.isEmpty() ? "" : Bundle.EventNodeBase_toolTip_tags(tagCountsString));
+                }
+
+                @Override
+                protected void succeeded() {
+                    super.succeeded();
+                    try {
+                        tooltip.setText(get());
+                        tooltip.setGraphic(null);
+                    } catch (InterruptedException | ExecutionException ex) {
+                        LOGGER.log(Level.SEVERE, "Tooltip generation failed.", ex); //NON-NLS
+                    }
+                }
+            };
+            new Thread(tooltTipTask).start();
+            chart.getController().monitorTask(tooltTipTask);
+        }
+    }
 
     void enableTooltip(boolean toolTipEnabled) {
         if (toolTipEnabled) {
@@ -246,6 +334,10 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
 
     long getStartMillis() {
         return tlEvent.getStartMillis();
+    }
+
+    final long getEndMillis() {
+        return tlEvent.getEndMillis();
     }
 
     final double getLayoutXCompensation() {
