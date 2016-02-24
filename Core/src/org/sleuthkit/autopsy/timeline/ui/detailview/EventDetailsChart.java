@@ -678,10 +678,6 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
                     }
                 });
             }
-            EventDetailsChart.this.controller.selectEventIDs(selectedNodes.stream()
-                    .flatMap(detailNode -> detailNode.getEventIDs().stream())
-                    .collect(Collectors.toList()));
         }
     }
-
 }

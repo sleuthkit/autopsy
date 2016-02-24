@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.timeline.ui.detailview;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -149,6 +150,9 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
                     highlightedNodes.add(n);
                 }
             }
+            controller.selectEventIDs(selectedNodes.stream()
+                    .flatMap(detailNode -> detailNode.getEventIDs().stream())
+                    .collect(Collectors.toList()));
         });
     }
 
