@@ -229,11 +229,11 @@ class MboxParser {
             StringBuilder bodyString = new StringBuilder();
             String line;
             while ((line = r.readLine()) != null) {
-                bodyString.append(line).append("\n");
+                bodyString.append(line).append("\n-----HEADER-----\n");
             }
             for(Field field: fields) {
                 String nextLine = field.getName() + ": " + field.getBody();
-                bodyString.append("\n-----HEADER-----\n").append(nextLine);
+                bodyString.append("\n").append(nextLine);
             }
 
             switch (type) {
