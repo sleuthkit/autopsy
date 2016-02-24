@@ -101,14 +101,8 @@ final public class EventClusterNode extends MultiEventNodeBase<EventCluster, Eve
         getChildren().addAll(subNodePane, infoHBox);
 
         if (parentNode == null) {
-
             setDescriptionVisibiltiyImpl(DescriptionVisibility.SHOWN);
         }
-    }
-
-    @Override
-    void applyHighlightEffect(boolean applied) {
-//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override

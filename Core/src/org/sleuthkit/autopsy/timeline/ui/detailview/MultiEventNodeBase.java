@@ -225,13 +225,6 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
         }
     }
 
-    /**
-     * apply the 'effect' to visually indicate highlighted nodes
-     *
-     * @param applied true to apply the highlight 'effect', false to remove it
-     */
-    abstract void applyHighlightEffect(boolean applied);
-
     @SuppressWarnings("unchecked")
     public List<EventNodeBase<?>> getSubNodes() {
         return subNodes;

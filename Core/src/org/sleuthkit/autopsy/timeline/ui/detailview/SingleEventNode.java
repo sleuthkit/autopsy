@@ -127,21 +127,7 @@ final class SingleEventNode extends EventNodeBase<SingleEvent> {
         chart.requestTimelineChartLayout();
     }
 
-    /**
-     * apply the 'effect' to visually indicate highlighted nodes
-     *
-     * @param applied true to apply the highlight 'effect', false to remove it
-     */
-    @Override
-    public synchronized void applyHighlightEffect(boolean applied) {
-        if (applied) {
-            descrLabel.setStyle("-fx-font-weight: bold;"); // NON-NLS
-            setBackground(highlightedBackground);
-        } else {
-            descrLabel.setStyle("-fx-font-weight: normal;"); // NON-NLS
-            setBackground(defaultBackground);
-        }
-    }
+    
 
     /**
      * @param w the maximum width the description label should have

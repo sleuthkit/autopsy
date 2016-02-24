@@ -38,9 +38,6 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleWrapper;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -113,6 +110,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
     private Set<String> activeQuickHidefilters;
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)//at start of layout pass
     private double descriptionWidth;
+    private final DetailViewLayoutSettings layoutSettings;
 
     @Override
     public ContextMenu getChartContextMenu() {
@@ -157,40 +155,9 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
     private final ObservableList<  EventNodeBase<?>> sortedStripeNodes = stripeNodes.sorted(Comparator.comparing(EventNodeBase<?>::getStartMillis));
     private final Map<EventCluster, Line> projectionMap = new ConcurrentHashMap<>();
 
-    /**
-     * true == layout each event type in its own band, false == mix all the
-     * events together during layout
-     */
-    private final SimpleBooleanProperty bandByType = new SimpleBooleanProperty(false);
-    /**
-     * true == enforce that no two events can share the same 'row', leading to
-     * sparser but possibly clearer layout. false == put unrelated events in the
-     * same 'row', creating a denser more compact layout
-     */
-    private final SimpleBooleanProperty oneEventPerRow = new SimpleBooleanProperty(false);
-
-    /**
-     * how much detail of the description to show in the ui
-     */
-    private final SimpleObjectProperty<DescriptionVisibility> descrVisibility =
-            new SimpleObjectProperty<>(DescriptionVisibility.SHOWN);
-
-    /**
-     * true == truncate all the labels to the greater of the size of their
-     * timespan indicator or the value of truncateWidth. false == don't truncate
-     * the labels, alow them to extend past the timespan indicator and off the
-     * edge of the screen
-     */
-    final SimpleBooleanProperty truncateAll = new SimpleBooleanProperty(false);
-
-    /**
-     * the width to truncate all labels to if truncateAll is true. adjustable
-     * via slider if truncateAll is true
-     */
-    final SimpleDoubleProperty truncateWidth = new SimpleDoubleProperty(200.0);
-
-    EventDetailsChart(TimeLineController controller, DateAxis dateAxis, final Axis<EventStripe> verticalAxis, ObservableList<EventNodeBase<?>> selectedNodes) {
+    EventDetailsChart(TimeLineController controller, DateAxis dateAxis, final Axis<EventStripe> verticalAxis, ObservableList<EventNodeBase<?>> selectedNodes, DetailViewLayoutSettings layoutSettings) {
         super(dateAxis, verticalAxis);
+        this.layoutSettings = layoutSettings;
 
         this.controller = controller;
         this.filteredEvents = this.controller.getEventsModel();
@@ -224,11 +191,11 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
         getPlotChildren().add(nodeGroup);
 
         //add listener for events that should trigger layout
-        bandByType.addListener(layoutInvalidationListener);
-        oneEventPerRow.addListener(layoutInvalidationListener);
-        truncateAll.addListener(layoutInvalidationListener);
-        truncateWidth.addListener(layoutInvalidationListener);
-        descrVisibility.addListener(layoutInvalidationListener);
+        layoutSettings.bandByTypeProperty().addListener(layoutInvalidationListener);
+        layoutSettings.oneEventPerRowProperty().addListener(layoutInvalidationListener);
+        layoutSettings.truncateAllProperty().addListener(layoutInvalidationListener);
+        layoutSettings.truncateAllProperty().addListener(layoutInvalidationListener);
+        layoutSettings.descrVisibilityProperty().addListener(layoutInvalidationListener);
         getController().getQuickHideFilters().addListener(layoutInvalidationListener);
 
         //this is needed to allow non circular binding of the guideline and timerangeRect heights to the height of the chart
@@ -289,17 +256,9 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
         intervalSelector = null;
     }
 
-    public synchronized SimpleBooleanProperty bandByTypeProperty() {
-        return bandByType;
-    }
-
     @Override
     public IntervalSelector<DateTime> newIntervalSelector() {
         return new DetailIntervalSelector(this);
-    }
-
-    synchronized void setBandByType(Boolean t1) {
-        bandByType.set(t1);
     }
 
     /**
@@ -324,22 +283,6 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
     public void setIntervalSelector(IntervalSelector<? extends DateTime> newIntervalSelector) {
         intervalSelector = newIntervalSelector;
         getChartChildren().add(getIntervalSelector());
-    }
-
-    SimpleBooleanProperty oneEventPerRowProperty() {
-        return oneEventPerRow;
-    }
-
-    SimpleDoubleProperty getTruncateWidth() {
-        return truncateWidth;
-    }
-
-    SimpleBooleanProperty truncateAllProperty() {
-        return truncateAll;
-    }
-
-    SimpleObjectProperty< DescriptionVisibility> descrVisibilityProperty() {
-        return descrVisibility;
     }
 
     /**
@@ -446,9 +389,9 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
                 .collect(Collectors.toSet());
 
         //This dosn't change during a layout pass and is expensive to compute per node.  So we do it once at the start
-        descriptionWidth = truncateAll.get() ? truncateWidth.get() : USE_PREF_SIZE;
+        descriptionWidth = layoutSettings.getTruncateAll() ? layoutSettings.getTruncateWidth() : USE_PREF_SIZE;
 
-        if (bandByType.get()) {
+        if (layoutSettings.getBandByType()) {
             sortedStripeNodes.stream()
                     .collect(Collectors.groupingBy(EventNodeBase<?>::getEventType)).values()
                     .forEach(inputNodes -> maxY.set(layoutEventBundleNodes(inputNodes, maxY.get())));
@@ -547,7 +490,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
                 double xRight = xLeft + w + MINIMUM_EVENT_NODE_GAP;
 
                 //initial test position
-                double yTop = (oneEventPerRow.get())
+                double yTop = (layoutSettings.getOneEventPerRow())
                         ? (localMax + MINIMUM_EVENT_NODE_GAP)// if onePerRow, just put it at end
                         : computeYTop(minY, h, maxXatY, xLeft, xRight);
 
@@ -607,19 +550,19 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
      *
      * Set layout paramaters on the given node and layout its children
      *
-     * @param bundleNode       the Node to layout
+     * @param eventNode        the Node to layout
      * @param descriptionWdith the maximum width for the description text
      */
-    private void layoutBundleHelper(final EventNodeBase< ?> bundleNode) {
+    private void layoutBundleHelper(final EventNodeBase< ?> eventNode) {
         //make sure it is shown
-        bundleNode.setVisible(true);
-        bundleNode.setManaged(true);
+        eventNode.setVisible(true);
+        eventNode.setManaged(true);
         //apply advanced layout description visibility options
-        bundleNode.setDescriptionVisibility(descrVisibility.get());
-        bundleNode.setMaxDescriptionWidth(descriptionWidth);
+        eventNode.setDescriptionVisibility(layoutSettings.getDescrVisibility());
+        eventNode.setMaxDescriptionWidth(descriptionWidth);
 
         //do recursive layout
-        bundleNode.layoutChildren();
+        eventNode.layoutChildren();
     }
 
     /**

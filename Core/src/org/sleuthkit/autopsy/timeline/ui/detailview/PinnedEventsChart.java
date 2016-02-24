@@ -26,7 +26,10 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.MissingResourceException;
+import java.util.stream.Collectors;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.collections.FXCollections;
@@ -94,6 +97,14 @@ public final class PinnedEventsChart extends XYChart<DateTime, TimeLineEvent> im
      * the maximum y value used so far during the most recent layout pass
      */
     private final ReadOnlyDoubleWrapper maxY = new ReadOnlyDoubleWrapper(0.0);
+    private final ObservableList<EventNodeBase<?>> selectedNodes;
+    private final DetailViewLayoutSettings layoutSettings;
+    /**
+     * listener that triggers chart layout pass
+     */
+    private final InvalidationListener layoutInvalidationListener = (Observable o) -> {
+        layoutPlotChildren();
+    };
 
     /**
      *
@@ -102,9 +113,9 @@ public final class PinnedEventsChart extends XYChart<DateTime, TimeLineEvent> im
      * @param verticalAxis   the value of verticalAxis
      * @param selectedNodes1 the value of selectedNodes1
      */
-    PinnedEventsChart(TimeLineController controller, DateAxis dateAxis, final Axis<TimeLineEvent> verticalAxis) {
+    PinnedEventsChart(TimeLineController controller, DateAxis dateAxis, final Axis<TimeLineEvent> verticalAxis, ObservableList<EventNodeBase<?>> selectedNodes, DetailViewLayoutSettings layoutSettings) {
         super(dateAxis, verticalAxis);
-
+        this.layoutSettings = layoutSettings;
         this.controller = controller;
         this.filteredEvents = this.controller.getEventsModel();
 
@@ -134,11 +145,12 @@ public final class PinnedEventsChart extends XYChart<DateTime, TimeLineEvent> im
         setData(FXCollections.observableArrayList());
         getData().add(series);
 //        //add listener for events that should trigger layout
-//        bandByType.addListener(layoutInvalidationListener);
-//        oneEventPerRow.addListener(layoutInvalidationListener);
-//        truncateAll.addListener(layoutInvalidationListener);
-//        truncateWidth.addListener(layoutInvalidationListener);
-//        descrVisibility.addListener(layoutInvalidationListener);
+        layoutSettings.bandByTypeProperty().addListener(layoutInvalidationListener);
+        layoutSettings.oneEventPerRowProperty().addListener(layoutInvalidationListener);
+        layoutSettings.truncateAllProperty().addListener(layoutInvalidationListener);
+        layoutSettings.truncateAllProperty().addListener(layoutInvalidationListener);
+        layoutSettings.descrVisibilityProperty().addListener(layoutInvalidationListener);
+        getController().getQuickHideFilters().addListener(layoutInvalidationListener);
 //        getController().getQuickHideFilters().addListener(layoutInvalidationListener);
 
 //        //this is needed to allow non circular binding of the guideline and timerangeRect heights to the height of the chart
@@ -168,9 +180,7 @@ public final class PinnedEventsChart extends XYChart<DateTime, TimeLineEvent> im
 
             requestChartLayout();
         });
-
-//        this.selectedNodes = selectedNodes;
-//        selectedNodes.addListener(new SelectionChangeHandler());
+        this.selectedNodes = selectedNodes;
     }
 
     @Override
@@ -233,7 +243,7 @@ public final class PinnedEventsChart extends XYChart<DateTime, TimeLineEvent> im
 
     @Override
     public ObservableList<EventNodeBase<?>> getSelectedNodes() {
-        return FXCollections.observableArrayList();
+        return selectedNodes;
     }
 
     @Override
@@ -257,7 +267,9 @@ public final class PinnedEventsChart extends XYChart<DateTime, TimeLineEvent> im
             double xRight = xLeft + w + MINIMUM_EVENT_NODE_GAP;
 
             //initial test position
-            double yTop = computeYTop(minY, h, maxXatY, xLeft, xRight);
+            double yTop = (layoutSettings.getOneEventPerRow())
+                    ? (localMax + MINIMUM_EVENT_NODE_GAP)// if onePerRow, just put it at end
+                    : computeYTop(minY, h, maxXatY, xLeft, xRight);
 
             localMax = Math.max(yTop + h, localMax);
 
@@ -301,17 +313,15 @@ public final class PinnedEventsChart extends XYChart<DateTime, TimeLineEvent> im
 //                .map(DescriptionFilter::getDescription)
 //                .collect(Collectors.toSet());
         //This dosn't change during a layout pass and is expensive to compute per node.  So we do it once at the start
-        descriptionWidth = /*
-                 * truncateAll.get() ? truncateWidth.get() :
-                 */ USE_PREF_SIZE;
+        descriptionWidth = layoutSettings.getTruncateAll() ? layoutSettings.getTruncateWidth() : USE_PREF_SIZE;
 
-//        if (bandByType.get()) {
-//            sortedStripeNodes.stream()
-//                    .collect(Collectors.groupingBy(EventStripeNode::getEventType)).values()
-//                    .forEach(inputNodes -> maxY.set(layoutEventBundleNodes(inputNodes, maxY.get())));
-//        } else {
-        maxY.set(layoutEventBundleNodes(sortedEventNodes.sorted(Comparator.comparing(EventNodeBase::getStartMillis)), 0));
-//        }
+        if (layoutSettings.getBandByType()) {
+            sortedEventNodes.stream()
+                    .collect(Collectors.groupingBy(EventNodeBase<?>::getEventType)).values()
+                    .forEach(inputNodes -> maxY.set(layoutEventBundleNodes(inputNodes, maxY.get())));
+        } else {
+            maxY.set(layoutEventBundleNodes(sortedEventNodes.sorted(Comparator.comparing(EventNodeBase<?>::getStartMillis)), 0));
+        }
         setCursor(null);
     }
 
@@ -326,6 +336,7 @@ public final class PinnedEventsChart extends XYChart<DateTime, TimeLineEvent> im
     public synchronized void setVScroll(double vScrollValue) {
         nodeGroup.setTranslateY(-vScrollValue);
     }
+
     public ReadOnlyDoubleProperty maxVScrollProperty() {
         return maxY.getReadOnlyProperty();
     }
@@ -402,8 +413,8 @@ public final class PinnedEventsChart extends XYChart<DateTime, TimeLineEvent> im
         eventNode.setVisible(true);
         eventNode.setManaged(true);
         //apply advanced layout description visibility options
-        eventNode.setDescriptionVisibility(DescriptionVisibility.SHOWN);
-        eventNode.setMaxDescriptionWidth(USE_PREF_SIZE);
+        eventNode.setDescriptionVisibility(layoutSettings.getDescrVisibility());
+        eventNode.setMaxDescriptionWidth(descriptionWidth);
 
         //do recursive layout
         eventNode.layoutChildren();

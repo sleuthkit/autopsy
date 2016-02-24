@@ -89,6 +89,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
     private final ObservableList<EventNodeBase<?>> highlightedNodes = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
     private final ScrollingWrapper<EventStripe, EventDetailsChart> mainView;
     private final ScrollingWrapper<TimeLineEvent, PinnedEventsChart> pinnedView;
+    private final DetailViewLayoutSettings layoutSettings;
 
     public ObservableList<EventStripe> getEventStripes() {
         return chart.getEventStripes();
@@ -107,10 +108,12 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
 
     public DetailViewPane(TimeLineController controller, Pane partPane, Pane contextPane, Region bottomLeftSpacer) {
         super(controller, partPane, contextPane, bottomLeftSpacer);
+        layoutSettings = new DetailViewLayoutSettings();
+
         //initialize chart;
-        chart = new EventDetailsChart(controller, detailsChartDateAxis, verticalAxis, selectedNodes);
+        chart = new EventDetailsChart(controller, detailsChartDateAxis, verticalAxis, selectedNodes, layoutSettings);
         mainView = new ScrollingWrapper<>(chart);
-        PinnedEventsChart pinnedChart = new PinnedEventsChart(controller, pinnedDateAxis, new EventAxis<>());
+        PinnedEventsChart pinnedChart = new PinnedEventsChart(controller, pinnedDateAxis, new EventAxis<>(), selectedNodes, layoutSettings);
         pinnedView = new ScrollingWrapper<>(pinnedChart);
         pinnedChart.setMinSize(100, 100);
         setChartClickHandler(); //can we push this into chart
@@ -270,14 +273,14 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
             assert oneEventPerRowBox != null : "fx:id=\"oneEventPerRowBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
             assert truncateAllBox != null : "fx:id=\"truncateAllBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
             assert truncateWidthSlider != null : "fx:id=\"truncateAllSlider\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
-            bandByTypeBox.selectedProperty().bindBidirectional(chart.bandByTypeProperty());
-            truncateAllBox.selectedProperty().bindBidirectional(chart.truncateAllProperty());
-            oneEventPerRowBox.selectedProperty().bindBidirectional(chart.oneEventPerRowProperty());
+            bandByTypeBox.selectedProperty().bindBidirectional(layoutSettings.bandByTypeProperty());
+            truncateAllBox.selectedProperty().bindBidirectional(layoutSettings.truncateAllProperty());
+            oneEventPerRowBox.selectedProperty().bindBidirectional(layoutSettings.oneEventPerRowProperty());
             truncateSliderLabel.disableProperty().bind(truncateAllBox.selectedProperty().not());
             truncateSliderLabel.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.truncateSliderLabel.text"));
             final InvalidationListener sliderListener = o -> {
                 if (truncateWidthSlider.isValueChanging() == false) {
-                    chart.getTruncateWidth().set(truncateWidthSlider.getValue());
+                    layoutSettings.truncateWidthProperty().set(truncateWidthSlider.getValue());
                 }
             };
             truncateWidthSlider.valueProperty().addListener(sliderListener);
@@ -285,11 +288,11 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
 
             descrVisibility.selectedToggleProperty().addListener((observable, oldToggle, newToggle) -> {
                 if (newToggle == countsRadio) {
-                    chart.descrVisibilityProperty().set(DescriptionVisibility.COUNT_ONLY);
+                    layoutSettings.descrVisibilityProperty().set(DescriptionVisibility.COUNT_ONLY);
                 } else if (newToggle == showRadio) {
-                    chart.descrVisibilityProperty().set(DescriptionVisibility.SHOWN);
+                    layoutSettings.descrVisibilityProperty().set(DescriptionVisibility.SHOWN);
                 } else if (newToggle == hiddenRadio) {
-                    chart.descrVisibilityProperty().set(DescriptionVisibility.HIDDEN);
+                    layoutSettings.descrVisibilityProperty().set(DescriptionVisibility.HIDDEN);
                 }
             });
 
