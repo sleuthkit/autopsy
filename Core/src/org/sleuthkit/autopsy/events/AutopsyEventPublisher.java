@@ -168,10 +168,14 @@ public final class AutopsyEventPublisher {
         if (null != currentChannelName) {
             boolean published = false;
             int tryCount = 1;
+            /* We need to store the original channel name in case we want to re-try 
+            opening a channel with same name.
+            */
+            String originalChannelName = currentChannelName;
             while (false == published && tryCount <= MAX_REMOTE_EVENT_PUBLISH_TRIES) {
                 try {
                     if (null == remotePublisher) {
-                        openRemoteEventChannel(currentChannelName);
+                        openRemoteEventChannel(originalChannelName);
                     }
                     remotePublisher.publish(event);
                     published = true;
@@ -180,7 +184,10 @@ public final class AutopsyEventPublisher {
                     closeRemoteEventChannel();
                     ++tryCount;
                 } catch (AutopsyEventException ex) {
-                    logger.log(Level.SEVERE, String.format("Failed to reopen channel %s to publish %s event (tryCount = %s)", currentChannelName, event.getPropertyName(), tryCount), ex); //NON-NLS
+                    logger.log(Level.SEVERE, String.format("Failed to reopen channel %s to publish %s event (tryCount = %s)", originalChannelName, event.getPropertyName(), tryCount), ex); //NON-NLS
+                    ++tryCount;
+                } catch (Exception ex) {
+                    logger.log(Level.SEVERE, String.format("Unexpected exception! Failed to to publish %s event on channel %s (tryCount = %s)", event.getPropertyName(), originalChannelName, tryCount), ex); //NON-NLS
                     ++tryCount;
                 }
             }
