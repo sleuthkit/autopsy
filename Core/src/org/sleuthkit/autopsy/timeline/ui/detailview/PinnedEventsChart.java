@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.MissingResourceException;
 import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -60,26 +61,21 @@ import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
  */
 public final class PinnedEventsChart extends XYChart<DateTime, TimeLineEvent> implements DetailsChart {
 
-    @Override
-    public ContextMenu getChartContextMenu() {
-        return chartContextMenu;
-    }
-    private ContextMenu chartContextMenu;
-
-    @Override
-    public ContextMenu getChartContextMenu(MouseEvent clickEvent) throws MissingResourceException {
-        if (chartContextMenu != null) {
-            chartContextMenu.hide();
-        }
-
-        chartContextMenu = ActionUtils.createContextMenu(Arrays.asList(//new EventDetailsChart.PlaceMarkerAction(clickEvent),
-                TimeLineChart.newZoomHistoyActionGroup(controller)));
-        chartContextMenu.setAutoHide(true);
-        return chartContextMenu;
-    }
-//    final ObservableList<EventNodeBase<?>> selectedNodes;
-
     private static final String styleSheet = GuideLine.class.getResource("EventsDetailsChart.css").toExternalForm(); //NON-NLS
+    private static final int MINIMUM_EVENT_NODE_GAP = 4;
+    private static final int MINIMUM_ROW_HEIGHT = 24;
+
+    private static EventNodeBase<?> createNode(PinnedEventsChart chart, TimeLineEvent event) {
+        if (event instanceof SingleEvent) {
+            return new SingleEventNode(chart, (SingleEvent) event, null);
+        } else if (event instanceof EventCluster) {
+            return new EventClusterNode(chart, (EventCluster) event, null);
+        } else {
+            return new EventStripeNode(chart, (EventStripe) event, null);
+        }
+    }
+    Map<TimeLineEvent, EventNodeBase<?>> eventMap = new HashMap<>();
+    private ContextMenu chartContextMenu;
 
     private final TimeLineController controller;
     private final FilteredEventsModel filteredEvents;
@@ -94,7 +90,10 @@ public final class PinnedEventsChart extends XYChart<DateTime, TimeLineEvent> im
     private final ObservableList< EventNodeBase<?>> sortedEventNodes = eventNodes.sorted(Comparator.comparing(EventNodeBase::getStartMillis));
     private double descriptionWidth;
 
-    Map<TimeLineEvent, EventNodeBase<?>> eventMap = new HashMap<>();
+    /**
+     * the maximum y value used so far during the most recent layout pass
+     */
+    private final ReadOnlyDoubleWrapper maxY = new ReadOnlyDoubleWrapper(0.0);
 
     /**
      *
@@ -175,6 +174,24 @@ public final class PinnedEventsChart extends XYChart<DateTime, TimeLineEvent> im
     }
 
     @Override
+    public ContextMenu getChartContextMenu() {
+        return chartContextMenu;
+    }
+
+    @Override
+    public ContextMenu getChartContextMenu(MouseEvent clickEvent) throws MissingResourceException {
+        if (chartContextMenu != null) {
+            chartContextMenu.hide();
+        }
+
+        chartContextMenu = ActionUtils.createContextMenu(Arrays.asList(//new EventDetailsChart.PlaceMarkerAction(clickEvent),
+                TimeLineChart.newZoomHistoyActionGroup(controller)));
+        chartContextMenu.setAutoHide(true);
+        return chartContextMenu;
+    }
+//    final ObservableList<EventNodeBase<?>> selectedNodes;
+
+    @Override
     public Node asNode() {
         return this;
     }
@@ -220,62 +237,6 @@ public final class PinnedEventsChart extends XYChart<DateTime, TimeLineEvent> im
     }
 
     @Override
-    protected void dataItemAdded(Series<DateTime, TimeLineEvent> series, int itemIndex, Data<DateTime, TimeLineEvent> item) {
-    }
-
-    @Override
-    protected void dataItemRemoved(Data<DateTime, TimeLineEvent> item, Series<DateTime, TimeLineEvent> series) {
-    }
-
-    @Override
-    protected void dataItemChanged(Data<DateTime, TimeLineEvent> item) {
-    }
-
-    @Override
-    protected void seriesAdded(Series<DateTime, TimeLineEvent> series, int seriesIndex) {
-    }
-
-    @Override
-    protected void seriesRemoved(Series<DateTime, TimeLineEvent> series) {
-    }
-    /**
-     * the maximum y value used so far during the most recent layout pass
-     */
-    private final ReadOnlyDoubleWrapper maxY = new ReadOnlyDoubleWrapper(0.0);
-
-    @Override
-    protected void layoutPlotChildren() {
-        setCursor(Cursor.WAIT);
-        maxY.set(0);
-
-//        //These don't change during a layout pass and are expensive to compute per node.  So we do it once at the start
-//        activeQuickHidefilters = getController().getQuickHideFilters().stream()
-//                .filter(AbstractFilter::isActive)
-//                .map(DescriptionFilter::getDescription)
-//                .collect(Collectors.toSet());
-        //This dosn't change during a layout pass and is expensive to compute per node.  So we do it once at the start
-        descriptionWidth = /*
-                 * truncateAll.get() ? truncateWidth.get() :
-                 */ USE_PREF_SIZE;
-
-//        if (bandByType.get()) {
-//            sortedStripeNodes.stream()
-//                    .collect(Collectors.groupingBy(EventStripeNode::getEventType)).values()
-//                    .forEach(inputNodes -> maxY.set(layoutEventBundleNodes(inputNodes, maxY.get())));
-//        } else {
-        maxY.set(layoutEventBundleNodes(sortedEventNodes.sorted(Comparator.comparing(EventNodeBase::getStartMillis)), 0));
-//        }
-        setCursor(null);
-    }
-    private static final int MINIMUM_EVENT_NODE_GAP = 4;
-    private final static int MINIMUM_ROW_HEIGHT = 24;
-
-    private double getXForEpochMillis(Long millis) {
-        DateTime dateTime = new DateTime(millis);
-        return getXAxis().getDisplayPosition(dateTime);
-    }
-
-    @Override
     public double layoutEventBundleNodes(final Collection<? extends EventNodeBase<?>> nodes, final double minY) {
         // map from y-ranges to maximum x
         TreeRangeMap<Double, Double> maxXatY = TreeRangeMap.create();
@@ -309,6 +270,51 @@ public final class PinnedEventsChart extends XYChart<DateTime, TimeLineEvent> im
         return localMax; //return new max
     }
 
+    @Override
+    protected void dataItemAdded(Series<DateTime, TimeLineEvent> series, int itemIndex, Data<DateTime, TimeLineEvent> item) {
+    }
+
+    @Override
+    protected void dataItemRemoved(Data<DateTime, TimeLineEvent> item, Series<DateTime, TimeLineEvent> series) {
+    }
+
+    @Override
+    protected void dataItemChanged(Data<DateTime, TimeLineEvent> item) {
+    }
+
+    @Override
+    protected void seriesAdded(Series<DateTime, TimeLineEvent> series, int seriesIndex) {
+    }
+
+    @Override
+    protected void seriesRemoved(Series<DateTime, TimeLineEvent> series) {
+    }
+
+    @Override
+    protected void layoutPlotChildren() {
+        setCursor(Cursor.WAIT);
+        maxY.set(0);
+
+//        //These don't change during a layout pass and are expensive to compute per node.  So we do it once at the start
+//        activeQuickHidefilters = getController().getQuickHideFilters().stream()
+//                .filter(AbstractFilter::isActive)
+//                .map(DescriptionFilter::getDescription)
+//                .collect(Collectors.toSet());
+        //This dosn't change during a layout pass and is expensive to compute per node.  So we do it once at the start
+        descriptionWidth = /*
+                 * truncateAll.get() ? truncateWidth.get() :
+                 */ USE_PREF_SIZE;
+
+//        if (bandByType.get()) {
+//            sortedStripeNodes.stream()
+//                    .collect(Collectors.groupingBy(EventStripeNode::getEventType)).values()
+//                    .forEach(inputNodes -> maxY.set(layoutEventBundleNodes(inputNodes, maxY.get())));
+//        } else {
+        maxY.set(layoutEventBundleNodes(sortedEventNodes.sorted(Comparator.comparing(EventNodeBase::getStartMillis)), 0));
+//        }
+        setCursor(null);
+    }
+
     /**
      * expose as protected
      */
@@ -317,40 +323,11 @@ public final class PinnedEventsChart extends XYChart<DateTime, TimeLineEvent> im
         super.requestChartLayout();
     }
 
-    private double computeYTop(double yMin, double h, TreeRangeMap<Double, Double> maxXatY, double xLeft, double xRight) {
-        double yTop = yMin;
-        double yBottom = yTop + h;
-        //until the node is not overlapping any others try moving it down.
-        boolean overlapping = true;
-        while (overlapping) {
-            overlapping = false;
-            //check each pixel from bottom to top.
-            for (double y = yBottom; y >= yTop; y -= MINIMUM_ROW_HEIGHT) {
-                final Double maxX = maxXatY.get(y);
-                if (maxX != null && maxX >= xLeft - MINIMUM_EVENT_NODE_GAP) {
-                    //if that pixel is already used
-                    //jump top to this y value and repeat until free slot is found.
-                    overlapping = true;
-                    yTop = y + MINIMUM_EVENT_NODE_GAP;
-                    yBottom = yTop + h;
-                    break;
-                }
-            }
-        }
-        maxXatY.put(Range.closed(yTop, yBottom), xRight);
-        return yTop;
+    public synchronized void setVScroll(double vScrollValue) {
+        nodeGroup.setTranslateY(-vScrollValue);
     }
-
-    private void layoutBundleHelper(final EventNodeBase<?> eventNode) {
-        //make sure it is shown
-        eventNode.setVisible(true);
-        eventNode.setManaged(true);
-        //apply advanced layout description visibility options
-        eventNode.setDescriptionVisibility(DescriptionVisibility.SHOWN);
-        eventNode.setMaxDescriptionWidth(USE_PREF_SIZE);
-
-        //do recursive layout
-        eventNode.layoutChildren();
+    public ReadOnlyDoubleProperty maxVScrollProperty() {
+        return maxY.getReadOnlyProperty();
     }
 
     /**
@@ -391,13 +368,44 @@ public final class PinnedEventsChart extends XYChart<DateTime, TimeLineEvent> im
         });
     }
 
-    static private EventNodeBase<?> createNode(PinnedEventsChart chart, TimeLineEvent event) {
-        if (event instanceof SingleEvent) {
-            return new SingleEventNode(chart, (SingleEvent) event, null);
-        } else if (event instanceof EventCluster) {
-            return new EventClusterNode(chart, (EventCluster) event, null);
-        } else {
-            return new EventStripeNode(chart, (EventStripe) event, null);
+    private double getXForEpochMillis(Long millis) {
+        DateTime dateTime = new DateTime(millis);
+        return getXAxis().getDisplayPosition(dateTime);
+    }
+
+    private double computeYTop(double yMin, double h, TreeRangeMap<Double, Double> maxXatY, double xLeft, double xRight) {
+        double yTop = yMin;
+        double yBottom = yTop + h;
+        //until the node is not overlapping any others try moving it down.
+        boolean overlapping = true;
+        while (overlapping) {
+            overlapping = false;
+            //check each pixel from bottom to top.
+            for (double y = yBottom; y >= yTop; y -= MINIMUM_ROW_HEIGHT) {
+                final Double maxX = maxXatY.get(y);
+                if (maxX != null && maxX >= xLeft - MINIMUM_EVENT_NODE_GAP) {
+                    //if that pixel is already used
+                    //jump top to this y value and repeat until free slot is found.
+                    overlapping = true;
+                    yTop = y + MINIMUM_EVENT_NODE_GAP;
+                    yBottom = yTop + h;
+                    break;
+                }
+            }
         }
+        maxXatY.put(Range.closed(yTop, yBottom), xRight);
+        return yTop;
+    }
+
+    private void layoutBundleHelper(final EventNodeBase<?> eventNode) {
+        //make sure it is shown
+        eventNode.setVisible(true);
+        eventNode.setManaged(true);
+        //apply advanced layout description visibility options
+        eventNode.setDescriptionVisibility(DescriptionVisibility.SHOWN);
+        eventNode.setMaxDescriptionWidth(USE_PREF_SIZE);
+
+        //do recursive layout
+        eventNode.layoutChildren();
     }
 }

@@ -97,7 +97,7 @@ import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
 public final class EventDetailsChart extends XYChart<DateTime, EventStripe> implements DetailsChart {
 
     private static final String styleSheet = GuideLine.class.getResource("EventsDetailsChart.css").toExternalForm(); //NON-NLS
-  
+
     private static final Image MARKER = new Image("/org/sleuthkit/autopsy/timeline/images/marker.png", 16, 16, true, true, true); //NON-NLS
     private static final int PROJECTED_LINE_Y_OFFSET = 5;
     private static final int PROJECTED_LINE_STROKE_WIDTH = 5;
@@ -459,7 +459,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
         setCursor(null);
     }
 
-    ReadOnlyDoubleProperty maxVScrollProperty() {
+    public ReadOnlyDoubleProperty maxVScrollProperty() {
         return maxY.getReadOnlyProperty();
     }
 
@@ -483,7 +483,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
                 .filter(p).collect(Collectors.toList());
     }
 
-    synchronized void setVScroll(double vScrollValue) {
+    public synchronized void setVScroll(double vScrollValue) {
         nodeGroup.setTranslateY(-vScrollValue);
     }
 

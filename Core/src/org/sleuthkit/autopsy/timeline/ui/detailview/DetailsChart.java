@@ -6,6 +6,7 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
 import java.util.Collection;
+import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.scene.Node;
@@ -36,6 +37,10 @@ interface DetailsChart extends TimeLineChart<DateTime> {
     public ObservableList<EventNodeBase<?>> getSelectedNodes();
 
     double layoutEventBundleNodes(final Collection<? extends EventNodeBase<?>> nodes, final double minY);
+
+    ReadOnlyDoubleProperty maxVScrollProperty();
+
+    void setVScroll(double vScrollValue);
 
     @NbBundle.Messages({"HideDescriptionAction.displayName=Hide",
         "HideDescriptionAction.displayMsg=Hide this group from the details view."})

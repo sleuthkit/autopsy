@@ -40,25 +40,15 @@ import javafx.scene.control.Label;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.MultipleSelectionModel;
 import javafx.scene.control.RadioButton;
-import javafx.scene.control.ScrollBar;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.Slider;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.TreeItem;
 import javafx.scene.effect.Effect;
-import static javafx.scene.input.KeyCode.DOWN;
-import static javafx.scene.input.KeyCode.KP_DOWN;
-import static javafx.scene.input.KeyCode.KP_UP;
-import static javafx.scene.input.KeyCode.PAGE_DOWN;
-import static javafx.scene.input.KeyCode.PAGE_UP;
-import static javafx.scene.input.KeyCode.UP;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import org.controlsfx.control.action.Action;
 import org.joda.time.DateTime;
@@ -91,17 +81,14 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
 
     private final static Logger LOGGER = Logger.getLogger(DetailViewPane.class.getName());
 
-    private static final double LINE_SCROLL_PERCENTAGE = .10;
-    private static final double PAGE_SCROLL_PERCENTAGE = .70;
-
     private final DateAxis detailsChartDateAxis = new DateAxis();
     private final DateAxis pinnedDateAxis = new DateAxis();
     private final Axis<EventStripe> verticalAxis = new EventAxis<>();
-    private final ScrollBar vertScrollBar = new ScrollBar();
-    private final Region scrollBarSpacer = new Region();
 
     private MultipleSelectionModel<TreeItem<TimeLineEvent>> treeSelectionModel;
     private final ObservableList<EventNodeBase<?>> highlightedNodes = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
+    private final ScrollingWrapper<EventStripe, EventDetailsChart> mainView;
+    private final ScrollingWrapper<TimeLineEvent, PinnedEventsChart> pinnedView;
 
     public ObservableList<EventStripe> getEventStripes() {
         return chart.getEventStripes();
@@ -113,21 +100,21 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
             s.getData().forEach(chart::removeDataItem);
             s.getData().clear();
         }
-        Platform.runLater(() -> {
-            vertScrollBar.setValue(0);
-        });
 
+        mainView.reset();
+        pinnedView.reset();
     }
 
     public DetailViewPane(TimeLineController controller, Pane partPane, Pane contextPane, Region bottomLeftSpacer) {
         super(controller, partPane, contextPane, bottomLeftSpacer);
         //initialize chart;
         chart = new EventDetailsChart(controller, detailsChartDateAxis, verticalAxis, selectedNodes);
-
+        mainView = new ScrollingWrapper<>(chart);
         PinnedEventsChart pinnedChart = new PinnedEventsChart(controller, pinnedDateAxis, new EventAxis<>());
+        pinnedView = new ScrollingWrapper<>(pinnedChart);
         pinnedChart.setMinSize(100, 100);
         setChartClickHandler(); //can we push this into chart
-        SplitPane splitPane = new SplitPane(pinnedChart, chart);
+        SplitPane splitPane = new SplitPane(pinnedView, mainView);
         splitPane.setOrientation(Orientation.VERTICAL);
         chart.setData(dataSeries);
         setCenter(splitPane);
@@ -142,50 +129,6 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
         bottomLeftSpacer.prefWidthProperty().bind(verticalAxis.widthProperty().add(verticalAxis.tickLengthProperty()));
         bottomLeftSpacer.maxWidthProperty().bind(verticalAxis.widthProperty().add(verticalAxis.tickLengthProperty()));
 
-        scrollBarSpacer.minHeightProperty().bind(detailsChartDateAxis.heightProperty());
-
-        //configure scrollbar
-        vertScrollBar.setOrientation(Orientation.VERTICAL);
-        vertScrollBar.maxProperty().bind(chart.maxVScrollProperty().subtract(chart.heightProperty()));
-        vertScrollBar.visibleAmountProperty().bind(chart.heightProperty());
-        vertScrollBar.visibleProperty().bind(vertScrollBar.visibleAmountProperty().greaterThanOrEqualTo(0));
-        VBox.setVgrow(vertScrollBar, Priority.ALWAYS);
-        setRight(new VBox(vertScrollBar, scrollBarSpacer));
-
-        //interpret scroll events to the scrollBar
-        this.setOnScroll(scrollEvent ->
-                vertScrollBar.valueProperty().set(clampScroll(vertScrollBar.getValue() - scrollEvent.getDeltaY())));
-
-        //request focus for keyboard scrolling
-        setOnMouseClicked(mouseEvent -> requestFocus());
-
-        //interpret scroll related keys to scrollBar
-        this.setOnKeyPressed((KeyEvent t) -> {
-            switch (t.getCode()) {
-                case PAGE_UP:
-                    incrementScrollValue(-PAGE_SCROLL_PERCENTAGE);
-                    t.consume();
-                    break;
-                case PAGE_DOWN:
-                    incrementScrollValue(PAGE_SCROLL_PERCENTAGE);
-                    t.consume();
-                    break;
-                case KP_UP:
-                case UP:
-                    incrementScrollValue(-LINE_SCROLL_PERCENTAGE);
-                    t.consume();
-                    break;
-                case KP_DOWN:
-                case DOWN:
-                    incrementScrollValue(LINE_SCROLL_PERCENTAGE);
-                    t.consume();
-                    break;
-            }
-        });
-
-        //scrollbar value change handler.  This forwards changes in scroll bar to chart
-        this.vertScrollBar.valueProperty().addListener(observable -> chart.setVScroll(vertScrollBar.getValue()));
-
         //maintain highlighted effect on correct nodes
         highlightedNodes.addListener((ListChangeListener.Change<? extends EventNodeBase<?>> change) -> {
             while (change.next()) {
@@ -196,21 +139,14 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
 
         selectedNodes.addListener((Observable observable) -> {
             highlightedNodes.clear();
-            selectedNodes.stream().forEach((tn) -> {
-                for (EventNodeBase<?> n : chart.getNodes((EventNodeBase<?> t) ->
-                        t.getDescription().equals(tn.getDescription()))) {
+            for (EventNodeBase<?> selectedNode : selectedNodes) {
+                String selectedDescription = selectedNode.getDescription();
+                for (EventNodeBase<?> n : chart.getNodes(eventNode ->
+                        selectedDescription.equals(eventNode.getDescription()))) {
                     highlightedNodes.add(n);
                 }
-            });
+            }
         });
-    }
-
-    private void incrementScrollValue(double factor) {
-        vertScrollBar.valueProperty().set(clampScroll(vertScrollBar.getValue() + factor * chart.getHeight()));
-    }
-
-    private Double clampScroll(Double value) {
-        return Math.max(0, Math.min(vertScrollBar.getMax() + 50, value));
     }
 
     public void setSelectionModel(MultipleSelectionModel<TreeItem<TimeLineEvent>> selectionModel) {
@@ -219,9 +155,9 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
         treeSelectionModel.getSelectedItems().addListener((Observable observable) -> {
             highlightedNodes.clear();
             for (TreeItem<TimeLineEvent> tn : treeSelectionModel.getSelectedItems()) {
-
-                for (EventNodeBase<?> n : chart.getNodes((EventNodeBase<?> t) ->
-                        t.getDescription().equals(tn.getValue().getDescription()))) {
+                String description = tn.getValue().getDescription();
+                for (EventNodeBase<?> n : chart.getNodes(eventNode ->
+                        description.equals(eventNode.getDescription()))) {
                     highlightedNodes.add(n);
                 }
             }
