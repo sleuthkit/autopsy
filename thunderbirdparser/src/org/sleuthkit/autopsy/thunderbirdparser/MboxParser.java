@@ -233,7 +233,7 @@ class MboxParser {
             }
             for(Field field: fields) {
                 String nextLine = field.getName() + ": " + field.getBody();
-                bodyString.append("\n").append(nextLine);
+                bodyString.append("\n-----HEADER-----\n").append(nextLine);
             }
 
             switch (type) {
