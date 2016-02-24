@@ -91,6 +91,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
     private final ScrollingWrapper<EventStripe, EventDetailsChart> mainView;
     private final ScrollingWrapper<TimeLineEvent, PinnedEventsChart> pinnedView;
     private final DetailViewLayoutSettings layoutSettings;
+    private final PinnedEventsChart pinnedChart;
 
     public ObservableList<EventStripe> getEventStripes() {
         return chart.getEventStripes();
@@ -114,7 +115,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
         //initialize chart;
         chart = new EventDetailsChart(controller, detailsChartDateAxis, verticalAxis, selectedNodes, layoutSettings);
         mainView = new ScrollingWrapper<>(chart);
-        PinnedEventsChart pinnedChart = new PinnedEventsChart(controller, pinnedDateAxis, new EventAxis<>(), selectedNodes, layoutSettings);
+        pinnedChart = new PinnedEventsChart(controller, pinnedDateAxis, new EventAxis<>(), selectedNodes, layoutSettings);
         pinnedView = new ScrollingWrapper<>(pinnedChart);
         pinnedChart.setMinSize(100, 100);
         setChartClickHandler(); //can we push this into chart
@@ -136,19 +137,15 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
         //maintain highlighted effect on correct nodes
         highlightedNodes.addListener((ListChangeListener.Change<? extends EventNodeBase<?>> change) -> {
             while (change.next()) {
-                change.getAddedSubList().forEach(EventNodeBase::applyHighlightEffect);
-                change.getRemoved().forEach(EventNodeBase::clearHighlightEffect);
+                change.getAddedSubList().forEach(eventNode -> eventNode.applyHighlightEffect());
+                change.getRemoved().forEach(eventNode -> eventNode.clearHighlightEffect());
             }
         });
 
         selectedNodes.addListener((Observable observable) -> {
             highlightedNodes.clear();
             for (EventNodeBase<?> selectedNode : selectedNodes) {
-                String selectedDescription = selectedNode.getDescription();
-                for (EventNodeBase<?> n : chart.getNodes(eventNode ->
-                        selectedDescription.equals(eventNode.getDescription()))) {
-                    highlightedNodes.add(n);
-                }
+                highlightedNodes.add(selectedNode);
             }
             controller.selectEventIDs(selectedNodes.stream()
                     .flatMap(detailNode -> detailNode.getEventIDs().stream())
@@ -163,8 +160,10 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
             highlightedNodes.clear();
             for (TreeItem<TimeLineEvent> tn : treeSelectionModel.getSelectedItems()) {
                 String description = tn.getValue().getDescription();
-                for (EventNodeBase<?> n : chart.getNodes(eventNode ->
-                        description.equals(eventNode.getDescription()))) {
+                for (EventNodeBase<?> n : chart.getNodes(eventNode -> eventNode.hasDescription(description))) {
+                    highlightedNodes.add(n);
+                }
+                for (EventNodeBase<?> n : pinnedChart.getNodes(eventNode -> eventNode.hasDescription(description))) {
                     highlightedNodes.add(n);
                 }
             }

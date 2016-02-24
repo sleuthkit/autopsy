@@ -26,7 +26,10 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.MissingResourceException;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -360,6 +363,26 @@ public final class PinnedEventsChart extends XYChart<DateTime, TimeLineEvent> im
             data.setNode(eventNode);
 
         });
+    }
+
+    /**
+     * @return all the nodes that pass the given predicate
+     */
+    synchronized Iterable<EventNodeBase<?>> getNodes(Predicate<EventNodeBase<?>> p) {
+        //use this recursive function to flatten the tree of nodes into an single stream.
+        Function<EventNodeBase<?>, Stream<EventNodeBase<?>>> stripeFlattener =
+                new Function<EventNodeBase<?>, Stream<EventNodeBase<?>>>() {
+                    @Override
+                    public Stream<EventNodeBase<?>> apply(EventNodeBase<?> node) {
+                        return Stream.concat(
+                                Stream.of(node),
+                                node.getSubNodes().stream().flatMap(this::apply));
+                    }
+                };
+
+        return sortedEventNodes.stream()
+                .flatMap(stripeFlattener)
+                .filter(p).collect(Collectors.toList());
     }
 
     /**

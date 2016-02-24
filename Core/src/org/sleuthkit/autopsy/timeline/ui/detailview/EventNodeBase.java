@@ -277,12 +277,16 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
 
     abstract void setDescriptionVisibiltiyImpl(DescriptionVisibility get);
 
+    boolean hasDescription(String other) {
+        return this.getDescription().startsWith(other);
+    }
+
     /**
      * apply the 'effect' to visually indicate highlighted nodes
      *
      * @param applied true to apply the highlight 'effect', false to remove it
      */
-     synchronized void applyHighlightEffect(boolean applied) {
+    synchronized void applyHighlightEffect(boolean applied) {
         if (applied) {
             descrLabel.setStyle("-fx-font-weight: bold;"); // NON-NLS
             setBackground(highlightedBackground);
