@@ -326,7 +326,7 @@ class LocalFilesPanel extends JPanel {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         String displayName = JOptionPane.showInputDialog("New Display Name: ");
-        if(displayName != null && !displayName.equals("")) {
+        if (displayName != null && !displayName.equals("")) {
             this.displayName = displayName;
             this.displayNameLabel.setText("Display Name: " + this.displayName);
         }
