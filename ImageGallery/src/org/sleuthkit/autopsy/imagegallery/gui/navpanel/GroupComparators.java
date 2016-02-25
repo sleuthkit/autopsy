@@ -18,21 +18,18 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui.navpanel;
 
-import com.google.common.collect.ImmutableList;
 import java.util.Comparator;
 import java.util.function.Function;
-
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 
-/**
- *
- */
 @NbBundle.Messages({"GroupComparators.uncategorizedCount=Uncategorized Count",
-        "GroupComparators.groupName=Group Name",
-        "GroupComparators.hitCount=Hit Count",
-        "GroupComparators.groupSize=Group Size",
-        "GroupComparators.hitDensity=Hit Density"})
+    "GroupComparators.groupName=Group Name",
+    "GroupComparators.hitCount=Hit Count",
+    "GroupComparators.groupSize=Group Size",
+    "GroupComparators.hitDensity=Hit Density"})
 final class GroupComparators<T extends Comparable<T>> implements Comparator<DrawableGroup> {
 
     static final GroupComparators<Long> UNCATEGORIZED_COUNT =
@@ -50,10 +47,10 @@ final class GroupComparators<T extends Comparable<T>> implements Comparator<Draw
     static final GroupComparators<Double> HIT_FILE_RATIO =
             new GroupComparators<>(Bundle.GroupComparators_hitDensity(), DrawableGroup::getHashHitDensity, density -> String.format("%.2f", density) + "%", true); //NON-NLS
 
-    private final static ImmutableList<GroupComparators<?>> values = ImmutableList.of(UNCATEGORIZED_COUNT, ALPHABETICAL, HIT_COUNT, FILE_COUNT, HIT_FILE_RATIO);
+    private final static ObservableList<GroupComparators<?>> values = FXCollections.observableArrayList(UNCATEGORIZED_COUNT, ALPHABETICAL, HIT_COUNT, FILE_COUNT, HIT_FILE_RATIO);
 
-    public static ImmutableList<GroupComparators<?>> getValues() {
-        return values;
+    public static ObservableList<GroupComparators<?>> getValues() {
+        return FXCollections.unmodifiableObservableList(values);
     }
 
     private final Function<DrawableGroup, T> extractor;

@@ -1,7 +1,7 @@
  /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2012-15 Basis Technology Corp.
+ * Copyright 2012-16 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
@@ -73,10 +74,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class ImageUtils {
 
     private static final Logger LOGGER = Logger.getLogger(ImageUtils.class.getName());
-
-    private static final String COULD_NOT_WRITE_CACHE_THUMBNAIL = "Could not write cache thumbnail: "; //NOI18N NON-NLS
-    private static final String COULD_NOT_CREATE_IMAGE_INPUT_STREAM = "Could not create ImageInputStream."; //NOI18N NON-NLS
-    private static final String NO_IMAGE_READER_FOUND_FOR_ = "No ImageReader found for "; //NOI18N NON-NLS
 
     /**
      * save thumbnails to disk as this format
@@ -594,7 +591,7 @@ public class ImageUtils {
         try (InputStream inputStream = new BufferedInputStream(new ReadContentInputStream(file));) {
             try (ImageInputStream input = ImageIO.createImageInputStream(inputStream)) {
                 if (input == null) {
-                    IIOException iioException = new IIOException(COULD_NOT_CREATE_IMAGE_INPUT_STREAM);
+                    IIOException iioException = new IIOException("Could not create ImageInputStream.");
                     LOGGER.log(Level.WARNING, errorTemplate + iioException.toString(), getContentPathSafe(file));
                     throw iioException;
                 }
@@ -613,7 +610,7 @@ public class ImageUtils {
                         reader.dispose();
                     }
                 } else {
-                    IIOException iioException = new IIOException(NO_IMAGE_READER_FOUND_FOR_ + getContentPathSafe(file));
+                    IIOException iioException = new IIOException("No ImageReader found.");
                     LOGGER.log(Level.WARNING, errorTemplate + iioException.toString(), getContentPathSafe(file));
 
                     throw iioException;
@@ -646,18 +643,19 @@ public class ImageUtils {
      */
     static private class GetThumbnailTask extends ReadImageTaskBase {
 
-        private static final String FAILED_TO_READ_IMAGE_FOR_THUMBNAIL_GENERATION = "Failed to read image for thumbnail generation."; //NOI18N NON-NLS
+        private static final String FAILED_TO_READ_IMAGE_FOR_THUMBNAIL_GENERATION = "Failed to read {0} for thumbnail generation."; //NOI18N NON-NLS
 
         private final int iconSize;
         private final File cacheFile;
         private final boolean defaultOnFailure;
 
-//        @NbBundle.Messages({"# {0} - file name",
-//            "GetOrGenerateThumbnailTask.loadingThumbnailFor=Loading thumbnail for {0}", "# {0} - file name",
-//            "GetOrGenerateThumbnailTask.generatingPreviewFor=Generating preview for {0}"})
+        @NbBundle.Messages({"# {0} - file name",
+            "GetOrGenerateThumbnailTask.loadingThumbnailFor=Loading thumbnail for {0}",
+            "# {0} - file name",
+            "GetOrGenerateThumbnailTask.generatingPreviewFor=Generating preview for {0}"})
         private GetThumbnailTask(AbstractFile file, int iconSize, boolean defaultOnFailure) {
             super(file);
-            updateMessage(NbBundle.getMessage(this.getClass(), "ImageUtils.GetOrGenerateThumbnailTask.loadingThumbnailFor", file.getName()));
+            updateMessage(Bundle.GetOrGenerateThumbnailTask_loadingThumbnailFor(file.getName()));
             this.iconSize = iconSize;
             this.defaultOnFailure = defaultOnFailure;
             this.cacheFile = getCachedThumbnailLocation(file.getId());
@@ -678,36 +676,39 @@ public class ImageUtils {
                     if (nonNull(cachedThumbnail) && cachedThumbnail.getWidth() == iconSize) {
                         return SwingFXUtils.toFXImage(cachedThumbnail, null);
                     }
-                } catch (IOException ex) {
-                    LOGGER.log(Level.WARNING, "ImageIO had a problem reading thumbnail for image {0}: " + ex.toString(), ImageUtils.getContentPathSafe(file)); //NOI18N NON-NLS
+                } catch (Exception ex) {
+                    LOGGER.log(Level.WARNING, "ImageIO had a problem reading the cached thumbnail for {0}: " + ex.toString(), ImageUtils.getContentPathSafe(file)); //NOI18N NON-NLS
+                    cacheFile.delete();  //since we can't read the file we might as well delete it.
                 }
             }
 
             if (isCancelled()) {
                 return null;
             }
+
             //There was no correctly-sized cached thumbnail so make one.
             BufferedImage thumbnail = null;
-
             if (VideoUtils.isVideoThumbnailSupported(file)) {
                 if (openCVLoaded) {
-                    updateMessage(NbBundle.getMessage(this.getClass(), "ImageUtils.GetOrGenerateThumbnailTask.generatingPreviewFor", file.getName()));
+                    updateMessage(Bundle.GetOrGenerateThumbnailTask_generatingPreviewFor(file.getName()));
                     thumbnail = VideoUtils.generateVideoThumbnail(file, iconSize);
                 }
                 if (null == thumbnail) {
                     if (defaultOnFailure) {
                         thumbnail = DEFAULT_THUMBNAIL;
                     } else {
-                        throw new IIOException("Failed to generate thumbnail for video file.");
+                        throw new IIOException("Failed to generate a thumbnail for " + getContentPathSafe(file));
                     }
                 }
 
             } else {
                 //read the image into a buffered image.
+                //TODO: I don't like this, we just converted it from BufferedIamge to fx Image -jm
                 BufferedImage bufferedImage = SwingFXUtils.fromFXImage(readImage(), null);
                 if (null == bufferedImage) {
-                    LOGGER.log(Level.WARNING, FAILED_TO_READ_IMAGE_FOR_THUMBNAIL_GENERATION);
-                    throw new IIOException(FAILED_TO_READ_IMAGE_FOR_THUMBNAIL_GENERATION);
+                    String msg = MessageFormat.format(FAILED_TO_READ_IMAGE_FOR_THUMBNAIL_GENERATION, getContentPathSafe(file));
+                    LOGGER.log(Level.WARNING, msg);
+                    throw new IIOException(msg);
                 }
                 updateProgress(-1, 1);
 
@@ -716,23 +717,21 @@ public class ImageUtils {
                     thumbnail = ScalrWrapper.resizeFast(bufferedImage, iconSize);
                 } catch (IllegalArgumentException | OutOfMemoryError e) {
                     // if resizing does not work due to extreme aspect ratio or oom, crop the image instead.
-                    LOGGER.log(Level.WARNING, "Could not scale image {0}: " + e.toString() + ".  Attemptying to crop {0} instead", ImageUtils.getContentPathSafe(file)); //NOI18N NON-NLS
+                    LOGGER.log(Level.WARNING, "Cropping {0}, because it could not be scaled: " + e.toString(), ImageUtils.getContentPathSafe(file)); //NOI18N NON-NLS
 
                     final int height = bufferedImage.getHeight();
                     final int width = bufferedImage.getWidth();
                     if (iconSize < height || iconSize < width) {
                         final int cropHeight = Math.min(iconSize, height);
                         final int cropWidth = Math.min(iconSize, width);
-
                         try {
                             thumbnail = ScalrWrapper.cropImage(bufferedImage, cropWidth, cropHeight);
                         } catch (Exception cropException) {
-                            LOGGER.log(Level.WARNING, "Could not crop image {0}: " + cropException.toString(), ImageUtils.getContentPathSafe(file)); //NOI18N NON-NLS
-                            throw cropException;
+                            LOGGER.log(Level.WARNING, "Could not crop {0}: " + cropException.toString(), ImageUtils.getContentPathSafe(file)); //NOI18N NON-NLS
                         }
                     }
                 } catch (Exception e) {
-                    LOGGER.log(Level.WARNING, "Could not scale image {0}: " + e.toString(), ImageUtils.getContentPathSafe(file)); //NOI18N NON-NLS
+                    LOGGER.log(Level.WARNING, "Could not scale {0}: " + e.toString(), ImageUtils.getContentPathSafe(file)); //NOI18N NON-NLS
                     throw e;
                 }
             }
@@ -744,7 +743,7 @@ public class ImageUtils {
             updateProgress(-1, 1);
 
             //if we got a valid thumbnail save it
-            if ((cacheFile != null) && nonNull(thumbnail) && DEFAULT_THUMBNAIL != thumbnail) {
+            if ((cacheFile != null) && thumbnail != null && DEFAULT_THUMBNAIL != thumbnail) {
                 saveThumbnail(thumbnail);
             }
 
@@ -790,16 +789,16 @@ public class ImageUtils {
     /**
      * A task that reads the content of a AbstractFile as a javafx Image.
      */
+    @NbBundle.Messages({
+        "# {0} - file name",
+        "ReadImageTask.mesageText=Reading image: {0}"})
     static private class ReadImageTask extends ReadImageTaskBase {
 
         ReadImageTask(AbstractFile file) {
             super(file);
-            updateMessage(NbBundle.getMessage(this.getClass(), "ImageUtils.ReadImageTask.mesage.text", file.getName()));
+            updateMessage(Bundle.ReadImageTask_mesageText(file.getName()));
         }
 
-//        @NbBundle.Messages({
-//            "# {0} - file name",
-//            "LoadImageTask.mesageText=Reading image: {0}"})
         @Override
         protected javafx.scene.image.Image call() throws Exception {
             return readImage();
@@ -811,70 +810,55 @@ public class ImageUtils {
      */
     static private abstract class ReadImageTaskBase extends Task<javafx.scene.image.Image> implements IIOReadProgressListener {
 
-        private static final String IMAGE_UTILS_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT = "ImageUtils could not read {0}.  It may be unsupported or corrupt"; //NOI18N NON-NLS
+        private static final String IMAGEIO_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT = "ImageIO could not read {0}.  It may be unsupported or corrupt"; //NOI18N NON-NLS
         final AbstractFile file;
-        private ImageReader reader;
+//        private ImageReader reader;
 
         ReadImageTaskBase(AbstractFile file) {
             this.file = file;
         }
 
         protected javafx.scene.image.Image readImage() throws IOException {
-            try (InputStream inputStream = new BufferedInputStream(new ReadContentInputStream(file));) {
-                if (ImageUtils.isGIF(file)) {
-                    //use JavaFX to directly read GIF to preserve potential animation,
-                    javafx.scene.image.Image image = new javafx.scene.image.Image(new BufferedInputStream(inputStream));
-                    if (image.isError() == false) {
-                        return image;
-                    }
-                    //fall through to default image reading code if there was an error
+            if (ImageUtils.isGIF(file)) {
+                //use JavaFX to directly read GIF to preserve potential animation
+                javafx.scene.image.Image image = new javafx.scene.image.Image(new BufferedInputStream(new ReadContentInputStream(file)));
+                if (image.isError() == false) {
+                    return image;
                 }
-                if (isCancelled()) {
-                    return null;
-                }
-                try (ImageInputStream input = ImageIO.createImageInputStream(inputStream)) {
-                    if (input == null) {
-                        throw new IIOException(COULD_NOT_CREATE_IMAGE_INPUT_STREAM);
-                    }
-                    Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
+                //fall through to default image reading code if there was an error
+            }
+            if (isCancelled()) {
+                return null;
+            }
 
-                    //we use the first ImageReader, is there any point to trying the others?
-                    if (readers.hasNext()) {
-                        reader = readers.next();
-                        reader.addIIOReadProgressListener(this);
-                        reader.setInput(input);
+            return getImageProperty(file, "ImageIO could not read {0}: ",
+                    imageReader -> {
+                        imageReader.addIIOReadProgressListener(ReadImageTaskBase.this);
                         /*
                          * This is the important part, get or create a
                          * ImageReadParam, create a destination image to hold
                          * the decoded result, then pass that image with the
                          * param.
                          */
-                        ImageReadParam param = reader.getDefaultReadParam();
-
-                        BufferedImage bufferedImage = reader.getImageTypes(0).next().createBufferedImage(reader.getWidth(0), reader.getHeight(0));
+                        ImageReadParam param = imageReader.getDefaultReadParam();
+                        BufferedImage bufferedImage = imageReader.getImageTypes(0).next().createBufferedImage(imageReader.getWidth(0), imageReader.getHeight(0));
                         param.setDestination(bufferedImage);
                         try {
-                            bufferedImage = reader.read(0, param); //should always be same bufferedImage object
+                            bufferedImage = imageReader.read(0, param); //should always be same bufferedImage object
                         } catch (IOException iOException) {
-                            // Ignore this exception or display a warning or similar, for exceptions happening during decoding
-                            LOGGER.log(Level.WARNING, IMAGE_UTILS_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT + ": " + iOException.toString(), ImageUtils.getContentPathSafe(file)); //NOI18N
+                            LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT + ": " + iOException.toString(), ImageUtils.getContentPathSafe(file)); //NOI18N
                         } finally {
-                            reader.removeIIOReadProgressListener(this);
-                            reader.dispose();
+                            imageReader.removeIIOReadProgressListener(ReadImageTaskBase.this);
                         }
                         if (isCancelled()) {
                             return null;
                         }
                         return SwingFXUtils.toFXImage(bufferedImage, null);
-                    } else {
-                        throw new IIOException(NO_IMAGE_READER_FOUND_FOR_ + ImageUtils.getContentPathSafe(file));
-                    }
-                }
-            }
+                    });
         }
 
         @Override
-        public void imageProgress(ImageReader source, float percentageDone) {
+        public void imageProgress(ImageReader reader, float percentageDone) {
             //update this task with the progress reported by ImageReader.read
             updateProgress(percentageDone, 100);
             if (isCancelled()) {
@@ -890,11 +874,11 @@ public class ImageUtils {
             try {
                 javafx.scene.image.Image fxImage = get();
                 if (fxImage == null) {
-                    LOGGER.log(Level.WARNING, IMAGE_UTILS_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT, ImageUtils.getContentPathSafe(file));
+                    LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT, ImageUtils.getContentPathSafe(file));
                 } else {
                     if (fxImage.isError()) {
                         //if there was somekind of error, log it
-                        LOGGER.log(Level.WARNING, IMAGE_UTILS_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT + ": " + ObjectUtils.toString(fxImage.getException()), ImageUtils.getContentPathSafe(file));
+                        LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT + ": " + ObjectUtils.toString(fxImage.getException()), ImageUtils.getContentPathSafe(file));
                     }
                 }
             } catch (InterruptedException | ExecutionException ex) {
@@ -905,7 +889,7 @@ public class ImageUtils {
         @Override
         protected void failed() {
             super.failed();
-            LOGGER.log(Level.WARNING, IMAGE_UTILS_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT + ": " + ObjectUtils.toString(getException()), ImageUtils.getContentPathSafe(file));
+            LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT + ": " + ObjectUtils.toString(getException()), ImageUtils.getContentPathSafe(file));
         }
 
         @Override
@@ -950,7 +934,7 @@ public class ImageUtils {
      *
      * @return
      */
-    private static String getContentPathSafe(Content content) {
+     static String getContentPathSafe(Content content) {
         try {
             return content.getUniquePath();
         } catch (TskCoreException tskCoreException) {

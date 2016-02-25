@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,67 +20,128 @@ package org.sleuthkit.autopsy.imagegallery.actions;
 
 import java.awt.Window;
 import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
-import javafx.event.ActionEvent;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
+import javafx.application.Platform;
+import javafx.collections.ObservableSet;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
+import javafx.scene.image.ImageView;
 import javax.swing.SwingUtilities;
-
+import javax.swing.SwingWorker;
+import org.controlsfx.control.action.Action;
+import org.controlsfx.control.action.ActionUtils;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.GetTagNameAndCommentDialog;
 import org.sleuthkit.autopsy.actions.GetTagNameDialog;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
-import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableTagsManager;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * An abstract base class for actions that allow users to tag SleuthKit data
- * model objects.
- *
- * //TODO: this class started as a cut and paste from
- * org.sleuthkit.autopsy.actions.AddTagAction and needs to be refactored or
- * reintegrated to the AddTagAction hierarchy of Autopysy.
+ * Instances of this Action allow users to apply tags to content.
  */
-abstract class AddTagAction {
+public class AddTagAction extends Action {
 
-    protected static final String NO_COMMENT = "";
+    private static final Logger LOGGER = Logger.getLogger(AddTagAction.class.getName());
 
-    /**
-     * Template method to allow derived classes to provide a string for a menu
-     * item label.
-     */
-    abstract protected String getActionDisplayName();
+    private final ImageGalleryController controller;
+    private final Set<Long> selectedFileIDs;
+    private final TagName tagName;
 
-    /**
-     * Template method to allow derived classes to add the indicated tag and
-     * comment to one or more a SleuthKit data model objects.
-     */
-    abstract protected void addTag(TagName tagName, String comment);
+    public AddTagAction(ImageGalleryController controller, TagName tagName, Set<Long> selectedFileIDs) {
+        super(tagName.getDisplayName());
+        this.controller = controller;
+        this.selectedFileIDs = selectedFileIDs;
+        this.tagName = tagName;
+        setGraphic(controller.getTagsManager().getGraphic(tagName));
+        setText(tagName.getDisplayName());
+        setEventHandler(actionEvent -> addTagWithComment(""));
+    }
 
-    /**
-     * Template method to allow derived classes to add the indicated tag and
-     * comment to a list of one or more file IDs.
-     */
-    abstract protected void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles);
+    static public Menu getTagMenu(ImageGalleryController controller) {
+        return new TagMenu(controller);
+    }
 
-    /**
-     * Instances of this class implement a context menu user interface for
-     * creating or selecting a tag name for a tag and specifying an optional tag
-     * comment.
-     */
-    // @@@ This user interface has some significant usability issues and needs
-    // to be reworked.
+    private void addTagWithComment(String comment) {
+        addTagsToFiles(tagName, comment, selectedFileIDs);
+    }
+
+    @NbBundle.Messages({"# {0} - fileID",
+        "AddDrawableTagAction.addTagsToFiles.alert=Unable to tag file {0}."})
+    private void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles) {
+        new SwingWorker<Void, Void>() {
+
+            @Override
+            protected Void doInBackground() throws Exception {
+                // check if the same tag is being added for the same abstract file.
+                DrawableTagsManager tagsManager = controller.getTagsManager();
+                for (Long fileID : selectedFiles) {
+                    try {
+                        final DrawableFile<?> file = controller.getFileFromId(fileID);
+                        LOGGER.log(Level.INFO, "tagging {0} with {1} and comment {2}", new Object[]{file.getName(), tagName.getDisplayName(), comment}); //NON-NLS
+
+                        List<ContentTag> contentTags = tagsManager.getContentTagsByContent(file);
+                        Optional<TagName> duplicateTagName = contentTags.stream()
+                                .map(ContentTag::getName)
+                                .filter(tagName::equals)
+                                .findAny();
+
+                        if (duplicateTagName.isPresent()) {
+                            LOGGER.log(Level.INFO, "{0} already tagged as {1}. Skipping.", new Object[]{file.getName(), tagName.getDisplayName()}); //NON-NLS
+                        } else {
+                            LOGGER.log(Level.INFO, "Tagging {0} as {1}", new Object[]{file.getName(), tagName.getDisplayName()}); //NON-NLS
+                            controller.getTagsManager().addContentTag(file, tagName, comment);
+                        }
+
+                    } catch (TskCoreException tskCoreException) {
+                        LOGGER.log(Level.SEVERE, "Error tagging file", tskCoreException); //NON-NLS
+                        Platform.runLater(() ->
+                                new Alert(Alert.AlertType.ERROR, Bundle.AddDrawableTagAction_addTagsToFiles_alert(fileID)).show()
+                        );
+                    }
+                }
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                super.done();
+                try {
+                    get();
+                } catch (InterruptedException | ExecutionException ex) {
+                    LOGGER.log(Level.SEVERE, "unexpected exception while tagging files", ex); //NON-NLS
+                }
+            }
+        }.execute();
+    }
+
     @NbBundle.Messages({"AddTagAction.menuItem.quickTag=Quick Tag",
-            "AddTagAction.menuItem.noTags=No tags",
-            "AddTagAction.menuItem.newTag=New Tag...",
-            "AddTagAction.menuItem.tagAndComment=Tag and Comment..."})
-    protected class TagMenu extends Menu {
+        "AddTagAction.menuItem.noTags=No tags",
+        "AddTagAction.menuItem.newTag=New Tag...",
+        "AddTagAction.menuItem.tagAndComment=Tag and Comment...",
+        "AddDrawableTagAction.displayName.plural=Tag Files",
+        "AddDrawableTagAction.displayName.singular=Tag File"})
+    private static class TagMenu extends Menu {
 
         TagMenu(ImageGalleryController controller) {
-            super(getActionDisplayName());
+            setGraphic(new ImageView(DrawableAttribute.TAGS.getIcon()));
+            ObservableSet<Long> selectedFileIDs = controller.getSelectionModel().getSelected();
+            setText(selectedFileIDs.size() > 1
+                    ? Bundle.AddDrawableTagAction_displayName_plural()
+                    : Bundle.AddDrawableTagAction_displayName_singular());
 
             // Create a "Quick Tag" sub-menu.
             Menu quickTagMenu = new Menu(Bundle.AddTagAction_menuItem_quickTag());
@@ -98,10 +159,8 @@ abstract class AddTagAction {
                 quickTagMenu.getItems().add(empty);
             } else {
                 for (final TagName tagName : tagNames) {
-                    MenuItem tagNameItem = new MenuItem(tagName.getDisplayName());
-                    tagNameItem.setOnAction((ActionEvent t) -> {
-                        addTag(tagName, NO_COMMENT);
-                    });
+                    AddTagAction addDrawableTagAction = new AddTagAction(controller, tagName, selectedFileIDs);
+                    MenuItem tagNameItem = ActionUtils.createMenuItem(addDrawableTagAction);
                     quickTagMenu.getItems().add(tagNameItem);
                 }
             }
@@ -112,14 +171,13 @@ abstract class AddTagAction {
              * or select a tag name and adds a tag with the resulting name.
              */
             MenuItem newTagMenuItem = new MenuItem(Bundle.AddTagAction_menuItem_newTag());
-            newTagMenuItem.setOnAction((ActionEvent t) -> {
-                SwingUtilities.invokeLater(() -> {
-                    TagName tagName = GetTagNameDialog.doDialog(getIGWindow());
-                    if (tagName != null) {
-                        addTag(tagName, NO_COMMENT);
-                    }
-                });
-            });
+            newTagMenuItem.setOnAction(actionEvent ->
+                    SwingUtilities.invokeLater(() -> {
+                        TagName tagName = GetTagNameDialog.doDialog(getIGWindow());
+                        if (tagName != null) {
+                            new AddTagAction(controller, tagName, selectedFileIDs).handle(actionEvent);
+                        }
+                    }));
             quickTagMenu.getItems().add(newTagMenuItem);
 
             /*
@@ -129,26 +187,17 @@ abstract class AddTagAction {
              * name.
              */
             MenuItem tagAndCommentItem = new MenuItem(Bundle.AddTagAction_menuItem_tagAndComment());
-            tagAndCommentItem.setOnAction((ActionEvent t) -> {
-                SwingUtilities.invokeLater(() -> {
-                    GetTagNameAndCommentDialog.TagNameAndComment tagNameAndComment = GetTagNameAndCommentDialog.doDialog(getIGWindow());
-                    if (null != tagNameAndComment) {
-                        if (CategoryManager.isCategoryTagName(tagNameAndComment.getTagName())) {
-                            new CategorizeAction(controller).addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
-                        } else {
-                            new AddDrawableTagAction(controller).addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
+            tagAndCommentItem.setOnAction(actionEvent ->
+                    SwingUtilities.invokeLater(() -> {
+                        GetTagNameAndCommentDialog.TagNameAndComment tagNameAndComment = GetTagNameAndCommentDialog.doDialog(getIGWindow());
+                        if (null != tagNameAndComment) {
+                            new AddTagAction(controller, tagNameAndComment.getTagName(), selectedFileIDs).addTagWithComment(tagNameAndComment.getComment());
                         }
-                    }
-                });
-            });
+                    }));
             getItems().add(tagAndCommentItem);
         }
-
     }
 
-    /**
-     * @return the Window containing the ImageGalleryTopComponent
-     */
     static private Window getIGWindow() {
         TopComponent etc = WindowManager.getDefault().findTopComponent(ImageGalleryTopComponent.PREFERRED_ID);
         return SwingUtilities.getWindowAncestor(etc);
