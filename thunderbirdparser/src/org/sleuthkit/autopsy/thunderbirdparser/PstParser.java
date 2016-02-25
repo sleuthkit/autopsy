@@ -76,7 +76,7 @@ class PstParser {
      * @param file A pst or ost file.
      *
      * @return ParseResult: OK on success, ERROR on an error, ENCRYPT if failed
-     * because the file is encrypted.
+     *         because the file is encrypted.
      */
     ParseResult parse(File file, long fileID) {
         PSTFile pstFile;
@@ -118,8 +118,8 @@ class PstParser {
      * structure.
      *
      * @param folder The folder to navigate and process
-     * @param path The path to the folder within the pst/ost file's directory
-     * structure
+     * @param path   The path to the folder within the pst/ost file's directory
+     *               structure
      *
      * @throws PSTException
      * @throws IOException
@@ -226,8 +226,8 @@ class PstParser {
 
                 EmailMessage.Attachment attachment = new EmailMessage.Attachment();
 
-                long crTime = attach.getCreationTime() != null ? attach.getCreationTime().getTime()/1000 : 0;
-                long mTime = attach.getModificationTime() != null ? attach.getModificationTime().getTime()/1000 : 0;
+                long crTime = attach.getCreationTime() != null ? attach.getCreationTime().getTime() / 1000 : 0;
+                long mTime = attach.getModificationTime() != null ? attach.getModificationTime().getTime() / 1000 : 0;
                 String relPath = getRelModuleOutputPath() + File.separator + uniqueFilename;
                 attachment.setName(filename);
                 attachment.setCrTime(crTime);
@@ -235,7 +235,11 @@ class PstParser {
                 attachment.setLocalPath(relPath);
                 attachment.setSize(attach.getFilesize());
                 email.addAttachment(attachment);
-            } catch (PSTException | IOException ex) {
+            } catch (PSTException | IOException | NullPointerException ex) {
+                /**
+                 * Swallowing null pointer as it is caused by a problem with
+                 * getting input stream (library problem).
+                 */
                 addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "PstParser.extractAttch.errMsg.failedToExtractToDisk",
                                 filename));

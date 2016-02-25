@@ -128,7 +128,6 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewMode;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 import org.sleuthkit.autopsy.imagegallery.gui.GuiUtils;
-import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -418,7 +417,7 @@ public class GroupPane extends BorderPane {
         flashAnimation.setAutoReverse(true);
 
         //configure gridView cell properties
-        DoubleBinding cellSize = Toolbar.getDefault(controller).sizeSliderValue().add(75);
+        DoubleBinding cellSize = controller.thumbnailSizeProperty().add(75);
         gridView.cellHeightProperty().bind(cellSize);
         gridView.cellWidthProperty().bind(cellSize);
         gridView.setCellFactory((GridView<Long> param) -> new DrawableCell());
