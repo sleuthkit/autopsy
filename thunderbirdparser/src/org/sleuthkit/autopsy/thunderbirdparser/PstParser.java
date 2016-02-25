@@ -271,6 +271,9 @@ class PstParser {
                 out.write(endBuffer);
             }
         }
+        catch (NullPointerException e) {
+            logger.log(Level.WARNING, "Could not write attachment to disk: " + attach.getDisplayName());
+        }
     }
 
     /**
