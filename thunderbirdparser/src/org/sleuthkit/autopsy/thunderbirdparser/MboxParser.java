@@ -229,12 +229,14 @@ class MboxParser {
             StringBuilder bodyString = new StringBuilder();
             String line;
             while ((line = r.readLine()) != null) {
-                bodyString.append(line).append("\n-----HEADER-----\n");
+                bodyString.append(line).append("\n");
             }
+            bodyString.append("\n-----HEADERS-----\n");
             for(Field field: fields) {
                 String nextLine = field.getName() + ": " + field.getBody();
                 bodyString.append("\n").append(nextLine);
             }
+            bodyString.append("\n\n---END HEADERS--\n\n");
 
             switch (type) {
                 case ContentTypeField.TYPE_TEXT_PLAIN:

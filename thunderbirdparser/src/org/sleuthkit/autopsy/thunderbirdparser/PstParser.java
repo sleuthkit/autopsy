@@ -175,7 +175,7 @@ class PstParser {
         if(msg.getTransportMessageHeaders().isEmpty()) {
             email.setTextBody(msg.getBody());
         } else {
-            email.setTextBody(msg.getBody() + "\n" + msg.getTransportMessageHeaders());
+            email.setTextBody(msg.getBody() + "\n-----HEADERS-----\n\n" + msg.getTransportMessageHeaders() + "\n\n---END HEADERS--\n\n");
         }
         
         email.setHtmlBody(msg.getBodyHTML());
