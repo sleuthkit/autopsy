@@ -35,7 +35,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
-import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
 
 /**
  * GUI component that represents a single image as a tile with an icon, a label,
@@ -64,8 +63,8 @@ public class DrawableTile extends DrawableTileBase {
         setCache(true);
         setCacheHint(CacheHint.SPEED);
         nameLabel.prefWidthProperty().bind(imageView.fitWidthProperty());
-        imageView.fitHeightProperty().bind(Toolbar.getDefault(getController()).sizeSliderValue());
-        imageView.fitWidthProperty().bind(Toolbar.getDefault(getController()).sizeSliderValue());
+        imageView.fitHeightProperty().bind(getController().thumbnailSizeProperty());
+        imageView.fitWidthProperty().bind(getController().thumbnailSizeProperty());
 
         selectionModel.lastSelectedProperty().addListener(new WeakChangeListener<>(lastSelectionListener));
 

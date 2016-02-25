@@ -26,7 +26,6 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
@@ -35,7 +34,6 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.Slider;
 import javafx.scene.control.SplitMenuButton;
 import javafx.scene.control.ToolBar;
-import javax.swing.SortOrder;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
@@ -82,10 +80,6 @@ public class Toolbar extends ToolBar {
     @FXML
     private Label thumbnailSizeLabel;
 
-    private static Toolbar instance;
-
-    private final SimpleObjectProperty<SortOrder> orderProperty = new SimpleObjectProperty<>(SortOrder.ASCENDING);
-
     private final ImageGalleryController controller;
     private SortChooser<DrawableGroup, GroupSortBy> sortChooser;
 
@@ -99,15 +93,8 @@ public class Toolbar extends ToolBar {
         }
     };
 
-    public DoubleProperty sizeSliderValue() {
+    public DoubleProperty thumbnailSizeProperty() {
         return sizeSlider.valueProperty();
-    }
-
-    static synchronized public Toolbar getDefault(ImageGalleryController controller) {
-        if (instance == null) {
-            instance = new Toolbar(controller);
-        }
-        return instance;
     }
 
     @FXML
@@ -156,7 +143,6 @@ public class Toolbar extends ToolBar {
                 catGroupMenuButton.getItems().setAll(categoryMenues);
             }
         });
-    
 
         groupByLabel.setText(Bundle.Toolbar_groupByLabel());
         tagImageViewLabel.setText(Bundle.Toolbar_tagImageViewLabel());
@@ -202,7 +188,7 @@ public class Toolbar extends ToolBar {
         });
     }
 
-    private Toolbar(ImageGalleryController controller) {
+    public Toolbar(ImageGalleryController controller) {
         this.controller = controller;
         FXMLConstructor.construct(this, "Toolbar.fxml"); //NON-NLS
     }
