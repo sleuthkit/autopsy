@@ -61,7 +61,9 @@ import org.sleuthkit.datamodel.TskData;
 class SampleFileIngestModule implements FileIngestModule {
 
     private int filesFound;
-    private static final Logger logger = Logger.getLogger(NbBundle.getMessage(SampleFileIngestModuleFactory.class, "SampleFileIngestModuleFactory.moduleName"));;
+    private static final Logger logger = Logger.getLogger(NbBundle.getMessage(SampleFileIngestModuleFactory.class, "SampleFileIngestModuleFactory.moduleName"));
+
+    ;
 
     SampleFileIngestModule(SampleModuleIngestJobSettings settings) {
     }

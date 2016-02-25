@@ -284,6 +284,6 @@ public class SampleDataSourceIngestModuleFactory implements IngestModuleFactory 
 
     @Override
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
-        throw new UnsupportedOperationException("Not supported for this factory."); 
+        throw new UnsupportedOperationException("Not supported for this factory.");
     }
 }
