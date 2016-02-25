@@ -87,6 +87,15 @@ public final class AutopsyEventPublisher {
      */
     public void closeRemoteEventChannel() {
         currentChannelName = null;
+        stopRemotePublisher();
+    }
+
+    /**
+     * Stops remote event publisher, causing it to disconnect from the message
+     * service. As opposed to closeRemoteEventChannel(), this method allows for
+     * the current remote event channel to be re-opened later.
+     */
+    private void stopRemotePublisher() {
         if (null != remotePublisher) {
             try {
                 remotePublisher.stop();
@@ -168,26 +177,23 @@ public final class AutopsyEventPublisher {
         if (null != currentChannelName) {
             boolean published = false;
             int tryCount = 1;
-            /* We need to store the original channel name in case we want to re-try 
-            opening a channel with same name.
-            */
-            String originalChannelName = currentChannelName;
+
             while (false == published && tryCount <= MAX_REMOTE_EVENT_PUBLISH_TRIES) {
                 try {
                     if (null == remotePublisher) {
-                        openRemoteEventChannel(originalChannelName);
+                        openRemoteEventChannel(currentChannelName);
                     }
                     remotePublisher.publish(event);
                     published = true;
                 } catch (JMSException ex) {
                     logger.log(Level.SEVERE, String.format("Failed to publish %s using channel %s (tryCount = %s)", event.getPropertyName(), currentChannelName, tryCount), ex); //NON-NLS
-                    closeRemoteEventChannel();
+                    stopRemotePublisher();
                     ++tryCount;
                 } catch (AutopsyEventException ex) {
-                    logger.log(Level.SEVERE, String.format("Failed to reopen channel %s to publish %s event (tryCount = %s)", originalChannelName, event.getPropertyName(), tryCount), ex); //NON-NLS
+                    logger.log(Level.SEVERE, String.format("Failed to reopen channel %s to publish %s event (tryCount = %s)", currentChannelName, event.getPropertyName(), tryCount), ex); //NON-NLS
                     ++tryCount;
                 } catch (Exception ex) {
-                    logger.log(Level.SEVERE, String.format("Unexpected exception! Failed to to publish %s event on channel %s (tryCount = %s)", event.getPropertyName(), originalChannelName, tryCount), ex); //NON-NLS
+                    logger.log(Level.SEVERE, String.format("Unexpected exception! Failed to to publish %s event on channel %s (tryCount = %s)", event.getPropertyName(), currentChannelName, tryCount), ex); //NON-NLS
                     ++tryCount;
                 }
             }
