@@ -76,7 +76,7 @@ class PstParser {
      * @param file A pst or ost file.
      *
      * @return ParseResult: OK on success, ERROR on an error, ENCRYPT if failed
-     * because the file is encrypted.
+     *         because the file is encrypted.
      */
     ParseResult parse(File file, long fileID) {
         PSTFile pstFile;
@@ -118,8 +118,8 @@ class PstParser {
      * structure.
      *
      * @param folder The folder to navigate and process
-     * @param path The path to the folder within the pst/ost file's directory
-     * structure
+     * @param path   The path to the folder within the pst/ost file's directory
+     *               structure
      *
      * @throws PSTException
      * @throws IOException
