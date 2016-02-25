@@ -221,8 +221,8 @@ class PstParser {
 
                 EmailMessage.Attachment attachment = new EmailMessage.Attachment();
 
-                long crTime = attach.getCreationTime() != null ? attach.getCreationTime().getTime()/1000 : 0;
-                long mTime = attach.getModificationTime() != null ? attach.getModificationTime().getTime()/1000 : 0;
+                long crTime = attach.getCreationTime() != null ? attach.getCreationTime().getTime() / 1000 : 0;
+                long mTime = attach.getModificationTime() != null ? attach.getModificationTime().getTime() / 1000 : 0;
                 String relPath = getRelModuleOutputPath() + File.separator + uniqueFilename;
                 attachment.setName(filename);
                 attachment.setCrTime(crTime);
@@ -230,7 +230,11 @@ class PstParser {
                 attachment.setLocalPath(relPath);
                 attachment.setSize(attach.getFilesize());
                 email.addAttachment(attachment);
-            } catch (PSTException | IOException ex) {
+            } catch (PSTException | IOException | NullPointerException ex) {
+                /**
+                 * Swallowing null pointer as it is caused by a problem with
+                 * getting input stream (library problem).
+                 */
                 addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "PstParser.extractAttch.errMsg.failedToExtractToDisk",
                                 filename));
@@ -270,9 +274,6 @@ class PstParser {
                 System.arraycopy(buffer, 0, endBuffer, 0, count);
                 out.write(endBuffer);
             }
-        }
-        catch (NullPointerException e) {
-            logger.log(Level.WARNING, "Could not write attachment to disk: " + attach.getDisplayName());
         }
     }
 
