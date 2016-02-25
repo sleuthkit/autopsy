@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.imagegallery.actions;
 import com.google.common.collect.ImmutableSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
 import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;
 import javafx.geometry.VPos;
@@ -33,7 +34,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import org.openide.util.Exceptions;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryPreferences;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
@@ -45,7 +47,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class CategorizeGroupAction extends CategorizeAction {
 
-    private final static ButtonType categorizeButtonType = new ButtonType("Overwrite", ButtonBar.ButtonData.APPLY);
+    private final static Logger LOGGER = Logger.getLogger(CategorizeGroupAction.class.getName());
 
     public CategorizeGroupAction(Category newCat, ImageGalleryController controller) {
         super(controller, newCat, null);
@@ -65,7 +67,7 @@ public class CategorizeGroupAction extends CategorizeAction {
                             catCountMap.merge(category, 1L, Long::sum);
                         }
                     } catch (TskCoreException ex) {
-                        Exceptions.printStackTrace(ex);
+                        LOGGER.log(Level.SEVERE, "Failed to categorize files.", ex);
                     }
                 }
 
@@ -73,40 +75,53 @@ public class CategorizeGroupAction extends CategorizeAction {
                     //if there are not going to be any categories overwritten, skip the warning.
                     addCatToFiles(ImmutableSet.copyOf(fileIDs));
                 } else {
-                    VBox textFlow = new VBox();
-
-                    for (Map.Entry<Category, Long> entry
-                            : catCountMap.entrySet()) {
-                        if (entry.getKey().equals(newCat) == false) {
-                            if (entry.getValue() > 0) {
-                                Label label = new Label(entry.getValue() + " with " + entry.getKey().getDisplayName(), entry.getKey().getGraphic());
-                                label.setContentDisplay(ContentDisplay.RIGHT);
-                                textFlow.getChildren().add(label);
-                            }
-                        }
-                    }
-
-                    CheckBox checkBox = new CheckBox("Don't show this message again");
-                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "", categorizeButtonType, ButtonType.CANCEL);
-                    Separator separator = new Separator(Orientation.HORIZONTAL);
-                    separator.setPrefHeight(30);
-                    separator.setValignment(VPos.BOTTOM);
-                    VBox.setVgrow(separator, Priority.ALWAYS);
-                    VBox vBox = new VBox(5, textFlow, separator, checkBox);
-                    alert.getDialogPane().setContent(vBox);
-                    alert.setHeaderText("Files in the folowing categories will have their categories overwritten: ");
-                    alert.showAndWait()
-                            .filter(categorizeButtonType::equals)
-                            .ifPresent(button -> {
-                                //if they accept the overwrites, then apply them.
-                                addCatToFiles(ImmutableSet.copyOf(fileIDs));
-                        if (checkBox.isSelected()) {
-                            //do we want to save this even on cancel?
-                                    ImageGalleryPreferences.setGroupCategorizationWarningDisabled(true);
-                                }
-                            });
+                    showConfirmationDialog(catCountMap, newCat, fileIDs);
                 }
             }
         });
+    }
+
+    @NbBundle.Messages({"CategorizeGroupAction.OverwriteButton.text=Overwrite",
+        "# {0} - number of files with the category", "# {1} - the name of the category",
+        "CategorizeGroupAction.fileCountMessage={0} with {1}",
+        "CategorizeGroupAction.dontShowAgain=Don't show this message again",
+        "CategorizeGroupAction.fileCountHeader=Files in the following categories will have their categories overwritten: "})
+    private void showConfirmationDialog(final Map<Category, Long> catCountMap, Category newCat, ObservableList<Long> fileIDs) {
+
+        ButtonType categorizeButtonType =
+                new ButtonType(Bundle.CategorizeGroupAction_OverwriteButton_text(), ButtonBar.ButtonData.APPLY);
+
+        VBox textFlow = new VBox();
+
+        for (Map.Entry<Category, Long> entry : catCountMap.entrySet()) {
+            if (entry.getKey().equals(newCat) == false) {
+                if (entry.getValue() > 0) {
+                    Label label = new Label(Bundle.CategorizeGroupAction_fileCountMessage(entry.getValue(), entry.getKey().getDisplayName()),
+                            entry.getKey().getGraphic());
+                    label.setContentDisplay(ContentDisplay.RIGHT);
+                    textFlow.getChildren().add(label);
+                }
+            }
+        }
+
+        CheckBox checkBox = new CheckBox(Bundle.CategorizeGroupAction_dontShowAgain());
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "", categorizeButtonType, ButtonType.CANCEL); //NON-NLS
+        Separator separator = new Separator(Orientation.HORIZONTAL);
+        separator.setPrefHeight(30);
+        separator.setValignment(VPos.BOTTOM);
+        VBox.setVgrow(separator, Priority.ALWAYS);
+        VBox vBox = new VBox(5, textFlow, separator, checkBox);
+        alert.getDialogPane().setContent(vBox);
+        alert.setHeaderText(Bundle.CategorizeGroupAction_fileCountHeader());
+        alert.showAndWait()
+                .filter(categorizeButtonType::equals)
+                .ifPresent(button -> {
+                    //if they accept the overwrites, then apply them.
+                    addCatToFiles(ImmutableSet.copyOf(fileIDs));
+                    if (checkBox.isSelected()) {
+                        //do we want to save this even on cancel also?
+                        ImageGalleryPreferences.setGroupCategorizationWarningDisabled(true);
+                    }
+                });
     }
 }
