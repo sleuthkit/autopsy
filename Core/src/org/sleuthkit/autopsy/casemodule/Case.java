@@ -403,21 +403,23 @@ public class Case implements SleuthkitCase.ErrorObserver {
     /**
      * Creates a single-user new case.
      *
-     * @param caseDir The full path of the case directory. It will be created if
-     * it doesn't already exist; if it exists, it should have been created using
-     * Case.createCaseDirectory() to ensure that the required sub-directories
-     * aere created.
-     * @param caseName The name of case.
+     * @param caseDir    The full path of the case directory. It will be created
+     *                   if it doesn't already exist; if it exists, it should
+     *                   have been created using Case.createCaseDirectory() to
+     *                   ensure that the required sub-directories aere created.
+     * @param caseName   The name of case.
      * @param caseNumber The case number, can be the empty string.
-     * @param examiner The examiner to associate with the case, can be the empty
-     * string.
+     * @param examiner   The examiner to associate with the case, can be the
+     *                   empty string.
      *
-     * @throws CaseActionException if there is a problem creating the case. The
-     * exception will have a user-friendly message and may be a wrapper for a
-     * lower-level exception. If so, CaseActionException.getCause will return a
-     * Throwable (null otherwise).
+     * @throws CaseActionException   if there is a problem creating the case.
+     *                               The exception will have a user-friendly
+     *                               message and may be a wrapper for a
+     *                               lower-level exception. If so,
+     *                               CaseActionException.getCause will return a
+     *                               Throwable (null otherwise).
      * @throws CaseMetadataException if there is a problem creating the case
-     * metadata.
+     *                               metadata.
      */
     public static void create(String caseDir, String caseName, String caseNumber, String examiner) throws CaseActionException, CaseMetadataException {
         create(caseDir, caseName, caseNumber, examiner, CaseType.SINGLE_USER_CASE);
@@ -426,22 +428,23 @@ public class Case implements SleuthkitCase.ErrorObserver {
     /**
      * Creates a new case.
      *
-     * @param caseDir The full path of the case directory. It will be created if
-     * it doesn't already exist; if it exists, it should have been created using
-     * Case.createCaseDirectory() to ensure that the required sub-directories
-     * aere created.
-     * @param caseName The name of case.
+     * @param caseDir    The full path of the case directory. It will be created
+     *                   if it doesn't already exist; if it exists, it should
+     *                   have been created using Case.createCaseDirectory() to
+     *                   ensure that the required sub-directories aere created.
+     * @param caseName   The name of case.
      * @param caseNumber The case number, can be the empty string.
-     * @param examiner The examiner to associate with the case, can be the empty
-     * string.
-     * @param caseType The type of case (single-user or multi-user). The
-     * exception will have a user-friendly message and may be a wrapper for a
-     * lower-level exception. If so, CaseActionException.getCause will return a
-     * Throwable (null otherwise).
+     * @param examiner   The examiner to associate with the case, can be the
+     *                   empty string.
+     * @param caseType   The type of case (single-user or multi-user). The
+     *                   exception will have a user-friendly message and may be
+     *                   a wrapper for a lower-level exception. If so,
+     *                   CaseActionException.getCause will return a Throwable
+     *                   (null otherwise).
      *
-     * @throws CaseActionException if there is a problem creating the case.
+     * @throws CaseActionException   if there is a problem creating the case.
      * @throws CaseMetadataException if there is a problem creating the case
-     * metadata.
+     *                               metadata.
      */
     public static void create(String caseDir, String caseName, String caseNumber, String examiner, CaseType caseType) throws CaseActionException, CaseMetadataException {
         logger.log(Level.INFO, "Creating case with case directory {0}, caseName {1}", new Object[]{caseDir, caseName}); //NON-NLS
@@ -574,9 +577,11 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @param caseMetadataFilePath The path of the case metadata file.
      *
      * @throws CaseActionException if there is a problem opening the case. The
-     * exception will have a user-friendly message and may be a wrapper for a
-     * lower-level exception. If so, CaseActionException.getCause will return a
-     * Throwable (null otherwise).
+     *                             exception will have a user-friendly message
+     *                             and may be a wrapper for a lower-level
+     *                             exception. If so,
+     *                             CaseActionException.getCause will return a
+     *                             Throwable (null otherwise).
      */
     public static void open(String caseMetadataFilePath) throws CaseActionException {
         logger.log(Level.INFO, "Opening case with metadata file path {0}", caseMetadataFilePath); //NON-NLS
@@ -702,7 +707,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * Sends out event and reopens windows if needed.
      *
      * @param imgPaths the paths of the image that being added
-     * @param imgId the ID of the image that being added
+     * @param imgId    the ID of the image that being added
      * @param timeZone the timeZone of the image where it's added
      *
      * @deprecated As of release 4.0, replaced by {@link #notifyAddingDataSource(java.util.UUID) and
@@ -742,8 +747,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * This should not be called from the event dispatch thread (EDT)
      *
      * @param dataSourceId A unique identifier for the data source. This UUID
-     * should be used to call notifyNewDataSource() after the data source is
-     * added.
+     *                     should be used to call notifyNewDataSource() after
+     *                     the data source is added.
      */
     public void notifyAddingDataSource(UUID dataSourceId) {
         eventPublisher.publish(new AddingDataSourceEvent(dataSourceId));
@@ -768,9 +773,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * This should not be called from the event dispatch thread (EDT)
      *
      * @param newDataSource New data source added.
-     * @param dataSourceId A unique identifier for the data source. Should be
-     * the same UUID used to call notifyAddingNewDataSource() when the process
-     * of adding the data source began.
+     * @param dataSourceId  A unique identifier for the data source. Should be
+     *                      the same UUID used to call
+     *                      notifyAddingNewDataSource() when the process of
+     *                      adding the data source began.
      */
     public void notifyDataSourceAdded(Content newDataSource, UUID dataSourceId) {
         eventPublisher.publish(new DataSourceAddedEvent(newDataSource, dataSourceId));
@@ -882,9 +888,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * This should not be called from the EDT.
      *
      * @param oldCaseName the old case name that wants to be updated
-     * @param oldPath the old path that wants to be updated
+     * @param oldPath     the old path that wants to be updated
      * @param newCaseName the new case name
-     * @param newPath the new path
+     * @param newPath     the new path
      */
     void updateCaseName(String oldCaseName, String oldPath, String newCaseName, String newPath) throws CaseActionException {
         try {
@@ -1305,7 +1311,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * Adds a subscriber to events from this Autopsy node and other Autopsy
      * nodes.
      *
-     * @param eventName The event the subscriber is interested in.
+     * @param eventName  The event the subscriber is interested in.
      * @param subscriber The subscriber to add.
      */
     public static void addEventSubscriber(String eventName, PropertyChangeListener subscriber) {
@@ -1316,7 +1322,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * Adds a subscriber to events from this Autopsy node and other Autopsy
      * nodes.
      *
-     * @param eventName The event the subscriber is no longer interested in.
+     * @param eventName  The event the subscriber is no longer interested in.
      * @param subscriber The subscriber to add.
      */
     public static void removeEventSubscriber(String eventName, PropertyChangeListener subscriber) {
@@ -1426,7 +1432,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
     /**
      * to create the case directory
      *
-     * @param caseDir Path to the case directory (typically base + case name)
+     * @param caseDir  Path to the case directory (typically base + case name)
      * @param caseName the case name (used only for error messages)
      *
      * @throws CaseActionException throw if could not create the case dir
@@ -1440,7 +1446,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
     /**
      * Create the case directory and its needed subfolders.
      *
-     * @param caseDir Path to the case directory (typically base + case name)
+     * @param caseDir  Path to the case directory (typically base + case name)
      * @param caseType The type of case, single-user or multi-user
      *
      * @throws CaseActionException throw if could not create the case dir
@@ -1659,10 +1665,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
     /**
      * Adds a report to the case.
      *
-     * @param localPath The path of the report file, must be in the case
-     * directory or one of its subdirectories.
+     * @param localPath     The path of the report file, must be in the case
+     *                      directory or one of its subdirectories.
      * @param srcModuleName The name of the module that created the report.
-     * @param reportName The report name, may be empty.
+     * @param reportName    The report name, may be empty.
      *
      * @throws TskCoreException
      */
@@ -1686,9 +1692,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * Deletes reports from the case - deletes it from the disk as well as the
      * database.
      *
-     * @param reports Collection of Report to be deleted from the case.
+     * @param reports        Collection of Report to be deleted from the case.
      * @param deleteFromDisk Set true to perform reports file deletion from
-     * disk.
+     *                       disk.
      *
      * @throws TskCoreException
      */

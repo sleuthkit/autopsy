@@ -325,7 +325,7 @@ public final class CaseMetadata {
         String oldDbName = this.caseDatabaseName;
         this.caseDatabaseName = caseDatabaseName;
         try {
-        this.write();
+            this.write();
         } catch (CaseMetadataException ex) {
             this.caseDatabaseName = oldDbName;
             throw ex;
@@ -346,7 +346,7 @@ public final class CaseMetadata {
         String oldIndexName = this.caseTextIndexName;
         this.caseTextIndexName = caseTextIndexName;
         try {
-        this.write();
+            this.write();
         } catch (CaseMetadataException ex) {
             this.caseTextIndexName = oldIndexName;
             throw ex;
