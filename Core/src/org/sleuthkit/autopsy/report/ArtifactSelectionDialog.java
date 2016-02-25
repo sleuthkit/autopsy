@@ -112,7 +112,7 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
 
     /**
      * Display this dialog, and return the selected artifactTypes.
-     * 
+     *
      * @return The state of artifact types displayed
      */
     Map<BlackboardArtifact.Type, Boolean> display() {
@@ -248,7 +248,6 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
         public int getSize() {
             return artifactTypes.size();
         }
-
 
         @Override
         public BlackboardArtifact.Type getElementAt(int index) {

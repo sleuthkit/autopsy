@@ -117,7 +117,7 @@ public class ArtifactStringContent implements StringContent {
                             case DATETIME:
                                 buffer.append(attr.getValueLong());
                                 break;
-                                
+
                         }
                     }
                     if (!"".equals(attr.getContext())) {

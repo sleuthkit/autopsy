@@ -140,7 +140,7 @@ final class ReportVisualPanel2 extends JPanel {
 
     /**
      * Gets the enabled/disabled state of all artifacts
-     * 
+     *
      * @return the enabled/disabled state of all Artifacts
      */
     Map<BlackboardArtifact.Type, Boolean> getArtifactStates() {

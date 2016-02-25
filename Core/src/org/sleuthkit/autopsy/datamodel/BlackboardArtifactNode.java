@@ -171,7 +171,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 AbstractFile af = (AbstractFile) associated;
                 ext = af.getNameExtension();
                 actualMimeType = af.getMIMEType();
-                if(actualMimeType == null) {
+                if (actualMimeType == null) {
                     actualMimeType = "";
                 }
             }
@@ -179,11 +179,11 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                     NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.ext.displayName"),
                     NO_DESCR,
                     ext));
-                ss.put(new NodeProperty<>(
-                        NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.mimeType.name"),
-                        NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.mimeType.displayName"),
-                        NO_DESCR,
-                        actualMimeType));
+            ss.put(new NodeProperty<>(
+                    NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.mimeType.name"),
+                    NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.mimeType.displayName"),
+                    NO_DESCR,
+                    actualMimeType));
         }
 
         if (Arrays.asList(SHOW_UNIQUE_PATH).contains(artifactTypeId)) {
@@ -282,8 +282,8 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
     /**
      * Fill map with Artifact properties
      *
-     * @param map map with preserved ordering, where property names/values are
-     * put
+     * @param map      map with preserved ordering, where property names/values
+     *                 are put
      * @param artifact to extract properties from
      */
     @SuppressWarnings("deprecation") // TODO: Remove this when TSK_TAGGED_ARTIFACT rows are removed in a database upgrade.

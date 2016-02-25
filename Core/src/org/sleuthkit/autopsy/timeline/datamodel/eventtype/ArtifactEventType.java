@@ -36,7 +36,7 @@ public interface ArtifactEventType extends EventType {
 
     /**
      * @return the Artifact type this event type is derived form, or null if
-     * there is no artifact type (eg file system events)
+     *         there is no artifact type (eg file system events)
      */
     public BlackboardArtifact.ARTIFACT_TYPE getArtifactType();
 
@@ -69,19 +69,19 @@ public interface ArtifactEventType extends EventType {
 
     /**
      * @return a function from an artifact and a map of its attributes, to a
-     * String to use as part of the full event description
+     *         String to use as part of the full event description
      */
     BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> getFullExtractor();
 
     /**
      * @return a function from an artifact and a map of its attributes, to a
-     * String to use as part of the medium event description
+     *         String to use as part of the medium event description
      */
     BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> getMedExtractor();
 
     /**
      * @return a function from an artifact and a map of its attributes, to a
-     * String to use as part of the short event description
+     *         String to use as part of the short event description
      */
     BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> getShortExtractor();
 
@@ -135,13 +135,13 @@ public interface ArtifactEventType extends EventType {
      * {@link BlackboardAttribute}s to the event description.
      *
      * @param artf the {@link BlackboardArtifact} to derive the event
-     * description from
+     *             description from
      *
      * @return an {@link AttributeEventDescription} derived from the given
-     * artifact, if the given artifact has no timestamp
+     *         artifact, if the given artifact has no timestamp
      *
      * @throws TskCoreException is there is a problem accessing the blackboard
-     * data
+     *                          data
      */
     static public AttributeEventDescription buildEventDescription(ArtifactEventType type, BlackboardArtifact artf) throws TskCoreException {
         //if we got passed an artifact that doesn't correspond to the type of the event, 
