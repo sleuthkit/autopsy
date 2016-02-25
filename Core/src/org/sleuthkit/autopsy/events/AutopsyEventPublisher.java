@@ -40,7 +40,7 @@ public final class AutopsyEventPublisher {
      * Composed of thread-safe objects.
      */
     private static final Logger logger = Logger.getLogger(AutopsyEventPublisher.class.getName());
-    private static final int MAX_REMOTE_EVENT_PUBLISH_TRIES = 3;
+    private static final int MAX_REMOTE_EVENT_PUBLISH_TRIES = 1;
     private final LocalEventPublisher localPublisher;
     private RemoteEventPublisher remotePublisher;
     private String currentChannelName;
