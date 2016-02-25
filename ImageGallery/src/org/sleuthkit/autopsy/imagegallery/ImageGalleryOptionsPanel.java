@@ -100,18 +100,12 @@ final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
 
         infoIconLabel.setFont(infoIconLabel.getFont().deriveFont(infoIconLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         infoIconLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/imagegallery/images/info-icon-16.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(infoIconLabel, NbBundle.getMessage(ImageGalleryOptionsPanel.class, "ImageGalleryOptionsPanel.infoIconLabel.text")); // NOI18N
 
         unavailableDuringInjestLabel.setFont(unavailableDuringInjestLabel.getFont().deriveFont(unavailableDuringInjestLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         unavailableDuringInjestLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/imagegallery/images/warning16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(unavailableDuringInjestLabel, NbBundle.getMessage(ImageGalleryOptionsPanel.class, "ImageGalleryOptionsPanel.unavailableDuringInjestLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(groupCategorizationWarningBox, NbBundle.getMessage(ImageGalleryOptionsPanel.class, "ImageGalleryOptionsPanel.groupCategorizationWarningBox.text")); // NOI18N
-        groupCategorizationWarningBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                groupCategorizationWarningBoxActionPerformed(evt);
-            }
-        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -153,7 +147,7 @@ final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(infoIconLabel)
-                    .addComponent(furtherDescriptionArea, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(furtherDescriptionArea, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -169,10 +163,6 @@ final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
     private void enabledForCaseBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_enabledForCaseBoxActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_enabledForCaseBoxActionPerformed
-
-    private void groupCategorizationWarningBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_groupCategorizationWarningBoxActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_groupCategorizationWarningBoxActionPerformed
 
     void load() {
         enabledByDefaultBox.setSelected(ImageGalleryPreferences.isEnabledByDefault());
