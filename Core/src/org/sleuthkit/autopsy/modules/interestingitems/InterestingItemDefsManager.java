@@ -95,7 +95,7 @@ final class InterestingItemDefsManager extends Observable {
      * Gets a copy of the current interesting files set definitions.
      *
      * @return A map of interesting files set names to interesting file sets,
-     * possibly empty.
+     *         possibly empty.
      */
     synchronized Map<String, FilesSet> getInterestingFilesSets() {
         return FilesSetXML.readDefinitionsFile(DEFAULT_FILE_SET_DEFS_PATH);
@@ -106,7 +106,7 @@ final class InterestingItemDefsManager extends Observable {
      * previous definitions.
      *
      * @param filesSets A mapping of interesting files set names to files sets,
-     * used to enforce unique files set names.
+     *                  used to enforce unique files set names.
      */
     synchronized void setInterestingFilesSets(Map<String, FilesSet> filesSets) {
         FilesSetXML.writeDefinitionsFile(INTERESING_FILES_SET_DEFS_SERIALIZATION_PATH, filesSets);
@@ -220,9 +220,9 @@ final class InterestingItemDefsManager extends Observable {
         /**
          * Reads in an interesting files set.
          *
-         * @param setElem An interesting files set XML element
+         * @param setElem   An interesting files set XML element
          * @param filesSets A collection to which the set is to be added.
-         * @param filePath The source file, used for error reporting.
+         * @param filePath  The source file, used for error reporting.
          */
         private static void readFilesSet(Element setElem, Map<String, FilesSet> filesSets, String filePath) {
             // The file set must have a unique name.
@@ -297,11 +297,11 @@ final class InterestingItemDefsManager extends Observable {
          * XML element.
          *
          * @param filePath The path of the definitions file.
-         * @param setName The name of the files set.
-         * @param elem The file name rule XML element.
+         * @param setName  The name of the files set.
+         * @param elem     The file name rule XML element.
          *
          * @return A file name rule, or null if there is an error (the error is
-         * logged).
+         *         logged).
          */
         private static FilesSet.Rule readFileNameRule(Element elem) {
             String ruleName = FilesSetXML.readRuleName(elem);
@@ -359,7 +359,7 @@ final class InterestingItemDefsManager extends Observable {
          * @param elem The file name extension rule XML element.
          *
          * @return A file name extension rule, or null if there is an error (the
-         * error is logged).
+         *         error is logged).
          */
         private static FilesSet.Rule readFileExtensionRule(Element elem) {
             String ruleName = FilesSetXML.readRuleName(elem);
@@ -452,7 +452,7 @@ final class InterestingItemDefsManager extends Observable {
          * @param ruleElement The XML element.
          *
          * @return The meta-type condition, or null if there is an error
-         * (logged).
+         *         (logged).
          */
         private static FilesSet.Rule.MetaTypeCondition readMetaTypeCondition(Element ruleElement) {
             FilesSet.Rule.MetaTypeCondition condition = null;
@@ -521,7 +521,7 @@ final class InterestingItemDefsManager extends Observable {
             try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(filePath))) {
                 out.writeObject(interestingFilesSets);
                 File xmlFile = new File(DEFAULT_FILE_SET_DEFS_PATH);
-                if(xmlFile.exists()) {
+                if (xmlFile.exists()) {
                     xmlFile.delete();
                 }
                 return true;

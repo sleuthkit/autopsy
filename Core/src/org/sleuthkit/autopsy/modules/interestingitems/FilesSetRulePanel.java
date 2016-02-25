@@ -158,6 +158,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
      * Gets the JOptionPane that is used to contain this panel if there is one
      *
      * @param parent
+     *
      * @return
      */
     private JOptionPane getOptionPane(JComponent parent) {
@@ -173,7 +174,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
     /**
      * Sets the buttons for ending the panel
      *
-     * @param ok The ok button
+     * @param ok     The ok button
      * @param cancel The cancel button
      */
     public void setButtons(JButton ok, JButton cancel) {
@@ -363,7 +364,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
      * @return A name condition.
      *
      * @throws IllegalStateException if the specified name condition is not
-     * valid.
+     *                               valid.
      */
     FilesSet.Rule.FileNameCondition getFileNameCondition() throws IllegalStateException {
         FilesSet.Rule.FileNameCondition condition = null;
@@ -452,7 +453,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
      * @return A path condition or null if no path condition was specified.
      *
      * @throws IllegalStateException if the specified path condition is not
-     * valid.
+     *                               valid.
      */
     FilesSet.Rule.ParentPathCondition getPathCondition() throws IllegalStateException {
         FilesSet.Rule.ParentPathCondition condition = null;
@@ -488,11 +489,11 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
     /**
      * Checks an input string for the use of illegal characters.
      *
-     * @param toBeChecked The input string.
+     * @param toBeChecked  The input string.
      * @param illegalChars The characters deemed to be illegal.
      *
      * @return True if the string does not contain illegal characters, false
-     * otherwise.
+     *         otherwise.
      */
     private static boolean containsOnlyLegalChars(String toBeChecked, List<String> illegalChars) {
         for (String illegalChar : illegalChars) {

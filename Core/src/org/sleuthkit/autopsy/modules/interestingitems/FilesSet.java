@@ -47,12 +47,12 @@ final class FilesSet implements Serializable {
     /**
      * Constructs an interesting files set.
      *
-     * @param name The name of the set.
-     * @param description A description of the set, may be null.
+     * @param name             The name of the set.
+     * @param description      A description of the set, may be null.
      * @param ignoreKnownFiles Whether or not to exclude known files from the
-     * set.
-     * @param rules The rules that define the set. May be null, but a set with
-     * no rules is the empty set.
+     *                         set.
+     * @param rules            The rules that define the set. May be null, but a
+     *                         set with no rules is the empty set.
      */
     FilesSet(String name, String description, boolean ignoreKnownFiles, Map<String, Rule> rules) {
         if ((name == null) || (name.isEmpty())) {
@@ -112,7 +112,7 @@ final class FilesSet implements Serializable {
      * @param file A file to test for set membership.
      *
      * @return The name of the first set membership rule satisfied by the file,
-     * will be null if the file does not belong to the set.
+     *         will be null if the file does not belong to the set.
      */
     String fileIsMemberOf(AbstractFile file) {
         if ((this.ignoreKnownFiles) && (file.getKnown() == TskData.FileKnown.KNOWN)) {
@@ -152,10 +152,10 @@ final class FilesSet implements Serializable {
         /**
          * Construct an interesting files set membership rule.
          *
-         * @param ruleName The name of the rule.
+         * @param ruleName          The name of the rule.
          * @param fileNameCondition A file name condition.
          * @param metaTypeCondition A file meta-type condition.
-         * @param pathCondition A file path condition, may be null.
+         * @param pathCondition     A file path condition, may be null.
          */
         Rule(String ruleName, FileNameCondition fileNameCondition, MetaTypeCondition metaTypeCondition, ParentPathCondition pathCondition, MimeTypeCondition mimeTypeCondition, FileSizeCondition fileSizeCondition) {
             // since ruleName is optional, ruleUUID can be used to uniquely identify a rule.
@@ -560,7 +560,7 @@ final class FilesSet implements Serializable {
              * regular expression.
              *
              * @return True if the text to be matched is a regular expression,
-             * false otherwise.
+             *         false otherwise.
              */
             boolean isRegex();
 
@@ -620,7 +620,7 @@ final class FilesSet implements Serializable {
              * regular expression.
              *
              * @return True if the text to be matched is a regular expression,
-             * false otherwise.
+             *         false otherwise.
              */
             @Override
             public boolean isRegex() {
@@ -754,7 +754,7 @@ final class FilesSet implements Serializable {
              * Construct a file name extension regular expression condition.
              *
              * @param extension The file name extension regular expression to be
-             * matched.
+             *                  matched.
              */
             ExtensionCondition(Pattern extension) {
                 super(extension.pattern(), false);
@@ -788,7 +788,7 @@ final class FilesSet implements Serializable {
              * expression.
              *
              * @return True if the text to be matched is a regular expression,
-             * false otherwise.
+             *         false otherwise.
              */
             boolean isRegex();
 
