@@ -392,7 +392,7 @@ public class ServicesMonitor {
             try {
                 checkAllServices();
             } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Unexpected exception in CrashDetectionTask!", ex); //NON-NLS
+                logger.log(Level.SEVERE, "Unexpected exception in CrashDetectionTask", ex); //NON-NLS
             }
         }
     }
