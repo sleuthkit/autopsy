@@ -193,7 +193,7 @@ public final class AutopsyEventPublisher {
                     logger.log(Level.SEVERE, String.format("Failed to reopen channel %s to publish %s event (tryCount = %s)", currentChannelName, event.getPropertyName(), tryCount), ex); //NON-NLS
                     ++tryCount;
                 } catch (Exception ex) {
-                    logger.log(Level.SEVERE, String.format("Unexpected exception! Failed to to publish %s event on channel %s (tryCount = %s)", event.getPropertyName(), currentChannelName, tryCount), ex); //NON-NLS
+                    logger.log(Level.SEVERE, String.format("Unexpected exception. Failed to to publish %s event on channel %s (tryCount = %s)", event.getPropertyName(), currentChannelName, tryCount), ex); //NON-NLS
                     ++tryCount;
                 }
             }
