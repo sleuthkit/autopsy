@@ -257,7 +257,7 @@
       <Properties>
         <Property name="editable" type="boolean" value="true"/>
         <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-          <Connection code="new javax.swing.DefaultComboBoxModel(new String[] {&quot;&quot;})" type="code"/>
+          <Connection code="new javax.swing.DefaultComboBoxModel&lt;String&gt;(new String[] {&quot;&quot;})" type="code"/>
         </Property>
         <Property name="enabled" type="boolean" value="false"/>
       </Properties>
@@ -272,23 +272,25 @@
     <Component class="javax.swing.JComboBox" name="equalitySymbolComboBox">
       <Properties>
         <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-          <Connection code="new javax.swing.DefaultComboBoxModel(new String[] { &quot;=&quot;, &quot;&gt;&quot;, &quot;&#x2265;&quot;, &quot;&lt;&quot;, &quot;&#x2264;&quot; })" type="code"/>
+          <Connection code="new javax.swing.DefaultComboBoxModel&lt;String&gt;(new String[] { &quot;=&quot;, &quot;&gt;&quot;, &quot;&#x2265;&quot;, &quot;&lt;&quot;, &quot;&#x2264;&quot; })" type="code"/>
         </Property>
         <Property name="enabled" type="boolean" value="false"/>
       </Properties>
       <AuxValues>
         <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new javax.swing.JComboBox&lt;String&gt;()"/>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
       </AuxValues>
     </Component>
     <Component class="javax.swing.JComboBox" name="fileSizeComboBox">
       <Properties>
         <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-          <Connection code="new javax.swing.DefaultComboBoxModel(new String[] { Bundle.FilesSetRulePanel_bytes(), Bundle.FilesSetRulePanel_kiloBytes(), Bundle.FilesSetRulePanel_megaBytes(), Bundle.FilesSetRulePanel_gigaBytes() })" type="code"/>
+          <Connection code="new javax.swing.DefaultComboBoxModel&lt;String&gt;(new String[] { Bundle.FilesSetRulePanel_bytes(), Bundle.FilesSetRulePanel_kiloBytes(), Bundle.FilesSetRulePanel_megaBytes(), Bundle.FilesSetRulePanel_gigaBytes() })" type="code"/>
         </Property>
         <Property name="enabled" type="boolean" value="false"/>
       </Properties>
       <AuxValues>
         <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new javax.swing.JComboBox&lt;String&gt;()"/>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
       </AuxValues>
     </Component>
     <Component class="javax.swing.JSpinner" name="fileSizeSpinner">

@@ -496,7 +496,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         jScrollPane2 = new javax.swing.JScrollPane();
         jTextArea1 = new javax.swing.JTextArea();
         jLabel7 = new javax.swing.JLabel();
-        mimeTypeComboBox = new javax.swing.JComboBox();
+        mimeTypeComboBox = new javax.swing.JComboBox<String>();
         jLabel8 = new javax.swing.JLabel();
         equalitySignComboBox = new javax.swing.JComboBox<String>();
         jSpinner1 = new javax.swing.JSpinner();
@@ -690,17 +690,17 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         org.openide.awt.Mnemonics.setLocalizedText(jLabel7, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.jLabel7.text")); // NOI18N
 
         mimeTypeComboBox.setEditable(true);
-        mimeTypeComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] {""}));
+        mimeTypeComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] {""}));
         mimeTypeComboBox.setEnabled(false);
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel8, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.jLabel8.text")); // NOI18N
 
-        equalitySignComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "=", ">", "≥", "<", "≤" }));
+        equalitySignComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { "=", ">", "≥", "<", "≤" }));
         equalitySignComboBox.setEnabled(false);
 
         jSpinner1.setEnabled(false);
 
-        fileSizeUnitComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { Bundle.InterestingItemDefsPanel_bytes(), Bundle.InterestingItemDefsPanel_kiloBytes(), Bundle.InterestingItemDefsPanel_megaBytes(), Bundle.InterestingItemDefsPanel_gigaBytes() }));
+        fileSizeUnitComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { Bundle.InterestingItemDefsPanel_bytes(), Bundle.InterestingItemDefsPanel_kiloBytes(), Bundle.InterestingItemDefsPanel_megaBytes(), Bundle.InterestingItemDefsPanel_gigaBytes() }));
         fileSizeUnitComboBox.setEnabled(false);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
@@ -954,7 +954,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
     private javax.swing.JRadioButton fileNameRadioButton;
     private javax.swing.JCheckBox fileNameRegexCheckbox;
     private javax.swing.JTextField fileNameTextField;
-    private javax.swing.JComboBox fileSizeUnitComboBox;
+    private javax.swing.JComboBox<String> fileSizeUnitComboBox;
     private javax.swing.JRadioButton filesRadioButton;
     private javax.swing.JCheckBox ignoreKnownFilesCheckbox;
     private javax.swing.JLabel jLabel1;
@@ -970,7 +970,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JSpinner jSpinner1;
     private javax.swing.JTextArea jTextArea1;
-    private javax.swing.JComboBox mimeTypeComboBox;
+    private javax.swing.JComboBox<String> mimeTypeComboBox;
     private javax.swing.JButton newRuleButton;
     private javax.swing.JButton newSetButton;
     private javax.swing.JCheckBox rulePathConditionRegexCheckBox;

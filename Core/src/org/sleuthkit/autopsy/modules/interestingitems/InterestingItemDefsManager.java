@@ -209,11 +209,19 @@ final class InterestingItemDefsManager extends Observable {
 
         private static Map<String, FilesSet> readSerializedDefinitions() {
             String filePath = INTERESING_FILES_SET_DEFS_SERIALIZATION_PATH;
-            try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(filePath.toString()))) {
-                Map<String, FilesSet> filesSetMap = (Map<String, FilesSet>) in.readObject();
-                return filesSetMap;
-            } catch (IOException | ClassNotFoundException ex) {
-                throw new PersistenceException(String.format("Failed to read settings from %s", filePath), ex);
+            File fileSetFile = new File(filePath);
+            if (fileSetFile.exists()) {
+                try {
+                    try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(filePath))) {
+                        InterestingItemsFilesSetSettings filesSetsSettings = (InterestingItemsFilesSetSettings) in.readObject();
+                        return filesSetsSettings.getFilesSets();
+                    }
+                } catch (IOException | ClassNotFoundException ex) {
+                    throw new PersistenceException(String.format("Failed to read settings from %s", filePath), ex);
+                }
+            }
+            else {
+                return new HashMap<String, FilesSet>();
             }
         }
 
@@ -519,7 +527,7 @@ final class InterestingItemDefsManager extends Observable {
         // definitions that ship with Autopsy and one for user definitions.
         static boolean writeDefinitionsFile(String filePath, Map<String, FilesSet> interestingFilesSets) {
             try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(filePath))) {
-                out.writeObject(interestingFilesSets);
+                out.writeObject(new InterestingItemsFilesSetSettings(interestingFilesSets));
                 File xmlFile = new File(DEFAULT_FILE_SET_DEFS_PATH);
                 if (xmlFile.exists()) {
                     xmlFile.delete();

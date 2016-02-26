@@ -602,7 +602,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(jLabel5, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.jLabel5.text")); // NOI18N
 
         mimeTypeComboBox.setEditable(true);
-        mimeTypeComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] {""}));
+        mimeTypeComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] {""}));
         mimeTypeComboBox.setEnabled(false);
         mimeTypeComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -610,10 +610,10 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
             }
         });
 
-        equalitySymbolComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "=", ">", "≥", "<", "≤" }));
+        equalitySymbolComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { "=", ">", "≥", "<", "≤" }));
         equalitySymbolComboBox.setEnabled(false);
 
-        fileSizeComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { Bundle.FilesSetRulePanel_bytes(), Bundle.FilesSetRulePanel_kiloBytes(), Bundle.FilesSetRulePanel_megaBytes(), Bundle.FilesSetRulePanel_gigaBytes() }));
+        fileSizeComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { Bundle.FilesSetRulePanel_bytes(), Bundle.FilesSetRulePanel_kiloBytes(), Bundle.FilesSetRulePanel_megaBytes(), Bundle.FilesSetRulePanel_gigaBytes() }));
         fileSizeComboBox.setEnabled(false);
 
         fileSizeSpinner.setModel(new javax.swing.SpinnerNumberModel(Integer.valueOf(0), Integer.valueOf(0), null, Integer.valueOf(1)));
@@ -858,10 +858,10 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JRadioButton dirsRadio;
-    private javax.swing.JComboBox equalitySymbolComboBox;
+    private javax.swing.JComboBox<String> equalitySymbolComboBox;
     private javax.swing.JRadioButton extensionRadioButton;
     private javax.swing.JCheckBox fileSizeCheck;
-    private javax.swing.JComboBox fileSizeComboBox;
+    private javax.swing.JComboBox<String> fileSizeComboBox;
     private javax.swing.JSpinner fileSizeSpinner;
     private javax.swing.JRadioButton filesAndDirsRadio;
     private javax.swing.JRadioButton filesRadio;
