@@ -421,7 +421,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @throws CaseMetadataException if there is a problem creating the case
      *                               metadata.
      */
-    public static void create(String caseDir, String caseName, String caseNumber, String examiner) throws CaseActionException, CaseMetadataException {
+    public static void create(String caseDir, String caseName, String caseNumber, String examiner) throws CaseActionException {
         create(caseDir, caseName, caseNumber, examiner, CaseType.SINGLE_USER_CASE);
     }
 
@@ -446,7 +446,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @throws CaseMetadataException if there is a problem creating the case
      *                               metadata.
      */
-    public static void create(String caseDir, String caseName, String caseNumber, String examiner, CaseType caseType) throws CaseActionException, CaseMetadataException {
+    public static void create(String caseDir, String caseName, String caseNumber, String examiner, CaseType caseType) throws CaseActionException {
         logger.log(Level.INFO, "Creating case with case directory {0}, caseName {1}", new Object[]{caseDir, caseName}); //NON-NLS
 
         /*
@@ -476,7 +476,12 @@ public class Case implements SleuthkitCase.ErrorObserver {
          * Create the case metadata (.aut) file.
          */
         String configFilePath = caseDir + File.separator + caseName + CASE_DOT_EXTENSION;
-        CaseMetadata metadata = CaseMetadata.create(caseType, caseName, caseNumber, examiner, caseDir, santizedCaseName, indexName);
+        CaseMetadata metadata;
+        try {
+            metadata = CaseMetadata.create(caseType, caseName, caseNumber, examiner, caseDir, dbName, indexName);
+        } catch (CaseMetadataException ex) {
+            throw new CaseActionException("Could not create case", ex);
+        }
 
         /*
          * Create the case database.
@@ -911,42 +916,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     /**
-     * Updates the case examiner
-     *
-     * This should not be called from the EDT.
-     *
-     * @param oldExaminer the old examiner
-     * @param newExaminer the new examiner
-     */
-    void updateExaminer(String oldExaminer, String newExaminer) throws CaseActionException {
-        try {
-            caseMetadata.setCaseExaminer(newExaminer); // set the examiner
-            examiner = newExaminer;
-            eventPublisher.publish(new AutopsyEvent(Events.EXAMINER.toString(), oldExaminer, newExaminer));
-        } catch (Exception e) {
-            throw new CaseActionException(NbBundle.getMessage(this.getClass(), "Case.updateExaminer.exception.msg"), e);
-        }
-    }
-
-    /**
-     * Updates the case number
-     *
-     * This should not be called from the EDT.
-     *
-     * @param oldCaseNumber the old case number
-     * @param newCaseNumber the new case number
-     */
-    void updateCaseNumber(String oldCaseNumber, String newCaseNumber) throws CaseActionException {
-        try {
-            caseMetadata.setCaseNumber(newCaseNumber); // set the case number
-            number = newCaseNumber;
-            eventPublisher.publish(new AutopsyEvent(Events.NUMBER.toString(), oldCaseNumber, newCaseNumber));
-        } catch (Exception e) {
-            throw new CaseActionException(NbBundle.getMessage(this.getClass(), "Case.updateCaseNum.exception.msg"), e);
-        }
-    }
-
-    /**
      * Checks whether there is a current case open.
      *
      * @return True if a case is open.
@@ -1245,7 +1214,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         if (caseMetadata == null) {
             return "";
         } else {
-            return caseMetadata.getCaseTextIndexName();
+            return caseMetadata.getTextIndexName();
         }
     }
 

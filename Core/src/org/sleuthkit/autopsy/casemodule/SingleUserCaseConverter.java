@@ -198,6 +198,7 @@ public class SingleUserCaseConverter {
                 dbName, solrName);
         // Set created date. This calls writefile, no need to call it again
         newCaseMetadata.setCreatedDate(oldCaseMetadata.getCreatedDate());
+        newCaseMetadata.setCreatedVersion(oldCaseMetadata.getCreatedVersion());
 
         // At this point the import has been finished successfully so we can delete the original case
         // (if requested). This *should* be fairly safe - at this point we know there was an autopsy file

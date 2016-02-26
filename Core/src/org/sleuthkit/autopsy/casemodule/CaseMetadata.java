@@ -46,10 +46,10 @@ import javax.xml.transform.stream.StreamResult;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 /**
@@ -67,7 +67,15 @@ public final class CaseMetadata {
         "CaseMetadata.open.msgDlg.notAutCase.msg=Error\\: This is not an Autopsy config file (\"{0}\").\\n\\n\\\n"
         + "Detail\\: \\n\\\n"
         + "Cannot open a non-Autopsy config file (at {1}).",
-        "CaseMetadata.open.msgDlg.notAutCase.title=Error"
+        "CaseMetadata.open.msgDlg.notAutCase.title=Error",
+        "CaseMetadata.open.msgDlg.noCaseHeaderTag.msg=Root element not recognized as autopsy case tag",
+        "CaseMetadata.open.caseRootError=Couldn't get case root",
+        "CaseMetadata.open.caseTypeError=Couldn't get case type",
+        "CaseMetadata.open.caseNameError=Couldn't get case name",
+        "CaseMetadata.open.caseDatabaseNameError=Couldn't get database name",
+        "CaseMetadata.open.caseIndexError=Couldn't get text index",
+        "CaseMetadata.open.createdDateError=Couldn't get created date",
+        "CaseMetadata.open.createdVersionError=Couldn't get created version"
     })
 
     /**
@@ -126,24 +134,22 @@ public final class CaseMetadata {
     private String caseDatabaseName;
     private String caseTextIndexName;
     private String createdDate;
-    private String schemaVersion;
+    private static String schemaVersion = "2.0";
     private String fileName;
-    private JPanel caller;
-    private final String className = this.getClass().toString();
-    private static final Logger logger = Logger.getLogger(CaseMetadata.class.getName());
+    private String createdVersion;
 
-    private CaseMetadata(Case.CaseType caseType, String caseName, String caseDirectory, String caseDatabaseName, String caseTextIndexName) throws CaseMetadataException {
+    private CaseMetadata(Case.CaseType caseType, String caseName, String caseNumber, String examiner, String caseDirectory, String caseDatabaseName, String caseTextIndexName) throws CaseMetadataException {
 
         this.caseType = caseType;
         this.caseName = caseName;
-        this.caseNumber = "";
-        this.examiner = "";
+        this.caseNumber = caseNumber;
+        this.examiner = examiner;
         this.createdDate = this.dateFormat.format(new Date());
         this.caseDirectory = caseDirectory;
         this.caseDatabaseName = caseDatabaseName;
         this.caseTextIndexName = caseTextIndexName;
-        this.schemaVersion = "1.0";
         this.fileName = caseName;
+        this.createdVersion = System.getProperty("netbeans.buildnumber");
         this.write();
 
     }
@@ -152,22 +158,59 @@ public final class CaseMetadata {
      * Constructs an object that provides access to case metadata.
      *
      * @param metadataFilePath Path to the metadata (.aut) file for a case.
+     *
+     * @deprecated Use open instead
      */
+    @Deprecated
     public CaseMetadata(Path metadataFilePath) throws CaseMetadataException {
         this(metadataFilePath.toString());
     }
 
+    /**
+     * Used to open a case at the given file path
+     *
+     * @param metadataFilePath the string file path for the case
+     *
+     * @throws
+     * org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException
+     */
     private CaseMetadata(String metadataFilePath) throws CaseMetadataException {
         this.open(metadataFilePath);
     }
 
+    /**
+     * Opens a case and gives the metadata object that corresponds
+     *
+     * @param metadataFilePath The file path of the metadata file
+     *
+     * @return The case metadata for the opened case
+     *
+     * @throws
+     * org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException
+     */
     public static CaseMetadata open(Path metadataFilePath) throws CaseMetadataException {
         CaseMetadata metadata = new CaseMetadata(metadataFilePath.toString());
         return metadata;
     }
 
+    /**
+     * Creates a metadata object for a new case
+     *
+     * @param caseType          The type of case
+     * @param caseName          The name of the case
+     * @param caseNumber        The case number
+     * @param examiner          The name of the case examiner
+     * @param caseDirectory     The directory of the case
+     * @param caseDatabaseName  The name of the case db
+     * @param caseTextIndexName The case index name
+     *
+     * @return The metadata for the new case
+     *
+     * @throws
+     * org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException
+     */
     public static CaseMetadata create(Case.CaseType caseType, String caseName, String caseNumber, String examiner, String caseDirectory, String caseDatabaseName, String caseTextIndexName) throws CaseMetadataException {
-        CaseMetadata metadata = new CaseMetadata(caseType, caseName, caseDirectory, caseDatabaseName, caseTextIndexName);
+        CaseMetadata metadata = new CaseMetadata(caseType, caseName, caseNumber, examiner, caseDirectory, caseDatabaseName, caseTextIndexName);
         return metadata;
     }
 
@@ -235,6 +278,29 @@ public final class CaseMetadata {
     }
 
     /**
+     * @return the createdVersion
+     */
+    public String getCreatedVersion() {
+        return createdVersion;
+    }
+
+    /**
+     * Sets the created version of this case
+     *
+     * @param createdVersion the createdVersion to set
+     */
+    public void setCreatedVersion(String createdVersion) throws CaseMetadataException {
+        String oldCreatedVersion = this.createdVersion;
+        this.createdVersion = createdVersion;
+        try {
+            this.write();
+        } catch (CaseMetadataException ex) {
+            this.createdDate = oldCreatedVersion;
+            throw ex;
+        }
+    }
+
+    /**
      * @param createdDate the createdDate to set
      */
     void setCreatedDate(String createdDate) throws CaseMetadataException {
@@ -249,23 +315,9 @@ public final class CaseMetadata {
     }
 
     /**
-     * @param caseType the caseType to set
-     */
-    public void setCaseType(Case.CaseType caseType) throws CaseMetadataException {
-        Case.CaseType oldCaseType = this.caseType;
-        this.caseType = caseType;
-        try {
-            this.write();
-        } catch (CaseMetadataException ex) {
-            this.caseType = oldCaseType;
-            throw ex;
-        }
-    }
-
-    /**
      * @param caseName the caseName to set
      */
-    public void setCaseName(String caseName) throws CaseMetadataException {
+    void setCaseName(String caseName) throws CaseMetadataException {
         String oldCaseName = this.caseName;
         this.caseName = caseName;
         try {
@@ -277,87 +329,10 @@ public final class CaseMetadata {
     }
 
     /**
-     * @param caseNumber the caseNumber to set
-     */
-    public void setCaseNumber(String caseNumber) throws CaseMetadataException {
-        String oldCaseNumber = this.caseNumber;
-        this.caseNumber = caseNumber;
-        try {
-            this.write();
-        } catch (CaseMetadataException ex) {
-            this.caseNumber = oldCaseNumber;
-            throw ex;
-        }
-    }
-
-    /**
-     * @param examiner the examiner to set
-     */
-    public void setCaseExaminer(String examiner) throws CaseMetadataException {
-        String oldExaminer = this.examiner;
-        this.examiner = examiner;
-        try {
-            this.write();
-        } catch (CaseMetadataException ex) {
-            this.examiner = oldExaminer;
-            throw ex;
-        }
-    }
-
-    /**
-     * @param caseDirectory the caseDirectory to set
-     */
-    public void setCaseDirectory(String caseDirectory) throws CaseMetadataException {
-        String oldCaseDirectory = this.caseDirectory;
-        this.caseDirectory = caseDirectory;
-        try {
-            this.write();
-        } catch (CaseMetadataException ex) {
-            this.caseDirectory = oldCaseDirectory;
-            throw ex;
-        }
-    }
-
-    /**
-     * @param caseDatabaseName the caseDatabaseName to set
-     */
-    public void setCaseDatabaseName(String caseDatabaseName) throws CaseMetadataException {
-        String oldDbName = this.caseDatabaseName;
-        this.caseDatabaseName = caseDatabaseName;
-        try {
-            this.write();
-        } catch (CaseMetadataException ex) {
-            this.caseDatabaseName = oldDbName;
-            throw ex;
-        }
-    }
-
-    /**
      * @return the caseTextIndexName
      */
-    public String getCaseTextIndexName() {
+    public String getTextIndexName() {
         return caseTextIndexName;
-    }
-
-    /**
-     * @param caseTextIndexName the caseTextIndexName to set
-     */
-    public void setCaseTextIndexName(String caseTextIndexName) throws CaseMetadataException {
-        String oldIndexName = this.caseTextIndexName;
-        this.caseTextIndexName = caseTextIndexName;
-        try {
-            this.write();
-        } catch (CaseMetadataException ex) {
-            this.caseTextIndexName = oldIndexName;
-            throw ex;
-        }
-    }
-
-    /**
-     * @return the schemaVersion
-     */
-    public String getSchemaVersion() {
-        return schemaVersion;
     }
 
     private void write() throws CaseMetadataException {
@@ -380,7 +355,7 @@ public final class CaseMetadata {
         rootElement.appendChild(mDateElement);
 
         Element autVerElement = doc.createElement(AUTOPSY_CRVERSION_NAME); // <AutopsyVersion> ... </AutopsyVersion>
-        autVerElement.appendChild(doc.createTextNode(System.getProperty("netbeans.buildnumber")));
+        autVerElement.appendChild(doc.createTextNode(this.getCreatedVersion()));
         rootElement.appendChild(autVerElement);
 
         Element autSavedVerElement = doc.createElement(AUTOPSY_MVERSION_NAME); // <AutopsySavedVersion> ... </AutopsySavedVersion>
@@ -388,7 +363,7 @@ public final class CaseMetadata {
         rootElement.appendChild(autSavedVerElement);
 
         Element schVerElement = doc.createElement(SCHEMA_VERSION_NAME); // <SchemaVersion> ... </SchemaVersion>
-        schVerElement.appendChild(doc.createTextNode(getSchemaVersion()));
+        schVerElement.appendChild(doc.createTextNode(schemaVersion));
         rootElement.appendChild(schVerElement);
 
         Element caseElement = doc.createElement(CASE_ROOT_NAME); // <Case> ... </Case>
@@ -406,26 +381,6 @@ public final class CaseMetadata {
         examinerElement.appendChild(doc.createTextNode(getExaminer()));
         caseElement.appendChild(examinerElement);
 
-        Element exportElement = doc.createElement(EXPORT_FOLDER_NAME); // <ExportFolder> ... </ExportFolder>
-        exportElement.appendChild(doc.createTextNode(EXPORT_FOLDER_RELPATH));
-        exportElement.setAttribute(RELATIVE_NAME, "true"); //NON-NLS
-        caseElement.appendChild(exportElement);
-
-        Element logElement = doc.createElement(LOG_FOLDER_NAME); // <LogFolder> ... </LogFolder>
-        logElement.appendChild(doc.createTextNode(LOG_FOLDER_RELPATH));
-        logElement.setAttribute(RELATIVE_NAME, "true"); //NON-NLS
-        caseElement.appendChild(logElement);
-
-        Element tempElement = doc.createElement(TEMP_FOLDER_NAME); // <TempFolder> ... </TempFolder>
-        tempElement.appendChild(doc.createTextNode(TEMP_FOLDER_RELPATH));
-        tempElement.setAttribute(RELATIVE_NAME, "true"); //NON-NLS
-        caseElement.appendChild(tempElement);
-
-        Element cacheElement = doc.createElement(CACHE_FOLDER_NAME); // <CacheFolder> ... </CacheFolder>
-        cacheElement.appendChild(doc.createTextNode(CACHE_FOLDER_RELPATH));
-        cacheElement.setAttribute(RELATIVE_NAME, "true"); //NON-NLS
-        caseElement.appendChild(cacheElement);
-
         Element typeElement = doc.createElement(CASE_TYPE); // <CaseType> ... </CaseType>
         typeElement.appendChild(doc.createTextNode(getCaseType().toString()));
         caseElement.appendChild(typeElement);
@@ -435,7 +390,7 @@ public final class CaseMetadata {
         caseElement.appendChild(dbNameElement);
 
         Element indexNameElement = doc.createElement(CASE_TEXT_INDEX_NAME); // <TextIndexName> ... </TextIndexName>
-        indexNameElement.appendChild(doc.createTextNode(this.getCaseTextIndexName()));
+        indexNameElement.appendChild(doc.createTextNode(this.getTextIndexName()));
         caseElement.appendChild(indexNameElement);
         doc.normalize();
         this.writeFile(doc);
@@ -461,7 +416,6 @@ public final class CaseMetadata {
         try {
             xformer = tfactory.newTransformer();
         } catch (TransformerConfigurationException ex) {
-            logger.log(Level.SEVERE, "Could not setup tranformer and write case file"); //NON-NLS
             throw new CaseMetadataException(
                     Bundle.CaseMetadata_writeFile_exception_errWriteToFile_msg(), ex);
         }
@@ -473,7 +427,6 @@ public final class CaseMetadata {
         try {
             xformer.transform(source, result);
         } catch (TransformerException ex) {
-            logger.log(Level.SEVERE, "Could not run tranformer and write case file"); //NON-NLS
             throw new CaseMetadataException(
                     Bundle.CaseMetadata_writeFile_exception_errWriteToFile_msg(), ex);
         }
@@ -489,7 +442,6 @@ public final class CaseMetadata {
             bw.flush();
             bw.close();
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Error writing to case file"); //NON-NLS
             throw new CaseMetadataException(
                     Bundle.CaseMetadata_writeFile_exception_errWriteToFile_msg(), ex);
         }
@@ -525,12 +477,7 @@ public final class CaseMetadata {
         if (!rootName.equals(TOP_ROOT_NAME)) {
             // throw an error ...
             if (RuntimeProperties.coreComponentsAreActive()) {
-
-                JOptionPane.showMessageDialog(caller,
-                        Bundle.CaseMetadata_open_msgDlg_notAutCase_msg(
-                                file.getName(), className),
-                        Bundle.CaseMetadata_open_msgDlg_notAutCase_title(),
-                        JOptionPane.ERROR_MESSAGE);
+                throw new CaseMetadataException(Bundle.CaseMetadata_open_msgDlg_noCaseHeaderTag_msg());
             }
         } else {
             /*
@@ -545,46 +492,58 @@ public final class CaseMetadata {
                 // if not the same version, update the saved version in the xml to the current version
                 rootElement.getElementsByTagName(AUTOPSY_MVERSION_NAME).item(0).setTextContent(System.getProperty("netbeans.buildnumber"));
             }
-
-            /*
-             * Schema Version
-             */
-            String schemaVer = ((Element) rootElement.getElementsByTagName(SCHEMA_VERSION_NAME).item(0)).getTextContent();
-            // check if it has the same schema version as the current one
-            if (!schemaVer.equals(schemaVersion)) {
-                // do something here if not the same version
-                // ... @Override
+            String fullFileName = file.getName();
+            String fileName = fullFileName.substring(0, fullFileName.lastIndexOf(".")); // remove the extension
+            this.fileName = fileName;
+            NodeList rootNameList = doc.getElementsByTagName(CASE_ROOT_NAME);
+            if (rootNameList.getLength() == 0) {
+                throw new CaseMetadataException(Bundle.CaseMetadata_open_caseRootError());
             }
-
-            try {
-                String fullFileName = file.getName();
-                String fileName = fullFileName.substring(0, fullFileName.lastIndexOf(".")); // remove the extension
-                this.fileName = fileName;
-                Element caseElement = (Element) doc.getElementsByTagName(CASE_ROOT_NAME).item(0);
-
-                String caseTypeString = ((Element) caseElement.getElementsByTagName(CASE_TYPE).item(0)).getTextContent();
-                this.caseType = caseTypeString.equals("") ? Case.CaseType.SINGLE_USER_CASE : Case.CaseType.fromString(caseTypeString);
-                this.caseName = ((Element) caseElement.getElementsByTagName(NAME).item(0)).getTextContent();
-                Element numberElement = caseElement.getElementsByTagName(NUMBER).getLength() > 0 ? (Element) caseElement.getElementsByTagName(NUMBER).item(0) : null;
-                this.caseNumber = numberElement != null ? numberElement.getTextContent() : "";
-                Element examinerElement = caseElement.getElementsByTagName(EXAMINER).getLength() > 0 ? (Element) caseElement.getElementsByTagName(EXAMINER).item(0) : null;
-                this.caseNumber = numberElement != null ? examinerElement.getTextContent() : "";
-                this.caseDirectory = conFilePath.substring(0, conFilePath.lastIndexOf("\\"));
-                if (this.caseDirectory.isEmpty()) {
-                    throw new CaseMetadataException(Bundle.CaseMetadata_open_exception_errReadXMLFile_msg(conFilePath));
-                }
-                Element databaseNameElement = caseElement.getElementsByTagName(DATABASE_NAME).getLength() > 0 ? (Element) caseElement.getElementsByTagName(DATABASE_NAME).item(0) : null;
-                this.caseDatabaseName = databaseNameElement != null ? databaseNameElement.getTextContent() : "";
-                Element caseTextIndexNameElement = caseElement.getElementsByTagName(CASE_TEXT_INDEX_NAME).getLength() > 0 ? (Element) caseElement.getElementsByTagName(CASE_TEXT_INDEX_NAME).item(0) : null;
-                this.caseTextIndexName = caseTextIndexNameElement != null ? caseTextIndexNameElement.getTextContent() : "";
-                if (Case.CaseType.MULTI_USER_CASE == caseType && caseDatabaseName.isEmpty()) {
-                    throw new CaseMetadataException(Bundle.CaseMetadata_open_exception_errReadXMLFile_msg(conFilePath));
-                }
-                this.setCreatedDate(((Element) rootElement.getElementsByTagName(CREATED_DATE_NAME).item(0)).getTextContent());
-                this.schemaVersion = ((Element) rootElement.getElementsByTagName(SCHEMA_VERSION_NAME).item(0)).getTextContent();
-            } catch (NullPointerException ex) {
-                throw new CaseMetadataException(Bundle.CaseMetadata_open_exception_errReadXMLFile_msg(conFilePath), ex);
+            Element caseElement = (Element) rootNameList.item(0);
+            NodeList caseTypeList = caseElement.getElementsByTagName(CASE_TYPE);
+            if (caseTypeList.getLength() == 0) {
+                throw new CaseMetadataException(Bundle.CaseMetadata_open_caseTypeError());
             }
+            String caseTypeString = ((Element) caseTypeList.item(0)).getTextContent();
+            this.caseType = caseTypeString.equals("") ? Case.CaseType.SINGLE_USER_CASE : Case.CaseType.fromString(caseTypeString);
+            NodeList caseNameList = caseElement.getElementsByTagName(NAME);
+            if (caseNameList.getLength() == 0) {
+                throw new CaseMetadataException(Bundle.CaseMetadata_open_caseTypeError());
+            }
+            this.caseName = ((Element) caseNameList.item(0)).getTextContent();
+            Element numberElement = caseElement.getElementsByTagName(NUMBER).getLength() > 0 ? (Element) caseElement.getElementsByTagName(NUMBER).item(0) : null;
+            this.caseNumber = numberElement != null ? numberElement.getTextContent() : "";
+            Element examinerElement = caseElement.getElementsByTagName(EXAMINER).getLength() > 0 ? (Element) caseElement.getElementsByTagName(EXAMINER).item(0) : null;
+            this.examiner = examinerElement != null ? examinerElement.getTextContent() : "";
+            this.caseDirectory = conFilePath.substring(0, conFilePath.lastIndexOf("\\"));
+            if (this.caseDirectory.isEmpty()) {
+                throw new CaseMetadataException(Bundle.CaseMetadata_open_exception_errReadXMLFile_msg(conFilePath));
+            }
+            NodeList databaseNameList = caseElement.getElementsByTagName(DATABASE_NAME);
+            if (databaseNameList.getLength() == 0) {
+                throw new CaseMetadataException(Bundle.CaseMetadata_open_caseDatabaseNameError());
+            }
+            Element databaseNameElement = (Element) databaseNameList.item(0);
+            this.caseDatabaseName = databaseNameElement.getTextContent();
+            NodeList textIndexList = caseElement.getElementsByTagName(CASE_TEXT_INDEX_NAME);
+            if(textIndexList.getLength() == 0) {
+                throw new CaseMetadataException(Bundle.CaseMetadata_open_caseIndexError());
+            }
+            Element caseTextIndexNameElement = (Element)textIndexList.item(0);
+            this.caseTextIndexName = caseTextIndexNameElement.getTextContent();
+            if (Case.CaseType.MULTI_USER_CASE == caseType && caseDatabaseName.isEmpty()) {
+                throw new CaseMetadataException(Bundle.CaseMetadata_open_exception_errReadXMLFile_msg(conFilePath));
+            }
+            NodeList createdDateList = rootElement.getElementsByTagName(CREATED_DATE_NAME);
+            if(createdDateList.getLength() == 0) {
+                throw new CaseMetadataException(Bundle.CaseMetadata_open_createdDateError());
+            }
+            this.setCreatedDate(((Element)createdDateList.item(0)).getTextContent());
+            NodeList createdVersionList = rootElement.getElementsByTagName(AUTOPSY_CRVERSION_NAME);
+            if(createdVersionList.getLength() == 0) {
+                throw new CaseMetadataException(Bundle.CaseMetadata_open_createdVersionError());
+            }
+            this.setCreatedVersion((((Element)createdVersionList.item(0))).getTextContent());
         }
     }
 
