@@ -61,7 +61,7 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
     }
 
     /**
-     * Populate the list of artifactTypes with all important artifactTypes.
+     * Populate the list of artifact types with all important artifact types.
      */
     @SuppressWarnings("deprecation")
     private void populateList() {

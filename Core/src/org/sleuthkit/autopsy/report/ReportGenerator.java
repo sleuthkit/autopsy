@@ -87,6 +87,7 @@ class ReportGenerator {
     private Map<TableReportModule, ReportProgressPanel> tableProgress;
     private Map<GeneralReportModule, ReportProgressPanel> generalProgress;
     private Map<FileReportModule, ReportProgressPanel> fileProgress;
+    private Map<Integer, List<Column>> columnHeaderMap;
 
     private String reportPath;
     private ReportGenerationPanel panel = new ReportGenerationPanel();
@@ -136,6 +137,7 @@ class ReportGenerator {
         tableProgress = new HashMap<>();
         fileProgress = new HashMap<>();
         setupProgressPanels(tableModuleStates, generalModuleStates, fileListModuleStates);
+        this.columnHeaderMap = new HashMap<>();
     }
 
     /**
@@ -461,7 +463,16 @@ class ReportGenerator {
                     module.startReport(reportPath);
                     progress.start();
                     progress.setIndeterminate(false);
-                    progress.setMaximumProgress(ARTIFACT_TYPE.values().length + 2); // +2 for content and blackboard artifact tags
+                    try {
+                        SleuthkitCase db = Case.getCurrentCase().getSleuthkitCase();
+                        SleuthkitCase.CaseDbQuery queryResult = db.executeQuery("SELECT COUNT (*) FROM blackboard_artifact_types");
+                        ResultSet rs = queryResult.getResultSet();
+                        rs.next();
+                        int count = rs.getInt(1);
+                        progress.setMaximumProgress(count + 2);
+                    } catch (Exception e) {
+                        progress.setMaximumProgress(ARTIFACT_TYPE.values().length + 2); // +2 for content and blackboard artifact tags
+                    }
                 }
             }
 
@@ -524,6 +535,7 @@ class ReportGenerator {
                     continue;
                 }
 
+                //Used to ge the unique attribute types
                 Set<BlackboardAttribute.Type> attrTypeSet = new TreeSet<>();
                 for (ArtifactData data : artifactList) {
                     List<BlackboardAttribute> attributes = data.getAttributes();
@@ -536,9 +548,7 @@ class ReportGenerator {
                 if (columns.isEmpty()) {
                     continue;
                 }
-                for (ArtifactData artData : artifactList) {
-                    artData.setColumns(columns);
-                }
+                ReportGenerator.this.columnHeaderMap.put(type.getTypeID(), columns);
                 // The most efficient way to sort all the Artifacts is to add them to a List, and then
                 // sort that List based off a Comparator. Adding to a TreeMap/Set/List sorts the list
                 // each time an element is added, which adds unnecessary overhead if we only need it sorted once.
@@ -1888,13 +1898,13 @@ class ReportGenerator {
             columns.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
 
         } else if (ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID() == artifactTypeId) {
-            columns.add(new UnspecifiedColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.file")));
+            columns.add(new HeaderOnlyColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.file")));
 
-            columns.add(new UnspecifiedColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.extension.text")));
+            columns.add(new HeaderOnlyColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.extension.text")));
 
-            columns.add(new UnspecifiedColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.mimeType.text")));
+            columns.add(new HeaderOnlyColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.mimeType.text")));
 
-            columns.add(new UnspecifiedColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.path")));
+            columns.add(new HeaderOnlyColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.path")));
 
         } else if (ARTIFACT_TYPE.TSK_OS_INFO.getTypeID() == artifactTypeId) {
             columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.processorArchitecture.text"),
@@ -2223,7 +2233,6 @@ class ReportGenerator {
         private List<BlackboardAttribute> attributes;
         private HashSet<String> tags;
         private List<String> rowData = null;
-        private List<Column> columns = new ArrayList<>();
 
         ArtifactData(BlackboardArtifact artifact, List<BlackboardAttribute> attrs, HashSet<String> tags) {
             this.artifact = artifact;
@@ -2251,10 +2260,6 @@ class ReportGenerator {
             return artifact.getObjectID();
         }
 
-        public void setColumns(List<Column> columns) {
-            this.columns = columns;
-        }
-
         /**
          * Compares ArtifactData objects by the first attribute they have in
          * common in their List<BlackboardAttribute>. Should only be used on two
@@ -2266,18 +2271,14 @@ class ReportGenerator {
          */
         @Override
         public int compareTo(ArtifactData otherArtifactData) {
-            if (columns != null) {
-                List<String> thisRow = getRow();
-                List<String> otherRow = otherArtifactData.getRow();
-                for (int i = 0; i < thisRow.size(); i++) {
-                    int compare = thisRow.get(i).compareTo(otherRow.get(i));
-                    if (compare != 0) {
-                        return compare;
-                    }
+            List<String> thisRow = getRow();
+            List<String> otherRow = otherArtifactData.getRow();
+            for (int i = 0; i < thisRow.size(); i++) {
+                int compare = thisRow.get(i).compareTo(otherRow.get(i));
+                if (compare != 0) {
+                    return compare;
                 }
             }
-            //OS TODO: figure out a way to compare artifact data without messing up cellData
-            // If all attributes are the same, they're most likely duplicates so sort by artifact ID
             return ((Long) this.getArtifactID()).compareTo((Long) otherArtifactData.getArtifactID());
         }
 
@@ -2348,9 +2349,12 @@ class ReportGenerator {
                 }
                 orderedRowData.add(pathToShow);
             } else {
-                for (Column currColumn : this.columns) {
-                    String cellData = currColumn.getCellData(this);
-                    orderedRowData.add(cellData);
+                if (ReportGenerator.this.columnHeaderMap.containsKey(this.artifact.getArtifactTypeID())) {
+
+                    for (Column currColumn : ReportGenerator.this.columnHeaderMap.get(this.artifact.getArtifactTypeID())) {
+                        String cellData = currColumn.getCellData(this);
+                        orderedRowData.add(cellData);
+                    }
                 }
                 /*
                  Short circuits so that the tag list is not added twice (the tag column is represented in the column list)
@@ -2482,11 +2486,11 @@ class ReportGenerator {
         }
     }
 
-    private class UnspecifiedColumn implements Column {
+    private class HeaderOnlyColumn implements Column {
 
         private String columnHeader;
 
-        UnspecifiedColumn(String columnHeader) {
+        HeaderOnlyColumn(String columnHeader) {
             this.columnHeader = columnHeader;
         }
 
