@@ -336,9 +336,11 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
                 if (selected == false) {
                     dividerPosition = masterDetailPane.getDividerPosition();
                 }
+                pinnedView.maxHeightProperty().unbind();;
                 masterDetailPane.setShowDetailNode(selected);
                 if (selected) {
                     pinnedView.setMinHeight(MIN_PINNED_LANE_HEIGHT);
+                    pinnedView.maxHeightProperty().bind(pinnedChart.maxVScrollProperty().add(30));
                     masterDetailPane.setDividerPosition(dividerPosition);
                 }
             });
