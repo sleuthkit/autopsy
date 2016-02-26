@@ -64,7 +64,8 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
     private static final Logger logger = Logger.getLogger(VMExtractorIngestModule.class.getName());
     private IngestJobContext context;
     private Path ingestJobOutputDir;
-    private String parentDeviceId = null;
+    private String parentDeviceId;
+    private String parentTimeZone;
 
     private final HashMap<String, String> imageFolderToOutputFolder = new HashMap<>();
     private int folderId = 0;
@@ -79,6 +80,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
             SleuthkitCase caseDb = currentCase.getSleuthkitCase();
             DataSource dataSource = caseDb.getDataSource(dataSourceObjId);
             parentDeviceId = dataSource.getDeviceId();
+            parentTimeZone = dataSource.getTimeZone();
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
             String timeStamp = dateFormat.format(Calendar.getInstance().getTime());
             String ingestJobOutputDirName = context.getDataSource().getName() + "_" + context.getDataSource().getId() + "_" + timeStamp;
@@ -181,7 +183,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
                 
                     // for extracted virtual machines there is no manifest XML file to read data source ID from so use parent data source ID.
                     // ingest the data sources  
-                    ingestVirtualMachineImage(Paths.get(folder, file), parentDeviceId);
+                    ingestVirtualMachineImage(Paths.get(folder, file));
                     logger.log(Level.INFO, "Ingest complete for virtual machine file {0} in folder {1}", new Object[]{file, folder}); //NON-NLS
                 } catch (InterruptedException ex) {
                     logger.log(Level.INFO, "Interrupted while ingesting virtual machine file "+file+" in folder "+folder, ex); //NON-NLS
@@ -247,9 +249,8 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
      * with the ingest modules.
      *
      * @param vmFile A virtual machine file.
-     * @param deviceId The device id associated with the parent data source.
      */
-    private void ingestVirtualMachineImage(Path vmFile, String deviceID) throws InterruptedException, IOException {
+    private void ingestVirtualMachineImage(Path vmFile) throws InterruptedException, IOException {
 
         /*
          * Try to add the virtual machine file to the case as a data source.
@@ -259,7 +260,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         AddDataSourceCallback dspCallback = new AddDataSourceCallback(vmFile);
         synchronized (this) {
-            dataSourceProcessor.run(deviceID, vmFile.toString(), "", false, new AddDataSourceProgressMonitor(), dspCallback);
+            dataSourceProcessor.run(parentDeviceId, vmFile.toString(), parentTimeZone, false, new AddDataSourceProgressMonitor(), dspCallback);
             /*
              * Block the ingest thread until the data source processor finishes.
              */

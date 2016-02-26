@@ -18,89 +18,50 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel.grouping;
 
-import java.util.Arrays;
 import java.util.Comparator;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.image.Image;
-import javax.swing.SortOrder;
-import static javax.swing.SortOrder.ASCENDING;
-import static javax.swing.SortOrder.DESCENDING;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 
 /**
- * enum of possible properties to sort groups by. This is the model for the drop
- * down in Toolbar as well as each enum value having the stategy
- * ({@link  Comparator}) for sorting the groups
+ * Pseudo enum of possible properties to sort groups by.
  */
 @NbBundle.Messages({"GroupSortBy.groupSize=Group Size",
-        "GroupSortBy.groupName=Group Name",
-        "GroupSortBy.none=None",
-        "GroupSortBy.priority=Priority"})
-public enum GroupSortBy implements ComparatorProvider {
+    "GroupSortBy.groupName=Group Name",
+    "GroupSortBy.none=None",
+    "GroupSortBy.priority=Priority"})
+public class GroupSortBy implements Comparator<DrawableGroup> {
 
     /**
-     * sort the groups by the number of files in each sort the groups by the
-     * number of files in each
+     * sort the groups by the number of files in each
      */
-    FILE_COUNT(Bundle.GroupSortBy_groupSize(), true, "folder-open-image.png") { //NON-NLS
-                @Override
-                public Comparator<DrawableGroup> getGrpComparator(final SortOrder sortOrder) {
-                    return applySortOrder(sortOrder, Comparator.comparingInt(DrawableGroup::getSize));
-                }
+    public final static GroupSortBy FILE_COUNT = new GroupSortBy(Bundle.GroupSortBy_groupSize(), "folder-open-image.png", Comparator.comparing(DrawableGroup::getSize));
 
-                @Override
-                public <A extends Comparable<A>> Comparator<A> getValueComparator(final DrawableAttribute<A> attr, final SortOrder sortOrder) {
-                    return getDefaultValueComparator(attr, sortOrder);
-                }
-            },
     /**
      * sort the groups by the natural order of the grouping value ( eg group
      * them by path alphabetically )
      */
-    GROUP_BY_VALUE(Bundle.GroupSortBy_groupName(), true, "folder-rename.png") { //NON-NLS
-                @Override
-                public Comparator<DrawableGroup> getGrpComparator(final SortOrder sortOrder) {
-                    return applySortOrder(sortOrder, Comparator.comparing(t -> t.getGroupByValueDislpayName()));
-                }
+    public final static GroupSortBy GROUP_BY_VALUE = new GroupSortBy(Bundle.GroupSortBy_groupName(), "folder-rename.png", Comparator.comparing(DrawableGroup::getGroupByValueDislpayName));
 
-                @Override
-                public <A extends Comparable<A>> Comparator<A> getValueComparator(final DrawableAttribute<A> attr, final SortOrder sortOrder) {
-                    return applySortOrder(sortOrder, Comparator.<A>naturalOrder());
-                }
-            },
     /**
      * don't sort the groups just use what ever order they come in (ingest
      * order)
      */
-    NONE(Bundle.GroupSortBy_none(), false, "prohibition.png") { //NON-NLS
-                @Override
-                public Comparator<DrawableGroup> getGrpComparator(SortOrder sortOrder) {
-                    return new NoOpComparator<>();
-                }
+    public final static GroupSortBy NONE = new GroupSortBy(Bundle.GroupSortBy_none(), "prohibition.png", new AllEqualComparator<>());
 
-                @Override
-                public <A extends Comparable<A>> Comparator<A> getValueComparator(DrawableAttribute<A> attr, final SortOrder sortOrder) {
-                    return new NoOpComparator<>();
-                }
-            },
     /**
      * sort the groups by some priority metric to be determined and implemented
      */
-    PRIORITY(Bundle.GroupSortBy_priority(), false, "hashset_hits.png") { //NON-NLS
-                @Override
-                public Comparator<DrawableGroup> getGrpComparator(SortOrder sortOrder) {
-                    return Comparator.nullsLast(Comparator.comparingDouble(DrawableGroup::getHashHitDensity).thenComparingInt(DrawableGroup::getSize).reversed());
-                }
+    public final static GroupSortBy PRIORITY = new GroupSortBy(Bundle.GroupSortBy_priority(), "hashset_hits.png", Comparator.comparing(DrawableGroup::getHashHitDensity).thenComparing(Comparator.comparing(DrawableGroup::getUncategorizedCount)));
 
-                @Override
-                public <A extends Comparable<A>> Comparator<A> getValueComparator(DrawableAttribute<A> attr, SortOrder sortOrder) {
-                    return getDefaultValueComparator(attr, sortOrder);
-                }
-            };
+    @Override
+    public int compare(DrawableGroup o1, DrawableGroup o2) {
+        return delegate.compare(o1, o2);
+    }
+
+    private final static ObservableList<GroupSortBy> values = FXCollections.unmodifiableObservableList(FXCollections.observableArrayList(PRIORITY, NONE, GROUP_BY_VALUE, FILE_COUNT));
 
     /**
      * get a list of the values of this enum
@@ -108,8 +69,7 @@ public enum GroupSortBy implements ComparatorProvider {
      * @return
      */
     public static ObservableList<GroupSortBy> getValues() {
-        return FXCollections.observableArrayList(Arrays.asList(values()));
-
+        return values;
     }
 
     final private String displayName;
@@ -118,12 +78,12 @@ public enum GroupSortBy implements ComparatorProvider {
 
     private final String imageName;
 
-    private final Boolean sortOrderEnabled;
+    private final Comparator<DrawableGroup> delegate;
 
-    private GroupSortBy(String displayName, Boolean sortOrderEnabled, String imagePath) {
+    private GroupSortBy(String displayName, String imagePath, Comparator<DrawableGroup> internalComparator) {
         this.displayName = displayName;
-        this.sortOrderEnabled = sortOrderEnabled;
         this.imageName = imagePath;
+        this.delegate = internalComparator;
     }
 
     public String getDisplayName() {
@@ -139,49 +99,11 @@ public enum GroupSortBy implements ComparatorProvider {
         return icon;
     }
 
-    public Boolean isSortOrderEnabled() {
-        return sortOrderEnabled;
-    }
-
-    private static <T> Comparator<T> applySortOrder(final SortOrder sortOrder, Comparator<T> comparator) {
-        switch (sortOrder) {
-            case ASCENDING:
-                return comparator;
-            case DESCENDING:
-                return comparator.reversed();
-            case UNSORTED:
-            default:
-                return new NoOpComparator<>();
-        }
-    }
-
-    private static class NoOpComparator<A> implements Comparator<A> {
+    static class AllEqualComparator<A> implements Comparator<A> {
 
         @Override
         public int compare(A o1, A o2) {
             return 0;
         }
-    }
-
-}
-
-/**
- * * implementers of this interface must provide a method to compare
- * ({@link Comparable}) values and Groupings based on an
- * {@link DrawableAttribute} and a {@link SortOrder}
- */
-interface ComparatorProvider {
-
-    <A extends Comparable<A>> Comparator<A> getValueComparator(DrawableAttribute<A> attr, SortOrder sortOrder);
-
-    Comparator<DrawableGroup> getGrpComparator(SortOrder sortOrder);
-
-    default <A extends Comparable<A>> Comparator<A> getDefaultValueComparator(DrawableAttribute<A> attr, SortOrder sortOrder) {
-        return (A v1, A v2) -> {
-            DrawableGroup g1 = ImageGalleryController.getDefault().getGroupManager().getGroupForKey(new GroupKey<>(attr, v1));
-            DrawableGroup g2 = ImageGalleryController.getDefault().getGroupManager().getGroupForKey(new GroupKey<>(attr, v2));
-
-            return getGrpComparator(sortOrder).compare(g1, g2);
-        };
     }
 }

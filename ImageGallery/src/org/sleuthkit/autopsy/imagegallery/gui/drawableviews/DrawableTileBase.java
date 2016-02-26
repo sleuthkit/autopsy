@@ -63,7 +63,7 @@ import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
-import org.sleuthkit.autopsy.imagegallery.actions.AddDrawableTagAction;
+import org.sleuthkit.autopsy.imagegallery.actions.AddTagAction;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
 import org.sleuthkit.autopsy.imagegallery.actions.DeleteFollowUpTagAction;
 import org.sleuthkit.autopsy.imagegallery.actions.OpenExternalViewerAction;
@@ -142,7 +142,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
      * @param controller the value of controller
      */
     @NbBundle.Messages({"DrawableTileBase.menuItem.extractFiles=Extract File(s)",
-            "DrawableTileBase.menuItem.showContentViewer=Show Content Viewer"})
+        "DrawableTileBase.menuItem.showContentViewer=Show Content Viewer"})
     protected DrawableTileBase(GroupPane groupPane, final ImageGalleryController controller) {
         super(controller);
         this.groupPane = groupPane;
@@ -182,10 +182,8 @@ public abstract class DrawableTileBase extends DrawableUIBase {
             private ContextMenu buildContextMenu(DrawableFile<?> file) {
                 final ArrayList<MenuItem> menuItems = new ArrayList<>();
 
-                menuItems.add(new CategorizeAction(getController()).getPopupMenu());
-
-                menuItems.add(new AddDrawableTagAction(getController()).getPopupMenu());
-
+                menuItems.add(CategorizeAction.getCategoriesMenu(getController()));
+                menuItems.add(AddTagAction.getTagMenu(getController()));
 
                 final MenuItem extractMenuItem = new MenuItem(Bundle.DrawableTileBase_menuItem_extractFiles());
                 extractMenuItem.setOnAction(actionEvent -> {
@@ -195,7 +193,6 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                     });
                 });
                 menuItems.add(extractMenuItem);
-
 
                 MenuItem contentViewer = new MenuItem(Bundle.DrawableTileBase_menuItem_showContentViewer());
                 contentViewer.setOnAction(actionEvent -> {
@@ -242,7 +239,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                 if (followUpToggle.isSelected() == true) {
                     try {
                         selectionModel.clearAndSelect(file.getId());
-                        new AddDrawableTagAction(getController()).addTag(getController().getTagsManager().getFollowUpTagName(), "");
+                        new AddTagAction(getController(), getController().getTagsManager().getFollowUpTagName(), selectionModel.getSelected()).handle(actionEvent);
                     } catch (TskCoreException ex) {
                         LOGGER.log(Level.SEVERE, "Failed to add Follow Up tag.  Could not load TagName.", ex); //NON-NLS
                     }

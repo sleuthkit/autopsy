@@ -22,15 +22,13 @@ import com.google.common.eventbus.Subscribe;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.function.Function;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.fxml.FXML;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.RadioButton;
 import javafx.scene.control.SelectionModel;
 import javafx.scene.control.Tab;
-import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.ToolBar;
 import javafx.scene.layout.BorderPane;
+import javax.swing.SortOrder;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
@@ -38,6 +36,7 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
+import org.sleuthkit.autopsy.imagegallery.gui.SortChooser;
 
 /**
  * Base class for Tabs in the left hand Navigation/Context area.
@@ -50,24 +49,10 @@ abstract class NavPanel<X> extends Tab {
     @FXML
     private ToolBar toolBar;
 
-    @FXML
-    private ComboBox<GroupComparators<?>> sortByBox;
-
-    @FXML
-    private RadioButton ascRadio;
-
-    @FXML
-    private ToggleGroup orderGroup;
-
-    @FXML
-    private RadioButton descRadio;
-
-    @FXML
-    private Label sortByBoxLabel;
-
     private final ImageGalleryController controller;
     private final GroupManager groupManager;
     private final CategoryManager categoryManager;
+    private SortChooser<DrawableGroup, GroupComparators<?>> sortChooser;
 
     NavPanel(ImageGalleryController controller) {
         this.controller = controller;
@@ -75,34 +60,35 @@ abstract class NavPanel<X> extends Tab {
         this.categoryManager = controller.getCategoryManager();
     }
 
+    public ReadOnlyObjectProperty<GroupComparators<?>> comparatorProperty() {
+        return sortChooser.comparatorProperty();
+    }
+
     @FXML
     @NbBundle.Messages({"NavPanel.ascRadio.text=Ascending",
-                "NavPanel.descRadio.text=Descending",
-                "NavPanel.sortByBoxLabel.text=Sort By:"})
+        "NavPanel.descRadio.text=Descending",
+        "NavPanel.sortByBoxLabel.text=Sort By:"})
     void initialize() {
         assert borderPane != null : "fx:id=\"borderPane\" was not injected: check your FXML file 'NavPanel.fxml'.";
         assert toolBar != null : "fx:id=\"toolBar\" was not injected: check your FXML file 'NavPanel.fxml'.";
-        assert sortByBox != null : "fx:id=\"sortByBox\" was not injected: check your FXML file 'NavPanel.fxml'.";
-        assert ascRadio != null : "fx:id=\"ascRadio\" was not injected: check your FXML file 'NavPanel.fxml'.";
-        assert orderGroup != null : "fx:id=\"orderGroup\" was not injected: check your FXML file 'NavPanel.fxml'.";
-        assert descRadio != null : "fx:id=\"descRadio\" was not injected: check your FXML file 'NavPanel.fxml'.";
 
-        sortByBox.getItems().setAll(GroupComparators.getValues());
-        sortByBox.getSelectionModel().select(getDefaultComparator());
-        orderGroup.selectedToggleProperty().addListener(order -> sortGroups());
-        sortByBox.getSelectionModel().selectedItemProperty().addListener(observable -> {
+        sortChooser = new SortChooser<>(GroupComparators.getValues());
+        sortChooser.setComparator(getDefaultComparator());
+        sortChooser.sortOrderProperty().addListener(order -> sortGroups());
+        sortChooser.comparatorProperty().addListener((observable, oldComparator, newComparator) -> {
             sortGroups();
             //only need to listen to changes in category if we are sorting by/ showing the uncategorized count
-            if (sortByBox.getSelectionModel().getSelectedItem() == GroupComparators.UNCATEGORIZED_COUNT) {
+            if (newComparator == GroupComparators.UNCATEGORIZED_COUNT) {
                 categoryManager.registerListener(NavPanel.this);
             } else {
                 categoryManager.unregisterListener(NavPanel.this);
             }
-        });
 
-        ascRadio.setText(Bundle.NavPanel_ascRadio_text());
-        descRadio.setText(Bundle.NavPanel_descRadio_text());
-        sortByBoxLabel.setText(Bundle.NavPanel_sortByBoxLabel_text());
+            final SortChooser.ValueType valueType = newComparator == GroupComparators.ALPHABETICAL ? SortChooser.ValueType.LEXICOGRAPHIC : SortChooser.ValueType.NUMERIC;
+            sortChooser.setValueType(valueType);
+        });
+        toolBar.getItems().add(sortChooser);
+
         //keep selection in sync with controller
         controller.viewState().addListener(observable -> {
             Optional.ofNullable(controller.viewState().get())
@@ -129,8 +115,8 @@ abstract class NavPanel<X> extends Tab {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     Comparator<DrawableGroup> getComparator() {
-        Comparator<DrawableGroup> comparator = sortByBox.getSelectionModel().getSelectedItem();
-        return (orderGroup.getSelectedToggle() == ascRadio)
+        Comparator<DrawableGroup> comparator = sortChooser.getComparator();
+        return (sortChooser.getSortOrder() == SortOrder.ASCENDING)
                 ? comparator
                 : comparator.reversed();
     }
@@ -192,22 +178,6 @@ abstract class NavPanel<X> extends Tab {
 
     ToolBar getToolBar() {
         return toolBar;
-    }
-
-    ComboBox<GroupComparators<?>> getSortByBox() {
-        return sortByBox;
-    }
-
-    RadioButton getAscRadio() {
-        return ascRadio;
-    }
-
-    ToggleGroup getOrderGroup() {
-        return orderGroup;
-    }
-
-    RadioButton getDescRadio() {
-        return descRadio;
     }
 
     ImageGalleryController getController() {

@@ -404,6 +404,8 @@ public class FileManager implements Closeable {
      *                                 that compose the data source. Pass the
      *                                 empty string to get a default name of the
      *                                 form: LogicalFileSet[N]
+     * @param timeZone                 The time zone used to process the data
+     *                                 source, may be the empty string.
      * @param localFilePaths           A list of local/logical file and/or
      *                                 directory localFilePaths.
      * @param progressUpdater          Called after each file/directory is added
@@ -416,7 +418,7 @@ public class FileManager implements Closeable {
      * @throws TskDataException if any of the local file paths is for a file or
      *                          directory that does not exist or cannot be read.
      */
-    public synchronized LocalFilesDataSource addLocalFilesDataSource(String deviceId, String rootVirtualDirectoryName, List<String> localFilePaths, FileAddProgressUpdater progressUpdater) throws TskCoreException, TskDataException {
+    public synchronized LocalFilesDataSource addLocalFilesDataSource(String deviceId, String rootVirtualDirectoryName, String timeZone, List<String> localFilePaths, FileAddProgressUpdater progressUpdater) throws TskCoreException, TskDataException {
         List<java.io.File> localFiles = getFilesAndDirectories(localFilePaths);
         CaseDbTransaction trans = null;
         try {
@@ -426,7 +428,7 @@ public class FileManager implements Closeable {
                 rootDirectoryName = VirtualDirectoryNode.LOGICAL_FILE_SET_PREFIX + newLocalFilesSetCount;
             }
             trans = tskCase.beginTransaction();
-            LocalFilesDataSource dataSource = tskCase.addLocalFilesDataSource(deviceId, rootDirectoryName, trans);
+            LocalFilesDataSource dataSource = tskCase.addLocalFilesDataSource(deviceId, rootDirectoryName, timeZone, trans);
             VirtualDirectory rootDirectory = dataSource.getRootDirectory();
             List<AbstractFile> filesAdded = new ArrayList<>();
             for (java.io.File localFile : localFiles) {

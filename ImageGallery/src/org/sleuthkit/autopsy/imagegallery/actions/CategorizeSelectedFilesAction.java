@@ -18,17 +18,18 @@
  */
 package org.sleuthkit.autopsy.imagegallery.actions;
 
-import org.controlsfx.control.action.Action;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 
 /**
  *
  */
-public class CategorizeSelectedFilesAction extends Action {
+public class CategorizeSelectedFilesAction extends CategorizeAction {
 
     public CategorizeSelectedFilesAction(Category cat, ImageGalleryController controller) {
-        super(cat.getDisplayName(), (javafx.event.ActionEvent actionEvent) -> new CategorizeAction(controller).addTag(controller.getTagsManager().getTagName(cat), ""));
-        setGraphic(cat.getGraphic());
+        super(controller, cat, null);
+        setEventHandler(actionEvent ->
+                addCatToFiles(controller.getSelectionModel().getSelected())
+        );
     }
 }
