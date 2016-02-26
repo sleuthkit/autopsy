@@ -469,7 +469,7 @@ final class CollaborationMonitor {
             try {
                 eventPublisher.publishRemotely(new CollaborationEvent(hostName, localTasksManager.getCurrentTasks()));
             } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Unexpected exception in HeartbeatTask!", ex); //NON-NLS
+                logger.log(Level.SEVERE, "Unexpected exception in HeartbeatTask", ex); //NON-NLS
             }
         }
     }
@@ -489,7 +489,7 @@ final class CollaborationMonitor {
             try {
                 remoteTasksManager.finishStaleTasks();
             } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Unexpected exception in StaleTaskDetectionTask!", ex); //NON-NLS
+                logger.log(Level.SEVERE, "Unexpected exception in StaleTaskDetectionTask", ex); //NON-NLS
             }
         }
     }
