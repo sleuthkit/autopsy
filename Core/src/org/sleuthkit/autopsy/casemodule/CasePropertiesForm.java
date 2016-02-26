@@ -89,7 +89,7 @@ class CasePropertiesForm extends javax.swing.JPanel {
         caseDirTextArea.setText(caseDir);
         current = currentCase;
 
-        CaseMetadata caseMetadata = new CaseMetadata(Paths.get(currentCase.getConfigFilePath()));
+        CaseMetadata caseMetadata = CaseMetadata.open(Paths.get(currentCase.getConfigFilePath()));
         tbDbName.setText(caseMetadata.getCaseDatabaseName());
         Case.CaseType caseType = caseMetadata.getCaseType();
         tbDbType.setText(caseType.toString());
