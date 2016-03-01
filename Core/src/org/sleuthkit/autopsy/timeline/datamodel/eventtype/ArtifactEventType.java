@@ -33,23 +33,22 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public interface ArtifactEventType extends EventType {
 
+    public static final Logger LOGGER = Logger.getLogger(ArtifactEventType.class.getName());
+
     /**
-     * @return the Artifact type this event type is derived form, or null if
-     *         there is no artifact type (eg file system events)
+     * @return the Artifact type this event type is derived from
      */
     public BlackboardArtifact.Type getArtifactType();
 
     public BlackboardAttribute.Type getDateTimeAttrubuteType();
 
     /**
-     * given an artifact, and a map from attribute types to attributes, pull out
-     * the time stamp, and compose the descriptions. Each implementation of
-     * {@link ArtifactEventType} needs to implement parseAttributesHelper() as
-     * hook for {@link buildEventDescription(org.sleuthkit.datamodel.BlackboardArtifact)
+     * given an artifact, pull out the time stamp, and compose the descriptions.
+     * Each implementation of {@link ArtifactEventType} needs to implement
+     * parseAttributesHelper() as hook for {@link buildEventDescription(org.sleuthkit.datamodel.BlackboardArtifact)
      * to invoke. Most subtypes can use this default implementation.
      *
      * @param artf
-     * @param attrMap
      *
      * @return an {@link AttributeEventDescription} containing the timestamp
      *         and description information
@@ -67,22 +66,22 @@ public interface ArtifactEventType extends EventType {
     }
 
     /**
-     * @return a function from an artifact and a map of its attributes, to a
-     *         String to use as part of the full event description
+     * @return a function from an artifact to a String to use as part of the
+     *         full event description
      */
-    AttrExtractor getFullExtractor();
+    Function<BlackboardArtifact, String> getFullExtractor();
 
     /**
-     * @return a function from an artifact and a map of its attributes, to a
-     *         String to use as part of the medium event description
+     * @return a function from an artifact to a String to use as part of the
+     *         medium event description
      */
-    AttrExtractor getMedExtractor();
+    Function<BlackboardArtifact, String> getMedExtractor();
 
     /**
-     * @return a function from an artifact and a map of its attributes, to a
-     *         String to use as part of the short event description
+     * @return a function from an artifact to a String to use as part of the
+     *         short event description
      */
-    AttrExtractor getShortExtractor();
+    Function<BlackboardArtifact, String> getShortExtractor();
 
     /**
      * bundles the per event information derived from a BlackBoard Artifact into
@@ -123,14 +122,13 @@ public interface ArtifactEventType extends EventType {
             this.medDescription = medDescription;
             this.fullDescription = fullDescription;
         }
-
     }
 
     /**
      * Build a {@link AttributeEventDescription} derived from a
      * {@link BlackboardArtifact}. This is a template method that relies on each
-     * {@link SubType}'s implementation of
-     * {@link SubType#parseAttributesHelper()} to know how to go from
+     * {@link ArtifactEventType}'s implementation of
+     * {@link ArtifactEventType#parseAttributesHelper()} to know how to go from
      * {@link BlackboardAttribute}s to the event description.
      *
      * @param artf the {@link BlackboardArtifact} to derive the event
@@ -157,33 +155,10 @@ public interface ArtifactEventType extends EventType {
         return type.parseAttributesHelper(artf);
     }
 
-    @FunctionalInterface
-    public interface AttrExtractor extends Function<BlackboardArtifact, String> {
-
-        @Override
-        default String apply(BlackboardArtifact t) {
-            try {
-                return applyBare(t);
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, MessageFormat.format("Error getting extracting attribute from artifact {0}.", t.getArtifactID()), ex); // NON-NLS
-                return "";
-            }
-        }
-
-        String applyBare(BlackboardArtifact t) throws TskCoreException;
-
-    }
-
-    public static class AttributeExtractor implements Function<BlackboardArtifact, String> {
+     static class AttributeExtractor implements Function<BlackboardArtifact, String> {
 
         public String apply(BlackboardArtifact artf) {
-            BlackboardAttribute attr = null;
-            try {
-                attr = artf.getAttribute(attributeType);
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, MessageFormat.format("Error getting extracting attribute from artifact {0}.", artf.getArtifactID()), ex); // NON-NLS
-            }
-            return Optional.ofNullable(attr)
+            return Optional.ofNullable(getAttributeSafe(artf, attributeType))
                     .map(BlackboardAttribute::getDisplayString)
                     .map(StringUtils::defaultString)
                     .orElse("");
@@ -196,13 +171,21 @@ public interface ArtifactEventType extends EventType {
         }
 
     }
-    public static final Logger LOGGER = Logger.getLogger(AttributeEventDescription.class.getName());
 
-    public static class EmptyExtractor implements Function<BlackboardArtifact, String> {
+     static class EmptyExtractor implements Function<BlackboardArtifact, String> {
 
         @Override
         public String apply(BlackboardArtifact t) {
             return "";
+        }
+    }
+
+    static BlackboardAttribute getAttributeSafe(BlackboardArtifact artf, BlackboardAttribute.Type attrType) {
+        try {
+            return artf.getAttribute(attrType);
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, MessageFormat.format("Error getting extracting attribute from artifact {0}.", artf.getArtifactID()), ex); // NON-NLS
+            return null;
         }
     }
 }

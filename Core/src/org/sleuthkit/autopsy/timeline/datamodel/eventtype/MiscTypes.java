@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,11 +21,12 @@ package org.sleuthkit.autopsy.timeline.datamodel.eventtype;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import javafx.scene.image.Image;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
+import static org.sleuthkit.autopsy.timeline.datamodel.eventtype.ArtifactEventType.getAttributeSafe;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -44,11 +45,11 @@ public enum MiscTypes implements EventType, ArtifactEventType {
             new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME),
             new AttributeExtractor(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE)),
             (artf) -> {
-                final BlackboardAttribute dir = artf.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DIRECTION));
-                final BlackboardAttribute readStatus = artf.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_READ_STATUS));
-                final BlackboardAttribute name = artf.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_NAME));
-                final BlackboardAttribute phoneNumber = artf.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER));
-                final BlackboardAttribute subject = artf.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SUBJECT));
+                final BlackboardAttribute dir = getAttributeSafe(artf, new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DIRECTION));
+                final BlackboardAttribute readStatus = getAttributeSafe(artf, new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_READ_STATUS));
+                final BlackboardAttribute name = getAttributeSafe(artf, new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_NAME));
+                final BlackboardAttribute phoneNumber = getAttributeSafe(artf, new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER));
+                final BlackboardAttribute subject = getAttributeSafe(artf, new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SUBJECT));
                 List<String> asList = Arrays.asList(stringValueOf(dir), stringValueOf(readStatus), name != null || phoneNumber != null ? toFrom(dir) : "", stringValueOf(name != null ? name : phoneNumber), (subject == null ? "" : stringValueOf(subject)));
                 return StringUtils.join(asList, " ");
             },
@@ -59,10 +60,10 @@ public enum MiscTypes implements EventType, ArtifactEventType {
             new AttributeExtractor(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PROG_NAME)),
             new AttributeExtractor(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_LOCATION)),
             (artf) -> {
-                final BlackboardAttribute latStart = artf.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START));
-                final BlackboardAttribute longStart = artf.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START));
-                final BlackboardAttribute latEnd = artf.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END));
-                final BlackboardAttribute longEnd = artf.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END));
+                final BlackboardAttribute latStart = getAttributeSafe(artf, new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START));
+                final BlackboardAttribute longStart = getAttributeSafe(artf, new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START));
+                final BlackboardAttribute latEnd = getAttributeSafe(artf, new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END));
+                final BlackboardAttribute longEnd = getAttributeSafe(artf, new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END));
                 return String.format("from %1$g %2$g to %3$g %4$g", latStart.getValueDouble(), longStart.getValueDouble(), latEnd.getValueDouble(), longEnd.getValueDouble()); // NON-NLS
             }),
     GPS_TRACKPOINT(NbBundle.getMessage(MiscTypes.class, "MiscTypes.GPSTrackpoint.name"), "gps-trackpoint.png", // NON-NLS
@@ -70,8 +71,8 @@ public enum MiscTypes implements EventType, ArtifactEventType {
             new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME),
             new AttributeExtractor(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PROG_NAME)),
             (artf) -> {
-                final BlackboardAttribute longitude = artf.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE));
-                final BlackboardAttribute latitude = artf.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE));
+                final BlackboardAttribute longitude = getAttributeSafe(artf, new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE));
+                final BlackboardAttribute latitude = getAttributeSafe(artf, new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE));
                 return (latitude != null ? latitude.getValueDouble() : "") + " " + (longitude != null ? longitude.getValueDouble() : ""); // NON-NLS
             },
             (artf) -> ""),
@@ -85,8 +86,8 @@ public enum MiscTypes implements EventType, ArtifactEventType {
             TypeUtils.fromEnum(ARTIFACT_TYPE.TSK_EMAIL_MSG),
             new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME_SENT),
             (artf) -> {
-                final BlackboardAttribute emailFrom = artf.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_EMAIL_FROM));
-                final BlackboardAttribute emailTo = artf.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_EMAIL_TO));
+                final BlackboardAttribute emailFrom = getAttributeSafe(artf, new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_EMAIL_FROM));
+                final BlackboardAttribute emailTo = getAttributeSafe(artf, new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_EMAIL_TO));
                 return (emailFrom != null ? emailFrom.getValueString() : "") + " to " + (emailTo != null ? emailTo.getValueString() : ""); // NON-NLS
             },
             new AttributeExtractor(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SUBJECT)),
@@ -100,14 +101,9 @@ public enum MiscTypes implements EventType, ArtifactEventType {
                     (String t) -> StringUtils.substringBeforeLast(t, "\\")),
             new AttributeExtractor(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PATH))) {
 
-                /**
-                 * Override
-                 * {@link ArtifactEventType#parseAttributesHelper(org.sleuthkit.datamodel.BlackboardArtifact, java.util.Map)}
-                 * with non-default description construction
-                 */
                 @Override
         public AttributeEventDescription parseAttributesHelper(BlackboardArtifact artf) throws TskCoreException {
-                    final BlackboardAttribute dateTimeAttr = artf.getAttribute(getDateTimeAttrubuteType());
+            final BlackboardAttribute dateTimeAttr = getAttributeSafe(artf, getDateTimeAttrubuteType());
 
                     long time = dateTimeAttr.getValueLong();
 
@@ -137,7 +133,7 @@ public enum MiscTypes implements EventType, ArtifactEventType {
                         return file.getName();
                     }
                 } catch (TskCoreException ex) {
-                    Logger.getLogger(MiscTypes.class.getName()).log(Level.SEVERE, "Exif event type failed to look up backing file name", ex); //NON-NLS
+                    LOGGER.log(Level.SEVERE, "Exif event type failed to look up backing file name", ex); //NON-NLS
                 }
                 return " error loading file name"; // NON-NLS
             }),
@@ -184,41 +180,26 @@ public enum MiscTypes implements EventType, ArtifactEventType {
 
     private final Function<BlackboardArtifact, String> shortExtractor;
 
-    /**
-     * {@inheritDoc }
-     */
     @Override
     public Function<BlackboardArtifact, String> getFullExtractor() {
         return longExtractor;
     }
 
-    /**
-     * {@inheritDoc }
-     */
     @Override
     public Function<BlackboardArtifact, String> getMedExtractor() {
         return medExtractor;
     }
 
-    /**
-     * {@inheritDoc }
-     */
     @Override
     public Function<BlackboardArtifact, String> getShortExtractor() {
         return shortExtractor;
     }
 
-    /**
-     * {@inheritDoc }
-     */
     @Override
     public BlackboardAttribute.Type getDateTimeAttrubuteType() {
         return dateTimeAttributeType;
     }
 
-    /**
-     * {@inheritDoc }
-     */
     @Override
     public EventTypeZoomLevel getZoomLevel() {
         return EventTypeZoomLevel.SUB_TYPE;
