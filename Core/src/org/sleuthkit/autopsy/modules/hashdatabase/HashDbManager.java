@@ -41,6 +41,8 @@ import java.beans.PropertyChangeSupport;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.Serializable;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.persistence.PersistenceException;
@@ -511,15 +513,16 @@ public class HashDbManager implements PropertyChangeListener {
     }
 
     private boolean writeHashSetConfigurationToDisk() {
-        HashDbSerializationSettings settings = new HashDbSerializationSettings(this.knownHashSets, this.knownBadHashSets);
+
         try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(DB_SERIALIZATION_FILE_PATH))) {
+            HashDbSerializationSettings settings = new HashDbSerializationSettings(this.knownHashSets, this.knownBadHashSets);
             out.writeObject(settings);
             File xmlFile = new File(configFilePath);
             if (xmlFile.exists()) {
                 xmlFile.delete();
             }
             return true;
-        } catch (IOException ex) {
+        } catch (IOException | TskCoreException ex) {
             throw new PersistenceException(String.format("Failed to write settings to %s", DB_SERIALIZATION_FILE_PATH), ex);
         }
     }
@@ -711,16 +714,23 @@ public class HashDbManager implements PropertyChangeListener {
                     throw new PersistenceException(String.format("Failed to read settings from %s", DB_SERIALIZATION_FILE_PATH), ex);
                 }
             } else {
-                this.setFields(new HashDbSerializationSettings(new ArrayList<>(), new ArrayList<>()));
+                try {
+                    this.setFields(new HashDbSerializationSettings(new ArrayList<>(), new ArrayList<>()));
+                } catch (TskCoreException ex) {
+                    throw new PersistenceException("Failed to create hash database settings", ex);
+                }
+
                 return true;
             }
         }
     }
 
     private void setFields(HashDbSerializationSettings settings) {
+        Map<HashDbManager.HashDb, String> knownPathMap = settings.getKnownPathMap();
+        Map<HashDbManager.HashDb, String> knownBadPathMap = settings.getKnownBadPathMap();
         for (HashDbManager.HashDb hashDb : settings.getKnownHashSets()) {
             try {
-                addExistingHashDatabaseInternal(hashDb.getHashSetName(), hashDb.getDatabasePath(), hashDb.getSearchDuringIngest(), hashDb.getSendIngestMessages(), HashDb.KnownFilesType.KNOWN);
+                addExistingHashDatabaseInternal(hashDb.getHashSetName(), knownPathMap.get(hashDb), hashDb.getSearchDuringIngest(), hashDb.getSendIngestMessages(), HashDb.KnownFilesType.KNOWN);
             } catch (HashDbManagerException | TskCoreException ex) {
                 Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash database", ex); //NON-NLS
                 JOptionPane.showMessageDialog(null,
@@ -732,7 +742,7 @@ public class HashDbManager implements PropertyChangeListener {
         }
         for (HashDbManager.HashDb hashDb : settings.getKnownBadHashSets()) {
             try {
-                addExistingHashDatabaseInternal(hashDb.getHashSetName(), hashDb.getDatabasePath(), hashDb.getSearchDuringIngest(), hashDb.getSendIngestMessages(), HashDb.KnownFilesType.KNOWN_BAD);
+                addExistingHashDatabaseInternal(hashDb.getHashSetName(), knownBadPathMap.get(hashDb), hashDb.getSearchDuringIngest(), hashDb.getSendIngestMessages(), HashDb.KnownFilesType.KNOWN_BAD);
             } catch (HashDbManagerException | TskCoreException ex) {
                 Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash database", ex); //NON-NLS
                 JOptionPane.showMessageDialog(null,
@@ -1000,6 +1010,16 @@ public class HashDbManager implements PropertyChangeListener {
 
         private void close() throws TskCoreException {
             SleuthkitJNI.closeHashDatabase(handle);
+        }
+
+        @Override
+        public int hashCode() {
+            int code = 23;
+            code = 47 * code + Integer.hashCode(handle);
+            code = 47 * code + Objects.hashCode(this.hashSetName);
+            code = 47 * code + Objects.hashCode(this.propertyChangeSupport);
+            code = 47 * code + Objects.hashCode(this.knownFilesType);
+            return code;
         }
     }
 
