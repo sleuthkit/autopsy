@@ -497,10 +497,7 @@ public final class DrawableDB {
         ArrayList<BlackboardArtifact> artifacts = tskCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, fileID);
 
         for (BlackboardArtifact a : artifacts) {
-            BlackboardAttribute attribute = a.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(),
-                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getLabel(),
-                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getDisplayName(),
-                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getValueType()));
+            BlackboardAttribute attribute = a.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
             if (attribute != null) {
                 hashNames.add(attribute.getValueString());
             }
