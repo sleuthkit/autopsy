@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,11 +37,11 @@ public enum WebTypes implements EventType, ArtifactEventType {
 
     WEB_DOWNLOADS(NbBundle.getMessage(WebTypes.class, "WebTypes.webDownloads.name"),
             "downloads.png", // NON-NLS
-            BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD,
-            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
+            TypeUtils.fromEnum(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD),
+            TypeUtils.fromEnum(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED),
             TopPrivateDomainExtractor.getInstance(),
-            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH),
-            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL)) {
+            new AttributeExtractor(TypeUtils.fromEnum(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH)),
+            new AttributeExtractor(TypeUtils.fromEnum(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL))) {
 
                 /**
                  * Override
@@ -49,8 +49,8 @@ public enum WebTypes implements EventType, ArtifactEventType {
                  * with non default description construction
                  */
                 @Override
-                public AttributeEventDescription parseAttributesHelper(BlackboardArtifact artf, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attrMap) {
-                    long time = attrMap.get(getDateTimeAttrubuteType()).getValueLong();
+        public AttributeEventDescription parseAttributesHelper(BlackboardArtifact artf, Map<BlackboardAttribute.Type, BlackboardAttribute> attrMap) {
+            long time = attrMap.get(getDateTimeAttrubuteType()).getValueLong();
                     String domain = getShortExtractor().apply(artf, attrMap);
                     String path = getMedExtractor().apply(artf, attrMap);
                     String fileName = StringUtils.substringAfterLast(path, "/");
@@ -66,37 +66,37 @@ public enum WebTypes implements EventType, ArtifactEventType {
     //TODO: review description separators
     WEB_COOKIE(NbBundle.getMessage(WebTypes.class, "WebTypes.webCookies.name"),
             "cookies.png", // NON-NLS
-            BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE,
-            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME,
+            TypeUtils.fromEnum(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE),
+            TypeUtils.fromEnum(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME),
             TopPrivateDomainExtractor.getInstance(),
-            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME),
-            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE)),
+            new AttributeExtractor(TypeUtils.fromEnum(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME)),
+            new AttributeExtractor(TypeUtils.fromEnum(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE))),
     //TODO: review description separators
     WEB_BOOKMARK(NbBundle.getMessage(WebTypes.class, "WebTypes.webBookmarks.name"),
             "bookmarks.png", // NON-NLS
-            BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK,
-            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
+            TypeUtils.fromEnum(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK),
+            TypeUtils.fromEnum(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED),
             TopPrivateDomainExtractor.getInstance(),
-            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL),
-            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE)),
+            new AttributeExtractor(TypeUtils.fromEnum(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL)),
+            new AttributeExtractor(TypeUtils.fromEnum(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE))),
     //TODO: review description separators
     WEB_HISTORY(NbBundle.getMessage(WebTypes.class, "WebTypes.webHistory.name"),
             "history.png", // NON-NLS
-            BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY,
-            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
+            TypeUtils.fromEnum(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY),
+            TypeUtils.fromEnum(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED),
             TopPrivateDomainExtractor.getInstance(),
-            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL),
-            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE)),
+            new AttributeExtractor(TypeUtils.fromEnum(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL)),
+            new AttributeExtractor(TypeUtils.fromEnum(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE))),
     //TODO: review description separators
     WEB_SEARCH(NbBundle.getMessage(WebTypes.class, "WebTypes.webSearch.name"),
             "searchquery.png", // NON-NLS
-            BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY,
-            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
-            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT),
+            TypeUtils.fromEnum(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY),
+            TypeUtils.fromEnum(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED),
+            new AttributeExtractor(TypeUtils.fromEnum(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT)),
             TopPrivateDomainExtractor.getInstance(),
-            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME));
+            new AttributeExtractor(TypeUtils.fromEnum(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME)));
 
-    private final BlackboardAttribute.ATTRIBUTE_TYPE dateTimeAttributeType;
+    private final BlackboardAttribute.Type dateTimeAttributeType;
 
     private final String iconBase;
 
@@ -108,7 +108,7 @@ public enum WebTypes implements EventType, ArtifactEventType {
     }
 
     @Override
-    public BlackboardAttribute.ATTRIBUTE_TYPE getDateTimeAttrubuteType() {
+    public BlackboardAttribute.Type getDateTimeAttrubuteType() {
         return dateTimeAttributeType;
     }
 
@@ -117,30 +117,30 @@ public enum WebTypes implements EventType, ArtifactEventType {
         return EventTypeZoomLevel.SUB_TYPE;
     }
 
-    private final BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> longExtractor;
+    private final BiFunction<BlackboardArtifact, Map<  BlackboardAttribute.Type, BlackboardAttribute>, String> longExtractor;
 
-    private final BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> medExtractor;
+    private final BiFunction<BlackboardArtifact, Map<  BlackboardAttribute.Type, BlackboardAttribute>, String> medExtractor;
 
-    private final BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> shortExtractor;
+    private final BiFunction<BlackboardArtifact, Map<  BlackboardAttribute.Type, BlackboardAttribute>, String> shortExtractor;
 
     @Override
-    public BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> getFullExtractor() {
+    public BiFunction<BlackboardArtifact, Map<  BlackboardAttribute.Type, BlackboardAttribute>, String> getFullExtractor() {
         return longExtractor;
     }
 
     @Override
-    public BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> getMedExtractor() {
+    public BiFunction<BlackboardArtifact, Map<  BlackboardAttribute.Type, BlackboardAttribute>, String> getMedExtractor() {
         return medExtractor;
     }
 
     @Override
-    public BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> getShortExtractor() {
+    public BiFunction<BlackboardArtifact, Map<  BlackboardAttribute.Type, BlackboardAttribute>, String> getShortExtractor() {
         return shortExtractor;
     }
 
     private final String displayName;
 
-    BlackboardArtifact.ARTIFACT_TYPE artifactType;
+    private final BlackboardArtifact.Type artifactType;
 
     @Override
     public String getIconBase() {
@@ -148,15 +148,15 @@ public enum WebTypes implements EventType, ArtifactEventType {
     }
 
     @Override
-    public BlackboardArtifact.ARTIFACT_TYPE getArtifactType() {
+    public BlackboardArtifact.Type getArtifactType() {
         return artifactType;
     }
 
-    private WebTypes(String displayName, String iconBase, BlackboardArtifact.ARTIFACT_TYPE artifactType,
-            BlackboardAttribute.ATTRIBUTE_TYPE dateTimeAttributeType,
-            BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> shortExtractor,
-            BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> medExtractor,
-            BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> longExtractor) {
+    private WebTypes(String displayName, String iconBase, BlackboardArtifact.Type artifactType,
+            BlackboardAttribute.Type dateTimeAttributeType,
+            BiFunction<BlackboardArtifact, Map<  BlackboardAttribute.Type, BlackboardAttribute>, String> shortExtractor,
+            BiFunction<BlackboardArtifact, Map<  BlackboardAttribute.Type, BlackboardAttribute>, String> medExtractor,
+            BiFunction<BlackboardArtifact, Map<  BlackboardAttribute.Type, BlackboardAttribute>, String> longExtractor) {
         this.displayName = displayName;
         this.iconBase = iconBase;
         this.artifactType = artifactType;
@@ -196,7 +196,7 @@ public enum WebTypes implements EventType, ArtifactEventType {
         }
 
         @Override
-        public String apply(BlackboardArtifact artf, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attrMap) {
+        public String apply(BlackboardArtifact artf, Map<BlackboardAttribute.Type, BlackboardAttribute> attrMap) {
             String domainString = StringUtils.substringBefore(super.apply(artf, attrMap), "/");
             if (InternetDomainName.isValid(domainString)) {
                 InternetDomainName domain = InternetDomainName.from(domainString);
@@ -209,7 +209,7 @@ public enum WebTypes implements EventType, ArtifactEventType {
         }
 
         TopPrivateDomainExtractor() {
-            super(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN);
+            super(TypeUtils.fromEnum(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN));
         }
     }
 
