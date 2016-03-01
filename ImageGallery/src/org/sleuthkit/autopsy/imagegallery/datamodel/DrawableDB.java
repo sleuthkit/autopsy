@@ -497,9 +497,12 @@ public final class DrawableDB {
         ArrayList<BlackboardArtifact> artifacts = tskCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, fileID);
 
         for (BlackboardArtifact a : artifacts) {
-            List<BlackboardAttribute> attributes = a.getAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME);
-            for (BlackboardAttribute attr : attributes) {
-                hashNames.add(attr.getValueString());
+            BlackboardAttribute attribute = a.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(),
+                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getLabel(),
+                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getDisplayName(),
+                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getValueType()));
+            if (attribute != null) {
+                hashNames.add(attribute.getValueString());
             }
         }
         return Collections.unmodifiableSet(hashNames);
@@ -1242,8 +1245,8 @@ public final class DrawableDB {
         String fileIdsList = "(" + StringUtils.join(fileIDs, ",") + " )";
 
         //count the fileids that are in the given list and don't have a non-zero category assigned to them.
-        String name =
-                "SELECT COUNT(obj_id) FROM tsk_files where obj_id IN " + fileIdsList //NON-NLS
+        String name
+                = "SELECT COUNT(obj_id) FROM tsk_files where obj_id IN " + fileIdsList //NON-NLS
                 + " AND obj_id NOT IN (SELECT obj_id FROM content_tags WHERE content_tags.tag_name_id IN " + catTagNameIDs + ")"; //NON-NLS
         try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery(name);
                 ResultSet resultSet = executeQuery.getResultSet();) {
