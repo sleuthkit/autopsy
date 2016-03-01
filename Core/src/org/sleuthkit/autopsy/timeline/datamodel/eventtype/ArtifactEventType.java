@@ -159,8 +159,7 @@ public interface ArtifactEventType extends EventType {
         List<BlackboardAttribute> attributes = artf.getAttributes();
         Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attrMap = new HashMap<>();
         for (BlackboardAttribute attr : attributes) {
-            attrMap.put(BlackboardAttribute.ATTRIBUTE_TYPE.fromLabel(attr.
-                    getAttributeTypeName()), attr);
+            attrMap.put(BlackboardAttribute.ATTRIBUTE_TYPE.fromLabel(attr.getAttributeType().getTypeName()), attr);
         }
 
         if (attrMap.get(type.getDateTimeAttrubuteType()) == null) {

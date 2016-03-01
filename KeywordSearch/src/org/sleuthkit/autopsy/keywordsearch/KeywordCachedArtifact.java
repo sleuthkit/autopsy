@@ -52,12 +52,12 @@ class KeywordCachedArtifact {
     }
 
     void add(BlackboardAttribute attribute) {
-        attributes.put(attribute.getAttributeTypeID(), attribute);
+        attributes.put(attribute.getAttributeType().getTypeID(), attribute);
     }
 
     void add(Collection<BlackboardAttribute> attributes) {
         for (BlackboardAttribute attr : attributes) {
-            this.attributes.put(attr.getAttributeTypeID(), attr);
+            this.attributes.put(attr.getAttributeType().getTypeID(), attr);
         }
     }
 }
