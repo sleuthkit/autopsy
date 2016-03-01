@@ -57,8 +57,8 @@ public abstract class DataSourceProcessorCallback {
      * the case database, this method adds a task to call the doneEDT method to
      * the EDT task queue.
      *
-     * Concrete implementations of DataSourceProcessorCallback should override
-     * this method if the callback SHOULD NOT be done in the EDT.
+     * IMPORTANT: Concrete implementations of DataSourceProcessorCallback should
+     * override this method if the callback SHOULD NOT be done in the EDT.
      *
      * @param result         Result code.
      * @param errList        List of error messages, possibly empty.
@@ -79,8 +79,10 @@ public abstract class DataSourceProcessorCallback {
      * Called by a data source processor when it is done adding a data source to
      * the case database, if the default done method has not been overridden.
      *
-     * Concrete implementations of DataSourceProcessorCallback should override
-     * this method if the callback SHOULD be done in the EDT.
+     * IMPORTANT: Concrete implementations of DataSourceProcessorCallback should
+     * override the done method and provide an implementation of this method
+     * that throws an UnsupportedOperationException if the callback SHOULD NOT
+     * be done in the EDT.
      *
      * @param result         Result code.
      * @param errList        List of error messages, possibly empty.
@@ -88,6 +90,5 @@ public abstract class DataSourceProcessorCallback {
      *                       errors occurred or processing was successfully
      *                       cancelled.
      */
-    public void doneEDT(DataSourceProcessorResult result, List<String> errList, List<Content> newDataSources) {
-    }
+    abstract public void doneEDT(DataSourceProcessorResult result, List<String> errList, List<Content> newDataSources);
 };
