@@ -28,6 +28,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
@@ -43,8 +44,8 @@ public enum WebTypes implements EventType, ArtifactEventType {
             new AttributeExtractor(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL))) {
 
                 @Override
-        public AttributeEventDescription parseAttributesHelper(BlackboardArtifact artf) {
-            long time = ArtifactEventType.getAttributeSafe(artf, getDateTimeAttrubuteType()).getValueLong();
+        public AttributeEventDescription parseAttributesHelper(BlackboardArtifact artf) throws TskCoreException {
+            long time = artf.getAttribute(getDateTimeAttrubuteType()).getValueLong();
                     String domain = getShortExtractor().apply(artf);
                     String path = getMedExtractor().apply(artf);
                     String fileName = StringUtils.substringAfterLast(path, "/");

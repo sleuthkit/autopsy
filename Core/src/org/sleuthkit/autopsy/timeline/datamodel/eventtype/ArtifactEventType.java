@@ -34,6 +34,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 public interface ArtifactEventType extends EventType {
 
     public static final Logger LOGGER = Logger.getLogger(ArtifactEventType.class.getName());
+    static final EmptyExtractor EMPTY_EXTRACTOR = new EmptyExtractor();
 
     /**
      * @return the Artifact type this event type is derived from
@@ -155,7 +156,7 @@ public interface ArtifactEventType extends EventType {
         return type.parseAttributesHelper(artf);
     }
 
-     static class AttributeExtractor implements Function<BlackboardArtifact, String> {
+    static class AttributeExtractor implements Function<BlackboardArtifact, String> {
 
         public String apply(BlackboardArtifact artf) {
             return Optional.ofNullable(getAttributeSafe(artf, attributeType))
@@ -172,7 +173,7 @@ public interface ArtifactEventType extends EventType {
 
     }
 
-     static class EmptyExtractor implements Function<BlackboardArtifact, String> {
+    static class EmptyExtractor implements Function<BlackboardArtifact, String> {
 
         @Override
         public String apply(BlackboardArtifact t) {
