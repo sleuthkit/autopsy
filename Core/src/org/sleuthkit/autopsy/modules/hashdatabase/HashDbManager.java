@@ -717,22 +717,30 @@ public class HashDbManager implements PropertyChangeListener {
         }
     }
 
-    private void setFields(HashDbSerializationSettings settings) throws TskCoreException {
-        this.knownHashSets = settings.getKnownHashSets();
-        this.knownBadHashSets = settings.getKnownBadHashSets();
-        this.hashSetNames = new HashSet<>();
-        this.hashSetPaths = new HashSet<>();
-        for (HashDbManager.HashDb hashDb : knownHashSets) {
-            String hashSetName = hashDb.getHashSetName();
-            if (hashSetNames.contains(hashSetName)) {
-                int suffix = 0;
-                String newHashSetName;
-                do {
-                    ++suffix;
-                    newHashSetName = hashSetName + suffix;
-                } while (hashSetNames.contains(newHashSetName));
+    private void setFields(HashDbSerializationSettings settings) {
+        for (HashDbManager.HashDb hashDb : settings.getKnownHashSets()) {
+            try {
+                addExistingHashDatabaseInternal(hashDb.getHashSetName(), hashDb.getDatabasePath(), hashDb.getSearchDuringIngest(), hashDb.getSendIngestMessages(), HashDb.KnownFilesType.KNOWN);
+            } catch (HashDbManagerException | TskCoreException ex) {
+                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash database", ex); //NON-NLS
+                JOptionPane.showMessageDialog(null,
+                        NbBundle.getMessage(this.getClass(),
+                                "HashDbManager.unableToOpenHashDbMsg", hashDb.getHashSetName()),
+                        NbBundle.getMessage(this.getClass(), "HashDbManager.openHashDbErr"),
+                        JOptionPane.ERROR_MESSAGE);
             }
-            this.hashSetPaths.add(hashDb.getDatabasePath());
+        }
+        for (HashDbManager.HashDb hashDb : settings.getKnownBadHashSets()) {
+            try {
+                addExistingHashDatabaseInternal(hashDb.getHashSetName(), hashDb.getDatabasePath(), hashDb.getSearchDuringIngest(), hashDb.getSendIngestMessages(), HashDb.KnownFilesType.KNOWN_BAD);
+            } catch (HashDbManagerException | TskCoreException ex) {
+                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash database", ex); //NON-NLS
+                JOptionPane.showMessageDialog(null,
+                        NbBundle.getMessage(this.getClass(),
+                                "HashDbManager.unableToOpenHashDbMsg", hashDb.getHashSetName()),
+                        NbBundle.getMessage(this.getClass(), "HashDbManager.openHashDbErr"),
+                        JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 
