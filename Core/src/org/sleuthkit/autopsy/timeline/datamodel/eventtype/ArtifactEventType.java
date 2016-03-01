@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,10 +18,9 @@
  */
 package org.sleuthkit.autopsy.timeline.datamodel.eventtype;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.BiFunction;
+import java.text.MessageFormat;
+import java.util.Optional;
+import java.util.function.Function;
 import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -34,56 +33,56 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public interface ArtifactEventType extends EventType {
 
+    public static final Logger LOGGER = Logger.getLogger(ArtifactEventType.class.getName());
+    static final EmptyExtractor EMPTY_EXTRACTOR = new EmptyExtractor();
+
     /**
-     * @return the Artifact type this event type is derived form, or null if
-     *         there is no artifact type (eg file system events)
+     * @return the Artifact type this event type is derived from
      */
-    public BlackboardArtifact.ARTIFACT_TYPE getArtifactType();
+    public BlackboardArtifact.Type getArtifactType();
 
-    public BlackboardAttribute.ATTRIBUTE_TYPE getDateTimeAttrubuteType();
+    public BlackboardAttribute.Type getDateTimeAttrubuteType();
 
     /**
-     * given an artifact, and a map from attribute types to attributes, pull out
-     * the time stamp, and compose the descriptions. Each implementation of
-     * {@link ArtifactEventType} needs to implement parseAttributesHelper() as
-     * hook for {@link buildEventDescription(org.sleuthkit.datamodel.BlackboardArtifact)
+     * given an artifact, pull out the time stamp, and compose the descriptions.
+     * Each implementation of {@link ArtifactEventType} needs to implement
+     * parseAttributesHelper() as hook for {@link buildEventDescription(org.sleuthkit.datamodel.BlackboardArtifact)
      * to invoke. Most subtypes can use this default implementation.
      *
      * @param artf
-     * @param attrMap
      *
      * @return an {@link AttributeEventDescription} containing the timestamp
      *         and description information
      *
      * @throws TskCoreException
      */
-    default AttributeEventDescription parseAttributesHelper(BlackboardArtifact artf, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attrMap) throws TskCoreException {
-        final BlackboardAttribute dateTimeAttr = attrMap.get(getDateTimeAttrubuteType());
+    default AttributeEventDescription parseAttributesHelper(BlackboardArtifact artf) throws TskCoreException {
+        final BlackboardAttribute dateTimeAttr = artf.getAttribute(getDateTimeAttrubuteType());
 
         long time = dateTimeAttr.getValueLong();
-        String shortDescription = getShortExtractor().apply(artf, attrMap);
-        String medDescription = shortDescription + " : " + getMedExtractor().apply(artf, attrMap);
-        String fullDescription = medDescription + " : " + getFullExtractor().apply(artf, attrMap);
+        String shortDescription = getShortExtractor().apply(artf);
+        String medDescription = shortDescription + " : " + getMedExtractor().apply(artf);
+        String fullDescription = medDescription + " : " + getFullExtractor().apply(artf);
         return new AttributeEventDescription(time, shortDescription, medDescription, fullDescription);
     }
 
     /**
-     * @return a function from an artifact and a map of its attributes, to a
-     *         String to use as part of the full event description
+     * @return a function from an artifact to a String to use as part of the
+     *         full event description
      */
-    BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> getFullExtractor();
+    Function<BlackboardArtifact, String> getFullExtractor();
 
     /**
-     * @return a function from an artifact and a map of its attributes, to a
-     *         String to use as part of the medium event description
+     * @return a function from an artifact to a String to use as part of the
+     *         medium event description
      */
-    BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> getMedExtractor();
+    Function<BlackboardArtifact, String> getMedExtractor();
 
     /**
-     * @return a function from an artifact and a map of its attributes, to a
-     *         String to use as part of the short event description
+     * @return a function from an artifact to a String to use as part of the
+     *         short event description
      */
-    BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> getShortExtractor();
+    Function<BlackboardArtifact, String> getShortExtractor();
 
     /**
      * bundles the per event information derived from a BlackBoard Artifact into
@@ -124,14 +123,13 @@ public interface ArtifactEventType extends EventType {
             this.medDescription = medDescription;
             this.fullDescription = fullDescription;
         }
-
     }
 
     /**
      * Build a {@link AttributeEventDescription} derived from a
      * {@link BlackboardArtifact}. This is a template method that relies on each
-     * {@link SubType}'s implementation of
-     * {@link SubType#parseAttributesHelper()} to know how to go from
+     * {@link ArtifactEventType}'s implementation of
+     * {@link ArtifactEventType#parseAttributesHelper()} to know how to go from
      * {@link BlackboardAttribute}s to the event description.
      *
      * @param artf the {@link BlackboardArtifact} to derive the event
@@ -150,47 +148,45 @@ public interface ArtifactEventType extends EventType {
             throw new IllegalArgumentException();
         }
 
-        /*
-         * build a map from attribute type to attribute, this makes implementing
-         * the parseAttributeHelper easier but could be ineffecient if we don't
-         * need most of the attributes. This would be unnessecary if there was
-         * an api on Blackboard artifacts to get specific attributes by type
-         */
-        List<BlackboardAttribute> attributes = artf.getAttributes();
-        Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attrMap = new HashMap<>();
-        for (BlackboardAttribute attr : attributes) {
-            attrMap.put(BlackboardAttribute.ATTRIBUTE_TYPE.fromLabel(attr.
-                    getAttributeTypeName()), attr);
-        }
-
-        if (attrMap.get(type.getDateTimeAttrubuteType()) == null) {
-            Logger.getLogger(AttributeEventDescription.class.getName()).log(Level.WARNING, "Artifact {0} has no date/time attribute, skipping it.", artf.getArtifactID()); // NON-NLS
+        if (artf.getAttribute(type.getDateTimeAttrubuteType()) == null) {
+            LOGGER.log(Level.WARNING, "Artifact {0} has no date/time attribute, skipping it.", artf.getArtifactID()); // NON-NLS
             return null;
         }
         //use the hook provided by this subtype implementation
-        return type.parseAttributesHelper(artf, attrMap);
+        return type.parseAttributesHelper(artf);
     }
 
-    public static class AttributeExtractor implements BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> {
+    static class AttributeExtractor implements Function<BlackboardArtifact, String> {
 
-        @Override
-        public String apply(BlackboardArtifact artf, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attrMap) {
-            final BlackboardAttribute attr = attrMap.get(attribute);
-            return (attr != null) ? StringUtils.defaultString(attr.getDisplayString()) : " ";
+        public String apply(BlackboardArtifact artf) {
+            return Optional.ofNullable(getAttributeSafe(artf, attributeType))
+                    .map(BlackboardAttribute::getDisplayString)
+                    .map(StringUtils::defaultString)
+                    .orElse("");
         }
 
-        private final BlackboardAttribute.ATTRIBUTE_TYPE attribute;
+        private final BlackboardAttribute.Type attributeType;
 
-        public AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE attribute) {
-            this.attribute = attribute;
+        public AttributeExtractor(BlackboardAttribute.Type attribute) {
+            this.attributeType = attribute;
         }
+
     }
 
-    public static class EmptyExtractor implements BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> {
+    static class EmptyExtractor implements Function<BlackboardArtifact, String> {
 
         @Override
-        public String apply(BlackboardArtifact t, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> u) {
+        public String apply(BlackboardArtifact t) {
             return "";
+        }
+    }
+
+    static BlackboardAttribute getAttributeSafe(BlackboardArtifact artf, BlackboardAttribute.Type attrType) {
+        try {
+            return artf.getAttribute(attrType);
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, MessageFormat.format("Error getting extracting attribute from artifact {0}.", artf.getArtifactID()), ex); // NON-NLS
+            return null;
         }
     }
 }
