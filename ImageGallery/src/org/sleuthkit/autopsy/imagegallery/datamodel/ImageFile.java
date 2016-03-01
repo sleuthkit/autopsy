@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.imagegallery.datamodel;
 import java.io.IOException;
 import javafx.concurrent.Task;
 import javafx.scene.image.Image;
-import javax.imageio.ImageIO;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -31,17 +30,12 @@ import org.sleuthkit.datamodel.AbstractFile;
  * wrapper(/decorator?/adapter?) around {@link AbstractFile} and provides
  * methods to get an thumbnail sized and a full sized {@link  Image}.
  */
-public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
+public class ImageFile extends DrawableFile {
 
     private static final Logger LOGGER = Logger.getLogger(ImageFile.class.getName());
 
-    static {
-        ImageIO.scanForPlugins();
-    }
-
-    ImageFile(T f, Boolean analyzed) {
+    ImageFile(AbstractFile f, Boolean analyzed) {
         super(f, analyzed);
-
     }
 
     @Override

@@ -36,13 +36,13 @@ import org.sleuthkit.autopsy.coreutils.VideoUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 
-public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
+public class VideoFile extends DrawableFile {
 
     private static final Logger LOGGER = Logger.getLogger(VideoFile.class.getName());
 
     private static final Image VIDEO_ICON = new Image("org/sleuthkit/autopsy/imagegallery/images/Clapperboard.png"); //NON-NLS
 
-    VideoFile(T file, Boolean analyzed) {
+    VideoFile(AbstractFile file, Boolean analyzed) {
         super(file, analyzed);
     }
 
