@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -126,7 +127,7 @@ public class GroupManager {
     private volatile DrawableAttribute<?> groupBy = DrawableAttribute.PATH;
     private volatile SortOrder sortOrder = SortOrder.ASCENDING;
 
-    private final ReadOnlyObjectWrapper<GroupSortBy> sortByProp = new ReadOnlyObjectWrapper<>(sortBy);
+    private final ReadOnlyObjectWrapper< Comparator<DrawableGroup>> sortByProp = new ReadOnlyObjectWrapper<>(sortBy);
     private final ReadOnlyObjectWrapper< DrawableAttribute<?>> groupByProp = new ReadOnlyObjectWrapper<>(groupBy);
     private final ReadOnlyObjectWrapper<SortOrder> sortOrderProp = new ReadOnlyObjectWrapper<>(sortOrder);
 
@@ -169,7 +170,7 @@ public class GroupManager {
      * file is a part of
      */
     @SuppressWarnings({"rawtypes", "unchecked"})
-    synchronized public Set<GroupKey<?>> getGroupKeysForFile(DrawableFile<?> file) {
+    synchronized public Set<GroupKey<?>> getGroupKeysForFile(DrawableFile file) {
         Set<GroupKey<?>> resultSet = new HashSet<>();
         for (Comparable<?> val : groupBy.getValue(file)) {
             if (groupBy == DrawableAttribute.TAGS) {
@@ -193,7 +194,7 @@ public class GroupManager {
     synchronized public Set<GroupKey<?>> getGroupKeysForFileID(Long fileID) {
         try {
             if (nonNull(db)) {
-                DrawableFile<?> file = db.getFileFromID(fileID);
+                DrawableFile file = db.getFileFromID(fileID);
                 return getGroupKeysForFile(file);
             } else {
                 Logger.getLogger(GroupManager.class.getName()).log(Level.WARNING, "Failed to load file with id: {0} from database.  There is no database assigned.", fileID); //NON-NLS
@@ -274,7 +275,7 @@ public class GroupManager {
         } else if (unSeenGroups.contains(group) == false) {
             unSeenGroups.add(group);
         }
-        FXCollections.sort(unSeenGroups, sortBy.getGrpComparator(sortOrder));
+        FXCollections.sort(unSeenGroups, applySortOrder(sortOrder, sortBy));
     }
 
     /**
@@ -299,11 +300,11 @@ public class GroupManager {
                     Platform.runLater(() -> {
                         if (analyzedGroups.contains(group)) {
                             analyzedGroups.remove(group);
-                            FXCollections.sort(analyzedGroups, sortBy.getGrpComparator(sortOrder));
+                            FXCollections.sort(analyzedGroups, applySortOrder(sortOrder, sortBy));
                         }
                         if (unSeenGroups.contains(group)) {
                             unSeenGroups.remove(group);
-                            FXCollections.sort(unSeenGroups, sortBy.getGrpComparator(sortOrder));
+                            FXCollections.sort(unSeenGroups, applySortOrder(sortOrder, sortBy));
                         }
                     });
                 }
@@ -450,7 +451,7 @@ public class GroupManager {
         }
     }
 
-    public GroupSortBy getSortBy() {
+    public Comparator<DrawableGroup> getSortBy() {
         return sortBy;
     }
 
@@ -459,7 +460,7 @@ public class GroupManager {
         Platform.runLater(() -> sortByProp.set(sortBy));
     }
 
-    public ReadOnlyObjectProperty<GroupSortBy> getSortByProperty() {
+    public ReadOnlyObjectProperty< Comparator<DrawableGroup>> getSortByProperty() {
         return sortByProp.getReadOnlyProperty();
     }
 
@@ -523,8 +524,8 @@ public class GroupManager {
             setSortBy(sortBy);
             setSortOrder(sortOrder);
             Platform.runLater(() -> {
-                FXCollections.sort(analyzedGroups, sortBy.getGrpComparator(sortOrder));
-                FXCollections.sort(unSeenGroups, sortBy.getGrpComparator(sortOrder));
+                FXCollections.sort(analyzedGroups, applySortOrder(sortOrder, sortBy));
+                FXCollections.sort(unSeenGroups, applySortOrder(sortOrder, sortBy));
             });
         }
     }
@@ -666,7 +667,7 @@ public class GroupManager {
                                 group = new DrawableGroup(groupKey, fileIDs, groupSeen);
                                 controller.getCategoryManager().registerListener(group);
                                 group.seenProperty().addListener((o, oldSeen, newSeen) -> {
-                                    markGroupSeen(group, newSeen);
+                                    Platform.runLater(() -> markGroupSeen(group, newSeen));
                                 });
                                 groupMap.put(groupKey, group);
                             }
@@ -675,7 +676,7 @@ public class GroupManager {
                             if (analyzedGroups.contains(group) == false) {
                                 analyzedGroups.add(group);
                                 if (Objects.isNull(task)) {
-                                    FXCollections.sort(analyzedGroups, sortBy.getGrpComparator(sortOrder));
+                                    FXCollections.sort(analyzedGroups, applySortOrder(sortOrder, sortBy));
                                 }
                             }
                             markGroupSeen(group, groupSeen);
@@ -719,12 +720,12 @@ public class GroupManager {
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     @NbBundle.Messages({"# {0} - groupBy attribute Name",
-            "# {1} - sortBy name",
-            "# {2} - sort Order",
-            "ReGroupTask.displayTitle=regrouping files by {0} sorted by {1} in {2} order",
-            "# {0} - groupBy attribute Name",
-            "# {1} - atribute value",
-            "ReGroupTask.progressUpdate=regrouping files by {0} : {1}"})
+        "# {1} - sortBy name",
+        "# {2} - sort Order",
+        "ReGroupTask.displayTitle=regrouping files by {0} sorted by {1} in {2} order",
+        "# {0} - groupBy attribute Name",
+        "# {1} - atribute value",
+        "ReGroupTask.progressUpdate=regrouping files by {0} : {1}"})
     private class ReGroupTask<A extends Comparable<A>> extends LoggedTask<Void> {
 
         private ProgressHandle groupProgress;
@@ -735,8 +736,8 @@ public class GroupManager {
 
         private final SortOrder sortOrder;
 
-        public ReGroupTask(DrawableAttribute<A> groupBy, GroupSortBy sortBy, SortOrder sortOrder) {
-            super(Bundle.ReGroupTask_displayTitle(groupBy.attrName.toString(), sortBy.name(), sortOrder.toString()), true);
+        ReGroupTask(DrawableAttribute<A> groupBy, GroupSortBy sortBy, SortOrder sortOrder) {
+            super(Bundle.ReGroupTask_displayTitle(groupBy.attrName.toString(), sortBy.getDisplayName(), sortOrder.toString()), true);
 
             this.groupBy = groupBy;
             this.sortBy = sortBy;
@@ -755,7 +756,7 @@ public class GroupManager {
                 return null;
             }
 
-            groupProgress = ProgressHandleFactory.createHandle(Bundle.ReGroupTask_displayTitle(groupBy.attrName.toString(), sortBy.name(), sortOrder.toString()), this);
+            groupProgress = ProgressHandleFactory.createHandle(Bundle.ReGroupTask_displayTitle(groupBy.attrName.toString(), sortBy.getDisplayName(), sortOrder.toString()), this);
             Platform.runLater(() -> {
                 analyzedGroups.clear();
                 unSeenGroups.clear();
@@ -778,7 +779,7 @@ public class GroupManager {
                 groupProgress.progress(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), val), p);
                 popuplateIfAnalyzed(new GroupKey<A>(groupBy, val), this);
             }
-            Platform.runLater(() -> FXCollections.sort(analyzedGroups, sortBy.getGrpComparator(sortOrder)));
+            Platform.runLater(() -> FXCollections.sort(analyzedGroups, applySortOrder(sortOrder, sortBy)));
 
             updateProgress(1, 1);
             return null;
@@ -791,6 +792,18 @@ public class GroupManager {
                 groupProgress.finish();
                 groupProgress = null;
             }
+        }
+    }
+
+    private static <T> Comparator<T> applySortOrder(final SortOrder sortOrder, Comparator<T> comparator) {
+        switch (sortOrder) {
+            case ASCENDING:
+                return comparator;
+            case DESCENDING:
+                return comparator.reversed();
+            case UNSORTED:
+            default:
+                return new GroupSortBy.AllEqualComparator<>();
         }
     }
 }

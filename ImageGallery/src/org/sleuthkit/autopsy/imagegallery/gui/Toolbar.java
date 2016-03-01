@@ -26,20 +26,14 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.RadioButton;
 import javafx.scene.control.Slider;
 import javafx.scene.control.SplitMenuButton;
-import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.ToolBar;
-import javafx.scene.layout.HBox;
-import javax.swing.SortOrder;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
@@ -48,6 +42,7 @@ import org.sleuthkit.autopsy.imagegallery.actions.CategorizeGroupAction;
 import org.sleuthkit.autopsy.imagegallery.actions.TagGroupAction;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -68,21 +63,6 @@ public class Toolbar extends ToolBar {
     private Slider sizeSlider;
 
     @FXML
-    private ComboBox<GroupSortBy> sortByBox;
-
-    @FXML
-    private RadioButton ascRadio;
-
-    @FXML
-    private RadioButton descRadio;
-
-    @FXML
-    private ToggleGroup orderGroup;
-
-    @FXML
-    private HBox sortControlGroup;
-
-    @FXML
     private SplitMenuButton catGroupMenuButton;
 
     @FXML
@@ -90,9 +70,6 @@ public class Toolbar extends ToolBar {
 
     @FXML
     private Label groupByLabel;
-
-    @FXML
-    private Label sortByLabel;
 
     @FXML
     private Label tagImageViewLabel;
@@ -103,54 +80,35 @@ public class Toolbar extends ToolBar {
     @FXML
     private Label thumbnailSizeLabel;
 
-    private static Toolbar instance;
-
-    private final SimpleObjectProperty<SortOrder> orderProperty = new SimpleObjectProperty<>(SortOrder.ASCENDING);
-
-    private final InvalidationListener queryInvalidationListener = (Observable o) -> {
-        if (orderGroup.getSelectedToggle() == ascRadio) {
-            orderProperty.set(SortOrder.ASCENDING);
-        } else {
-            orderProperty.set(SortOrder.DESCENDING);
-        }
-
-        ImageGalleryController.getDefault().getGroupManager().regroup(groupByBox.getSelectionModel().getSelectedItem(), sortByBox.getSelectionModel().getSelectedItem(), getSortOrder(), false);
-    };
     private final ImageGalleryController controller;
+    private SortChooser<DrawableGroup, GroupSortBy> sortChooser;
 
-    synchronized public SortOrder getSortOrder() {
-        return orderProperty.get();
-    }
-
-    public DoubleProperty sizeSliderValue() {
-        return sizeSlider.valueProperty();
-    }
-
-    static synchronized public Toolbar getDefault(ImageGalleryController controller) {
-        if (instance == null) {
-            instance = new Toolbar(controller);
+    private final InvalidationListener queryInvalidationListener = new InvalidationListener() {
+        public void invalidated(Observable o) {
+            controller.getGroupManager().regroup(
+                    groupByBox.getSelectionModel().getSelectedItem(),
+                    sortChooser.getComparator(),
+                    sortChooser.getSortOrder(),
+                    false);
         }
-        return instance;
+    };
+
+    public DoubleProperty thumbnailSizeProperty() {
+        return sizeSlider.valueProperty();
     }
 
     @FXML
     @NbBundle.Messages({"Toolbar.groupByLabel=Group By:",
-            "Toolbar.sortByLabel=Sort By:",
-            "Toolbar.ascRadio=Ascending",
-            "Toolbar.descRadio=Descending",
-            "Toolbar.tagImageViewLabel=Tag Group's Files:",
-            "Toolbar.categoryImageViewLabel=Categorize Group's Files:",
-            "Toolbar.thumbnailSizeLabel=Thumbnail Size (px):"})
+        "Toolbar.sortByLabel=Sort By:",
+        "Toolbar.ascRadio=Ascending",
+        "Toolbar.descRadio=Descending",
+        "Toolbar.tagImageViewLabel=Tag Group's Files:",
+        "Toolbar.categoryImageViewLabel=Categorize Group's Files:",
+        "Toolbar.thumbnailSizeLabel=Thumbnail Size (px):"})
     void initialize() {
-        assert ascRadio != null : "fx:id=\"ascRadio\" was not injected: check your FXML file 'Toolbar.fxml'.";
         assert catGroupMenuButton != null : "fx:id=\"catSelectedMenubutton\" was not injected: check your FXML file 'Toolbar.fxml'.";
-        assert descRadio != null : "fx:id=\"descRadio\" was not injected: check your FXML file 'Toolbar.fxml'.";
         assert groupByBox != null : "fx:id=\"groupByBox\" was not injected: check your FXML file 'Toolbar.fxml'.";
-
-        assert orderGroup != null : "fx:id=\"orderGroup\" was not injected: check your FXML file 'Toolbar.fxml'.";
         assert sizeSlider != null : "fx:id=\"sizeSlider\" was not injected: check your FXML file 'Toolbar.fxml'.";
-        assert sortByBox != null : "fx:id=\"sortByBox\" was not injected: check your FXML file 'Toolbar.fxml'.";
-        assert sortControlGroup != null : "fx:id=\"sortControlGroup\" was not injected: check your FXML file 'Toolbar.fxml'.";
         assert tagGroupMenuButton != null : "fx:id=\"tagSelectedMenubutton\" was not injected: check your FXML file 'Toolbar.fxml'.";
 
         controller.viewState().addListener((observable, oldViewState, newViewState) -> {
@@ -174,14 +132,6 @@ public class Toolbar extends ToolBar {
             }
         });
 
-        groupByLabel.setText(Bundle.Toolbar_groupByLabel());
-        sortByLabel.setText(Bundle.Toolbar_sortByLabel());
-        ascRadio.setText(Bundle.Toolbar_ascRadio());
-        descRadio.setText(Bundle.Toolbar_descRadio());
-        tagImageViewLabel.setText(Bundle.Toolbar_tagImageViewLabel());
-        categoryImageViewLabel.setText(Bundle.Toolbar_categoryImageViewLabel());
-        thumbnailSizeLabel.setText(Bundle.Toolbar_thumbnailSizeLabel());
-
         CategorizeGroupAction cat5GroupAction = new CategorizeGroupAction(Category.FIVE, controller);
         catGroupMenuButton.setOnAction(cat5GroupAction);
         catGroupMenuButton.setText(cat5GroupAction.getText());
@@ -194,6 +144,11 @@ public class Toolbar extends ToolBar {
             }
         });
 
+        groupByLabel.setText(Bundle.Toolbar_groupByLabel());
+        tagImageViewLabel.setText(Bundle.Toolbar_tagImageViewLabel());
+        categoryImageViewLabel.setText(Bundle.Toolbar_categoryImageViewLabel());
+        thumbnailSizeLabel.setText(Bundle.Toolbar_thumbnailSizeLabel());
+
         groupByBox.setItems(FXCollections.observableList(DrawableAttribute.getGroupableAttrs()));
         groupByBox.getSelectionModel().select(DrawableAttribute.PATH);
         groupByBox.getSelectionModel().selectedItemProperty().addListener(queryInvalidationListener);
@@ -201,21 +156,20 @@ public class Toolbar extends ToolBar {
         groupByBox.setCellFactory(listView -> new AttributeListCell());
         groupByBox.setButtonCell(new AttributeListCell());
 
-        sortByBox.setCellFactory(listView -> new SortByListCell());
-        sortByBox.setButtonCell(new SortByListCell());
-        sortByBox.setItems(GroupSortBy.getValues());
+        sortChooser = new SortChooser<>(GroupSortBy.getValues());
+        sortChooser.comparatorProperty().addListener((observable, oldComparator, newComparator) -> {
+            final boolean orderEnabled = newComparator == GroupSortBy.NONE || newComparator == GroupSortBy.PRIORITY;
+            sortChooser.setSortOrderDisabled(orderEnabled);
 
-        sortByBox.getSelectionModel().selectedItemProperty().addListener(queryInvalidationListener);
-
-        sortByBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            final boolean orderEnabled = newValue == GroupSortBy.NONE || newValue == GroupSortBy.PRIORITY;
-            ascRadio.setDisable(orderEnabled);
-            descRadio.setDisable(orderEnabled);
-
+            final SortChooser.ValueType valueType = newComparator == GroupSortBy.GROUP_BY_VALUE ? SortChooser.ValueType.LEXICOGRAPHIC : SortChooser.ValueType.NUMERIC;
+            sortChooser.setValueType(valueType);
+            queryInvalidationListener.invalidated(observable);
         });
-        sortByBox.getSelectionModel().select(GroupSortBy.PRIORITY);
 
-        orderGroup.selectedToggleProperty().addListener(queryInvalidationListener);
+        sortChooser.sortOrderProperty().addListener(queryInvalidationListener);
+        sortChooser.setComparator(GroupSortBy.PRIORITY);
+        getItems().add(1, sortChooser);
+
     }
 
     private void syncGroupControlsEnabledState(GroupViewState newViewState) {
@@ -230,13 +184,11 @@ public class Toolbar extends ToolBar {
     public void reset() {
         Platform.runLater(() -> {
             groupByBox.getSelectionModel().select(DrawableAttribute.PATH);
-            sortByBox.getSelectionModel().select(GroupSortBy.NONE);
-            orderGroup.selectToggle(ascRadio);
             sizeSlider.setValue(SIZE_SLIDER_DEFAULT);
         });
     }
 
-    private Toolbar(ImageGalleryController controller) {
+    public Toolbar(ImageGalleryController controller) {
         this.controller = controller;
         FXMLConstructor.construct(this, "Toolbar.fxml"); //NON-NLS
     }

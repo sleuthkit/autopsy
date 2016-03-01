@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.coreutils;
 
+import com.google.common.io.Files;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -91,33 +92,33 @@ public class VideoUtils {
         return isMediaThumbnailSupported(file, SUPPORTED_VIDEO_MIME_TYPES, SUPPORTED_VIDEO_EXTENSIONS, CONDITIONAL_MIME_TYPES);
     }
 
+    @NbBundle.Messages({"# {0} - file name",
+        "VideoUtils.genVideoThumb.progress.text=extracting temporary file {0}"})
     static BufferedImage generateVideoThumbnail(AbstractFile file, int iconSize) {
         java.io.File tempFile = getTempVideoFile(file);
-
-        try {
-            if (tempFile.exists() == false || tempFile.length() < file.getSize()) {
-                com.google.common.io.Files.createParentDirs(tempFile);
-                ProgressHandle progress = ProgressHandleFactory.createHandle(NbBundle.getMessage(VideoUtils.class, "VideoUtils.genVideoThumb.progress.text", file.getName()));
-                progress.start(100);
-                try {
-                    ContentUtils.writeToFile(file, tempFile, progress, null, true);
-                } catch (IOException ex) {
-                    LOGGER.log(Level.WARNING, "Error buffering file", ex); //NON-NLS
-                }
+        if (tempFile.exists() == false || tempFile.length() < file.getSize()) {
+            ProgressHandle progress = ProgressHandleFactory.createHandle(Bundle.VideoUtils_genVideoThumb_progress_text(file.getName()));
+            progress.start(100);
+            try {
+                Files.createParentDirs(tempFile);
+                ContentUtils.writeToFile(file, tempFile, progress, null, true);
+            } catch (IOException ex) {
+                LOGGER.log(Level.WARNING, "Error extracting temporary file for " + ImageUtils.getContentPathSafe(file), ex); //NON-NLS
+            } finally {
                 progress.finish();
             }
-        } catch (IOException ex) {
-            return null;
         }
 
         VideoCapture videoFile = new VideoCapture(); // will contain the video
 
         if (!videoFile.open(tempFile.toString())) {
+            LOGGER.log(Level.WARNING, "Error opening {0} for preview generation.", ImageUtils.getContentPathSafe(file)); //NON-NLS
             return null;
         }
         double fps = videoFile.get(CV_CAP_PROP_FPS); // gets frame per second
         double totalFrames = videoFile.get(CV_CAP_PROP_FRAME_COUNT); // gets total frames
         if (fps <= 0 || totalFrames <= 0) {
+            LOGGER.log(Level.WARNING, "Error getting fps or total frames for {0}", ImageUtils.getContentPathSafe(file)); //NON-NLS
             return null;
         }
         double milliseconds = 1000 * (totalFrames / fps); //total milliseconds
@@ -132,10 +133,12 @@ public class VideoUtils {
         for (int x = 0; x < THUMB_COLUMNS; x++) {
             for (int y = 0; y < THUMB_ROWS; y++) {
                 if (!videoFile.set(CV_CAP_PROP_POS_MSEC, timestamp + x * framkeskip + y * framkeskip * THUMB_COLUMNS)) {
+                    LOGGER.log(Level.WARNING, "Error seeking to " + timestamp + "ms in {0}", ImageUtils.getContentPathSafe(file)); //NON-NLS
                     break; // if we can't set the time, return black for that frame
                 }
                 //read the frame into the image/matrix
                 if (!videoFile.read(imageMatrix)) {
+                    LOGGER.log(Level.WARNING, "Error reading frames at " + timestamp + "ms from {0}", ImageUtils.getContentPathSafe(file)); //NON-NLS
                     break; //if the image for some reason is bad, return black for that frame
                 }
 

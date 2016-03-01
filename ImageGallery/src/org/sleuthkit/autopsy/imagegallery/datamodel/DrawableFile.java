@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
 import java.lang.ref.SoftReference;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -42,39 +43,36 @@ import org.sleuthkit.autopsy.imagegallery.ThumbnailCache;
 import org.sleuthkit.autopsy.imagegallery.utils.TaskUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ContentVisitor;
-import org.sleuthkit.datamodel.ReadContentInputStream;
-import org.sleuthkit.datamodel.SleuthkitItemVisitor;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * @TODO: There is something I don't understand or have done wrong about
- * implementing this class,as it is unreadable by
- * {@link ReadContentInputStream}. As a work around we keep a reference to the
- * original {@link AbstractFile} to use when reading the image. -jm
+ * A file that contains visual information such as an image or video.
  */
-public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile {
+public abstract class DrawableFile {
 
     private static final Logger LOGGER = Logger.getLogger(DrawableFile.class.getName());
 
-    public static DrawableFile<?> create(AbstractFile abstractFileById, boolean analyzed) {
+    public static DrawableFile create(AbstractFile abstractFileById, boolean analyzed) {
         return create(abstractFileById, analyzed, FileTypeUtils.isVideoFile(abstractFileById));
     }
 
     /**
      * Skip the database query if we have already determined the file type.
      */
-    public static DrawableFile<?> create(AbstractFile abstractFileById, boolean analyzed, boolean isVideo) {
+    public static DrawableFile create(AbstractFile abstractFileById, boolean analyzed, boolean isVideo) {
         return isVideo
-                ? new VideoFile<>(abstractFileById, analyzed)
-                : new ImageFile<>(abstractFileById, analyzed);
+                ? new VideoFile(abstractFileById, analyzed)
+                : new ImageFile(abstractFileById, analyzed);
     }
 
-    public static DrawableFile<?> create(Long id, boolean analyzed) throws TskCoreException, IllegalStateException {
+    public static DrawableFile create(Long id, boolean analyzed) throws TskCoreException, IllegalStateException {
         return create(Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(id), analyzed);
     }
 
@@ -82,7 +80,7 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
 
     private String drawablePath;
 
-    private final T file;
+    private final AbstractFile file;
 
     private final SimpleBooleanProperty analyzed;
 
@@ -92,73 +90,61 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
 
     private String model;
 
-    protected DrawableFile(T file, Boolean analyzed) {
-        /*
-         * @TODO: the two 'new Integer(0).shortValue()' values and null are
-         * placeholders because the super constructor expects values i can't get
-         * easily at the moment. I assume this is related to why
-         * ReadContentInputStream can't read from DrawableFiles.
-         */
-
-        super(file.getSleuthkitCase(),
-                file.getId(),
-                file.getAttrType(),
-                file.getAttrId(),
-                file.getName(),
-                file.getType(),
-                file.getMetaAddr(),
-                (int) file.getMetaSeq(),
-                file.getDirType(),
-                file.getMetaType(),
-                null,
-                new Integer(0).shortValue(),
-                file.getSize(),
-                file.getCtime(),
-                file.getCrtime(),
-                file.getAtime(),
-                file.getMtime(),
-                new Integer(0).shortValue(),
-                file.getUid(),
-                file.getGid(),
-                file.getMd5Hash(),
-                file.getKnown(),
-                file.getParentPath(),
-                file.getMIMEType());
+    protected DrawableFile(AbstractFile file, Boolean analyzed) {
         this.analyzed = new SimpleBooleanProperty(analyzed);
         this.file = file;
     }
 
     public abstract boolean isVideo();
 
-    @Override
-    public boolean isRoot() {
-        return false;
-    }
-
-    @Override
-    public <T> T accept(SleuthkitItemVisitor<T> v) {
-        return file.accept(v);
-    }
-
-    @Override
-    public <T> T accept(ContentVisitor<T> v) {
-        return file.accept(v);
-    }
-
-    @Override
-    public List<Content> getChildren() throws TskCoreException {
-        return new ArrayList<>();
-    }
-
-    @Override
-    public List<Long> getChildrenIds() throws TskCoreException {
-        return new ArrayList<>();
-    }
-
     public List<Pair<DrawableAttribute<?>, Collection<?>>> getAttributesList() {
         return DrawableAttribute.getValues().stream()
                 .map(this::makeAttributeValuePair)
                 .collect(Collectors.toList());
+    }
+
+    public String getMIMEType() {
+        return file.getMIMEType();
+    }
+
+    public long getId() {
+        return file.getId();
+    }
+
+    public long getCtime() {
+        return file.getCtime();
+    }
+
+    public long getCrtime() {
+        return file.getCrtime();
+    }
+
+    public long getAtime() {
+        return file.getAtime();
+    }
+
+    public long getMtime() {
+        return file.getMtime();
+    }
+
+    public String getMd5Hash() {
+        return file.getMd5Hash();
+    }
+
+    public String getName() {
+        return file.getName();
+    }
+
+    public String getAtimeAsDate() {
+        return file.getAtimeAsDate();
+    }
+
+    public synchronized String getUniquePath() throws TskCoreException {
+        return file.getUniquePath();
+    }
+
+    public SleuthkitCase getSleuthkitCase() {
+        return file.getSleuthkitCase();
     }
 
     private Pair<DrawableAttribute<?>, Collection<?>> makeAttributeValuePair(DrawableAttribute<?> t) {
@@ -167,14 +153,14 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
 
     public String getModel() {
         if (model == null) {
-            model = WordUtils.capitalizeFully((String) getValueOfBBAttribute(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MODEL));
+            model = WordUtils.capitalizeFully((String) getValueOfBBAttribute(ARTIFACT_TYPE.TSK_METADATA_EXIF, ATTRIBUTE_TYPE.TSK_DEVICE_MODEL));
         }
         return model;
     }
 
     public String getMake() {
         if (make == null) {
-            make = WordUtils.capitalizeFully((String) getValueOfBBAttribute(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MAKE));
+            make = WordUtils.capitalizeFully((String) getValueOfBBAttribute(ARTIFACT_TYPE.TSK_METADATA_EXIF, ATTRIBUTE_TYPE.TSK_DEVICE_MAKE));
         }
         return make;
     }
@@ -182,18 +168,18 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
     public Set<TagName> getTagNames() {
         try {
 
-            return getSleuthkitCase().getContentTagsByContent(this).stream()
+            return getContentTags().stream()
                     .map(Tag::getName)
                     .collect(Collectors.toSet());
         } catch (TskCoreException ex) {
             Logger.getAnonymousLogger().log(Level.WARNING, "problem looking up " + DrawableAttribute.TAGS.getDisplayName() + " for " + file.getName(), ex); //NON-NLS
         } catch (IllegalStateException ex) {
-            Logger.getAnonymousLogger().log(Level.WARNING, "there is no case open; failed to look up " + DrawableAttribute.TAGS.getDisplayName() + " for " + file.getName()); //NON-NLS
+            Logger.getAnonymousLogger().log(Level.WARNING, "there is no case open; failed to look up " + DrawableAttribute.TAGS.getDisplayName() + " for " + getContentPathSafe(), ex); //NON-NLS
         }
         return Collections.emptySet();
     }
 
-    protected Object getValueOfBBAttribute(BlackboardArtifact.ARTIFACT_TYPE artType, BlackboardAttribute.ATTRIBUTE_TYPE attrType) {
+    protected Object getValueOfBBAttribute(ARTIFACT_TYPE artType, ATTRIBUTE_TYPE attrType) {
         try {
 
             //why doesn't file.getArtifacts() work?
@@ -223,7 +209,8 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
                 }
             }
         } catch (TskCoreException ex) {
-            Logger.getAnonymousLogger().log(Level.WARNING, "problem looking up {0}/{1}" + " " + " for {2}", new Object[]{artType.getDisplayName(), attrType.getDisplayName(), getName()}); //NON-NLS
+            Logger.getAnonymousLogger().log(Level.WARNING, ex,
+                    () -> MessageFormat.format("problem looking up {0}/{1}" + " " + " for {2}", new Object[]{artType.getDisplayName(), attrType.getDisplayName(), getContentPathSafe()})); //NON-NLS
         }
         return "";
     }
@@ -247,7 +234,7 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
      */
     private void updateCategory() {
         try {
-            category.set(getSleuthkitCase().getContentTagsByContent(this).stream()
+            category.set(getContentTags().stream()
                     .map(Tag::getName).filter(CategoryManager::isCategoryTagName)
                     .map(TagName::getDisplayName)
                     .map(Category::fromDisplayName)
@@ -255,10 +242,14 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
                     .orElse(Category.ZERO)
             );
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "problem looking up category for file " + this.getName() + ex.getLocalizedMessage()); //NON-NLS
+            LOGGER.log(Level.WARNING, "problem looking up category for " + this.getContentPathSafe(), ex); //NON-NLS
         } catch (IllegalStateException ex) {
             // We get here many times if the case is closed during ingest, so don't print out a ton of warnings.
         }
+    }
+
+    private List<ContentTag> getContentTags() throws TskCoreException {
+        return getSleuthkitCase().getContentTagsByContent(file);
     }
 
     @Deprecated
@@ -317,7 +308,7 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
         return analyzed.get();
     }
 
-    public T getAbstractFile() {
+    public AbstractFile getAbstractFile() {
         return this.file;
     }
 
@@ -333,10 +324,14 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
                 drawablePath = StringUtils.removeEnd(getUniquePath(), getName());
                 return drawablePath;
             } catch (TskCoreException ex) {
-                LOGGER.log(Level.WARNING, "failed to get drawablePath from {0}", getName()); //NON-NLS
+                LOGGER.log(Level.WARNING, "failed to get drawablePath from " + getContentPathSafe(), ex); //NON-NLS
                 return "";
             }
         }
+    }
+
+    public Set<String> getHashSetNames() throws TskCoreException {
+        return file.getHashSetNames();
     }
 
     @Nonnull
@@ -359,7 +354,7 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
      */
     public String getContentPathSafe() {
         try {
-            return this.getUniquePath();
+            return getUniquePath();
         } catch (TskCoreException tskCoreException) {
             String contentName = this.getName();
             LOGGER.log(Level.SEVERE, "Failed to get unique path for " + contentName, tskCoreException); //NOI18N NON-NLS

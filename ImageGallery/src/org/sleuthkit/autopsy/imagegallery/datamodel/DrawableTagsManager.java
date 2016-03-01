@@ -45,13 +45,24 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Manages Tags, Tagging, and the relationship between Categories and Tags in
  * the autopsy Db. Delegates some work to the backing {@link TagsManager}.
  */
-@NbBundle.Messages({"DrawableTagsManager.followUp=Follow Up"})
+@NbBundle.Messages({"DrawableTagsManager.followUp=Follow Up",
+    "DrawableTagsManager.bookMark=Bookmark"})
 public class DrawableTagsManager {
 
     private static final Logger LOGGER = Logger.getLogger(DrawableTagsManager.class.getName());
 
     private static final String FOLLOW_UP = Bundle.DrawableTagsManager_followUp();
+    private static final String BOOKMARK = Bundle.DrawableTagsManager_bookMark();
     private static Image FOLLOW_UP_IMAGE;
+    private static Image BOOKMARK_IMAGE;
+
+    public static String getFollowUpText() {
+        return FOLLOW_UP;
+    }
+
+    public static String getBookmarkText() {
+        return BOOKMARK;
+    }
 
     final private Object autopsyTagsManagerLock = new Object();
     private TagsManager autopsyTagsManager;
@@ -70,6 +81,7 @@ public class DrawableTagsManager {
      * The tag name corresponding to the "built-in" tag "Follow Up"
      */
     private TagName followUpTagName;
+    private TagName bookmarkTagName;
 
     public DrawableTagsManager(TagsManager autopsyTagsManager) {
         this.autopsyTagsManager = autopsyTagsManager;
@@ -141,6 +153,15 @@ public class DrawableTagsManager {
         }
     }
 
+    private Object getBookmarkTagName() throws TskCoreException {
+        synchronized (autopsyTagsManagerLock) {
+            if (Objects.isNull(bookmarkTagName)) {
+                bookmarkTagName = getTagName(BOOKMARK);
+            }
+            return bookmarkTagName;
+        }
+    }
+
     /**
      * get all the TagNames that are not categories
      *
@@ -164,19 +185,33 @@ public class DrawableTagsManager {
     }
 
     /**
-     * Gets content tags count by content.
+     * Gets content tags by content.
      *
-     * @param The content of interest.
+     * @param content The content of interest.
      *
      * @return A list, possibly empty, of the tags that have been applied to the
-     *         artifact.
+     *         content.
      *
-     * @throws TskCoreException
+     * @throws TskCoreException if there was an error reading from the db
      */
-    public List<ContentTag> getContentTagsByContent(Content content) throws TskCoreException {
+    public List<ContentTag> getContentTags(Content content) throws TskCoreException {
         synchronized (autopsyTagsManagerLock) {
             return autopsyTagsManager.getContentTagsByContent(content);
         }
+    }
+
+    /**
+     * Gets content tags by DrawableFile.
+     *
+     * @param drawable The DrawableFile of interest.
+     *
+     * @return A list, possibly empty, of the tags that have been applied to the
+     *         DrawableFile.
+     *
+     * @throws TskCoreException if there was an error reading from the db
+     */
+    public List<ContentTag> getContentTags(DrawableFile drawable) throws TskCoreException {
+        return getContentTags(drawable.getAbstractFile());
     }
 
     public TagName getTagName(String displayName) throws TskCoreException {
@@ -192,7 +227,7 @@ public class DrawableTagsManager {
                 } catch (TagsManager.TagNameAlreadyExistsException ex) {
                     throw new TskCoreException("tagame exists but wasn't found", ex);
                 }
-            } catch (IllegalStateException ex) {
+            } catch (NullPointerException | IllegalStateException ex) {
                 LOGGER.log(Level.SEVERE, "Case was closed out from underneath", ex); //NON-NLS
                 throw new TskCoreException("Case was closed out from underneath", ex);
             }
@@ -207,7 +242,7 @@ public class DrawableTagsManager {
         }
     }
 
-    public ContentTag addContentTag(DrawableFile<?> file, TagName tagName, String comment) throws TskCoreException {
+    public ContentTag addContentTag(DrawableFile file, TagName tagName, String comment) throws TskCoreException {
         synchronized (autopsyTagsManagerLock) {
             return autopsyTagsManager.addContentTag(file.getAbstractFile(), tagName, comment);
         }
@@ -241,9 +276,11 @@ public class DrawableTagsManager {
         try {
             if (tagname.equals(getFollowUpTagName())) {
                 return new ImageView(getFollowUpImage());
+            } else if (tagname.equals(getBookmarkTagName())) {
+                return new ImageView(getBookmarkImage());
             }
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to get \"Follow Up\" tag name from db.", ex);
+            LOGGER.log(Level.SEVERE, "Failed to get \"Follow Up\" or \"Bookmark\"tag name from db.", ex);
         }
         return DrawableAttribute.TAGS.getGraphicForValue(tagname);
     }
@@ -254,4 +291,12 @@ public class DrawableTagsManager {
         }
         return FOLLOW_UP_IMAGE;
     }
+
+    synchronized private static Image getBookmarkImage() {
+        if (BOOKMARK_IMAGE == null) {
+            BOOKMARK_IMAGE = new Image("/org/sleuthkit/autopsy/images/star-bookmark-icon-16.png");
+        }
+        return BOOKMARK_IMAGE;
+    }
+
 }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,38 +23,67 @@ import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 
 /**
- * Complementary class to TableFilterNode.
+ * A children (child factory) implementation for a TableFilterNode. A
+ * TableFilterNode creates at most one layer of child nodes for the node it
+ * wraps. It is designed to be used for nodes displayed in Autopsy table views.
  */
 class TableFilterChildren extends FilterNode.Children {
 
     /**
-     * the constructor
+     * Constructs a children (child factory) implementation for a
+     * TableFilterNode. A TableFilterNode creates at most one layer of child
+     * nodes for the node it wraps. It is designed to be used for nodes
+     * displayed in Autopsy table views.
+     *
+     * @param wrappedNode The node wrapped by the TableFilterNode.
      */
-    TableFilterChildren(Node arg) {
-        super(arg);
-    }
-
-    @Override
-    protected Node copyNode(Node arg0) {
-        return new TableFilterNode(arg0, false);
-    }
-
-    @Override
-    protected Node[] createNodes(Node arg0) {
-        // filter out the children
-        return new Node[]{this.copyNode(arg0)};
+    TableFilterChildren(Node wrappedNode) {
+        super(wrappedNode);
     }
 
     /**
-     * Converts the given FsContent into "Children".
+     * Copies a TableFilterNode, with the create children (child factory) flag
+     * set to false.
      *
-     * @param fs
+     * @param nodeToCopy The TableFilterNode to copy.
      *
-     * @return children
+     * @return A copy of a TableFilterNode.
      */
-    public static Children createInstance(Node arg, boolean createChild) {
-        if (createChild) {
-            return new TableFilterChildren(arg);
+    @Override
+    protected Node copyNode(Node nodeToCopy) {
+        return new TableFilterNode(nodeToCopy, false);
+    }
+
+    /**
+     * Creates the child nodes represented by this children (child factory)
+     * object.
+     *
+     * @param key The key, i.e., the node, for which to create the child nodes.
+     *
+     * @return
+     */
+    @Override
+    protected Node[] createNodes(Node key) {
+        return new Node[]{this.copyNode(key)};
+    }
+
+    /**
+     * Creates a children (child factory) object for a node wrapped in a
+     * TableFilterNode. A TableFilterNode creates at most one layer of child
+     * nodes for the node it wraps. It is designed to be used for nodes
+     * displayed in Autopsy table views.
+     *
+     *
+     * @param wrappedNode    The node wrapped by the TableFilterNode.
+     * @param createChildren True if a children (child factory) object should be
+     *                       created for the wrapped node.
+     *
+     * @return A children (child factory) object for a node wrapped by a
+     *         TableFilterNode.
+     */
+    public static Children createInstance(Node wrappedNode, boolean createChildren) {
+        if (createChildren) {
+            return new TableFilterChildren(wrappedNode);
         } else {
             return Children.LEAF;
         }

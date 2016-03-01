@@ -497,9 +497,9 @@ public final class DrawableDB {
         ArrayList<BlackboardArtifact> artifacts = tskCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, fileID);
 
         for (BlackboardArtifact a : artifacts) {
-            List<BlackboardAttribute> attributes = a.getAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME);
-            for (BlackboardAttribute attr : attributes) {
-                hashNames.add(attr.getValueString());
+            BlackboardAttribute attribute = a.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
+            if (attribute != null) {
+                hashNames.add(attribute.getValueString());
             }
         }
         return Collections.unmodifiableSet(hashNames);
@@ -569,23 +569,23 @@ public final class DrawableDB {
         return removeFile;
     }
 
-    public void updateFile(DrawableFile<?> f) {
+    public void updateFile(DrawableFile f) {
         DrawableTransaction trans = beginTransaction();
         updateFile(f, trans);
         commitTransaction(trans, true);
     }
 
-    public void insertFile(DrawableFile<?> f) {
+    public void insertFile(DrawableFile f) {
         DrawableTransaction trans = beginTransaction();
         insertFile(f, trans);
         commitTransaction(trans, true);
     }
 
-    public void insertFile(DrawableFile<?> f, DrawableTransaction tr) {
+    public void insertFile(DrawableFile f, DrawableTransaction tr) {
         insertOrUpdateFile(f, tr, insertFileStmt);
     }
 
-    public void updateFile(DrawableFile<?> f, DrawableTransaction tr) {
+    public void updateFile(DrawableFile f, DrawableTransaction tr) {
         insertOrUpdateFile(f, tr, updateFileStmt);
     }
 
@@ -602,7 +602,7 @@ public final class DrawableDB {
      * @param tr   a transaction to use, must not be null
      * @param stmt the statement that does the actull inserting
      */
-    private void insertOrUpdateFile(DrawableFile<?> f, @Nonnull DrawableTransaction tr, @Nonnull PreparedStatement stmt) {
+    private void insertOrUpdateFile(DrawableFile f, @Nonnull DrawableTransaction tr, @Nonnull PreparedStatement stmt) {
 
         if (tr.isClosed()) {
             throw new IllegalArgumentException("can't update database with closed transaction");
@@ -686,7 +686,7 @@ public final class DrawableDB {
         tr.commit(notify);
     }
 
-    public Boolean isFileAnalyzed(DrawableFile<?> f) {
+    public Boolean isFileAnalyzed(DrawableFile f) {
         return isFileAnalyzed(f.getId());
     }
 
@@ -903,16 +903,11 @@ public final class DrawableDB {
                 StringBuilder query = new StringBuilder("SELECT " + groupBy.attrName.toString() + ", COUNT(*) FROM drawable_files GROUP BY " + groupBy.attrName.toString()); //NON-NLS
 
                 String orderByClause = "";
-                switch (sortBy) {
-                    case GROUP_BY_VALUE:
-                        orderByClause = " ORDER BY " + groupBy.attrName.toString(); //NON-NLS
-                        break;
-                    case FILE_COUNT:
-                        orderByClause = " ORDER BY COUNT(*)"; //NON-NLS
-                        break;
-                    case NONE:
-//                    case PRIORITY:
-                        break;
+
+                if (sortBy == GROUP_BY_VALUE) {
+                    orderByClause = " ORDER BY " + groupBy.attrName.toString();
+                } else if (sortBy == GroupSortBy.FILE_COUNT) {
+                    orderByClause = " ORDER BY COUNT(*)";
                 }
 
                 query.append(orderByClause);
@@ -984,7 +979,7 @@ public final class DrawableDB {
      * @throws TskCoreException if unable to get a file from the currently open
      *                          {@link SleuthkitCase}
      */
-    private DrawableFile<?> getFileFromID(Long id, boolean analyzed) throws TskCoreException {
+    private DrawableFile getFileFromID(Long id, boolean analyzed) throws TskCoreException {
         try {
             AbstractFile f = tskCase.getAbstractFileById(id);
             return DrawableFile.create(f, analyzed, isVideoFile(f));
@@ -1002,7 +997,7 @@ public final class DrawableDB {
      * @throws TskCoreException if unable to get a file from the currently open
      *                          {@link SleuthkitCase}
      */
-    public DrawableFile<?> getFileFromID(Long id) throws TskCoreException {
+    public DrawableFile getFileFromID(Long id) throws TskCoreException {
         try {
             AbstractFile f = tskCase.getAbstractFileById(id);
             return DrawableFile.create(f,
@@ -1247,8 +1242,8 @@ public final class DrawableDB {
         String fileIdsList = "(" + StringUtils.join(fileIDs, ",") + " )";
 
         //count the fileids that are in the given list and don't have a non-zero category assigned to them.
-        String name =
-                "SELECT COUNT(obj_id) FROM tsk_files where obj_id IN " + fileIdsList //NON-NLS
+        String name
+                = "SELECT COUNT(obj_id) FROM tsk_files where obj_id IN " + fileIdsList //NON-NLS
                 + " AND obj_id NOT IN (SELECT obj_id FROM content_tags WHERE content_tags.tag_name_id IN " + catTagNameIDs + ")"; //NON-NLS
         try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery(name);
                 ResultSet resultSet = executeQuery.getResultSet();) {

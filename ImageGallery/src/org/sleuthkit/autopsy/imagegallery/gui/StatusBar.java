@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-14 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,8 +19,6 @@
 package org.sleuthkit.autopsy.imagegallery.gui;
 
 import java.io.IOException;
-import java.net.URL;
-import java.util.ResourceBundle;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -39,19 +37,10 @@ public class StatusBar extends AnchorPane {
     private final ImageGalleryController controller;
 
     @FXML
-    private ResourceBundle resources;
-
-    @FXML
-    private URL location;
-
-    @FXML
     private ProgressBar fileTaskProgresBar;
 
     @FXML
     private Label fileUpdateTaskLabel;
-
-    @FXML
-    private Label statusLabel;
 
     @FXML
     private Label bgTaskLabel;
@@ -64,42 +53,32 @@ public class StatusBar extends AnchorPane {
 
     @FXML
     @NbBundle.Messages({"StatusBar.fileUpdateTaskLabel.text= File Update Tasks",
-            "StatusBar.bgTaskLabel.text=Regrouping",
-            "StatuBar.toolTip=Some data may be out of date.  Enable Image Gallery in Tools | Options | Image /Video Gallery , after ingest is complete to update the Image Gallery data."})
+        "StatusBar.bgTaskLabel.text=Regrouping",
+        "StatuBar.toolTip=Some data may be out of date.  Enable Image Gallery in Tools | Options | Image /Video Gallery , after ingest is complete to update the Image Gallery data."})
     void initialize() {
         assert fileTaskProgresBar != null : "fx:id=\"fileTaskProgresBar\" was not injected: check your FXML file 'StatusBar.fxml'.";
         assert fileUpdateTaskLabel != null : "fx:id=\"fileUpdateTaskLabel\" was not injected: check your FXML file 'StatusBar.fxml'.";
-        assert statusLabel != null : "fx:id=\"statusLabel\" was not injected: check your FXML file 'StatusBar.fxml'.";
         assert bgTaskLabel != null : "fx:id=\"bgTaskLabel\" was not injected: check your FXML file 'StatusBar.fxml'.";
         assert bgTaskProgressBar != null : "fx:id=\"bgTaskProgressBar\" was not injected: check your FXML file 'StatusBar.fxml'.";
 
-        fileUpdateTaskLabel.textProperty().bind(controller.getFileUpdateQueueSizeProperty().asString().concat(Bundle.StatusBar_fileUpdateTaskLabel_text()));//;setText(newSize.toString() + " File Update Tasks");
-        fileTaskProgresBar.progressProperty().bind(controller.getFileUpdateQueueSizeProperty().negate());
-//        controller.getFileUpdateQueueSizeProperty().addListener((ov, oldSize, newSize) -> {
-//            Platform.runLater(() -> {
-//
-//
-//            });
-//        });
+        fileUpdateTaskLabel.textProperty().bind(controller.getDBTasksQueueSizeProperty().asString().concat(Bundle.StatusBar_fileUpdateTaskLabel_text()));
+        fileTaskProgresBar.progressProperty().bind(controller.getDBTasksQueueSizeProperty().negate());
 
         controller.regroupProgress().addListener((ov, oldSize, newSize) -> {
             Platform.runLater(() -> {
-                if(controller.regroupProgress().lessThan(1.0).get()){
+                if (controller.regroupProgress().lessThan(1.0).get()) {
                     // Regrouping in progress
                     bgTaskProgressBar.progressProperty().setValue(-1.0);
                     bgTaskLabel.setText(Bundle.StatusBar_bgTaskLabel_text());
-                } else{
+                } else {
                     // Clear the progress bar
                     bgTaskProgressBar.progressProperty().setValue(0.0);
                     bgTaskLabel.setText("");
                 }
             });
         });
-        
 
-        Platform.runLater(() -> {
-            staleLabel.setTooltip(new Tooltip(Bundle.StatuBar_toolTip()));
-        });
+        Platform.runLater(() -> staleLabel.setTooltip(new Tooltip(Bundle.StatuBar_toolTip())));
         staleLabel.visibleProperty().bind(controller.stale());
     }
 
@@ -115,15 +94,5 @@ public class StatusBar extends AnchorPane {
             throw new RuntimeException(exception);
         }
 
-    }
-
-    public void setLabelText(final String newText) {
-        Platform.runLater(() -> {
-            statusLabel.setText(newText);
-        });
-    }
-
-    public String getLabeltext() {
-        return statusLabel.getText();
     }
 }
