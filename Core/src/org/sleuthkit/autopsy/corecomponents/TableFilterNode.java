@@ -23,24 +23,25 @@ import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 
 /**
- * A filter node that creates at most one layer of children for the node it
+ * A filter node that creates at most one layer of child nodes for the node it
  * wraps. It is designed to be used for nodes displayed in Autopsy table views.
  */
 public class TableFilterNode extends FilterNode {
 
-    private final boolean isLeaf;
+    private final boolean createChildren;
 
     /**
-     * Constructs a filter node that creates at most one layer of children for
-     * the node it wraps. It is designed to be used for nodes displayed in
+     * Constructs a filter node that creates at most one layer of child nodes
+     * for the node it wraps. It is designed to be used for nodes displayed in
      * Autopsy table views.
      *
-     * @param wrappedNode The node to wrap in the filter node.
-     * @param isLeaf      True if the wrapped node is a leaf node.
+     * @param wrappedNode    The node to wrap in the filter node.
+     * @param createChildren True if a children (child factory) object should be
+     *                       created for the wrapped node.
      */
-    public TableFilterNode(Node wrappedNode, boolean isLeaf) {
-        super(wrappedNode, TableFilterChildren.createInstance(wrappedNode, isLeaf));
-        this.isLeaf = isLeaf;
+    public TableFilterNode(Node wrappedNode, boolean createChildren) {
+        super(wrappedNode, TableFilterChildren.createInstance(wrappedNode, createChildren));
+        this.createChildren = createChildren;
     }
 
     /**
@@ -51,7 +52,7 @@ public class TableFilterNode extends FilterNode {
      */
     @Override
     public String getDisplayName() {
-        if (isLeaf) {
+        if (createChildren) {
             return NbBundle.getMessage(this.getClass(), "TableFilterNode.displayName.text");
         } else {
             return super.getDisplayName();
