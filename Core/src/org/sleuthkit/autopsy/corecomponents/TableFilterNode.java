@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,48 +23,39 @@ import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 
 /**
- * This class is used to filter the nodes that we want to show on the
- * "TreeTableView". So basically we just want to show one layer of nodes from
- * it's parent.
- *
- * @author jantonius
+ * A filter node that creates at most one layer of children for the node it
+ * wraps. It is designed to be used for nodes displayed in Autopsy table views.
  */
 public class TableFilterNode extends FilterNode {
 
-    private boolean createChild;
-    private String itemType;
+    private final boolean isLeaf;
 
     /**
-     * the constructor
-     */
-    public TableFilterNode(Node arg, boolean crChild) {
-        super(arg, TableFilterChildren.createInstance(arg, crChild));
-        this.createChild = crChild;
-        this.itemType = "";
-    }
-    
-    public TableFilterNode(Node arg, boolean crChild, String itemType) {
-        super(arg, TableFilterChildren.createInstance(arg, crChild));
-        this.createChild = crChild;
-        this.itemType = itemType;
-    }
-
-    /**
-     * Override the display name / header for the first (tree) column on the
-     * "TreeTableView".
+     * Constructs a filter node that creates at most one layer of children for
+     * the node it wraps. It is designed to be used for nodes displayed in
+     * Autopsy table views.
      *
-     * @return disName the display name for the first column
+     * @param wrappedNode The node to wrap in the filter node.
+     * @param isLeaf      True if the wrapped node is a leaf node.
+     */
+    public TableFilterNode(Node wrappedNode, boolean isLeaf) {
+        super(wrappedNode, TableFilterChildren.createInstance(wrappedNode, isLeaf));
+        this.isLeaf = isLeaf;
+    }
+
+    /**
+     * Returns a display name for the wrapped node, for use in the first column
+     * of an Autopsy table view.
+     *
+     * @return The display name.
      */
     @Override
     public String getDisplayName() {
-        if (createChild) {
+        if (isLeaf) {
             return NbBundle.getMessage(this.getClass(), "TableFilterNode.displayName.text");
         } else {
             return super.getDisplayName();
         }
     }
-    
-    public String getItemType() {
-        return itemType;
-    }
+
 }
