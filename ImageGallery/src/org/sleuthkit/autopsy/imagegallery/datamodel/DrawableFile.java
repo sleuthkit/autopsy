@@ -189,8 +189,8 @@ public abstract class DrawableFile {
             for (BlackboardArtifact artf : artifacts) {
                 if (artf.getArtifactTypeID() == artType.getTypeID()) {
                     for (BlackboardAttribute attr : artf.getAttributes()) {
-                        if (attr.getAttributeTypeID() == attrType.getTypeID()) {
-                            switch (attr.getValueType()) {
+                        if (attr.getAttributeType().getTypeID() == attrType.getTypeID()) {
+                            switch (attr.getAttributeType().getValueType()) {
                                 case BYTE:
                                     return attr.getValueBytes();
                                 case DOUBLE:

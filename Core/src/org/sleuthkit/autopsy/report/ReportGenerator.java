@@ -1506,7 +1506,7 @@ class ReportGenerator {
         }
         for (BlackboardAttribute tempatt : attList) {
             String value = "";
-            Integer type = tempatt.getAttributeTypeID();
+            Integer type = tempatt.getAttributeType().getTypeID();
             if (type.equals(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID())
                     || type.equals(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID())
                     || type.equals(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID())

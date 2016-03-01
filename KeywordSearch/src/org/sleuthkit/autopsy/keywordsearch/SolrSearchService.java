@@ -94,7 +94,7 @@ public class SolrSearchService implements KeywordSearchService {
         StringBuilder artifactContents = new StringBuilder();
 
         for (BlackboardAttribute attribute : artifact.getAttributes()) {
-            artifactContents.append(attribute.getAttributeTypeDisplayName());
+            artifactContents.append(attribute.getAttributeType().getDisplayName());
             artifactContents.append(" : ");
 
             // This is ugly since it will need to updated any time a new
@@ -109,14 +109,14 @@ public class SolrSearchService implements KeywordSearchService {
             // the fact that BlackboardAttribute exists in Sleuthkit data model
             // while the utility to determine the timezone to use is in ContentUtils
             // in the Autopsy datamodel.
-            if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()
-                    || attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()
-                    || attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID()
-                    || attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED.getTypeID()
-                    || attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID()
-                    || attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID()
-                    || attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()
-                    || attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()) {
+            if (attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()
+                    || attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()
+                    || attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID()
+                    || attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED.getTypeID()
+                    || attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID()
+                    || attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID()
+                    || attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()
+                    || attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()) {
 
                 artifactContents.append(ContentUtils.getStringTime(attribute.getValueLong(), dataSource));
             } else {

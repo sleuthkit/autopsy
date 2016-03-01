@@ -117,7 +117,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         if (artifact != null && artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
             try {
                 for (BlackboardAttribute attribute : artifact.getAttributes()) {
-                    if (attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
+                    if (attribute.getAttributeType().getTypeID() == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
                         BlackboardArtifact associatedArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
                         if (associatedArtifact != null) {
                             displayName = associatedArtifact.getDisplayName() + " Artifact"; // NON-NLS
@@ -171,7 +171,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 AbstractFile af = (AbstractFile) associated;
                 ext = af.getNameExtension();
                 actualMimeType = af.getMIMEType();
-                if(actualMimeType == null) {
+                if (actualMimeType == null) {
                     actualMimeType = "";
                 }
             }
@@ -179,11 +179,11 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                     NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.ext.displayName"),
                     NO_DESCR,
                     ext));
-                ss.put(new NodeProperty<>(
-                        NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.mimeType.name"),
-                        NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.mimeType.displayName"),
-                        NO_DESCR,
-                        actualMimeType));
+            ss.put(new NodeProperty<>(
+                    NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.mimeType.name"),
+                    NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.mimeType.displayName"),
+                    NO_DESCR,
+                    actualMimeType));
         }
 
         if (Arrays.asList(SHOW_UNIQUE_PATH).contains(artifactTypeId)) {
@@ -282,8 +282,8 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
     /**
      * Fill map with Artifact properties
      *
-     * @param map map with preserved ordering, where property names/values are
-     * put
+     * @param map      map with preserved ordering, where property names/values
+     *                 are put
      * @param artifact to extract properties from
      */
     @SuppressWarnings("deprecation") // TODO: Remove this when TSK_TAGGED_ARTIFACT rows are removed in a database upgrade.
@@ -384,7 +384,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
             String keyword = null;
             String regexp = null;
             for (BlackboardAttribute att : attributes) {
-                final int attributeTypeID = att.getAttributeTypeID();
+                final int attributeTypeID = att.getAttributeType().getTypeID();
                 if (attributeTypeID == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()) {
                     keyword = att.getValueString();
                 } else if (attributeTypeID == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID()) {
