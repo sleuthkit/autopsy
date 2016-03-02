@@ -49,10 +49,10 @@ public class UserArtifactIngestModule implements DataSourceIngestModule {
             FileManager manager = Case.getCurrentCase().getServices().getFileManager();
             List<AbstractFile> file1 = manager.findFiles("Sunset.jpg"); //NON-NLS
             List<AbstractFile> file2 = manager.findFiles("Winter.jpg"); //NON-NLS
-            List<BlackboardArtifact> currArtifacts = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT);
+            List<BlackboardArtifact> currArtifacts = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF);
             BlackboardArtifact art1 = currArtifacts.size() == 0 ? null : currArtifacts.get(0);
             BlackboardArtifact art2;
-            if (art1 != null) {
+            if (art1 == null) {
                 if (!file1.isEmpty()) {
                     art1 = file1.get(0).newArtifact(type1.getTypeID());
                 } else {
@@ -94,9 +94,15 @@ public class UserArtifactIngestModule implements DataSourceIngestModule {
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         try {
-            type1 = Case.getCurrentCase().getServices().getBlackboard().addArtifactType("FINAL TEST a", "FINAL TEST a"); //NON-NLS
-            type2 = Case.getCurrentCase().getServices().getBlackboard().addArtifactType("FINAL TEST b", "FINAL TEST b"); //NON-NLS
-        } catch (BlackboardException ex) {
+            type1 = Case.getCurrentCase().getSleuthkitCase().getArtifactType("FINAL TEST a");
+            type2 = Case.getCurrentCase().getSleuthkitCase().getArtifactType("FINAL TEST b");
+            if (type1 == null) {
+                type1 = Case.getCurrentCase().getServices().getBlackboard().addArtifactType("FINAL TEST a", "FINAL TEST a"); //NON-NLS 
+            }
+            if (type2 == null) {
+                type2 = Case.getCurrentCase().getServices().getBlackboard().addArtifactType("FINAL TEST b", "FINAL TEST b"); //NON-NLS
+            }
+        } catch (BlackboardException | TskCoreException ex) {
             Logger.logMsg(Logger.ERROR, "Startup failed"); //NON-NLS
         }
     }
