@@ -1922,7 +1922,7 @@ class ReportGenerator {
          * @throws TskCoreException
          */
         private List<String> getOrderedRowDataAsStrings() throws TskCoreException {
-            Map<Integer, String> mappedAttributes = getMappedAttributes();
+
             List<String> orderedRowData = new ArrayList<>();
             if (ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID() == getArtifact().getArtifactTypeID()) {
                 AbstractFile file = skCase.getAbstractFileById(getObjectID());
@@ -1943,7 +1943,10 @@ class ReportGenerator {
                     orderedRowData.add(null);
                     orderedRowData.add(null);
                 }
+                orderedRowData.add(makeCommaSeparatedList(getTags()));
+
             } else if (ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() == getArtifact().getArtifactTypeID()) {
+                Map<Integer, String> mappedAttributes = getMappedAttributes();
                 orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()));
                 orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID()));
                 String pathToShow = mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PATH.getTypeID());
@@ -1951,6 +1954,8 @@ class ReportGenerator {
                     pathToShow = getFileUniquePath(getObjectID());
                 }
                 orderedRowData.add(pathToShow);
+                orderedRowData.add(makeCommaSeparatedList(getTags()));
+
             } else {
                 if (ReportGenerator.this.columnHeaderMap.containsKey(this.artifact.getArtifactTypeID())) {
 
@@ -1959,12 +1964,8 @@ class ReportGenerator {
                         orderedRowData.add(cellData);
                     }
                 }
-                /*
-                 Short circuits so that the tag list is not added twice (the tag column is represented in the column list)
-                 */
-                return orderedRowData;
+                orderedRowData.add(makeCommaSeparatedList(getTags()));
             }
-            orderedRowData.add(makeCommaSeparatedList(getTags()));
 
             return orderedRowData;
         }
