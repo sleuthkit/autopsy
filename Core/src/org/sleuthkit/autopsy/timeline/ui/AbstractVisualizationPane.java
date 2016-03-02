@@ -132,6 +132,10 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
      */
     protected List<Node> settingsNodes;
 
+    public TimeLineController getController() {
+        return controller;
+    }
+
     /**
      * @return the list of nodes containing settings widgets to insert into this
      *         visualization's header

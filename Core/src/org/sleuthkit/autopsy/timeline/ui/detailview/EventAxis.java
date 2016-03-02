@@ -30,6 +30,10 @@ import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
  */
 class EventAxis<Type extends TimeLineEvent> extends Axis<Type> {
 
+     EventAxis(String label) {
+        setLabel(label);
+    }
+
     @Override
     public double getDisplayPosition(Type value) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.

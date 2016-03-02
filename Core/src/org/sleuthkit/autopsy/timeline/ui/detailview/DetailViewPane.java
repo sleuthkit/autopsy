@@ -19,7 +19,10 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.MissingResourceException;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -27,6 +30,7 @@ import javafx.beans.Observable;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.collections.SetChangeListener;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.geometry.Side;
@@ -36,6 +40,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.CustomMenuItem;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuButton;
@@ -47,12 +52,16 @@ import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.TreeItem;
 import javafx.scene.effect.Effect;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.stage.Modality;
 import org.controlsfx.control.MasterDetailPane;
 import org.controlsfx.control.action.Action;
+import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
@@ -63,42 +72,91 @@ import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
-import org.sleuthkit.autopsy.timeline.ui.detailview.DetailsChart.HideDescriptionAction;
-import org.sleuthkit.autopsy.timeline.ui.detailview.DetailsChart.UnhideDescriptionAction;
+import org.sleuthkit.autopsy.timeline.ui.ContextMenuProvider;
+import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
+import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
+import org.sleuthkit.autopsy.timeline.ui.detailview.DetailsChartLane.HideDescriptionAction;
+import org.sleuthkit.autopsy.timeline.ui.detailview.DetailsChartLane.UnhideDescriptionAction;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 /**
- * Controller class for a {@link EventDetailsChart} based implementation of a
+ * Controller class for a {@link PrimaryDetailsChart} based implementation of a
  * TimeLineView.
  *
  * This class listens to changes in the assigned {@link FilteredEventsModel} and
- * updates the internal {@link EventDetailsChart} to reflect the currently
+ * updates the internal {@link PrimaryDetailsChart} to reflect the currently
  * requested events.
  *
  * Concurrency Policy: Access to the private members clusterChart, dateAxis,
  * EventTypeMap, and dataSets is all linked directly to the ClusterChart which
  * must only be manipulated on the JavaFx thread.
  */
-public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStripe, EventNodeBase<?>, EventDetailsChart> {
+public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStripe, EventNodeBase<?>, PrimaryDetailsChart> implements ContextMenuProvider<DateTime> {
 
     private final static Logger LOGGER = Logger.getLogger(DetailViewPane.class.getName());
 
     private final DateAxis detailsChartDateAxis = new DateAxis();
     private final DateAxis pinnedDateAxis = new DateAxis();
-    private final Axis<EventStripe> verticalAxis = new EventAxis<>();
+    private final Axis<EventStripe> verticalAxis = new EventAxis<>("All Events");
 
     private MultipleSelectionModel<TreeItem<TimeLineEvent>> treeSelectionModel;
     private final ObservableList<EventNodeBase<?>> highlightedNodes = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
-    private final ScrollingWrapper<EventStripe, EventDetailsChart> mainView;
-    private final ScrollingWrapper<TimeLineEvent, PinnedEventsChart> pinnedView;
+    private final ScrollingLaneWrapper mainView;
+    private final ScrollingLaneWrapper pinnedView;
     private final DetailViewLayoutSettings layoutSettings;
     private final PinnedEventsChart pinnedChart;
     private final MasterDetailPane masterDetailPane;
     private double dividerPosition = .1;
     private static final int MIN_PINNED_LANE_HEIGHT = 50;
+    private ContextMenu contextMenu;
+    private IntervalSelector<? extends DateTime> intervalSelector;
+    private final Pane rootPane;
 
     public ObservableList<EventStripe> getEventStripes() {
         return chart.getEventStripes();
+    }
+
+    private static class DetailIntervalSelector extends IntervalSelector<DateTime> {
+
+        DetailIntervalSelector(ContextMenuProvider<DateTime> chart) {
+            super(chart);
+        }
+
+        @Override
+        protected String formatSpan(DateTime date) {
+            return date.toString(TimeLineController.getZonedFormatter());
+        }
+
+        @Override
+        protected Interval adjustInterval(Interval i) {
+            return i;
+        }
+
+        @Override
+        protected DateTime parseDateTime(DateTime date) {
+            return date;
+        }
+    }
+
+    @Override
+    public ContextMenu getContextMenu() {
+        return contextMenu;
+    }
+
+    @Override
+    public ContextMenu getChartContextMenu(MouseEvent mouseEvent) throws MissingResourceException {
+        if (contextMenu != null) {
+            contextMenu.hide();
+        }
+
+        contextMenu = ActionUtils.createContextMenu(Arrays.asList(new PlaceMarkerAction(mouseEvent),
+                TimeLineChart.newZoomHistoyActionGroup(controller)));
+        contextMenu.setAutoHide(true);
+        return contextMenu;
+    }
+
+    DetailViewLayoutSettings getLayoutSettings() {
+        return layoutSettings;
     }
 
     @Override
@@ -117,19 +175,22 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
         layoutSettings = new DetailViewLayoutSettings();
 
         //initialize chart;
-        chart = new EventDetailsChart(controller, detailsChartDateAxis, verticalAxis, selectedNodes, layoutSettings);
-        mainView = new ScrollingWrapper<>(chart);
-        pinnedChart = new PinnedEventsChart(controller, pinnedDateAxis, new EventAxis<>(), selectedNodes, layoutSettings);
-        pinnedView = new ScrollingWrapper<>(pinnedChart);
+        chart = new PrimaryDetailsChart(this, detailsChartDateAxis, verticalAxis);
+        chart.setData(dataSeries);
+        setChartClickHandler(); //can we push this into chart
+
+        mainView = new ScrollingLaneWrapper(chart);
+        pinnedChart = new PinnedEventsChart(this, pinnedDateAxis, new EventAxis<>("Pinned Events"));
+        pinnedView = new ScrollingLaneWrapper(pinnedChart);
         pinnedChart.setMinHeight(MIN_PINNED_LANE_HEIGHT);
         pinnedView.setMinHeight(MIN_PINNED_LANE_HEIGHT);
-        setChartClickHandler(); //can we push this into chart
+
         masterDetailPane = new MasterDetailPane(Side.TOP, mainView, pinnedView, false);
         masterDetailPane.setDividerPosition(dividerPosition);
-//        SplitPane.setResizableWithParent(pinnedChart, Boolean.FALSE);
-//        SplitPane.setResizableWithParent(pinnedView, Boolean.FALSE);
-        chart.setData(dataSeries);
-        setCenter(masterDetailPane);
+        masterDetailPane.prefHeightProperty().bind(heightProperty());
+        masterDetailPane.prefWidthProperty().bind(widthProperty());
+        rootPane = new Pane(masterDetailPane);
+        setCenter(rootPane);
 
         settingsNodes = new ArrayList<>(new DetailViewSettingsPane().getChildrenUnmodifiable());
         //bind layout fo axes and spacers
@@ -158,6 +219,40 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
                     .flatMap(detailNode -> detailNode.getEventIDs().stream())
                     .collect(Collectors.toList()));
         });
+
+        filteredEvents.zoomParametersProperty().addListener(o -> {
+            clearIntervalSelector();
+            selectedNodes.clear();
+            controller.selectEventIDs(Collections.emptyList());
+        });
+
+        TimeLineChart.MouseClickedHandler<DateTime, DetailViewPane> mouseClickedHandler = new TimeLineChart.MouseClickedHandler<>(this);
+        TimeLineChart.ChartDragHandler<DateTime, DetailViewPane> chartDragHandler = new TimeLineChart.ChartDragHandler<>(this);
+        configureMouseListeners(chart, mouseClickedHandler, chartDragHandler);
+        configureMouseListeners(pinnedChart, mouseClickedHandler, chartDragHandler);
+
+    }
+
+    @Override
+    public void clearIntervalSelector() {
+        rootPane.getChildren().remove(intervalSelector);
+        intervalSelector = null;
+    }
+
+    @Override
+    public IntervalSelector<DateTime> newIntervalSelector() {
+        return new DetailIntervalSelector(this);
+    }
+
+    @Override
+    public IntervalSelector<? extends DateTime> getIntervalSelector() {
+        return intervalSelector;
+    }
+
+    @Override
+    public void setIntervalSelector(IntervalSelector<? extends DateTime> newIntervalSelector) {
+        intervalSelector = newIntervalSelector;
+        rootPane.getChildren().add(getIntervalSelector());
     }
 
     public void setSelectionModel(MultipleSelectionModel<TreeItem<TimeLineEvent>> selectionModel) {
@@ -188,7 +283,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
     }
 
     @Override
-    protected Axis<DateTime> getXAxis() {
+    public Axis<DateTime> getXAxis() {
         return detailsChartDateAxis;
     }
 
@@ -215,6 +310,57 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
     @Override
     protected void applySelectionEffect(EventNodeBase<?> c1, Boolean selected) {
         c1.applySelectionEffect(selected);
+
+    }
+
+    DateTime getDateTimeForPosition(double layoutX) {
+        return chart.getDateTimeForPosition(layoutX);
+    }
+
+    void clearGuideLine(GuideLine guideLine) {
+        rootPane.getChildren().remove(guideLine);
+        guideLine = null;
+    }
+
+    /**
+     *
+     * @param chartLane           the value of chartLane
+     * @param mouseClickedHandler the value of mouseClickedHandler
+     * @param chartDragHandler1   the value of chartDragHandler1
+     */
+    private void configureMouseListeners(final DetailsChartLane<?> chartLane, final TimeLineChart.MouseClickedHandler<DateTime, DetailViewPane> mouseClickedHandler, final TimeLineChart.ChartDragHandler<DateTime, DetailViewPane> chartDragHandler) {
+        chartLane.setOnMousePressed(chartDragHandler);
+        chartLane.setOnMouseReleased(chartDragHandler);
+        chartLane.setOnMouseDragged(chartDragHandler);
+        chartLane.addEventHandler(MouseEvent.MOUSE_CLICKED, mouseClickedHandler);
+    }
+    private static final Image MARKER = new Image("/org/sleuthkit/autopsy/timeline/images/marker.png", 16, 16, true, true, true); //NON-NLS
+
+    class PlaceMarkerAction extends Action {
+
+        private GuideLine guideLine;
+
+        @NbBundle.Messages({"EventDetailChart.chartContextMenu.placeMarker.name=Place Marker"})
+        PlaceMarkerAction(MouseEvent clickEvent) {
+            super(Bundle.EventDetailChart_chartContextMenu_placeMarker_name());
+
+            setGraphic(new ImageView(MARKER)); // NON-NLS
+            setEventHandler(actionEvent -> {
+                if (guideLine == null) {
+                    guideLine = new GuideLine(DetailViewPane.this);
+                    guideLine.relocate(sceneToLocal(clickEvent.getSceneX(), 0).getX(), 0);
+                    addGuideLine(guideLine);
+
+                } else {
+                    guideLine.relocate(sceneToLocal(clickEvent.getSceneX(), 0).getX(), 0);
+                }
+            });
+        }
+
+    }
+
+    private void addGuideLine(GuideLine guideLine) {
+        rootPane.getChildren().add(guideLine);
     }
 
     private class DetailViewSettingsPane extends HBox {
@@ -331,7 +477,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
             hiddenRadioMenuItem.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.hiddenRadioMenuItem.text"));
             hiddenRadio.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.hiddenRadio.text"));
 
-            pinnedEventsToggle.setOnAction(event -> {
+            pinnedEventsToggle.selectedProperty().addListener(observable -> {
                 boolean selected = pinnedEventsToggle.isSelected();
                 if (selected == false) {
                     dividerPosition = masterDetailPane.getDividerPosition();
@@ -344,7 +490,16 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
                     masterDetailPane.setDividerPosition(dividerPosition);
                 }
             });
+
+            controller.getPinnedEvents().addListener((SetChangeListener.Change<? extends TimeLineEvent> change) -> {
+                if (change.getSet().size() == 0) {
+                    pinnedEventsToggle.setSelected(false);
+                } else {
+                    pinnedEventsToggle.setSelected(true);
+                }
+            });
         }
+
     }
 
     public Action newUnhideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
@@ -353,6 +508,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
 
     public Action newHideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
         return new HideDescriptionAction(description, descriptionLoD, chart);
+
     }
 
     @NbBundle.Messages({

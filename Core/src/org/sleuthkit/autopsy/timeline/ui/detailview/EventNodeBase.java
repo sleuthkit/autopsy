@@ -71,7 +71,6 @@ import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
-import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.show;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.MultiEventNodeBase.CORNER_RADII_3;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
@@ -83,13 +82,14 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  */
 public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPane {
+    
     static final Map<EventType, Effect> dropShadowMap = new ConcurrentHashMap<>();
-
+    
     private static final Logger LOGGER = Logger.getLogger(EventNodeBase.class.getName());
-
+    
     private static final Image HASH_PIN = new Image("/org/sleuthkit/autopsy/images/hashset_hits.png"); //NOI18N NON-NLS
     private static final Image TAG = new Image("/org/sleuthkit/autopsy/images/green-tag-icon-16.png"); // NON-NLS //NOI18N
-  
+
     private static final Image PIN = new Image("/org/sleuthkit/autopsy/timeline/images/marker--plus.png"); // NON-NLS //NOI18N
     private static final Image UNPIN = new Image("/org/sleuthkit/autopsy/timeline/images/marker--minus.png"); // NON-NLS //NOI18N
 
@@ -98,59 +98,59 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
         b.setMaxSize(16, 16);
         b.setPrefSize(16, 16);
     }
-
+    
     static void show(Node b, boolean show) {
         b.setVisible(show);
         b.setManaged(show);
     }
-
+    
     final Type tlEvent;
-
+    
     final EventNodeBase<?> parentNode;
-
+    
     final SimpleObjectProperty<DescriptionLoD> descLOD = new SimpleObjectProperty<>();
     final SimpleObjectProperty<DescriptionVisibility> descVisibility = new SimpleObjectProperty<>();
-
-    final DetailsChart chart;
+    
+    final DetailsChartLane<?> chartLane;
     final Background highlightedBackground;
     final Background defaultBackground;
     final Color evtColor;
-
+    
     final Label countLabel = new Label();
     final Label descrLabel = new Label();
     final ImageView hashIV = new ImageView(HASH_PIN);
     final ImageView tagIV = new ImageView(TAG);
-
+    
     final HBox controlsHBox = new HBox(5);
     final HBox infoHBox = new HBox(5, descrLabel, countLabel, hashIV, tagIV, controlsHBox);
-
+    
     final Tooltip tooltip = new Tooltip(Bundle.EventBundleNodeBase_toolTip_loading());
-
+    
     final ImageView eventTypeImageView = new ImageView();
     final SleuthkitCase sleuthkitCase;
     final FilteredEventsModel eventsModel;
     private Timeline timeline;
     private Button pinButton;
     private final Border SELECTION_BORDER;
-
-    EventNodeBase(Type ievent, EventNodeBase<?> parent, DetailsChart chart) {
-        this.chart = chart;
+    
+    EventNodeBase(Type ievent, EventNodeBase<?> parent, DetailsChartLane<?> chart) {
+        this.chartLane = chart;
         this.tlEvent = ievent;
         this.parentNode = parent;
-
+        
         sleuthkitCase = chart.getController().getAutopsyCase().getSleuthkitCase();
         eventsModel = chart.getController().getEventsModel();
         eventTypeImageView.setImage(getEventType().getFXImage());
-
+        
         descrLabel.setGraphic(eventTypeImageView);
-
+        
         if (chart.getController().getEventsModel().getEventTypeZoom() == EventTypeZoomLevel.SUB_TYPE) {
             evtColor = getEventType().getColor();
         } else {
             evtColor = getEventType().getBaseType().getColor();
         }
         SELECTION_BORDER = new Border(new BorderStroke(evtColor.darker().desaturate(), BorderStrokeStyle.SOLID, CORNER_RADII_3, new BorderWidths(2)));
-
+        
         defaultBackground = new Background(new BackgroundFill(evtColor.deriveColor(0, 1, 1, .1), CORNER_RADII_3, Insets.EMPTY));
         highlightedBackground = new Background(new BackgroundFill(evtColor.deriveColor(0, 1.1, 1.1, .3), CORNER_RADII_3, Insets.EMPTY));
         descVisibility.addListener(observable -> setDescriptionVisibiltiyImpl(descVisibility.get()));
@@ -159,7 +159,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
 
         //set up mouse hover effect and tooltip
         setOnMouseEntered(mouseEntered -> {
-            Tooltip.uninstall(chart.asNode(), AbstractVisualizationPane.getDefaultTooltip());
+            Tooltip.uninstall(chart, AbstractVisualizationPane.getDefaultTooltip());
             showHoverControls(true);
             toFront();
         });
@@ -168,18 +168,20 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
             if (parentNode != null) {
                 parentNode.showHoverControls(true);
             } else {
-                Tooltip.install(chart.asNode(), AbstractVisualizationPane.getDefaultTooltip());
+                Tooltip.install(chart, AbstractVisualizationPane.getDefaultTooltip());
             }
         });
         setOnMouseClicked(new ClickHandler());
         show(controlsHBox, false);
     }
-
+    
     public Type getEvent() {
         return tlEvent;
     }
-
-    public abstract TimeLineChart<DateTime> getChart();
+    
+    DetailsChartLane<?> getChartLane() {
+        return chartLane;
+    }
 
     /**
      * @param w the maximum width the description label should have
@@ -187,7 +189,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
     public void setMaxDescriptionWidth(double w) {
         descrLabel.setMaxWidth(w);
     }
-
+    
     public abstract List<EventNodeBase<?>> getSubNodes();
 
     /**
@@ -198,7 +200,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
     public void applySelectionEffect(boolean applied) {
         setBorder(applied ? SELECTION_BORDER : null);
     }
-
+    
     protected void layoutChildren() {
         super.layoutChildren();
     }
@@ -215,7 +217,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
             configureActionButton(pinButton);
         }
     }
-
+    
     final void showHoverControls(final boolean showControls) {
         Effect dropShadow = dropShadowMap.computeIfAbsent(getEventType(),
                 eventType -> new DropShadow(-10, eventType.getColor()));
@@ -223,9 +225,9 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
         installTooltip();
         enableTooltip(showControls);
         installActionButtons();
-
-        TimeLineController controller = getChart().getController();
-
+        
+        TimeLineController controller = getChartLane().getController();
+        
         if (controller.getPinnedEvents().contains(tlEvent)) {
             pinButton.setOnAction(actionEvent -> {
                 new UnPinEventAction(controller, tlEvent).handle(actionEvent);
@@ -239,7 +241,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
             });
             pinButton.setGraphic(new ImageView(PIN));
         }
-
+        
         show(controlsHBox, showControls);
         if (parentNode != null) {
             parentNode.showHoverControls(false);
@@ -268,7 +270,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
                 {
                     updateTitle(Bundle.EventNodeBase_toolTip_loading2());
                 }
-
+                
                 @Override
                 protected String call() throws Exception {
                     HashMap<String, Long> hashSetCounts = new HashMap<>();
@@ -288,7 +290,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
                     String hashSetCountsString = hashSetCounts.entrySet().stream()
                             .map((Map.Entry<String, Long> t) -> t.getKey() + " : " + t.getValue())
                             .collect(Collectors.joining("\n"));
-
+                    
                     Map<String, Long> tagCounts = new HashMap<>();
                     if (tlEvent.getEventIDsWithTags().isEmpty() == false) {
                         tagCounts.putAll(eventsModel.getTagCountsByTagName(tlEvent.getEventIDsWithTags()));
@@ -296,14 +298,14 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
                     String tagCountsString = tagCounts.entrySet().stream()
                             .map((Map.Entry<String, Long> t) -> t.getKey() + " : " + t.getValue())
                             .collect(Collectors.joining("\n"));
-
+                    
                     return Bundle.EventNodeBase_tooltip_text(getEventIDs().size(), getEventType(), getDescription(),
                             TimeLineController.getZonedFormatter().print(getStartMillis()),
                             TimeLineController.getZonedFormatter().print(getEndMillis() + 1000))
                             + (hashSetCountsString.isEmpty() ? "" : Bundle.EventNodeBase_toolTip_hashSetHits(hashSetCountsString))
                             + (tagCountsString.isEmpty() ? "" : Bundle.EventNodeBase_toolTip_tags(tagCountsString));
                 }
-
+                
                 @Override
                 protected void succeeded() {
                     super.succeeded();
@@ -316,10 +318,10 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
                 }
             };
             new Thread(tooltTipTask).start();
-            chart.getController().monitorTask(tooltTipTask);
+            chartLane.getController().monitorTask(tooltTipTask);
         }
     }
-
+    
     void enableTooltip(boolean toolTipEnabled) {
         if (toolTipEnabled) {
             Tooltip.install(this, tooltip);
@@ -327,27 +329,27 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
             Tooltip.uninstall(this, tooltip);
         }
     }
-
+    
     final EventType getEventType() {
         return tlEvent.getEventType();
     }
-
+    
     long getStartMillis() {
         return tlEvent.getStartMillis();
     }
-
+    
     final long getEndMillis() {
         return tlEvent.getEndMillis();
     }
-
+    
     final double getLayoutXCompensation() {
         return parentNode != null
-                ? getChart().getXAxis().getDisplayPosition(new DateTime(parentNode.getStartMillis()))
+                ? getChartLane().getXAxis().getDisplayPosition(new DateTime(parentNode.getStartMillis()))
                 : 0;
     }
-
+    
     abstract String getDescription();
-
+    
     void animateTo(double xLeft, double yTop) {
         if (timeline != null) {
             timeline.stop();
@@ -360,15 +362,15 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
         timeline.setOnFinished(finished -> Platform.runLater(this::requestChartLayout));
         timeline.play();
     }
-
+    
     abstract void requestChartLayout();
-
+    
     void setDescriptionVisibility(DescriptionVisibility get) {
         descVisibility.set(get);
     }
-
+    
     abstract void setDescriptionVisibiltiyImpl(DescriptionVisibility get);
-
+    
     boolean hasDescription(String other) {
         return this.getDescription().startsWith(other);
     }
@@ -387,23 +389,23 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
             setBackground(defaultBackground);
         }
     }
-
+    
     void applyHighlightEffect() {
         applyHighlightEffect(true);
     }
-
+    
     void clearHighlightEffect() {
         applyHighlightEffect(false);
     }
-
+    
     abstract Collection<Long> getEventIDs();
-
+    
     abstract EventHandler<MouseEvent> getDoubleClickHandler();
-
+    
     abstract Collection<? extends Action> getActions();
-
+    
     static class PinEventAction extends Action {
-
+        
         @NbBundle.Messages({"PinEventAction.text=Pin"})
         PinEventAction(TimeLineController controller, TimeLineEvent event) {
             super(Bundle.PinEventAction_text());
@@ -411,9 +413,9 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
             setGraphic(new ImageView(PIN));
         }
     }
-
+    
     static class UnPinEventAction extends Action {
-
+        
         @NbBundle.Messages({"UnPinEventAction.text=Unpin"})
         UnPinEventAction(TimeLineController controller, TimeLineEvent event) {
             super(Bundle.UnPinEventAction_text());
@@ -426,30 +428,30 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
      * event handler used for mouse events on {@link EventNodeBase}s
      */
     class ClickHandler implements EventHandler<MouseEvent> {
-
+        
         private ContextMenu contextMenu;
-
+        
         @Override
         public void handle(MouseEvent t) {
             if (t.getButton() == MouseButton.PRIMARY) {
                 if (t.getClickCount() > 1) {
                     getDoubleClickHandler().handle(t);
                 } else if (t.isShiftDown()) {
-                    chart.getSelectedNodes().add(EventNodeBase.this);
+                    chartLane.getSelectedNodes().add(EventNodeBase.this);
                 } else if (t.isShortcutDown()) {
-                    chart.getSelectedNodes().removeAll(EventNodeBase.this);
+                    chartLane.getSelectedNodes().removeAll(EventNodeBase.this);
                 } else {
-                    chart.getSelectedNodes().setAll(EventNodeBase.this);
+                    chartLane.getSelectedNodes().setAll(EventNodeBase.this);
                 }
                 t.consume();
             } else if (t.getButton() == MouseButton.SECONDARY) {
-                ContextMenu chartContextMenu = chart.getChartContextMenu(t);
+                ContextMenu chartContextMenu = chartLane.getChartContextMenu(t);
                 if (contextMenu == null) {
                     contextMenu = new ContextMenu();
                     contextMenu.setAutoHide(true);
-
+                    
                     contextMenu.getItems().addAll(ActionUtils.createContextMenu(getActions()).getItems());
-
+                    
                     contextMenu.getItems().add(new SeparatorMenuItem());
                     contextMenu.getItems().addAll(chartContextMenu.getItems());
                 }
@@ -457,7 +459,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
                 t.consume();
             }
         }
-
+        
     }
-
+    
 }

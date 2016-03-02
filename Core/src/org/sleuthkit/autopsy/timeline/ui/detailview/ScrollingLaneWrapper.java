@@ -6,35 +6,31 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
 import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.geometry.Orientation;
-import javafx.scene.chart.XYChart;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
-import org.joda.time.DateTime;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 
 /**
  *
  */
-public class ScrollingWrapper<ValueType extends TimeLineEvent, ChartType extends XYChart<DateTime, ValueType> & DetailsChart> extends BorderPane {
+class ScrollingLaneWrapper extends BorderPane {
 
     private static final double LINE_SCROLL_PERCENTAGE = .10;
     private static final double PAGE_SCROLL_PERCENTAGE = .70;
     private final ScrollBar vertScrollBar = new ScrollBar();
     private final Region scrollBarSpacer = new Region();
-    private final ChartType chart;
+    private final DetailsChartLane<?> chart;
 
-    public ScrollingWrapper(ChartType center) {
+    ScrollingLaneWrapper(DetailsChartLane<?> center) {
         super(center);
         this.chart = center;
 
-        scrollBarSpacer.minHeightProperty().bind(((XYChart) chart).getXAxis().heightProperty());
+        scrollBarSpacer.minHeightProperty().bind(chart.getXAxis().heightProperty());
 
         //configure scrollbar
         vertScrollBar.setOrientation(Orientation.VERTICAL);
@@ -45,16 +41,13 @@ public class ScrollingWrapper<ValueType extends TimeLineEvent, ChartType extends
         setRight(new VBox(vertScrollBar, scrollBarSpacer));
 
         //scrollbar value change handler.  This forwards changes in scroll bar to chart
-        this.vertScrollBar.valueProperty().addListener(new InvalidationListener() {
-
-            public void invalidated(Observable observable) {
-                chart.setVScroll(vertScrollBar.getValue());
-            }
+        this.vertScrollBar.valueProperty().addListener((Observable observable) -> {
+            chart.setVScroll(vertScrollBar.getValue());
         });
         //request focus for keyboard scrolling
         setOnMouseClicked(mouseEvent -> requestFocus());
 
-//interpret scroll events to the scrollBar
+        //interpret scroll events to the scrollBar
         this.setOnScroll(scrollEvent ->
                 vertScrollBar.valueProperty().set(clampScroll(vertScrollBar.getValue() - scrollEvent.getDeltaY())));
 

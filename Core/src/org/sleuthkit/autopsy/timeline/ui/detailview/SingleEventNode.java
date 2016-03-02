@@ -35,11 +35,9 @@ import javafx.scene.layout.CornerRadii;
 import static javafx.scene.layout.Region.USE_PREF_SIZE;
 import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.control.action.Action;
-import org.joda.time.DateTime;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
-import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
 
 /**
  *
@@ -62,7 +60,7 @@ final class SingleEventNode extends EventNodeBase<SingleEvent> {
 
     @Override
     Collection<? extends Action> getActions() {
-        TimeLineController controller = getChart().getController();
+        TimeLineController controller = getChartLane().getController();
         if (controller.getPinnedEvents().contains(tlEvent)) {
             return Arrays.asList(new UnPinEventAction(controller, tlEvent));
         } else {
@@ -70,7 +68,7 @@ final class SingleEventNode extends EventNodeBase<SingleEvent> {
         }
     }
 
-    SingleEventNode(DetailsChart chart, SingleEvent event, MultiEventNodeBase<?, ?, ?> parent) {
+    SingleEventNode(DetailsChartLane<?> chart, SingleEvent event, MultiEventNodeBase<?, ?, ?> parent) {
         super(event, parent, chart);
         this.descrLabel.setText(event.getFullDescription());
         eventTypeImageView.setImage(getEventType().getFXImage());
@@ -94,10 +92,6 @@ final class SingleEventNode extends EventNodeBase<SingleEvent> {
         getChildren().add(infoHBox);
     }
 
-    @Override
-    public TimeLineChart<DateTime> getChart() {
-        return chart;
-    }
 
     @Override
     public List<EventNodeBase<?>> getSubNodes() {
@@ -117,7 +111,7 @@ final class SingleEventNode extends EventNodeBase<SingleEvent> {
 
     @Override
     void requestChartLayout() {
-        chart.requestTimelineChartLayout();
+        chartLane.requestTimelineChartLayout();
     }
 
     

@@ -89,8 +89,8 @@ final public class EventClusterNode extends MultiEventNodeBase<EventCluster, Eve
         }
     }
 
-    EventClusterNode(DetailsChart chart, EventCluster eventCluster, EventStripeNode parentNode) {
-        super(chart, eventCluster, parentNode);
+    EventClusterNode(DetailsChartLane<?> chartLane, EventCluster eventCluster, EventStripeNode parentNode) {
+        super(chartLane, eventCluster, parentNode);
 
         subNodePane.setBorder(clusterBorder);
         subNodePane.setBackground(defaultBackground);
@@ -146,7 +146,7 @@ final public class EventClusterNode extends MultiEventNodeBase<EventCluster, Eve
     @NbBundle.Messages(value = "EventStripeNode.loggedTask.name=Load sub clusters")
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private synchronized void loadSubBundles(DescriptionLoD.RelativeDetail relativeDetail) {
-        getChart().asNode().setCursor(Cursor.WAIT);
+        getChartLane().setCursor(Cursor.WAIT);
 
 
         /*
@@ -206,22 +206,22 @@ final public class EventClusterNode extends MultiEventNodeBase<EventCluster, Eve
                 } catch (InterruptedException | ExecutionException ex) {
                     LOGGER.log(Level.SEVERE, "Error loading subnodes", ex); //NON-NLS
                 }
-                getChart().requestTimelineChartLayout();
-                getChart().asNode().setCursor(null);
+                getChartLane().requestTimelineChartLayout();
+                getChartLane().setCursor(null);
             }
         };
 
         new Thread(loggedTask).start();
         //start task
-        getChart().getController().monitorTask(loggedTask);
+        getChartLane().getController().monitorTask(loggedTask);
     }
 
     @Override
     EventNodeBase<?> createChildNode(EventStripe stripe) {
         if (stripe.getEventIDs().size() == 1) {
-            return new SingleEventNode(getChart(), getChart().getController().getEventsModel().getEventById(Iterables.getOnlyElement(stripe.getEventIDs())), this);
+            return new SingleEventNode(getChartLane(), getChartLane().getController().getEventsModel().getEventById(Iterables.getOnlyElement(stripe.getEventIDs())), this);
         } else {
-            return new EventStripeNode(getChart(), stripe, this);
+            return new EventStripeNode(getChartLane(), stripe, this);
         }
     }
 
@@ -231,8 +231,8 @@ final public class EventClusterNode extends MultiEventNodeBase<EventCluster, Eve
 
     @Override
     protected void layoutChildren() {
-        double chartX = getChart().getXAxis().getDisplayPosition(new DateTime(getStartMillis()));
-        double w = getChart().getXAxis().getDisplayPosition(new DateTime(getEndMillis())) - chartX;
+        double chartX = getChartLane().getXAxis().getDisplayPosition(new DateTime(getStartMillis()));
+        double w = getChartLane().getXAxis().getDisplayPosition(new DateTime(getEndMillis())) - chartX;
         subNodePane.setPrefWidth(Math.max(1, w));
         super.layoutChildren();
     }

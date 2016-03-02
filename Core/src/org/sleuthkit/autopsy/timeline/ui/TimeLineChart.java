@@ -22,10 +22,9 @@ import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.scene.Cursor;
 import javafx.scene.chart.Axis;
-import javafx.scene.chart.Chart;
-import javafx.scene.control.ContextMenu;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Region;
 import org.controlsfx.control.action.ActionGroup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
@@ -37,11 +36,7 @@ import org.sleuthkit.autopsy.timeline.actions.Forward;
  *
  * @param <X> the type of values along the horizontal axis
  */
-public interface TimeLineChart<X> {
-
-
-  
-
+public interface TimeLineChart<X> extends ContextMenuProvider<X> {
 
 //    void setController(TimeLineController controller);
     IntervalSelector<? extends X> getIntervalSelector();
@@ -66,11 +61,6 @@ public interface TimeLineChart<X> {
 
     public TimeLineController getController();
 
-
-    ContextMenu getChartContextMenu();
-
-    ContextMenu getChartContextMenu(MouseEvent m);
-
     /**
      * drag handler class used by {@link TimeLineChart}s to create
      * {@link IntervalSelector}s
@@ -78,7 +68,7 @@ public interface TimeLineChart<X> {
      * @param <X> the type of values along the horizontal axis
      * @param <Y> the type of chart this is a drag handler for
      */
-    static class ChartDragHandler<X, Y extends Chart & TimeLineChart<X>> implements EventHandler<MouseEvent> {
+    public static class ChartDragHandler<X, Y extends Region & ContextMenuProvider<X>> implements EventHandler<MouseEvent> {
 
         private final Y chart;
 
@@ -102,8 +92,7 @@ public interface TimeLineChart<X> {
                     chart.getIntervalSelector().prefHeightProperty().bind(chart.heightProperty());
                     startX = mouseEvent.getX();
                     chart.getIntervalSelector().relocate(startX, 0);
-                } else {
-                    //resize/position existing selector
+                } else //resize/position existing selector
                     if (mouseEvent.getX() > startX) {
                         chart.getIntervalSelector().relocate(startX, 0);
                         chart.getIntervalSelector().setPrefWidth(mouseEvent.getX() - startX);
@@ -111,7 +100,6 @@ public interface TimeLineChart<X> {
                         chart.getIntervalSelector().relocate(mouseEvent.getX(), 0);
                         chart.getIntervalSelector().setPrefWidth(startX - mouseEvent.getX());
                     }
-                }
                 chart.getIntervalSelector().autosize();
             } else if (mouseEventType == MouseEvent.MOUSE_RELEASED) {
                 chart.setCursor(Cursor.DEFAULT);
@@ -122,7 +110,7 @@ public interface TimeLineChart<X> {
 
     }
 
-    static class MouseClickedHandler<X, C extends Chart & TimeLineChart<X>> implements EventHandler<MouseEvent> {
+    static class MouseClickedHandler<X, C extends Region & ContextMenuProvider<X>> implements EventHandler<MouseEvent> {
 
         private final C chart;
 
@@ -131,15 +119,15 @@ public interface TimeLineChart<X> {
         }
 
         @Override
-        public void handle(MouseEvent clickEvent) {
-            if (chart.getChartContextMenu() != null) {
-                chart.getChartContextMenu().hide();
+        public void handle(MouseEvent mouseEvent) {
+            if (chart.getContextMenu() != null) {
+                chart.getContextMenu().hide();
             }
-            if (clickEvent.getButton() == MouseButton.SECONDARY && clickEvent.isStillSincePress()) {
-                chart.getChartContextMenu(clickEvent);
+            if (mouseEvent.getButton() == MouseButton.SECONDARY && mouseEvent.isStillSincePress()) {
+                chart.getChartContextMenu(mouseEvent);
                 chart.setOnMouseMoved(this);
-                chart.getChartContextMenu().show(chart, clickEvent.getScreenX(), clickEvent.getScreenY());
-                clickEvent.consume();
+                chart.getContextMenu().show(chart, mouseEvent.getScreenX(), mouseEvent.getScreenY());
+                mouseEvent.consume();
             }
         }
     }

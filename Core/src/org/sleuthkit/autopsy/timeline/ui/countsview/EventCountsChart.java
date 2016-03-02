@@ -65,10 +65,6 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
     private static final Effect SELECTED_NODE_EFFECT = new Lighting();
     private ContextMenu chartContextMenu;
 
-    @Override
-    public ContextMenu getChartContextMenu() {
-        return chartContextMenu;
-    }
 
     private final TimeLineController controller;
     private final FilteredEventsModel filteredEvents;
@@ -163,7 +159,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
      *
      * @return the context menu for this chart
      */
-    ContextMenu getContextMenu() {
+    public ContextMenu getContextMenu() {
         return chartContextMenu;
     }
 

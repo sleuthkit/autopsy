@@ -33,7 +33,7 @@ import org.controlsfx.control.action.ActionUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
-import org.sleuthkit.autopsy.timeline.ui.detailview.DetailsChart.HideDescriptionAction;
+import org.sleuthkit.autopsy.timeline.ui.detailview.DetailsChartLane.HideDescriptionAction;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.configureActionButton;
 
 /**
@@ -44,14 +44,13 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
     private static final Logger LOGGER = Logger.getLogger(EventStripeNode.class.getName());
     private Button hideButton;
 
-
-    EventStripeNode(DetailsChart chart, EventStripe eventStripe, EventClusterNode parentNode) {
-        super(chart, eventStripe, parentNode);
+    EventStripeNode(DetailsChartLane<?> chartLane, EventStripe eventStripe, EventClusterNode parentNode) {
+        super(chartLane, eventStripe, parentNode);
         setMinHeight(24);
         //setup description label
-       
+
         descrLabel.setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
-     
+
         descrLabel.setPrefWidth(USE_COMPUTED_SIZE);
         setAlignment(subNodePane, Pos.BOTTOM_LEFT);
 
@@ -64,10 +63,10 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
             EventNodeBase<?> childNode;
             EventCluster cluster = Iterables.getOnlyElement(eventStripe.getClusters());
             if (cluster.getEventIDs().size() == 1) {
-                SingleEventNode singleEventNode = new SingleEventNode(getChart(), getChart().getController().getEventsModel().getEventById(Iterables.getOnlyElement(cluster.getEventIDs())), this);
+                SingleEventNode singleEventNode = new SingleEventNode(getChartLane(), getChartLane().getController().getEventsModel().getEventById(Iterables.getOnlyElement(cluster.getEventIDs())), this);
                 childNode = singleEventNode;
             } else {
-                EventClusterNode eventClusterNode = new EventClusterNode(getChart(), cluster, this);
+                EventClusterNode eventClusterNode = new EventClusterNode(getChartLane(), cluster, this);
                 eventClusterNode.installActionButtons();
                 eventClusterNode.infoHBox.getChildren().remove(eventClusterNode.countLabel);
                 controlsHBox.getChildren().addAll(eventClusterNode.minusButton, eventClusterNode.plusButton);
@@ -84,13 +83,11 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
         return getEventBundle();
     }
 
-   
-
     @Override
     void installActionButtons() {
         super.installActionButtons();
-        if (hideButton == null) {
-            hideButton = ActionUtils.createButton(new HideDescriptionAction(getDescription(), tlEvent.getDescriptionLoD(), chart),
+        if (chartLane.quickHideFiltersEnabled() && hideButton == null) {
+            hideButton = ActionUtils.createButton(new HideDescriptionAction(getDescription(), tlEvent.getDescriptionLoD(), chartLane),
                     ActionUtils.ActionTextBehavior.HIDE);
             configureActionButton(hideButton);
 
@@ -101,13 +98,11 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
     @Override
     EventNodeBase<?> createChildNode(EventCluster cluster) {
         if (cluster.getEventIDs().size() == 1) {
-            return new SingleEventNode(getChart(), getChart().getController().getEventsModel().getEventById(Iterables.getOnlyElement(cluster.getEventIDs())), this);
+            return new SingleEventNode(getChartLane(), getChartLane().getController().getEventsModel().getEventById(Iterables.getOnlyElement(cluster.getEventIDs())), this);
         } else {
-            return new EventClusterNode(getChart(), cluster, this);
+            return new EventClusterNode(getChartLane(), cluster, this);
         }
     }
-
-
 
     @Override
     void setDescriptionVisibiltiyImpl(DescriptionVisibility descrVis) {
@@ -142,6 +137,6 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
 
     @Override
     Collection<? extends Action> getActions() {
-        return Arrays.asList(new HideDescriptionAction(getDescription(), tlEvent.getDescriptionLoD(), chart));
+        return Arrays.asList(new HideDescriptionAction(getDescription(), tlEvent.getDescriptionLoD(), chartLane));
     }
 }

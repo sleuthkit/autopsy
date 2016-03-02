@@ -61,7 +61,7 @@ public abstract class IntervalSelector<X> extends BorderPane {
     /**
      * the Axis this is a selector over
      */
-    public final TimeLineChart<X> chart;
+    public final ContextMenuProvider<X> chart;
 
     private Tooltip tooltip;
     /////////drag state
@@ -89,7 +89,7 @@ public abstract class IntervalSelector<X> extends BorderPane {
     @FXML
     private BorderPane bottomBorder;
 
-    public IntervalSelector(TimeLineChart<X> chart) {
+    public IntervalSelector(ContextMenuProvider<X> chart) {
         this.chart = chart;
         this.controller = chart.getController();
         FXMLConstructor.construct(this, IntervalSelector.class, "IntervalSelector.fxml"); // NON-NLS

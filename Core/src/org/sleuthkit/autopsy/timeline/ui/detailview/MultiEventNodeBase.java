@@ -66,7 +66,7 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
     
     private Timeline timeline;
 
-    MultiEventNodeBase(DetailsChart chart, BundleType eventBundle, ParentNodeType parentNode) {
+    MultiEventNodeBase(DetailsChartLane<?> chart, BundleType eventBundle, ParentNodeType parentNode) {
         super(eventBundle, parentNode, chart);
         this.descLOD.set(eventBundle.getDescriptionLoD());
   
@@ -101,7 +101,7 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
 
         //set up mouse hover effect and tooltip
         setOnMouseEntered((MouseEvent e) -> {
-            Tooltip.uninstall(chart.asNode(), AbstractVisualizationPane.getDefaultTooltip());
+            Tooltip.uninstall(chart, AbstractVisualizationPane.getDefaultTooltip());
             showHoverControls(true);
             toFront();
         });
@@ -110,7 +110,7 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
             if (parentNode != null) {
                 parentNode.showHoverControls(true);
             } else {
-                Tooltip.install(chart.asNode(), AbstractVisualizationPane.getDefaultTooltip());
+                Tooltip.install(chart, AbstractVisualizationPane.getDefaultTooltip());
             }
         });
         setOnMouseClicked(new ClickHandler());
@@ -120,12 +120,9 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
 
     @Override
     void requestChartLayout() {
-        getChart().requestTimelineChartLayout();
+        getChartLane().requestTimelineChartLayout();
     }
 
-    public DetailsChart getChart() {
-        return chart;
-    }
 
     final DescriptionLoD getDescriptionLoD() {
         return descLOD.get();
@@ -159,7 +156,7 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
 
     @Override
     protected void layoutChildren() {
-        chart.layoutEventBundleNodes(subNodes, 0);
+        chartLane.layoutEventBundleNodes(subNodes, 0);
         super.layoutChildren();
     }
 
@@ -168,13 +165,13 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
     void animateTo(double xLeft, double yTop) {
         if (timeline != null) {
             timeline.stop();
-            Platform.runLater(chart::requestTimelineChartLayout);
+            Platform.runLater(chartLane::requestTimelineChartLayout);
         }
         timeline = new Timeline(new KeyFrame(Duration.millis(100),
                 new KeyValue(layoutXProperty(), xLeft),
                 new KeyValue(layoutYProperty(), yTop))
         );
-        timeline.setOnFinished(finished -> Platform.runLater(chart::requestTimelineChartLayout));
+        timeline.setOnFinished(finished -> Platform.runLater(chartLane::requestTimelineChartLayout));
         timeline.play();
     }
 
