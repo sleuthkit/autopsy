@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -59,7 +59,6 @@ import org.xml.sax.SAXException;
 final class UserDefinedFileTypesManager {
 
     private static final Logger logger = Logger.getLogger(UserDefinedFileTypesManager.class.getName());
-    private static final String FILE_TYPE_DEFINITIONS_SCHEMA_FILE = "FileTypes.xsd"; //NON-NLS
     private static final String USER_DEFINED_TYPE_DEFINITIONS_FILE = "UserFileTypeDefinitions.xml"; //NON-NLS
     private static final String FILE_TYPES_TAG_NAME = "FileTypes"; //NON-NLS
     private static final String FILE_TYPE_TAG_NAME = "FileType"; //NON-NLS
@@ -72,7 +71,6 @@ final class UserDefinedFileTypesManager {
     private static final String INTERESTING_FILES_SET_TAG_NAME = "InterestingFileSset"; //NON-NLS
     private static final String ALERT_ATTRIBUTE = "alert"; //NON-NLS
     private static final String ENCODING_FOR_XML_FILE = "UTF-8"; //NON-NLS
-    private static final String ASCII_ENCODING = "US-ASCII"; //NON-NLS
     private static UserDefinedFileTypesManager instance;
 
     /**
@@ -181,7 +179,7 @@ final class UserDefinedFileTypesManager {
     private void loadPredefinedFileTypes() throws UserDefinedFileTypesException {
         byte[] byteArray;
         FileType fileType;
-        
+
         try {
             // Add rule for xml
             fileType = new FileType("text/xml", new Signature("<?xml", 0L), "", false); //NON-NLS
@@ -228,13 +226,12 @@ final class UserDefinedFileTypesManager {
             fileTypes.add(fileType);
             fileType = new FileType("image/x-portable-floatmap", new Signature("Pf", 0L), "", false); //NON-NLS
             fileTypes.add(fileType);
-            
+
             // Add rule for .tga
             byteArray = DatatypeConverter.parseHexBinary("54525545564953494F4E2D5846494C452E00"); //NON-NLS
             fileType = new FileType("image/x-tga", new Signature(byteArray, 17, false), "", false); //NON-NLS
             fileTypes.add(fileType);
-        }
-        // parseHexBinary() throws this if the argument passed in is not Hex
+        } // parseHexBinary() throws this if the argument passed in is not Hex
         catch (IllegalArgumentException e) {
             throw new UserDefinedFileTypesException("Error creating predefined file types", e); //
         }
@@ -282,7 +279,7 @@ final class UserDefinedFileTypesManager {
      * Sets the user-defined file types.
      *
      * @param newFileTypes A mapping of file type names to user-defined file
-     * types.
+     *                     types.
      */
     synchronized void setUserDefinedFileTypes(List<FileType> newFileTypes) throws UserDefinedFileTypesException {
         try {
@@ -317,7 +314,7 @@ final class UserDefinedFileTypesManager {
          * Writes a set of file type definitions to an XML file.
          *
          * @param fileTypes A collection of file types.
-         * @param filePath The path to the destination file.
+         * @param filePath  The path to the destination file.
          *
          * @throws ParserConfigurationException
          * @throws IOException
@@ -340,7 +337,7 @@ final class UserDefinedFileTypesManager {
          * Creates an XML representation of a file type.
          *
          * @param fileType The file type object.
-         * @param doc The WC3 DOM object to use to create the XML.
+         * @param doc      The WC3 DOM object to use to create the XML.
          *
          * @return An XML element.
          */
@@ -356,9 +353,9 @@ final class UserDefinedFileTypesManager {
         /**
          * Add a MIME type child element to a file type XML element.
          *
-         * @param fileType The file type to use as a content source.
+         * @param fileType     The file type to use as a content source.
          * @param fileTypeElem The parent file type element.
-         * @param doc The WC3 DOM object to use to create the XML.
+         * @param doc          The WC3 DOM object to use to create the XML.
          */
         private static void addMimeTypeElement(FileType fileType, Element fileTypeElem, Document doc) {
             Element typeNameElem = doc.createElement(MIME_TYPE_TAG_NAME);
@@ -369,9 +366,9 @@ final class UserDefinedFileTypesManager {
         /**
          * Add a signature child element to a file type XML element.
          *
-         * @param fileType The file type to use as a content source.
+         * @param fileType     The file type to use as a content source.
          * @param fileTypeElem The parent file type element.
-         * @param doc The WC3 DOM object to use to create the XML.
+         * @param doc          The WC3 DOM object to use to create the XML.
          */
         private static void addSignatureElement(FileType fileType, Element fileTypeElem, Document doc) {
             Signature signature = fileType.getSignature();
@@ -393,9 +390,9 @@ final class UserDefinedFileTypesManager {
         /**
          * Add an interesting files set element to a file type XML element.
          *
-         * @param fileType The file type to use as a content source.
+         * @param fileType     The file type to use as a content source.
          * @param fileTypeElem The parent file type element.
-         * @param doc The WC3 DOM object to use to create the XML.
+         * @param doc          The WC3 DOM object to use to create the XML.
          */
         private static void addInterestingFilesSetElement(FileType fileType, Element fileTypeElem, Document doc) {
             if (!fileType.getFilesSetName().isEmpty()) {
@@ -408,11 +405,18 @@ final class UserDefinedFileTypesManager {
         /**
          * Add an alert attribute to a file type XML element.
          *
-         * @param fileType The file type to use as a content source.
+         * @param fileType     The file type to use as a content source.
          * @param fileTypeElem The parent file type element.
          */
         private static void addAlertAttribute(FileType fileType, Element fileTypeElem) {
             fileTypeElem.setAttribute(ALERT_ATTRIBUTE, Boolean.toString(fileType.alertOnMatch()));
+        }
+
+        /**
+         * Private constructor suppresses creation of instanmces of this utility
+         * class.
+         */
+        private XmlWriter() {
         }
 
     }
@@ -432,7 +436,17 @@ final class UserDefinedFileTypesManager {
          */
         private static List<FileType> readFileTypes(String filePath) throws IOException, ParserConfigurationException, SAXException {
             List<FileType> fileTypes = new ArrayList<>();
-            Document doc = XMLUtil.loadDocument(filePath, UserDefinedFileTypesManager.class, FILE_TYPE_DEFINITIONS_SCHEMA_FILE);
+            /*
+             * RC: Commenting out the loadDocument overload that validates
+             * agaisnt the XSD is a temp fix for a failure to provide an upgrade
+             * path when the RelativeToStart attribute was added to the
+             * Signature element. The upgrade path can be supplied, but the plan
+             * is to replace the use of XML with object serialization for the
+             * settings, so it may not be worth the effort.
+             */
+            // private static final String FILE_TYPE_DEFINITIONS_SCHEMA_FILE = "FileTypes.xsd"; //NON-NLS
+            // Document doc = XMLUtil.loadDocument(filePath, UserDefinedFileTypesManager.class, FILE_TYPE_DEFINITIONS_SCHEMA_FILE);
+            Document doc = XMLUtil.loadDocument(filePath);
             if (doc != null) {
                 Element fileTypesElem = doc.getDocumentElement();
                 if (fileTypesElem != null && fileTypesElem.getNodeName().equals(FILE_TYPES_TAG_NAME)) {
@@ -496,14 +510,16 @@ final class UserDefinedFileTypesManager {
             Element offsetElem = (Element) signatureElem.getElementsByTagName(OFFSET_TAG_NAME).item(0);
             String offsetString = offsetElem.getTextContent();
             long offset = DatatypeConverter.parseLong(offsetString);
-            
-            String relativeString = offsetElem.getAttribute(RELATIVE_ATTRIBUTE);
-            if(relativeString == null || relativeString.equals(""))
-                return new Signature(signatureBytes, offset, signatureType);
-            
-            boolean isRelative = DatatypeConverter.parseBoolean(relativeString);
 
-            return new Signature(signatureBytes, offset, signatureType, isRelative);
+            boolean isRelativeToStart;
+            String relativeString = offsetElem.getAttribute(RELATIVE_ATTRIBUTE);
+            if (null == relativeString || relativeString.equals("")) {
+                isRelativeToStart = true;
+            } else {
+                isRelativeToStart = DatatypeConverter.parseBoolean(relativeString);
+            }
+
+            return new Signature(signatureBytes, offset, signatureType, isRelativeToStart);
         }
 
         /**
@@ -538,7 +554,7 @@ final class UserDefinedFileTypesManager {
         /**
          * Gets the text content of a single child element.
          *
-         * @param elem The parent element.
+         * @param elem    The parent element.
          * @param tagName The tag name of the child element.
          *
          * @return The text content or null if the tag doesn't exist.
@@ -546,10 +562,18 @@ final class UserDefinedFileTypesManager {
         private static String getChildElementTextContent(Element elem, String tagName) {
             NodeList childElems = elem.getElementsByTagName(tagName);
             Node childNode = childElems.item(0);
-            if(childNode == null)
+            if (childNode == null) {
                 return null;
+            }
             Element childElem = (Element) childNode;
             return childElem.getTextContent();
+        }
+
+        /**
+         * Private constructor suppresses creation of instanmces of this utility
+         * class.
+         */
+        private XmlReader() {
         }
 
     }
@@ -558,9 +582,9 @@ final class UserDefinedFileTypesManager {
      * Logs an exception, bundles the exception with a simple message in a
      * uniform exception type, and throws the wrapper exception.
      *
-     * @param ex The exception to wrap.
+     * @param ex         The exception to wrap.
      * @param messageKey A key into the bundle file that maps to the desired
-     * message.
+     *                   message.
      *
      * @throws
      * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException
@@ -577,6 +601,8 @@ final class UserDefinedFileTypesManager {
      * clients of the user-defined file types manager.
      */
     static class UserDefinedFileTypesException extends Exception {
+
+        private static final long serialVersionUID = 1L;
 
         UserDefinedFileTypesException(String message) {
             super(message);
