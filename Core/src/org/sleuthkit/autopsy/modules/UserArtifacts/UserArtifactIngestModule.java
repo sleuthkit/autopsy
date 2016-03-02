@@ -49,25 +49,35 @@ public class UserArtifactIngestModule implements DataSourceIngestModule {
             FileManager manager = Case.getCurrentCase().getServices().getFileManager();
             List<AbstractFile> file1 = manager.findFiles("Sunset.jpg"); //NON-NLS
             List<AbstractFile> file2 = manager.findFiles("Winter.jpg"); //NON-NLS
-            BlackboardArtifact art1;
+            List<BlackboardArtifact> currArtifacts = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF);
+            BlackboardArtifact art1 = currArtifacts.size() == 0 ? null : currArtifacts.get(0);
             BlackboardArtifact art2;
-            if (!file1.isEmpty()) {
-                art1 = file1.get(0).newArtifact(type1.getTypeID());
-            } else {
-                art1 = dataSource.newArtifact(type1.getTypeID());
+            if (art1 == null) {
+                if (!file1.isEmpty()) {
+                    art1 = file1.get(0).newArtifact(type1.getTypeID());
+                } else {
+                    art1 = dataSource.newArtifact(type1.getTypeID());
+                }
             }
             if (!file2.isEmpty()) {
                 art2 = file2.get(0).newArtifact(type2.getTypeID());
             } else {
                 art2 = dataSource.newArtifact(type2.getTypeID());
             }
-            BlackboardAttribute.Type attributeType = Case.getCurrentCase().getServices().getBlackboard().addAttributeType("Test", TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.LONG, "2"); //NON-NLS
-            BlackboardAttribute.Type attributeType2 = Case.getCurrentCase().getServices().getBlackboard().addAttributeType("Test2", TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.BYTE, "3"); //NON-NLS
+            BlackboardAttribute.Type attributeType = Case.getCurrentCase().getSleuthkitCase().getAttributeType("Test5");
+            if (attributeType == null) {
+                attributeType = Case.getCurrentCase().getServices().getBlackboard().addAttributeType("Test5", TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Header3");
+            }
+            BlackboardAttribute.Type attributeType2 = Case.getCurrentCase().getSleuthkitCase().getAttributeType("Test6");
+            if (attributeType2 == null) {
+                attributeType2 = Case.getCurrentCase().getServices().getBlackboard().addAttributeType("Test6", TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Header4");
+
+            }
             art1.addAttribute(new BlackboardAttribute(attributeType,
-                    UserArtifactIngestModuleFactory.getModuleName(), -1L));
+                    UserArtifactIngestModuleFactory.getModuleName(), "tester1"));
             progressBar.progress(1);
             art2.addAttribute(new BlackboardAttribute(attributeType2,
-                    UserArtifactIngestModuleFactory.getModuleName(), new byte[7]));
+                    UserArtifactIngestModuleFactory.getModuleName(), "tester2"));
             progressBar.progress(1);
             IngestServices.getInstance().postMessage(IngestMessage.createDataMessage(
                     "name", // NON-NLS
@@ -84,9 +94,15 @@ public class UserArtifactIngestModule implements DataSourceIngestModule {
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         try {
-            type1 = Case.getCurrentCase().getServices().getBlackboard().addArtifactType("This is", "a test"); //NON-NLS
-            type2 = Case.getCurrentCase().getServices().getBlackboard().addArtifactType("Another", "kinda test"); //NON-NLS
-        } catch (BlackboardException ex) {
+            type1 = Case.getCurrentCase().getSleuthkitCase().getArtifactType("FINAL TEST a");
+            type2 = Case.getCurrentCase().getSleuthkitCase().getArtifactType("FINAL TEST b");
+            if (type1 == null) {
+                type1 = Case.getCurrentCase().getServices().getBlackboard().addArtifactType("FINAL TEST a", "FINAL TEST a"); //NON-NLS 
+            }
+            if (type2 == null) {
+                type2 = Case.getCurrentCase().getServices().getBlackboard().addArtifactType("FINAL TEST b", "FINAL TEST b"); //NON-NLS
+            }
+        } catch (BlackboardException | TskCoreException ex) {
             Logger.logMsg(Logger.ERROR, "Startup failed"); //NON-NLS
         }
     }
