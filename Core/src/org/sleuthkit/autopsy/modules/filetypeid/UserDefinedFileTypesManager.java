@@ -19,7 +19,9 @@
 package org.sleuthkit.autopsy.modules.filetypeid;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Path;
@@ -27,6 +29,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import javax.persistence.PersistenceException;
 import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -34,10 +37,13 @@ import org.w3c.dom.NodeList;
 import javax.xml.bind.DatatypeConverter;
 import javax.xml.transform.TransformerException;
 import org.openide.util.NbBundle;
+import org.openide.util.io.NbObjectInputStream;
+import org.openide.util.io.NbObjectOutputStream;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
@@ -60,6 +66,7 @@ final class UserDefinedFileTypesManager {
 
     private static final Logger logger = Logger.getLogger(UserDefinedFileTypesManager.class.getName());
     private static final String USER_DEFINED_TYPE_DEFINITIONS_FILE = "UserFileTypeDefinitions.xml"; //NON-NLS
+    private static final String USER_DEFINED_TYPE_SERIALIZATION_FILE = "UserFileTypeDefinitions.settings";
     private static final String FILE_TYPES_TAG_NAME = "FileTypes"; //NON-NLS
     private static final String FILE_TYPE_TAG_NAME = "FileType"; //NON-NLS
     private static final String MIME_TYPE_TAG_NAME = "MimeType"; //NON-NLS
@@ -323,14 +330,16 @@ final class UserDefinedFileTypesManager {
          * @throws TransformerException
          */
         private static void writeFileTypes(List<FileType> fileTypes, String filePath) throws ParserConfigurationException, IOException, FileNotFoundException, UnsupportedEncodingException, TransformerException {
-            Document doc = XMLUtil.createDocument();
-            Element fileTypesElem = doc.createElement(FILE_TYPES_TAG_NAME);
-            doc.appendChild(fileTypesElem);
-            for (FileType fileType : fileTypes) {
-                Element fileTypeElem = XmlWriter.createFileTypeElement(fileType, doc);
-                fileTypesElem.appendChild(fileTypeElem);
+            try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(getFileTypeDefinitionsFilePath(USER_DEFINED_TYPE_SERIALIZATION_FILE)))) {
+                UserDefinedFileTypesSettings settings = new UserDefinedFileTypesSettings(fileTypes);
+                out.writeObject(settings);
+                File xmlFile = new File(filePath);
+                if (xmlFile.exists()) {
+                    xmlFile.delete();
+                }
+            } catch (IOException ex) {
+                throw new PersistenceException(String.format("Failed to write settings to %s", getFileTypeDefinitionsFilePath(USER_DEFINED_TYPE_SERIALIZATION_FILE)), ex);
             }
-            XMLUtil.saveDocument(doc, ENCODING_FOR_XML_FILE, filePath);
         }
 
         /**
@@ -455,6 +464,18 @@ final class UserDefinedFileTypesManager {
                         Element fileTypeElem = (Element) fileTypeElems.item(i);
                         FileType fileType = XmlReader.parseFileType(fileTypeElem);
                         fileTypes.add(fileType);
+                    }
+                }
+            } else {
+                File serializedDefs = new File(getFileTypeDefinitionsFilePath(USER_DEFINED_TYPE_SERIALIZATION_FILE));
+                if (serializedDefs.exists()) {
+                    try {
+                        try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(serializedDefs))) {
+                            UserDefinedFileTypesSettings filesSetsSettings = (UserDefinedFileTypesSettings) in.readObject();
+                            return filesSetsSettings.getUserDefinedFileTypes();
+                        }
+                    } catch (IOException | ClassNotFoundException ex) {
+                        throw new PersistenceException(String.format("Failed to read settings from %s", getFileTypeDefinitionsFilePath(USER_DEFINED_TYPE_SERIALIZATION_FILE)), ex);
                     }
                 }
             }
