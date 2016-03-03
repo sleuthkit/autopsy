@@ -30,6 +30,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JFrame;
 import org.apache.commons.io.FilenameUtils;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
@@ -46,6 +47,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
             .getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.defaultFileName");
     private JFileChooser fileChooser = null;
     private HashDb newHashDb = null;
+    private final static String LAST_FILE_PATH_KEY = "HashDbCreate_Basecase_Path";
 
     /**
      * Displays a dialog that allows a user to create a new hash database and
@@ -273,7 +275,9 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
 
     private void saveAsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveAsButtonActionPerformed
         try {
+            String lastBaseDirectory = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY);
             StringBuilder path = new StringBuilder();
+            path.append(lastBaseDirectory);
             if (!hashSetNameTextField.getText().isEmpty()) {
                 path.append(hashSetNameTextField.getText());
             } else {
@@ -284,6 +288,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
             if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
                 File databaseFile = fileChooser.getSelectedFile();
                 databasePathTextField.setText(databaseFile.getCanonicalPath());
+                ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY, databaseFile.getAbsolutePath());
             }
         } catch (IOException ex) {
             Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.WARNING, "Couldn't get selected file path.", ex); //NON-NLS
