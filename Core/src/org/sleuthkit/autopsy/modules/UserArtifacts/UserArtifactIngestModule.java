@@ -64,21 +64,62 @@ public class UserArtifactIngestModule implements DataSourceIngestModule {
             } else {
                 art2 = dataSource.newArtifact(type2.getTypeID());
             }
-            BlackboardAttribute.Type attributeType = Case.getCurrentCase().getSleuthkitCase().getAttributeType("Test7");
+            BlackboardAttribute.Type attributeType = Case.getCurrentCase().getSleuthkitCase().getAttributeType("Test8");
             if (attributeType == null) {
-                attributeType = Case.getCurrentCase().getServices().getBlackboard().addAttributeType("Test7", TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.INTEGER, "Header5");
+                attributeType = Case.getCurrentCase().getServices().getBlackboard().addAttributeType("Test8", TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.LONG, "Header6");
             }
-            BlackboardAttribute.Type attributeType2 = Case.getCurrentCase().getSleuthkitCase().getAttributeType("Test6");
+            BlackboardAttribute.Type attributeType2 = Case.getCurrentCase().getSleuthkitCase().getAttributeType("Test9");
             if (attributeType2 == null) {
-                attributeType2 = Case.getCurrentCase().getServices().getBlackboard().addAttributeType("Test6", TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Header4");
+                attributeType2 = Case.getCurrentCase().getServices().getBlackboard().addAttributeType("Test9", TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME, "Header7");
+
+            }
+            BlackboardAttribute.Type attributeType3 = Case.getCurrentCase().getSleuthkitCase().getAttributeType("Test0");
+            if (attributeType3 == null) {
+                attributeType3 = Case.getCurrentCase().getServices().getBlackboard().addAttributeType("Test0", TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Header8");
+
+            }
+            BlackboardAttribute.Type attributeType4 = Case.getCurrentCase().getSleuthkitCase().getAttributeType("TestA");
+            if (attributeType4 == null) {
+                attributeType4 = Case.getCurrentCase().getServices().getBlackboard().addAttributeType("TestA", TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.INTEGER, "Header9");
+
+            }
+            BlackboardAttribute.Type attributeType5 = Case.getCurrentCase().getSleuthkitCase().getAttributeType("TestB");
+            if (attributeType5 == null) {
+                attributeType5 = Case.getCurrentCase().getServices().getBlackboard().addAttributeType("TestB", TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DOUBLE, "Header0");
+
+            }
+            BlackboardAttribute.Type attributeType6 = Case.getCurrentCase().getSleuthkitCase().getAttributeType("TestC");
+            if (attributeType6 == null) {
+                attributeType6 = Case.getCurrentCase().getServices().getBlackboard().addAttributeType("TestC", TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.BYTE, "HeaderA");
 
             }
             art1.addAttribute(new BlackboardAttribute(attributeType,
+                    UserArtifactIngestModuleFactory.getModuleName(), 12345678L));
+            art1.addAttribute(new BlackboardAttribute(attributeType2,
+                    UserArtifactIngestModuleFactory.getModuleName(), 1457105587962L));
+            art1.addAttribute(new BlackboardAttribute(attributeType3,
+                    UserArtifactIngestModuleFactory.getModuleName(), "STRING VALUE TEST"));
+            art1.addAttribute(new BlackboardAttribute(attributeType4,
                     UserArtifactIngestModuleFactory.getModuleName(), 1234));
-            progressBar.progress(1);
+            art1.addAttribute(new BlackboardAttribute(attributeType5,
+                    UserArtifactIngestModuleFactory.getModuleName(), 1234.5678D));
+            byte[] bytes = new byte[2];
+            bytes[0] = 12;
+            bytes[1] = 100;
+            art1.addAttribute(new BlackboardAttribute(attributeType6,
+                    UserArtifactIngestModuleFactory.getModuleName(), bytes));
             art2.addAttribute(new BlackboardAttribute(attributeType2,
-                    UserArtifactIngestModuleFactory.getModuleName(), "tester2"));
-            progressBar.progress(1);
+                    UserArtifactIngestModuleFactory.getModuleName(), 1457105587962L));
+            art2.addAttribute(new BlackboardAttribute(attributeType,
+                    UserArtifactIngestModuleFactory.getModuleName(), 12345678L));
+            art2.addAttribute(new BlackboardAttribute(attributeType3,
+                    UserArtifactIngestModuleFactory.getModuleName(), "STRING VALUE TEST"));
+            art2.addAttribute(new BlackboardAttribute(attributeType4,
+                    UserArtifactIngestModuleFactory.getModuleName(), 1234));
+            art2.addAttribute(new BlackboardAttribute(attributeType5,
+                    UserArtifactIngestModuleFactory.getModuleName(), 1234.5678D));
+            art2.addAttribute(new BlackboardAttribute(attributeType6,
+                    UserArtifactIngestModuleFactory.getModuleName(), bytes));
             IngestServices.getInstance().postMessage(IngestMessage.createDataMessage(
                     "name", // NON-NLS
                     UserArtifactIngestModuleFactory.getModuleName(),
