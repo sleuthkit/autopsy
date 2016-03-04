@@ -255,8 +255,13 @@ final class UserDefinedFileTypesManager {
         try {
             String filePath = getFileTypeDefinitionsFilePath(USER_DEFINED_TYPE_DEFINITIONS_FILE);
             File file = new File(filePath);
+            File serialized = new File(getFileTypeDefinitionsFilePath(USER_DEFINED_TYPE_SERIALIZATION_FILE));
             if (file.exists() && file.canRead()) {
-                for (FileType fileType : XmlReader.readFileTypes(filePath)) {
+                for (FileType fileType : DefinitionsReader.readFileTypes(filePath)) {
+                    addUserDefinedFileType(fileType);
+                }
+            } else if (serialized.exists()) {
+                for (FileType fileType : DefinitionsReader.readFileTypesSerialized(getFileTypeDefinitionsFilePath(USER_DEFINED_TYPE_SERIALIZATION_FILE))) {
                     addUserDefinedFileType(fileType);
                 }
             }
@@ -291,7 +296,7 @@ final class UserDefinedFileTypesManager {
     synchronized void setUserDefinedFileTypes(List<FileType> newFileTypes) throws UserDefinedFileTypesException {
         try {
             String filePath = getFileTypeDefinitionsFilePath(USER_DEFINED_TYPE_DEFINITIONS_FILE);
-            XmlWriter.writeFileTypes(newFileTypes, filePath);
+            DefinitionsWriter.writeFileTypes(newFileTypes, filePath);
         } catch (ParserConfigurationException | FileNotFoundException | UnsupportedEncodingException | TransformerException ex) {
             throwUserDefinedFileTypesException(ex, "UserDefinedFileTypesManager.saveFileTypes.errorMessage");
         } catch (IOException ex) {
@@ -315,7 +320,7 @@ final class UserDefinedFileTypesManager {
      * Provides a mechanism for writing a set of file type definitions to an XML
      * file.
      */
-    private static class XmlWriter {
+    private static class DefinitionsWriter {
 
         /**
          * Writes a set of file type definitions to an XML file.
@@ -343,89 +348,10 @@ final class UserDefinedFileTypesManager {
         }
 
         /**
-         * Creates an XML representation of a file type.
-         *
-         * @param fileType The file type object.
-         * @param doc      The WC3 DOM object to use to create the XML.
-         *
-         * @return An XML element.
-         */
-        private static Element createFileTypeElement(FileType fileType, Document doc) {
-            Element fileTypeElem = doc.createElement(FILE_TYPE_TAG_NAME);
-            XmlWriter.addMimeTypeElement(fileType, fileTypeElem, doc);
-            XmlWriter.addSignatureElement(fileType, fileTypeElem, doc);
-            XmlWriter.addInterestingFilesSetElement(fileType, fileTypeElem, doc);
-            XmlWriter.addAlertAttribute(fileType, fileTypeElem);
-            return fileTypeElem;
-        }
-
-        /**
-         * Add a MIME type child element to a file type XML element.
-         *
-         * @param fileType     The file type to use as a content source.
-         * @param fileTypeElem The parent file type element.
-         * @param doc          The WC3 DOM object to use to create the XML.
-         */
-        private static void addMimeTypeElement(FileType fileType, Element fileTypeElem, Document doc) {
-            Element typeNameElem = doc.createElement(MIME_TYPE_TAG_NAME);
-            typeNameElem.setTextContent(fileType.getMimeType());
-            fileTypeElem.appendChild(typeNameElem);
-        }
-
-        /**
-         * Add a signature child element to a file type XML element.
-         *
-         * @param fileType     The file type to use as a content source.
-         * @param fileTypeElem The parent file type element.
-         * @param doc          The WC3 DOM object to use to create the XML.
-         */
-        private static void addSignatureElement(FileType fileType, Element fileTypeElem, Document doc) {
-            Signature signature = fileType.getSignature();
-            Element signatureElem = doc.createElement(SIGNATURE_TAG_NAME);
-
-            Element bytesElem = doc.createElement(BYTES_TAG_NAME);
-            bytesElem.setTextContent(DatatypeConverter.printHexBinary(signature.getSignatureBytes()));
-            signatureElem.appendChild(bytesElem);
-
-            Element offsetElem = doc.createElement(OFFSET_TAG_NAME);
-            offsetElem.setTextContent(DatatypeConverter.printLong(signature.getOffset()));
-            offsetElem.setAttribute(RELATIVE_ATTRIBUTE, String.valueOf(signature.isRelativeToStart()));
-            signatureElem.appendChild(offsetElem);
-
-            signatureElem.setAttribute(SIGNATURE_TYPE_ATTRIBUTE, signature.getType().toString());
-            fileTypeElem.appendChild(signatureElem);
-        }
-
-        /**
-         * Add an interesting files set element to a file type XML element.
-         *
-         * @param fileType     The file type to use as a content source.
-         * @param fileTypeElem The parent file type element.
-         * @param doc          The WC3 DOM object to use to create the XML.
-         */
-        private static void addInterestingFilesSetElement(FileType fileType, Element fileTypeElem, Document doc) {
-            if (!fileType.getFilesSetName().isEmpty()) {
-                Element filesSetElem = doc.createElement(INTERESTING_FILES_SET_TAG_NAME);
-                filesSetElem.setTextContent(fileType.getFilesSetName());
-                fileTypeElem.appendChild(filesSetElem);
-            }
-        }
-
-        /**
-         * Add an alert attribute to a file type XML element.
-         *
-         * @param fileType     The file type to use as a content source.
-         * @param fileTypeElem The parent file type element.
-         */
-        private static void addAlertAttribute(FileType fileType, Element fileTypeElem) {
-            fileTypeElem.setAttribute(ALERT_ATTRIBUTE, Boolean.toString(fileType.alertOnMatch()));
-        }
-
-        /**
-         * Private constructor suppresses creation of instanmces of this utility
+         * Private constructor suppresses creation of instances of this utility
          * class.
          */
-        private XmlWriter() {
+        private DefinitionsWriter() {
         }
 
     }
@@ -434,7 +360,7 @@ final class UserDefinedFileTypesManager {
      * Provides a mechanism for reading a set of file type definitions from an
      * XML file.
      */
-    private static class XmlReader {
+    private static class DefinitionsReader {
 
         /**
          * Reads a set of file type definitions from an XML file.
@@ -462,21 +388,25 @@ final class UserDefinedFileTypesManager {
                     NodeList fileTypeElems = fileTypesElem.getElementsByTagName(FILE_TYPE_TAG_NAME);
                     for (int i = 0; i < fileTypeElems.getLength(); ++i) {
                         Element fileTypeElem = (Element) fileTypeElems.item(i);
-                        FileType fileType = XmlReader.parseFileType(fileTypeElem);
+                        FileType fileType = DefinitionsReader.parseFileType(fileTypeElem);
                         fileTypes.add(fileType);
                     }
                 }
-            } else {
-                File serializedDefs = new File(getFileTypeDefinitionsFilePath(USER_DEFINED_TYPE_SERIALIZATION_FILE));
-                if (serializedDefs.exists()) {
-                    try {
-                        try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(serializedDefs))) {
-                            UserDefinedFileTypesSettings filesSetsSettings = (UserDefinedFileTypesSettings) in.readObject();
-                            return filesSetsSettings.getUserDefinedFileTypes();
-                        }
-                    } catch (IOException | ClassNotFoundException ex) {
-                        throw new PersistenceException(String.format("Failed to read settings from %s", getFileTypeDefinitionsFilePath(USER_DEFINED_TYPE_SERIALIZATION_FILE)), ex);
+            }
+            return fileTypes;
+        }
+
+        private static List<FileType> readFileTypesSerialized(String filePath) throws IOException, ParserConfigurationException, SAXException {
+            List<FileType> fileTypes = new ArrayList<>();
+            File serializedDefs = new File(getFileTypeDefinitionsFilePath(USER_DEFINED_TYPE_SERIALIZATION_FILE));
+            if (serializedDefs.exists()) {
+                try {
+                    try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(serializedDefs))) {
+                        UserDefinedFileTypesSettings filesSetsSettings = (UserDefinedFileTypesSettings) in.readObject();
+                        return filesSetsSettings.getUserDefinedFileTypes();
                     }
+                } catch (IOException | ClassNotFoundException ex) {
+                    throw new PersistenceException(String.format("Failed to read settings from %s", getFileTypeDefinitionsFilePath(USER_DEFINED_TYPE_SERIALIZATION_FILE)), ex);
                 }
             }
             return fileTypes;
@@ -493,10 +423,10 @@ final class UserDefinedFileTypesManager {
          * @throws NumberFormatException
          */
         private static FileType parseFileType(Element fileTypeElem) throws IllegalArgumentException, NumberFormatException {
-            String mimeType = XmlReader.parseMimeType(fileTypeElem);
-            Signature signature = XmlReader.parseSignature(fileTypeElem);
-            String filesSetName = XmlReader.parseInterestingFilesSet(fileTypeElem);
-            boolean alert = XmlReader.parseAlert(fileTypeElem);
+            String mimeType = DefinitionsReader.parseMimeType(fileTypeElem);
+            Signature signature = DefinitionsReader.parseSignature(fileTypeElem);
+            String filesSetName = DefinitionsReader.parseInterestingFilesSet(fileTypeElem);
+            boolean alert = DefinitionsReader.parseAlert(fileTypeElem);
             return new FileType(mimeType, signature, filesSetName, alert);
         }
 
@@ -594,7 +524,7 @@ final class UserDefinedFileTypesManager {
          * Private constructor suppresses creation of instanmces of this utility
          * class.
          */
-        private XmlReader() {
+        private DefinitionsReader() {
         }
 
     }
