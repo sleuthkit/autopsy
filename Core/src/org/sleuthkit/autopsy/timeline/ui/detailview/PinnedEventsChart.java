@@ -23,10 +23,9 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.SetChangeListener;
 import javafx.scene.chart.Axis;
+import javafx.scene.chart.XYChart;
 import org.joda.time.DateTime;
-import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
-import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 
 /**
@@ -70,6 +69,10 @@ public final class PinnedEventsChart extends DetailsChartLane<TimeLineEvent> {
             requestChartLayout();
         });
 
+        for (TimeLineEvent event : getController().getPinnedEvents()) {
+            addDataItem(new XYChart.Data<>(new DateTime(event.getStartMillis()), event));
+        }
+
     }
 
     @Override
@@ -77,63 +80,6 @@ public final class PinnedEventsChart extends DetailsChartLane<TimeLineEvent> {
         return FXCollections.emptyObservableList();
     }
 
-//    @Override
-//    public double layoutEventBundleNodes(final Collection<? extends EventNodeBase<?>> nodes, final double minY) {
-//        // map from y-ranges to maximum x
-//        TreeRangeMap<Double, Double> maxXatY = TreeRangeMap.create();
-//
-//        // maximum y values occupied by any of the given nodes,  updated as nodes are layed out.
-//        double localMax = minY;
-//
-//        //for each node do a recursive layout to size it and then position it in first available slot
-//        for (EventNodeBase<?> eventNode : nodes) {
-//            //is the node hiden by a quick hide filter?
-//
-//            layoutBundleHelper(eventNode);
-//            //get computed height and width
-//            double h = eventNode.getBoundsInLocal().getHeight();
-//            double w = eventNode.getBoundsInLocal().getWidth();
-//            //get left and right x coords from axis plus computed width
-//            double xLeft = getXForEpochMillis(eventNode.getStartMillis()) - eventNode.getLayoutXCompensation();
-//            double xRight = xLeft + w + MINIMUM_EVENT_NODE_GAP;
-//
-//            //initial test position
-//            double yTop = (layoutSettings.getOneEventPerRow())
-//                    ? (localMax + MINIMUM_EVENT_NODE_GAP)// if onePerRow, just put it at end
-//                    : computeYTop(minY, h, maxXatY, xLeft, xRight);
-//
-//            localMax = Math.max(yTop + h, localMax);
-//
-//            if ((xLeft != eventNode.getLayoutX()) || (yTop != eventNode.getLayoutY())) {
-//                //animate node to new position
-//                eventNode.animateTo(xLeft, yTop);
-//            }
-//
-//        }
-//        return localMax; //return new max
-//    }
-//    @Override
-//    protected void layoutPlotChildren() {
-//        setCursor(Cursor.WAIT);
-//        maxY.set(0);
-//
-////        //These don't change during a layout pass and are expensive to compute per node.  So we do it once at the start
-////        activeQuickHidefilters = getController().getQuickHideFilters().stream()
-////                .filter(AbstractFilter::isActive)
-////                .map(DescriptionFilter::getDescription)
-////                .collect(Collectors.toSet());
-//        //This dosn't change during a layout pass and is expensive to compute per node.  So we do it once at the start
-//        descriptionWidth = layoutSettings.getTruncateAll() ? layoutSettings.getTruncateWidth() : USE_PREF_SIZE;
-//
-//        if (layoutSettings.getBandByType()) {
-//            sortedNodes.stream()
-//                    .collect(Collectors.groupingBy(EventNodeBase<?>::getEventType)).values()
-//                    .forEach(inputNodes -> maxY.set(layoutEventBundleNodes(inputNodes, maxY.get())));
-//        } else {
-//            maxY.set(layoutEventBundleNodes(sortedNodes.sorted(Comparator.comparing(EventNodeBase<?>::getStartMillis)), 0));
-//        }
-//        setCursor(null);
-//    }
     /**
      * add a dataitem to this chart
      *
@@ -153,16 +99,6 @@ public final class PinnedEventsChart extends DetailsChartLane<TimeLineEvent> {
             data.setNode(eventNode);
 
         });
-    }
-
-    static EventNodeBase<?> createNode(DetailsChartLane<?> chart, TimeLineEvent event) {
-        if (event instanceof SingleEvent) {
-            return new SingleEventNode(chart, (SingleEvent) event, null);
-        } else if (event instanceof EventCluster) {
-            return new EventClusterNode(chart, (EventCluster) event, null);
-        } else {
-            return new EventStripeNode(chart, (EventStripe) event, null);
-        }
     }
 
     /**

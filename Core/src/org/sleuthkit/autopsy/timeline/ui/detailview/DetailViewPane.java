@@ -168,6 +168,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
 
         mainView.reset();
         pinnedView.reset();
+
     }
 
     public DetailViewPane(TimeLineController controller, Pane partPane, Pane contextPane, Region bottomLeftSpacer) {
@@ -319,7 +320,6 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
 
     void clearGuideLine(GuideLine guideLine) {
         rootPane.getChildren().remove(guideLine);
-        guideLine = null;
     }
 
     /**
@@ -336,7 +336,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
     }
     private static final Image MARKER = new Image("/org/sleuthkit/autopsy/timeline/images/marker.png", 16, 16, true, true, true); //NON-NLS
 
-    class PlaceMarkerAction extends Action {
+    private class PlaceMarkerAction extends Action {
 
         private GuideLine guideLine;
 
@@ -482,7 +482,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
                 if (selected == false) {
                     dividerPosition = masterDetailPane.getDividerPosition();
                 }
-                pinnedView.maxHeightProperty().unbind();;
+                pinnedView.maxHeightProperty().unbind();
                 masterDetailPane.setShowDetailNode(selected);
                 if (selected) {
                     pinnedView.setMinHeight(MIN_PINNED_LANE_HEIGHT);
@@ -492,14 +492,16 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
             });
 
             controller.getPinnedEvents().addListener((SetChangeListener.Change<? extends TimeLineEvent> change) -> {
-                if (change.getSet().size() == 0) {
-                    pinnedEventsToggle.setSelected(false);
-                } else {
-                    pinnedEventsToggle.setSelected(true);
-                }
+                boolean empty = change.getSet().isEmpty();
+                pinnedEventsToggle.setSelected(empty == false);
             });
-        }
 
+//            Platform.runLater(() -> {
+//                if (controller.getPinnedEvents().isEmpty() == false) {
+//                    pinnedEventsToggle.setSelected(true);
+//                }
+//            });
+        }
     }
 
     public Action newUnhideDescriptionAction(String description, DescriptionLoD descriptionLoD) {

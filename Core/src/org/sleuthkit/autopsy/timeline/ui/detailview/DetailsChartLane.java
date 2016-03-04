@@ -5,6 +5,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Range;
 import com.google.common.collect.TreeRangeMap;
 import java.util.Collection;
@@ -40,8 +41,10 @@ import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
 import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
@@ -87,7 +90,17 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
     public boolean quickHideFiltersEnabled() {
         return useQuickHideFilters;
     }
-
+    EventNodeBase<?> createNode(DetailsChartLane<?> chart, TimeLineEvent event) {
+        if (event.getEventIDs().size() == 1) {
+            return new SingleEventNode(this, controller.getEventsModel().getEventById(Iterables.getOnlyElement(event.getEventIDs())), null);
+        } else if (event instanceof SingleEvent) {
+            return new SingleEventNode(chart, (SingleEvent) event, null);
+        } else if (event instanceof EventCluster) {
+            return new EventClusterNode(chart, (EventCluster) event, null);
+        } else {
+            return new EventStripeNode(chart, (EventStripe) event, null);
+        }
+    }
     @Override
     protected void layoutPlotChildren() {
         setCursor(Cursor.WAIT);
