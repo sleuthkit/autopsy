@@ -18,10 +18,13 @@
  */
 package org.sleuthkit.autopsy.timeline.ui;
 
+import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.scene.Cursor;
+import javafx.scene.Node;
 import javafx.scene.chart.Axis;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Region;
@@ -30,15 +33,17 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.actions.Back;
 import org.sleuthkit.autopsy.timeline.actions.Forward;
+import org.sleuthkit.autopsy.timeline.ui.IntervalSelector.IntervalSelectorProvider;
 
 /**
  * Interface for TimeLineViews that are 'charts'.
  *
  * @param <X> the type of values along the horizontal axis
  */
-public interface TimeLineChart<X> extends ContextMenuProvider<X> {
+public interface TimeLineChart<X> extends ContextMenuProvider<X>, IntervalSelectorProvider<X> {
 
-//    void setController(TimeLineController controller);
+    ObservableList<? extends Node> getSelectedNodes();
+
     IntervalSelector<? extends X> getIntervalSelector();
 
     void setIntervalSelector(IntervalSelector<? extends X> newIntervalSelector);
@@ -68,7 +73,7 @@ public interface TimeLineChart<X> extends ContextMenuProvider<X> {
      * @param <X> the type of values along the horizontal axis
      * @param <Y> the type of chart this is a drag handler for
      */
-    public static class ChartDragHandler<X, Y extends Region & ContextMenuProvider<X>> implements EventHandler<MouseEvent> {
+    public static class ChartDragHandler<X, Y extends Region & IntervalSelectorProvider<X>> implements EventHandler<MouseEvent> {
 
         private final Y chart;
 
@@ -92,14 +97,14 @@ public interface TimeLineChart<X> extends ContextMenuProvider<X> {
                     chart.getIntervalSelector().prefHeightProperty().bind(chart.heightProperty());
                     startX = mouseEvent.getX();
                     chart.getIntervalSelector().relocate(startX, 0);
-                } else //resize/position existing selector
-                    if (mouseEvent.getX() > startX) {
-                        chart.getIntervalSelector().relocate(startX, 0);
-                        chart.getIntervalSelector().setPrefWidth(mouseEvent.getX() - startX);
-                    } else {
-                        chart.getIntervalSelector().relocate(mouseEvent.getX(), 0);
-                        chart.getIntervalSelector().setPrefWidth(startX - mouseEvent.getX());
-                    }
+                } else if (mouseEvent.getX() > startX) {
+                    //resize/position existing selector
+                    chart.getIntervalSelector().relocate(startX, 0);
+                    chart.getIntervalSelector().setPrefWidth(mouseEvent.getX() - startX);
+                } else {
+                    chart.getIntervalSelector().relocate(mouseEvent.getX(), 0);
+                    chart.getIntervalSelector().setPrefWidth(startX - mouseEvent.getX());
+                }
                 chart.getIntervalSelector().autosize();
             } else if (mouseEventType == MouseEvent.MOUSE_RELEASED) {
                 chart.setCursor(Cursor.DEFAULT);
@@ -107,10 +112,9 @@ public interface TimeLineChart<X> extends ContextMenuProvider<X> {
                 chart.setCursor(Cursor.DEFAULT);
             }
         }
-
     }
 
-    static class MouseClickedHandler<X, C extends Region & ContextMenuProvider<X>> implements EventHandler<MouseEvent> {
+    static class MouseClickedHandler<X, C extends Region & TimeLineChart<X>> implements EventHandler<MouseEvent> {
 
         private final C chart;
 
@@ -123,10 +127,12 @@ public interface TimeLineChart<X> extends ContextMenuProvider<X> {
             if (chart.getContextMenu() != null) {
                 chart.getContextMenu().hide();
             }
-            if (mouseEvent.getButton() == MouseButton.SECONDARY && mouseEvent.isStillSincePress()) {
-                chart.getChartContextMenu(mouseEvent);
+            if (mouseEvent.getButton() == MouseButton.PRIMARY && mouseEvent.isStillSincePress()) {
+                chart.getSelectedNodes().clear();
+            } else if (MouseEvent.MOUSE_CLICKED == mouseEvent.getEventType() && mouseEvent.isPopupTrigger() && mouseEvent.isStillSincePress()) {
+                ContextMenu chartContextMenu = chart.getChartContextMenu(mouseEvent);
                 chart.setOnMouseMoved(this);
-                chart.getContextMenu().show(chart, mouseEvent.getScreenX(), mouseEvent.getScreenY());
+                chartContextMenu.show(chart, mouseEvent.getScreenX(), mouseEvent.getScreenY());
                 mouseEvent.consume();
             }
         }

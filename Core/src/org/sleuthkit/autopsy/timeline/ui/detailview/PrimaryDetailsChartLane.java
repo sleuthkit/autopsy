@@ -18,11 +18,8 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
-import com.google.common.collect.Iterables;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-import javafx.application.Platform;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.scene.chart.Axis;
@@ -34,6 +31,7 @@ import org.joda.time.DateTime;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
+import org.sleuthkit.autopsy.timeline.ui.ContextMenuProvider;
 
 /**
  * Custom implementation of {@link XYChart} to graph events on a horizontal
@@ -49,7 +47,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
  *
  * //TODO: refactor the projected lines to a separate class. -jm
  */
-public final class PrimaryDetailsChart extends DetailsChartLane<EventStripe> {
+public final class PrimaryDetailsChartLane extends DetailsChartLane<EventStripe> implements ContextMenuProvider<DateTime> {
 
     private static final int PROJECTED_LINE_Y_OFFSET = 5;
     private static final int PROJECTED_LINE_STROKE_WIDTH = 5;
@@ -57,21 +55,26 @@ public final class PrimaryDetailsChart extends DetailsChartLane<EventStripe> {
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private final Map<EventCluster, Line> projectionMap = new ConcurrentHashMap<>();
 
-    PrimaryDetailsChart(DetailViewPane parentPane, DateAxis dateAxis, final Axis<EventStripe> verticalAxis) {
-        super(parentPane, dateAxis, verticalAxis, true);
+    PrimaryDetailsChartLane(DetailsChart parentChart, DateAxis dateAxis, final Axis<EventStripe> verticalAxis) {
+        super(parentChart, dateAxis, verticalAxis, true);
 
 //        filteredEvents.zoomParametersProperty().addListener(o -> {
 //            selectedNodes.clear();
 //            projectionMap.clear();
 //            controller.selectEventIDs(Collections.emptyList());
 //        });
-//        //this is needed to allow non circular binding of the guideline and timerangeRect heights to the height of the chart
-//        //TODO: seems like a hack, can we remove? -jm
-//        boundsInLocalProperty().addListener((Observable observable) -> {
-//            setPrefHeight(boundsInLocalProperty().get().getHeight());
-//        });
         //add listener for events that should trigger layout
         getController().getQuickHideFilters().addListener(layoutInvalidationListener);
+
+        parentChart.getEventStripes().addListener((ListChangeListener.Change<? extends EventStripe> change) -> {
+            while (change.next()) {
+                change.getAddedSubList().stream().forEach(this::addDataItem);
+                change.getRemoved().stream().forEach(this::removeDataItem);
+            }
+            requestChartLayout();
+        });
+        parentChart.getEventStripes().stream().forEach(this::addDataItem);
+        requestChartLayout();
 
         selectedNodes.addListener((ListChangeListener.Change<? extends EventNodeBase<?>> change) -> {
             while (change.next()) {
@@ -101,46 +104,6 @@ public final class PrimaryDetailsChart extends DetailsChartLane<EventStripe> {
 
     public ObservableList<EventStripe> getEventStripes() {
         return events;
-    }
-
-    /**
-     * add a dataitem to this chart
-     *
-     * @see note in main section of class JavaDoc
-     *
-     * @param data
-     */
-    void addDataItem(Data<DateTime, EventStripe> data) {
-        final EventStripe eventStripe = data.getYValue();
-        EventNodeBase<?> newNode;
-        if (eventStripe.getEventIDs().size() == 1) {
-            newNode = new SingleEventNode(this, controller.getEventsModel().getEventById(Iterables.getOnlyElement(eventStripe.getEventIDs())), null);
-        } else {
-            newNode = new EventStripeNode(PrimaryDetailsChart.this, eventStripe, null);
-        }
-        Platform.runLater(() -> {
-            events.add(eventStripe);
-            nodes.add(newNode);
-            nodeGroup.getChildren().add(newNode);
-            data.setNode(newNode);
-        });
-    }
-
-    /**
-     * remove a data item from this chart
-     *
-     * @see note in main section of class JavaDoc
-     *
-     * @param data
-     */
-    void removeDataItem(Data<DateTime, EventStripe> data) {
-        Platform.runLater(() -> {
-            EventNodeBase<?> removedNode = (EventNodeBase<?>) data.getNode();
-            events.removeAll(new StripeFlattener().apply(removedNode).collect(Collectors.toList()));
-            nodes.removeAll(removedNode);
-            nodeGroup.getChildren().removeAll(removedNode);
-            data.setNode(null);
-        });
     }
 
     private double getParentXForEpochMillis(Long epochMillis) {

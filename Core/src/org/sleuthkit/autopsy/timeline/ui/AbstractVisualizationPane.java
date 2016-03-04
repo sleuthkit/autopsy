@@ -45,8 +45,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.Tooltip;
 import javafx.scene.effect.Effect;
-import javafx.scene.input.MouseButton;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
@@ -82,7 +80,7 @@ import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
  * {@link XYChart} doing the rendering. Is this a good idea? -jm TODO: pull up
  * common history context menu items out of derived classes? -jm
  */
-public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, ChartType extends XYChart<X, Y> & TimeLineChart<X>> extends BorderPane {
+public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, ChartType extends Region & TimeLineChart<X>> extends BorderPane {
 
     @NbBundle.Messages("AbstractVisualization.Default_Tooltip.text=Drag the mouse to select a time interval to zoom into.\nRight-click for more actions.")
     private static final Tooltip DEFAULT_TOOLTIP = new Tooltip(Bundle.AbstractVisualization_Default_Tooltip_text());
@@ -136,6 +134,9 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
         return controller;
     }
 
+//    public ObservableList<XYChart.Series<X, Y>> getDataSeries() {
+//        return FXCollections.unmodifiableObservableList(dataSeries);
+//    }
     /**
      * @return the list of nodes containing settings widgets to insert into this
      *         visualization's header
@@ -199,6 +200,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
      */
     abstract protected Axis<Y> getYAxis();
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     abstract protected void resetData();
 
     /**
@@ -382,14 +384,11 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
         requestParentLayout();
     }
 
-    protected void setChartClickHandler() {
-        chart.addEventHandler(MouseEvent.MOUSE_CLICKED, (MouseEvent event) -> {
-            if (event.getButton() == MouseButton.PRIMARY && event.isStillSincePress()) {
-                selectedNodes.clear();
-            }
-        });
-    }
-
+//    protected void setChartClickHandler() {
+//        chart.addEventHandler(MouseEvent.MOUSE_CLICKED, (MouseEvent event) -> {
+//
+//        });
+//    }
     /**
      * add a {@link Text} node to the leaf container for the decluttered axis
      * labels
@@ -548,11 +547,12 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
          */
         @ThreadConfined(type = ThreadConfined.ThreadType.NOT_UI)
         protected void resetChart(AxisValuesType axisValues) {
-            resetData();
+
             Platform.runLater(() -> {
+                chart.clearIntervalSelector();
+                resetData();
                 setDateAxisValues(axisValues);
             });
-
         }
 
         abstract protected void setDateAxisValues(AxisValuesType values);

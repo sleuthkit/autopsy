@@ -19,28 +19,21 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.MissingResourceException;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
-import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.collections.SetChangeListener;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
-import javafx.geometry.Side;
 import javafx.scene.chart.Axis;
-import javafx.scene.chart.XYChart;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
-import javafx.scene.control.ContextMenu;
 import javafx.scene.control.CustomMenuItem;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuButton;
@@ -52,31 +45,24 @@ import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.TreeItem;
 import javafx.scene.effect.Effect;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.stage.Modality;
-import org.controlsfx.control.MasterDetailPane;
 import org.controlsfx.control.action.Action;
-import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
-import org.sleuthkit.autopsy.timeline.ui.ContextMenuProvider;
-import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
-import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
-import org.sleuthkit.autopsy.timeline.ui.detailview.DetailsChartLane.HideDescriptionAction;
-import org.sleuthkit.autopsy.timeline.ui.detailview.DetailsChartLane.UnhideDescriptionAction;
+import org.sleuthkit.autopsy.timeline.ui.detailview.DetailsChart.HideDescriptionAction;
+import org.sleuthkit.autopsy.timeline.ui.detailview.DetailsChart.UnhideDescriptionAction;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 /**
@@ -91,7 +77,7 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
  * EventTypeMap, and dataSets is all linked directly to the ClusterChart which
  * must only be manipulated on the JavaFx thread.
  */
-public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStripe, EventNodeBase<?>, PrimaryDetailsChart> implements ContextMenuProvider<DateTime> {
+public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStripe, EventNodeBase<?>, DetailsChart> {
 
     private final static Logger LOGGER = Logger.getLogger(DetailViewPane.class.getName());
 
@@ -100,177 +86,75 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
     private final Axis<EventStripe> verticalAxis = new EventAxis<>("All Events");
 
     private MultipleSelectionModel<TreeItem<TimeLineEvent>> treeSelectionModel;
-    private final ObservableList<EventNodeBase<?>> highlightedNodes = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
-    private final ScrollingLaneWrapper mainView;
-    private final ScrollingLaneWrapper pinnedView;
     private final DetailViewLayoutSettings layoutSettings;
-    private final PinnedEventsChart pinnedChart;
-    private final MasterDetailPane masterDetailPane;
-    private double dividerPosition = .1;
-    private static final int MIN_PINNED_LANE_HEIGHT = 50;
-    private ContextMenu contextMenu;
-    private IntervalSelector<? extends DateTime> intervalSelector;
-    private final Pane rootPane;
-
-    public ObservableList<EventStripe> getEventStripes() {
-        return chart.getEventStripes();
-    }
-
-    private static class DetailIntervalSelector extends IntervalSelector<DateTime> {
-
-        DetailIntervalSelector(ContextMenuProvider<DateTime> chart) {
-            super(chart);
-        }
-
-        @Override
-        protected String formatSpan(DateTime date) {
-            return date.toString(TimeLineController.getZonedFormatter());
-        }
-
-        @Override
-        protected Interval adjustInterval(Interval i) {
-            return i;
-        }
-
-        @Override
-        protected DateTime parseDateTime(DateTime date) {
-            return date;
-        }
-    }
-
-    @Override
-    public ContextMenu getContextMenu() {
-        return contextMenu;
-    }
-
-    @Override
-    public ContextMenu getChartContextMenu(MouseEvent mouseEvent) throws MissingResourceException {
-        if (contextMenu != null) {
-            contextMenu.hide();
-        }
-
-        contextMenu = ActionUtils.createContextMenu(Arrays.asList(new PlaceMarkerAction(mouseEvent),
-                TimeLineChart.newZoomHistoyActionGroup(controller)));
-        contextMenu.setAutoHide(true);
-        return contextMenu;
-    }
-
-    DetailViewLayoutSettings getLayoutSettings() {
-        return layoutSettings;
-    }
-
-    @Override
-    protected void resetData() {
-        for (XYChart.Series<DateTime, EventStripe> s : dataSeries) {
-            s.getData().forEach(chart::removeDataItem);
-            s.getData().clear();
-        }
-
-        mainView.reset();
-        pinnedView.reset();
-
-    }
 
     public DetailViewPane(TimeLineController controller, Pane partPane, Pane contextPane, Region bottomLeftSpacer) {
         super(controller, partPane, contextPane, bottomLeftSpacer);
         layoutSettings = new DetailViewLayoutSettings();
+        settingsNodes = new ArrayList<>(new DetailViewSettingsPane().getChildrenUnmodifiable());
 
         //initialize chart;
-        chart = new PrimaryDetailsChart(this, detailsChartDateAxis, verticalAxis);
-        chart.setData(dataSeries);
-        setChartClickHandler(); //can we push this into chart
+        chart = new DetailsChart(this, detailsChartDateAxis, pinnedDateAxis, verticalAxis);
+//        setChartClickHandler(); //can we push this into chart
+        setCenter(chart);
 
-        mainView = new ScrollingLaneWrapper(chart);
-        pinnedChart = new PinnedEventsChart(this, pinnedDateAxis, new EventAxis<>("Pinned Events"));
-        pinnedView = new ScrollingLaneWrapper(pinnedChart);
-        pinnedChart.setMinHeight(MIN_PINNED_LANE_HEIGHT);
-        pinnedView.setMinHeight(MIN_PINNED_LANE_HEIGHT);
-
-        masterDetailPane = new MasterDetailPane(Side.TOP, mainView, pinnedView, false);
-        masterDetailPane.setDividerPosition(dividerPosition);
-        masterDetailPane.prefHeightProperty().bind(heightProperty());
-        masterDetailPane.prefWidthProperty().bind(widthProperty());
-        rootPane = new Pane(masterDetailPane);
-        setCenter(rootPane);
-
-        settingsNodes = new ArrayList<>(new DetailViewSettingsPane().getChildrenUnmodifiable());
-        //bind layout fo axes and spacers
+//        //bind layout fo axes and spacers
         detailsChartDateAxis.getTickMarks().addListener((Observable observable) -> layoutDateLabels());
         detailsChartDateAxis.getTickSpacing().addListener(observable -> layoutDateLabels());
-
         verticalAxis.setAutoRanging(false); //prevent XYChart.updateAxisRange() from accessing dataSeries on JFX thread causing ConcurrentModificationException
         bottomLeftSpacer.minWidthProperty().bind(verticalAxis.widthProperty().add(verticalAxis.tickLengthProperty()));
         bottomLeftSpacer.prefWidthProperty().bind(verticalAxis.widthProperty().add(verticalAxis.tickLengthProperty()));
         bottomLeftSpacer.maxWidthProperty().bind(verticalAxis.widthProperty().add(verticalAxis.tickLengthProperty()));
 
-        //maintain highlighted effect on correct nodes
-        highlightedNodes.addListener((ListChangeListener.Change<? extends EventNodeBase<?>> change) -> {
-            while (change.next()) {
-                change.getAddedSubList().forEach(eventNode -> eventNode.applyHighlightEffect());
-                change.getRemoved().forEach(eventNode -> eventNode.clearHighlightEffect());
-            }
-        });
-
         selectedNodes.addListener((Observable observable) -> {
-            highlightedNodes.clear();
-            for (EventNodeBase<?> selectedNode : selectedNodes) {
-                highlightedNodes.add(selectedNode);
-            }
-            controller.selectEventIDs(selectedNodes.stream()
+            chart.setHighlightPredicate(selectedNodes::contains);
+            getController().selectEventIDs(selectedNodes.stream()
                     .flatMap(detailNode -> detailNode.getEventIDs().stream())
                     .collect(Collectors.toList()));
         });
-
-        filteredEvents.zoomParametersProperty().addListener(o -> {
-            clearIntervalSelector();
-            selectedNodes.clear();
-            controller.selectEventIDs(Collections.emptyList());
-        });
-
-        TimeLineChart.MouseClickedHandler<DateTime, DetailViewPane> mouseClickedHandler = new TimeLineChart.MouseClickedHandler<>(this);
-        TimeLineChart.ChartDragHandler<DateTime, DetailViewPane> chartDragHandler = new TimeLineChart.ChartDragHandler<>(this);
-        configureMouseListeners(chart, mouseClickedHandler, chartDragHandler);
-        configureMouseListeners(pinnedChart, mouseClickedHandler, chartDragHandler);
-
     }
 
-    @Override
-    public void clearIntervalSelector() {
-        rootPane.getChildren().remove(intervalSelector);
-        intervalSelector = null;
-    }
-
-    @Override
-    public IntervalSelector<DateTime> newIntervalSelector() {
-        return new DetailIntervalSelector(this);
-    }
-
-    @Override
-    public IntervalSelector<? extends DateTime> getIntervalSelector() {
-        return intervalSelector;
-    }
-
-    @Override
-    public void setIntervalSelector(IntervalSelector<? extends DateTime> newIntervalSelector) {
-        intervalSelector = newIntervalSelector;
-        rootPane.getChildren().add(getIntervalSelector());
+    public ObservableList<EventStripe> getEventStripes() {
+        return chart.getEventStripes();
     }
 
     public void setSelectionModel(MultipleSelectionModel<TreeItem<TimeLineEvent>> selectionModel) {
         this.treeSelectionModel = selectionModel;
 
         treeSelectionModel.getSelectedItems().addListener((Observable observable) -> {
-            highlightedNodes.clear();
-            for (TreeItem<TimeLineEvent> tn : treeSelectionModel.getSelectedItems()) {
-                String description = tn.getValue().getDescription();
-                for (EventNodeBase<?> n : chart.getNodes(eventNode -> eventNode.hasDescription(description))) {
-                    highlightedNodes.add(n);
-                }
-                for (EventNodeBase<?> n : pinnedChart.getNodes(eventNode -> eventNode.hasDescription(description))) {
-                    highlightedNodes.add(n);
-                }
-            }
+            Predicate<EventNodeBase<?>> highlightPredicate =
+                    treeSelectionModel.getSelectedItems().stream()
+                    .map(TreeItem::getValue)
+                    .map(TimeLineEvent::getDescription)
+                    .map(new Function<String, Predicate<EventNodeBase<?>>>() {
+                        @Override
+                        public Predicate<EventNodeBase<?>> apply(String description) {
+                            return (EventNodeBase< ?> eventNode) -> eventNode.hasDescription(description);
+                        }
+                    })
+                    .reduce(selectedNodes::contains, Predicate::or);
+            chart.setHighlightPredicate(highlightPredicate);
         });
+    }
+
+    @Override
+    public Axis<DateTime> getXAxis() {
+        return detailsChartDateAxis;
+    }
+
+    public Action newUnhideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
+        return new UnhideDescriptionAction(description, descriptionLoD, chart);
+    }
+
+    public Action newHideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
+        return new HideDescriptionAction(description, descriptionLoD, chart);
+
+    }
+
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    @Override
+    protected void resetData() {
+        chart.reset();
     }
 
     @Override
@@ -281,11 +165,6 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
     @Override
     protected Axis<EventStripe> getYAxis() {
         return verticalAxis;
-    }
-
-    @Override
-    public Axis<DateTime> getXAxis() {
-        return detailsChartDateAxis;
     }
 
     @Override
@@ -314,53 +193,13 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
 
     }
 
+    DetailViewLayoutSettings getLayoutSettings() {
+        return layoutSettings;
+    }
+
     DateTime getDateTimeForPosition(double layoutX) {
         return chart.getDateTimeForPosition(layoutX);
-    }
 
-    void clearGuideLine(GuideLine guideLine) {
-        rootPane.getChildren().remove(guideLine);
-    }
-
-    /**
-     *
-     * @param chartLane           the value of chartLane
-     * @param mouseClickedHandler the value of mouseClickedHandler
-     * @param chartDragHandler1   the value of chartDragHandler1
-     */
-    private void configureMouseListeners(final DetailsChartLane<?> chartLane, final TimeLineChart.MouseClickedHandler<DateTime, DetailViewPane> mouseClickedHandler, final TimeLineChart.ChartDragHandler<DateTime, DetailViewPane> chartDragHandler) {
-        chartLane.setOnMousePressed(chartDragHandler);
-        chartLane.setOnMouseReleased(chartDragHandler);
-        chartLane.setOnMouseDragged(chartDragHandler);
-        chartLane.addEventHandler(MouseEvent.MOUSE_CLICKED, mouseClickedHandler);
-    }
-    private static final Image MARKER = new Image("/org/sleuthkit/autopsy/timeline/images/marker.png", 16, 16, true, true, true); //NON-NLS
-
-    private class PlaceMarkerAction extends Action {
-
-        private GuideLine guideLine;
-
-        @NbBundle.Messages({"EventDetailChart.chartContextMenu.placeMarker.name=Place Marker"})
-        PlaceMarkerAction(MouseEvent clickEvent) {
-            super(Bundle.EventDetailChart_chartContextMenu_placeMarker_name());
-
-            setGraphic(new ImageView(MARKER)); // NON-NLS
-            setEventHandler(actionEvent -> {
-                if (guideLine == null) {
-                    guideLine = new GuideLine(DetailViewPane.this);
-                    guideLine.relocate(sceneToLocal(clickEvent.getSceneX(), 0).getX(), 0);
-                    addGuideLine(guideLine);
-
-                } else {
-                    guideLine.relocate(sceneToLocal(clickEvent.getSceneX(), 0).getX(), 0);
-                }
-            });
-        }
-
-    }
-
-    private void addGuideLine(GuideLine guideLine) {
-        rootPane.getChildren().add(guideLine);
     }
 
     private class DetailViewSettingsPane extends HBox {
@@ -477,40 +316,9 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
             hiddenRadioMenuItem.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.hiddenRadioMenuItem.text"));
             hiddenRadio.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.hiddenRadio.text"));
 
-            pinnedEventsToggle.selectedProperty().addListener(observable -> {
-                boolean selected = pinnedEventsToggle.isSelected();
-                if (selected == false) {
-                    dividerPosition = masterDetailPane.getDividerPosition();
-                }
-                pinnedView.maxHeightProperty().unbind();
-                masterDetailPane.setShowDetailNode(selected);
-                if (selected) {
-                    pinnedView.setMinHeight(MIN_PINNED_LANE_HEIGHT);
-                    pinnedView.maxHeightProperty().bind(pinnedChart.maxVScrollProperty().add(30));
-                    masterDetailPane.setDividerPosition(dividerPosition);
-                }
-            });
+            pinnedEventsToggle.selectedProperty().bindBidirectional(chart.pinnedLaneShowing());
 
-            controller.getPinnedEvents().addListener((SetChangeListener.Change<? extends TimeLineEvent> change) -> {
-                boolean empty = change.getSet().isEmpty();
-                pinnedEventsToggle.setSelected(empty == false);
-            });
-
-//            Platform.runLater(() -> {
-//                if (controller.getPinnedEvents().isEmpty() == false) {
-//                    pinnedEventsToggle.setSelected(true);
-//                }
-//            });
         }
-    }
-
-    public Action newUnhideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
-        return new UnhideDescriptionAction(description, descriptionLoD, chart);
-    }
-
-    public Action newHideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
-        return new HideDescriptionAction(description, descriptionLoD, chart);
-
     }
 
     @NbBundle.Messages({
@@ -567,12 +375,9 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
                     return null;
                 }
                 updateProgress(i, size);
-                final EventStripe cluster = eventStripes.get(i);
-                final XYChart.Data<DateTime, EventStripe> dataItem = new XYChart.Data<>(new DateTime(cluster.getStartMillis()), cluster);
-                getSeries(cluster.getEventType()).getData().add(dataItem);
-                chart.addDataItem(dataItem);
+                final EventStripe stripe = eventStripes.get(i);
+                Platform.runLater(() -> chart.addStripe(stripe));
             }
-
             return eventStripes.isEmpty() == false;
         }
 

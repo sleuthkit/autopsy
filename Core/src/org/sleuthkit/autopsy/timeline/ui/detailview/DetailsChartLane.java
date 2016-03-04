@@ -9,6 +9,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Range;
 import com.google.common.collect.TreeRangeMap;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,13 +18,13 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
@@ -32,13 +33,9 @@ import javafx.scene.chart.Axis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Tooltip;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import static javafx.scene.layout.Region.USE_PREF_SIZE;
-import org.controlsfx.control.action.Action;
 import org.joda.time.DateTime;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
@@ -49,9 +46,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
 import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
-import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
-import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
+import org.sleuthkit.autopsy.timeline.ui.ContextMenuProvider;
 
 /**
  *
@@ -60,17 +55,16 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
  * } and {@link #removeDataItem(javafx.scene.chart.XYChart.Data) } to add and
  * remove data.
  */
-abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTime, Y> implements TimeLineChart<DateTime> {
+abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTime, Y> implements ContextMenuProvider<DateTime> {
 
     private static final String STYLE_SHEET = GuideLine.class.getResource("EventsDetailsChart.css").toExternalForm(); //NON-NLS
 
-    static final Image HIDE = new Image("/org/sleuthkit/autopsy/timeline/images/eye--minus.png"); // NON-NLS
-    static final Image SHOW = new Image("/org/sleuthkit/autopsy/timeline/images/eye--plus.png"); // NON-NLS
+ 
 
     static final int MINIMUM_EVENT_NODE_GAP = 4;
     static final int MINIMUM_ROW_HEIGHT = 24;
 
-    private final DetailViewPane parentPane;
+    private final DetailsChart parentChart;
     final TimeLineController controller;
     final FilteredEventsModel filteredEvents;
     final DetailViewLayoutSettings layoutSettings;
@@ -90,6 +84,17 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
     public boolean quickHideFiltersEnabled() {
         return useQuickHideFilters;
     }
+
+    @Override
+    public ContextMenu getChartContextMenu(MouseEvent clickEvent) {
+        return parentChart.getChartContextMenu(clickEvent);
+    }
+
+    @Override
+    public ContextMenu getContextMenu() {
+        return parentChart.getContextMenu();
+    }
+
     EventNodeBase<?> createNode(DetailsChartLane<?> chart, TimeLineEvent event) {
         if (event.getEventIDs().size() == 1) {
             return new SingleEventNode(this, controller.getEventsModel().getEventById(Iterables.getOnlyElement(event.getEventIDs())), null);
@@ -101,6 +106,7 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
             return new EventStripeNode(chart, (EventStripe) event, null);
         }
     }
+
     @Override
     protected void layoutPlotChildren() {
         setCursor(Cursor.WAIT);
@@ -126,7 +132,6 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
         setCursor(null);
     }
 
-    @Override
     public TimeLineController getController() {
         return controller;
     }
@@ -149,14 +154,18 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
      */
     final ReadOnlyDoubleWrapper maxY = new ReadOnlyDoubleWrapper(0.0);
 
-    DetailsChartLane(DetailViewPane parentPane, Axis<DateTime> dateAxis, Axis<Y> verticalAxis, boolean useQuickHideFilters) {
+    DetailsChartLane(DetailsChart parentChart, Axis<DateTime> dateAxis, Axis<Y> verticalAxis, boolean useQuickHideFilters) {
         super(dateAxis, verticalAxis);
-        this.parentPane = parentPane;
-        this.layoutSettings = parentPane.getLayoutSettings();
-        this.controller = parentPane.getController();
-        this.selectedNodes = parentPane.getSelectedNodes();
+        this.parentChart = parentChart;
+        this.layoutSettings = parentChart.getLayoutSettings();
+        this.controller = parentChart.getController();
+        this.selectedNodes = parentChart.getSelectedNodes();
         this.filteredEvents = controller.getEventsModel();
         this.useQuickHideFilters = useQuickHideFilters;
+
+        final Series<DateTime, Y> series = new Series<>();
+        setData(FXCollections.observableArrayList());
+        getData().add(series);
 
         Tooltip.install(this, AbstractVisualizationPane.getDefaultTooltip());
 
@@ -258,8 +267,8 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
         return localMax; //return new max
     }
 
-    final public void requestTimelineChartLayout() {
-        requestChartLayout();
+    final public void requestChartLayout() {
+        super.requestChartLayout();
     }
 
     double getXForEpochMillis(Long millis) {
@@ -268,11 +277,6 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
     }
 
     abstract public ObservableList<EventStripe> getEventStripes();
-
-    @Override
-    public ContextMenu getContextMenu() {
-        return parentPane.getContextMenu();
-    }
 
     @Override
     protected void dataItemAdded(Series<DateTime, Y> series, int itemIndex, Data<DateTime, Y> item) {
@@ -294,24 +298,41 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
     protected void seriesRemoved(Series<DateTime, Y> series) {
     }
 
-    @Override
-    public IntervalSelector<? extends DateTime> getIntervalSelector() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    /**
+     * add a dataitem to this chart
+     *
+     * @see note in main section of class JavaDoc
+     *
+     * @param data
+     */
+    void addDataItem(Y event) {
+
+        EventNodeBase<?> eventNode = createNode(this, event);
+        eventMap.put(event, eventNode);
+        Platform.runLater(() -> {
+            events.add(event);
+            nodes.add(eventNode);
+            nodeGroup.getChildren().add(eventNode);
+//            data.setNode(eventNode);
+
+        });
     }
 
-    @Override
-    public void setIntervalSelector(IntervalSelector<? extends DateTime> newIntervalSelector) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public IntervalSelector<DateTime> newIntervalSelector() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void clearIntervalSelector() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    /**
+     * remove a data item from this chart
+     *
+     * @see note in main section of class JavaDoc
+     *
+     * @param data
+     */
+    void removeDataItem(Y event) {
+        EventNodeBase<?> removedNode = eventMap.remove(event);
+        Platform.runLater(() -> {
+            events.removeAll(Collections.singleton(event));
+            events.removeAll(new StripeFlattener().apply(removedNode).collect(Collectors.toList()));
+            nodeGroup.getChildren().removeAll(removedNode);
+//            data.setNode(null);
+        });
     }
 
     /**
@@ -327,10 +348,6 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
         return getXAxis().getValueForDisplay(getXAxis().parentToLocal(x, 0).getX());
     }
 
-    @Override
-    public ContextMenu getChartContextMenu(MouseEvent clickEvent) {
-        return parentPane.getChartContextMenu(clickEvent);
-    }
     /**
      * the group that all event nodes are added to. This facilitates scrolling
      * by allowing a single translation of this group.
@@ -344,22 +361,30 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
     /**
      * @return all the nodes that pass the given predicate
      */
+    synchronized Iterable<EventNodeBase<?>> getAllNodes() {
+        return getNodes((x) -> true);
+    }
+
+    /**
+     * @return all the nodes that pass the given predicate
+     */
     synchronized Iterable<EventNodeBase<?>> getNodes(Predicate<EventNodeBase<?>> p) {
         //use this recursive function to flatten the tree of nodes into an single stream.
         Function<EventNodeBase<?>, Stream<EventNodeBase<?>>> stripeFlattener =
                 new Function<EventNodeBase<?>, Stream<EventNodeBase<?>>>() {
-            @Override
-            public Stream<EventNodeBase<?>> apply(EventNodeBase<?> node) {
-                return Stream.concat(
-                        Stream.of(node),
-                        node.getSubNodes().stream().flatMap(this::apply));
-            }
-        };
+                    @Override
+                    public Stream<EventNodeBase<?>> apply(EventNodeBase<?> node) {
+                        return Stream.concat(
+                                Stream.of(node),
+                                node.getSubNodes().stream().flatMap(this::apply));
+                    }
+                };
 
         return sortedNodes.stream()
                 .flatMap(stripeFlattener)
                 .filter(p).collect(Collectors.toList());
     }
+
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)//at start of layout pass
     double descriptionWidth;
 
@@ -425,45 +450,10 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
 
     abstract void doAdditionalLayout();
 
-    @NbBundle.Messages({"HideDescriptionAction.displayName=Hide",
-        "HideDescriptionAction.displayMsg=Hide this group from the details view."})
-    static class HideDescriptionAction extends Action {
-
-        HideDescriptionAction(String description, DescriptionLoD descriptionLoD, DetailsChartLane<?> chart) {
-            super(Bundle.HideDescriptionAction_displayName());
-            setLongText(Bundle.HideDescriptionAction_displayMsg());
-            setGraphic(new ImageView(HIDE));
-            setEventHandler((ActionEvent t) -> {
-                final DescriptionFilter testFilter = new DescriptionFilter(
-                        descriptionLoD,
-                        description,
-                        DescriptionFilter.FilterMode.EXCLUDE);
-
-                DescriptionFilter descriptionFilter = chart.getController().getQuickHideFilters().stream()
-                        .filter(testFilter::equals)
-                        .findFirst().orElseGet(() -> {
-                            testFilter.selectedProperty().addListener(observable -> chart.requestTimelineChartLayout());
-                            chart.getController().getQuickHideFilters().add(testFilter);
-                            return testFilter;
-                        });
-                descriptionFilter.setSelected(true);
-            });
-        }
+    DetailsChart getParentChart() {
+        return parentChart;
     }
 
-    @NbBundle.Messages({"UnhideDescriptionAction.displayName=Unhide"})
-    static class UnhideDescriptionAction extends Action {
-
-        UnhideDescriptionAction(String description, DescriptionLoD descriptionLoD, DetailsChartLane<?> chart) {
-            super(Bundle.UnhideDescriptionAction_displayName());
-            setGraphic(new ImageView(SHOW));
-            setEventHandler((ActionEvent t) ->
-                    chart.getController().getQuickHideFilters().stream()
-                    .filter(descriptionFilter -> descriptionFilter.getDescriptionLoD().equals(descriptionLoD)
-                            && descriptionFilter.getDescription().equals(description))
-                    .forEach(descriptionfilter -> descriptionfilter.setSelected(false))
-            );
-        }
-    }
+   
 
 }

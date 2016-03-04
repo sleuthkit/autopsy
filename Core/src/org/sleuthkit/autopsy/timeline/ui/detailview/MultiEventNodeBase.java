@@ -66,8 +66,8 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
     
     private Timeline timeline;
 
-    MultiEventNodeBase(DetailsChartLane<?> chart, BundleType eventBundle, ParentNodeType parentNode) {
-        super(eventBundle, parentNode, chart);
+    MultiEventNodeBase(DetailsChartLane<?> chartLane, BundleType eventBundle, ParentNodeType parentNode) {
+        super(eventBundle, parentNode, chartLane);
         this.descLOD.set(eventBundle.getDescriptionLoD());
   
 
@@ -88,9 +88,9 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
          * This triggers the layout when a mousover causes the action buttons to
          * interesect with another node, forcing it down.
          */
-        heightProperty().addListener(heightProp -> chart.requestTimelineChartLayout());
+        heightProperty().addListener(heightProp -> chartLane.requestChartLayout());
         Platform.runLater(() ->
-                setLayoutX(chart.getXAxis().getDisplayPosition(new DateTime(eventBundle.getStartMillis())) - getLayoutXCompensation())
+                setLayoutX(chartLane.getXAxis().getDisplayPosition(new DateTime(eventBundle.getStartMillis())) - getLayoutXCompensation())
         );
 
         //initialize info hbox
@@ -101,7 +101,7 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
 
         //set up mouse hover effect and tooltip
         setOnMouseEntered((MouseEvent e) -> {
-            Tooltip.uninstall(chart, AbstractVisualizationPane.getDefaultTooltip());
+            Tooltip.uninstall(chartLane, AbstractVisualizationPane.getDefaultTooltip());
             showHoverControls(true);
             toFront();
         });
@@ -110,7 +110,7 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
             if (parentNode != null) {
                 parentNode.showHoverControls(true);
             } else {
-                Tooltip.install(chart, AbstractVisualizationPane.getDefaultTooltip());
+                Tooltip.install(chartLane, AbstractVisualizationPane.getDefaultTooltip());
             }
         });
         setOnMouseClicked(new ClickHandler());
@@ -120,7 +120,7 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
 
     @Override
     void requestChartLayout() {
-        getChartLane().requestTimelineChartLayout();
+        getChartLane().requestChartLayout();
     }
 
 
@@ -165,13 +165,13 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
     void animateTo(double xLeft, double yTop) {
         if (timeline != null) {
             timeline.stop();
-            Platform.runLater(chartLane::requestTimelineChartLayout);
+            Platform.runLater(chartLane::requestChartLayout);
         }
         timeline = new Timeline(new KeyFrame(Duration.millis(100),
                 new KeyValue(layoutXProperty(), xLeft),
                 new KeyValue(layoutYProperty(), yTop))
         );
-        timeline.setOnFinished(finished -> Platform.runLater(chartLane::requestTimelineChartLayout));
+        timeline.setOnFinished(finished -> Platform.runLater(chartLane::requestChartLayout));
         timeline.play();
     }
 

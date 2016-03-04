@@ -383,7 +383,10 @@ final public class VisualizationPanel extends BorderPane {
 
                 notificationPane.setContent(visualization);
                 if (visualization instanceof DetailViewPane) {
-                    eventsTree.setDetailViewPane((DetailViewPane) visualization);
+                    Platform.runLater(() -> {
+                        eventsTree.setDetailViewPane((DetailViewPane) visualization);
+                    });
+
                 }
                 visualization.hasEvents.addListener((observable, oldValue, newValue) -> {
                     if (newValue == false) {
@@ -391,11 +394,11 @@ final public class VisualizationPanel extends BorderPane {
                         notificationPane.setContent(
                                 new StackPane(visualization,
                                         new Region() {
-                                            {
-                                                setBackground(new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY)));
-                                                setOpacity(.3);
-                                            }
-                                        },
+                                    {
+                                        setBackground(new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY)));
+                                        setOpacity(.3);
+                                    }
+                                },
                                         new NoEventsDialog(() -> notificationPane.setContent(visualization))));
                     } else {
                         notificationPane.setContent(visualization);
@@ -424,79 +427,79 @@ final public class VisualizationPanel extends BorderPane {
 
         histogramTask = new LoggedTask<Void>(
                 NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.title"), true) { // NON-NLS
-                    private final Lighting lighting = new Lighting();
+            private final Lighting lighting = new Lighting();
 
-                    @Override
-                    protected Void call() throws Exception {
+            @Override
+            protected Void call() throws Exception {
 
-                        updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.preparing")); // NON-NLS
+                updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.preparing")); // NON-NLS
 
-                        long max = 0;
-                        final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval());
-                        final long lowerBound = rangeInfo.getLowerBound();
-                        final long upperBound = rangeInfo.getUpperBound();
-                        Interval timeRange = new Interval(new DateTime(lowerBound, TimeLineController.getJodaTimeZone()), new DateTime(upperBound, TimeLineController.getJodaTimeZone()));
+                long max = 0;
+                final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval());
+                final long lowerBound = rangeInfo.getLowerBound();
+                final long upperBound = rangeInfo.getUpperBound();
+                Interval timeRange = new Interval(new DateTime(lowerBound, TimeLineController.getJodaTimeZone()), new DateTime(upperBound, TimeLineController.getJodaTimeZone()));
 
-                        //extend range to block bounderies (ie day, month, year)
-                        int p = 0; // progress counter
+                //extend range to block bounderies (ie day, month, year)
+                int p = 0; // progress counter
 
-                        //clear old data, and reset ranges and series
-                        Platform.runLater(() -> {
-                            updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.resetUI")); // NON-NLS
+                //clear old data, and reset ranges and series
+                Platform.runLater(() -> {
+                    updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.resetUI")); // NON-NLS
 
-                        });
+                });
 
-                        ArrayList<Long> bins = new ArrayList<>();
+                ArrayList<Long> bins = new ArrayList<>();
 
-                        DateTime start = timeRange.getStart();
-                        while (timeRange.contains(start)) {
-                            if (isCancelled()) {
-                                return null;
-                            }
-                            DateTime end = start.plus(rangeInfo.getPeriodSize().getPeriod());
-                            final Interval interval = new Interval(start, end);
-                            //increment for next iteration
-
-                            start = end;
-
-                            updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.queryDb")); // NON-NLS
-                            //query for current range
-                            long count = filteredEvents.getEventCounts(interval).values().stream().mapToLong(Long::valueOf).sum();
-                            bins.add(count);
-
-                            max = Math.max(count, max);
-
-                            final double fMax = Math.log(max);
-                            final ArrayList<Long> fbins = new ArrayList<>(bins);
-                            Platform.runLater(() -> {
-                                updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.updateUI2")); // NON-NLS
-
-                                histogramBox.getChildren().clear();
-
-                                for (Long bin : fbins) {
-                                    if (isCancelled()) {
-                                        break;
-                                    }
-                                    Region bar = new Region();
-                                    //scale them to fit in histogram height
-                                    bar.prefHeightProperty().bind(histogramBox.heightProperty().multiply(Math.log(bin)).divide(fMax));
-                                    bar.setMaxHeight(USE_PREF_SIZE);
-                                    bar.setMinHeight(USE_PREF_SIZE);
-                                    bar.setBackground(background);
-                                    bar.setOnMouseEntered((MouseEvent event) -> {
-                                        Tooltip.install(bar, new Tooltip(bin.toString()));
-                                    });
-                                    bar.setEffect(lighting);
-                                    //they each get equal width to fill the histogram horizontally
-                                    HBox.setHgrow(bar, Priority.ALWAYS);
-                                    histogramBox.getChildren().add(bar);
-                                }
-                            });
-                        }
+                DateTime start = timeRange.getStart();
+                while (timeRange.contains(start)) {
+                    if (isCancelled()) {
                         return null;
                     }
+                    DateTime end = start.plus(rangeInfo.getPeriodSize().getPeriod());
+                    final Interval interval = new Interval(start, end);
+                    //increment for next iteration
 
-                };
+                    start = end;
+
+                    updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.queryDb")); // NON-NLS
+                    //query for current range
+                    long count = filteredEvents.getEventCounts(interval).values().stream().mapToLong(Long::valueOf).sum();
+                    bins.add(count);
+
+                    max = Math.max(count, max);
+
+                    final double fMax = Math.log(max);
+                    final ArrayList<Long> fbins = new ArrayList<>(bins);
+                    Platform.runLater(() -> {
+                        updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.updateUI2")); // NON-NLS
+
+                        histogramBox.getChildren().clear();
+
+                        for (Long bin : fbins) {
+                            if (isCancelled()) {
+                                break;
+                            }
+                            Region bar = new Region();
+                            //scale them to fit in histogram height
+                            bar.prefHeightProperty().bind(histogramBox.heightProperty().multiply(Math.log(bin)).divide(fMax));
+                            bar.setMaxHeight(USE_PREF_SIZE);
+                            bar.setMinHeight(USE_PREF_SIZE);
+                            bar.setBackground(background);
+                            bar.setOnMouseEntered((MouseEvent event) -> {
+                                Tooltip.install(bar, new Tooltip(bin.toString()));
+                            });
+                            bar.setEffect(lighting);
+                            //they each get equal width to fill the histogram horizontally
+                            HBox.setHgrow(bar, Priority.ALWAYS);
+                            histogramBox.getChildren().add(bar);
+                        }
+                    });
+                }
+                return null;
+            }
+
+        };
         new Thread(histogramTask).start();
         controller.monitorTask(histogramTask);
     }

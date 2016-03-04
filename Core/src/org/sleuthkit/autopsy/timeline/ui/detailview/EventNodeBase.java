@@ -133,18 +133,18 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
     private Button pinButton;
     private final Border SELECTION_BORDER;
     
-    EventNodeBase(Type ievent, EventNodeBase<?> parent, DetailsChartLane<?> chart) {
-        this.chartLane = chart;
+    EventNodeBase(Type ievent, EventNodeBase<?> parent, DetailsChartLane<?> chartLane) {
+        this.chartLane = chartLane;
         this.tlEvent = ievent;
         this.parentNode = parent;
         
-        sleuthkitCase = chart.getController().getAutopsyCase().getSleuthkitCase();
-        eventsModel = chart.getController().getEventsModel();
+        sleuthkitCase = chartLane.getController().getAutopsyCase().getSleuthkitCase();
+        eventsModel = chartLane.getController().getEventsModel();
         eventTypeImageView.setImage(getEventType().getFXImage());
         
         descrLabel.setGraphic(eventTypeImageView);
         
-        if (chart.getController().getEventsModel().getEventTypeZoom() == EventTypeZoomLevel.SUB_TYPE) {
+        if (chartLane.getController().getEventsModel().getEventTypeZoom() == EventTypeZoomLevel.SUB_TYPE) {
             evtColor = getEventType().getColor();
         } else {
             evtColor = getEventType().getBaseType().getColor();
@@ -159,7 +159,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
 
         //set up mouse hover effect and tooltip
         setOnMouseEntered(mouseEntered -> {
-            Tooltip.uninstall(chart, AbstractVisualizationPane.getDefaultTooltip());
+            Tooltip.uninstall(chartLane, AbstractVisualizationPane.getDefaultTooltip());
             showHoverControls(true);
             toFront();
         });
@@ -168,7 +168,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
             if (parentNode != null) {
                 parentNode.showHoverControls(true);
             } else {
-                Tooltip.install(chart, AbstractVisualizationPane.getDefaultTooltip());
+                Tooltip.install(chartLane, AbstractVisualizationPane.getDefaultTooltip());
             }
         });
         setOnMouseClicked(new ClickHandler());

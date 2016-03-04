@@ -111,7 +111,7 @@ final class SingleEventNode extends EventNodeBase<SingleEvent> {
 
     @Override
     void requestChartLayout() {
-        chartLane.requestTimelineChartLayout();
+        chartLane.requestChartLayout();
     }
 
     

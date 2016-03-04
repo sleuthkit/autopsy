@@ -65,7 +65,6 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
     private static final Effect SELECTED_NODE_EFFECT = new Lighting();
     private ContextMenu chartContextMenu;
 
-
     private final TimeLineController controller;
     private final FilteredEventsModel filteredEvents;
 
@@ -151,8 +150,6 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
         return new CountsIntervalSelector(this);
     }
 
-   
-
     /**
      * used by {@link CountsViewPane#BarClickHandler} to close the context menu
      * when the bar menu is requested
@@ -161,6 +158,10 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
      */
     public ContextMenu getContextMenu() {
         return chartContextMenu;
+    }
+
+    public ObservableList<Node> getSelectedNodes() {
+        return selectedNodes;
     }
 
     void setRangeInfo(RangeDivisionInfo rangeInfo) {

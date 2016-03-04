@@ -206,7 +206,7 @@ final public class EventClusterNode extends MultiEventNodeBase<EventCluster, Eve
                 } catch (InterruptedException | ExecutionException ex) {
                     LOGGER.log(Level.SEVERE, "Error loading subnodes", ex); //NON-NLS
                 }
-                getChartLane().requestTimelineChartLayout();
+                getChartLane().requestChartLayout();
                 getChartLane().setCursor(null);
             }
         };

@@ -5,14 +5,12 @@
  */
 package org.sleuthkit.autopsy.timeline.ui;
 
-import javafx.scene.chart.Axis;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.input.MouseEvent;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 
 public interface ContextMenuProvider<X> {
 
-    public Axis<X> getXAxis();
 
     public TimeLineController getController();
 
@@ -20,21 +18,4 @@ public interface ContextMenuProvider<X> {
 
     ContextMenu getChartContextMenu(MouseEvent m);
 
-    IntervalSelector<? extends X> getIntervalSelector();
-
-    void setIntervalSelector(IntervalSelector<? extends X> newIntervalSelector);
-
-    /**
-     * derived classes should implement this so as to supply an appropriate
-     * subclass of {@link IntervalSelector}
-     *
-     * @return a new interval selector
-     */
-    IntervalSelector<X> newIntervalSelector();
-
-    /**
-     * clear any references to previous interval selectors , including removing
-     * the interval selector from the ui / scene-graph
-     */
-    void clearIntervalSelector();
 }

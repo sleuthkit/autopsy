@@ -43,6 +43,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import org.apache.commons.lang3.StringUtils;
+import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -199,13 +200,12 @@ final public class EventsTree extends BorderPane {
                 if (getTreeItem() instanceof EventDescriptionTreeItem) {
                     setOnMouseClicked((MouseEvent event) -> {
                         if (event.getButton() == MouseButton.SECONDARY) {
-                            if (hidden.get()) {
-                                ActionUtils.createContextMenu(ImmutableList.of(detailViewPane.newUnhideDescriptionAction(item.getDescription(), item.getDescriptionLoD())))
-                                        .show(EventBundleTreeCell.this, event.getScreenX(), event.getScreenY());
-                            } else {
-                                ActionUtils.createContextMenu(ImmutableList.of(detailViewPane.newHideDescriptionAction(item.getDescription(), item.getDescriptionLoD())))
-                                        .show(EventBundleTreeCell.this, event.getScreenX(), event.getScreenY());
-                            }
+                            Action action = hidden.get()
+                                    ? detailViewPane.newUnhideDescriptionAction(item.getDescription(), item.getDescriptionLoD())
+                                    : detailViewPane.newHideDescriptionAction(item.getDescription(), item.getDescriptionLoD());
+
+                            ActionUtils.createContextMenu(ImmutableList.of(action))
+                                    .show(this, event.getScreenX(), event.getScreenY());
                         }
                     });
                 } else {

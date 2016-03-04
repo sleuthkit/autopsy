@@ -26,6 +26,7 @@ import javafx.fxml.FXML;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
+import javafx.scene.chart.Axis;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
@@ -61,7 +62,7 @@ public abstract class IntervalSelector<X> extends BorderPane {
     /**
      * the Axis this is a selector over
      */
-    public final ContextMenuProvider<X> chart;
+    public final IntervalSelectorProvider<X> chart;
 
     private Tooltip tooltip;
     /////////drag state
@@ -89,7 +90,7 @@ public abstract class IntervalSelector<X> extends BorderPane {
     @FXML
     private BorderPane bottomBorder;
 
-    public IntervalSelector(ContextMenuProvider<X> chart) {
+    public IntervalSelector(IntervalSelectorProvider<X> chart) {
         this.chart = chart;
         this.controller = chart.getController();
         FXMLConstructor.construct(this, IntervalSelector.class, "IntervalSelector.fxml"); // NON-NLS
@@ -191,13 +192,11 @@ public abstract class IntervalSelector<X> extends BorderPane {
         ActionUtils.configureButton(new ZoomToSelectedIntervalAction(), zoomButton);
         ActionUtils.configureButton(new ClearSelectedIntervalAction(), closeButton);
 
-        //have to add handler rather than use convenience methods so that charts can listen for dismisal click
         setOnMouseClicked(mosueClick -> {
             if (mosueClick.getButton() == MouseButton.SECONDARY) {
                 chart.clearIntervalSelector();
                 mosueClick.consume();
-            }
-            if (mosueClick.getClickCount() >= 2) {
+            } else if (mosueClick.getClickCount() >= 2) {
                 zoomToSelectedInterval();
                 mosueClick.consume();
             }
@@ -312,5 +311,30 @@ public abstract class IntervalSelector<X> extends BorderPane {
                 chart.clearIntervalSelector();
             });
         }
+    }
+
+    public interface IntervalSelectorProvider<X> {
+
+        public TimeLineController getController();
+
+        IntervalSelector<? extends X> getIntervalSelector();
+
+        void setIntervalSelector(IntervalSelector<? extends X> newIntervalSelector);
+
+        /**
+         * derived classes should implement this so as to supply an appropriate
+         * subclass of {@link IntervalSelector}
+         *
+         * @return a new interval selector
+         */
+        IntervalSelector<X> newIntervalSelector();
+
+        /**
+         * clear any references to previous interval selectors , including
+         * removing the interval selector from the ui / scene-graph
+         */
+        void clearIntervalSelector();
+
+        public Axis<X> getXAxis();
     }
 }

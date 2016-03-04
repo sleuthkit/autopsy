@@ -45,6 +45,7 @@ import javafx.scene.layout.Region;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
@@ -102,7 +103,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
     public CountsViewPane(TimeLineController controller, Pane partPane, Pane contextPane, Region spacer) {
         super(controller, partPane, contextPane, spacer);
         chart = new EventCountsChart(controller, dateAxis, countAxis, selectedNodes);
-        setChartClickHandler();
+//        setChartClickHandler();
         chart.setData(dataSeries);
         setCenter(chart);
 
@@ -201,18 +202,16 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
         }
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     @Override
     protected void resetData() {
+        for (XYChart.Series<String, Number> s : dataSeries) {
+            s.getData().clear();
+        }
 
-        Platform.runLater(() -> {
-            for (XYChart.Series<String, Number> s : dataSeries) {
-                s.getData().clear();
-            }
-
-            dataSeries.clear();
-            eventTypeToSeriesMap.clear();
-            createSeries();
-        });
+        dataSeries.clear();
+        eventTypeToSeriesMap.clear();
+        createSeries();
     }
 
     private static enum ScaleType implements Function<Long, Double> {

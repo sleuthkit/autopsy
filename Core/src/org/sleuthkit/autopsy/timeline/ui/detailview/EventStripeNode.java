@@ -33,7 +33,7 @@ import org.controlsfx.control.action.ActionUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
-import org.sleuthkit.autopsy.timeline.ui.detailview.DetailsChartLane.HideDescriptionAction;
+import org.sleuthkit.autopsy.timeline.ui.detailview.DetailsChart.HideDescriptionAction;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.configureActionButton;
 
 /**
@@ -42,16 +42,19 @@ import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.configu
 final public class EventStripeNode extends MultiEventNodeBase<EventStripe, EventCluster, EventClusterNode> {
 
     private static final Logger LOGGER = Logger.getLogger(EventStripeNode.class.getName());
+
+    private Action newHideAction() {
+        return new HideDescriptionAction(getDescription(), tlEvent.getDescriptionLoD(), chartLane.getParentChart());
+    }
     private Button hideButton;
 
     EventStripeNode(DetailsChartLane<?> chartLane, EventStripe eventStripe, EventClusterNode parentNode) {
         super(chartLane, eventStripe, parentNode);
         setMinHeight(24);
         //setup description label
-
         descrLabel.setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
-
         descrLabel.setPrefWidth(USE_COMPUTED_SIZE);
+
         setAlignment(subNodePane, Pos.BOTTOM_LEFT);
 
         if (eventStripe.getClusters().size() > 1) {
@@ -87,7 +90,7 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
     void installActionButtons() {
         super.installActionButtons();
         if (chartLane.quickHideFiltersEnabled() && hideButton == null) {
-            hideButton = ActionUtils.createButton(new HideDescriptionAction(getDescription(), tlEvent.getDescriptionLoD(), chartLane),
+            hideButton = ActionUtils.createButton(newHideAction(),
                     ActionUtils.ActionTextBehavior.HIDE);
             configureActionButton(hideButton);
 
@@ -137,6 +140,6 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
 
     @Override
     Collection<? extends Action> getActions() {
-        return Arrays.asList(new HideDescriptionAction(getDescription(), tlEvent.getDescriptionLoD(), chartLane));
+        return Arrays.asList(newHideAction());
     }
 }
