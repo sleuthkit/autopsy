@@ -464,12 +464,7 @@ class ReportGenerator {
                     progress.start();
                     progress.setIndeterminate(false);
                     try {
-                        SleuthkitCase db = Case.getCurrentCase().getSleuthkitCase();
-                        SleuthkitCase.CaseDbQuery queryResult = db.executeQuery("SELECT COUNT (*) FROM blackboard_artifact_types");
-                        ResultSet rs = queryResult.getResultSet();
-                        rs.next();
-                        int count = rs.getInt(1);
-                        progress.setMaximumProgress(count + 2);
+                        progress.setMaximumProgress(this.artifactTypes.size() + 2);
                     } catch (Exception e) {
                         progress.setMaximumProgress(ARTIFACT_TYPE.values().length + 2); // +2 for content and blackboard artifact tags
                     }
@@ -535,7 +530,10 @@ class ReportGenerator {
                     continue;
                 }
 
-                //Used to ge the unique attribute types
+                /*
+                 Gets all of the attribute types of this artifact type by adding
+                 all of the types to a set
+                 */
                 Set<BlackboardAttribute.Type> attrTypeSet = new TreeSet<>();
                 for (ArtifactData data : artifactList) {
                     List<BlackboardAttribute> attributes = data.getAttributes();
@@ -543,15 +541,18 @@ class ReportGenerator {
                         attrTypeSet.add(attribute.getAttributeType());
                     }
                 }
-                // Get the columns appropriate for the artifact type.
+                // Get the columns appropriate for the artifact type. This is
+                // used to get the data that will be in the cells below based on
+                // type, and display the column headers.
                 List<Column> columns = getArtifactTableColumns(type.getTypeID(), attrTypeSet);
                 if (columns.isEmpty()) {
                     continue;
                 }
                 ReportGenerator.this.columnHeaderMap.put(type.getTypeID(), columns);
-                // The most efficient way to sort all the Artifacts is to add them to a List, and then
-                // sort that List based off a Comparator. Adding to a TreeMap/Set/List sorts the list
-                // each time an element is added, which adds unnecessary overhead if we only need it sorted once.
+
+                // The artifact list is sorted now, as getting the row data is 
+                // dependent on having the columns, which is necessary for 
+                // sorting.
                 Collections.sort(artifactList);
                 List<String> columnHeaderNames = new ArrayList<>();
                 for (Column currColumn : columns) {
@@ -566,7 +567,8 @@ class ReportGenerator {
                     // Add the row data to all of the reports.
                     for (TableReportModule module : tableModules) {
 
-                        // Get the row data for this type of artifact.
+                        // Get the row data for this artifact, and has the 
+                        // module add it.
                         List<String> rowData = artifactData.getRow();
                         if (rowData.isEmpty()) {
                             continue;
@@ -1053,11 +1055,9 @@ class ReportGenerator {
                     currentKeyword = keyword;
                     for (TableReportModule module : tableModules) {
                         module.addSetElement(currentKeyword);
-                        List<Column> columns = getArtifactTableColumns(ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID(), new HashSet<BlackboardAttribute.Type>());
                         List<String> columnHeaderNames = new ArrayList<>();
-                        for (Column currColumn : columns) {
-                            columnHeaderNames.add(currColumn.getColumnHeader());
-                        }
+                        columnHeaderNames.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.preview"));
+                        columnHeaderNames.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile"));
                         module.startTable(columnHeaderNames);
                     }
                 }
@@ -1190,11 +1190,9 @@ class ReportGenerator {
                     currentSet = set;
                     for (TableReportModule module : tableModules) {
                         module.startSet(currentSet);
-                        List<Column> columns = getArtifactTableColumns(ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID(), new HashSet<BlackboardAttribute.Type>());
                         List<String> columnHeaderNames = new ArrayList<>();
-                        for (Column currColumn : columns) {
-                            columnHeaderNames.add(currColumn.getColumnHeader());
-                        }
+                        columnHeaderNames.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.file"));
+                        columnHeaderNames.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.size"));
                         module.startTable(columnHeaderNames);
                         tableProgress.get(module).updateStatusLabel(
                                 NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processingList",
@@ -1220,16 +1218,20 @@ class ReportGenerator {
     }
 
     /**
-     * For a given artifact type ID, return the list of the row titles we're
+     * For a given artifact type ID, return the list of the columns that we are
      * reporting on.
      *
-     * @param artifactTypeId artifact type ID
-     * @param types          The set of types available for this artifact type
+     * @param artifactTypeId   artifact type ID
+     * @param attributeTypeSet The set of attributeTypeSet available for this
+     *                         artifact type
      *
      * @return List<String> row titles
      */
-    private List<Column> getArtifactTableColumns(int artifactTypeId, Set<BlackboardAttribute.Type> types) {
+    private List<Column> getArtifactTableColumns(int artifactTypeId, Set<BlackboardAttribute.Type> attributeTypeSet) {
         ArrayList<Column> columns = new ArrayList<>();
+
+        // Long switch statement to retain ordering of attribute types that are 
+        // attached to pre-defined artifact types.
         if (ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID() == artifactTypeId) {
             columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.url"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_URL)));
@@ -1684,20 +1686,28 @@ class ReportGenerator {
             columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.remotePath"),
                     new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_REMOTE_PATH)));
         } else {
-            for (BlackboardAttribute.Type type : types) {
+            // This is the case that it is a custom type. The reason an else is 
+            // necessary is to make sure that the source file column is added
+            for (BlackboardAttribute.Type type : attributeTypeSet) {
                 columns.add(new AttributeColumn(type.getDisplayName(), type));
             }
             columns.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
             columns.add(new TaggedResultsColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tags")));
 
+            // Short circuits to guarantee that the attribute types aren't added
+            // twice.
             return columns;
         }
+        // If it is an attribute column, it removes the attribute type of that 
+        // column from the set, so types are not reported more than once.
         for (Column column : columns) {
-            column.removeType(types);
+            attributeTypeSet = column.removeTypeFromSet(attributeTypeSet);
         }
-        for (BlackboardAttribute.Type type : types) {
+        // Now uses the remaining types in the set to construct columns
+        for (BlackboardAttribute.Type type : attributeTypeSet) {
             columns.add(new AttributeColumn(type.getDisplayName(), type));
         }
+        // Source file column is added here for ordering purposes.
         if (artifactTypeId == ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()
                 || artifactTypeId == ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()
                 || artifactTypeId == ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()
@@ -1725,53 +1735,6 @@ class ReportGenerator {
         columns.add(new TaggedResultsColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tags")));
 
         return columns;
-    }
-
-    /**
-     * Map all BlackboardAttributes' values in a list of BlackboardAttributes to
-     * each attribute's attribute type ID, using module's dateToString method
-     * for date/time conversions if a module is supplied.
-     *
-     * @param attList list of BlackboardAttributes to be mapped
-     * @param module  the TableReportModule the mapping is for
-     *
-     * @return Map<Integer, String> of the BlackboardAttributes mapped to their
-     *         attribute type ID
-     */
-    public Map<Integer, String> getMappedAttributes(List<BlackboardAttribute> attList, TableReportModule... module) {
-        Map<Integer, String> attributes = new HashMap<>();
-        int size = ATTRIBUTE_TYPE.values().length;
-        for (int n = 0; n <= size; n++) {
-            attributes.put(n, "");
-        }
-        for (BlackboardAttribute tempatt : attList) {
-            String value = "";
-            Integer type = tempatt.getAttributeType().getTypeID();
-            if (type.equals(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID())
-                    || type.equals(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID())
-                    || type.equals(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID())
-                    || type.equals(ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED.getTypeID())
-                    || type.equals(ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID())
-                    || type.equals(ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID())
-                    || type.equals(ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID())
-                    || type.equals(ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID())) {
-                if (module.length > 0) {
-                    value = module[0].dateToString(tempatt.getValueLong());
-                } else {
-                    SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-                    value = sdf.format(new java.util.Date((tempatt.getValueLong() * 1000)));
-                }
-            } else {
-                value = tempatt.getDisplayString();
-            }
-
-            if (value == null) {
-                value = "";
-            }
-            value = EscapeUtil.escapeHtml(value);
-            attributes.put(type, value);
-        }
-        return attributes;
     }
 
     /**
@@ -1933,14 +1896,21 @@ class ReportGenerator {
                 orderedRowData.add(makeCommaSeparatedList(getTags()));
 
             } else if (ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() == getArtifact().getArtifactTypeID()) {
-                Map<Integer, String> mappedAttributes = getMappedAttributes();
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()));
-                orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID()));
-                String pathToShow = mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PATH.getTypeID());
-                if (pathToShow.isEmpty()) {
-                    pathToShow = getFileUniquePath(getObjectID());
+                String[] attributeDataArray = new String[3];
+                for (BlackboardAttribute attr : attributes) {
+                    if (attr.getAttributeType().equals(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SET_NAME))) {
+                        attributeDataArray[0] = attr.getDisplayString();
+                    } else if (attr.getAttributeType().equals(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CATEGORY))) {
+                        attributeDataArray[1] = attr.getDisplayString();
+                    } else if (attr.getAttributeType().equals(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PATH))) {
+                        String pathToShow = attr.getDisplayString();
+                        if (pathToShow.isEmpty()) {
+                            pathToShow = getFileUniquePath(getObjectID());
+                        }
+                        attributeDataArray[2] = pathToShow;
+                    }
                 }
-                orderedRowData.add(pathToShow);
+                orderedRowData.addAll(Arrays.asList(attributeDataArray));
                 orderedRowData.add(makeCommaSeparatedList(getTags()));
 
             } else {
@@ -1955,14 +1925,6 @@ class ReportGenerator {
             }
 
             return orderedRowData;
-        }
-
-        /**
-         * Returns a mapping of Attribute Type ID to the String representation
-         * of an Attribute Value.
-         */
-        private Map<Integer, String> getMappedAttributes() {
-            return ReportGenerator.this.getMappedAttributes(attributes);
         }
     }
 
@@ -2001,7 +1963,7 @@ class ReportGenerator {
 
         String getCellData(ArtifactData artData);
 
-        void removeType(Set<BlackboardAttribute.Type> types);
+        Set<BlackboardAttribute.Type> removeTypeFromSet(Set<BlackboardAttribute.Type> types);
     }
 
     private class AttributeColumn implements Column {
@@ -2037,8 +1999,9 @@ class ReportGenerator {
         }
 
         @Override
-        public void removeType(Set<Type> types) {
+        public Set<BlackboardAttribute.Type> removeTypeFromSet(Set<Type> types) {
             types.remove(this.attributeType);
+            return types;
         }
     }
 
@@ -2065,7 +2028,9 @@ class ReportGenerator {
         }
 
         @Override
-        public void removeType(Set<Type> types) {
+        public Set<BlackboardAttribute.Type> removeTypeFromSet(Set<Type> types) {
+            // This column doesn't have a type, so nothing to remove
+            return types;
         }
     }
 
@@ -2088,7 +2053,9 @@ class ReportGenerator {
         }
 
         @Override
-        public void removeType(Set<Type> types) {
+        public Set<BlackboardAttribute.Type> removeTypeFromSet(Set<Type> types) {
+            // This column doesn't have a type, so nothing to remove
+            return types;
         }
     }
 
@@ -2111,7 +2078,9 @@ class ReportGenerator {
         }
 
         @Override
-        public void removeType(Set<Type> types) {
+        public Set<BlackboardAttribute.Type> removeTypeFromSet(Set<Type> types) {
+            // This column doesn't have a type, so nothing to remove
+            return types;
         }
     }
 }
