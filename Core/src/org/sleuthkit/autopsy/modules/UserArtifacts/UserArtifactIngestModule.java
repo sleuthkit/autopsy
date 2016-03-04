@@ -64,9 +64,9 @@ public class UserArtifactIngestModule implements DataSourceIngestModule {
             } else {
                 art2 = dataSource.newArtifact(type2.getTypeID());
             }
-            BlackboardAttribute.Type attributeType = Case.getCurrentCase().getSleuthkitCase().getAttributeType("Test5");
+            BlackboardAttribute.Type attributeType = Case.getCurrentCase().getSleuthkitCase().getAttributeType("Test7");
             if (attributeType == null) {
-                attributeType = Case.getCurrentCase().getServices().getBlackboard().addAttributeType("Test5", TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Header3");
+                attributeType = Case.getCurrentCase().getServices().getBlackboard().addAttributeType("Test7", TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.INTEGER, "Header5");
             }
             BlackboardAttribute.Type attributeType2 = Case.getCurrentCase().getSleuthkitCase().getAttributeType("Test6");
             if (attributeType2 == null) {
@@ -74,7 +74,7 @@ public class UserArtifactIngestModule implements DataSourceIngestModule {
 
             }
             art1.addAttribute(new BlackboardAttribute(attributeType,
-                    UserArtifactIngestModuleFactory.getModuleName(), "tester1"));
+                    UserArtifactIngestModuleFactory.getModuleName(), 1234));
             progressBar.progress(1);
             art2.addAttribute(new BlackboardAttribute(attributeType2,
                     UserArtifactIngestModuleFactory.getModuleName(), "tester2"));

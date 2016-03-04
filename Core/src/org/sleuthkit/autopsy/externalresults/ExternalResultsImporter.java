@@ -133,7 +133,7 @@ public final class ExternalResultsImporter {
         for (ExternalResults.Artifact artifactData : results.getArtifacts()) {
             try {
                 // Add the artifact to the case database.
-                int artifactTypeId = caseDb.getArtifactType(artifactData.getType()).getTypeID();
+                int artifactTypeId = caseDb.getArtifactTypeID(artifactData.getType());
                 if (artifactTypeId == -1) {
                     artifactTypeId = caseDb.addBlackboardArtifactType(artifactData.getType(), artifactData.getType()).getTypeID();
                 }
