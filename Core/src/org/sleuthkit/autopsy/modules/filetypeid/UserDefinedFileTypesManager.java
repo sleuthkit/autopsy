@@ -369,7 +369,7 @@ final class UserDefinedFileTypesManager {
          *
          * @return A collection of file types read from the XML file.
          */
-        private static List<FileType> readFileTypes(String filePath) throws IOException, ParserConfigurationException, SAXException {
+        private static List<FileType> readFileTypes(String filePath) throws IOException, SAXException {
             List<FileType> fileTypes = new ArrayList<>();
             /*
              * RC: Commenting out the loadDocument overload that validates
@@ -395,8 +395,15 @@ final class UserDefinedFileTypesManager {
             }
             return fileTypes;
         }
-
-        private static List<FileType> readFileTypesSerialized(String filePath) throws IOException, ParserConfigurationException, SAXException {
+        
+        /**
+         * Reads the file types
+         * 
+         * @param filePath the file path where the file types are to be read
+         * @return the file types
+         * @throws ParserConfigurationException If the file cannot be read
+         */
+        private static List<FileType> readFileTypesSerialized(String filePath) throws ParserConfigurationException {
             List<FileType> fileTypes = new ArrayList<>();
             File serializedDefs = new File(getFileTypeDefinitionsFilePath(USER_DEFINED_TYPE_SERIALIZATION_FILE));
             if (serializedDefs.exists()) {
