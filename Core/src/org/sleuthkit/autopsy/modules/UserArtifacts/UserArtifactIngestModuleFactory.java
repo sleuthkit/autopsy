@@ -19,15 +19,17 @@
 package org.sleuthkit.autopsy.modules.UserArtifacts;
 
 import org.openide.util.NbBundle;
+import org.openide.util.lookup.ServiceProvider;
 import org.python.apache.xmlcommons.Version;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
+import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
 /**
  * Factory for test module that creates new artifact and attribute types.
  */
-//@ServiceProvider(service = IngestModuleFactory.class)
+@ServiceProvider(service = IngestModuleFactory.class)
 public class UserArtifactIngestModuleFactory extends IngestModuleFactoryAdapter {
 
     static String getModuleName() {

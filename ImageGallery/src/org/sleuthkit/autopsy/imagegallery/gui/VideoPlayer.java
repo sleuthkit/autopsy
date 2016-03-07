@@ -104,7 +104,7 @@ public class VideoPlayer extends BorderPane {
             mp.seek(Duration.millis(timeSlider.getValue()));
         }
     };
-    private final VideoFile<?> file;
+    private final VideoFile file;
 
     @FXML
     @NbBundle.Messages({"# {0} - exception type",
@@ -236,7 +236,7 @@ public class VideoPlayer extends BorderPane {
         }
     }
 
-    public VideoPlayer(MediaPlayer mp, VideoFile<?> file) {
+    public VideoPlayer(MediaPlayer mp, VideoFile file) {
         this.file = file;
         this.mp = mp;
         FXMLConstructor.construct(this, "MediaControl.fxml"); //NON-NLS

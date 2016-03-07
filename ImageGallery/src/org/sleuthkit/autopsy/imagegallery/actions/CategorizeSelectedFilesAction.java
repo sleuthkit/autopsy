@@ -27,6 +27,9 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 public class CategorizeSelectedFilesAction extends CategorizeAction {
 
     public CategorizeSelectedFilesAction(Category cat, ImageGalleryController controller) {
-        super(controller, cat, controller.getSelectionModel().getSelected());
+        super(controller, cat, null);
+        setEventHandler(actionEvent ->
+                addCatToFiles(controller.getSelectionModel().getSelected())
+        );
     }
 }

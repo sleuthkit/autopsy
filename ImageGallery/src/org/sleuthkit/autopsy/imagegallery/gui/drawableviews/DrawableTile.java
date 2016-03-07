@@ -31,13 +31,10 @@ import javafx.scene.image.Image;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
-import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
-import org.sleuthkit.datamodel.AbstractContent;
 
 /**
  * GUI component that represents a single image as a tile with an icon, a label,
@@ -66,8 +63,8 @@ public class DrawableTile extends DrawableTileBase {
         setCache(true);
         setCacheHint(CacheHint.SPEED);
         nameLabel.prefWidthProperty().bind(imageView.fitWidthProperty());
-        imageView.fitHeightProperty().bind(Toolbar.getDefault(getController()).sizeSliderValue());
-        imageView.fitWidthProperty().bind(Toolbar.getDefault(getController()).sizeSliderValue());
+        imageView.fitHeightProperty().bind(getController().thumbnailSizeProperty());
+        imageView.fitWidthProperty().bind(getController().thumbnailSizeProperty());
 
         selectionModel.lastSelectedProperty().addListener(new WeakChangeListener<>(lastSelectionListener));
 
@@ -108,12 +105,12 @@ public class DrawableTile extends DrawableTileBase {
     }
 
     @Override
-    Task<Image> newReadImageTask(DrawableFile<?> file) {
+    Task<Image> newReadImageTask(DrawableFile file) {
         return file.getThumbnailTask();
     }
 
     @Override
     protected String getTextForLabel() {
-        return getFile().map(AbstractContent::getName).orElse("");
+        return getFile().map(DrawableFile::getName).orElse("");
     }
 }

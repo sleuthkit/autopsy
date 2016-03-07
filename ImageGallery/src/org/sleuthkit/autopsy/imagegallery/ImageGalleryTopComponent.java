@@ -148,7 +148,8 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             fullUIStack.getChildren().add(borderPane);
             splitPane = new SplitPane();
             borderPane.setCenter(splitPane);
-            borderPane.setTop(Toolbar.getDefault(controller));
+            Toolbar toolbar = new Toolbar(controller);
+            borderPane.setTop(toolbar);
             borderPane.setBottom(new StatusBar(controller));
 
             metaDataTable = new MetaDataPane(controller);
@@ -168,6 +169,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             splitPane.setDividerPositions(0.1, 1.0);
 
             ImageGalleryController.getDefault().setStacks(fullUIStack, centralStack);
+            ImageGalleryController.getDefault().setToolbar(toolbar);
             ImageGalleryController.getDefault().setShowTree(() -> tabPane.getSelectionModel().select(groupTree));
         });
     }

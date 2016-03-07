@@ -98,11 +98,11 @@ class EvalNetworkShareObj extends EvaluatableObject {
                 boolean foundLocalPathMatch = false;
 
                 for (BlackboardAttribute attr : art.getAttributes()) {
-                    if ((attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_REMOTE_PATH.getTypeID())
+                    if ((attr.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_REMOTE_PATH.getTypeID())
                             && (obj.getNetname() != null)) {
                         foundRemotePathMatch = compareStringObject(obj.getNetname(), attr.getValueString());
                     }
-                    if ((attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LOCAL_PATH.getTypeID())
+                    if ((attr.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LOCAL_PATH.getTypeID())
                             && (obj.getLocalPath() != null)) {
                         foundLocalPathMatch = compareStringObject(obj.getLocalPath(), attr.getValueString());
                     }

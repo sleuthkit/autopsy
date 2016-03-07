@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,14 +22,21 @@ import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
 import org.openide.util.NbPreferences;
 
-/** Persists Image Analyzer preference to a per user .properties file */
-class ImageGalleryPreferences {
+/**
+ * Persists Image Gallery preference to a per user .properties file
+ */
+public class ImageGalleryPreferences {
 
-    /** NBPreferences object used to persist settings */
+    /**
+     * NBPreferences object used to persist settings
+     */
     private static final Preferences preferences = NbPreferences.forModule(ImageGalleryPreferences.class);
 
-    /** key for the listening enabled for new cases setting */
+    /**
+     * key for the listening enabled for new cases setting
+     */
     private static final String ENABLED_BY_DEFAULT = "enabled_by_default"; //NON-NLS
+    private static final String GROUP_CATEGORIZATION_WARNING_DISABLED = "group_categorization_warning_disabled"; //NON-NLS
 
     /**
      * Return setting of whether Image Analyzer should be automatically enabled
@@ -38,13 +45,28 @@ class ImageGalleryPreferences {
      *
      * @return true if new cases should have image analyzer enabled.
      */
-    static boolean isEnabledByDefault() {
+    public static boolean isEnabledByDefault() {
         final boolean aBoolean = preferences.getBoolean(ENABLED_BY_DEFAULT, true);
         return aBoolean;
     }
 
-    static void setEnabledByDefault(boolean b) {
+    public static void setEnabledByDefault(boolean b) {
         preferences.putBoolean(ENABLED_BY_DEFAULT, b);
+    }
+
+    /**
+     * Return whether the warning about overwriting categories when acting on an
+     * entire group is disabled.
+     *
+     * @return true if the warning is disabled.
+     */
+    public static boolean isGroupCategorizationWarningDisabled() {
+        final boolean aBoolean = preferences.getBoolean(GROUP_CATEGORIZATION_WARNING_DISABLED, false);
+        return aBoolean;
+    }
+
+    public static void setGroupCategorizationWarningDisabled(boolean b) {
+        preferences.putBoolean(GROUP_CATEGORIZATION_WARNING_DISABLED, b);
     }
 
     static void addChangeListener(PreferenceChangeListener l) {

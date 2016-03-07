@@ -117,7 +117,7 @@ class EvalAddressObj extends EvaluatableObject {
                     for (BlackboardArtifact art : artList) {
 
                         for (BlackboardAttribute attr : art.getAttributes()) {
-                            if (attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()) {
+                            if (attr.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()) {
                                 if (compareStringObject(addressStr, obj.getAddressValue().getCondition(),
                                         obj.getAddressValue().getApplyCondition(), attr.getValueString())) {
                                     finalHits.add(art);

@@ -461,6 +461,7 @@ public class EventsRepository {
             updateProgress(workDone, total);
         }
 
+        @SuppressWarnings("deprecation") // TODO (EUR-733): Do not use SleuthkitCase.getLastObjectId         
         @Override
         @NbBundle.Messages({"progressWindow.msg.refreshingFileTags=Refreshing file tags",
             "progressWindow.msg.refreshingResultTags=Refreshing result tags",
@@ -654,7 +655,7 @@ public class EventsRepository {
         private void populateEventType(final ArtifactEventType type, EventDB.EventTransaction trans) {
             try {
                 //get all the blackboard artifacts corresponding to the given event sub_type
-                final ArrayList<BlackboardArtifact> blackboardArtifacts = skCase.getBlackboardArtifacts(type.getArtifactType());
+                final ArrayList<BlackboardArtifact> blackboardArtifacts = skCase.getBlackboardArtifacts(type.getArtifactType().getTypeID());
                 final int numArtifacts = blackboardArtifacts.size();
                 restartProgressHandle(Bundle.progressWindow_populatingXevents(type.getDisplayName()), "", 0D, numArtifacts, true);
                 for (int i = 0; i < numArtifacts; i++) {

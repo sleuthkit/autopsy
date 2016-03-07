@@ -185,19 +185,33 @@ public class DrawableTagsManager {
     }
 
     /**
-     * Gets content tags count by content.
+     * Gets content tags by content.
      *
-     * @param The content of interest.
+     * @param content The content of interest.
      *
      * @return A list, possibly empty, of the tags that have been applied to the
-     *         artifact.
+     *         content.
      *
-     * @throws TskCoreException
+     * @throws TskCoreException if there was an error reading from the db
      */
-    public List<ContentTag> getContentTagsByContent(Content content) throws TskCoreException {
+    public List<ContentTag> getContentTags(Content content) throws TskCoreException {
         synchronized (autopsyTagsManagerLock) {
             return autopsyTagsManager.getContentTagsByContent(content);
         }
+    }
+
+    /**
+     * Gets content tags by DrawableFile.
+     *
+     * @param drawable The DrawableFile of interest.
+     *
+     * @return A list, possibly empty, of the tags that have been applied to the
+     *         DrawableFile.
+     *
+     * @throws TskCoreException if there was an error reading from the db
+     */
+    public List<ContentTag> getContentTags(DrawableFile drawable) throws TskCoreException {
+        return getContentTags(drawable.getAbstractFile());
     }
 
     public TagName getTagName(String displayName) throws TskCoreException {
@@ -213,7 +227,7 @@ public class DrawableTagsManager {
                 } catch (TagsManager.TagNameAlreadyExistsException ex) {
                     throw new TskCoreException("tagame exists but wasn't found", ex);
                 }
-            } catch (IllegalStateException ex) {
+            } catch (NullPointerException | IllegalStateException ex) {
                 LOGGER.log(Level.SEVERE, "Case was closed out from underneath", ex); //NON-NLS
                 throw new TskCoreException("Case was closed out from underneath", ex);
             }
@@ -228,7 +242,7 @@ public class DrawableTagsManager {
         }
     }
 
-    public ContentTag addContentTag(DrawableFile<?> file, TagName tagName, String comment) throws TskCoreException {
+    public ContentTag addContentTag(DrawableFile file, TagName tagName, String comment) throws TskCoreException {
         synchronized (autopsyTagsManagerLock) {
             return autopsyTagsManager.addContentTag(file.getAbstractFile(), tagName, comment);
         }

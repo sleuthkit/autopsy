@@ -106,7 +106,7 @@ class ScalpelCarverIngestModule implements FileIngestModule {
         } catch (IOException ex) {
             String message = NbBundle.getMessage(this.getClass(), "ScalpelCarverIngestModule.startUp.exception.msg4");
             logger.log(Level.SEVERE, message, ex);
-            throw new IngestModuleException(message);
+            throw new IngestModuleException(message, ex);
         }
 
         initialized = true;

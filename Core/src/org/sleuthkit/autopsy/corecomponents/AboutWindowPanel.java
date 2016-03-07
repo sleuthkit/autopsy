@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,16 +47,22 @@ import org.sleuthkit.datamodel.SleuthkitJNI;
  */
 public final class AboutWindowPanel extends JPanel implements HyperlinkListener {
 
-    private static final Logger Logger = org.sleuthkit.autopsy.coreutils.Logger.getLogger(AboutWindowPanel.class.getName());
-
+    private static final long serialVersionUID = 1L;
     private URL url = null;
-
-    private Icon about;
-
+    private final Icon about;
     private boolean verboseLogging;
 
+    public AboutWindowPanel() {
+        about = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/splash.png"));
+        init();
+    }
+        
     public AboutWindowPanel(String pathToBrandingImage) {
         about = new ImageIcon(ImageUtilities.loadImage(pathToBrandingImage));
+        init();
+    }
+
+    private void init() {
         initComponents();
         logoLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         description.setText(org.openide.util.NbBundle.getMessage(AboutWindowPanel.class,
@@ -67,8 +73,7 @@ public final class AboutWindowPanel extends JPanel implements HyperlinkListener 
         copyright.setBackground(getBackground());
         if (verboseLoggingIsSet()) {
             disableVerboseLoggingButton();
-        }
-
+        }        
     }
 
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents

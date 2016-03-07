@@ -52,7 +52,7 @@ public interface DrawableView {
 
     Region getCategoryBorderRegion();
 
-    Optional<DrawableFile<?>> getFile();
+    Optional<DrawableFile> getFile();
 
     void setFile(final Long fileID);
 

@@ -219,11 +219,11 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * multi-user (using PostgreSql)
      */
     @NbBundle.Messages({"Case_caseType_singleUser=Single-user case",
-    "Case_caseType_multiUser=Multi-user case"})
+        "Case_caseType_multiUser=Multi-user case"})
     public enum CaseType {
 
-        SINGLE_USER_CASE(Bundle.Case_caseType_singleUser()),
-        MULTI_USER_CASE(Bundle.Case_caseType_multiUser());
+        SINGLE_USER_CASE("Single-user case"), //NON-NLS
+        MULTI_USER_CASE("Multi-user case");   //NON-NLS
 
         private final String caseType;
 
@@ -249,6 +249,14 @@ public class Case implements SleuthkitCase.ErrorObserver {
         @Override
         public String toString() {
             return caseType;
+        }
+
+        String getLocalizedDisplayName() {
+            if (fromString(caseType) == SINGLE_USER_CASE) {
+                return Bundle.Case_caseType_singleUser();
+            } else {
+                return Bundle.Case_caseType_multiUser();
+            }
         }
     };
 

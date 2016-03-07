@@ -79,7 +79,7 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
             } catch (SecurityException ex) {
                 logger.log(Level.SEVERE, "Error initializing output dir: " + moduleDirAbsolute, ex); //NON-NLS
                 services.postMessage(IngestMessage.createErrorMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), "Error initializing", "Error initializing output dir: " + moduleDirAbsolute)); //NON-NLS
-                throw new IngestModuleException(ex.getMessage());
+                throw new IngestModuleException(ex.getMessage(), ex);
             }
         }
 
@@ -87,7 +87,7 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            throw new IngestModuleException(ex.getMessage());
+            throw new IngestModuleException(ex.getMessage(), ex);
         }
 
         // initialize the extraction modules.
