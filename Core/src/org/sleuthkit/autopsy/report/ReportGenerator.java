@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -463,11 +464,7 @@ class ReportGenerator {
                     module.startReport(reportPath);
                     progress.start();
                     progress.setIndeterminate(false);
-                    try {
-                        progress.setMaximumProgress(this.artifactTypes.size() + 2);
-                    } catch (Exception e) {
-                        progress.setMaximumProgress(ARTIFACT_TYPE.values().length + 2); // +2 for content and blackboard artifact tags
-                    }
+                    progress.setMaximumProgress(this.artifactTypes.size() + 2); // +2 for content and blackboard artifact tags
                 }
             }
 
@@ -534,7 +531,7 @@ class ReportGenerator {
                  Gets all of the attribute types of this artifact type by adding
                  all of the types to a set
                  */
-                Set<BlackboardAttribute.Type> attrTypeSet = new TreeSet<>();
+                Set<BlackboardAttribute.Type> attrTypeSet = new TreeSet<>((Type o1, Type o2) -> o1.getDisplayName().compareTo(o2.getDisplayName()));
                 for (ArtifactData data : artifactList) {
                     List<BlackboardAttribute> attributes = data.getAttributes();
                     for (BlackboardAttribute attribute : attributes) {
