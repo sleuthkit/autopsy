@@ -488,7 +488,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
                     // if the artifact has an ASSOCIATED ARTIFACT, then we display the associated artifact instead
                     try {
                         for (BlackboardAttribute attr : artifact.getAttributes()) {
-                            if (attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
+                            if (attr.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
                                 long assocArtifactId = attr.getValueLong();
                                 int assocArtifactIndex = -1;
                                 for (BlackboardArtifact art : artifacts) {

@@ -92,7 +92,7 @@ class CasePropertiesForm extends javax.swing.JPanel {
         CaseMetadata caseMetadata = new CaseMetadata(Paths.get(currentCase.getConfigFilePath()));
         tbDbName.setText(caseMetadata.getCaseDatabaseName());
         Case.CaseType caseType = caseMetadata.getCaseType();
-        tbDbType.setText(caseType.toString());
+        tbDbType.setText(caseType.getLocalizedDisplayName());
         if (caseType == Case.CaseType.SINGLE_USER_CASE) {
             deleteCaseButton.setEnabled(true);
         } else {

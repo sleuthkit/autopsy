@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2014 Basis Technology Corp.
+ * Copyright 2013-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,56 +23,72 @@ import java.util.List;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * Abstract class for a callback for a DataSourceProcessor.
+ * An abstract base class for callback objects to be given to data source
+ * processors for use by the background tasks that add data sources to a case
+ * database. The callback objects are used to signal task completion and return
+ * results.
  *
- * Ensures that DSP invokes the caller overridden method, doneEDT(), in the EDT
- * thread.
- *
+ * Concrete implementations of DataSourceProcessorCallback should override
+ * either the done method or the doneEDT method, but not both.
  */
 public abstract class DataSourceProcessorCallback {
 
     public enum DataSourceProcessorResult {
 
-        NO_ERRORS, ///< No errors were encountered while ading the data source
-        CRITICAL_ERRORS, ///< No data was added to the database. There were fundamental errors processing the data (such as no data or system failure).  
-        NONCRITICAL_ERRORS, ///< There was data added to the database, but there were errors from data corruption or a small number of minor issues. 
+        /**
+         * No errors occurred while ading the data source to the case database.
+         */
+        NO_ERRORS,
+        /**
+         * Critical errors occurred while ading the data source to the case
+         * database. The data source was not added to the case database.
+         */
+        CRITICAL_ERRORS,
+        /**
+         * Non-critical errors occurred while adding the data source to the case
+         * database. The data source was added to the database, but the data
+         * source may have been corrupted in some way.
+         */
+        NONCRITICAL_ERRORS
     };
 
     /**
-     * Called by a DSP implementation when it is done adding a data source to
-     * the database. Users of the DSP can override this method if they do not
-     * want to be notified on the EDT. Otherwise, this method will call
-     * doneEDT() with the same arguments.
+     * Called by a data source processor when it is done adding a data source to
+     * the case database, this method adds a task to call the doneEDT method to
+     * the EDT task queue.
      *
-     * @param result      Code for status
-     * @param errList     List of error strings
-     * @param newContents List of root Content objects that were added to
-     *                    database. Typically only one is given.
+     * IMPORTANT: Concrete implementations of DataSourceProcessorCallback should
+     * override this method if the callback SHOULD NOT be done in the EDT.
+     *
+     * @param result         Result code.
+     * @param errList        List of error messages, possibly empty.
+     * @param newDataSources A list of the data sources added, empty if critical
+     *                       errors occurred or processing was successfully
+     *                       cancelled.
      */
-    public void done(DataSourceProcessorResult result, List<String> errList, List<Content> newContents) {
-
+    public void done(DataSourceProcessorResult result, List<String> errList, List<Content> newDataSources) {
         final DataSourceProcessorResult resultf = result;
         final List<String> errListf = errList;
-        final List<Content> newContentsf = newContents;
-
-        // Invoke doneEDT() that runs on the EDT .
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                doneEDT(resultf, errListf, newContentsf);
-            }
+        final List<Content> newContentsf = newDataSources;
+        EventQueue.invokeLater(() -> {
+            doneEDT(resultf, errListf, newContentsf);
         });
     }
 
     /**
-     * Called by done() if the default implementation is used. Users of DSPs
-     * that have UI updates to do after the DSP is finished adding the DS can
-     * implement this method to receive the updates on the EDT.
+     * Called by a data source processor when it is done adding a data source to
+     * the case database, if the default done method has not been overridden.
      *
-     * @param result      Code for status
-     * @param errList     List of error strings
-     * @param newContents List of root Content objects that were added to
-     *                    database. Typically only one is given.
+     * IMPORTANT: Concrete implementations of DataSourceProcessorCallback should
+     * override the done method and provide an implementation of this method
+     * that throws an UnsupportedOperationException if the callback SHOULD NOT
+     * be done in the EDT.
+     *
+     * @param result         Result code.
+     * @param errList        List of error messages, possibly empty.
+     * @param newDataSources A list of the data sources added, empty if critical
+     *                       errors occurred or processing was successfully
+     *                       cancelled.
      */
-    public abstract void doneEDT(DataSourceProcessorResult result, List<String> errList, List<Content> newContents);
+    abstract public void doneEDT(DataSourceProcessorResult result, List<String> errList, List<Content> newDataSources);
 };

@@ -115,15 +115,15 @@ class EvalAccountObj extends EvaluatableObject {
                 boolean foundSIDMatch = false;
 
                 for (BlackboardAttribute attr : art.getAttributes()) {
-                    if ((attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID())
+                    if ((attr.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID())
                             && (haveHomeDir)) {
                         foundHomeDirMatch = compareStringObject(userAccountObj.getHomeDirectory(), attr.getValueString());
                     }
-                    if ((attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME.getTypeID())
+                    if ((attr.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME.getTypeID())
                             && (haveUsername)) {
                         foundUsernameMatch = compareStringObject(userAccountObj.getUsername(), attr.getValueString());
                     }
-                    if ((attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_ID.getTypeID())
+                    if ((attr.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_ID.getTypeID())
                             && (haveSID) && (winUserObj != null)) {
                         foundSIDMatch = compareStringObject(winUserObj.getSecurityID(), attr.getValueString());
                     }
