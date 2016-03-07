@@ -1846,11 +1846,18 @@ class ReportGenerator {
             if (rowData == null) {
                 try {
                     rowData = getOrderedRowDataAsStrings();
-                    // replace null values if attribute was not defined
-                    for (int i = 0; i < rowData.size(); i++) {
-                        if (rowData.get(i) == null) {
-                            rowData.set(i, "");
+                    // If else is done so that row data is not set before 
+                    // columns are added to the hash map.
+                    if (rowData.size() > 0) {
+                        // replace null values if attribute was not defined
+                        for (int i = 0; i < rowData.size(); i++) {
+                            if (rowData.get(i) == null) {
+                                rowData.set(i, "");
+                            }
                         }
+                    } else {
+                        rowData = null;
+                        return new ArrayList<>();
                     }
                 } catch (TskCoreException ex) {
                     errorList.add(
@@ -1897,6 +1904,8 @@ class ReportGenerator {
 
             } else if (ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() == getArtifact().getArtifactTypeID()) {
                 String[] attributeDataArray = new String[3];
+                // Array is used so that the order of the attributes is 
+                // maintained.
                 for (BlackboardAttribute attr : attributes) {
                     if (attr.getAttributeType().equals(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SET_NAME))) {
                         attributeDataArray[0] = attr.getDisplayString();
