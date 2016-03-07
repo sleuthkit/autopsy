@@ -152,7 +152,7 @@ final class FilesSet implements Serializable {
         /**
          * Construct an interesting files set membership rule.
          *
-         * @param ruleName          The name of the rule.
+         * @param ruleName          The name of the rule. Can be empty string.
          * @param fileNameCondition A file name condition.
          * @param metaTypeCondition A file meta-type condition.
          * @param pathCondition     A file path condition, may be null.
@@ -163,7 +163,7 @@ final class FilesSet implements Serializable {
             if (metaTypeCondition == null) {
                 throw new IllegalArgumentException("Interesting files set rule meta-type condition cannot be null");
             }
-            if (ruleName == null && fileNameCondition == null && mimeTypeCondition == null) {
+            if (pathCondition == null && fileNameCondition == null && mimeTypeCondition == null && fileSizeCondition == null) {
                 throw new IllegalArgumentException("Must have at least one condition on rule.");
             }
 
@@ -174,14 +174,18 @@ final class FilesSet implements Serializable {
              * fastest, so do it first
              */
             this.metaTypeCondition = metaTypeCondition;
-            if (this.metaTypeCondition != null) {
-                this.conditions.add(this.metaTypeCondition);
+            this.conditions.add(this.metaTypeCondition);
+
+            this.fileSizeCondition = fileSizeCondition;
+            if (this.fileSizeCondition != null) {
+                this.conditions.add(this.fileSizeCondition);
             }
 
             this.fileNameCondition = fileNameCondition;
             if (this.fileNameCondition != null) {
                 this.conditions.add(fileNameCondition);
             }
+
             this.mimeTypeCondition = mimeTypeCondition;
             if (this.mimeTypeCondition != null) {
                 this.conditions.add(mimeTypeCondition);
@@ -190,11 +194,6 @@ final class FilesSet implements Serializable {
             this.pathCondition = pathCondition;
             if (this.pathCondition != null) {
                 this.conditions.add(this.pathCondition);
-            }
-
-            this.fileSizeCondition = fileSizeCondition;
-            if (this.fileSizeCondition != null) {
-                this.conditions.add(this.fileSizeCondition);
             }
         }
 
@@ -210,7 +209,7 @@ final class FilesSet implements Serializable {
         /**
          * Get the file name condition for the rule.
          *
-         * @return A file name condition.
+         * @return A file name condition. Can be null.
          */
         FileNameCondition getFileNameCondition() {
             return this.fileNameCondition;
@@ -219,7 +218,7 @@ final class FilesSet implements Serializable {
         /**
          * Get the meta-type condition for the rule.
          *
-         * @return A meta-type condition.
+         * @return A meta-type condition. Can be null.
          */
         MetaTypeCondition getMetaTypeCondition() {
             return this.metaTypeCondition;
@@ -228,7 +227,7 @@ final class FilesSet implements Serializable {
         /**
          * Get the path condition for the rule.
          *
-         * @return A path condition, may be null.
+         * @return A path condition, may be null. Can be null.
          */
         ParentPathCondition getPathCondition() {
             return this.pathCondition;
@@ -280,16 +279,16 @@ final class FilesSet implements Serializable {
         }
 
         /**
-         * @return the mimeTypeCondition
+         * @return the mime type condition. Can be null.
          */
-        public MimeTypeCondition getMimeTypeCondition() {
+        MimeTypeCondition getMimeTypeCondition() {
             return mimeTypeCondition;
         }
 
         /**
-         * @return the fileSizeCondition
+         * @return the file size condition. Can be null.
          */
-        public FileSizeCondition getFileSizeCondition() {
+        FileSizeCondition getFileSizeCondition() {
             return fileSizeCondition;
         }
 
@@ -316,7 +315,7 @@ final class FilesSet implements Serializable {
         static final class MimeTypeCondition implements FileAttributeCondition {
 
             private static final long serialVersionUID = 1L;
-            private String mimeType;
+            private final String mimeType;
 
             /**
              * Constructs a MimeTypeCondition
@@ -340,7 +339,7 @@ final class FilesSet implements Serializable {
              *
              * @return the mime type
              */
-            public String getMimeType() {
+            String getMimeType() {
                 return this.mimeType;
             }
 
@@ -359,7 +358,7 @@ final class FilesSet implements Serializable {
              *
              * @return the comparator
              */
-            public COMPARATOR getComparator() {
+            COMPARATOR getComparator() {
                 return comparator;
             }
 
@@ -368,7 +367,7 @@ final class FilesSet implements Serializable {
              *
              * @return the unit
              */
-            public SIZE_UNIT getUnit() {
+            SIZE_UNIT getUnit() {
                 return unit;
             }
 
@@ -377,7 +376,7 @@ final class FilesSet implements Serializable {
              *
              * @return the size value
              */
-            public int getSizeValue() {
+            int getSizeValue() {
                 return sizeValue;
             }
 
@@ -459,9 +458,9 @@ final class FilesSet implements Serializable {
                     return name;
                 }
             }
-            private COMPARATOR comparator;
-            private SIZE_UNIT unit;
-            private int sizeValue;
+            private final COMPARATOR comparator;
+            private final SIZE_UNIT unit;
+            private final int sizeValue;
 
             FileSizeCondition(COMPARATOR comparator, SIZE_UNIT unit, int sizeValue) {
                 this.comparator = comparator;
