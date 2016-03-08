@@ -40,6 +40,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.TskData.FileKnown;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -103,6 +104,9 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
     @Override
     public ProcessResult process(AbstractFile abstractFile) {
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
+        if(this.settings.isSkipKnownFiles() && (abstractFile.getKnown() == FileKnown.KNOWN)) {
+            return ProcessResult.OK;
+        }
 
         // skip non-files
         if ((abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)

@@ -28,6 +28,7 @@ final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJ
     private static final long serialVersionUID = 1L;
     private boolean skipFilesWithNoExtension = true;
     private boolean skipFilesWithTextPlainMimeType = true;
+    private boolean skipKnownFiles = true;
 
     FileExtMismatchDetectorModuleSettings() {
     }
@@ -35,6 +36,7 @@ final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJ
     FileExtMismatchDetectorModuleSettings(boolean skipKnownFiles, boolean skipFilesWithNoExtension, boolean skipFilesWithTextPlainMimeType) {
         this.skipFilesWithNoExtension = skipFilesWithNoExtension;
         this.skipFilesWithTextPlainMimeType = skipFilesWithTextPlainMimeType;
+        this.skipKnownFiles = skipKnownFiles;
     }
 
     @Override
@@ -56,5 +58,19 @@ final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJ
 
     boolean skipFilesWithTextPlainMimeType() {
         return skipFilesWithTextPlainMimeType;
+    }
+
+    /**
+     * @return the skipKnownFiles
+     */
+    boolean isSkipKnownFiles() {
+        return skipKnownFiles;
+    }
+
+    /**
+     * @param skipKnownFiles the skipKnownFiles to set
+     */
+    void setSkipKnownFiles(boolean skipKnownFiles) {
+        this.skipKnownFiles = skipKnownFiles;
     }
 }
