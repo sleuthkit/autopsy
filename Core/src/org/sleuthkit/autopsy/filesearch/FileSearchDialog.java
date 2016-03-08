@@ -46,7 +46,7 @@ class FileSearchDialog extends javax.swing.JDialog {
                 NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.frame.msg"), true);
         initComponents();
 
-        setResizable(false);
+        setResizable(true);
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
         double w = getSize().getWidth();
         double h = getSize().getHeight();

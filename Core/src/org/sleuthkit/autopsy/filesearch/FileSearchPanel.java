@@ -101,6 +101,7 @@ class FileSearchPanel extends javax.swing.JPanel {
         this.filterAreas.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.metadata"), metadataFilters));
 
         this.filterAreas.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.knownStatus"), new KnownStatusSearchFilter()));
+        this.filterAreas.add(new FilterArea("Test mime", new MimeTypeFilter()));
 
         for (FilterArea fa : this.filterAreas) {
             fa.setMaximumSize(new Dimension(Integer.MAX_VALUE, fa.getMinimumSize().height));
@@ -272,6 +273,8 @@ class FileSearchPanel extends javax.swing.JPanel {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+
+        setPreferredSize(new java.awt.Dimension(300, 450));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);

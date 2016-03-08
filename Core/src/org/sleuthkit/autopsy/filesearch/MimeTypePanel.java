@@ -5,14 +5,17 @@
  */
 package org.sleuthkit.autopsy.filesearch;
 
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.logging.Level;
-import javax.swing.JList;
-import org.apache.tika.mime.MediaType;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
+import org.apache.tika.mime.MediaType;
+import org.apache.tika.mime.MimeTypes;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  *
@@ -20,14 +23,18 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
  */
 public class MimeTypePanel extends javax.swing.JPanel {
 
+    private static final SortedSet<MediaType> mediaTypes = MimeTypes.getDefaultMimeTypes().getMediaTypeRegistry().getTypes();
+    private static final Logger logger = Logger.getLogger(MimeTypePanel.class.getName());
+    private static final long serialVersionUID = 1L;
+
     /**
      * Creates new form MimeTypePanel
      */
     public MimeTypePanel() {
         initComponents();
     }
-    
-    String[] getMimeTypeArray() {
+
+    private String[] getMimeTypeArray() {
         Set<String> fileTypesCollated = new HashSet<>();
         for (MediaType mediaType : mediaTypes) {
             fileTypesCollated.add(mediaType.toString());
@@ -51,9 +58,14 @@ public class MimeTypePanel extends javax.swing.JPanel {
             }
             return result;
         });
-        String [] mimeTypeArray = new String[toSort.size()];
+        String[] mimeTypeArray = new String[toSort.size()];
         return toSort.toArray(mimeTypeArray);
     }
+    
+    List<String> getMimeTypesSelected() {
+        return this.jList1.getSelectedValuesList();
+    }
+    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -66,13 +78,17 @@ public class MimeTypePanel extends javax.swing.JPanel {
 
         jScrollPane1 = new javax.swing.JScrollPane();
         jList1 = new javax.swing.JList<String>();
+        jLabel1 = new javax.swing.JLabel();
 
         jList1.setModel(new javax.swing.AbstractListModel() {
             String[] strings = getMimeTypeArray();
             public int getSize() { return strings.length; }
             public Object getElementAt(int i) { return strings[i]; }
         });
+        jList1.setMinimumSize(new java.awt.Dimension(0, 200));
         jScrollPane1.setViewportView(jList1);
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(MimeTypePanel.class, "MimeTypePanel.jLabel1.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -80,20 +96,26 @@ public class MimeTypePanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 380, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 380, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 90, Short.MAX_VALUE)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JList<String> jList1;
     private javax.swing.JScrollPane jScrollPane1;
     // End of variables declaration//GEN-END:variables
