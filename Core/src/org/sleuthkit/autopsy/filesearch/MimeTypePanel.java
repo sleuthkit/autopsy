@@ -80,6 +80,9 @@ public class MimeTypePanel extends javax.swing.JPanel {
         jList1 = new javax.swing.JList<String>();
         jLabel1 = new javax.swing.JLabel();
 
+        setMinimumSize(new java.awt.Dimension(100, 100));
+        setPreferredSize(new java.awt.Dimension(100, 100));
+
         jList1.setModel(new javax.swing.AbstractListModel() {
             String[] strings = getMimeTypeArray();
             public int getSize() { return strings.length; }
@@ -108,7 +111,7 @@ public class MimeTypePanel extends javax.swing.JPanel {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 90, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 121, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
