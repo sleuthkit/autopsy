@@ -1055,6 +1055,7 @@ class ReportGenerator {
                         List<String> columnHeaderNames = new ArrayList<>();
                         columnHeaderNames.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.preview"));
                         columnHeaderNames.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile"));
+                        columnHeaderNames.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tags"));
                         module.startTable(columnHeaderNames);
                     }
                 }
@@ -1190,6 +1191,7 @@ class ReportGenerator {
                         List<String> columnHeaderNames = new ArrayList<>();
                         columnHeaderNames.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.file"));
                         columnHeaderNames.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.size"));
+                        columnHeaderNames.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tags"));
                         module.startTable(columnHeaderNames);
                         tableProgress.get(module).updateStatusLabel(
                                 NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processingList",
