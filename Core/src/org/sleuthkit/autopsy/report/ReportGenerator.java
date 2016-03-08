@@ -1927,7 +1927,6 @@ class ReportGenerator {
                         orderedRowData.add(cellData);
                     }
                 }
-                orderedRowData.add(makeCommaSeparatedList(getTags()));
             }
 
             return orderedRowData;
