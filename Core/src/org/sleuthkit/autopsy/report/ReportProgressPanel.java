@@ -23,6 +23,8 @@ import org.openide.util.NbBundle;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
@@ -31,6 +33,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 public class ReportProgressPanel extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(ReportProgressPanel.class.getName());
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private ReportStatus STATUS;
 
     // Enum to represent if a report is waiting,
@@ -42,6 +45,12 @@ public class ReportProgressPanel extends javax.swing.JPanel {
         COMPLETE,
         CANCELED,
         ERROR
+    }
+
+    public enum Events {
+
+        COMPLETED,
+        NOT_COMPLETED
     }
 
     /**
@@ -107,6 +116,16 @@ public class ReportProgressPanel extends javax.swing.JPanel {
         } else {
             pathLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.initPathLabel.noFile"));
         }
+    }
+
+    @Override
+    public void addPropertyChangeListener(PropertyChangeListener listener) {
+        this.pcs.addPropertyChangeListener(listener);
+    }
+
+    @Override
+    public void removePropertyChangeListener(PropertyChangeListener listener) {
+        this.pcs.removePropertyChangeListener(listener);
     }
 
     /**
@@ -251,10 +270,11 @@ public class ReportProgressPanel extends javax.swing.JPanel {
             public void run() {
                 // make sure we disable an indeterminate 
                 reportProgressBar.setIndeterminate(false);
-                
+
                 if (STATUS != ReportStatus.CANCELED) {
                     switch (reportStatus) {
                         case COMPLETE: {
+                            ReportStatus oldValue = STATUS;
                             STATUS = ReportStatus.COMPLETE;
                             processingLabel.setForeground(Color.BLACK);
                             processingLabel.setText(
@@ -264,10 +284,11 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                             // set reportProgressBar color as green.
                             reportProgressBar.setForeground(new Color(50, 205, 50));
                             reportProgressBar.setString("Complete"); //NON-NLS
-                            
+                            pcs.firePropertyChange(Events.COMPLETED.toString(), oldValue, STATUS);
                             break;
                         }
                         case ERROR: {
+                            ReportStatus oldValue = STATUS;
                             STATUS = ReportStatus.ERROR;
                             processingLabel.setForeground(new Color(178, 34, 34));
                             processingLabel.setText(
@@ -277,6 +298,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                             // set reportProgressBar color as red.
                             reportProgressBar.setForeground(new Color(178, 34, 34));
                             reportProgressBar.setString("Error"); //NON-NLS
+                            pcs.firePropertyChange(Events.COMPLETED.toString(), oldValue, STATUS);
                             break;
                         }
                         // add finer grained result codes here.
