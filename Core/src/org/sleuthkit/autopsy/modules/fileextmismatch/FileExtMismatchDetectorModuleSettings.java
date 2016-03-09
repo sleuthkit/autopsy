@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -78,9 +78,8 @@ final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJ
         in.defaultReadObject();
         if (0L == versionNumber) {
             /*
-             * If the version number is set to the default value of zero, then
-             * skipKnownFiles is a new field that has been initialized to the
-             * Java default boolean field value of false. Change this to the
+             * If the version number is set to the Java field default value of
+             * zero, then skipKnownFiles is a new field. Change this to the
              * desired default value of true.
              */
             skipKnownFiles = true;
