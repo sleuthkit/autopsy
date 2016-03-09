@@ -38,7 +38,7 @@ final class FileExtMismatchModuleSettingsPanel extends IngestModuleIngestJobSett
     private void customizeComponents() {
         skipNoExtCheckBox.setSelected(settings.skipFilesWithNoExtension());
         skipTextPlain.setSelected(settings.skipFilesWithTextPlainMimeType());
-        skipKnownFiles.setSelected(settings.isSkipKnownFiles());
+        skipKnownFiles.setSelected(settings.skipKnownFiles());
     }
 
     @Override

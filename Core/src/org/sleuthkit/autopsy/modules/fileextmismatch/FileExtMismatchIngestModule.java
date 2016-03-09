@@ -104,7 +104,7 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
     @Override
     public ProcessResult process(AbstractFile abstractFile) {
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
-        if(this.settings.isSkipKnownFiles() && (abstractFile.getKnown() == FileKnown.KNOWN)) {
+        if(this.settings.skipKnownFiles() && (abstractFile.getKnown() == FileKnown.KNOWN)) {
             return ProcessResult.OK;
         }
 
