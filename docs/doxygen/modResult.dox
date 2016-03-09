@@ -24,7 +24,7 @@ DataResultViewer modules will have additional NetBeans dependencies. Right click
 You will need a class that extends org.sleuthkit.autopsy.corecomponents.AbstractDataResultViewer. You can use NetBeans to make a class, manually extend it, and then let NetBeans complain about missing methods.  It will provide default implementations for them if you click on the error messages in the UI.
 Refer to the documentation in org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer on what each method should do. Note that AbstractDataResultViewer extends JPanel.
 
-Autopsy will find your module using the NetBeans Lookup infrastruscture. To be found, you will need to register as a service provider for DataResultViewer.class by annotating your class as follows:
+Autopsy will find your module using the NetBeans Lookup infrascture. To be found, you will need to register as a service provider for DataResultViewer.class by annotating your class as follows:
 
 \code
 @ServiceProvider(service = DataResultViewer.class)
