@@ -26,6 +26,8 @@ import java.util.TreeMap;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
+import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 
@@ -75,7 +77,11 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
          * Observer.update().
          */
         List<FilesSetRow> filesSetRows = new ArrayList<>();
-        this.filesSetSnapshot = new TreeMap<>(InterestingItemDefsManager.getInstance().getInterestingFilesSets());
+        try {
+            this.filesSetSnapshot = new TreeMap<>(InterestingItemDefsManager.getInstance().getInterestingFilesSets());
+        } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
+            MessageNotifyUtil.Message.error("Test Error");
+        }
         for (FilesSet set : this.filesSetSnapshot.values()) {
             filesSetRows.add(new FilesSetRow(set, settings.interestingFilesSetIsEnabled(set.getName())));
         }
@@ -130,7 +136,13 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
 
         // Refresh the view of the interesting files set definitions.
         List<FilesSetRow> rowModels = new ArrayList<>();
-        TreeMap<String, FilesSet> newFilesSetSnapshot = new TreeMap<>(InterestingItemDefsManager.getInstance().getInterestingFilesSets());
+        TreeMap<String, FilesSet> newFilesSetSnapshot;
+        try {
+            newFilesSetSnapshot = new TreeMap<>(InterestingItemDefsManager.getInstance().getInterestingFilesSets());
+        } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
+            MessageNotifyUtil.Message.error("Test error");
+            return;
+        }
         for (FilesSet set : newFilesSetSnapshot.values()) {
             if (this.filesSetSnapshot.keySet().contains(set.getName())) {
                 // Preserve the current enabled/diabled state of the set.

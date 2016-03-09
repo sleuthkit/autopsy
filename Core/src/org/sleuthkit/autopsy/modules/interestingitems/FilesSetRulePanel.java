@@ -69,10 +69,11 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
     /**
      * Constructs a files set rule panel in create rule mode.
      */
-    FilesSetRulePanel() {
+    FilesSetRulePanel(JButton okButton, JButton cancelButton) {
         initComponents();
+        populateMimeTypesComboBox();
         populateComponentsWithDefaultValues();
-        customInit();
+        this.setButtons(okButton, cancelButton);
     }
 
     /**
@@ -80,26 +81,29 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
      *
      * @param rule The files set rule to be edited.
      */
-    FilesSetRulePanel(FilesSet.Rule rule) {
+    FilesSetRulePanel(FilesSet.Rule rule, JButton okButton, JButton cancelButton) {
         initComponents();
+        populateMimeTypesComboBox();
         populateRuleNameComponent(rule);
         populateTypeConditionComponents(rule);
         populateNameConditionComponents(rule);
         populatePathConditionComponents(rule);
-        customInit();
+        populateMimeConditionComponents(rule);
+        this.setButtons(okButton, cancelButton);
     }
 
     /**
      * Populates the UI components with default values.
      */
     private void populateComponentsWithDefaultValues() {
-        this.filesRadio.setSelected(true);
+        this.filesRadioButton.setSelected(true);
         this.fullNameRadioButton.setSelected(true);
-        this.equalitySymbolComboBox.setSelectedIndex(2);
-        this.fileSizeComboBox.setSelectedIndex(1);
+        this.equalitySymbolComboBox.setSelectedItem(FilesSet.Rule.FileSizeCondition.COMPARATOR.GREATER_THAN_EQUAL.getSymbol());
+        this.fileSizeComboBox.setSelectedItem(FilesSet.Rule.FileSizeCondition.SIZE_UNIT.KILOBYTE.getName());
+        this.mimeTypeComboBox.setSelectedIndex(0);
     }
 
-    private void customInit() {
+    private void populateMimeTypesComboBox() {
         Set<String> fileTypesCollated = new HashSet<>();
         for (MediaType mediaType : mediaTypes) {
             fileTypesCollated.add(mediaType.toString());
@@ -139,18 +143,21 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         this.ruleNameTextField.setText(rule.getName());
     }
 
+    private void populateMimeConditionComponents(FilesSet.Rule rule) {
+        FilesSet.Rule.MimeTypeCondition mimeTypeCondition = rule.getMimeTypeCondition();
+        if (mimeTypeCondition != null) {
+            this.mimeTypeComboBox.setSelectedItem(mimeTypeCondition.getMimeType());
+        }
+    }
+
     /**
      * Sets whether or not the OK button should be enabled based upon other UI
      * elements
      */
     private void setOkButton() {
         if (this.okButton != null) {
-            if (!(this.fileSizeCheck.isSelected() || this.mimeCheck.isSelected()
-                    || this.nameCheck.isSelected() || this.pathCheck.isSelected())) {
-                this.okButton.setEnabled(false);
-            } else {
-                this.okButton.setEnabled(true);
-            }
+            this.okButton.setEnabled(this.fileSizeCheck.isSelected() || this.mimeCheck.isSelected()
+                    || this.nameCheck.isSelected() || this.pathCheck.isSelected());
         }
     }
 
@@ -177,7 +184,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
      * @param ok     The ok button
      * @param cancel The cancel button
      */
-    public void setButtons(JButton ok, JButton cancel) {
+    private void setButtons(JButton ok, JButton cancel) {
         this.okButton = ok;
         this.cancelButton = cancel;
         okButton.addActionListener(new ActionListener() {
@@ -207,13 +214,13 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         FilesSet.Rule.MetaTypeCondition typeCondition = rule.getMetaTypeCondition();
         switch (typeCondition.getMetaType()) {
             case FILES:
-                this.filesRadio.setSelected(true);
+                this.filesRadioButton.setSelected(true);
                 break;
             case DIRECTORIES:
-                this.dirsRadio.setSelected(true);
+                this.dirsRadioButton.setSelected(true);
                 break;
             case FILES_AND_DIRECTORIES:
-                this.filesAndDirsRadio.setSelected(true);
+                this.filesAndDirsRadioButton.setSelected(true);
                 break;
         }
     }
@@ -418,14 +425,10 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
     FilesSet.Rule.FileSizeCondition getFileSizeCondition() {
         FilesSet.Rule.FileSizeCondition condition = null;
         if ((Integer) this.fileSizeSpinner.getValue() != 0) {
-            try {
-                FilesSet.Rule.FileSizeCondition.COMPARATOR comparator = FilesSet.Rule.FileSizeCondition.COMPARATOR.fromSymbol((String) this.equalitySymbolComboBox.getSelectedItem());
-                FilesSet.Rule.FileSizeCondition.SIZE_UNIT unit = FilesSet.Rule.FileSizeCondition.SIZE_UNIT.fromName((String) this.fileSizeComboBox.getSelectedItem());
-                int fileSizeValue = (Integer) this.fileSizeSpinner.getValue();
-                condition = new FilesSet.Rule.FileSizeCondition(comparator, unit, fileSizeValue);
-            } catch (IllegalArgumentException ex) {
-                //Swallowing up exception because if invalid data is given, this should return null
-            }
+            FilesSet.Rule.FileSizeCondition.COMPARATOR comparator = FilesSet.Rule.FileSizeCondition.COMPARATOR.fromSymbol((String) this.equalitySymbolComboBox.getSelectedItem());
+            FilesSet.Rule.FileSizeCondition.SIZE_UNIT unit = FilesSet.Rule.FileSizeCondition.SIZE_UNIT.fromName((String) this.fileSizeComboBox.getSelectedItem());
+            int fileSizeValue = (Integer) this.fileSizeSpinner.getValue();
+            condition = new FilesSet.Rule.FileSizeCondition(comparator, unit, fileSizeValue);
         }
         return condition;
     }
@@ -437,9 +440,9 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
      * @return A type condition.
      */
     FilesSet.Rule.MetaTypeCondition getMetaTypeCondition() {
-        if (this.filesRadio.isSelected()) {
+        if (this.filesRadioButton.isSelected()) {
             return new FilesSet.Rule.MetaTypeCondition(FilesSet.Rule.MetaTypeCondition.Type.FILES);
-        } else if (this.dirsRadio.isSelected()) {
+        } else if (this.dirsRadioButton.isSelected()) {
             return new FilesSet.Rule.MetaTypeCondition(FilesSet.Rule.MetaTypeCondition.Type.DIRECTORIES);
         } else {
             return new FilesSet.Rule.MetaTypeCondition(FilesSet.Rule.MetaTypeCondition.Type.FILES_AND_DIRECTORIES);
@@ -509,7 +512,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
      * state of the UI components in the type button group.
      */
     private void setComponentsForSearchType() {
-        if (!this.filesRadio.isSelected()) {
+        if (!this.filesRadioButton.isSelected()) {
             this.fullNameRadioButton.setSelected(true);
             this.extensionRadioButton.setEnabled(false);
             this.mimeTypeComboBox.setEnabled(false);
@@ -560,9 +563,9 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         pathCheck = new javax.swing.JCheckBox();
         mimeCheck = new javax.swing.JCheckBox();
         fileSizeCheck = new javax.swing.JCheckBox();
-        filesRadio = new javax.swing.JRadioButton();
-        dirsRadio = new javax.swing.JRadioButton();
-        filesAndDirsRadio = new javax.swing.JRadioButton();
+        filesRadioButton = new javax.swing.JRadioButton();
+        dirsRadioButton = new javax.swing.JRadioButton();
+        filesAndDirsRadioButton = new javax.swing.JRadioButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(ruleNameLabel, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.ruleNameLabel.text")); // NOI18N
 
@@ -581,6 +584,11 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         nameButtonGroup.add(fullNameRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(fullNameRadioButton, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.fullNameRadioButton.text")); // NOI18N
         fullNameRadioButton.setEnabled(false);
+        fullNameRadioButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                fullNameRadioButtonActionPerformed(evt);
+            }
+        });
 
         nameButtonGroup.add(extensionRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(extensionRadioButton, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.extensionRadioButton.text")); // NOI18N
@@ -604,11 +612,6 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         mimeTypeComboBox.setEditable(true);
         mimeTypeComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] {""}));
         mimeTypeComboBox.setEnabled(false);
-        mimeTypeComboBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mimeTypeComboBoxActionPerformed(evt);
-            }
-        });
 
         equalitySymbolComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { "=", ">", "≥", "<", "≤" }));
         equalitySymbolComboBox.setEnabled(false);
@@ -647,27 +650,27 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
             }
         });
 
-        typeButtonGroup.add(filesRadio);
-        org.openide.awt.Mnemonics.setLocalizedText(filesRadio, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.filesRadio.text")); // NOI18N
-        filesRadio.addActionListener(new java.awt.event.ActionListener() {
+        typeButtonGroup.add(filesRadioButton);
+        org.openide.awt.Mnemonics.setLocalizedText(filesRadioButton, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.filesRadioButton.text")); // NOI18N
+        filesRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                filesRadioActionPerformed(evt);
+                filesRadioButtonActionPerformed(evt);
             }
         });
 
-        typeButtonGroup.add(dirsRadio);
-        org.openide.awt.Mnemonics.setLocalizedText(dirsRadio, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.dirsRadio.text")); // NOI18N
-        dirsRadio.addActionListener(new java.awt.event.ActionListener() {
+        typeButtonGroup.add(dirsRadioButton);
+        org.openide.awt.Mnemonics.setLocalizedText(dirsRadioButton, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.dirsRadioButton.text")); // NOI18N
+        dirsRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                dirsRadioActionPerformed(evt);
+                dirsRadioButtonActionPerformed(evt);
             }
         });
 
-        typeButtonGroup.add(filesAndDirsRadio);
-        org.openide.awt.Mnemonics.setLocalizedText(filesAndDirsRadio, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.filesAndDirsRadio.text")); // NOI18N
-        filesAndDirsRadio.addActionListener(new java.awt.event.ActionListener() {
+        typeButtonGroup.add(filesAndDirsRadioButton);
+        org.openide.awt.Mnemonics.setLocalizedText(filesAndDirsRadioButton, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.filesAndDirsRadioButton.text")); // NOI18N
+        filesAndDirsRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                filesAndDirsRadioActionPerformed(evt);
+                filesAndDirsRadioButtonActionPerformed(evt);
             }
         });
 
@@ -690,11 +693,11 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
                                     .addGroup(layout.createSequentialGroup()
                                         .addComponent(jLabel1)
                                         .addGap(65, 65, 65)
-                                        .addComponent(filesRadio)
+                                        .addComponent(filesRadioButton)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(dirsRadio)
+                                        .addComponent(dirsRadioButton)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(filesAndDirsRadio)))
+                                        .addComponent(filesAndDirsRadioButton)))
                                 .addGap(0, 0, Short.MAX_VALUE))))
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
@@ -743,9 +746,9 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
-                    .addComponent(filesRadio)
-                    .addComponent(dirsRadio)
-                    .addComponent(filesAndDirsRadio))
+                    .addComponent(filesRadioButton)
+                    .addComponent(dirsRadioButton)
+                    .addComponent(filesAndDirsRadioButton))
                 .addGap(5, 5, 5)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(nameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -839,32 +842,32 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         this.setOkButton();
     }//GEN-LAST:event_fileSizeCheckActionPerformed
 
-    private void mimeTypeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mimeTypeComboBoxActionPerformed
+    private void filesRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_filesRadioButtonActionPerformed
+
+        this.setComponentsForSearchType();
+    }//GEN-LAST:event_filesRadioButtonActionPerformed
+
+    private void dirsRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dirsRadioButtonActionPerformed
+        this.setComponentsForSearchType();
+    }//GEN-LAST:event_dirsRadioButtonActionPerformed
+
+    private void filesAndDirsRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_filesAndDirsRadioButtonActionPerformed
+        this.setComponentsForSearchType();
+    }//GEN-LAST:event_filesAndDirsRadioButtonActionPerformed
+
+    private void fullNameRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fullNameRadioButtonActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_mimeTypeComboBoxActionPerformed
-
-    private void filesRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_filesRadioActionPerformed
-
-        this.setComponentsForSearchType();
-    }//GEN-LAST:event_filesRadioActionPerformed
-
-    private void dirsRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dirsRadioActionPerformed
-        this.setComponentsForSearchType();
-    }//GEN-LAST:event_dirsRadioActionPerformed
-
-    private void filesAndDirsRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_filesAndDirsRadioActionPerformed
-        this.setComponentsForSearchType();
-    }//GEN-LAST:event_filesAndDirsRadioActionPerformed
+    }//GEN-LAST:event_fullNameRadioButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JRadioButton dirsRadio;
+    private javax.swing.JRadioButton dirsRadioButton;
     private javax.swing.JComboBox<String> equalitySymbolComboBox;
     private javax.swing.JRadioButton extensionRadioButton;
     private javax.swing.JCheckBox fileSizeCheck;
     private javax.swing.JComboBox<String> fileSizeComboBox;
     private javax.swing.JSpinner fileSizeSpinner;
-    private javax.swing.JRadioButton filesAndDirsRadio;
-    private javax.swing.JRadioButton filesRadio;
+    private javax.swing.JRadioButton filesAndDirsRadioButton;
+    private javax.swing.JRadioButton filesRadioButton;
     private javax.swing.JRadioButton fullNameRadioButton;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel5;

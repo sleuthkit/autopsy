@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
@@ -77,10 +78,14 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
                 // synchronized definitions manager method eliminates the need 
                 // to disable the interesting files set definition UI during ingest.
                 List<FilesSet> filesSets = new ArrayList<>();
-                for (FilesSet set : InterestingItemDefsManager.getInstance().getInterestingFilesSets().values()) {
-                    if (settings.interestingFilesSetIsEnabled(set.getName())) {
-                        filesSets.add(set);
+                try {
+                    for (FilesSet set : InterestingItemDefsManager.getInstance().getInterestingFilesSets().values()) {
+                        if (settings.interestingFilesSetIsEnabled(set.getName())) {
+                            filesSets.add(set);
+                        }
                     }
+                } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
+                    throw new IngestModuleException("Test");
                 }
                 FilesIdentifierIngestModule.interestingFileSetsByJob.put(context.getJobId(), filesSets);
             }

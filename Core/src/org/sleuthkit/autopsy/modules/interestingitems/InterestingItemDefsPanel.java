@@ -42,6 +42,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MimeTypes;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -121,7 +122,11 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
      */
     @Override
     public void saveSettings() {
-        InterestingItemDefsManager.getInstance().setInterestingFilesSets(this.filesSets);
+        try {
+            InterestingItemDefsManager.getInstance().setInterestingFilesSets(this.filesSets);
+        } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
+            MessageNotifyUtil.Message.error("Test Error");
+        }
     }
 
     /**
@@ -139,9 +144,13 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
     public void load() {
         this.resetComponents();
 
-        // Get a working copy of the interesting files set definitions and sort
-        // by set name.
-        this.filesSets = new TreeMap<>(InterestingItemDefsManager.getInstance().getInterestingFilesSets());
+        try {
+            // Get a working copy of the interesting files set definitions and sort
+            // by set name.
+            this.filesSets = new TreeMap<>(InterestingItemDefsManager.getInstance().getInterestingFilesSets());
+        } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
+            MessageNotifyUtil.Message.error("Test error");
+        }
 
         // Populate the list model for the interesting files sets list 
         // component.
@@ -369,12 +378,11 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         FilesSetRulePanel panel;
         if (selectedRule != null) {
             // Editing an existing rule definition.
-            panel = new FilesSetRulePanel(selectedRule);
+            panel = new FilesSetRulePanel(selectedRule, okButton, cancelButton);
         } else {
             // Creating a new rule definition.
-            panel = new FilesSetRulePanel();
+            panel = new FilesSetRulePanel(okButton, cancelButton);
         }
-        panel.setButtons(okButton, cancelButton);
         // Do a dialog box with the files set panel until the user either enters 
         // a valid definition or cancels. Note that the panel gives the user
         // feedback when isValidDefinition() is called.

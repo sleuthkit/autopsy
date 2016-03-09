@@ -32,11 +32,6 @@ import java.util.Observable;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import javax.persistence.PersistenceException;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import org.openide.util.Exceptions;
 import org.openide.util.io.NbObjectInputStream;
 import org.openide.util.io.NbObjectOutputStream;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -97,7 +92,7 @@ final class InterestingItemDefsManager extends Observable {
      * @return A map of interesting files set names to interesting file sets,
      *         possibly empty.
      */
-    synchronized Map<String, FilesSet> getInterestingFilesSets() {
+    synchronized Map<String, FilesSet> getInterestingFilesSets() throws InterestingItemDefsManagerException {
         return FilesSetXML.readDefinitionsFile(DEFAULT_FILE_SET_DEFS_PATH);
     }
 
@@ -108,7 +103,7 @@ final class InterestingItemDefsManager extends Observable {
      * @param filesSets A mapping of interesting files set names to files sets,
      *                  used to enforce unique files set names.
      */
-    synchronized void setInterestingFilesSets(Map<String, FilesSet> filesSets) {
+    synchronized void setInterestingFilesSets(Map<String, FilesSet> filesSets) throws InterestingItemDefsManagerException {
         FilesSetXML.writeDefinitionsFile(INTERESTING_FILES_SET_DEFS_SERIALIZATION_PATH, filesSets);
         this.setChanged();
         this.notifyObservers();
@@ -139,21 +134,6 @@ final class InterestingItemDefsManager extends Observable {
         private static final String TYPE_FILTER_VALUE_FILES = "file"; //NON-NLS
         private static final String TYPE_FILTER_VALUE_DIRS = "dir"; //NON-NLS
 
-        // The following tags and attributes are currently specific to the 
-        // Autopsy implementation of interesting files set definitions. Autopsy
-        // definitions that use these will not be able to be used by TSK 
-        // Framework. However, Autopsy can accept TSK Framework definitions:
-        // 
-        // 1. Rules do not have names in the TSK Framework schema, but rules do
-        // have names in the Autopsy schema. Names will be synthesized as needed
-        // to allow Autopsy to use TSK Framework interesting files set 
-        // definitions.
-        // 2. The TSK Framework has an interesting files module that supports
-        // simple globbing with "*" characters. Name rules and path conditions with 
-        // "*" characters will be converted to regexes to allow Autopsy to use 
-        // TSK Framework interesting files set definitions.
-        // 3. Type conditions are required by Autopsy, but not by TSK Frmaework.
-        // Missing type conditions will defualt to "files" conditions.
         private static final String REGEX_ATTR = "regex"; //NON-NLS
         private static final String PATH_REGEX_ATTR = "pathRegex"; //NON-NLS
         private static final String TYPE_FILTER_VALUE_FILES_AND_DIRS = "files_and_dirs"; //NON-NLS
@@ -170,10 +150,10 @@ final class InterestingItemDefsManager extends Observable {
         // Note: This method takes a file path to support the possibility of 
         // multiple intersting files set definition files, e.g., one for 
         // definitions that ship with Autopsy and one for user definitions.
-        static Map<String, FilesSet> readDefinitionsFile(String filePath) {
+        static Map<String, FilesSet> readDefinitionsFile(String filePath) throws InterestingItemDefsManagerException {
             Map<String, FilesSet> filesSets = new HashMap<>();
 
-            // Check if the file exists.
+            // Check if the legacy xml file exists.
             File defsFile = new File(filePath);
             if (!defsFile.exists()) {
                 return readSerializedDefinitions();
@@ -207,8 +187,9 @@ final class InterestingItemDefsManager extends Observable {
             return filesSets;
         }
 
-        private static Map<String, FilesSet> readSerializedDefinitions() {
-            String filePath = INTERESTING_FILES_SET_DEFS_SERIALIZATION_PATH;
+        private static Map<String, FilesSet> readSerializedDefinitions() throws InterestingItemDefsManagerException {
+            throw new InterestingItemDefsManagerException("Test");
+            /*String filePath = INTERESTING_FILES_SET_DEFS_SERIALIZATION_PATH;
             File fileSetFile = new File(filePath);
             if (fileSetFile.exists()) {
                 try {
@@ -217,11 +198,11 @@ final class InterestingItemDefsManager extends Observable {
                         return filesSetsSettings.getFilesSets();
                     }
                 } catch (IOException | ClassNotFoundException ex) {
-                    throw new PersistenceException(String.format("Failed to read settings from %s", filePath), ex);
+                    throw new InterestingItemDefsManagerException(String.format("Failed to read settings from %s", filePath), ex);
                 }
             } else {
                 return new HashMap<String, FilesSet>();
-            }
+            }*/
         }
 
         /**
@@ -524,17 +505,32 @@ final class InterestingItemDefsManager extends Observable {
         // Note: This method takes a file path to support the possibility of 
         // multiple intersting files set definition files, e.g., one for 
         // definitions that ship with Autopsy and one for user definitions.
-        static boolean writeDefinitionsFile(String filePath, Map<String, FilesSet> interestingFilesSets) {
+        static boolean writeDefinitionsFile(String filePath, Map<String, FilesSet> interestingFilesSets) throws InterestingItemDefsManagerException {
             try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(filePath))) {
                 out.writeObject(new InterestingItemsFilesSetSettings(interestingFilesSets));
             } catch (IOException ex) {
-                throw new PersistenceException(String.format("Failed to write settings to %s", filePath), ex);
+                throw new InterestingItemDefsManagerException(String.format("Failed to write settings to %s", filePath), ex);
             }
             File xmlFile = new File(DEFAULT_FILE_SET_DEFS_PATH);
             if (xmlFile.exists()) {
                 xmlFile.delete();
             }
             return true;
+        }
+    }
+    
+    static class InterestingItemDefsManagerException extends Exception {
+        InterestingItemDefsManagerException() {
+            
+        }
+        InterestingItemDefsManagerException(String message) {
+            super(message);
+        }
+        InterestingItemDefsManagerException(String message, Throwable cause) {
+            super(message, cause);
+        }
+        InterestingItemDefsManagerException(Throwable cause) {
+            super(cause);
         }
     }
 

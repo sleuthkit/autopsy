@@ -153,9 +153,11 @@ final class FilesSet implements Serializable {
          * Construct an interesting files set membership rule.
          *
          * @param ruleName          The name of the rule. Can be empty string.
-         * @param fileNameCondition A file name condition.
+         * @param fileNameCondition A file name condition, may be null.
          * @param metaTypeCondition A file meta-type condition.
          * @param pathCondition     A file path condition, may be null.
+         * @param mimeTypeCondition A file mime type condition, may be null.
+         * @param fileSizeCondition A file size condition, may be null.
          */
         Rule(String ruleName, FileNameCondition fileNameCondition, MetaTypeCondition metaTypeCondition, ParentPathCondition pathCondition, MimeTypeCondition mimeTypeCondition, FileSizeCondition fileSizeCondition) {
             // since ruleName is optional, ruleUUID can be used to uniquely identify a rule.
@@ -227,7 +229,7 @@ final class FilesSet implements Serializable {
         /**
          * Get the path condition for the rule.
          *
-         * @return A path condition, may be null. Can be null.
+         * @return A path condition, may be null.
          */
         ParentPathCondition getPathCondition() {
             return this.pathCondition;
@@ -299,8 +301,7 @@ final class FilesSet implements Serializable {
         static interface FileAttributeCondition extends Serializable {
 
             /**
-             * Tests whether or not a file satisfies the conditions of a
-             * condition.
+             * Tests whether or not a file satisfies the condition.
              *
              * @param file The file to test.
              *
@@ -353,33 +354,7 @@ final class FilesSet implements Serializable {
 
             private static final long serialVersionUID = 1L;
 
-            /**
-             * Gets the comparator of this condition
-             *
-             * @return the comparator
-             */
-            COMPARATOR getComparator() {
-                return comparator;
-            }
-
-            /**
-             * Gets the unit for the size of this condition
-             *
-             * @return the unit
-             */
-            SIZE_UNIT getUnit() {
-                return unit;
-            }
-
-            /**
-             * Gets the size value of this condition
-             *
-             * @return the size value
-             */
-            int getSizeValue() {
-                return sizeValue;
-            }
-
+            
             /**
              * Represents a comparison item for file size
              */
@@ -467,6 +442,34 @@ final class FilesSet implements Serializable {
                 this.unit = unit;
                 this.sizeValue = sizeValue;
             }
+            
+            /**
+             * Gets the comparator of this condition
+             *
+             * @return the comparator
+             */
+            COMPARATOR getComparator() {
+                return comparator;
+            }
+
+            /**
+             * Gets the unit for the size of this condition
+             *
+             * @return the unit
+             */
+            SIZE_UNIT getUnit() {
+                return unit;
+            }
+
+            /**
+             * Gets the size value of this condition
+             *
+             * @return the size value
+             */
+            int getSizeValue() {
+                return sizeValue;
+            }
+
 
             @Override
             public boolean passes(AbstractFile file) {
