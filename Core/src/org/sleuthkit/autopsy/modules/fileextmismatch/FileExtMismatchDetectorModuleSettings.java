@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.modules.fileextmismatch;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
 /**
@@ -26,15 +28,21 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJobSettings {
 
     private static final long serialVersionUID = 1L;
-    private boolean skipFilesWithNoExtension = true;
-    private boolean skipFilesWithTextPlainMimeType = true;
+    private long versionNumber;
+    private boolean skipFilesWithNoExtension;
+    private boolean skipFilesWithTextPlainMimeType;
+    private boolean skipKnownFiles;
 
     FileExtMismatchDetectorModuleSettings() {
+        this.skipFilesWithNoExtension = true;
+        this.skipFilesWithTextPlainMimeType = true;
+        this.skipKnownFiles = true;
     }
 
     FileExtMismatchDetectorModuleSettings(boolean skipKnownFiles, boolean skipFilesWithNoExtension, boolean skipFilesWithTextPlainMimeType) {
         this.skipFilesWithNoExtension = skipFilesWithNoExtension;
         this.skipFilesWithTextPlainMimeType = skipFilesWithTextPlainMimeType;
+        this.skipKnownFiles = skipKnownFiles;
     }
 
     @Override
@@ -42,19 +50,41 @@ final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJ
         return serialVersionUID;
     }
 
-    void setSkipFilesWithNoExtension(boolean enabled) {
-        skipFilesWithNoExtension = enabled;
+    void setSkipFilesWithNoExtension(boolean skipFilesWithNoExtension) {
+        this.skipFilesWithNoExtension = skipFilesWithNoExtension;
     }
 
     boolean skipFilesWithNoExtension() {
         return skipFilesWithNoExtension;
     }
 
-    void setSkipFilesWithTextPlainMimeType(boolean enabled) {
-        skipFilesWithTextPlainMimeType = enabled;
+    void setSkipFilesWithTextPlainMimeType(boolean skipFilesWithTextPlainMimeType) {
+        this.skipFilesWithTextPlainMimeType = skipFilesWithTextPlainMimeType;
     }
 
     boolean skipFilesWithTextPlainMimeType() {
         return skipFilesWithTextPlainMimeType;
     }
+
+    boolean skipKnownFiles() {
+        return skipKnownFiles;
+    }
+
+    void setSkipKnownFiles(boolean skipKnownFiles) {
+        this.skipKnownFiles = skipKnownFiles;
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        if (0L == versionNumber) {
+            /*
+             * If the version number is set to the Java field default value of
+             * zero, then skipKnownFiles is a new field. Change this to the
+             * desired default value of true.
+             */
+            skipKnownFiles = true;
+        }
+        versionNumber = 1;
+    }
+
 }
