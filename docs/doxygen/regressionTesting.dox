@@ -72,7 +72,7 @@ By default this will
 - Search for any image files in the ./input directory and test them
 - Compare the generated database and report to the gold standards
 - Save AutopsyErrors.txt, which is a log of all Warnings and Exceptions thrown by Autopsy, in the output directory
-- Save CSV.txt, which contains all important test details for each image delimited by a "|", in the output directory
+- Save CSV.txt, which contains all important test detailes for each image delimited by a "|", in the output directory
 - Save AutopsyTestCase.html, which is a user-friendly information, warning, and command-line log of all the tests ran, in the output directory
 - Delete the Solr index in the output directory to save drive space
 
@@ -81,7 +81,7 @@ Other commands can be issued by adding the following arguments to the script
     -r, --rebuild
 Rebuild the gold standards from the test results for each image.
     -i, --ignore
-Ignores the ./input directory when searching for files. Only use in combination with a configuration file.
+Ignores the ./input directory when searching for files. Only use in combinatin with a configuration file.
     -u, --unallocated
 Ignores unallocated space when ingesting. Faster, but yields less accurate results.
     -k, --keep
@@ -153,7 +153,7 @@ For additional details regarding setting up and using Jemmy, please see
 	
 
 
-The Jemmy UI framework includes elements such as buttons, frames, dialog boxes and wizards. In order to manipulate these elements programmatically, the associated ContainerOperators must be used. RegressionTest.java makes use of the following major operators:
+The Jemmy UI framework includes elements such as buttons, frames, dialog boxes and wizards. In order to manipulate these elements programatically, the associated ContainerOperators must be used. RegressionTest.java makes use of the following major operators:
 	
 	JButtonOperator
 	JDialogOperator
@@ -194,7 +194,7 @@ For further reference regarding ContainerOperators, please see
 	http://www.jarvana.com/jarvana/view/org/netbeans/jemmy/2.2.7.5/jemmy-2.2.7.5-javadoc.jar!/org/netbeans/jemmy/operators/ContainerOperator.html
 
 
-When an element has been selected, the individual components may be manipulated with ContainerOperators. 
+When an element has been selected, the individual components may be manipluated with ContainerOperators. 
 To select a button, use the code below, where cont is one of the ContainerOperators from above, text is the text displayed on the button, and index is the button's order if there are multiple with the same name (i.e. if there are three buttons labeled �preview�, the first's index is 0, then 1, then 2).
 
 JbuttonOperator jbo = new JbuttonOperator(ContainerOperator cont, String text, int index);

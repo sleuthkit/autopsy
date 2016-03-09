@@ -40,7 +40,7 @@ You can refer to the org.sleuthkit.autopsy.corecomponents.DataResultViewerTable 
 
 \section result_hint Hints
 
-Note that we have made the least number of these types of modules, so some work could be done to make the framework and infrastructure for them better. 
+Note that we have made the least number of these types of modules, so some work could be done to make the framework and infrastuture for them better. 
 
 These modules are currently the most challenging to develop because they require the most NetBeans knowledge about Nodes and ExplorerManagers. Make sure you read some of the tutorials (or books) first:
 - NetBeans Nodes API Tutorial (https://platform.netbeans.org/tutorials/nbm-nodesapi2.html)

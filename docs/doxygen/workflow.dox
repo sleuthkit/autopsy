@@ -27,7 +27,7 @@ If you want to develop a module that analyzes drive data, then this is probably 
 
 The UI has three main areas.  The tree on the left-hand side, the result viewers in the upper right, and the content viewers in the lower right.  Data passes between these areas by encapsulating them in Netbeans Node objects (see org.openide.nodes.Node).  These allow Autopsy to generically handle all types of data.  The org.sleuthkit.autopsy.datamodel package wraps the generic org.sleuthkit.datamodel Sleuth Kit objects as Netbeans Nodes. 
  
-Nodes are modelled in a parent-child hierarchy with other nodes.  All data within a Case is represented in a hierarchy with the disk images being one level below the case and volumes and such below the image. 
+Nodes are modeled in a parent-child hierarchy with other nodes.  All data within a Case is represented in a hierarchy with the disk images being one level below the case and volumes and such below the image. 
 
 The tree on the left hand-side shows the analysis results.  
 Its contents are populated from the central database.   
