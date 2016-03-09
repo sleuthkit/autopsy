@@ -22,7 +22,8 @@ class MimeTypeFilter extends AbstractFileSearchFilter<MimeTypePanel>  {
 
     @Override
     public boolean isEnabled() {
-        return !this.getComponent().getMimeTypesSelected().isEmpty();
+        return this.getComponent().isSelected() &&
+                !this.getComponent().getMimeTypesSelected().isEmpty();
     }
 
     @Override

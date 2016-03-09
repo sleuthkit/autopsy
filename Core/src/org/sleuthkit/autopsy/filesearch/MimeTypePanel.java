@@ -61,11 +61,14 @@ public class MimeTypePanel extends javax.swing.JPanel {
         String[] mimeTypeArray = new String[toSort.size()];
         return toSort.toArray(mimeTypeArray);
     }
-    
+
     List<String> getMimeTypesSelected() {
         return this.jList1.getSelectedValuesList();
     }
-    
+
+    boolean isSelected() {
+        return this.jCheckBox1.isSelected();
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -78,9 +81,9 @@ public class MimeTypePanel extends javax.swing.JPanel {
 
         jScrollPane1 = new javax.swing.JScrollPane();
         jList1 = new javax.swing.JList<String>();
-        jLabel1 = new javax.swing.JLabel();
+        jCheckBox1 = new javax.swing.JCheckBox();
 
-        setMinimumSize(new java.awt.Dimension(100, 100));
+        setMinimumSize(new java.awt.Dimension(150, 150));
         setPreferredSize(new java.awt.Dimension(100, 100));
 
         jList1.setModel(new javax.swing.AbstractListModel() {
@@ -91,7 +94,7 @@ public class MimeTypePanel extends javax.swing.JPanel {
         jList1.setMinimumSize(new java.awt.Dimension(0, 200));
         jScrollPane1.setViewportView(jList1);
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(MimeTypePanel.class, "MimeTypePanel.jLabel1.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jCheckBox1, org.openide.util.NbBundle.getMessage(MimeTypePanel.class, "MimeTypePanel.jCheckBox1.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -99,26 +102,25 @@ public class MimeTypePanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel1)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 380, Short.MAX_VALUE))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 180, Short.MAX_VALUE)
                 .addContainerGap())
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(jCheckBox1)
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addComponent(jLabel1)
+                .addComponent(jCheckBox1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 121, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 164, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel jLabel1;
+    private javax.swing.JCheckBox jCheckBox1;
     private javax.swing.JList<String> jList1;
     private javax.swing.JScrollPane jScrollPane1;
     // End of variables declaration//GEN-END:variables
