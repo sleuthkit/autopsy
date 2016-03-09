@@ -76,7 +76,7 @@ public class CategorizeAction extends Action {
         this.selectedFileIDs = selectedFileIDs;
         this.createUndo = createUndo;
         setGraphic(cat.getGraphic());
-        setEventHandler(actionEvent -> addCatToFiles());
+        setEventHandler(actionEvent -> addCatToFiles(selectedFileIDs));
         setAccelerator(new KeyCodeCombination(KeyCode.getKeyCode(Integer.toString(cat.getCategoryNumber()))));
     }
 
@@ -84,9 +84,10 @@ public class CategorizeAction extends Action {
         return new CategoryMenu(controller);
     }
 
-    private void addCatToFiles() {
-        Logger.getAnonymousLogger().log(Level.INFO, "categorizing{0} as {1}", new Object[]{selectedFileIDs.toString(), cat.getDisplayName()}); //NON-NLS
-        controller.queueDBWorkerTask(new CategorizeTask(selectedFileIDs, cat, createUndo));
+
+    final void addCatToFiles(Set<Long> ids) {
+        Logger.getAnonymousLogger().log(Level.INFO, "categorizing{0} as {1}", new Object[]{ids.toString(), cat.getDisplayName()}); //NON-NLS
+        controller.queueDBWorkerTask(new CategorizeTask(ids, cat, createUndo));
     }
 
     /**
@@ -136,7 +137,7 @@ public class CategorizeAction extends Action {
             TagName catZeroTagName = categoryManager.getTagName(Category.ZERO);
             for (long fileID : fileIDs) {
                 try {
-                    DrawableFile<?> file = controller.getFileFromId(fileID);   //drawable db access
+                    DrawableFile file = controller.getFileFromId(fileID);   //drawable db access
                     if (createUndo) {
                         Category oldCat = file.getCategory();  //drawable db access
                         TagName oldCatTagName = categoryManager.getTagName(oldCat);
@@ -145,8 +146,8 @@ public class CategorizeAction extends Action {
                         }
                     }
 
-                    final List<ContentTag> fileTags = tagsManager.getContentTagsByContent(file);
-                    if (tagName.equals(catZeroTagName)) {
+                    final List<ContentTag> fileTags = tagsManager.getContentTags(file);
+                    if (tagName == categoryManager.getTagName(Category.ZERO)) {
                         // delete all cat tags for cat-0
                         fileTags.stream()
                                 .filter(tag -> CategoryManager.isCategoryTagName(tag.getName()))
@@ -203,8 +204,8 @@ public class CategorizeAction extends Action {
          */
         @Override
         public void run() {
-            CategorizeAction categorizeAction = new CategorizeAction(controller, newCategory, this.oldCategories.keySet(), false);
-            categorizeAction.addCatToFiles();
+            new CategorizeAction(controller, newCategory, this.oldCategories.keySet(), false)
+                    .handle(null);
         }
 
         /**
@@ -216,7 +217,7 @@ public class CategorizeAction extends Action {
 
             for (Map.Entry<Long, Category> entry : oldCategories.entrySet()) {
                 new CategorizeAction(controller, entry.getValue(), Collections.singleton(entry.getKey()), false)
-                        .addCatToFiles();
+                        .handle(null);
             }
         }
     }

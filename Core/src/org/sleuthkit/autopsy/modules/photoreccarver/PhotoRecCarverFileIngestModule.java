@@ -152,7 +152,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 // Initialize job totals
                 initTotalsForIngestJob(jobId);
             } catch (SecurityException | IOException | UnsupportedOperationException ex) {
-                throw new IngestModule.IngestModuleException(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "cannotCreateOutputDir.message", ex.getLocalizedMessage()));
+                throw new IngestModule.IngestModuleException(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "cannotCreateOutputDir.message", ex.getLocalizedMessage()), ex);
             }
         }
     }
@@ -396,7 +396,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         } catch (FileAlreadyExistsException ex) {
             // No worries.
         } catch (IOException | SecurityException | UnsupportedOperationException ex) {
-            throw new IngestModule.IngestModuleException(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "cannotCreateOutputDir.message", ex.getLocalizedMessage()));
+            throw new IngestModule.IngestModuleException(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "cannotCreateOutputDir.message", ex.getLocalizedMessage()), ex);
         }
         return path;
     }

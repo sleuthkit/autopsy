@@ -56,7 +56,6 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.VideoFile;
 import org.sleuthkit.autopsy.imagegallery.gui.VideoPlayer;
 import static org.sleuthkit.autopsy.imagegallery.gui.drawableviews.DrawableUIBase.exec;
 import static org.sleuthkit.autopsy.imagegallery.gui.drawableviews.DrawableView.CAT_BORDER_WIDTH;
-import org.sleuthkit.datamodel.AbstractContent;
 
 /**
  * Displays the files of a group one at a time. Designed to be embedded in a
@@ -186,16 +185,16 @@ public class SlideShowView extends DrawableTileBase {
     synchronized protected void updateContent() {
         disposeContent();
         if (getFile().isPresent()) {
-            DrawableFile<?> file = getFile().get();
+            DrawableFile file = getFile().get();
             if (file.isVideo()) {
-                doMediaLoadTask((VideoFile<?>) file);
+                doMediaLoadTask((VideoFile) file);
             } else {
                 doReadImageTask(file);
             }
         }
     }
 
-    synchronized private Node doMediaLoadTask(VideoFile<?> file) {
+    synchronized private Node doMediaLoadTask(VideoFile file) {
 
         //specially handling for videos
         MediaLoadTask myTask = new MediaLoadTask(file);
@@ -225,7 +224,7 @@ public class SlideShowView extends DrawableTileBase {
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private void showMedia(DrawableFile<?> file, Task<Node> mediaTask) {
+    private void showMedia(DrawableFile file, Task<Node> mediaTask) {
         //Note that all error conditions are allready logged in readImageTask.succeeded()
         try {
             Node mediaNode = mediaTask.get();
@@ -265,7 +264,7 @@ public class SlideShowView extends DrawableTileBase {
      */
     @Override
     protected String getTextForLabel() {
-        return getFile().map(AbstractContent::getName).orElse("") + " " + getSupplementalText();
+        return getFile().map(DrawableFile::getName).orElse("") + " " + getSupplementalText();
     }
 
     /**
@@ -308,7 +307,7 @@ public class SlideShowView extends DrawableTileBase {
     @Override
     @ThreadConfined(type = ThreadType.ANY)
     public Category updateCategory() {
-        Optional<DrawableFile<?>> file = getFile();
+        Optional<DrawableFile> file = getFile();
         if (file.isPresent()) {
             Category updateCategory = super.updateCategory();
             Platform.runLater(() -> getGroupPane().syncCatToggle(file.get()));
@@ -319,7 +318,7 @@ public class SlideShowView extends DrawableTileBase {
     }
 
     @Override
-    Task<Image> newReadImageTask(DrawableFile<?> file) {
+    Task<Image> newReadImageTask(DrawableFile file) {
         return file.getReadFullSizeImageTask();
 
     }
@@ -328,9 +327,9 @@ public class SlideShowView extends DrawableTileBase {
         "MediaLoadTask.messageText=Reading video: {0}"})
     private class MediaLoadTask extends Task<Node> {
 
-        private final VideoFile<?> file;
+        private final VideoFile file;
 
-        MediaLoadTask(VideoFile<?> file) {
+        MediaLoadTask(VideoFile file) {
             updateMessage(Bundle.MediaLoadTask_messageText(file.getName()));
             this.file = file;
         }

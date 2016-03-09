@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,11 +39,14 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
 
 /**
- * Dialog box that allows a user to configure and run an ingest job on one or
- * more data sources.
+ *
+ * A dialog box that allows a user to configure and execute analysis of one or
+ * more data sources with ingest modules or analysis of the contents of a
+ * directory with file-level ingest modules.
  */
 public final class RunIngestModulesDialog extends JDialog {
 
+    private static final long serialVersionUID = 1L;
     private static final String TITLE = NbBundle.getMessage(RunIngestModulesDialog.class, "IngestDialog.title.text");
     private final IngestType ingestType;
     private static Dimension DIMENSIONS = new Dimension(500, 300);
@@ -51,13 +54,13 @@ public final class RunIngestModulesDialog extends JDialog {
     private IngestJobSettingsPanel ingestJobSettingsPanel;
 
     /**
-     * Construct a dialog box that allows a user to configure and run an ingest
-     * job on one or more data sources.
+     * Constructs a dialog box that allows a user to configure and execute
+     * analysis of one or more data sources with ingest modules.
      *
      * @param frame       The dialog parent window.
      * @param title       The title for the dialog.
      * @param modal       True if the dialog should be modal, false otherwise.
-     * @param dataSources The data sources to be processed.
+     * @param dataSources The data sources to be analyzed.
      */
     public RunIngestModulesDialog(JFrame frame, String title, boolean modal, List<Content> dataSources) {
         super(frame, title, modal);
@@ -66,58 +69,24 @@ public final class RunIngestModulesDialog extends JDialog {
     }
 
     /**
-     * Construct a dialog box that allows a user to configure and run an ingest
-     * job on one or more data sources.
+     * Constructs a dialog box that allows a user to configure and execute
+     * analysis of one or more data sources with ingest modules.
      *
      * @param dataSources The data sources to be processed.
      */
     public RunIngestModulesDialog(List<Content> dataSources) {
         this(new JFrame(TITLE), TITLE, true, dataSources);
     }
-    
+
+    /**
+     * Constructs a dialog box that allows a user to configure and execute
+     * analysis of the contents of a directory with file-level ingest modules.
+     *
+     * @param dir
+     */
     public RunIngestModulesDialog(Directory dir) {
         this.dataSources.add(dir);
         this.ingestType = IngestType.FILES_ONLY;
-    }
-
-    /**
-     * Construct a dialog box that allows a user to configure and run an ingest
-     * job on one or more data sources.
-     *
-     * @param frame The dialog parent window.
-     * @param title The title for the dialog.
-     * @param modal True if the dialog should be modal, false otherwise.
-     *
-     * @deprecated
-     */
-    @Deprecated
-    public RunIngestModulesDialog(JFrame frame, String title, boolean modal) {
-        super(frame, title, modal);
-        this.ingestType = IngestType.ALL_MODULES;
-    }
-
-    /**
-     * Construct a dialog box that allows a user to configure and run an ingest
-     * job on one or more data sources.
-     *
-     * @deprecated
-     */
-    @Deprecated
-    public RunIngestModulesDialog() {
-        this(new JFrame(TITLE), TITLE, true);
-    }
-
-    /**
-     * Set the data sources to be processed.
-     *
-     * @param dataSources The data sources.
-     *
-     * @deprecated
-     */
-    @Deprecated
-    public void setDataSources(List<Content> dataSources) {
-        this.dataSources.clear();
-        this.dataSources.addAll(dataSources);
     }
 
     /**
@@ -139,7 +108,7 @@ public final class RunIngestModulesDialog extends JDialog {
          * Get the default or saved ingest job settings for this context and use
          * them to create and add an ingest job settings panel.
          */
-        IngestJobSettings ingestJobSettings = new IngestJobSettings(RunIngestModulesDialog.class.getCanonicalName(), this.ingestType);       
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(RunIngestModulesDialog.class.getCanonicalName(), this.ingestType);
         RunIngestModulesDialog.showWarnings(ingestJobSettings);
         this.ingestJobSettingsPanel = new IngestJobSettingsPanel(ingestJobSettings);
         add(this.ingestJobSettingsPanel, BorderLayout.PAGE_START);
@@ -227,4 +196,45 @@ public final class RunIngestModulesDialog extends JDialog {
             JOptionPane.showMessageDialog(null, warningMessage.toString());
         }
     }
+    
+    /**
+     * Constructs a dialog box that allows a user to configure and execute
+     * analysis of one or more data sources with ingest modules.
+     *
+     * @param frame The dialog parent window.
+     * @param title The title for the dialog.
+     * @param modal True if the dialog should be modal, false otherwise.
+     *
+     * @deprecated
+     */
+    @Deprecated
+    public RunIngestModulesDialog(JFrame frame, String title, boolean modal) {
+        super(frame, title, modal);
+        this.ingestType = IngestType.ALL_MODULES;
+    }
+
+    /**
+     * Constructs a dialog box that allows a user to configure and run an ingest
+     * job on one or more data sources.
+     *
+     * @deprecated
+     */
+    @Deprecated
+    public RunIngestModulesDialog() {
+        this(new JFrame(TITLE), TITLE, true);
+    }
+
+    /**
+     * Sets the data sources to be processed.
+     *
+     * @param dataSources The data sources.
+     *
+     * @deprecated
+     */
+    @Deprecated
+    public void setDataSources(List<Content> dataSources) {
+        this.dataSources.clear();
+        this.dataSources.addAll(dataSources);
+    }
+    
 }
