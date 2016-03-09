@@ -49,8 +49,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
 
     public enum Events {
 
-        COMPLETED,
-        NOT_COMPLETED
+        COMPLETED
     }
 
     /**
