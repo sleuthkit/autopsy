@@ -1,11 +1,27 @@
+/*
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2014-16 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.MissingResourceException;
 import java.util.function.Predicate;
 import javafx.beans.Observable;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -16,6 +32,7 @@ import javafx.geometry.Side;
 import javafx.scene.chart.Axis;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Control;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.image.Image;
@@ -38,29 +55,31 @@ import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
-public class DetailsChart extends Control implements TimeLineChart<DateTime> {
+public final class DetailsChart extends Control implements TimeLineChart<DateTime> {
 
-    private final DetailViewPane parentPane;
     private final DateAxis detailsChartDateAxis;
     private final DateAxis pinnedDateAxis;
 
     private final Axis<EventStripe> verticalAxis;
 
-    private final SimpleBooleanProperty pinnedLaneShowing = new SimpleBooleanProperty(false);
     private final SimpleObjectProperty<  IntervalSelector<? extends DateTime>> intervalSelector = new SimpleObjectProperty<>();
     private final SimpleObjectProperty<Predicate<EventNodeBase<?>>> highlightPredicate = new SimpleObjectProperty<>((x) -> false);
+    private final ObservableList<EventNodeBase<?>> selectedNodes;
+    private final DetailsChartLayoutSettings layoutSettings = new DetailsChartLayoutSettings();
+    private final TimeLineController controller;
 
-    DetailsChart(DetailViewPane parentPane, DateAxis detailsChartDateAxis, DateAxis pinnedDateAxis, Axis<EventStripe> verticalAxis) {
-        this.parentPane = parentPane;
+    DetailsChart(TimeLineController controller, DateAxis detailsChartDateAxis, DateAxis pinnedDateAxis, Axis<EventStripe> verticalAxis, ObservableList<EventNodeBase<?>> selectedNodes) {
+        this.controller = controller;
         this.detailsChartDateAxis = detailsChartDateAxis;
         this.verticalAxis = verticalAxis;
         this.pinnedDateAxis = pinnedDateAxis;
+        this.selectedNodes = selectedNodes;
         getController().getPinnedEvents().addListener((SetChangeListener.Change<? extends TimeLineEvent> change) -> {
-            pinnedLaneShowing.set(change.getSet().isEmpty() == false);
+            layoutSettings.setPinnedLaneShowing(change.getSet().isEmpty() == false);
         });
 
         if (getController().getPinnedEvents().isEmpty() == false) {
-            pinnedLaneShowing.set(true);
+            layoutSettings.setPinnedLaneShowing(true);
         }
 
         getController().getEventsModel().zoomParametersProperty().addListener(o -> {
@@ -68,18 +87,6 @@ public class DetailsChart extends Control implements TimeLineChart<DateTime> {
             getSelectedNodes().clear();
             getController().selectEventIDs(Collections.emptyList());
         });
-    }
-
-    public SimpleBooleanProperty pinnedLaneShowing() {
-        return pinnedLaneShowing;
-    }
-
-    public boolean isPinnedLaneShowing() {
-        return pinnedLaneShowing.get();
-    }
-
-    public void setPinnedLaneShowing(boolean showing) {
-        pinnedLaneShowing.set(showing);
     }
 
     DateTime getDateTimeForPosition(double layoutX) {
@@ -94,20 +101,16 @@ public class DetailsChart extends Control implements TimeLineChart<DateTime> {
         eventStripes.add(stripe);
     }
 
-    void requestTimelineChartLayout() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
     void clearGuideLine(GuideLine guideLine) {
         guideLines.remove(guideLine);
     }
 
     public ObservableList<EventNodeBase<?>> getSelectedNodes() {
-        return parentPane.getSelectedNodes();
+        return selectedNodes;
     }
 
-    DetailViewLayoutSettings getLayoutSettings() {
-        return parentPane.getLayoutSettings();
+    DetailsChartLayoutSettings getLayoutSettings() {
+        return layoutSettings;
     }
 
     void setHighlightPredicate(Predicate<EventNodeBase<?>> highlightPredicate) {
@@ -152,9 +155,9 @@ public class DetailsChart extends Control implements TimeLineChart<DateTime> {
         private static final Image MARKER = new Image("/org/sleuthkit/autopsy/timeline/images/marker.png", 16, 16, true, true, true); //NON-NLS
         private GuideLine guideLine;
 
-        @NbBundle.Messages({"EventDetailChart.chartContextMenu.placeMarker.name=Place Marker"})
+        @NbBundle.Messages({"PlaceMArkerAction.name=Place Marker"})
         PlaceMarkerAction(DetailsChart chart, MouseEvent clickEvent) {
-            super(Bundle.EventDetailChart_chartContextMenu_placeMarker_name());
+            super(Bundle.PlaceMArkerAction_name());
 
             setGraphic(new ImageView(MARKER)); // NON-NLS
             setEventHandler(actionEvent -> {
@@ -180,6 +183,7 @@ public class DetailsChart extends Control implements TimeLineChart<DateTime> {
         chartLane.setOnMousePressed(chartDragHandler);
         chartLane.setOnMouseReleased(chartDragHandler);
         chartLane.setOnMouseDragged(chartDragHandler);
+        chartLane.setOnMouseClicked(chartDragHandler);
         chartLane.addEventHandler(MouseEvent.MOUSE_CLICKED, mouseClickedHandler);
     }
 
@@ -207,25 +211,30 @@ public class DetailsChart extends Control implements TimeLineChart<DateTime> {
     }
 
     @Override
-    final public Axis<DateTime> getXAxis() {
+    public Axis<DateTime> getXAxis() {
         return detailsChartDateAxis;
     }
 
     @Override
-    final public TimeLineController getController() {
-        return parentPane.getController();
+    public TimeLineController getController() {
+        return controller;
     }
 
-    public ContextMenu getChartContextMenu(MouseEvent mouseEvent) throws MissingResourceException {
+    @Override
+    public void clearContextMenu() {
+        setContextMenu(null);
+    }
+
+    public ContextMenu getContextMenu(MouseEvent mouseEvent) throws MissingResourceException {
         ContextMenu contextMenu = getContextMenu();
         if (contextMenu != null) {
             contextMenu.hide();
         }
 
-        setContextMenu(ActionUtils.createContextMenu(Arrays.asList(
-                new PlaceMarkerAction(this, mouseEvent),
-                TimeLineChart.newZoomHistoyActionGroup(getController()))
-        ));
+        setContextMenu(new ContextMenu(
+                ActionUtils.createMenuItem(new PlaceMarkerAction(this, mouseEvent)),
+                new SeparatorMenuItem(),
+                ActionUtils.createMenuItem(TimeLineChart.newZoomHistoyActionGroup(getController()))));
         getContextMenu().setAutoHide(true);
         return getContextMenu();
     }
@@ -258,7 +267,7 @@ public class DetailsChart extends Control implements TimeLineChart<DateTime> {
                 DescriptionFilter descriptionFilter = chart.getController().getQuickHideFilters().stream()
                         .filter(testFilter::equals)
                         .findFirst().orElseGet(() -> {
-                            testFilter.selectedProperty().addListener(observable -> chart.requestTimelineChartLayout());
+                    testFilter.selectedProperty().addListener(observable -> chart.requestLayout());
                             chart.getController().getQuickHideFilters().add(testFilter);
                             return testFilter;
                         });
@@ -331,8 +340,8 @@ public class DetailsChart extends Control implements TimeLineChart<DateTime> {
             configureMouseListeners(primaryLane, mouseClickedHandler, chartDragHandler);
             configureMouseListeners(pinnedLane, mouseClickedHandler, chartDragHandler);
 
-            getSkinnable().pinnedLaneShowing.addListener(observable -> {
-                boolean selected = getSkinnable().isPinnedLaneShowing();
+            getSkinnable().getLayoutSettings().pinnedLaneShowing().addListener(observable -> {
+                boolean selected = getSkinnable().getLayoutSettings().isPinnedLaneShowing();
                 if (selected == false) {
                     dividerPosition = masterDetailPane.getDividerPosition();
                 }

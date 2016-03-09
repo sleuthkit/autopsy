@@ -21,14 +21,12 @@ package org.sleuthkit.autopsy.timeline.ui.detailview;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import static java.util.Objects.nonNull;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import javafx.beans.binding.Bindings;
 import javafx.concurrent.Task;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
@@ -67,8 +65,7 @@ import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 final public class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStripe, EventStripeNode> {
 
     private static final Logger LOGGER = Logger.getLogger(EventClusterNode.class.getName());
-    private static final Image PLUS = new Image("/org/sleuthkit/autopsy/timeline/images/plus-button.png"); // NON-NLS //NOI18N
-    private static final Image MINUS = new Image("/org/sleuthkit/autopsy/timeline/images/minus-button.png"); // NON-NLS //NOI18N
+
     private static final BorderWidths CLUSTER_BORDER_WIDTHS = new BorderWidths(2, 1, 2, 1);
 
     private final Border clusterBorder = new Border(new BorderStroke(evtColor.deriveColor(0, 1, 1, .4), BorderStrokeStyle.SOLID, CORNER_RADII_1, CLUSTER_BORDER_WIDTHS));
@@ -80,8 +77,8 @@ final public class EventClusterNode extends MultiEventNodeBase<EventCluster, Eve
     void installActionButtons() {
         super.installActionButtons();
         if (plusButton == null) {
-            plusButton = ActionUtils.createButton(new ExpandClusterAction(), ActionUtils.ActionTextBehavior.HIDE);
-            minusButton = ActionUtils.createButton(new CollapseClusterAction(), ActionUtils.ActionTextBehavior.HIDE);
+            plusButton = ActionUtils.createButton(new ExpandClusterAction(this), ActionUtils.ActionTextBehavior.HIDE);
+            minusButton = ActionUtils.createButton(new CollapseClusterAction(this), ActionUtils.ActionTextBehavior.HIDE);
             controlsHBox.getChildren().addAll(minusButton, plusButton);
 
             configureActionButton(plusButton);
@@ -103,37 +100,16 @@ final public class EventClusterNode extends MultiEventNodeBase<EventCluster, Eve
         getChildren().addAll(subNodePane, infoHBox);
 
         if (parentNode == null) {
-            setDescriptionVisibiltiyImpl(DescriptionVisibility.SHOWN);
+            setDescriptionVisibility(DescriptionVisibility.SHOWN);
         }
     }
 
     @Override
-    void setDescriptionVisibiltiyImpl(DescriptionVisibility descrVis) {
-        final int size = getEventCluster().getSize();
-        switch (descrVis) {
-            case HIDDEN:
-                countLabel.setText("");
-                descrLabel.setText("");
-                break;
-            case COUNT_ONLY:
-                descrLabel.setText("");
-                countLabel.setText(String.valueOf(size));
-                break;
-            case SHOWN:
-            default:
-                String count;
-                String description;
-                if (parentNode == null) {
-                    description = tlEvent.getDescription();
-                    count = "(" + size + ")";
-                } else {
-                    description = "";
-                    count = String.valueOf(size);
-                }
-
-                descrLabel.setText(description);
-                countLabel.setText(count);
-                break;
+    void showFullDescription(final int size) {
+        if (getParentNode().isPresent()) {
+            showCountOnly(size);
+        } else {
+            super.showFullDescription(size);
         }
     }
 
@@ -192,16 +168,16 @@ final public class EventClusterNode extends MultiEventNodeBase<EventCluster, Eve
 
                     //clear the existing subnodes
                     List<TimeLineEvent> transform = subNodes.stream().flatMap(new StripeFlattener()).collect(Collectors.toList());
-//                    ((EventDetailsChart) getChart()).getEventStripes().removeAll(transform);
+//                    getChartLane().getParentChart().getEventStripes().removeAll(transform);
                     subNodes.clear();
                     if (bundles.isEmpty()) {
                         getChildren().setAll(subNodePane, infoHBox);
-                        descLOD.set(getEventBundle().getDescriptionLoD());
+                        setDescriptionLOD(getEventBundle().getDescriptionLoD());
                     } else {
-//                        ((EventDetailsChart) getChart()).getEventStripes().addAll(bundles);
+//                        getChartLane().getParentChart().getEventStripes().addAll(bundles);
                         subNodes.addAll(Lists.transform(bundles, EventClusterNode.this::createChildNode));
                         getChildren().setAll(new VBox(infoHBox, subNodePane));
-                        descLOD.set(loadedDescriptionLoD);
+                        setDescriptionLOD(loadedDescriptionLoD);
                     }
                 } catch (InterruptedException | ExecutionException ex) {
                     LOGGER.log(Level.SEVERE, "Error loading subnodes", ex); //NON-NLS
@@ -209,6 +185,7 @@ final public class EventClusterNode extends MultiEventNodeBase<EventCluster, Eve
                 getChartLane().requestChartLayout();
                 getChartLane().setCursor(null);
             }
+
         };
 
         new Thread(loggedTask).start();
@@ -251,46 +228,52 @@ final public class EventClusterNode extends MultiEventNodeBase<EventCluster, Eve
     }
 
     @Override
-    Collection<? extends Action> getActions() {
-        return Arrays.asList(new ExpandClusterAction(),
-                new CollapseClusterAction());
+    Iterable<? extends Action> getActions() {
+        return Iterables.concat(
+                super.getActions(),
+                Arrays.asList(new ExpandClusterAction(this), new CollapseClusterAction(this))
+        );
     }
 
     @Override
     EventHandler<MouseEvent> getDoubleClickHandler() {
-        return mouseEvent -> new ExpandClusterAction().handle(null);
+        return mouseEvent -> new ExpandClusterAction(this).handle(null);
     }
 
-    class ExpandClusterAction extends Action {
+    static private class ExpandClusterAction extends Action {
+
+        private static final Image PLUS = new Image("/org/sleuthkit/autopsy/timeline/images/plus-button.png"); // NON-NLS //NOI18N
 
         @NbBundle.Messages({"ExpandClusterAction.text=Expand"})
-        ExpandClusterAction() {
+        ExpandClusterAction(EventClusterNode node) {
             super(Bundle.ExpandClusterAction_text());
 
             setGraphic(new ImageView(PLUS));
             setEventHandler(actionEvent -> {
-                if (descLOD.get().moreDetailed() != null) {
-                    loadSubBundles(DescriptionLoD.RelativeDetail.MORE);
+                if (node.getDescriptionLoD().moreDetailed() != null) {
+                    node.loadSubBundles(DescriptionLoD.RelativeDetail.MORE);
                 }
             });
-            disabledProperty().bind(descLOD.isEqualTo(DescriptionLoD.FULL));
+            disabledProperty().bind(node.descriptionLoDProperty().isEqualTo(DescriptionLoD.FULL));
         }
     }
 
-    class CollapseClusterAction extends Action {
+    static private class CollapseClusterAction extends Action {
+
+        private static final Image MINUS = new Image("/org/sleuthkit/autopsy/timeline/images/minus-button.png"); // NON-NLS //NOI18N
 
         @NbBundle.Messages({"CollapseClusterAction.text=Collapse"})
-        CollapseClusterAction() {
+        CollapseClusterAction(EventClusterNode node) {
             super(Bundle.CollapseClusterAction_text());
 
             setGraphic(new ImageView(MINUS));
             setEventHandler(actionEvent -> {
-                if (descLOD.get().lessDetailed() != null) {
-                    loadSubBundles(DescriptionLoD.RelativeDetail.LESS);
+                if (node.getDescriptionLoD().lessDetailed() != null) {
+                    node.loadSubBundles(DescriptionLoD.RelativeDetail.LESS);
                 }
             });
-            disabledProperty().bind(Bindings.createBooleanBinding(() -> nonNull(getEventCluster()) && descLOD.get() == getEventCluster().getDescriptionLoD(), descLOD));
+
+            disabledProperty().bind(node.descriptionLoDProperty().isEqualTo(node.getEventCluster().getDescriptionLoD()));
         }
     }
-
 }

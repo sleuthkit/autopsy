@@ -12,7 +12,7 @@ import javafx.beans.property.SimpleObjectProperty;
 /**
  *
  */
-public class DetailViewLayoutSettings {
+public class DetailsChartLayoutSettings {
 
     /**
      * true == truncate all the labels to the greater of the size of their
@@ -42,11 +42,27 @@ public class DetailViewLayoutSettings {
     /**
      * how much detail of the description to show in the ui
      */
-    private final SimpleObjectProperty<DescriptionVisibility> descrVisibility =
-            new SimpleObjectProperty<>(DescriptionVisibility.SHOWN);
+    private final SimpleObjectProperty<DescriptionVisibility> descrVisibility = new SimpleObjectProperty<>(DescriptionVisibility.SHOWN);
+
+    /**
+     * is the pinned events lane showing
+     */
+    private final SimpleBooleanProperty pinnedLaneShowing = new SimpleBooleanProperty(false);
 
     public synchronized SimpleBooleanProperty bandByTypeProperty() {
         return bandByType;
+    }
+
+    public SimpleBooleanProperty pinnedLaneShowing() {
+        return pinnedLaneShowing;
+    }
+
+    public boolean isPinnedLaneShowing() {
+        return pinnedLaneShowing.get();
+    }
+
+    public void setPinnedLaneShowing(boolean showing) {
+        pinnedLaneShowing.set(showing);
     }
 
     SimpleBooleanProperty oneEventPerRowProperty() {
@@ -88,4 +104,5 @@ public class DetailViewLayoutSettings {
     DescriptionVisibility getDescrVisibility() {
         return descrVisibility.get();
     }
+
 }

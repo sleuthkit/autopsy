@@ -20,14 +20,12 @@ package org.sleuthkit.autopsy.timeline.ui.detailview;
 
 import com.google.common.collect.Iterables;
 import java.util.Arrays;
-import java.util.Collection;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.OverrunStyle;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
-import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -44,7 +42,7 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
     private static final Logger LOGGER = Logger.getLogger(EventStripeNode.class.getName());
 
     private Action newHideAction() {
-        return new HideDescriptionAction(getDescription(), tlEvent.getDescriptionLoD(), chartLane.getParentChart());
+        return new HideDescriptionAction(getDescription(), getEvent().getDescriptionLoD(), chartLane.getParentChart());
     }
     private Button hideButton;
 
@@ -76,7 +74,7 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
                 childNode = eventClusterNode;
             }
 
-            childNode.setDescriptionVisibiltiyImpl(DescriptionVisibility.HIDDEN);
+            childNode.setDescriptionVisibility(DescriptionVisibility.HIDDEN);
             subNodes.add(childNode);
             getChildren().addAll(infoHBox, subNodePane);
         }
@@ -108,38 +106,17 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
     }
 
     @Override
-    void setDescriptionVisibiltiyImpl(DescriptionVisibility descrVis) {
-        final int size = getEventStripe().getSize();
-
-        switch (descrVis) {
-            case HIDDEN:
-                countLabel.setText("");
-                descrLabel.setText("");
-                break;
-            case COUNT_ONLY:
-                descrLabel.setText("");
-                countLabel.setText(String.valueOf(size));
-                break;
-            default:
-            case SHOWN:
-                String description = getEventStripe().getDescription();
-                description = parentNode != null
-                        ? "    ..." + StringUtils.substringAfter(description, parentNode.getDescription())
-                        : description;
-                descrLabel.setText(description);
-                countLabel.setText(((size == 1) ? "" : " (" + size + ")")); // NON-NLS
-                break;
-        }
-    }
-
-    @Override
     EventHandler<MouseEvent> getDoubleClickHandler() {
         return mouseEvent -> {
         };
     }
 
     @Override
-    Collection<? extends Action> getActions() {
-        return Arrays.asList(newHideAction());
+    Iterable<? extends Action> getActions() {
+        return Iterables.concat(
+                super.getActions(),
+                Arrays.asList(newHideAction())
+        );
+
     }
 }

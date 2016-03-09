@@ -21,13 +21,11 @@ package org.sleuthkit.autopsy.timeline.ui.detailview;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
 import javafx.scene.chart.Axis;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.StrokeLineCap;
-import org.joda.time.DateTime;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
@@ -47,7 +45,7 @@ import org.sleuthkit.autopsy.timeline.ui.ContextMenuProvider;
  *
  * //TODO: refactor the projected lines to a separate class. -jm
  */
-public final class PrimaryDetailsChartLane extends DetailsChartLane<EventStripe> implements ContextMenuProvider<DateTime> {
+public final class PrimaryDetailsChartLane extends DetailsChartLane<EventStripe> implements ContextMenuProvider {
 
     private static final int PROJECTED_LINE_Y_OFFSET = 5;
     private static final int PROJECTED_LINE_STROKE_WIDTH = 5;
@@ -68,15 +66,15 @@ public final class PrimaryDetailsChartLane extends DetailsChartLane<EventStripe>
 
         parentChart.getEventStripes().addListener((ListChangeListener.Change<? extends EventStripe> change) -> {
             while (change.next()) {
-                change.getAddedSubList().stream().forEach(this::addDataItem);
-                change.getRemoved().stream().forEach(this::removeDataItem);
+                change.getAddedSubList().stream().forEach(this::addEvent);
+                change.getRemoved().stream().forEach(this::removeEvent);
             }
             requestChartLayout();
         });
-        parentChart.getEventStripes().stream().forEach(this::addDataItem);
+        parentChart.getEventStripes().stream().forEach(this::addEvent);
         requestChartLayout();
 
-        selectedNodes.addListener((ListChangeListener.Change<? extends EventNodeBase<?>> change) -> {
+        getSelectedNodes().addListener((ListChangeListener.Change<? extends EventNodeBase<?>> change) -> {
             while (change.next()) {
                 change.getRemoved().forEach(removedNode -> {
                     removedNode.getEvent().getClusters().forEach(cluster -> {
@@ -102,9 +100,7 @@ public final class PrimaryDetailsChartLane extends DetailsChartLane<EventStripe>
         });
     }
 
-    public ObservableList<EventStripe> getEventStripes() {
-        return events;
-    }
+ 
 
     private double getParentXForEpochMillis(Long epochMillis) {
         return getXAxis().localToParent(getXForEpochMillis(epochMillis), 0).getX();

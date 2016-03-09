@@ -18,11 +18,8 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.collections.SetChangeListener;
 import javafx.scene.chart.Axis;
-import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 
 /**
@@ -43,24 +40,18 @@ public final class PinnedEventsChartLane extends DetailsChartLane<TimeLineEvent>
 //        final Series<DateTime, TimeLineEvent> series = new Series<>();
 //        setData(FXCollections.observableArrayList());
 //        getData().add(series);
-
         getController().getPinnedEvents().addListener((SetChangeListener.Change<? extends TimeLineEvent> change) -> {
             if (change.wasAdded()) {
-                addDataItem(change.getElementAdded());
+                addEvent(change.getElementAdded());
             }
             if (change.wasRemoved()) {
-                removeDataItem(change.getElementRemoved());
+                removeEvent(change.getElementRemoved());
             }
             requestChartLayout();
         });
 
-        getController().getPinnedEvents().stream().forEach(this::addDataItem);
+        getController().getPinnedEvents().stream().forEach(this::addEvent);
         requestChartLayout();
-    }
-
-    @Override
-    public ObservableList<EventStripe> getEventStripes() {
-        return FXCollections.emptyObservableList();
     }
 
     @Override

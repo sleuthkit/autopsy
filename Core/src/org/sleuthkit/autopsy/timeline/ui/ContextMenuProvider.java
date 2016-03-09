@@ -9,13 +9,11 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.input.MouseEvent;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 
-public interface ContextMenuProvider<X> {
+public interface ContextMenuProvider {
 
+    TimeLineController getController();
 
-    public TimeLineController getController();
+    void clearContextMenu();
 
-    ContextMenu getContextMenu();
-
-    ContextMenu getChartContextMenu(MouseEvent m);
-
+    ContextMenu getContextMenu(MouseEvent m);
 }

@@ -103,7 +103,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
     public CountsViewPane(TimeLineController controller, Pane partPane, Pane contextPane, Region spacer) {
         super(controller, partPane, contextPane, spacer);
         chart = new EventCountsChart(controller, dateAxis, countAxis, selectedNodes);
-//        setChartClickHandler();
+
         chart.setData(dataSeries);
         setCenter(chart);
 

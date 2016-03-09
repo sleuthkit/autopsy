@@ -9,7 +9,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Range;
 import com.google.common.collect.TreeRangeMap;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
@@ -40,7 +39,6 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
@@ -55,44 +53,42 @@ import org.sleuthkit.autopsy.timeline.ui.ContextMenuProvider;
  * } and {@link #removeDataItem(javafx.scene.chart.XYChart.Data) } to add and
  * remove data.
  */
-abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTime, Y> implements ContextMenuProvider<DateTime> {
+abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTime, Y> implements ContextMenuProvider {
 
     private static final String STYLE_SHEET = GuideLine.class.getResource("EventsDetailsChart.css").toExternalForm(); //NON-NLS
-
- 
 
     static final int MINIMUM_EVENT_NODE_GAP = 4;
     static final int MINIMUM_ROW_HEIGHT = 24;
 
     private final DetailsChart parentChart;
-    final TimeLineController controller;
-    final FilteredEventsModel filteredEvents;
-    final DetailViewLayoutSettings layoutSettings;
-    final ObservableList<EventNodeBase<?>> selectedNodes;
+    private final TimeLineController controller;
+    private final DetailsChartLayoutSettings layoutSettings;
+    private final ObservableList<EventNodeBase<?>> selectedNodes;
 
-    final Map<Y, EventNodeBase<?>> eventMap = new HashMap<>();
+    private final Map<Y, EventNodeBase<?>> eventMap = new HashMap<>();
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    final ObservableList<Y> events = FXCollections.observableArrayList();
     final ObservableList< EventNodeBase<?>> nodes = FXCollections.observableArrayList();
     final ObservableList< EventNodeBase<?>> sortedNodes = nodes.sorted(Comparator.comparing(EventNodeBase::getStartMillis));
+
     private final boolean useQuickHideFilters;
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)//at start of layout pass
+    private double descriptionWidth;
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)//at start of layout pass
     private Set<String> activeQuickHidefilters;
 
-    public boolean quickHideFiltersEnabled() {
+    boolean quickHideFiltersEnabled() {
         return useQuickHideFilters;
     }
 
-    @Override
-    public ContextMenu getChartContextMenu(MouseEvent clickEvent) {
-        return parentChart.getChartContextMenu(clickEvent);
+    public void clearContextMenu() {
+        parentChart.clearContextMenu();
     }
 
     @Override
-    public ContextMenu getContextMenu() {
-        return parentChart.getContextMenu();
+    public ContextMenu getContextMenu(MouseEvent clickEvent) {
+        return parentChart.getContextMenu(clickEvent);
     }
 
     EventNodeBase<?> createNode(DetailsChartLane<?> chart, TimeLineEvent event) {
@@ -108,7 +104,7 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
     }
 
     @Override
-    protected void layoutPlotChildren() {
+    synchronized protected void layoutPlotChildren() {
         setCursor(Cursor.WAIT);
         maxY.set(0);
         if (useQuickHideFilters) {
@@ -152,7 +148,7 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
     /**
      * the maximum y value used so far during the most recent layout pass
      */
-    final ReadOnlyDoubleWrapper maxY = new ReadOnlyDoubleWrapper(0.0);
+    private final ReadOnlyDoubleWrapper maxY = new ReadOnlyDoubleWrapper(0.0);
 
     DetailsChartLane(DetailsChart parentChart, Axis<DateTime> dateAxis, Axis<Y> verticalAxis, boolean useQuickHideFilters) {
         super(dateAxis, verticalAxis);
@@ -160,9 +156,10 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
         this.layoutSettings = parentChart.getLayoutSettings();
         this.controller = parentChart.getController();
         this.selectedNodes = parentChart.getSelectedNodes();
-        this.filteredEvents = controller.getEventsModel();
         this.useQuickHideFilters = useQuickHideFilters;
 
+        //add a dummy deries or the chart is never rendered
+        //JMTODO: test if this is necessary
         final Series<DateTime, Y> series = new Series<>();
         setData(FXCollections.observableArrayList());
         getData().add(series);
@@ -235,11 +232,9 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
 
         //for each node do a recursive layout to size it and then position it in first available slot
         for (EventNodeBase<?> bundleNode : nodes) {
-            //is the node hiden by a quick hide filter?
 
-            boolean quickHide = useQuickHideFilters && activeQuickHidefilters.contains(bundleNode.getDescription());
-            if (quickHide) {
-                //hide it and skip layout
+            if (useQuickHideFilters && activeQuickHidefilters.contains(bundleNode.getDescription())) {
+                //if the node hiden is hidden by  quick hide filter, hide it and skip layout
                 bundleNode.setVisible(false);
                 bundleNode.setManaged(false);
             } else {
@@ -276,76 +271,60 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
         return getXAxis().getDisplayPosition(dateTime);
     }
 
-    abstract public ObservableList<EventStripe> getEventStripes();
-
+    @Deprecated
     @Override
     protected void dataItemAdded(Series<DateTime, Y> series, int itemIndex, Data<DateTime, Y> item) {
     }
 
+    @Deprecated
     @Override
     protected void dataItemRemoved(Data<DateTime, Y> item, Series<DateTime, Y> series) {
     }
 
+    @Deprecated
     @Override
     protected void dataItemChanged(Data<DateTime, Y> item) {
     }
 
+    @Deprecated
     @Override
     protected void seriesAdded(Series<DateTime, Y> series, int seriesIndex) {
     }
 
+    @Deprecated
     @Override
     protected void seriesRemoved(Series<DateTime, Y> series) {
     }
 
     /**
-     * add a dataitem to this chart
+     * add an event to this chart
      *
      * @see note in main section of class JavaDoc
      *
-     * @param data
+     * @param event
      */
-    void addDataItem(Y event) {
-
+    void addEvent(Y event) {
         EventNodeBase<?> eventNode = createNode(this, event);
         eventMap.put(event, eventNode);
         Platform.runLater(() -> {
-            events.add(event);
             nodes.add(eventNode);
             nodeGroup.getChildren().add(eventNode);
-//            data.setNode(eventNode);
-
         });
     }
 
     /**
-     * remove a data item from this chart
+     * remove an event from this chart
      *
      * @see note in main section of class JavaDoc
      *
-     * @param data
+     * @param event
      */
-    void removeDataItem(Y event) {
+    void removeEvent(Y event) {
         EventNodeBase<?> removedNode = eventMap.remove(event);
         Platform.runLater(() -> {
-            events.removeAll(Collections.singleton(event));
-            events.removeAll(new StripeFlattener().apply(removedNode).collect(Collectors.toList()));
+            nodes.remove(removedNode);
             nodeGroup.getChildren().removeAll(removedNode);
-//            data.setNode(null);
         });
-    }
-
-    /**
-     * get the DateTime along the x-axis that corresponds to the given
-     * x-coordinate in the coordinate system of this {@link PrimaryDetailsChart}
-     *
-     * @param x a x-coordinate in the space of this {@link PrimaryDetailsChart}
-     *
-     * @return the DateTime along the x-axis corresponding to the given x value
-     *         (in the space of this {@link PrimaryDetailsChart}
-     */
-    public DateTime getDateTimeForPosition(double x) {
-        return getXAxis().getValueForDisplay(getXAxis().parentToLocal(x, 0).getX());
     }
 
     /**
@@ -384,9 +363,6 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
                 .flatMap(stripeFlattener)
                 .filter(p).collect(Collectors.toList());
     }
-
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)//at start of layout pass
-    double descriptionWidth;
 
     /**
      * Given information about the current layout pass so far and about a
@@ -430,11 +406,9 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
     }
 
     /**
+     * Set layout parameters on the given node and layout its children
      *
-     * Set layout paramaters on the given node and layout its children
-     *
-     * @param eventNode        the Node to layout
-     * @param descriptionWdith the maximum width for the description text
+     * @param eventNode the Node to layout
      */
     void layoutBundleHelper(final EventNodeBase< ?> eventNode) {
         //make sure it is shown
@@ -453,7 +427,5 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
     DetailsChart getParentChart() {
         return parentChart;
     }
-
-   
 
 }

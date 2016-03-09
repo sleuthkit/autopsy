@@ -18,31 +18,25 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
-import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Pane;
-import javafx.util.Duration;
-import org.controlsfx.control.action.Action;
 import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.datamodel.MultiEvent;
-import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.show;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
@@ -58,18 +52,14 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
     static final CornerRadii CORNER_RADII_3 = new CornerRadii(3);
     static final CornerRadii CORNER_RADII_1 = new CornerRadii(1);
 
-
-
     final ObservableList<EventNodeBase<?>> subNodes = FXCollections.observableArrayList();
     final Pane subNodePane = new Pane();
 
-    
-    private Timeline timeline;
+    private final ReadOnlyObjectWrapper<DescriptionLoD> descLOD = new ReadOnlyObjectWrapper<>();
 
     MultiEventNodeBase(DetailsChartLane<?> chartLane, BundleType eventBundle, ParentNodeType parentNode) {
         super(eventBundle, parentNode, chartLane);
-        this.descLOD.set(eventBundle.getDescriptionLoD());
-  
+        setDescriptionLOD(eventBundle.getDescriptionLoD());
 
         if (eventBundle.getEventIDsWithHashHits().isEmpty()) {
             show(hashIV, false);
@@ -88,7 +78,7 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
          * This triggers the layout when a mousover causes the action buttons to
          * interesect with another node, forcing it down.
          */
-        heightProperty().addListener(heightProp -> chartLane.requestChartLayout());
+        heightProperty().addListener(heightProp -> chartLane.requestLayout());
         Platform.runLater(() ->
                 setLayoutX(chartLane.getXAxis().getDisplayPosition(new DateTime(eventBundle.getStartMillis())) - getLayoutXCompensation())
         );
@@ -97,42 +87,27 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
         infoHBox.setPadding(new Insets(2, 3, 2, 3));
         infoHBox.setAlignment(Pos.TOP_LEFT);
 
-        Tooltip.install(this, this.tooltip);
-
-        //set up mouse hover effect and tooltip
-        setOnMouseEntered((MouseEvent e) -> {
-            Tooltip.uninstall(chartLane, AbstractVisualizationPane.getDefaultTooltip());
-            showHoverControls(true);
-            toFront();
-        });
-        setOnMouseExited((MouseEvent event) -> {
-            showHoverControls(false);
-            if (parentNode != null) {
-                parentNode.showHoverControls(true);
-            } else {
-                Tooltip.install(chartLane, AbstractVisualizationPane.getDefaultTooltip());
-            }
-        });
-        setOnMouseClicked(new ClickHandler());
-
         Bindings.bindContent(subNodePane.getChildren(), subNodes);
     }
 
-    @Override
-    void requestChartLayout() {
-        getChartLane().requestChartLayout();
+    public ReadOnlyObjectProperty<DescriptionLoD> descriptionLoDProperty() {
+        return descLOD.getReadOnlyProperty();
     }
-
 
     final DescriptionLoD getDescriptionLoD() {
         return descLOD.get();
     }
 
-    public final BundleType getEventBundle() {
-        return tlEvent;
+    /**
+     *
+     */
+    final void setDescriptionLOD(final DescriptionLoD descriptionLoD) {
+        descLOD.set(descriptionLoD);
     }
 
-   
+    public final BundleType getEventBundle() {
+        return getEvent();
+    }
 
     @SuppressWarnings("unchecked")
     public List<EventNodeBase<?>> getSubNodes() {
@@ -142,8 +117,6 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
     final String getDescription() {
         return getEventBundle().getDescription();
     }
-
-  
 
     final Set<Long> getEventIDs() {
         return getEventBundle().getEventIDs();
@@ -162,21 +135,5 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
 
     abstract EventNodeBase<?> createChildNode(ParentType rawChild);
 
-    void animateTo(double xLeft, double yTop) {
-        if (timeline != null) {
-            timeline.stop();
-            Platform.runLater(chartLane::requestChartLayout);
-        }
-        timeline = new Timeline(new KeyFrame(Duration.millis(100),
-                new KeyValue(layoutXProperty(), xLeft),
-                new KeyValue(layoutYProperty(), yTop))
-        );
-        timeline.setOnFinished(finished -> Platform.runLater(chartLane::requestChartLayout));
-        timeline.play();
-    }
-
     abstract EventHandler<MouseEvent> getDoubleClickHandler();
-
-    abstract Collection<? extends Action> getActions();
-
 }

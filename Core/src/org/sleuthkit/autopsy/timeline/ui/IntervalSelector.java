@@ -32,7 +32,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import org.controlsfx.control.action.Action;
@@ -155,7 +154,11 @@ public abstract class IntervalSelector<X> extends BorderPane {
             mousePress.consume();
         });
 
-        setOnMouseReleased(mouseRelease -> isDragging.set(false));
+        setOnMouseReleased((MouseEvent mouseRelease) -> {
+            isDragging.set(false);
+            mouseRelease.consume();;
+        });
+
         setOnMouseDragged(mouseDrag -> {
             isDragging.set(true);
             double dX = mouseDrag.getScreenX() - startDragX;
@@ -189,18 +192,15 @@ public abstract class IntervalSelector<X> extends BorderPane {
             mouseDrag.consume();
         });
 
-        ActionUtils.configureButton(new ZoomToSelectedIntervalAction(), zoomButton);
-        ActionUtils.configureButton(new ClearSelectedIntervalAction(), closeButton);
-
-        setOnMouseClicked(mosueClick -> {
-            if (mosueClick.getButton() == MouseButton.SECONDARY) {
-                chart.clearIntervalSelector();
-                mosueClick.consume();
-            } else if (mosueClick.getClickCount() >= 2) {
+        setOnMouseClicked(mouseClick -> {
+            if (mouseClick.getClickCount() >= 2) {
                 zoomToSelectedInterval();
-                mosueClick.consume();
+                mouseClick.consume();
             }
         });
+
+        ActionUtils.configureButton(new ZoomToSelectedIntervalAction(), zoomButton);
+        ActionUtils.configureButton(new ClearSelectedIntervalAction(), closeButton);
     }
 
     private Point2D getLocalMouseCoords(MouseEvent mouseEvent) {
@@ -245,7 +245,7 @@ public abstract class IntervalSelector<X> extends BorderPane {
 
     @NbBundle.Messages(value = {"# {0} - start timestamp",
         "# {1} - end timestamp",
-        "Timeline.ui.TimeLineChart.tooltip.text=Double-click to zoom into range:\n{0} to {1}\nRight-click to clear."})
+        "Timeline.ui.TimeLineChart.tooltip.text=Double-click to zoom into range:\n{0} to {1}."})
     private void updateStartAndEnd() {
         String startString = formatSpan(getSpanStart());
         String endString = formatSpan(getSpanEnd());

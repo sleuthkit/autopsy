@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -33,16 +32,14 @@ import javafx.scene.layout.BorderStrokeStyle;
 import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.CornerRadii;
 import static javafx.scene.layout.Region.USE_PREF_SIZE;
-import org.apache.commons.lang3.StringUtils;
-import org.controlsfx.control.action.Action;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 
 /**
  *
  */
 final class SingleEventNode extends EventNodeBase<SingleEvent> {
+
     private static final Logger LOGGER = Logger.getLogger(SingleEventNode.class.getName());
 
     static void show(Node b, boolean show) {
@@ -56,16 +53,6 @@ final class SingleEventNode extends EventNodeBase<SingleEvent> {
     EventHandler<MouseEvent> getDoubleClickHandler() {
         return mouseEvent -> {
         };
-    }
-
-    @Override
-    Collection<? extends Action> getActions() {
-        TimeLineController controller = getChartLane().getController();
-        if (controller.getPinnedEvents().contains(tlEvent)) {
-            return Arrays.asList(new UnPinEventAction(controller, tlEvent));
-        } else {
-            return Arrays.asList(new PinEventAction(controller, tlEvent));
-        }
     }
 
     SingleEventNode(DetailsChartLane<?> chart, SingleEvent event, MultiEventNodeBase<?, ?, ?> parent) {
@@ -92,7 +79,6 @@ final class SingleEventNode extends EventNodeBase<SingleEvent> {
         getChildren().add(infoHBox);
     }
 
-
     @Override
     public List<EventNodeBase<?>> getSubNodes() {
         return Collections.emptyList();
@@ -103,18 +89,10 @@ final class SingleEventNode extends EventNodeBase<SingleEvent> {
         super.layoutChildren(); //To change body of generated methods, choose Tools | Templates.
     }
 
-    
     @Override
     String getDescription() {
-        return tlEvent.getFullDescription();
+        return getEvent().getFullDescription();
     }
-
-    @Override
-    void requestChartLayout() {
-        chartLane.requestChartLayout();
-    }
-
-    
 
     /**
      * @param w the maximum width the description label should have
@@ -124,29 +102,7 @@ final class SingleEventNode extends EventNodeBase<SingleEvent> {
         descrLabel.setMaxWidth(w);
     }
 
-    @Override
-    void setDescriptionVisibiltiyImpl(DescriptionVisibility descrVis) {
-
-        switch (descrVis) {
-            case HIDDEN:
-                countLabel.setText(null);
-                descrLabel.setText("");
-                break;
-            case COUNT_ONLY:
-                countLabel.setText(null);
-                descrLabel.setText("");
-                break;
-            default:
-            case SHOWN:
-                countLabel.setText(null);
-                String description = tlEvent.getFullDescription();
-                description = parentNode != null
-                        ? "    ..." + StringUtils.substringAfter(description, parentNode.getDescription())
-                        : description;
-                descrLabel.setText(description);
-                break;
-        }
-    }
+   
 
     @Override
     Collection<Long> getEventIDs() {

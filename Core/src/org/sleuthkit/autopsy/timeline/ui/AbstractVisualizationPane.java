@@ -384,11 +384,6 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
         requestParentLayout();
     }
 
-//    protected void setChartClickHandler() {
-//        chart.addEventHandler(MouseEvent.MOUSE_CLICKED, (MouseEvent event) -> {
-//
-//        });
-//    }
     /**
      * add a {@link Text} node to the leaf container for the decluttered axis
      * labels

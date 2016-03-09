@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -86,17 +85,14 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
     private final Axis<EventStripe> verticalAxis = new EventAxis<>("All Events");
 
     private MultipleSelectionModel<TreeItem<TimeLineEvent>> treeSelectionModel;
-    private final DetailViewLayoutSettings layoutSettings;
 
     public DetailViewPane(TimeLineController controller, Pane partPane, Pane contextPane, Region bottomLeftSpacer) {
         super(controller, partPane, contextPane, bottomLeftSpacer);
-        layoutSettings = new DetailViewLayoutSettings();
-        settingsNodes = new ArrayList<>(new DetailViewSettingsPane().getChildrenUnmodifiable());
 
         //initialize chart;
-        chart = new DetailsChart(this, detailsChartDateAxis, pinnedDateAxis, verticalAxis);
-//        setChartClickHandler(); //can we push this into chart
+        chart = new DetailsChart(controller, detailsChartDateAxis, pinnedDateAxis, verticalAxis, getSelectedNodes());
         setCenter(chart);
+        settingsNodes = new DetailViewSettingsPane(chart.getLayoutSettings()).getChildrenUnmodifiable();
 
 //        //bind layout fo axes and spacers
         detailsChartDateAxis.getTickMarks().addListener((Observable observable) -> layoutDateLabels());
@@ -193,16 +189,12 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
 
     }
 
-    DetailViewLayoutSettings getLayoutSettings() {
-        return layoutSettings;
-    }
-
     DateTime getDateTimeForPosition(double layoutX) {
         return chart.getDateTimeForPosition(layoutX);
 
     }
 
-    private class DetailViewSettingsPane extends HBox {
+    static private class DetailViewSettingsPane extends HBox {
 
         @FXML
         private RadioButton hiddenRadio;
@@ -260,8 +252,10 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
 
         @FXML
         private ToggleButton pinnedEventsToggle;
+        private final DetailsChartLayoutSettings layoutSettings;
 
-        DetailViewSettingsPane() {
+        DetailViewSettingsPane(DetailsChartLayoutSettings layoutSettings) {
+            this.layoutSettings = layoutSettings;
             FXMLConstructor.construct(DetailViewSettingsPane.this, "DetailViewSettingsPane.fxml"); // NON-NLS
         }
 
@@ -271,11 +265,13 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
             assert oneEventPerRowBox != null : "fx:id=\"oneEventPerRowBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
             assert truncateAllBox != null : "fx:id=\"truncateAllBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
             assert truncateWidthSlider != null : "fx:id=\"truncateAllSlider\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
+            assert pinnedEventsToggle != null : "fx:id=\"pinnedEventsToggle\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
             bandByTypeBox.selectedProperty().bindBidirectional(layoutSettings.bandByTypeProperty());
             truncateAllBox.selectedProperty().bindBidirectional(layoutSettings.truncateAllProperty());
             oneEventPerRowBox.selectedProperty().bindBidirectional(layoutSettings.oneEventPerRowProperty());
             truncateSliderLabel.disableProperty().bind(truncateAllBox.selectedProperty().not());
-            truncateSliderLabel.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.truncateSliderLabel.text"));
+            pinnedEventsToggle.selectedProperty().bindBidirectional(layoutSettings.pinnedLaneShowing());
+
             final InvalidationListener sliderListener = o -> {
                 if (truncateWidthSlider.isValueChanging() == false) {
                     layoutSettings.truncateWidthProperty().set(truncateWidthSlider.getValue());
@@ -294,30 +290,23 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
                 }
             });
 
-            advancedLayoutOptionsButtonLabel.setText(
-                    NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.advancedLayoutOptionsButtonLabel.text"));
+            truncateSliderLabel.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.truncateSliderLabel.text"));
+
+            advancedLayoutOptionsButtonLabel.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.advancedLayoutOptionsButtonLabel.text"));
             bandByTypeBox.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.bandByTypeBox.text"));
-            bandByTypeBoxMenuItem.setText(
-                    NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.bandByTypeBoxMenuItem.text"));
+            bandByTypeBoxMenuItem.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.bandByTypeBoxMenuItem.text"));
             oneEventPerRowBox.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.oneEventPerRowBox.text"));
-            oneEventPerRowBoxMenuItem.setText(
-                    NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.oneEventPerRowBoxMenuItem.text"));
+            oneEventPerRowBoxMenuItem.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.oneEventPerRowBoxMenuItem.text"));
             truncateAllBox.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPan.truncateAllBox.text"));
-            truncateAllBoxMenuItem.setText(
-                    NbBundle.getMessage(DetailViewPane.class, "DetailViewPan.truncateAllBoxMenuItem.text"));
-            truncateSliderLabelMenuItem.setText(
-                    NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.truncateSlideLabelMenuItem.text"));
-            descVisibilitySeparatorMenuItem.setText(
-                    NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.descVisSeparatorMenuItem.text"));
+            truncateAllBoxMenuItem.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPan.truncateAllBoxMenuItem.text"));
+            truncateSliderLabelMenuItem.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.truncateSlideLabelMenuItem.text"));
+            descVisibilitySeparatorMenuItem.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.descVisSeparatorMenuItem.text"));
             showRadioMenuItem.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.showRadioMenuItem.text"));
             showRadio.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.showRadio.text"));
             countsRadioMenuItem.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.countsRadioMenuItem.text"));
             countsRadio.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.countsRadio.text"));
             hiddenRadioMenuItem.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.hiddenRadioMenuItem.text"));
             hiddenRadio.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.hiddenRadio.text"));
-
-            pinnedEventsToggle.selectedProperty().bindBidirectional(chart.pinnedLaneShowing());
-
         }
     }
 

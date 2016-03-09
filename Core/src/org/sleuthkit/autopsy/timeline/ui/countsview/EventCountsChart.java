@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.timeline.ui.countsview;
 
 import java.util.Arrays;
-import java.util.MissingResourceException;
 import javafx.beans.Observable;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
@@ -117,8 +116,22 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
         intervalSelector = null;
     }
 
+    public void clearContextMenu() {
+        chartContextMenu = null;
+    }
+
+    /**
+     * used by {@link CountsViewPane#BarClickHandler} to close the context menu
+     * when the bar menu is requested
+     *
+     * @return the context menu for this chart
+     */
+    public ContextMenu getContextMenu() {
+        return chartContextMenu;
+    }
+
     @Override
-    public ContextMenu getChartContextMenu(MouseEvent clickEvent) throws MissingResourceException {
+    public ContextMenu getContextMenu(MouseEvent clickEvent) {
         if (chartContextMenu != null) {
             chartContextMenu.hide();
         }
@@ -148,16 +161,6 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
     @Override
     public CountsIntervalSelector newIntervalSelector() {
         return new CountsIntervalSelector(this);
-    }
-
-    /**
-     * used by {@link CountsViewPane#BarClickHandler} to close the context menu
-     * when the bar menu is requested
-     *
-     * @return the context menu for this chart
-     */
-    public ContextMenu getContextMenu() {
-        return chartContextMenu;
     }
 
     public ObservableList<Node> getSelectedNodes() {
@@ -369,7 +372,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
                     controller.selectTimeAndType(interval, type);
                     selectedNodes.setAll(node);
                 } else if (e.getButton().equals(MouseButton.SECONDARY)) {
-                    getChartContextMenu(e).hide();
+                    getContextMenu(e).hide();
 
                     if (barContextMenu == null) {
                         barContextMenu = new ContextMenu();
@@ -381,7 +384,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
                                 new SeparatorMenuItem(),
                                 ActionUtils.createMenuItem(new ZoomToIntervalAction()));
 
-                        barContextMenu.getItems().addAll(getChartContextMenu(e).getItems());
+                        barContextMenu.getItems().addAll(getContextMenu(e).getItems());
                     }
 
                     barContextMenu.show(node, e.getScreenX(), e.getScreenY());

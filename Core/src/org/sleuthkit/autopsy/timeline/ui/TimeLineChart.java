@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-15 Basis Technology Corp.
+ * Copyright 2014-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,7 +40,7 @@ import org.sleuthkit.autopsy.timeline.ui.IntervalSelector.IntervalSelectorProvid
  *
  * @param <X> the type of values along the horizontal axis
  */
-public interface TimeLineChart<X> extends ContextMenuProvider<X>, IntervalSelectorProvider<X> {
+public interface TimeLineChart<X> extends ContextMenuProvider, IntervalSelectorProvider<X> {
 
     ObservableList<? extends Node> getSelectedNodes();
 
@@ -124,29 +124,15 @@ public interface TimeLineChart<X> extends ContextMenuProvider<X>, IntervalSelect
 
         @Override
         public void handle(MouseEvent mouseEvent) {
-            if (chart.getContextMenu() != null) {
-                chart.getContextMenu().hide();
-            }
-            if (mouseEvent.getButton() == MouseButton.PRIMARY && mouseEvent.isStillSincePress()) {
-                chart.getSelectedNodes().clear();
-            } else if (MouseEvent.MOUSE_CLICKED == mouseEvent.getEventType() && mouseEvent.isPopupTrigger() && mouseEvent.isStillSincePress()) {
-                ContextMenu chartContextMenu = chart.getChartContextMenu(mouseEvent);
-                chart.setOnMouseMoved(this);
+            if (MouseEvent.MOUSE_CLICKED == mouseEvent.getEventType() && mouseEvent.isPopupTrigger() && mouseEvent.isStillSincePress()) {
+                ContextMenu chartContextMenu = chart.getContextMenu(mouseEvent);
                 chartContextMenu.show(chart, mouseEvent.getScreenX(), mouseEvent.getScreenY());
-                mouseEvent.consume();
+                chart.clearContextMenu();
+            } else if (mouseEvent.getButton() == MouseButton.PRIMARY && mouseEvent.isStillSincePress()) {
+                chart.getSelectedNodes().clear();
             }
+            mouseEvent.consume();
         }
-    }
-
-    /**
-     * enum to represent whether the drag is a left/right-edge modification or a
-     * horizontal slide triggered by dragging the center
-     */
-    enum DragPosition {
-
-        LEFT,
-        CENTER,
-        RIGHT
     }
 
     @NbBundle.Messages({"TimeLineChart.zoomHistoryActionGroup.name=Zoom History"})
