@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.modules.fileextmismatch;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,6 +30,7 @@ import java.util.logging.Level;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import org.openide.util.io.NbObjectInputStream;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
@@ -90,7 +92,15 @@ class FileExtMismatchXML {
         HashMap<String, String[]> sigTypeToExtMap = new HashMap<>();
         File serializedFile = new File(DEFAULT_SERIALIZED_FILE_PATH);
         if (serializedFile.exists()) {
-            
+            try {
+                try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(serializedFile))) {
+                    FileExtMismatchSettings fileExtMismatchSettings = (FileExtMismatchSettings) in.readObject();
+                    return fileExtMismatchSettings.getSigTypeToExtMap();
+                }
+            } catch (IOException | ClassNotFoundException ex) {
+                throw new FileExtMismatchException("Couldn't read serialized settings.", ex);
+            }
+            return sigTypeToExtMap;
         }
 
         try {
@@ -177,6 +187,7 @@ class FileExtMismatchXML {
                     }
                 }
                 rootEl.appendChild(sigEl);
+
             }
 
             success = XMLUtil.saveDoc(FileExtMismatchXML.class, filePath, ENCODING, doc);
@@ -187,5 +198,24 @@ class FileExtMismatchXML {
         }
         return success;
     }
+    
+    /**
+     * Used to translate more implementation-details-specific exceptions (which
+     * are logged by this class) into more generic exceptions for propagation to
+     * clients of the user-defined file types manager.
+     */
+    static class FileExtMismatchException extends Exception {
+
+        private static final long serialVersionUID = 1L;
+
+        FileExtMismatchException(String message) {
+            super(message);
+        }
+
+        FileExtMismatchException(String message, Throwable throwable) {
+            super(message, throwable);
+        }
+    }
+
 
 }
