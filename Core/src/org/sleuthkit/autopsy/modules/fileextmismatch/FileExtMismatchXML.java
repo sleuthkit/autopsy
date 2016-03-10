@@ -54,6 +54,8 @@ class FileExtMismatchXML {
     private static final String SIG_MIMETYPE_ATTR = "mimetype"; //NON-NLS
 
     private static final String DEFAULT_CONFIG_FILE_NAME = "mismatch_config.xml";   //NON-NLS
+    private static final String DEFAULT_SERIALIZED_FILE_NAME = "mismatch_config.settings";
+    private static final String DEFAULT_SERIALIZED_FILE_PATH = PlatformUtil.getUserConfigDirectory() + File.separator + DEFAULT_SERIALIZED_FILE_NAME;
 
     protected String filePath;
 
@@ -86,6 +88,10 @@ class FileExtMismatchXML {
      */
     public HashMap<String, String[]> load() {
         HashMap<String, String[]> sigTypeToExtMap = new HashMap<>();
+        File serializedFile = new File(DEFAULT_SERIALIZED_FILE_PATH);
+        if (serializedFile.exists()) {
+            
+        }
 
         try {
             final Document doc = XMLUtil.loadDoc(FileExtMismatchXML.class, filePath);
