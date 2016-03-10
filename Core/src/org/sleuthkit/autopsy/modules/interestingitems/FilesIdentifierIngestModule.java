@@ -89,7 +89,7 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
                         }
                     }
                 } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
-                    throw new IngestModuleException(Bundle.FilesIdentifierIngestModule_getFilesError());
+                    throw new IngestModuleException(Bundle.FilesIdentifierIngestModule_getFilesError(), ex);
                 }
                 FilesIdentifierIngestModule.interestingFileSetsByJob.put(context.getJobId(), filesSets);
             }
