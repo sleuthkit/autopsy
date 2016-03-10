@@ -24,7 +24,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -44,6 +46,9 @@ import org.sleuthkit.datamodel.TskCoreException;
  * files that match interesting files set definitions.
  */
 final class FilesIdentifierIngestModule implements FileIngestModule {
+    @Messages({
+        "FilesIdentifierIngestModule.getFilesError=Error getting interesting files sets from file."
+    })
 
     private static final Object sharedResourcesLock = new Object();
     private static final Logger logger = Logger.getLogger(FilesIdentifierIngestModule.class.getName());
@@ -77,10 +82,14 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
                 // synchronized definitions manager method eliminates the need 
                 // to disable the interesting files set definition UI during ingest.
                 List<FilesSet> filesSets = new ArrayList<>();
-                for (FilesSet set : InterestingItemDefsManager.getInstance().getInterestingFilesSets().values()) {
-                    if (settings.interestingFilesSetIsEnabled(set.getName())) {
-                        filesSets.add(set);
+                try {
+                    for (FilesSet set : InterestingItemDefsManager.getInstance().getInterestingFilesSets().values()) {
+                        if (settings.interestingFilesSetIsEnabled(set.getName())) {
+                            filesSets.add(set);
+                        }
                     }
+                } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
+                    throw new IngestModuleException(Bundle.FilesIdentifierIngestModule_getFilesError(), ex);
                 }
                 FilesIdentifierIngestModule.interestingFileSetsByJob.put(context.getJobId(), filesSets);
             }

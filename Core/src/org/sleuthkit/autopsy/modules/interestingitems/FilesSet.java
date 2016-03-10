@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.interestingitems;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,8 +36,9 @@ import org.sleuthkit.datamodel.TskData;
  * Interesting files set definition objects are immutable, so they may be safely
  * published to multiple threads.
  */
-final class FilesSet {
+final class FilesSet implements Serializable {
 
+    private static final long serialVersionUID = 1L;
     private final String name;
     private final String description;
     private final boolean ignoreKnownFiles;
@@ -135,51 +137,65 @@ final class FilesSet {
      * A set membership rule for an interesting files set. The immutability of a
      * rule object allows it to be safely published to multiple threads.
      */
-    static class Rule {
+    static class Rule implements Serializable {
 
+        private static final long serialVersionUID = 1L;
         private final String uuid;
         private final String ruleName;
-        private final FileNameFilter fileNameFilter;
-        private final MetaTypeFilter metaTypeFilter;
-        private final ParentPathFilter pathFilter;
-        private final List<FileAttributeFilter> filters = new ArrayList<>();
+        private final FileNameCondition fileNameCondition;
+        private final MetaTypeCondition metaTypeCondition;
+        private final ParentPathCondition pathCondition;
+        private final MimeTypeCondition mimeTypeCondition;
+        private final FileSizeCondition fileSizeCondition;
+        private final List<FileAttributeCondition> conditions = new ArrayList<>();
 
         /**
          * Construct an interesting files set membership rule.
          *
-         * @param ruleName       The name of the rule.
-         * @param fileNameFilter A file name filter.
-         * @param metaTypeFilter A file meta-type filter.
-         * @param pathFilter     A file path filter, may be null.
+         * @param ruleName          The name of the rule. Can be empty string.
+         * @param fileNameCondition A file name condition, may be null.
+         * @param metaTypeCondition A file meta-type condition.
+         * @param pathCondition     A file path condition, may be null.
+         * @param mimeTypeCondition A file mime type condition, may be null.
+         * @param fileSizeCondition A file size condition, may be null.
          */
-        Rule(String ruleName, FileNameFilter fileNameFilter, MetaTypeFilter metaTypeFilter, ParentPathFilter pathFilter) {
+        Rule(String ruleName, FileNameCondition fileNameCondition, MetaTypeCondition metaTypeCondition, ParentPathCondition pathCondition, MimeTypeCondition mimeTypeCondition, FileSizeCondition fileSizeCondition) {
             // since ruleName is optional, ruleUUID can be used to uniquely identify a rule.
             this.uuid = UUID.randomUUID().toString();
+            if (metaTypeCondition == null) {
+                throw new IllegalArgumentException("Interesting files set rule meta-type condition cannot be null");
+            }
+            if (pathCondition == null && fileNameCondition == null && mimeTypeCondition == null && fileSizeCondition == null) {
+                throw new IllegalArgumentException("Must have at least one condition on rule.");
+            }
 
-            if (ruleName == null) {
-                throw new IllegalArgumentException("Interesting files set rule name cannot be null");
-            }
-            if (fileNameFilter == null) {
-                throw new IllegalArgumentException("Interesting files set rule file name filter cannot be null");
-            }
-            if (metaTypeFilter == null) {
-                throw new IllegalArgumentException("Interesting files set rule meta-type filter cannot be null");
-            }
             this.ruleName = ruleName;
 
             /*
              * The rules are evaluated in the order added. MetaType check is
              * fastest, so do it first
              */
-            this.metaTypeFilter = metaTypeFilter;
-            this.filters.add(this.metaTypeFilter);
+            this.metaTypeCondition = metaTypeCondition;
+            this.conditions.add(this.metaTypeCondition);
 
-            this.fileNameFilter = fileNameFilter;
-            this.filters.add(fileNameFilter);
+            this.fileSizeCondition = fileSizeCondition;
+            if (this.fileSizeCondition != null) {
+                this.conditions.add(this.fileSizeCondition);
+            }
 
-            this.pathFilter = pathFilter;
-            if (this.pathFilter != null) {
-                this.filters.add(this.pathFilter);
+            this.fileNameCondition = fileNameCondition;
+            if (this.fileNameCondition != null) {
+                this.conditions.add(fileNameCondition);
+            }
+
+            this.mimeTypeCondition = mimeTypeCondition;
+            if (this.mimeTypeCondition != null) {
+                this.conditions.add(mimeTypeCondition);
+            }
+
+            this.pathCondition = pathCondition;
+            if (this.pathCondition != null) {
+                this.conditions.add(this.pathCondition);
             }
         }
 
@@ -193,30 +209,30 @@ final class FilesSet {
         }
 
         /**
-         * Get the file name filter for the rule.
+         * Get the file name condition for the rule.
          *
-         * @return A file name filter.
+         * @return A file name condition. Can be null.
          */
-        FileNameFilter getFileNameFilter() {
-            return this.fileNameFilter;
+        FileNameCondition getFileNameCondition() {
+            return this.fileNameCondition;
         }
 
         /**
-         * Get the meta-type filter for the rule.
+         * Get the meta-type condition for the rule.
          *
-         * @return A meta-type filter.
+         * @return A meta-type condition. Can be null.
          */
-        MetaTypeFilter getMetaTypeFilter() {
-            return this.metaTypeFilter;
+        MetaTypeCondition getMetaTypeCondition() {
+            return this.metaTypeCondition;
         }
 
         /**
-         * Get the path filter for the rule.
+         * Get the path condition for the rule.
          *
-         * @return A path filter, may be null.
+         * @return A path condition, may be null.
          */
-        ParentPathFilter getPathFilter() {
-            return this.pathFilter;
+        ParentPathCondition getPathCondition() {
+            return this.pathCondition;
         }
 
         /**
@@ -227,8 +243,8 @@ final class FilesSet {
          * @return True if the rule is satisfied, false otherwise.
          */
         boolean isSatisfied(AbstractFile file) {
-            for (FileAttributeFilter filter : filters) {
-                if (!filter.passes(file)) {
+            for (FileAttributeCondition condition : conditions) {
+                if (!condition.passes(file)) {
                     return false;
                 }
             }
@@ -242,7 +258,19 @@ final class FilesSet {
         public String toString() {
             // This override is designed to provide a display name for use with 
             // javax.swing.DefaultListModel<E>.
-            return this.ruleName + " (" + fileNameFilter.getTextToMatch() + ")";
+            if (fileNameCondition != null) {
+                return this.ruleName + " (" + fileNameCondition.getTextToMatch() + ")";
+            } else if (this.pathCondition != null) {
+                return this.ruleName + " (" + pathCondition.getTextToMatch() + ")";
+            } else if (this.mimeTypeCondition != null) {
+                return this.ruleName + " (" + mimeTypeCondition.getMimeType() + ")";
+            } else if (this.fileSizeCondition != null) {
+                return this.ruleName + " (" + fileSizeCondition.getComparator().getSymbol() + " " + fileSizeCondition.getSizeValue()
+                        + " " + fileSizeCondition.getUnit().getName() + ")";
+            } else {
+                return this.ruleName + " ()";
+            }
+
         }
 
         /**
@@ -253,13 +281,27 @@ final class FilesSet {
         }
 
         /**
-         * An interface for the file attribute filters of which interesting
+         * @return the mime type condition. Can be null.
+         */
+        MimeTypeCondition getMimeTypeCondition() {
+            return mimeTypeCondition;
+        }
+
+        /**
+         * @return the file size condition. Can be null.
+         */
+        FileSizeCondition getFileSizeCondition() {
+            return fileSizeCondition;
+        }
+
+        /**
+         * An interface for the file attribute conditions of which interesting
          * files set membership rules are composed.
          */
-        static interface FileAttributeFilter {
+        static interface FileAttributeCondition extends Serializable {
 
             /**
-             * Tests whether or not a file satisfies the conditions of a filter.
+             * Tests whether or not a file satisfies the condition.
              *
              * @param file The file to test.
              *
@@ -269,11 +311,195 @@ final class FilesSet {
         }
 
         /**
-         * A file meta-type filter for an interesting files set membership rule.
-         * The immutability of a meta-type filter object allows it to be safely
-         * published to multiple threads.
+         * A class for checking files based upon their MIME types.
          */
-        static final class MetaTypeFilter implements FileAttributeFilter {
+        static final class MimeTypeCondition implements FileAttributeCondition {
+
+            private static final long serialVersionUID = 1L;
+            private final String mimeType;
+
+            /**
+             * Constructs a MimeTypeCondition
+             *
+             * @param mimeType The mime type to condition for
+             */
+            MimeTypeCondition(String mimeType) {
+                this.mimeType = mimeType;
+            }
+
+            /**
+             * @inheritDoc
+             */
+            @Override
+            public boolean passes(AbstractFile file) {
+                return this.mimeType.equals(file.getMIMEType());
+            }
+
+            /**
+             * Gets the mime type that is being checked
+             *
+             * @return the mime type
+             */
+            String getMimeType() {
+                return this.mimeType;
+            }
+
+        }
+
+        /**
+         * A class for checking whether a file's size is within the
+         * specifications given (i.e. < N Bytes).
+         */
+        static final class FileSizeCondition implements FileAttributeCondition {
+
+            private static final long serialVersionUID = 1L;
+
+            
+            /**
+             * Represents a comparison item for file size
+             */
+            static enum COMPARATOR {
+
+                LESS_THAN("<"),
+                LESS_THAN_EQUAL("≤"),
+                EQUAL("="),
+                GREATER_THAN(">"),
+                GREATER_THAN_EQUAL("≥");
+
+                private String symbol;
+
+                COMPARATOR(String symbol) {
+                    this.symbol = symbol;
+                }
+
+                public static COMPARATOR fromSymbol(String symbol) {
+                    if (symbol.equals("<=") || symbol.equals("≤")) {
+                        return LESS_THAN_EQUAL;
+                    } else if (symbol.equals("<")) {
+                        return LESS_THAN;
+                    } else if (symbol.equals("==") || symbol.equals("=")) {
+                        return EQUAL;
+                    } else if (symbol.equals(">")) {
+                        return GREATER_THAN;
+                    } else if (symbol.equals(">=") || symbol.equals("≥")) {
+                        return GREATER_THAN_EQUAL;
+                    } else {
+                        throw new IllegalArgumentException("Invalid symbol");
+                    }
+                }
+
+                /**
+                 * @return the symbol
+                 */
+                public String getSymbol() {
+                    return symbol;
+                }
+            }
+
+            /**
+             * Represents the units of size
+             */
+            static enum SIZE_UNIT {
+
+                BYTE(1, "Bytes"),
+                KILOBYTE(1024, "Kilobytes"),
+                MEGABYTE(1024 * 1024, "Megabytes"),
+                GIGABYTE(1024 * 1024 * 1024, "Gigabytes");
+                private long size;
+                private String name;
+
+                private SIZE_UNIT(long size, String name) {
+                    this.size = size;
+                    this.name = name;
+                }
+
+                public long getSize() {
+                    return this.size;
+                }
+
+                public static SIZE_UNIT fromName(String name) {
+                    for (SIZE_UNIT unit : SIZE_UNIT.values()) {
+                        if (unit.getName().equals(name)) {
+                            return unit;
+                        }
+                    }
+                    throw new IllegalArgumentException("Invalid name for size unit.");
+                }
+
+                /**
+                 * @return the name
+                 */
+                public String getName() {
+                    return name;
+                }
+            }
+            private final COMPARATOR comparator;
+            private final SIZE_UNIT unit;
+            private final int sizeValue;
+
+            FileSizeCondition(COMPARATOR comparator, SIZE_UNIT unit, int sizeValue) {
+                this.comparator = comparator;
+                this.unit = unit;
+                this.sizeValue = sizeValue;
+            }
+            
+            /**
+             * Gets the comparator of this condition
+             *
+             * @return the comparator
+             */
+            COMPARATOR getComparator() {
+                return comparator;
+            }
+
+            /**
+             * Gets the unit for the size of this condition
+             *
+             * @return the unit
+             */
+            SIZE_UNIT getUnit() {
+                return unit;
+            }
+
+            /**
+             * Gets the size value of this condition
+             *
+             * @return the size value
+             */
+            int getSizeValue() {
+                return sizeValue;
+            }
+
+
+            @Override
+            public boolean passes(AbstractFile file) {
+                long fileSize = file.getSize();
+                long conditionSize = this.getUnit().getSize() * this.getSizeValue();
+                switch (this.getComparator()) {
+                    case GREATER_THAN:
+                        return fileSize > conditionSize;
+                    case GREATER_THAN_EQUAL:
+                        return fileSize >= conditionSize;
+                    case LESS_THAN_EQUAL:
+                        return fileSize <= conditionSize;
+                    case LESS_THAN:
+                        return fileSize < conditionSize;
+                    default:
+                        return fileSize == conditionSize;
+
+                }
+            }
+
+        }
+
+        /**
+         * A file meta-type condition for an interesting files set membership
+         * rule. The immutability of a meta-type condition object allows it to
+         * be safely published to multiple threads.
+         */
+        static final class MetaTypeCondition implements FileAttributeCondition {
+
+            private static final long serialVersionUID = 1L;
 
             enum Type {
 
@@ -285,11 +511,11 @@ final class FilesSet {
             private final Type type;
 
             /**
-             * Construct a meta-type filter.
+             * Construct a meta-type condition.
              *
              * @param metaType The meta-type to match, must.
              */
-            MetaTypeFilter(Type type) {
+            MetaTypeCondition(Type type) {
                 this.type = type;
             }
 
@@ -310,9 +536,9 @@ final class FilesSet {
             }
 
             /**
-             * Gets the meta-type the filter matches.
+             * Gets the meta-type the condition matches.
              *
-             * @return A member of the MetaTypeFilter.Type enumeration.
+             * @return A member of the MetaTypeCondition.Type enumeration.
              */
             Type getMetaType() {
                 return this.type;
@@ -320,20 +546,20 @@ final class FilesSet {
         }
 
         /**
-         * An interface for file attribute filters that do textual matching.
+         * An interface for file attribute conditions that do textual matching.
          */
-        static interface TextFilter extends FileAttributeFilter {
+        static interface TextCondition extends FileAttributeCondition {
 
             /**
-             * Gets the text the filter matches.
+             * Gets the text the condition matches.
              *
              * @return The text.
              */
             String getTextToMatch();
 
             /**
-             * Queries whether or not the text the filter matches is a regular
-             * expression.
+             * Queries whether or not the text the condition matches is a
+             * regular expression.
              *
              * @return True if the text to be matched is a regular expression,
              *         false otherwise.
@@ -341,7 +567,7 @@ final class FilesSet {
             boolean isRegex();
 
             /**
-             * Determines whether a string of text matches the filter.
+             * Determines whether a string of text matches the condition.
              *
              * @param textToMatch The text string.
              *
@@ -352,19 +578,19 @@ final class FilesSet {
         }
 
         /**
-         * An abstract base class for file attribute filters that do textual
+         * An abstract base class for file attribute conditions that do textual
          * matching.
          */
-        private static abstract class AbstractTextFilter implements TextFilter {
+        private static abstract class AbstractTextCondition implements TextCondition {
 
             private final TextMatcher textMatcher;
 
             /**
-             * Construct a case-insensitive text filter.
+             * Construct a case-insensitive text condition.
              *
              * @param text The text to be matched.
              */
-            AbstractTextFilter(String text, Boolean partialMatch) {
+            AbstractTextCondition(String text, Boolean partialMatch) {
                 if (partialMatch) {
                     this.textMatcher = new FilesSet.Rule.CaseInsensitivePartialStringComparisionMatcher(text);
                 } else {
@@ -373,16 +599,16 @@ final class FilesSet {
             }
 
             /**
-             * Construct a regular expression text filter.
+             * Construct a regular expression text condition.
              *
              * @param regex The regular expression to be matched.
              */
-            AbstractTextFilter(Pattern regex) {
+            AbstractTextCondition(Pattern regex) {
                 this.textMatcher = new FilesSet.Rule.RegexMatcher(regex);
             }
 
             /**
-             * Get the text the filter matches.
+             * Get the text the condition matches.
              *
              * @return The text.
              */
@@ -392,8 +618,8 @@ final class FilesSet {
             }
 
             /**
-             * Queries whether or not the text the filter matches is a regular
-             * expression.
+             * Queries whether or not the text the condition matches is a
+             * regular expression.
              *
              * @return True if the text to be matched is a regular expression,
              *         false otherwise.
@@ -404,7 +630,7 @@ final class FilesSet {
             }
 
             /**
-             * Determines whether a string of text matches the filter.
+             * Determines whether a string of text matches the condition.
              *
              * @param textToMatch The text string.
              *
@@ -424,27 +650,29 @@ final class FilesSet {
         }
 
         /**
-         * A file path filter for an interesting files set membership rule. The
-         * immutability of a path filter object allows it to be safely published
-         * to multiple threads.
+         * A file path condition for an interesting files set membership rule.
+         * The immutability of a path condition object allows it to be safely
+         * published to multiple threads.
          */
-        static final class ParentPathFilter extends AbstractTextFilter {
+        static final class ParentPathCondition extends AbstractTextCondition {
+
+            private static final long serialVersionUID = 1L;
 
             /**
-             * Construct a case-insensitive file path filter.
+             * Construct a case-insensitive file path condition.
              *
              * @param path The path to be matched.
              */
-            ParentPathFilter(String path) {
+            ParentPathCondition(String path) {
                 super(path, true);
             }
 
             /**
-             * Construct a file path regular expression filter.
+             * Construct a file path regular expression condition.
              *
              * @param path The path regular expression to be matched.
              */
-            ParentPathFilter(Pattern path) {
+            ParentPathCondition(Pattern path) {
                 super(path);
             }
 
@@ -459,34 +687,37 @@ final class FilesSet {
         }
 
         /**
-         * A "tagging" interface to group name and extension filters separately
-         * from path filters for type safety when constructing rules.
+         * A "tagging" interface to group name and extension conditions
+         * separately from path conditions for type safety when constructing
+         * rules.
          */
-        static interface FileNameFilter extends TextFilter {
+        static interface FileNameCondition extends TextCondition {
         }
 
         /**
-         * A file name filter for an interesting files set membership rule. The
-         * immutability of a file name filter object allows it to be safely
-         * published to multiple threads.
+         * A file name condition for an interesting files set membership rule.
+         * The immutability of a file name condition object allows it to be
+         * safely published to multiple threads.
          */
-        static final class FullNameFilter extends AbstractTextFilter implements FileNameFilter {
+        static final class FullNameCondition extends AbstractTextCondition implements FileNameCondition {
+
+            private static final long serialVersionUID = 1L;
 
             /**
-             * Construct a case-insensitive full file name filter.
+             * Construct a case-insensitive full file name condition.
              *
              * @param name The file name to be matched.
              */
-            FullNameFilter(String name) {
+            FullNameCondition(String name) {
                 super(name, false);
             }
 
             /**
-             * Construct a full file name regular expression filter.
+             * Construct a full file name regular expression condition.
              *
              * @param name The file name regular expression to be matched.
              */
-            FullNameFilter(Pattern name) {
+            FullNameCondition(Pattern name) {
                 super(name);
             }
 
@@ -501,18 +732,20 @@ final class FilesSet {
         }
 
         /**
-         * A file name extension filter for an interesting files set membership
-         * rule. The immutability of a file name extension filter object allows
-         * it to be safely published to multiple threads.
+         * A file name extension condition for an interesting files set
+         * membership rule. The immutability of a file name extension condition
+         * object allows it to be safely published to multiple threads.
          */
-        static final class ExtensionFilter extends AbstractTextFilter implements FileNameFilter {
+        static final class ExtensionCondition extends AbstractTextCondition implements FileNameCondition {
+
+            private static final long serialVersionUID = 1L;
 
             /**
-             * Construct a case-insensitive file name extension filter.
+             * Construct a case-insensitive file name extension condition.
              *
              * @param extension The file name extension to be matched.
              */
-            ExtensionFilter(String extension) {
+            ExtensionCondition(String extension) {
                 // If there is a leading ".", strip it since 
                 // AbstractFile.getFileNameExtension() returns just the 
                 // extension chars and not the dot.
@@ -520,12 +753,12 @@ final class FilesSet {
             }
 
             /**
-             * Construct a file name extension regular expression filter.
+             * Construct a file name extension regular expression condition.
              *
              * @param extension The file name extension regular expression to be
              *                  matched.
              */
-            ExtensionFilter(Pattern extension) {
+            ExtensionCondition(Pattern extension) {
                 super(extension.pattern(), false);
             }
 
@@ -541,9 +774,9 @@ final class FilesSet {
 
         /**
          * An interface for objects that do textual matches, used to compose a
-         * text filter.
+         * text condition.
          */
-        private static interface TextMatcher {
+        private static interface TextMatcher extends Serializable {
 
             /**
              * Get the text the matcher examines.
@@ -577,6 +810,7 @@ final class FilesSet {
          */
         private static class CaseInsensitiveStringComparisionMatcher implements TextMatcher {
 
+            private static final long serialVersionUID = 1L;
             private final String textToMatch;
 
             /**
@@ -620,6 +854,7 @@ final class FilesSet {
          */
         private static class CaseInsensitivePartialStringComparisionMatcher implements TextMatcher {
 
+            private static final long serialVersionUID = 1L;
             private final String textToMatch;
             private final Pattern pattern;
 
@@ -664,6 +899,7 @@ final class FilesSet {
          */
         private static class RegexMatcher implements TextMatcher {
 
+            private static final long serialVersionUID = 1L;
             private final Pattern regex;
 
             /**
