@@ -136,6 +136,10 @@ public class HashDbManager implements PropertyChangeListener {
         private HashDbManagerException(String message) {
             super(message);
         }
+
+        private HashDbManagerException(String message, Throwable exception) {
+            super(message, exception);
+        }
     }
 
     /**
@@ -512,18 +516,14 @@ public class HashDbManager implements PropertyChangeListener {
         hashDatabases.clear();
     }
 
-    private boolean writeHashSetConfigurationToDisk() {
+    private boolean writeHashSetConfigurationToDisk() throws HashDbManagerException {
 
         try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(DB_SERIALIZATION_FILE_PATH))) {
             HashDbSerializationSettings settings = new HashDbSerializationSettings(this.knownHashSets, this.knownBadHashSets);
             out.writeObject(settings);
-            File xmlFile = new File(configFilePath);
-            if (xmlFile.exists()) {
-                xmlFile.delete();
-            }
             return true;
         } catch (IOException | TskCoreException ex) {
-            throw new PersistenceException(String.format("Failed to write settings to %s", DB_SERIALIZATION_FILE_PATH), ex);
+            throw new HashDbManagerException(String.format("Failed to write settings to %s", DB_SERIALIZATION_FILE_PATH), ex);
         }
     }
 
@@ -560,8 +560,19 @@ public class HashDbManager implements PropertyChangeListener {
         return f.exists() && f.canRead() && f.canWrite();
     }
 
-    private boolean readHashSetsConfigurationFromDisk() {
-        if (hashSetsConfigurationFileExists()) {
+    private boolean readHashSetsConfigurationFromDisk() throws HashDbManagerException {
+        File fileSetFile = new File(DB_SERIALIZATION_FILE_PATH);
+        if (fileSetFile.exists()) {
+            try {
+                try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(DB_SERIALIZATION_FILE_PATH))) {
+                    HashDbSerializationSettings filesSetsSettings = (HashDbSerializationSettings) in.readObject();
+                    this.setFields(filesSetsSettings);
+                    return true;
+                }
+            } catch (IOException | ClassNotFoundException ex) {
+                throw new PersistenceException(String.format("Failed to read settings from %s", DB_SERIALIZATION_FILE_PATH), ex);
+            }
+        } else if (hashSetsConfigurationFileExists()) {
             boolean updatedSchema = false;
 
             // Open the XML document that implements the configuration file.
@@ -702,26 +713,13 @@ public class HashDbManager implements PropertyChangeListener {
 
             return true;
         } else {
-            File fileSetFile = new File(DB_SERIALIZATION_FILE_PATH);
-            if (fileSetFile.exists()) {
-                try {
-                    try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(DB_SERIALIZATION_FILE_PATH))) {
-                        HashDbSerializationSettings filesSetsSettings = (HashDbSerializationSettings) in.readObject();
-                        this.setFields(filesSetsSettings);
-                        return true;
-                    }
-                } catch (IOException | ClassNotFoundException ex) {
-                    throw new PersistenceException(String.format("Failed to read settings from %s", DB_SERIALIZATION_FILE_PATH), ex);
-                }
-            } else {
-                try {
-                    this.setFields(new HashDbSerializationSettings(new ArrayList<>(), new ArrayList<>()));
-                } catch (TskCoreException ex) {
-                    throw new PersistenceException("Failed to create hash database settings", ex);
-                }
-
-                return true;
+            try {
+                this.setFields(new HashDbSerializationSettings(new ArrayList<>(), new ArrayList<>()));
+            } catch (TskCoreException ex) {
+                throw new PersistenceException("Failed to create hash database settings", ex);
             }
+
+            return true;
         }
     }
 
