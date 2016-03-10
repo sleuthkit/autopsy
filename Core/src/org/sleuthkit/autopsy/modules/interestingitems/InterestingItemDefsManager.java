@@ -151,12 +151,15 @@ final class InterestingItemDefsManager extends Observable {
         // multiple intersting files set definition files, e.g., one for 
         // definitions that ship with Autopsy and one for user definitions.
         static Map<String, FilesSet> readDefinitionsFile(String filePath) throws InterestingItemDefsManagerException {
-            Map<String, FilesSet> filesSets = new HashMap<>();
+            Map<String, FilesSet> filesSets = readSerializedDefinitions();
 
+            if (!filesSets.isEmpty()) {
+                return filesSets;
+            }
             // Check if the legacy xml file exists.
             File defsFile = new File(filePath);
             if (!defsFile.exists()) {
-                return readSerializedDefinitions();
+                return filesSets;
             }
 
             // Check if the file can be read.
@@ -509,10 +512,6 @@ final class InterestingItemDefsManager extends Observable {
                 out.writeObject(new InterestingItemsFilesSetSettings(interestingFilesSets));
             } catch (IOException ex) {
                 throw new InterestingItemDefsManagerException(String.format("Failed to write settings to %s", filePath), ex);
-            }
-            File xmlFile = new File(LEGACY_FILE_SET_DEFS_PATH);
-            if (xmlFile.exists()) {
-                xmlFile.delete();
             }
             return true;
         }
