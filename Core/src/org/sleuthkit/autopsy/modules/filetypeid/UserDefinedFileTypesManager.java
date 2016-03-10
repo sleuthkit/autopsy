@@ -256,12 +256,12 @@ final class UserDefinedFileTypesManager {
             String filePath = getFileTypeDefinitionsFilePath(USER_DEFINED_TYPE_DEFINITIONS_FILE);
             File file = new File(filePath);
             File serialized = new File(getFileTypeDefinitionsFilePath(USER_DEFINED_TYPE_SERIALIZATION_FILE));
-            if (file.exists() && file.canRead()) {
-                for (FileType fileType : DefinitionsReader.readFileTypes(filePath)) {
+            if (serialized.exists()) {
+                for (FileType fileType : DefinitionsReader.readFileTypesSerialized()) {
                     addUserDefinedFileType(fileType);
                 }
-            } else if (serialized.exists()) {
-                for (FileType fileType : DefinitionsReader.readFileTypesSerialized(getFileTypeDefinitionsFilePath(USER_DEFINED_TYPE_SERIALIZATION_FILE))) {
+            } else if (file.exists() && file.canRead()) {
+                for (FileType fileType : DefinitionsReader.readFileTypes(filePath)) {
                     addUserDefinedFileType(fileType);
                 }
             }
@@ -294,14 +294,8 @@ final class UserDefinedFileTypesManager {
      *                     types.
      */
     synchronized void setUserDefinedFileTypes(List<FileType> newFileTypes) throws UserDefinedFileTypesException {
-        try {
-            String filePath = getFileTypeDefinitionsFilePath(USER_DEFINED_TYPE_DEFINITIONS_FILE);
-            DefinitionsWriter.writeFileTypes(newFileTypes, filePath);
-        } catch (ParserConfigurationException | FileNotFoundException | UnsupportedEncodingException | TransformerException ex) {
-            throwUserDefinedFileTypesException(ex, "UserDefinedFileTypesManager.saveFileTypes.errorMessage");
-        } catch (IOException ex) {
-            throwUserDefinedFileTypesException(ex, "UserDefinedFileTypesManager.saveFileTypes.errorMessage");
-        }
+        String filePath = getFileTypeDefinitionsFilePath(USER_DEFINED_TYPE_DEFINITIONS_FILE);
+        DefinitionsWriter.writeFileTypes(newFileTypes, filePath);
     }
 
     /**
@@ -334,16 +328,12 @@ final class UserDefinedFileTypesManager {
          * @throws UnsupportedEncodingException
          * @throws TransformerException
          */
-        private static void writeFileTypes(List<FileType> fileTypes, String filePath) throws ParserConfigurationException, IOException, FileNotFoundException, UnsupportedEncodingException, TransformerException {
-            try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(getFileTypeDefinitionsFilePath(USER_DEFINED_TYPE_SERIALIZATION_FILE)))) {
+        private static void writeFileTypes(List<FileType> fileTypes, String filePath) throws UserDefinedFileTypesException {
+            try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(filePath))) {
                 UserDefinedFileTypesSettings settings = new UserDefinedFileTypesSettings(fileTypes);
                 out.writeObject(settings);
-                File xmlFile = new File(filePath);
-                if (xmlFile.exists()) {
-                    xmlFile.delete();
-                }
             } catch (IOException ex) {
-                throw new PersistenceException(String.format("Failed to write settings to %s", getFileTypeDefinitionsFilePath(USER_DEFINED_TYPE_SERIALIZATION_FILE)), ex);
+                throw new UserDefinedFileTypesException(String.format("Failed to write settings to %s", getFileTypeDefinitionsFilePath(USER_DEFINED_TYPE_SERIALIZATION_FILE)), ex);
             }
         }
 
@@ -369,7 +359,7 @@ final class UserDefinedFileTypesManager {
          *
          * @return A collection of file types read from the XML file.
          */
-        private static List<FileType> readFileTypes(String filePath) throws IOException, SAXException {
+        private static List<FileType> readFileTypes(String filePath) throws IOException, SAXException, ParserConfigurationException {
             List<FileType> fileTypes = new ArrayList<>();
             /*
              * RC: Commenting out the loadDocument overload that validates
@@ -395,15 +385,17 @@ final class UserDefinedFileTypesManager {
             }
             return fileTypes;
         }
-        
+
         /**
          * Reads the file types
-         * 
+         *
          * @param filePath the file path where the file types are to be read
+         *
          * @return the file types
+         *
          * @throws ParserConfigurationException If the file cannot be read
          */
-        private static List<FileType> readFileTypesSerialized(String filePath) throws ParserConfigurationException {
+        private static List<FileType> readFileTypesSerialized() throws UserDefinedFileTypesException {
             List<FileType> fileTypes = new ArrayList<>();
             File serializedDefs = new File(getFileTypeDefinitionsFilePath(USER_DEFINED_TYPE_SERIALIZATION_FILE));
             if (serializedDefs.exists()) {
@@ -413,7 +405,7 @@ final class UserDefinedFileTypesManager {
                         return filesSetsSettings.getUserDefinedFileTypes();
                     }
                 } catch (IOException | ClassNotFoundException ex) {
-                    throw new PersistenceException(String.format("Failed to read settings from %s", getFileTypeDefinitionsFilePath(USER_DEFINED_TYPE_SERIALIZATION_FILE)), ex);
+                    throw new UserDefinedFileTypesException("Couldn't read serialized settings.", ex);
                 }
             }
             return fileTypes;
