@@ -41,7 +41,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 final public class InterestingItemsIngestModuleFactory extends IngestModuleFactoryAdapter {
 
     @Messages({
-        "InterestingItemsIngestModuleFactory.defaultSettingsError=Could not get default interesting files settings."
+        "InterestingItemsIngestModuleFactory.defaultSettingsError=Error getting default interesting files settings from file."
     })
 
     @Override

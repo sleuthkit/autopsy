@@ -55,8 +55,8 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         "InterestingItemDefsPanel.kiloBytes=Kilobytes",
         "InterestingItemDefsPanel.megaBytes=Megabytes",
         "InterestingItemDefsPanel.gigaBytes=Gigabytes",
-        "InterestingItemsDefsPanel.loadError=Could not load interesting files sets.",
-        "InterestingItemsDefsPanel.saveError=Could not save interesting files sets."
+        "InterestingItemsDefsPanel.loadError=Error loading interesting files sets from file.",
+        "InterestingItemsDefsPanel.saveError=Error saving interesting files sets to file."
     })
 
     private static final SortedSet<MediaType> mediaTypes = MimeTypes.getDefaultMimeTypes().getMediaTypeRegistry().getTypes();

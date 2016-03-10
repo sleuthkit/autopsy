@@ -37,8 +37,8 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
  */
 final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobSettingsPanel implements Observer {
     @Messages({
-        "FilesIdentifierIngestJobSettingsPanel.updateError=Could not update interesting files sets.",
-        "FilesIdentifierIngestJobSettingsPanel.getError=Could not get interesting files sets."
+        "FilesIdentifierIngestJobSettingsPanel.updateError=Error updating interesting files sets settings file.",
+        "FilesIdentifierIngestJobSettingsPanel.getError=Error getting interesting files sets from settings file."
     })
 
     private final FilesSetsTableModel tableModel;
