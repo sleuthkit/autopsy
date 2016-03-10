@@ -57,14 +57,14 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
 
     private final ReadOnlyObjectWrapper<DescriptionLoD> descLOD = new ReadOnlyObjectWrapper<>();
 
-    MultiEventNodeBase(DetailsChartLane<?> chartLane, BundleType eventBundle, ParentNodeType parentNode) {
-        super(eventBundle, parentNode, chartLane);
-        setDescriptionLOD(eventBundle.getDescriptionLoD());
+    MultiEventNodeBase(DetailsChartLane<?> chartLane, BundleType event, ParentNodeType parentNode) {
+        super(event, parentNode, chartLane);
+        setDescriptionLOD(event.getDescriptionLoD());
 
-        if (eventBundle.getEventIDsWithHashHits().isEmpty()) {
+        if (event.getEventIDsWithHashHits().isEmpty()) {
             show(hashIV, false);
         }
-        if (eventBundle.getEventIDsWithTags().isEmpty()) {
+        if (event.getEventIDsWithTags().isEmpty()) {
             show(tagIV, false);
         }
 
@@ -80,7 +80,7 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
          */
         heightProperty().addListener(heightProp -> chartLane.requestLayout());
         Platform.runLater(() ->
-                setLayoutX(chartLane.getXAxis().getDisplayPosition(new DateTime(eventBundle.getStartMillis())) - getLayoutXCompensation())
+                setLayoutX(chartLane.getXAxis().getDisplayPosition(new DateTime(event.getStartMillis())) - getLayoutXCompensation())
         );
 
         //initialize info hbox
@@ -105,21 +105,17 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
         descLOD.set(descriptionLoD);
     }
 
-    public final BundleType getEventBundle() {
-        return getEvent();
-    }
-
     @SuppressWarnings("unchecked")
     public List<EventNodeBase<?>> getSubNodes() {
         return subNodes;
     }
 
     final String getDescription() {
-        return getEventBundle().getDescription();
+        return getEvent().getDescription();
     }
 
     final Set<Long> getEventIDs() {
-        return getEventBundle().getEventIDs();
+        return getEvent().getEventIDs();
     }
 
     @Override

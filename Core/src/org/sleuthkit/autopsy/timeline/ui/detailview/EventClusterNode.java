@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import static java.util.Objects.nonNull;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.concurrent.Task;
@@ -119,11 +120,10 @@ final public class EventClusterNode extends MultiEventNodeBase<EventCluster, Eve
      * @param requestedDescrLoD
      * @param expand
      */
-    @NbBundle.Messages(value = "EventStripeNode.loggedTask.name=Load sub clusters")
+    @NbBundle.Messages(value = "EventClusterNode.loggedTask.name=Load sub events")
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private synchronized void loadSubBundles(DescriptionLoD.RelativeDetail relativeDetail) {
+    private synchronized void loadSubStripes(DescriptionLoD.RelativeDetail relativeDetail) {
         getChartLane().setCursor(Cursor.WAIT);
-
 
         /*
          * make new ZoomParams to query with
@@ -137,45 +137,50 @@ final public class EventClusterNode extends MultiEventNodeBase<EventCluster, Eve
         final EventTypeZoomLevel eventTypeZoomLevel = eventsModel.eventTypeZoomProperty().get();
         final ZoomParams zoomParams = new ZoomParams(subClusterSpan, eventTypeZoomLevel, subClusterFilter, getDescriptionLoD());
 
-        Task<List<EventStripe>> loggedTask = new LoggedTask<List<EventStripe>>(Bundle.EventStripeNode_loggedTask_name(), false) {
+        Task<List<EventStripe>> loggedTask = new LoggedTask<List<EventStripe>>(Bundle.EventClusterNode_loggedTask_name(), false) {
 
             private volatile DescriptionLoD loadedDescriptionLoD = getDescriptionLoD().withRelativeDetail(relativeDetail);
 
             @Override
             protected List<EventStripe> call() throws Exception {
-                List<EventStripe> bundles;
+                List<EventStripe> stripes;
                 DescriptionLoD next = loadedDescriptionLoD;
                 do {
                     loadedDescriptionLoD = next;
-                    if (loadedDescriptionLoD == getEventBundle().getDescriptionLoD()) {
+                    if (loadedDescriptionLoD == getEvent().getDescriptionLoD()) {
                         return Collections.emptyList();
                     }
-                    bundles = eventsModel.getEventStripes(zoomParams.withDescrLOD(loadedDescriptionLoD));
+                    stripes = eventsModel.getEventStripes(zoomParams.withDescrLOD(loadedDescriptionLoD));
 
                     next = loadedDescriptionLoD.withRelativeDetail(relativeDetail);
-                } while (bundles.size() == 1 && nonNull(next));
+                } while (stripes.size() == 1 && nonNull(next));
 
                 // return list of EventStripes representing sub-bundles
-                return bundles.stream()
-                        .map(eventStripe -> eventStripe.withParent(getEventCluster()))
+                return stripes.stream()
+                        .map(new Function<EventStripe, EventStripe>() {
+
+                            public EventStripe apply(EventStripe eventStripe) {
+                                return eventStripe.withParent(getEvent());
+                            }
+                        })
                         .collect(Collectors.toList());
             }
 
             @Override
             protected void succeeded() {
                 try {
-                    List<EventStripe> bundles = get();
+                    List<EventStripe> newSubStripes = get();
 
                     //clear the existing subnodes
-                    List<TimeLineEvent> transform = subNodes.stream().flatMap(new StripeFlattener()).collect(Collectors.toList());
-//                    getChartLane().getParentChart().getEventStripes().removeAll(transform);
+                    List<TimeLineEvent> oldSubStripes = subNodes.stream().flatMap(new StripeFlattener()).collect(Collectors.toList());
+                    getChartLane().getParentChart().getAllNestedEventStripes().removeAll(oldSubStripes);
                     subNodes.clear();
-                    if (bundles.isEmpty()) {
+                    if (newSubStripes.isEmpty()) {
                         getChildren().setAll(subNodePane, infoHBox);
-                        setDescriptionLOD(getEventBundle().getDescriptionLoD());
+                        setDescriptionLOD(getEvent().getDescriptionLoD());
                     } else {
-//                        getChartLane().getParentChart().getEventStripes().addAll(bundles);
-                        subNodes.addAll(Lists.transform(bundles, EventClusterNode.this::createChildNode));
+                        getChartLane().getParentChart().getAllNestedEventStripes().addAll(newSubStripes);
+                        subNodes.addAll(Lists.transform(newSubStripes, EventClusterNode.this::createChildNode));
                         getChildren().setAll(new VBox(infoHBox, subNodePane));
                         setDescriptionLOD(loadedDescriptionLoD);
                     }
@@ -202,10 +207,6 @@ final public class EventClusterNode extends MultiEventNodeBase<EventCluster, Eve
         }
     }
 
-    EventCluster getEventCluster() {
-        return getEventBundle();
-    }
-
     @Override
     protected void layoutChildren() {
         double chartX = getChartLane().getXAxis().getDisplayPosition(new DateTime(getStartMillis()));
@@ -222,7 +223,7 @@ final public class EventClusterNode extends MultiEventNodeBase<EventCluster, Eve
     RootFilter getSubClusterFilter() {
         RootFilter subClusterFilter = eventsModel.filterProperty().get().copyOf();
         subClusterFilter.getSubFilters().addAll(
-                new DescriptionFilter(getEventBundle().getDescriptionLoD(), getDescription(), DescriptionFilter.FilterMode.INCLUDE),
+                new DescriptionFilter(getEvent().getDescriptionLoD(), getDescription(), DescriptionFilter.FilterMode.INCLUDE),
                 new TypeFilter(getEventType()));
         return subClusterFilter;
     }
@@ -251,7 +252,7 @@ final public class EventClusterNode extends MultiEventNodeBase<EventCluster, Eve
             setGraphic(new ImageView(PLUS));
             setEventHandler(actionEvent -> {
                 if (node.getDescriptionLoD().moreDetailed() != null) {
-                    node.loadSubBundles(DescriptionLoD.RelativeDetail.MORE);
+                    node.loadSubStripes(DescriptionLoD.RelativeDetail.MORE);
                 }
             });
             disabledProperty().bind(node.descriptionLoDProperty().isEqualTo(DescriptionLoD.FULL));
@@ -269,11 +270,11 @@ final public class EventClusterNode extends MultiEventNodeBase<EventCluster, Eve
             setGraphic(new ImageView(MINUS));
             setEventHandler(actionEvent -> {
                 if (node.getDescriptionLoD().lessDetailed() != null) {
-                    node.loadSubBundles(DescriptionLoD.RelativeDetail.LESS);
+                    node.loadSubStripes(DescriptionLoD.RelativeDetail.LESS);
                 }
             });
 
-            disabledProperty().bind(node.descriptionLoDProperty().isEqualTo(node.getEventCluster().getDescriptionLoD()));
+            disabledProperty().bind(node.descriptionLoDProperty().isEqualTo(node.getEvent().getDescriptionLoD()));
         }
     }
 }

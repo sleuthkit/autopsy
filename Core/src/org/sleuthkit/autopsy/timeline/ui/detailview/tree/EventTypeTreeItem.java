@@ -25,10 +25,10 @@ import java.util.Map;
 import javafx.collections.FXCollections;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.timeline.datamodel.MultiEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 
-class EventTypeTreeItem extends NavTreeItem {
+class EventTypeTreeItem extends EventsTreeItem {
 
     /**
      * maps a description to the child item of this item with that description
@@ -37,35 +37,31 @@ class EventTypeTreeItem extends NavTreeItem {
 
     private Comparator<TreeItem<TimeLineEvent>> comparator = TreeComparator.Description;
 
-    EventTypeTreeItem(MultiEvent<?> g, Comparator<TreeItem<TimeLineEvent>> comp) {
-        setValue(g);
+    EventTypeTreeItem(EventStripe stripe, Comparator<TreeItem<TimeLineEvent>> comp) {
+        setValue(stripe);
         comparator = comp;
     }
 
-    @Override
-    public long getCount() {
-        return getValue().getSize();
-    }
-
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    public void insert(Deque<MultiEvent<?>> path) {
-        MultiEvent<?> head = path.removeFirst();
-        EventDescriptionTreeItem treeItem = childMap.computeIfAbsent(head.getDescription(), description -> {
-            EventDescriptionTreeItem newTreeItem = new EventDescriptionTreeItem(head, comparator);
-            newTreeItem.setExpanded(true);
-            childMap.put(head.getDescription(), newTreeItem);
-            getChildren().add(newTreeItem);
-            resort(comparator, false);
-            return newTreeItem;
-        });
+    public void insert(Deque<EventStripe> path) {
+        EventStripe head = path.removeFirst();
+
+        EventDescriptionTreeItem treeItem = childMap.computeIfAbsent(head.getDescription(),
+                description -> {
+                    EventDescriptionTreeItem newTreeItem = new EventDescriptionTreeItem(head, comparator);
+                    newTreeItem.setExpanded(true);
+                    getChildren().add(newTreeItem);
+                    resort(comparator, false);
+                    return newTreeItem;
+                });
 
         if (path.isEmpty() == false) {
             treeItem.insert(path);
         }
     }
 
-    void remove(Deque<MultiEvent<?>> path) {
-        MultiEvent<?> head = path.removeFirst();
+    void remove(Deque<EventStripe> path) {
+        EventStripe head = path.removeFirst();
         EventDescriptionTreeItem descTreeItem = childMap.get(head.getDescription());
         if (descTreeItem != null) {
             if (path.isEmpty() == false) {
@@ -79,11 +75,11 @@ class EventTypeTreeItem extends NavTreeItem {
     }
 
     @Override
-    public NavTreeItem findTreeItemForEvent(TimeLineEvent t) {
+    public EventsTreeItem findTreeItemForEvent(TimeLineEvent t) {
         if (t.getEventType().getBaseType() == getValue().getEventType().getBaseType()) {
 
             for (EventDescriptionTreeItem child : childMap.values()) {
-                final NavTreeItem findTreeItemForEvent = child.findTreeItemForEvent(t);
+                final EventsTreeItem findTreeItemForEvent = child.findTreeItemForEvent(t);
                 if (findTreeItemForEvent != null) {
                     return findTreeItemForEvent;
                 }

@@ -57,20 +57,19 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
 
         if (eventStripe.getClusters().size() > 1) {
             for (EventCluster cluster : eventStripe.getClusters()) {
-                subNodes.add(createChildNode(cluster));
+                subNodes.add(createChildNode(cluster.withParent(eventStripe)));
             }
             getChildren().addAll(new VBox(infoHBox, subNodePane));
         } else {
             EventNodeBase<?> childNode;
-            EventCluster cluster = Iterables.getOnlyElement(eventStripe.getClusters());
+            EventCluster cluster = Iterables.getOnlyElement(eventStripe.getClusters()).withParent(eventStripe);
             if (cluster.getEventIDs().size() == 1) {
-                SingleEventNode singleEventNode = new SingleEventNode(getChartLane(), getChartLane().getController().getEventsModel().getEventById(Iterables.getOnlyElement(cluster.getEventIDs())), this);
-                childNode = singleEventNode;
+                childNode = createChildNode(cluster);
             } else {
-                EventClusterNode eventClusterNode = new EventClusterNode(getChartLane(), cluster, this);
+                EventClusterNode eventClusterNode = (EventClusterNode) createChildNode(cluster);
                 eventClusterNode.installActionButtons();
-                eventClusterNode.infoHBox.getChildren().remove(eventClusterNode.countLabel);
                 controlsHBox.getChildren().addAll(eventClusterNode.minusButton, eventClusterNode.plusButton);
+                eventClusterNode.infoHBox.getChildren().remove(eventClusterNode.countLabel);
                 childNode = eventClusterNode;
             }
 
@@ -81,7 +80,7 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
     }
 
     public EventStripe getEventStripe() {
-        return getEventBundle();
+        return getEvent();
     }
 
     @Override

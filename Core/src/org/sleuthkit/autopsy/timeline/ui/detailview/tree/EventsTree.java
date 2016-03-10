@@ -49,6 +49,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.MultiEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
@@ -86,15 +87,11 @@ final public class EventsTree extends BorderPane {
         this.detailViewPane = detailViewPane;
         detailViewPane.setSelectionModel(eventsTree.getSelectionModel());
 
-        detailViewPane.getEventStripes().addListener((ListChangeListener.Change<? extends MultiEvent<?>> c) -> {
+        detailViewPane.getEventStripes().addListener((ListChangeListener.Change<? extends EventStripe> c) -> {
             //on jfx thread
             while (c.next()) {
-                for (MultiEvent<?> bundle : c.getAddedSubList()) {
-                    getRoot().insert(bundle);
-                }
-                for (MultiEvent<?> bundle : c.getRemoved()) {
-                    getRoot().remove(bundle);
-                }
+                c.getRemoved().forEach(getRoot()::remove);
+                c.getAddedSubList().forEach(getRoot()::insert);
             }
         });
 
@@ -116,9 +113,7 @@ final public class EventsTree extends BorderPane {
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void setRoot() {
         RootItem root = new RootItem(TreeComparator.Type.reversed().thenComparing(sortByBox.getSelectionModel().getSelectedItem()));
-        for (MultiEvent<?> bundle : detailViewPane.getEventStripes()) {
-            root.insert(bundle);
-        }
+        detailViewPane.getEventStripes().forEach(root::insert);
         eventsTree.setRoot(root);
 
     }

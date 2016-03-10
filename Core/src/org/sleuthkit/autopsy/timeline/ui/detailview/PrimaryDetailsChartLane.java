@@ -100,8 +100,6 @@ public final class PrimaryDetailsChartLane extends DetailsChartLane<EventStripe>
         });
     }
 
- 
-
     private double getParentXForEpochMillis(Long epochMillis) {
         return getXAxis().localToParent(getXForEpochMillis(epochMillis), 0).getX();
     }

@@ -24,57 +24,49 @@ import java.util.HashMap;
 import java.util.Map;
 import javafx.collections.FXCollections;
 import javafx.scene.control.TreeItem;
+import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.timeline.datamodel.MultiEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 
 /**
  *
  */
-class EventDescriptionTreeItem extends NavTreeItem {
+class EventDescriptionTreeItem extends EventsTreeItem {
 
     /**
      * maps a description to the child item of this item with that description
      */
     private final Map<String, EventDescriptionTreeItem> childMap = new HashMap<>();
-    private final TimeLineEvent bundle;
     private Comparator<TreeItem<TimeLineEvent>> comparator = TreeComparator.Description;
 
-    public TimeLineEvent getEvent() {
-        return bundle;
-    }
-
-    EventDescriptionTreeItem(TimeLineEvent g, Comparator<TreeItem<TimeLineEvent>> comp) {
-        bundle = g;
+    EventDescriptionTreeItem(EventStripe stripe, Comparator<TreeItem<TimeLineEvent>> comp) {
         comparator = comp;
-        setValue(g);
-    }
-
-    @Override
-    public long getCount() {
-        return getValue().getSize();
+        setValue(stripe);
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    public void insert(Deque<MultiEvent<?>> path) {
-        MultiEvent<?> head = path.removeFirst();
-        EventDescriptionTreeItem treeItem = childMap.computeIfAbsent(head.getDescription(), description -> {
-            EventDescriptionTreeItem newTreeItem = new EventDescriptionTreeItem(head, comparator);
-            newTreeItem.setExpanded(true);
-            childMap.put(description, newTreeItem);
-            getChildren().add(newTreeItem);
-            resort(comparator, false);
-            return newTreeItem;
-        });
+    public void insert(Deque<EventStripe> path) {
+        EventStripe head = path.removeFirst();
+        String substringAfter = StringUtils.substringAfter(head.getDescription(), head.getParentStripe().map(EventStripe::getDescription).orElse(""));
+        EventDescriptionTreeItem treeItem = childMap.computeIfAbsent(substringAfter,
+                description -> {
+                    EventDescriptionTreeItem newTreeItem = new EventDescriptionTreeItem(head, comparator);
+                    newTreeItem.setExpanded(true);
+                    getChildren().add(newTreeItem);
+                    resort(comparator, false);
+                    return newTreeItem;
+                });
 
         if (path.isEmpty() == false) {
             treeItem.insert(path);
         }
     }
 
-    void remove(Deque<MultiEvent<?>> path) {
-        MultiEvent<?> head = path.removeFirst();
-        EventDescriptionTreeItem descTreeItem = childMap.get(head.getDescription());
+    void remove(Deque<EventStripe> path) {
+        EventStripe head = path.removeFirst();
+        String substringAfter = StringUtils.substringAfter(head.getDescription(), head.getParentStripe().map(EventStripe::getDescription).orElse(""));
+        EventDescriptionTreeItem descTreeItem = childMap.get(substringAfter);
         if (path.isEmpty() == false) {
             descTreeItem.remove(path);
         }
@@ -94,14 +86,14 @@ class EventDescriptionTreeItem extends NavTreeItem {
     }
 
     @Override
-    public NavTreeItem findTreeItemForEvent(TimeLineEvent t) {
+    public EventsTreeItem findTreeItemForEvent(TimeLineEvent event) {
 
-        if (getValue().getEventType() == t.getEventType()
-                && getValue().getDescription().equals(t.getDescription())) {
+        if (getValue().getEventType() == event.getEventType()
+                && getValue().getDescription().equals(event.getDescription())) {
             return this;
         } else {
             for (EventDescriptionTreeItem child : childMap.values()) {
-                final NavTreeItem findTreeItemForEvent = child.findTreeItemForEvent(t);
+                final EventsTreeItem findTreeItemForEvent = child.findTreeItemForEvent(event);
                 if (findTreeItemForEvent != null) {
                     return findTreeItemForEvent;
                 }
@@ -109,5 +101,4 @@ class EventDescriptionTreeItem extends NavTreeItem {
         }
         return null;
     }
-
 }

@@ -22,7 +22,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Sets;
 import java.util.Comparator;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
@@ -33,9 +32,9 @@ import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 /**
- * Represents a set of other events clustered together. All the
- * sub events should have the same type and matching descriptions at the
- * designated 'zoom level', and be 'close together' in time.
+ * Represents a set of other events clustered together. All the sub events
+ * should have the same type and matching descriptions at the designated 'zoom
+ * level', and be 'close together' in time.
  */
 @Immutable
 public class EventCluster implements MultiEvent<EventStripe> {
@@ -120,7 +119,7 @@ public class EventCluster implements MultiEvent<EventStripe> {
     }
 
     @Override
-    public Optional<EventStripe> getParentBundle() {
+    public Optional<EventStripe> getParent() {
         return Optional.ofNullable(parent);
     }
 
@@ -181,9 +180,6 @@ public class EventCluster implements MultiEvent<EventStripe> {
      *         EventBundle as the parent.
      */
     public EventCluster withParent(EventStripe parent) {
-        if (Objects.nonNull(this.parent)) {
-            throw new IllegalStateException("Event Cluster already has a parent!");
-        }
         return new EventCluster(span, type, eventIDs, hashHits, tagged, description, lod, parent);
     }
 
@@ -192,5 +188,8 @@ public class EventCluster implements MultiEvent<EventStripe> {
         return ImmutableSortedSet.orderedBy(Comparator.comparing(EventCluster::getStartMillis)).add(this).build();
     }
 
-   
+    @Override
+    public String toString() {
+        return "EventCluster{" + "description=" + description + ", eventIDs=" + eventIDs.size() + '}';
+    }
 }

@@ -1050,7 +1050,7 @@ public class EventDB {
 
         switch (Version.getBuildType()) {
             case DEVELOPMENT:
-                LOGGER.log(Level.INFO, "executing timeline query: {0}", query); //NON-NLS
+//                LOGGER.log(Level.INFO, "executing timeline query: {0}", query); //NON-NLS
                 break;
             case RELEASE:
             default:
@@ -1097,8 +1097,7 @@ public class EventDB {
         Set<Long> hashHits = SQLHelper.unGroupConcat(rs.getString("hash_hits"), Long::valueOf); //NON-NLS
         Set<Long> tagged = SQLHelper.unGroupConcat(rs.getString("taggeds"), Long::valueOf); //NON-NLS
 
-        return new EventCluster(interval, type, eventIDs, hashHits, tagged,
-                description, descriptionLOD);
+        return new EventCluster(interval, type, eventIDs, hashHits, tagged, description, descriptionLOD);
     }
 
     /**
@@ -1159,7 +1158,7 @@ public class EventDB {
 
         for (EventCluster eventCluster : aggEvents) {
             stripeDescMap.merge(ImmutablePair.of(eventCluster.getEventType(), eventCluster.getDescription()),
-                    new EventStripe(eventCluster, null), EventStripe::merge);
+                    new EventStripe(eventCluster), EventStripe::merge);
         }
 
         return stripeDescMap.values().stream().sorted(Comparator.comparing(EventStripe::getStartMillis)).collect(Collectors.toList());
