@@ -85,7 +85,7 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
                         }
                     }
                 } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
-                    throw new IngestModuleException("Test");
+                    throw new IngestModuleException("Could not start up interesting files module.");
                 }
                 FilesIdentifierIngestModule.interestingFileSetsByJob.put(context.getJobId(), filesSets);
             }

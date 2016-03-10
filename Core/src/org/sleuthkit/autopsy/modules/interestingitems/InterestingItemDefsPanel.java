@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,7 +54,9 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         "InterestingItemDefsPanel.bytes=Bytes",
         "InterestingItemDefsPanel.kiloBytes=Kilobytes",
         "InterestingItemDefsPanel.megaBytes=Megabytes",
-        "InterestingItemDefsPanel.gigaBytes=Gigabytes"
+        "InterestingItemDefsPanel.gigaBytes=Gigabytes",
+        "InterestingItemsDefsPanel.loadError=Could not load interesting files sets.",
+        "InterestingItemsDefsPanel.saveError=Could not save interesting files sets."
     })
 
     private static final SortedSet<MediaType> mediaTypes = MimeTypes.getDefaultMimeTypes().getMediaTypeRegistry().getTypes();
@@ -125,7 +127,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         try {
             InterestingItemDefsManager.getInstance().setInterestingFilesSets(this.filesSets);
         } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
-            MessageNotifyUtil.Message.error("Test Error");
+            MessageNotifyUtil.Message.error(Bundle.InterestingItemsDefsPanel_saveError());
         }
     }
 
@@ -149,7 +151,8 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             // by set name.
             this.filesSets = new TreeMap<>(InterestingItemDefsManager.getInstance().getInterestingFilesSets());
         } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
-            MessageNotifyUtil.Message.error("Test error");
+            MessageNotifyUtil.Message.error(Bundle.InterestingItemsDefsPanel_loadError());
+            this.filesSets = new TreeMap<>();
         }
 
         // Populate the list model for the interesting files sets list 

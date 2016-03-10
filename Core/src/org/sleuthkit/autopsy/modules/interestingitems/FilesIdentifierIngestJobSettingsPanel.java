@@ -27,6 +27,7 @@ import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import org.openide.util.Exceptions;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
@@ -35,6 +36,10 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
  * Ingest job settings panel for interesting files identifier ingest modules.
  */
 final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobSettingsPanel implements Observer {
+    @Messages({
+        "FilesIdentifierIngestJobSettingsPanel.updateError=Could not update interesting files sets.",
+        "FilesIdentifierIngestJobSettingsPanel.getError=Could not get interesting files sets."
+    })
 
     private final FilesSetsTableModel tableModel;
 
@@ -80,7 +85,8 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
         try {
             this.filesSetSnapshot = new TreeMap<>(InterestingItemDefsManager.getInstance().getInterestingFilesSets());
         } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
-            MessageNotifyUtil.Message.error("Test Error");
+            MessageNotifyUtil.Message.error(Bundle.FilesIdentifierIngestJobSettingsPanel_getError());
+            this.filesSetSnapshot = new TreeMap<>();
         }
         for (FilesSet set : this.filesSetSnapshot.values()) {
             filesSetRows.add(new FilesSetRow(set, settings.interestingFilesSetIsEnabled(set.getName())));
@@ -140,7 +146,7 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
         try {
             newFilesSetSnapshot = new TreeMap<>(InterestingItemDefsManager.getInstance().getInterestingFilesSets());
         } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
-            MessageNotifyUtil.Message.error("Test error");
+            MessageNotifyUtil.Message.error(Bundle.FilesIdentifierIngestJobSettingsPanel_updateError());
             return;
         }
         for (FilesSet set : newFilesSetSnapshot.values()) {

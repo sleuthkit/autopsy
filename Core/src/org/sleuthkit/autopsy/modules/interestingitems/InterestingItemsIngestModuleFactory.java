@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
@@ -38,6 +39,10 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
  */
 @ServiceProvider(service = IngestModuleFactory.class)
 final public class InterestingItemsIngestModuleFactory extends IngestModuleFactoryAdapter {
+
+    @Messages({
+        "InterestingItemsIngestModuleFactory.defaultSettingsError=Could not get default interesting files settings."
+    })
 
     @Override
     public String getModuleDisplayName() {
@@ -83,7 +88,7 @@ final public class InterestingItemsIngestModuleFactory extends IngestModuleFacto
                 enabledFilesSetNames.add(name);
             }
         } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
-            MessageNotifyUtil.Message.error("Test Error");
+            MessageNotifyUtil.Message.error(Bundle.InterestingItemsIngestModuleFactory_defaultSettingsError());
         }
         return new FilesIdentifierIngestJobSettings(enabledFilesSetNames);
     }

@@ -51,10 +51,10 @@ final class InterestingItemDefsManager extends Observable {
 
     private static final List<String> ILLEGAL_FILE_NAME_CHARS = Collections.unmodifiableList(new ArrayList<>(Arrays.asList("\\", "/", ":", "*", "?", "\"", "<", ">")));
     private static final List<String> ILLEGAL_FILE_PATH_CHARS = Collections.unmodifiableList(new ArrayList<>(Arrays.asList("\\", ":", "*", "?", "\"", "<", ">")));
-    private static final String INTERESTING_FILES_SET_DEFS_FILE_NAME = "InterestingFilesSetDefs.xml"; //NON-NLS
+    private static final String LEGACY_FILES_SET_DEFS_FILE_NAME = "InterestingFilesSetDefs.xml"; //NON-NLS
     private static final String INTERESTING_FILES_SET_DEFS_SERIALIZATION_NAME = "InterestingFileSets.settings";
     private static final String INTERESTING_FILES_SET_DEFS_SERIALIZATION_PATH = PlatformUtil.getUserConfigDirectory() + File.separator + INTERESTING_FILES_SET_DEFS_SERIALIZATION_NAME;
-    private static final String DEFAULT_FILE_SET_DEFS_PATH = PlatformUtil.getUserConfigDirectory() + File.separator + INTERESTING_FILES_SET_DEFS_FILE_NAME;
+    private static final String LEGACY_FILE_SET_DEFS_PATH = PlatformUtil.getUserConfigDirectory() + File.separator + LEGACY_FILES_SET_DEFS_FILE_NAME;
     private static InterestingItemDefsManager instance;
 
     /**
@@ -93,7 +93,7 @@ final class InterestingItemDefsManager extends Observable {
      *         possibly empty.
      */
     synchronized Map<String, FilesSet> getInterestingFilesSets() throws InterestingItemDefsManagerException {
-        return FilesSetXML.readDefinitionsFile(DEFAULT_FILE_SET_DEFS_PATH);
+        return FilesSetXML.readDefinitionsFile(LEGACY_FILE_SET_DEFS_PATH);
     }
 
     /**
@@ -188,8 +188,7 @@ final class InterestingItemDefsManager extends Observable {
         }
 
         private static Map<String, FilesSet> readSerializedDefinitions() throws InterestingItemDefsManagerException {
-            throw new InterestingItemDefsManagerException("Test");
-            /*String filePath = INTERESTING_FILES_SET_DEFS_SERIALIZATION_PATH;
+            String filePath = INTERESTING_FILES_SET_DEFS_SERIALIZATION_PATH;
             File fileSetFile = new File(filePath);
             if (fileSetFile.exists()) {
                 try {
@@ -202,7 +201,7 @@ final class InterestingItemDefsManager extends Observable {
                 }
             } else {
                 return new HashMap<String, FilesSet>();
-            }*/
+            }
         }
 
         /**
@@ -511,24 +510,28 @@ final class InterestingItemDefsManager extends Observable {
             } catch (IOException ex) {
                 throw new InterestingItemDefsManagerException(String.format("Failed to write settings to %s", filePath), ex);
             }
-            File xmlFile = new File(DEFAULT_FILE_SET_DEFS_PATH);
+            File xmlFile = new File(LEGACY_FILE_SET_DEFS_PATH);
             if (xmlFile.exists()) {
                 xmlFile.delete();
             }
             return true;
         }
     }
-    
+
     static class InterestingItemDefsManagerException extends Exception {
+
         InterestingItemDefsManagerException() {
-            
+
         }
+
         InterestingItemDefsManagerException(String message) {
             super(message);
         }
+
         InterestingItemDefsManagerException(String message, Throwable cause) {
             super(message, cause);
         }
+
         InterestingItemDefsManagerException(Throwable cause) {
             super(cause);
         }
