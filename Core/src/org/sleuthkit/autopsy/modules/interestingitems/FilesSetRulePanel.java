@@ -89,6 +89,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         populateNameConditionComponents(rule);
         populatePathConditionComponents(rule);
         populateMimeConditionComponents(rule);
+        populateSizeConditionComponents(rule);
         this.setButtons(okButton, cancelButton);
     }
 
@@ -146,7 +147,19 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
     private void populateMimeConditionComponents(FilesSet.Rule rule) {
         FilesSet.Rule.MimeTypeCondition mimeTypeCondition = rule.getMimeTypeCondition();
         if (mimeTypeCondition != null) {
+            this.mimeCheck.setSelected(true);
+            this.mimeCheckActionPerformed(null);
             this.mimeTypeComboBox.setSelectedItem(mimeTypeCondition.getMimeType());
+        }
+    }
+    private void populateSizeConditionComponents(FilesSet.Rule rule) {
+        FilesSet.Rule.FileSizeCondition fileSizeCondition = rule.getFileSizeCondition();
+        if (fileSizeCondition != null) {
+            this.fileSizeCheck.setSelected(true);
+            this.fileSizeCheckActionPerformed(null);
+            this.fileSizeSpinner.setValue(fileSizeCondition.getSizeValue());
+            this.fileSizeComboBox.setSelectedItem(fileSizeCondition.getUnit().getName());
+            this.equalitySymbolComboBox.setSelectedItem(fileSizeCondition.getComparator().getSymbol());
         }
     }
 
@@ -232,12 +245,16 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
      */
     private void populateNameConditionComponents(FilesSet.Rule rule) {
         FilesSet.Rule.FileNameCondition nameCondition = rule.getFileNameCondition();
-        this.nameTextField.setText(nameCondition.getTextToMatch());
-        this.nameRegexCheckbox.setSelected(nameCondition.isRegex());
-        if (nameCondition instanceof FilesSet.Rule.FullNameCondition) {
-            this.fullNameRadioButton.setSelected(true);
-        } else {
-            this.extensionRadioButton.setSelected(true);
+        if (nameCondition != null) {
+            this.nameCheck.setSelected(true);
+            this.nameCheckActionPerformed(null);
+            this.nameTextField.setText(nameCondition.getTextToMatch());
+            this.nameRegexCheckbox.setSelected(nameCondition.isRegex());
+            if (nameCondition instanceof FilesSet.Rule.FullNameCondition) {
+                this.fullNameRadioButton.setSelected(true);
+            } else {
+                this.extensionRadioButton.setSelected(true);
+            }
         }
     }
 
@@ -250,6 +267,8 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
     private void populatePathConditionComponents(FilesSet.Rule rule) {
         FilesSet.Rule.ParentPathCondition pathCondition = rule.getPathCondition();
         if (pathCondition != null) {
+            this.pathCheck.setSelected(true);
+            this.pathCheckActionPerformed(null);
             this.pathTextField.setText(pathCondition.getTextToMatch());
             this.pathRegexCheckBox.setSelected(pathCondition.isRegex());
         }
