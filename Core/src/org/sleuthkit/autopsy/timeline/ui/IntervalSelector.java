@@ -34,6 +34,8 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
@@ -53,7 +55,7 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
  */
 public abstract class IntervalSelector<X> extends BorderPane {
 
-    private static final Image ClEAR_INTERVAL_ICON = new Image("/org/sleuthkit/autopsy/timeline/images/cross-script.png", 16, 16, true, true, true); //NON-NLS
+    private static final Image CLEAR_INTERVAL_ICON = new Image("/org/sleuthkit/autopsy/timeline/images/cross-script.png", 16, 16, true, true, true); //NON-NLS
     private static final Image ZOOM_TO_INTERVAL_ICON = new Image("/org/sleuthkit/autopsy/timeline/images/magnifier-zoom-fit.png", 16, 16, true, true, true); //NON-NLS
     private static final double STROKE_WIDTH = 3;
     private static final double HALF_STROKE = STROKE_WIDTH / 2;
@@ -115,8 +117,9 @@ public abstract class IntervalSelector<X> extends BorderPane {
 
         widthProperty().addListener(o -> {
             IntervalSelector.this.updateStartAndEnd();
-            if (startLabel.getWidth() + zoomButton.getWidth() + endLabel.getWidth() > getWidth()) {
+            if (startLabel.getWidth() + zoomButton.getWidth() + endLabel.getWidth() > getWidth() - 10) {
                 this.setCenter(zoomButton);
+                bottomBorder.setCenter(new Rectangle(10, 10, Color.TRANSPARENT));
             } else {
                 bottomBorder.setCenter(zoomButton);
             }
@@ -306,7 +309,7 @@ public abstract class IntervalSelector<X> extends BorderPane {
         ClearSelectedIntervalAction() {
             super("");
             setLongText(Bundle.IntervalSelector_ClearSelectedIntervalAction_tooltTipText());
-            setGraphic(new ImageView(ClEAR_INTERVAL_ICON));
+            setGraphic(new ImageView(CLEAR_INTERVAL_ICON));
             setEventHandler((ActionEvent t) -> {
                 chart.clearIntervalSelector();
             });

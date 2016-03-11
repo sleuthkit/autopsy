@@ -544,7 +544,6 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
         protected void resetChart(AxisValuesType axisValues) {
 
             Platform.runLater(() -> {
-                chart.clearIntervalSelector();
                 resetData();
                 setDateAxisValues(axisValues);
             });

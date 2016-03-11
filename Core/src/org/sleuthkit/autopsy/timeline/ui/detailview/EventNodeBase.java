@@ -110,8 +110,6 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
 
     private final EventNodeBase<?> parentNode;
 
-  
-
     final DetailsChartLane<?> chartLane;
     final Background highlightedBackground;
     final Background defaultBackground;

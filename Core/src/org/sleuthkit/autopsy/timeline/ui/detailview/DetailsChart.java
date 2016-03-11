@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.MissingResourceException;
 import java.util.function.Predicate;
 import javafx.beans.Observable;
@@ -32,7 +32,6 @@ import javafx.geometry.Side;
 import javafx.scene.chart.Axis;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Control;
-import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.image.Image;
@@ -75,6 +74,7 @@ public final class DetailsChart extends Control implements TimeLineChart<DateTim
         this.verticalAxis = verticalAxis;
         this.pinnedDateAxis = pinnedDateAxis;
         this.selectedNodes = selectedNodes;
+
         getController().getPinnedEvents().addListener((SetChangeListener.Change<? extends TimeLineEvent> change) -> {
             layoutSettings.setPinnedLaneShowing(change.getSet().isEmpty() == false);
         });
@@ -83,11 +83,13 @@ public final class DetailsChart extends Control implements TimeLineChart<DateTim
             layoutSettings.setPinnedLaneShowing(true);
         }
 
-        getController().getEventsModel().zoomParametersProperty().addListener(o -> {
-            clearIntervalSelector();
+        getController().getEventsModel().timeRangeProperty().addListener(o -> {
             clearGuideLines();
+            clearIntervalSelector();
+        });
+
+        getController().getEventsModel().zoomParametersProperty().addListener(o -> {
             getSelectedNodes().clear();
-            getController().selectEventIDs(Collections.emptyList());
         });
     }
 
@@ -246,12 +248,10 @@ public final class DetailsChart extends Control implements TimeLineChart<DateTim
         if (contextMenu != null) {
             contextMenu.hide();
         }
-
-        setContextMenu(new ContextMenu(
-                ActionUtils.createMenuItem(new PlaceMarkerAction(this, mouseEvent)),
-                new SeparatorMenuItem(),
-                ActionUtils.createMenuItem(TimeLineChart.newZoomHistoyActionGroup(getController()))));
-        getContextMenu().setAutoHide(true);
+        setContextMenu(ActionUtils.createContextMenu(Arrays.asList(new PlaceMarkerAction(this, mouseEvent),
+                ActionUtils.ACTION_SEPARATOR,
+                TimeLineChart.newZoomHistoyActionGroup(getController())))
+        );
         return getContextMenu();
     }
 
