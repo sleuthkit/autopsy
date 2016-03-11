@@ -589,7 +589,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
             //error
             JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(this.getClass(),
-                            "FileExtMismatchConfigPanel.store.msgDlg.msg2"),
+                            "AddFileExtensionAction.msgDlg.msg2"),
                     NbBundle.getMessage(this.getClass(),
                             "FileExtMismatchConfigPanel.save.msgDlg.title"),
                     JOptionPane.ERROR_MESSAGE);

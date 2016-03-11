@@ -91,7 +91,8 @@ class FileExtMismatchXML {
      * @return Loaded hash map or null on error or null if data does not exist
      */
     public HashMap<String, String[]> load() throws FileExtMismatchException {
-        HashMap<String, String[]> sigTypeToExtMap = new HashMap<>();
+        throw new FileExtMismatchException("");
+        /*HashMap<String, String[]> sigTypeToExtMap = new HashMap<>();
         File serializedFile = new File(DEFAULT_SERIALIZED_FILE_PATH);
         if (serializedFile.exists()) {
             try {
@@ -147,7 +148,7 @@ class FileExtMismatchXML {
             logger.log(Level.SEVERE, "Error loading config file.", e); //NON-NLS
             return null;
         }
-        return sigTypeToExtMap;
+        return sigTypeToExtMap;*/
     }
 
     /**
@@ -159,13 +160,14 @@ class FileExtMismatchXML {
      * @return Loaded hash map or null on error or null if data does not exist
      */
     public boolean save(HashMap<String, String[]> sigTypeToExtMap) throws FileExtMismatchException {
-        try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(DEFAULT_SERIALIZED_FILE_PATH))) {
+        throw new FileExtMismatchException("");
+        /*try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(DEFAULT_SERIALIZED_FILE_PATH))) {
             FileExtMismatchSettings settings = new FileExtMismatchSettings(sigTypeToExtMap);
             out.writeObject(settings);
             return true;
         } catch (IOException ex) {
             throw new FileExtMismatchException(String.format("Failed to write settings to %s", DEFAULT_SERIALIZED_FILE_PATH), ex);
-        }
+        }*/
     }
 
     /**
