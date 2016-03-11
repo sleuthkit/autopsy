@@ -25,6 +25,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.Action;
+import javax.swing.JOptionPane;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
@@ -71,14 +73,14 @@ public class FileExtMismatchContextMenuActionsProvider implements ContextMenuAct
                         }
 
                         if (af != null) {
-                                int i = af.getName().lastIndexOf(".");
-                                if ((i > -1) && ((i + 1) < af.getName().length())) {
-                                    extStr = af.getName().substring(i + 1).toLowerCase();
-                                }
-                                mimeTypeStr = af.getMIMEType();
-                                if(mimeTypeStr == null) {
-                                    mimeTypeStr = "";
-                                }
+                            int i = af.getName().lastIndexOf(".");
+                            if ((i > -1) && ((i + 1) < af.getName().length())) {
+                                extStr = af.getName().substring(i + 1).toLowerCase();
+                            }
+                            mimeTypeStr = af.getMIMEType();
+                            if (mimeTypeStr == null) {
+                                mimeTypeStr = "";
+                            }
 
                             if (!extStr.isEmpty() && !mimeTypeStr.isEmpty()) {
                                 // Limit max size so the context window doesn't get ridiculously wide
@@ -94,13 +96,20 @@ public class FileExtMismatchContextMenuActionsProvider implements ContextMenuAct
                                 actions.add(new AddFileExtensionAction(menuItemStr, extStr, mimeTypeStr));
 
                                 // Check if already added
-                                HashMap<String, String[]> editableMap = FileExtMismatchXML.getDefault().load();
-                                ArrayList<String> editedExtensions = new ArrayList<>(Arrays.asList(editableMap.get(mimeTypeStr)));
-                                if (editedExtensions.contains(extStr)) {
-                                    // Informs the user that they have already added this extension to this MIME type
-                                    actions.get(0).setEnabled(false);
+                                HashMap<String, String[]> editableMap;
+                                try {
+                                    editableMap = FileExtMismatchXML.getDefault().load();
+                                    ArrayList<String> editedExtensions = new ArrayList<>(Arrays.asList(editableMap.get(mimeTypeStr)));
+                                    if (editedExtensions.contains(extStr)) {
+                                        // Informs the user that they have already added this extension to this MIME type
+                                        actions.get(0).setEnabled(false);
+                                    }
+                                } catch (FileExtMismatchXML.FileExtMismatchException ex) {
+                                    JOptionPane.showMessageDialog(null,
+                                            NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.msg2"),
+                                            NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.title"),
+                                            JOptionPane.ERROR_MESSAGE);
                                 }
-
                             }
                         }
                     }

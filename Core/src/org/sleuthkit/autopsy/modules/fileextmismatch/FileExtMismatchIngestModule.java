@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
@@ -92,7 +93,11 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
         refCounter.incrementAndGet(jobId);
 
         FileExtMismatchXML xmlLoader = FileExtMismatchXML.getDefault();
-        SigTypeToExtMap = xmlLoader.load();
+        try {
+            SigTypeToExtMap = xmlLoader.load();
+        } catch (FileExtMismatchXML.FileExtMismatchException ex) {
+            throw new IngestModuleException("Could not load file extension mismatch configurations.", ex);
+        }
         try {
             this.detector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
