@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.modules.fileextmismatch;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,6 +32,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.openide.util.io.NbObjectInputStream;
+import org.openide.util.io.NbObjectOutputStream;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
@@ -88,7 +90,7 @@ class FileExtMismatchXML {
      *
      * @return Loaded hash map or null on error or null if data does not exist
      */
-    public HashMap<String, String[]> load() {
+    public HashMap<String, String[]> load() throws FileExtMismatchException {
         HashMap<String, String[]> sigTypeToExtMap = new HashMap<>();
         File serializedFile = new File(DEFAULT_SERIALIZED_FILE_PATH);
         if (serializedFile.exists()) {
@@ -100,7 +102,6 @@ class FileExtMismatchXML {
             } catch (IOException | ClassNotFoundException ex) {
                 throw new FileExtMismatchException("Couldn't read serialized settings.", ex);
             }
-            return sigTypeToExtMap;
         }
 
         try {
@@ -157,48 +158,16 @@ class FileExtMismatchXML {
      *
      * @return Loaded hash map or null on error or null if data does not exist
      */
-    public boolean save(HashMap<String, String[]> sigTypeToExtMap) {
-        boolean success;
-
-        DocumentBuilderFactory dbfac = DocumentBuilderFactory.newInstance();
-
-        try {
-            DocumentBuilder docBuilder = dbfac.newDocumentBuilder();
-            Document doc = docBuilder.newDocument();
-
-            Element rootEl = doc.createElement(ROOT_EL);
-            doc.appendChild(rootEl);
-
-            ArrayList<String> mimeTypeList = new ArrayList<>(sigTypeToExtMap.keySet());
-            Collections.sort(mimeTypeList);
-
-            for (String mimeType : mimeTypeList) {
-                Element sigEl = doc.createElement(SIG_EL);
-                sigEl.setAttribute(SIG_MIMETYPE_ATTR, mimeType.toLowerCase());
-
-                String[] extArray = sigTypeToExtMap.get(mimeType);
-                if (extArray != null) {
-                    ArrayList<String> extList = new ArrayList<>(Arrays.asList(extArray));
-                    Collections.sort(extList);
-                    for (String ext : extList) {
-                        Element extEl = doc.createElement(EXT_EL);
-                        extEl.setTextContent(ext.toLowerCase());
-                        sigEl.appendChild(extEl);
-                    }
-                }
-                rootEl.appendChild(sigEl);
-
-            }
-
-            success = XMLUtil.saveDoc(FileExtMismatchXML.class, filePath, ENCODING, doc);
-
-        } catch (ParserConfigurationException e) {
-            logger.log(Level.SEVERE, "Error saving keyword list: can't initialize parser.", e); //NON-NLS
-            success = false;
+    public boolean save(HashMap<String, String[]> sigTypeToExtMap) throws FileExtMismatchException {
+        try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(DEFAULT_SERIALIZED_FILE_PATH))) {
+            FileExtMismatchSettings settings = new FileExtMismatchSettings(sigTypeToExtMap);
+            out.writeObject(settings);
+            return true;
+        } catch (IOException ex) {
+            throw new FileExtMismatchException(String.format("Failed to write settings to %s", DEFAULT_SERIALIZED_FILE_PATH), ex);
         }
-        return success;
     }
-    
+
     /**
      * Used to translate more implementation-details-specific exceptions (which
      * are logged by this class) into more generic exceptions for propagation to
@@ -216,6 +185,5 @@ class FileExtMismatchXML {
             super(message, throwable);
         }
     }
-
 
 }

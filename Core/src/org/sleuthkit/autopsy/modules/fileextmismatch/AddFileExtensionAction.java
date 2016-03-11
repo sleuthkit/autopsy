@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
+import org.openide.util.Exceptions;
 
 /**
  * Do the context menu action for adding a new filename extension to the
@@ -43,19 +44,35 @@ class AddFileExtensionAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent event) {
-        HashMap<String, String[]> editableMap = FileExtMismatchXML.getDefault().load();
+        HashMap<String, String[]> editableMap;
+        try {
+            editableMap = FileExtMismatchXML.getDefault().load();
+        } catch (FileExtMismatchXML.FileExtMismatchException ex) {
+            JOptionPane.showMessageDialog(null,
+                    NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.msg"),
+                    NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.title"),
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
         ArrayList<String> editedExtensions = new ArrayList<>(Arrays.asList(editableMap.get(mimeTypeStr)));
         editedExtensions.add(extStr);
 
         // Old array will be replaced by new array for this key
         editableMap.put(mimeTypeStr, editedExtensions.toArray(new String[0]));
 
-        if (!FileExtMismatchXML.getDefault().save(editableMap)) {
-            //error
+        try {
+            if (!FileExtMismatchXML.getDefault().save(editableMap)) {
+                //error
+                JOptionPane.showMessageDialog(null,
+                        NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.msg"),
+                        NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.title"),
+                        JOptionPane.ERROR_MESSAGE);
+            } // else //in the future we might want to update the statusbar to give feedback to the user
+        } catch (FileExtMismatchXML.FileExtMismatchException ex) {
             JOptionPane.showMessageDialog(null,
                     NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.msg"),
                     NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.title"),
                     JOptionPane.ERROR_MESSAGE);
-        } // else //in the future we might want to update the statusbar to give feedback to the user        
+        }
     }
 }
