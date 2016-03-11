@@ -151,12 +151,15 @@ final class InterestingItemDefsManager extends Observable {
         // multiple intersting files set definition files, e.g., one for 
         // definitions that ship with Autopsy and one for user definitions.
         static Map<String, FilesSet> readDefinitionsFile(String filePath) throws InterestingItemDefsManagerException {
-            Map<String, FilesSet> filesSets = new HashMap<>();
+            Map<String, FilesSet> filesSets = readSerializedDefinitions();
 
+            if (!filesSets.isEmpty()) {
+                return filesSets;
+            }
             // Check if the legacy xml file exists.
             File defsFile = new File(filePath);
             if (!defsFile.exists()) {
-                return readSerializedDefinitions();
+                return filesSets;
             }
 
             // Check if the file can be read.
@@ -187,6 +190,14 @@ final class InterestingItemDefsManager extends Observable {
             return filesSets;
         }
 
+        /**
+         * Reads the definitions from the serialization file
+         *
+         * @return the map representing settings saved to serialization file,
+         *         empty set if the file does not exist.
+         *
+         * @throws InterestingItemDefsManagerException if file could not be read
+         */
         private static Map<String, FilesSet> readSerializedDefinitions() throws InterestingItemDefsManagerException {
             String filePath = INTERESTING_FILES_SET_DEFS_SERIALIZATION_PATH;
             File fileSetFile = new File(filePath);
@@ -509,10 +520,6 @@ final class InterestingItemDefsManager extends Observable {
                 out.writeObject(new InterestingItemsFilesSetSettings(interestingFilesSets));
             } catch (IOException ex) {
                 throw new InterestingItemDefsManagerException(String.format("Failed to write settings to %s", filePath), ex);
-            }
-            File xmlFile = new File(LEGACY_FILE_SET_DEFS_PATH);
-            if (xmlFile.exists()) {
-                xmlFile.delete();
             }
             return true;
         }
