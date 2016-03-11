@@ -190,6 +190,14 @@ final class InterestingItemDefsManager extends Observable {
             return filesSets;
         }
 
+        /**
+         * Reads the definitions from the serialization file
+         *
+         * @return the map representing settings saved to serialization file,
+         *         empty set if the file does not exist.
+         *
+         * @throws InterestingItemDefsManagerException if file could not be read
+         */
         private static Map<String, FilesSet> readSerializedDefinitions() throws InterestingItemDefsManagerException {
             String filePath = INTERESTING_FILES_SET_DEFS_SERIALIZATION_PATH;
             File fileSetFile = new File(filePath);
