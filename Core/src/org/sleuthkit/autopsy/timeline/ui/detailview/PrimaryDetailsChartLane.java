@@ -56,11 +56,6 @@ public final class PrimaryDetailsChartLane extends DetailsChartLane<EventStripe>
     PrimaryDetailsChartLane(DetailsChart parentChart, DateAxis dateAxis, final Axis<EventStripe> verticalAxis) {
         super(parentChart, dateAxis, verticalAxis, true);
 
-//        filteredEvents.zoomParametersProperty().addListener(o -> {
-//            selectedNodes.clear();
-//            projectionMap.clear();
-//            controller.selectEventIDs(Collections.emptyList());
-//        });
         //add listener for events that should trigger layout
         getController().getQuickHideFilters().addListener(layoutInvalidationListener);
 

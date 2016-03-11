@@ -67,7 +67,7 @@ public final class DetailsChart extends Control implements TimeLineChart<DateTim
     private final ObservableList<EventNodeBase<?>> selectedNodes;
     private final DetailsChartLayoutSettings layoutSettings = new DetailsChartLayoutSettings();
     private final TimeLineController controller;
-    private ObservableList<EventStripe> nestedEventStripes = FXCollections.observableArrayList();
+    private final ObservableList<EventStripe> nestedEventStripes = FXCollections.observableArrayList();
 
     DetailsChart(TimeLineController controller, DateAxis detailsChartDateAxis, DateAxis pinnedDateAxis, Axis<EventStripe> verticalAxis, ObservableList<EventNodeBase<?>> selectedNodes) {
         this.controller = controller;
@@ -85,6 +85,7 @@ public final class DetailsChart extends Control implements TimeLineChart<DateTim
 
         getController().getEventsModel().zoomParametersProperty().addListener(o -> {
             clearIntervalSelector();
+            clearGuideLines();
             getSelectedNodes().clear();
             getController().selectEventIDs(Collections.emptyList());
         });
@@ -101,6 +102,10 @@ public final class DetailsChart extends Control implements TimeLineChart<DateTim
     void addStripe(EventStripe stripe) {
         eventStripes.add(stripe);
         nestedEventStripes.add(stripe);
+    }
+
+    void clearGuideLines() {
+        guideLines.clear();
     }
 
     void clearGuideLine(GuideLine guideLine) {
