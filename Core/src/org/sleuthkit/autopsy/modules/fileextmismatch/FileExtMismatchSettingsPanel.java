@@ -583,8 +583,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
             // Load the configuration into a buffer that the user can modify. They can choose
             // to save it back to the file after making changes.
             editableMap = FileExtMismatchXML.getDefault().load();
-            updateMimeList();
-            updateExtList();
+
         } catch (FileExtMismatchXML.FileExtMismatchException ex) {
             //error
             JOptionPane.showMessageDialog(this,
@@ -594,6 +593,8 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
                             "FileExtMismatchConfigPanel.save.msgDlg.title"),
                     JOptionPane.ERROR_MESSAGE);
         }
+        updateMimeList();
+        updateExtList();
     }
 
     @Override
