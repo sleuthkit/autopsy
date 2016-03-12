@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2016 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -139,26 +139,13 @@ public class FileTypeDetector {
      * @throws TskCoreException if detection is required and there is a problem
      *                          writing the result to the case database.
      */
-    @SuppressWarnings("deprecation")
     public String getFileType(AbstractFile file) throws TskCoreException {
         String mimeType = file.getMIMEType();
         if (null != mimeType) {
             return mimeType;
         }
-
         mimeType = detect(file);
         Case.getCurrentCase().getSleuthkitCase().setFileMIMEType(file, mimeType);
-
-        /*
-         * Add the file type attribute to the general info artifact. Note that
-         * no property change is fired for this blackboard posting because
-         * general info artifacts are different from other artifacts, e.g., they
-         * are not displayed in the results tree.
-         */
-        BlackboardArtifact getInfoArt = file.getGenInfoArtifact();
-        BlackboardAttribute batt = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG, FileTypeIdModuleFactory.getModuleName(), mimeType);
-        getInfoArt.addAttribute(batt);
-
         return mimeType;
     }
 
