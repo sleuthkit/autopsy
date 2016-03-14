@@ -402,9 +402,6 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
         descrLabel.setText("");
     }
 
-    boolean hasDescription(String other) {
-        return this.getDescription().startsWith(other);
-    }
 
     /**
      * apply the 'effect' to visually indicate highlighted nodes

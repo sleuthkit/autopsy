@@ -25,7 +25,6 @@ import java.util.Collections;
 import java.util.List;
 import static java.util.Objects.nonNull;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.concurrent.Task;
@@ -157,12 +156,7 @@ final public class EventClusterNode extends MultiEventNodeBase<EventCluster, Eve
 
                 // return list of EventStripes representing sub-bundles
                 return stripes.stream()
-                        .map(new Function<EventStripe, EventStripe>() {
-
-                            public EventStripe apply(EventStripe eventStripe) {
-                                return eventStripe.withParent(getEvent());
-                            }
-                        })
+                        .map(eventStripe -> eventStripe.withParent(getEvent()))
                         .collect(Collectors.toList());
             }
 

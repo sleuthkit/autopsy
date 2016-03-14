@@ -27,6 +27,7 @@ import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 
 class EventTypeTreeItem extends EventsTreeItem {
 
@@ -36,9 +37,11 @@ class EventTypeTreeItem extends EventsTreeItem {
     private final Map<String, EventDescriptionTreeItem> childMap = new HashMap<>();
 
     private Comparator<TreeItem<TimeLineEvent>> comparator = TreeComparator.Description;
+    private final EventType eventType;
 
     EventTypeTreeItem(EventStripe stripe, Comparator<TreeItem<TimeLineEvent>> comp) {
-        setValue(stripe);
+        setValue(null);
+        eventType = stripe.getEventType();
         comparator = comp;
     }
 
@@ -76,7 +79,7 @@ class EventTypeTreeItem extends EventsTreeItem {
 
     @Override
     public EventsTreeItem findTreeItemForEvent(TimeLineEvent t) {
-        if (t.getEventType().getBaseType() == getValue().getEventType().getBaseType()) {
+        if (t.getEventType().getBaseType() == eventType.getBaseType()) {
 
             for (EventDescriptionTreeItem child : childMap.values()) {
                 final EventsTreeItem findTreeItemForEvent = child.findTreeItemForEvent(t);
@@ -96,4 +99,15 @@ class EventTypeTreeItem extends EventsTreeItem {
             childMap.values().forEach(ti -> ti.resort(comp, true));
         }
     }
+
+    @Override
+    String getDisplayText() {
+        return eventType.getDisplayName();
+    }
+
+    @Override
+    EventType getEventType() {
+        return eventType;
+    }
+   
 }

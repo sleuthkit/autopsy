@@ -36,18 +36,17 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.CustomMenuItem;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuButton;
-import javafx.scene.control.MultipleSelectionModel;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.Slider;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
-import javafx.scene.control.TreeItem;
 import javafx.scene.effect.Effect;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.stage.Modality;
+import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.control.action.Action;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
@@ -62,6 +61,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailsChart.HideDescriptionAction;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailsChart.UnhideDescriptionAction;
+import org.sleuthkit.autopsy.timeline.utils.MappedList;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 /**
@@ -84,10 +84,11 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
     private final DateAxis pinnedDateAxis = new DateAxis();
     private final Axis<EventStripe> verticalAxis = new EventAxis<>("All Events");
 
-    private MultipleSelectionModel<TreeItem<TimeLineEvent>> treeSelectionModel;
+    private final MappedList<TimeLineEvent, EventNodeBase> selectedEvents;
 
     public DetailViewPane(TimeLineController controller, Pane partPane, Pane contextPane, Region bottomLeftSpacer) {
         super(controller, partPane, contextPane, bottomLeftSpacer);
+        this.selectedEvents = new MappedList<>(getSelectedNodes(), EventNodeBase::getEvent);
 
         //initialize chart;
         chart = new DetailsChart(controller, detailsChartDateAxis, pinnedDateAxis, verticalAxis, getSelectedNodes());
@@ -110,22 +111,23 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
         });
     }
 
-    public ObservableList<EventStripe> getEventStripes() {
+    public ObservableList<EventStripe> getAllEventStripes() {
         return chart.getAllNestedEventStripes();
     }
 
-    public void setSelectionModel(MultipleSelectionModel<TreeItem<TimeLineEvent>> selectionModel) {
-        this.treeSelectionModel = selectionModel;
+    public ObservableList<TimeLineEvent> getSelectedEvents() {
+        return selectedEvents;
+    }
 
-        treeSelectionModel.getSelectedItems().addListener((Observable observable) -> {
+    public void setHighLightedEvents(ObservableList<TimeLineEvent> highlightedEvents) {
+        highlightedEvents.addListener((Observable observable) -> {
             Predicate<EventNodeBase<?>> highlightPredicate =
-                    treeSelectionModel.getSelectedItems().stream()
-                    .map(TreeItem::getValue)
+                    highlightedEvents.stream()
                     .map(TimeLineEvent::getDescription)
                     .map(new Function<String, Predicate<EventNodeBase<?>>>() {
                         @Override
                         public Predicate<EventNodeBase<?>> apply(String description) {
-                            return (EventNodeBase< ?> eventNode) -> eventNode.hasDescription(description);
+                            return eventNode -> StringUtils.equalsIgnoreCase(eventNode.getDescription(), description);
                         }
                     })
                     .reduce(selectedNodes::contains, Predicate::or);
@@ -382,4 +384,5 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
             pinnedDateAxis.setRange(timeRange, true);
         }
     }
+
 }

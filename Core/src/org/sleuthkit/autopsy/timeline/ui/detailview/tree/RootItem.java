@@ -107,4 +107,15 @@ class RootItem extends EventsTreeItem {
         }
         return null;
     }
+
+    @Override
+    String getDisplayText() {
+        return "";
+    }
+
+    @Override
+    EventType getEventType() {
+        return null;
+    }
+
 }

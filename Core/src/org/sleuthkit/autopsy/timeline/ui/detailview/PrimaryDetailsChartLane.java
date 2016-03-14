@@ -59,14 +59,14 @@ public final class PrimaryDetailsChartLane extends DetailsChartLane<EventStripe>
         //add listener for events that should trigger layout
         getController().getQuickHideFilters().addListener(layoutInvalidationListener);
 
-        parentChart.getEventStripes().addListener((ListChangeListener.Change<? extends EventStripe> change) -> {
+        parentChart.getRootEventStripes().addListener((ListChangeListener.Change<? extends EventStripe> change) -> {
             while (change.next()) {
                 change.getAddedSubList().stream().forEach(this::addEvent);
                 change.getRemoved().stream().forEach(this::removeEvent);
             }
             requestChartLayout();
         });
-        parentChart.getEventStripes().stream().forEach(this::addEvent);
+        parentChart.getRootEventStripes().stream().forEach(this::addEvent);
         requestChartLayout();
 
         getSelectedNodes().addListener((ListChangeListener.Change<? extends EventNodeBase<?>> change) -> {

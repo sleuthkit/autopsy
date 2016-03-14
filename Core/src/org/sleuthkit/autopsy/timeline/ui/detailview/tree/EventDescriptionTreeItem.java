@@ -28,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 
 /**
  *
@@ -101,4 +102,21 @@ class EventDescriptionTreeItem extends EventsTreeItem {
         }
         return null;
     }
+
+    @Override
+    String getDisplayText() {
+        String text = getValue().getDescription() + " (" + getValue().getSize() + ")"; // NON-NLS
+
+        TreeItem<TimeLineEvent> parent = getParent();
+        if (parent != null && parent.getValue() != null && (parent instanceof EventDescriptionTreeItem)) {
+            text = StringUtils.substringAfter(text, parent.getValue().getDescription());
+        }
+        return text;
+    }
+
+    @Override
+    EventType getEventType() {
+        return getValue().getEventType();
+    }
+
 }

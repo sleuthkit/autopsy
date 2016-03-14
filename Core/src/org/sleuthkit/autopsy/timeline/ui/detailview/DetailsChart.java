@@ -68,6 +68,9 @@ public final class DetailsChart extends Control implements TimeLineChart<DateTim
     private final TimeLineController controller;
     private final ObservableList<EventStripe> nestedEventStripes = FXCollections.observableArrayList();
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private final ObservableList<EventStripe> eventStripes = FXCollections.observableArrayList();
+
     DetailsChart(TimeLineController controller, DateAxis detailsChartDateAxis, DateAxis pinnedDateAxis, Axis<EventStripe> verticalAxis, ObservableList<EventNodeBase<?>> selectedNodes) {
         this.controller = controller;
         this.detailsChartDateAxis = detailsChartDateAxis;
@@ -96,9 +99,6 @@ public final class DetailsChart extends Control implements TimeLineChart<DateTim
     DateTime getDateTimeForPosition(double layoutX) {
         return ((DetailsChartSkin) getSkin()).getDateTimeForPosition(layoutX);
     }
-
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private final ObservableList<EventStripe> eventStripes = FXCollections.observableArrayList();
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     void addStripe(EventStripe stripe) {
@@ -134,10 +134,6 @@ public final class DetailsChart extends Control implements TimeLineChart<DateTim
 
     public ObservableList<EventStripe> getAllNestedEventStripes() {
         return nestedEventStripes;
-    }
-
-    ObservableList<EventStripe> getEventStripes() {
-        return eventStripes;
     }
 
     private static class DetailIntervalSelector extends IntervalSelector<DateTime> {
