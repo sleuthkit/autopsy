@@ -15,7 +15,7 @@ Although Autopsy is designed to be cross-platform (Windows, Linux, MacOSX), the 
 We have run it on XP, Vista, and Windows 7 with no problems. 
 
 Autopsy 4 is released under the Apache 2.0 license.
-Some libraries Autopsy uses may have different, but similar open source licenses. 
+Some libraries Autopsy uses may have different, but similar, open source licenses. 
 
 
 ##INSTALLATION
@@ -43,24 +43,24 @@ The Autopsy code is released under the Apache License, Version 2.  See LICENSE-2
 
 ##EMBEDDED SOFTWARE
 
-This section lists the software components and libraries that are used inside of
-Autopsy.   These tools are bundled with the installer, unless specified otherwise.
+This section lists the software components and libraries that are used by of
+Autopsy.   These tools are bundled with the Windows installer, unless specified otherwise.
 
 JRE (Java Runtime Environment) 1.8
 - Web page: http://www.oracle.com/technetwork/java/index.html
 - License: http://www.oracle.com/technetwork/java/javase/terms/license/index.html
 
-Netbeans 7.3 RCP platform and .jar files bundled with the platform
+Netbeans 8.0.2 RCP platform and .jar files bundled with the platform
 - Web page: http://netbeans.org/features/platform/
 - License: 
-http://services.netbeans.org/downloads/licence/nb-7.0-final-2011-04-20-license.txt
+https://netbeans.org/downloads/jdk-bundle/8.0.2/nb802-LICENSE.txt
 
 Sleuth Kit for analyzing disk images.
 - Web page: http://www.sleuthkit.org/sleuthkit/
 - License: http://sleuthkit.org/sleuthkit/licenses.php
 
 Libewf for opening E01 files
-- Web page: http://sourceforge.net/projects/libewf/
+- Web page: https://github.com/libyal/libewf
 - License: http://www.gnu.org/licenses/lgpl.html
 
 zlib for opening E01 files
