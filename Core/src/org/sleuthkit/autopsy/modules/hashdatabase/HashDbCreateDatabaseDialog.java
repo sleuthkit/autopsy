@@ -47,7 +47,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
             .getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.defaultFileName");
     private JFileChooser fileChooser = null;
     private HashDb newHashDb = null;
-    private final static String LAST_FILE_PATH_KEY = "HashDbCreate_Basecase_Path";
+    private final static String LAST_FILE_PATH_KEY = "HashDbCreate_Path";
 
     /**
      * Displays a dialog that allows a user to create a new hash database and

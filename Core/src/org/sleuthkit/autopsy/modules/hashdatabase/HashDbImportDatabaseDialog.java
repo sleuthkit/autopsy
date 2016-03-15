@@ -32,6 +32,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.JFrame;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.apache.commons.io.FilenameUtils;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDbManagerException;
@@ -46,6 +47,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     private JFileChooser fileChooser = new JFileChooser();
     private String selectedFilePath = "";
     private HashDb selectedHashDb = null;
+    private final static String LAST_FILE_PATH_KEY = "HashDbImport_Path";
 
     /**
      * Displays a dialog that allows a user to select an existing hash database
@@ -249,6 +251,9 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void openButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openButtonActionPerformed
+        if (ModuleSettings.settingExists(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY)) {
+            fileChooser.setCurrentDirectory(new File(ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY)));
+        }
         if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             File databaseFile = fileChooser.getSelectedFile();
             try {
@@ -259,6 +264,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                     knownRadioButton.setSelected(true);
                     knownRadioButtonActionPerformed(null);
                 }
+                ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY, databaseFile.getAbsolutePath());
             } catch (IOException ex) {
                 Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.SEVERE, "Failed to get path of selected database", ex); //NON-NLS
                 JOptionPane.showMessageDialog(this,
