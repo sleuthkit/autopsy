@@ -38,14 +38,22 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.Serializable;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import javax.persistence.PersistenceException;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.FileUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.openide.util.io.NbObjectInputStream;
+import org.openide.util.io.NbObjectOutputStream;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -72,11 +80,13 @@ public class HashDbManager implements PropertyChangeListener {
     private static final String PATH_ELEMENT = "hash_set_path"; //NON-NLS
     private static final String LEGACY_PATH_NUMBER_ATTRIBUTE = "number"; //NON-NLS
     private static final String CONFIG_FILE_NAME = "hashsets.xml"; //NON-NLS
+    private static final String DB_SERIALIZATION_FILE_NAME = "hashDbs.settings";
     private static final String XSD_FILE_NAME = "HashsetsSchema.xsd"; //NON-NLS
     private static final String ENCODING = "UTF-8"; //NON-NLS
     private static final String HASH_DATABASE_FILE_EXTENSON = "kdb"; //NON-NLS
     private static HashDbManager instance = null;
     private final String configFilePath = PlatformUtil.getUserConfigDirectory() + File.separator + CONFIG_FILE_NAME;
+    private final String DB_SERIALIZATION_FILE_PATH = PlatformUtil.getUserConfigDirectory() + File.separator + DB_SERIALIZATION_FILE_NAME;
     private List<HashDb> knownHashSets = new ArrayList<>();
     private List<HashDb> knownBadHashSets = new ArrayList<>();
     private Set<String> hashSetNames = new HashSet<>();
@@ -109,9 +119,7 @@ public class HashDbManager implements PropertyChangeListener {
     }
 
     private HashDbManager() {
-        if (hashSetsConfigurationFileExists()) {
-            readHashSetsConfigurationFromDisk();
-        }
+        readHashSetsConfigurationFromDisk();
     }
 
     /**
@@ -127,6 +135,10 @@ public class HashDbManager implements PropertyChangeListener {
 
         private HashDbManagerException(String message) {
             super(message);
+        }
+
+        private HashDbManagerException(String message, Throwable exception) {
+            super(message, exception);
         }
     }
 
@@ -490,9 +502,7 @@ public class HashDbManager implements PropertyChangeListener {
         hashSetNames.clear();
         hashSetPaths.clear();
 
-        if (hashSetsConfigurationFileExists()) {
-            readHashSetsConfigurationFromDisk();
-        }
+        readHashSetsConfigurationFromDisk();
     }
 
     private void closeHashDatabases(List<HashDb> hashDatabases) {
@@ -506,23 +516,15 @@ public class HashDbManager implements PropertyChangeListener {
         hashDatabases.clear();
     }
 
-    private boolean writeHashSetConfigurationToDisk() {
-        boolean success = false;
-        DocumentBuilderFactory dbfac = DocumentBuilderFactory.newInstance();
-        try {
-            DocumentBuilder docBuilder = dbfac.newDocumentBuilder();
-            Document doc = docBuilder.newDocument();
-            Element rootEl = doc.createElement(ROOT_ELEMENT);
-            doc.appendChild(rootEl);
+    private boolean writeHashSetConfigurationToDisk() throws HashDbManagerException {
 
-            writeHashDbsToDisk(doc, rootEl, knownHashSets);
-            writeHashDbsToDisk(doc, rootEl, knownBadHashSets);
-
-            success = XMLUtil.saveDoc(HashDbManager.class, configFilePath, ENCODING, doc);
-        } catch (ParserConfigurationException ex) {
-            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error saving hash databases", ex); //NON-NLS
+        try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(DB_SERIALIZATION_FILE_PATH))) {
+            HashDbSerializationSettings settings = new HashDbSerializationSettings(this.knownHashSets, this.knownBadHashSets);
+            out.writeObject(settings);
+            return true;
+        } catch (IOException | TskCoreException ex) {
+            throw new HashDbManagerException(String.format("Failed to write settings to %s", DB_SERIALIZATION_FILE_PATH), ex);
         }
-        return success;
     }
 
     private static void writeHashDbsToDisk(Document doc, Element rootEl, List<HashDb> hashDbs) {
@@ -558,146 +560,196 @@ public class HashDbManager implements PropertyChangeListener {
         return f.exists() && f.canRead() && f.canWrite();
     }
 
-    private boolean readHashSetsConfigurationFromDisk() {
-        boolean updatedSchema = false;
+    private boolean readHashSetsConfigurationFromDisk() throws HashDbManagerException {
+        File fileSetFile = new File(DB_SERIALIZATION_FILE_PATH);
+        if (fileSetFile.exists()) {
+            try {
+                try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(DB_SERIALIZATION_FILE_PATH))) {
+                    HashDbSerializationSettings filesSetsSettings = (HashDbSerializationSettings) in.readObject();
+                    this.setFields(filesSetsSettings);
+                    return true;
+                }
+            } catch (IOException | ClassNotFoundException ex) {
+                throw new PersistenceException(String.format("Failed to read settings from %s", DB_SERIALIZATION_FILE_PATH), ex);
+            }
+        } else if (hashSetsConfigurationFileExists()) {
+            boolean updatedSchema = false;
 
-        // Open the XML document that implements the configuration file.
-        final Document doc = XMLUtil.loadDoc(HashDbManager.class, configFilePath);
-        if (doc == null) {
-            return false;
-        }
-
-        // Get the root element.
-        Element root = doc.getDocumentElement();
-        if (root == null) {
-            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error loading hash sets: invalid file format."); //NON-NLS
-            return false;
-        }
-
-        // Get the hash set elements.
-        NodeList setsNList = root.getElementsByTagName(SET_ELEMENT);
-        int numSets = setsNList.getLength();
-        if (numSets == 0) {
-            Logger.getLogger(HashDbManager.class.getName()).log(Level.WARNING, "No element hash_set exists."); //NON-NLS
-        }
-
-        // Create HashDb objects for each hash set element. Skip to the next hash database if the definition of
-        // a particular hash database is not well-formed.
-        String attributeErrorMessage = " attribute was not set for hash_set at index {0}, cannot make instance of HashDb class"; //NON-NLS
-        String elementErrorMessage = " element was not set for hash_set at index {0}, cannot make instance of HashDb class"; //NON-NLS
-        for (int i = 0; i < numSets; ++i) {
-            Element setEl = (Element) setsNList.item(i);
-
-            String hashSetName = setEl.getAttribute(SET_NAME_ATTRIBUTE);
-            if (hashSetName.isEmpty()) {
-                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, SET_NAME_ATTRIBUTE + attributeErrorMessage, i);
-                continue;
+            // Open the XML document that implements the configuration file.
+            final Document doc = XMLUtil.loadDoc(HashDbManager.class, configFilePath);
+            if (doc == null) {
+                return false;
             }
 
-            // Handle configurations saved before duplicate hash set names were not permitted.
-            if (hashSetNames.contains(hashSetName)) {
-                int suffix = 0;
-                String newHashSetName;
-                do {
-                    ++suffix;
-                    newHashSetName = hashSetName + suffix;
-                } while (hashSetNames.contains(newHashSetName));
-                JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(this.getClass(),
-                                "HashDbManager.replacingDuplicateHashsetNameMsg",
-                                hashSetName, newHashSetName),
-                        NbBundle.getMessage(this.getClass(), "HashDbManager.openHashDbErr"),
-                        JOptionPane.ERROR_MESSAGE);
-                hashSetName = newHashSetName;
+            // Get the root element.
+            Element root = doc.getDocumentElement();
+            if (root == null) {
+                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error loading hash sets: invalid file format."); //NON-NLS
+                return false;
             }
 
-            String knownFilesType = setEl.getAttribute(SET_TYPE_ATTRIBUTE);
-            if (knownFilesType.isEmpty()) {
-                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, SET_TYPE_ATTRIBUTE + attributeErrorMessage, i);
-                continue;
+            // Get the hash set elements.
+            NodeList setsNList = root.getElementsByTagName(SET_ELEMENT);
+            int numSets = setsNList.getLength();
+            if (numSets == 0) {
+                Logger.getLogger(HashDbManager.class.getName()).log(Level.WARNING, "No element hash_set exists."); //NON-NLS
             }
 
-            // Handle legacy known files types.
-            if (knownFilesType.equals("NSRL")) { //NON-NLS
-                knownFilesType = HashDb.KnownFilesType.KNOWN.toString();
-                updatedSchema = true;
-            }
+            // Create HashDb objects for each hash set element. Skip to the next hash database if the definition of
+            // a particular hash database is not well-formed.
+            String attributeErrorMessage = " attribute was not set for hash_set at index {0}, cannot make instance of HashDb class"; //NON-NLS
+            String elementErrorMessage = " element was not set for hash_set at index {0}, cannot make instance of HashDb class"; //NON-NLS
+            for (int i = 0; i < numSets; ++i) {
+                Element setEl = (Element) setsNList.item(i);
 
-            final String searchDuringIngest = setEl.getAttribute(SEARCH_DURING_INGEST_ATTRIBUTE);
-            if (searchDuringIngest.isEmpty()) {
-                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, SEARCH_DURING_INGEST_ATTRIBUTE + attributeErrorMessage, i);
-                continue;
-            }
-            Boolean seearchDuringIngestFlag = Boolean.parseBoolean(searchDuringIngest);
+                String hashSetName = setEl.getAttribute(SET_NAME_ATTRIBUTE);
+                if (hashSetName.isEmpty()) {
+                    Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, SET_NAME_ATTRIBUTE + attributeErrorMessage, i);
+                    continue;
+                }
 
-            final String sendIngestMessages = setEl.getAttribute(SEND_INGEST_MESSAGES_ATTRIBUTE);
-            if (searchDuringIngest.isEmpty()) {
-                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, SEND_INGEST_MESSAGES_ATTRIBUTE + attributeErrorMessage, i);
-                continue;
-            }
-            Boolean sendIngestMessagesFlag = Boolean.parseBoolean(sendIngestMessages);
+                // Handle configurations saved before duplicate hash set names were not permitted.
+                if (hashSetNames.contains(hashSetName)) {
+                    int suffix = 0;
+                    String newHashSetName;
+                    do {
+                        ++suffix;
+                        newHashSetName = hashSetName + suffix;
+                    } while (hashSetNames.contains(newHashSetName));
+                    JOptionPane.showMessageDialog(null,
+                            NbBundle.getMessage(this.getClass(),
+                                    "HashDbManager.replacingDuplicateHashsetNameMsg",
+                                    hashSetName, newHashSetName),
+                            NbBundle.getMessage(this.getClass(), "HashDbManager.openHashDbErr"),
+                            JOptionPane.ERROR_MESSAGE);
+                    hashSetName = newHashSetName;
+                }
 
-            String dbPath;
-            NodeList pathsNList = setEl.getElementsByTagName(PATH_ELEMENT);
-            if (pathsNList.getLength() > 0) {
-                Element pathEl = (Element) pathsNList.item(0); // Shouldn't be more than one.
+                String knownFilesType = setEl.getAttribute(SET_TYPE_ATTRIBUTE);
+                if (knownFilesType.isEmpty()) {
+                    Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, SET_TYPE_ATTRIBUTE + attributeErrorMessage, i);
+                    continue;
+                }
 
-                // Check for legacy path number attribute.
-                String legacyPathNumber = pathEl.getAttribute(LEGACY_PATH_NUMBER_ATTRIBUTE);
-                if (null != legacyPathNumber && !legacyPathNumber.isEmpty()) {
+                // Handle legacy known files types.
+                if (knownFilesType.equals("NSRL")) { //NON-NLS
+                    knownFilesType = HashDb.KnownFilesType.KNOWN.toString();
                     updatedSchema = true;
                 }
 
-                dbPath = pathEl.getTextContent();
-                if (dbPath.isEmpty()) {
+                final String searchDuringIngest = setEl.getAttribute(SEARCH_DURING_INGEST_ATTRIBUTE);
+                if (searchDuringIngest.isEmpty()) {
+                    Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, SEARCH_DURING_INGEST_ATTRIBUTE + attributeErrorMessage, i);
+                    continue;
+                }
+                Boolean seearchDuringIngestFlag = Boolean.parseBoolean(searchDuringIngest);
+
+                final String sendIngestMessages = setEl.getAttribute(SEND_INGEST_MESSAGES_ATTRIBUTE);
+                if (searchDuringIngest.isEmpty()) {
+                    Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, SEND_INGEST_MESSAGES_ATTRIBUTE + attributeErrorMessage, i);
+                    continue;
+                }
+                Boolean sendIngestMessagesFlag = Boolean.parseBoolean(sendIngestMessages);
+
+                String dbPath;
+                NodeList pathsNList = setEl.getElementsByTagName(PATH_ELEMENT);
+                if (pathsNList.getLength() > 0) {
+                    Element pathEl = (Element) pathsNList.item(0); // Shouldn't be more than one.
+
+                    // Check for legacy path number attribute.
+                    String legacyPathNumber = pathEl.getAttribute(LEGACY_PATH_NUMBER_ATTRIBUTE);
+                    if (null != legacyPathNumber && !legacyPathNumber.isEmpty()) {
+                        updatedSchema = true;
+                    }
+
+                    dbPath = pathEl.getTextContent();
+                    if (dbPath.isEmpty()) {
+                        Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, PATH_ELEMENT + elementErrorMessage, i);
+                        continue;
+                    }
+                } else {
                     Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, PATH_ELEMENT + elementErrorMessage, i);
                     continue;
                 }
-            } else {
-                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, PATH_ELEMENT + elementErrorMessage, i);
-                continue;
-            }
-            dbPath = getValidFilePath(hashSetName, dbPath);
+                dbPath = getValidFilePath(hashSetName, dbPath);
 
-            if (null != dbPath) {
+                if (null != dbPath) {
+                    try {
+                        addExistingHashDatabaseInternal(hashSetName, dbPath, seearchDuringIngestFlag, sendIngestMessagesFlag, HashDb.KnownFilesType.valueOf(knownFilesType));
+                    } catch (HashDbManagerException | TskCoreException ex) {
+                        Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash database", ex); //NON-NLS
+                        JOptionPane.showMessageDialog(null,
+                                NbBundle.getMessage(this.getClass(),
+                                        "HashDbManager.unableToOpenHashDbMsg", dbPath),
+                                NbBundle.getMessage(this.getClass(), "HashDbManager.openHashDbErr"),
+                                JOptionPane.ERROR_MESSAGE);
+                    }
+                } else {
+                    Logger.getLogger(HashDbManager.class.getName()).log(Level.WARNING, "No valid path for hash_set at index {0}, cannot make instance of HashDb class", i); //NON-NLS
+                }
+            }
+
+            if (updatedSchema) {
+                String backupFilePath = configFilePath + ".v1_backup"; //NON-NLS
+                String messageBoxTitle = NbBundle.getMessage(this.getClass(),
+                        "HashDbManager.msgBoxTitle.confFileFmtChanged");
+                String baseMessage = NbBundle.getMessage(this.getClass(),
+                        "HashDbManager.baseMessage.updatedFormatHashDbConfig");
                 try {
-                    addExistingHashDatabaseInternal(hashSetName, dbPath, seearchDuringIngestFlag, sendIngestMessagesFlag, HashDb.KnownFilesType.valueOf(knownFilesType));
-                } catch (HashDbManagerException | TskCoreException ex) {
-                    Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash database", ex); //NON-NLS
+                    FileUtils.copyFile(new File(configFilePath), new File(backupFilePath));
                     JOptionPane.showMessageDialog(null,
                             NbBundle.getMessage(this.getClass(),
-                                    "HashDbManager.unableToOpenHashDbMsg", dbPath),
-                            NbBundle.getMessage(this.getClass(), "HashDbManager.openHashDbErr"),
-                            JOptionPane.ERROR_MESSAGE);
+                                    "HashDbManager.savedBackupOfOldConfigMsg",
+                                    baseMessage, backupFilePath),
+                            messageBoxTitle,
+                            JOptionPane.INFORMATION_MESSAGE);
+                } catch (IOException ex) {
+                    Logger.getLogger(HashDbManager.class.getName()).log(Level.WARNING, "Failed to save backup of old format configuration file to " + backupFilePath, ex); //NON-NLS
+                    JOptionPane.showMessageDialog(null, baseMessage, messageBoxTitle, JOptionPane.INFORMATION_MESSAGE);
                 }
-            } else {
-                Logger.getLogger(HashDbManager.class.getName()).log(Level.WARNING, "No valid path for hash_set at index {0}, cannot make instance of HashDb class", i); //NON-NLS
-            }
-        }
 
-        if (updatedSchema) {
-            String backupFilePath = configFilePath + ".v1_backup"; //NON-NLS
-            String messageBoxTitle = NbBundle.getMessage(this.getClass(),
-                    "HashDbManager.msgBoxTitle.confFileFmtChanged");
-            String baseMessage = NbBundle.getMessage(this.getClass(),
-                    "HashDbManager.baseMessage.updatedFormatHashDbConfig");
+                writeHashSetConfigurationToDisk();
+            }
+
+            return true;
+        } else {
             try {
-                FileUtils.copyFile(new File(configFilePath), new File(backupFilePath));
+                this.setFields(new HashDbSerializationSettings(new ArrayList<>(), new ArrayList<>()));
+            } catch (TskCoreException ex) {
+                throw new PersistenceException("Failed to create hash database settings", ex);
+            }
+
+            return true;
+        }
+    }
+
+    private void setFields(HashDbSerializationSettings settings) {
+        Map<HashDbManager.HashDb, String> knownPathMap = settings.getKnownPathMap();
+        Map<HashDbManager.HashDb, String> knownBadPathMap = settings.getKnownBadPathMap();
+        for (HashDbManager.HashDb hashDb : settings.getKnownHashSets()) {
+            try {
+                addExistingHashDatabaseInternal(hashDb.getHashSetName(), knownPathMap.get(hashDb), hashDb.getSearchDuringIngest(), hashDb.getSendIngestMessages(), HashDb.KnownFilesType.KNOWN);
+            } catch (HashDbManagerException | TskCoreException ex) {
+                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash database", ex); //NON-NLS
                 JOptionPane.showMessageDialog(null,
                         NbBundle.getMessage(this.getClass(),
-                                "HashDbManager.savedBackupOfOldConfigMsg",
-                                baseMessage, backupFilePath),
-                        messageBoxTitle,
-                        JOptionPane.INFORMATION_MESSAGE);
-            } catch (IOException ex) {
-                Logger.getLogger(HashDbManager.class.getName()).log(Level.WARNING, "Failed to save backup of old format configuration file to " + backupFilePath, ex); //NON-NLS
-                JOptionPane.showMessageDialog(null, baseMessage, messageBoxTitle, JOptionPane.INFORMATION_MESSAGE);
+                                "HashDbManager.unableToOpenHashDbMsg", hashDb.getHashSetName()),
+                        NbBundle.getMessage(this.getClass(), "HashDbManager.openHashDbErr"),
+                        JOptionPane.ERROR_MESSAGE);
             }
-
-            writeHashSetConfigurationToDisk();
         }
-
-        return true;
+        for (HashDbManager.HashDb hashDb : settings.getKnownBadHashSets()) {
+            try {
+                addExistingHashDatabaseInternal(hashDb.getHashSetName(), knownBadPathMap.get(hashDb), hashDb.getSearchDuringIngest(), hashDb.getSendIngestMessages(), HashDb.KnownFilesType.KNOWN_BAD);
+            } catch (HashDbManagerException | TskCoreException ex) {
+                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash database", ex); //NON-NLS
+                JOptionPane.showMessageDialog(null,
+                        NbBundle.getMessage(this.getClass(),
+                                "HashDbManager.unableToOpenHashDbMsg", hashDb.getHashSetName()),
+                        NbBundle.getMessage(this.getClass(), "HashDbManager.openHashDbErr"),
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
 
     private String getValidFilePath(String hashSetName, String configuredPath) {
@@ -750,7 +802,7 @@ public class HashDbManager implements PropertyChangeListener {
      * Instances of this class represent hash databases used to classify files
      * as known or know bad.
      */
-    public static class HashDb {
+    public static class HashDb implements Serializable {
 
         /**
          * Indicates how files with hashes stored in a particular hash database
@@ -778,6 +830,7 @@ public class HashDbManager implements PropertyChangeListener {
 
             INDEXING_DONE
         }
+        private static final long serialVersionUID = 1L;
         private int handle;
         private String hashSetName;
         private boolean searchDuringIngest;
@@ -955,6 +1008,16 @@ public class HashDbManager implements PropertyChangeListener {
 
         private void close() throws TskCoreException {
             SleuthkitJNI.closeHashDatabase(handle);
+        }
+
+        @Override
+        public int hashCode() {
+            int code = 23;
+            code = 47 * code + Integer.hashCode(handle);
+            code = 47 * code + Objects.hashCode(this.hashSetName);
+            code = 47 * code + Objects.hashCode(this.propertyChangeSupport);
+            code = 47 * code + Objects.hashCode(this.knownFilesType);
+            return code;
         }
     }
 
