@@ -1,24 +1,32 @@
-                               Autopsy 3.0
-                          http://www.sleuthkit.org/
+#                               Autopsy 4.0
+http://www.sleuthkit.org/
 
-                                March 13, 2013
+March 3, 2016
 
 
-OVERVIEW
+
+##OVERVIEW
 
 Autopsy is a graphical interface to The Sleuth Kit and other open source digital forensics tools. 
-Autopsy 3 is a complete rewrite from Autopsy 2 and it is now Java-based.     
+Autopsy 4 (and 3) are a complete rewrite from Autopsy 2, and none of this document is relevant to Autopsy 2.   
 
 Although Autopsy is designed to be cross-platform (Windows, Linux, MacOSX), the current version is fully functional and fully tested only on Windows. 
-We have run it on XP, Vista, and Windows 7 with no problems. 
+You can run Autopsy 4 on Linux and OS X, but it must be built from source code. 
 
-Autopsy 3.0 is released under the Apache 2.0 license. 
+Autopsy 3 and 4 source code are distributed under a Apache 2 license. The package contains libraries that may have different licenses.
 
 
-INSTALLATION
+##INSTALLATION
 
 All Autopsy dependencies are bundled with the installer provided.
-There is no need for manual installation of additional dependencies if the installer is used.
+For Autopsy 3, there is no need for manual installation of additional dependencies if the installer is used.
+The current version of Autopsy 4 is distributed on sleuthkit.org only as a Windows installer. It can run on Linux and OS X, but requires some manual setup. To install Autopsy, perform the following steps:
+
+* Run the Autopsy msi file
+* If Windows prompts with User Account Control, click Yes
+* Click through the dialog boxes until you click a button that says Finish
+* Autopsy should now be fully installed
+
 
 If you want the Japanese localized version, you must have the Japanese language pack (http://support.microsoft.com/kb/972813) installed and the default locale set to JA. (http://windows.microsoft.com/en-us/windows/change-system-locale#1TC=windows-7).
 
@@ -27,7 +35,7 @@ Refer to the next section for additional info on third-party software requiremen
 Refer to the KNOWN_ISSUES.txt file for known bugs that could cause investigation problems. 
 
 
-SUPPORT
+##SUPPORT
 
 There is a built-in help system in Autopsy once you get it started.  There is also a QuickStart Guide that came with the installer.
 
@@ -35,12 +43,11 @@ Send any bug reports or feature requests to the sleuthkit-users e-mail list.
     http://www.sleuthkit.org/support.php
 
 
-LICENSE
+##LICENSE
 
 The Autopsy code is released under the Apache License, Version 2.  See LICENSE-2.0.txt for details.
 
-
-EMBEDDED SOFTWARE
+##EMBEDDED SOFTWARE
 
 This section lists the software components and libraries that are used inside of
 Autopsy.   These tools are bundled with the installer, unless specified otherwise.
@@ -116,7 +123,7 @@ ImgScalr 4.2 for image resizing in image viewers
 - License: http://www.thebuzzmedia.com/software/imgscalr-java-image-scaling-library/#license
 
 
-EMBEDED RESOURCES
+##EMBEDED RESOURCES
 
 This section lists other resources, such as icons, that are used by Autopsy.   
 
