@@ -108,6 +108,10 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
         setOnMouseClicked(new MouseClickedHandler<>(this));
 
         this.selectedNodes = selectedNodes;
+
+        getController().getEventsModel().timeRangeProperty().addListener(o -> {
+            clearIntervalSelector();
+        });
     }
 
     @Override
