@@ -1,43 +1,36 @@
-#                               Autopsy 4.0
+Autopsy 4
+
 http://www.sleuthkit.org/
 
-March 3, 2016
-
+March 15, 2016
 
 
 ##OVERVIEW
 
 Autopsy is a graphical interface to The Sleuth Kit and other open source digital forensics tools. 
-Autopsy 4 (and 3) are a complete rewrite from Autopsy 2, and none of this document is relevant to Autopsy 2.   
+Autopsy 3 was a complete rewrite from Autopsy 2 to make it Java-based.
+Autopsy 4 improves on Autopsy 3 by supporting collaboration on a single case by multiple users.     
 
 Although Autopsy is designed to be cross-platform (Windows, Linux, MacOSX), the current version is fully functional and fully tested only on Windows. 
-You can run Autopsy 4 on Linux and OS X, but it must be built from source code. 
+We have run it on XP, Vista, and Windows 7 with no problems. 
 
-Autopsy 3 and 4 source code are distributed under a Apache 2 license. The package contains libraries that may have different licenses.
+Autopsy 4 is released under the Apache 2.0 license.
+Some libraries Autopsy uses may have different, but similar, open source licenses. 
 
 
 ##INSTALLATION
 
-All Autopsy dependencies are bundled with the installer provided.
-For Autopsy 3, there is no need for manual installation of additional dependencies if the installer is used.
-The current version of Autopsy 4 is distributed on sleuthkit.org only as a Windows installer. It can run on Linux and OS X, but requires some manual setup. To install Autopsy, perform the following steps:
-
-* Run the Autopsy msi file
-* If Windows prompts with User Account Control, click Yes
-* Click through the dialog boxes until you click a button that says Finish
-* Autopsy should now be fully installed
-
+For a Windows installation, all Autopsy dependencies are bundled with the installer provided.
+There is no need for manual installation of additional dependencies if the Windows installer is used.
 
 If you want the Japanese localized version, you must have the Japanese language pack (http://support.microsoft.com/kb/972813) installed and the default locale set to JA. (http://windows.microsoft.com/en-us/windows/change-system-locale#1TC=windows-7).
-
-Refer to the next section for additional info on third-party software requirements to run Autopsy without installer.
 
 Refer to the KNOWN_ISSUES.txt file for known bugs that could cause investigation problems. 
 
 
 ##SUPPORT
 
-There is a built-in help system in Autopsy once you get it started.  There is also a QuickStart Guide that came with the installer.
+There is a built-in help system in Autopsy once you get it started.  There is also a QuickStart Guide that comes with the installer.
 
 Send any bug reports or feature requests to the sleuthkit-users e-mail list.
     http://www.sleuthkit.org/support.php
@@ -47,26 +40,27 @@ Send any bug reports or feature requests to the sleuthkit-users e-mail list.
 
 The Autopsy code is released under the Apache License, Version 2.  See LICENSE-2.0.txt for details.
 
+
 ##EMBEDDED SOFTWARE
 
-This section lists the software components and libraries that are used inside of
-Autopsy.   These tools are bundled with the installer, unless specified otherwise.
+This section lists the software components and libraries that are used by of
+Autopsy.   These tools are bundled with the Windows installer, unless specified otherwise.
 
 JRE (Java Runtime Environment) 1.8
 - Web page: http://www.oracle.com/technetwork/java/index.html
 - License: http://www.oracle.com/technetwork/java/javase/terms/license/index.html
 
-Netbeans 7.3 RCP platform and .jar files bundled with the platform
+Netbeans 8.0.2 RCP platform and .jar files bundled with the platform
 - Web page: http://netbeans.org/features/platform/
 - License: 
-http://services.netbeans.org/downloads/licence/nb-7.0-final-2011-04-20-license.txt
+https://netbeans.org/downloads/jdk-bundle/8.0.2/nb802-LICENSE.txt
 
 Sleuth Kit for analyzing disk images.
 - Web page: http://www.sleuthkit.org/sleuthkit/
 - License: http://sleuthkit.org/sleuthkit/licenses.php
 
 Libewf for opening E01 files
-- Web page: http://sourceforge.net/projects/libewf/
+- Web page: https://github.com/libyal/libewf
 - License: http://www.gnu.org/licenses/lgpl.html
 
 zlib for opening E01 files
@@ -123,7 +117,7 @@ ImgScalr 4.2 for image resizing in image viewers
 - License: http://www.thebuzzmedia.com/software/imgscalr-java-image-scaling-library/#license
 
 
-##EMBEDED RESOURCES
+##EMBEDDED RESOURCES
 
 This section lists other resources, such as icons, that are used by Autopsy.   
 
