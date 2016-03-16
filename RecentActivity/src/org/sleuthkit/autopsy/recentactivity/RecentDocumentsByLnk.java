@@ -99,9 +99,6 @@ class RecentDocumentsByLnk extends Extract {
                         || recentFile.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC);
                 if (unalloc == false) {
                     logger.log(Level.WARNING, "Error lnk parsing the file to get recent files {0}", recentFile); //NON-NLS
-                    this.addErrorMessage(
-                            NbBundle.getMessage(this.getClass(), "RecentDocumentsByLnk.getRecDoc.errParsingFile",
-                                    this.getName(), recentFile.getName()));
                 }
                 continue;
             }
