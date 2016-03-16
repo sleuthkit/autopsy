@@ -2,7 +2,7 @@
 
 
 
-This page covers the motivation for and basics of Autopsy modules.  It applies to both Java and Python modules.  Later pages will focus on getting the devevelopment environment setup and how to write specific modules. 
+This page covers the motivation for and basics of Autopsy modules.  It applies to both Java and Python modules.  Later pages will focus on getting the development environment setup and how to write specific modules. 
 
 \section platform_motivation Why Write Modules?
 
@@ -18,7 +18,7 @@ The main reason for considering writing an Autopsy module instead of a stand-alo
 Autopsy was designed to be an extensible platform for other developers to leverage. There are several places in the platform where plug-in modules can be applied. 
 - <b>Ingest Modules:</b> These modules are run when a new data source (such as a disk image) is added to a case (and can be re-run afterwards too).  These modules come in two forms:
  - File Ingest Modules are called for every file in the data source.  Use this type of module if you want to examine the contents of all or most of the files.  Examples include hash calculation, hash lookup, file type identification, and entropy calculation.  These modules are passed in a reference to a file to analyze. 
- - Data Source Ingest Modules are called once for every image or set of logical files.  These modules can use the database to query for one or more files and perform analysis on them.  Examples include web artifact analysis and searches that can rely only file names and extensions.  Note that these modules will not have access to the contents of ZIP files.  These modules are also often used when wrapping an executabe that takes a disk image in as input. 
+ - Data Source Ingest Modules are called once for every image or set of logical files.  These modules can use the database to query for one or more files and perform analysis on them.  Examples include web artifact analysis and searches that can rely only file names and extensions.  Note that these modules will not have access to the contents of ZIP files.  These modules are also often used when wrapping an executable that takes a disk image in as input. 
 See \ref mod_ingest_page for details on building these modules. 
 - <b>Report Modules:</b> These modules are (typically) run after the user has reviewed results and tagged files.  Their intention is to create an output report of the results, but they can also be used to perform analysis. See \ref mod_report_page for details on creating these modules. 
 - <b>Content Viewers:</b> These modules are graphical and focus on displaying a specific file in some unique way. These are the modules in the lower right of the interface.  The platform comes with viewers to view the file in hexadecimal, extract the strings from the file, and view images and movies.  See \ref mod_content_page for details on creating these modules. 

@@ -56,7 +56,7 @@ the needed places (i.e. '/usr/local').
 
 
 3) For 32-bit targets, get GStreamer Setup. GStreamer is used to view video files.
-You can either download it and install it or manually by unziping the
+You can either download it and install it or manually by unzipping the
 version that is included in the 'thirdparty/gstreamer' folder.  You
 will need the 'bin' and 'lib/gstreamer-1.0' folders to be in your
 Windows PATH environment variable.
