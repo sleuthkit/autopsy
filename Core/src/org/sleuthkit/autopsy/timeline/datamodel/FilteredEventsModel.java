@@ -44,7 +44,8 @@ import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
 import org.sleuthkit.autopsy.timeline.db.EventsRepository;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
-import org.sleuthkit.autopsy.timeline.events.TagsUpdatedEvent;
+import org.sleuthkit.autopsy.timeline.events.TagsAddedEvent;
+import org.sleuthkit.autopsy.timeline.events.TagsDeletedEvent;
 import org.sleuthkit.autopsy.timeline.filters.DataSourceFilter;
 import org.sleuthkit.autopsy.timeline.filters.DataSourcesFilter;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
@@ -351,14 +352,14 @@ public final class FilteredEventsModel {
         ContentTag contentTag = evt.getAddedTag();
         Content content = contentTag.getContent();
         Set<Long> updatedEventIDs = repo.addTag(content.getId(), null, contentTag, null);
-        return postTagsUpdated(updatedEventIDs);
+        return postTagsAdded(updatedEventIDs);
     }
 
     synchronized public boolean handleArtifactTagAdded(BlackBoardArtifactTagAddedEvent evt) {
         BlackboardArtifactTag artifactTag = evt.getAddedTag();
         BlackboardArtifact artifact = artifactTag.getArtifact();
         Set<Long> updatedEventIDs = repo.addTag(artifact.getObjectID(), artifact.getArtifactID(), artifactTag, null);
-        return postTagsUpdated(updatedEventIDs);
+        return postTagsAdded(updatedEventIDs);
     }
 
     synchronized public boolean handleContentTagDeleted(ContentTagDeletedEvent evt) {
@@ -367,7 +368,7 @@ public final class FilteredEventsModel {
             Content content = autoCase.getSleuthkitCase().getContentById(deletedTagInfo.getContentID());
             boolean tagged = autoCase.getServices().getTagsManager().getContentTagsByContent(content).isEmpty() == false;
             Set<Long> updatedEventIDs = repo.deleteTag(content.getId(), null, deletedTagInfo.getTagID(), tagged);
-            return postTagsUpdated(updatedEventIDs);
+            return postTagsDeleted(updatedEventIDs);
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "unable to determine tagged status of content.", ex); //NON-NLS
         }
@@ -380,17 +381,25 @@ public final class FilteredEventsModel {
             BlackboardArtifact artifact = autoCase.getSleuthkitCase().getBlackboardArtifact(deletedTagInfo.getArtifactID());
             boolean tagged = autoCase.getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact).isEmpty() == false;
             Set<Long> updatedEventIDs = repo.deleteTag(artifact.getObjectID(), artifact.getArtifactID(), deletedTagInfo.getTagID(), tagged);
-            return postTagsUpdated(updatedEventIDs);
+            return postTagsDeleted(updatedEventIDs);
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "unable to determine tagged status of artifact.", ex); //NON-NLS
         }
         return false;
     }
 
-    private boolean postTagsUpdated(Set<Long> updatedEventIDs) {
+    private boolean postTagsAdded(Set<Long> updatedEventIDs) {
         boolean tagsUpdated = !updatedEventIDs.isEmpty();
         if (tagsUpdated) {
-            eventbus.post(new TagsUpdatedEvent(updatedEventIDs));
+            eventbus.post(new TagsAddedEvent(updatedEventIDs));
+        }
+        return tagsUpdated;
+    }
+
+    private boolean postTagsDeleted(Set<Long> updatedEventIDs) {
+        boolean tagsUpdated = !updatedEventIDs.isEmpty();
+        if (tagsUpdated) {
+            eventbus.post(new TagsDeletedEvent(updatedEventIDs));
         }
         return tagsUpdated;
     }

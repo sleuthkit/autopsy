@@ -20,6 +20,8 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import com.google.common.eventbus.Subscribe;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -73,6 +75,8 @@ import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
+import org.sleuthkit.autopsy.timeline.events.TagsAddedEvent;
+import org.sleuthkit.autopsy.timeline.events.TagsDeletedEvent;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
 import org.sleuthkit.autopsy.timeline.ui.ContextMenuProvider;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.show;
@@ -140,7 +144,14 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
         eventsModel = chartLane.getController().getEventsModel();
         eventTypeImageView.setImage(getEventType().getFXImage());
 
-//        descrLabel.setGraphic();
+        if (tlEvent.getEventIDsWithHashHits().isEmpty()) {
+            show(hashIV, false);
+        }
+
+        if (tlEvent.getEventIDsWithTags().isEmpty()) {
+            show(tagIV, false);
+        }
+
         if (chartLane.getController().getEventsModel().getEventTypeZoom() == EventTypeZoomLevel.SUB_TYPE) {
             evtColor = getEventType().getColor();
         } else {
@@ -459,7 +470,30 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
         descrLabel.setText(description);
     }
 
-    static class PinEventAction extends Action {
+    @Subscribe
+    public void handleTimeLineTagEvent(TagsAddedEvent event) {
+        if (false == Sets.intersection(getEvent().getEventIDs(), event.getUpdatedEventIDs()).isEmpty()) {
+            Platform.runLater(() -> {
+                show(tagIV, true);
+            });
+        }
+    }
+
+    /**
+     * TODO: this method implementation is wrong and just a place holder
+     */
+    @Subscribe
+    public void handleTimeLineTagEvent(TagsDeletedEvent event) {
+        Sets.SetView<Long> difference = Sets.difference(getEvent().getEventIDs(), event.getUpdatedEventIDs());
+
+        if (false == difference.isEmpty()) {
+            Platform.runLater(() -> {
+                show(tagIV, true);
+            });
+        }
+    }
+
+    private static class PinEventAction extends Action {
 
         @NbBundle.Messages({"PinEventAction.text=Pin"})
         PinEventAction(TimeLineController controller, TimeLineEvent event) {
@@ -469,7 +503,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
         }
     }
 
-    static class UnPinEventAction extends Action {
+    private static class UnPinEventAction extends Action {
 
         @NbBundle.Messages({"UnPinEventAction.text=Unpin"})
         UnPinEventAction(TimeLineController controller, TimeLineEvent event) {
@@ -482,7 +516,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
     /**
      * event handler used for mouse events on {@link EventNodeBase}s
      */
-    class ClickHandler implements EventHandler<MouseEvent> {
+    private class ClickHandler implements EventHandler<MouseEvent> {
 
         @Override
         public void handle(MouseEvent t) {

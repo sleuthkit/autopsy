@@ -37,7 +37,6 @@ import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.datamodel.MultiEvent;
-import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.show;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 /**
@@ -61,12 +60,7 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
         super(event, parentNode, chartLane);
         setDescriptionLOD(event.getDescriptionLoD());
 
-        if (event.getEventIDsWithHashHits().isEmpty()) {
-            show(hashIV, false);
-        }
-        if (event.getEventIDsWithTags().isEmpty()) {
-            show(tagIV, false);
-        }
+      
 
         setAlignment(Pos.TOP_LEFT);
         setMaxWidth(USE_PREF_SIZE);

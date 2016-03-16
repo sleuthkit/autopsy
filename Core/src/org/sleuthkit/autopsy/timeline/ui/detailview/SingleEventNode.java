@@ -64,12 +64,6 @@ final class SingleEventNode extends EventNodeBase<SingleEvent> {
         descrLabel.setPrefWidth(USE_COMPUTED_SIZE);
         setMinHeight(24);
         setAlignment(Pos.CENTER_LEFT);
-        if (event.getEventIDsWithHashHits().isEmpty()) {
-            show(hashIV, false);
-        }
-        if (event.getEventIDsWithTags().isEmpty()) {
-            show(tagIV, false);
-        }
 
         final Border clusterBorder = new Border(new BorderStroke(evtColor.deriveColor(0, 1, 1, .4), BorderStrokeStyle.SOLID, CORNER_RADII_1, CLUSTER_BORDER_WIDTHS));
         setBorder(clusterBorder);
@@ -101,8 +95,6 @@ final class SingleEventNode extends EventNodeBase<SingleEvent> {
     public void setMaxDescriptionWidth(double w) {
         descrLabel.setMaxWidth(w);
     }
-
-   
 
     @Override
     Collection<Long> getEventIDs() {
