@@ -109,7 +109,7 @@ public abstract class IntervalSelector<X> extends BorderPane {
         setMaxWidth(USE_PREF_SIZE);
         setMinWidth(USE_PREF_SIZE);
 
-        BooleanBinding showingControls = hoverProperty().and(isDragging.not());
+        BooleanBinding showingControls = zoomButton.hoverProperty().or(bottomBorder.hoverProperty().or(hoverProperty())).and(isDragging.not());
         closeButton.visibleProperty().bind(showingControls);
         closeButton.managedProperty().bind(showingControls);
         zoomButton.visibleProperty().bind(showingControls);
