@@ -82,7 +82,9 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
 
     private final DateAxis detailsChartDateAxis = new DateAxis();
     private final DateAxis pinnedDateAxis = new DateAxis();
-    private final Axis<EventStripe> verticalAxis = new EventAxis<>("All Events");
+
+    @NbBundle.Messages("DetailViewPane.primaryLaneLabel.text=All Events (Filtered)")
+    private final Axis<EventStripe> verticalAxis = new EventAxis<>(Bundle.DetailViewPane_primaryLaneLabel_text());
 
     private final MappedList<TimeLineEvent, EventNodeBase> selectedEvents;
 
@@ -299,8 +301,8 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
             bandByTypeBoxMenuItem.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.bandByTypeBoxMenuItem.text"));
             oneEventPerRowBox.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.oneEventPerRowBox.text"));
             oneEventPerRowBoxMenuItem.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.oneEventPerRowBoxMenuItem.text"));
-            truncateAllBox.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPan.truncateAllBox.text"));
-            truncateAllBoxMenuItem.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPan.truncateAllBoxMenuItem.text"));
+            truncateAllBox.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.truncateAllBox.text"));
+            truncateAllBoxMenuItem.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.truncateAllBoxMenuItem.text"));
             truncateSliderLabelMenuItem.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.truncateSlideLabelMenuItem.text"));
             descVisibilitySeparatorMenuItem.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.descVisSeparatorMenuItem.text"));
             showRadioMenuItem.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.showRadioMenuItem.text"));

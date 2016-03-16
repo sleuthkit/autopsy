@@ -320,6 +320,7 @@ public final class DetailsChart extends Control implements TimeLineChart<DateTim
 
         private IntervalSelector<? extends DateTime> intervalSelector;
 
+        @NbBundle.Messages("DetailViewPane.pinnedLaneLabel.text=Pinned Events")
         DetailsChartSkin(DetailsChart chart) {
             super(chart);
             //initialize chart;
@@ -327,7 +328,7 @@ public final class DetailsChart extends Control implements TimeLineChart<DateTim
 
             mainView = new ScrollingLaneWrapper(primaryLane);
 
-            pinnedLane = new PinnedEventsChartLane(chart, getSkinnable().pinnedDateAxis, new EventAxis<>("Pinned Events"));
+            pinnedLane = new PinnedEventsChartLane(chart, getSkinnable().pinnedDateAxis, new EventAxis<>(Bundle.DetailViewPane_pinnedLaneLabel_text()));
             pinnedView = new ScrollingLaneWrapper(pinnedLane);
             pinnedLane.setMinHeight(MIN_PINNED_LANE_HEIGHT);
             pinnedLane.maxVScrollProperty().addListener((Observable observable) -> syncPinnedHeight());
