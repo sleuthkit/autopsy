@@ -119,13 +119,12 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
     final Label descrLabel = new Label();
     final ImageView hashIV = new ImageView(HASH_HIT);
     final ImageView tagIV = new ImageView(TAG);
-
-    final HBox controlsHBox = new HBox(5);
-    final HBox infoHBox = new HBox(5, descrLabel, countLabel, hashIV, tagIV, controlsHBox);
+    final ImageView eventTypeImageView = new ImageView();
 
     final Tooltip tooltip = new Tooltip(Bundle.EventBundleNodeBase_toolTip_loading());
 
-    final ImageView eventTypeImageView = new ImageView();
+    final HBox controlsHBox = new HBox(5);
+    final HBox infoHBox = new HBox(5, eventTypeImageView, hashIV, tagIV, descrLabel, countLabel, controlsHBox);
     final SleuthkitCase sleuthkitCase;
     final FilteredEventsModel eventsModel;
     private Timeline timeline;
@@ -141,8 +140,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
         eventsModel = chartLane.getController().getEventsModel();
         eventTypeImageView.setImage(getEventType().getFXImage());
 
-        descrLabel.setGraphic(eventTypeImageView);
-
+//        descrLabel.setGraphic();
         if (chartLane.getController().getEventsModel().getEventTypeZoom() == EventTypeZoomLevel.SUB_TYPE) {
             evtColor = getEventType().getColor();
         } else {
@@ -401,7 +399,6 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
         countLabel.setText("");
         descrLabel.setText("");
     }
-
 
     /**
      * apply the 'effect' to visually indicate highlighted nodes
