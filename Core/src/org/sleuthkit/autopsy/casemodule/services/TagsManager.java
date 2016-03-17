@@ -577,6 +577,7 @@ public class TagsManager implements Closeable {
      * Exception thrown if there is an attempt to add a duplicate tag name.
      */
     public static class TagNameAlreadyExistsException extends Exception {
+        private static final long serialVersionUID = 1L;
     }
 
 }
