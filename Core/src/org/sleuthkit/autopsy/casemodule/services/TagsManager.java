@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-15 Basis Technology Corp.
+ * Copyright 2011-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,11 +42,12 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class TagsManager implements Closeable {
 
+    private static final Logger logger = Logger.getLogger(TagsManager.class.getName());
     private static final String TAGS_SETTINGS_NAME = "Tags"; //NON-NLS
     private static final String TAG_NAMES_SETTING_KEY = "TagNames"; //NON-NLS
     private final SleuthkitCase caseDb;
     private final HashMap<String, TagName> uniqueTagNames = new HashMap<>();
-    private boolean tagNamesInitialized = false;
+    private boolean tagNamesLoaded = false;
 
     /**
      * Constructs a per case Autopsy service that manages the creation,
@@ -216,35 +217,39 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException         If there is an error adding the tag to
      *                                  the case database.
      */
-    public synchronized ContentTag addContentTag(Content content, TagName tagName, String comment, long beginByteOffset, long endByteOffset) throws IllegalArgumentException, TskCoreException {
-        lazyLoadExistingTagNames();
+    public ContentTag addContentTag(Content content, TagName tagName, String comment, long beginByteOffset, long endByteOffset) throws IllegalArgumentException, TskCoreException {
+        ContentTag tag;
+        synchronized (this) {
+            lazyLoadExistingTagNames();
 
-        if (beginByteOffset >= 0 && endByteOffset >= 1) {
-            if (beginByteOffset > content.getSize() - 1) {
-                throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(),
-                        "TagsManager.addContentTag.exception.beginByteOffsetOOR.msg",
-                        beginByteOffset, content.getSize() - 1));
+            if (beginByteOffset >= 0 && endByteOffset >= 1) {
+                if (beginByteOffset > content.getSize() - 1) {
+                    throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(),
+                            "TagsManager.addContentTag.exception.beginByteOffsetOOR.msg",
+                            beginByteOffset, content.getSize() - 1));
+                }
+
+                if (endByteOffset > content.getSize() - 1) {
+                    throw new IllegalArgumentException(
+                            NbBundle.getMessage(this.getClass(), "TagsManager.addContentTag.exception.endByteOffsetOOR.msg",
+                                    endByteOffset, content.getSize() - 1));
+                }
+
+                if (endByteOffset < beginByteOffset) {
+                    throw new IllegalArgumentException(
+                            NbBundle.getMessage(this.getClass(), "TagsManager.addContentTag.exception.endLTbegin.msg"));
+                }
             }
 
-            if (endByteOffset > content.getSize() - 1) {
-                throw new IllegalArgumentException(
-                        NbBundle.getMessage(this.getClass(), "TagsManager.addContentTag.exception.endByteOffsetOOR.msg",
-                                endByteOffset, content.getSize() - 1));
-            }
-
-            if (endByteOffset < beginByteOffset) {
-                throw new IllegalArgumentException(
-                        NbBundle.getMessage(this.getClass(), "TagsManager.addContentTag.exception.endLTbegin.msg"));
-            }
+            tag = caseDb.addContentTag(content, tagName, comment, beginByteOffset, endByteOffset);
         }
 
-        ContentTag newContentTag = caseDb.addContentTag(content, tagName, comment, beginByteOffset, endByteOffset);
         try {
-            Case.getCurrentCase().notifyContentTagAdded(newContentTag);
+            Case.getCurrentCase().notifyContentTagAdded(tag);
         } catch (IllegalStateException ex) {
-            Logger.getLogger(TagsManager.class.getName()).log(Level.WARNING, NbBundle.getMessage(TagsManager.class, "TagsManager.addContentTag.noCaseWarning"));
+            logger.log(Level.SEVERE, NbBundle.getMessage(TagsManager.class, "TagsManager.addContentTag.noCaseWarning"), ex);
         }
-        return newContentTag;
+        return tag;
     }
 
     /**
@@ -255,14 +260,16 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error deleting the tag from the
      *                          case database.
      */
-    public synchronized void deleteContentTag(ContentTag tag) throws TskCoreException {
-        lazyLoadExistingTagNames();
+    public void deleteContentTag(ContentTag tag) throws TskCoreException {
+        synchronized (this) {
+            lazyLoadExistingTagNames();
+            caseDb.deleteContentTag(tag);
+        }
 
-        caseDb.deleteContentTag(tag);
         try {
             Case.getCurrentCase().notifyContentTagDeleted(tag);
-        } catch (IllegalStateException e) {
-            Logger.getLogger(TagsManager.class.getName()).log(Level.WARNING, NbBundle.getMessage(TagsManager.class, "TagsManager.deleteContentTag.noCaseWarning"));
+        } catch (IllegalStateException ex) {
+            logger.log(Level.SEVERE, NbBundle.getMessage(TagsManager.class, "TagsManager.deleteContentTag.noCaseWarning"), ex);
         }
     }
 
@@ -274,7 +281,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error getting the tags from the
      *                          case database.
      */
-    public List<ContentTag> getAllContentTags() throws TskCoreException {
+    public synchronized List<ContentTag> getAllContentTags() throws TskCoreException {
         lazyLoadExistingTagNames();
         return caseDb.getAllContentTags();
     }
@@ -370,15 +377,19 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error adding the tag to the case
      *                          database.
      */
-    public synchronized BlackboardArtifactTag addBlackboardArtifactTag(BlackboardArtifact artifact, TagName tagName, String comment) throws TskCoreException {
-        lazyLoadExistingTagNames();
-        BlackboardArtifactTag addBlackboardArtifactTag = caseDb.addBlackboardArtifactTag(artifact, tagName, comment);
-        try {
-            Case.getCurrentCase().notifyBlackBoardArtifactTagAdded(addBlackboardArtifactTag);
-        } catch (IllegalStateException e) {
-            Logger.getLogger(TagsManager.class.getName()).log(Level.WARNING, NbBundle.getMessage(TagsManager.class, "TagsManager.addBlackboardArtifactTag.noCaseWarning"));
+    public BlackboardArtifactTag addBlackboardArtifactTag(BlackboardArtifact artifact, TagName tagName, String comment) throws TskCoreException {
+        BlackboardArtifactTag tag;
+        synchronized (this) {
+            lazyLoadExistingTagNames();
+            tag = caseDb.addBlackboardArtifactTag(artifact, tagName, comment);
         }
-        return addBlackboardArtifactTag;
+
+        try {
+            Case.getCurrentCase().notifyBlackBoardArtifactTagAdded(tag);
+        } catch (IllegalStateException ex) {
+            logger.log(Level.SEVERE, NbBundle.getMessage(TagsManager.class, "TagsManager.addBlackboardArtifactTag.noCaseWarning"), ex);
+        }
+        return tag;
     }
 
     /**
@@ -389,13 +400,16 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error deleting the tag from the
      *                          case database.
      */
-    public synchronized void deleteBlackboardArtifactTag(BlackboardArtifactTag tag) throws TskCoreException {
-        lazyLoadExistingTagNames();
-        caseDb.deleteBlackboardArtifactTag(tag);
+    public void deleteBlackboardArtifactTag(BlackboardArtifactTag tag) throws TskCoreException {
+        synchronized (this) {
+            lazyLoadExistingTagNames();
+            caseDb.deleteBlackboardArtifactTag(tag);
+        }
+
         try {
             Case.getCurrentCase().notifyBlackBoardArtifactTagDeleted(tag);
-        } catch (IllegalStateException e) {
-            Logger.getLogger(TagsManager.class.getName()).log(Level.WARNING, NbBundle.getMessage(TagsManager.class, "TagsManager.deleteBlackboardArtifactTag.noCaseWarning"));
+        } catch (IllegalStateException ex) {
+            logger.log(Level.WARNING, NbBundle.getMessage(TagsManager.class, "TagsManager.deleteBlackboardArtifactTag.noCaseWarning"), ex);
         }
     }
 
@@ -407,7 +421,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error getting the tags from the
      *                          case database.
      */
-    public List<BlackboardArtifactTag> getAllBlackboardArtifactTags() throws TskCoreException {
+    public synchronized List<BlackboardArtifactTag> getAllBlackboardArtifactTags() throws TskCoreException {
         lazyLoadExistingTagNames();
         return caseDb.getAllBlackboardArtifactTags();
     }
@@ -479,7 +493,7 @@ public class TagsManager implements Closeable {
      * Saves the avaialble tag names to secondary storage.
      */
     @Override
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
         saveTagNamesToTagsSettings();
     }
 
@@ -488,12 +502,12 @@ public class TagsManager implements Closeable {
      * database with the existing tag names from all sources.
      */
     private void lazyLoadExistingTagNames() {
-        if (!tagNamesInitialized) {
+        if (!tagNamesLoaded) {
             addTagNamesFromCurrentCase();
             addTagNamesFromTagsSettings();
             addPredefinedTagNames();
             saveTagNamesToTagsSettings();
-            tagNamesInitialized = true;
+            tagNamesLoaded = true;
         }
     }
 
@@ -577,6 +591,7 @@ public class TagsManager implements Closeable {
      * Exception thrown if there is an attempt to add a duplicate tag name.
      */
     public static class TagNameAlreadyExistsException extends Exception {
+
         private static final long serialVersionUID = 1L;
     }
 
