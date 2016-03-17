@@ -275,20 +275,23 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
 
     private void saveAsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveAsButtonActionPerformed
         try {
-            String lastBaseDirectory = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY);
+            String lastBaseDirectory = "";
+            if (ModuleSettings.settingExists(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY)) {
+                lastBaseDirectory = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY);
+            }
             StringBuilder path = new StringBuilder();
             path.append(lastBaseDirectory);
             if (!hashSetNameTextField.getText().isEmpty()) {
-                path.append(hashSetNameTextField.getText());
+                path.append(File.separator).append(hashSetNameTextField.getText());
             } else {
-                path.append(DEFAULT_FILE_NAME);
+                path.append(File.separator).append(DEFAULT_FILE_NAME);
             }
             path.append(".").append(HashDbManager.getHashDatabaseFileExtension());
             fileChooser.setSelectedFile(new File(path.toString()));
             if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
                 File databaseFile = fileChooser.getSelectedFile();
                 databasePathTextField.setText(databaseFile.getCanonicalPath());
-                ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY, databaseFile.getAbsolutePath());
+                ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY, databaseFile.getParent());
             }
         } catch (IOException ex) {
             Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.WARNING, "Couldn't get selected file path.", ex); //NON-NLS

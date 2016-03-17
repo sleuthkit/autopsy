@@ -264,7 +264,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                     knownRadioButton.setSelected(true);
                     knownRadioButtonActionPerformed(null);
                 }
-                ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY, databaseFile.getAbsolutePath());
+                ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY, databaseFile.getParent());
             } catch (IOException ex) {
                 Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.SEVERE, "Failed to get path of selected database", ex); //NON-NLS
                 JOptionPane.showMessageDialog(this,
