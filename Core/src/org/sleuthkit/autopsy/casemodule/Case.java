@@ -678,11 +678,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     }
                 }
             }
-
-            /*
-             * TODO (AUT-1885): Replace use of obsolete and unsafe
-             * XMLCaseManagement class with use of CaseMetadata class.
-             */
             Case openedCase = new Case(caseName, caseNumber, examiner, caseMetadataFilePath, metadata, db, caseType);
             changeCase(openedCase);
 

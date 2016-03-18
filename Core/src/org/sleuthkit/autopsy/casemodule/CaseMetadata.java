@@ -29,9 +29,6 @@ import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.logging.Level;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -57,27 +54,6 @@ import org.xml.sax.SAXException;
  * Provides access to case metadata.
  */
 public final class CaseMetadata {
-
-    @Messages({
-        "CaseMetadata.writeFile.exception.noCase.msg=No set case to write management file for.",
-        "CaseMetadata.writeFile.exception.errWriteToFile.msg=Error writing to case file",
-        "# {0} - case file path",
-        "CaseMetadata.open.exception.errReadXMLFile.msg=Error reading case XML file\\: {0}",
-        "# {0} - file name",
-        "# {1} - class name",
-        "CaseMetadata.open.msgDlg.notAutCase.msg=Error\\: This is not an Autopsy config file (\"{0}\").\\n\\n\\\n"
-        + "Detail\\: \\n\\\n"
-        + "Cannot open a non-Autopsy config file (at {1}).",
-        "CaseMetadata.open.msgDlg.notAutCase.title=Error",
-        "CaseMetadata.open.msgDlg.noCaseHeaderTag.msg=Root element not recognized as autopsy case tag",
-        "CaseMetadata.open.caseRootError=Couldn't get case root",
-        "CaseMetadata.open.caseTypeError=Couldn't get case type",
-        "CaseMetadata.open.caseNameError=Couldn't get case name",
-        "CaseMetadata.open.caseDatabaseNameError=Couldn't get database name",
-        "CaseMetadata.open.caseIndexError=Couldn't get text index",
-        "CaseMetadata.open.createdDateError=Couldn't get created date",
-        "CaseMetadata.open.createdVersionError=Couldn't get created version"
-    })
 
     /**
      * Exception thrown by the CaseMetadata class when there is a problem
@@ -155,7 +131,7 @@ public final class CaseMetadata {
     }
 
     /**
-     * Used to open a case at the given file path
+     * Used to read a case at the given file path
      *
      * @param metadataFilePath the string file path for the case
      *
@@ -163,7 +139,7 @@ public final class CaseMetadata {
      * org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException
      */
     private CaseMetadata(String metadataFilePath) throws CaseMetadataException {
-        this.open(metadataFilePath);
+        this.read(metadataFilePath);
     }
 
     /**
@@ -387,7 +363,8 @@ public final class CaseMetadata {
     private void writeFile(Document doc) throws CaseMetadataException {
         if (doc == null || getCaseName().equals("")) {
             throw new CaseMetadataException(
-                    Bundle.CaseMetadata_writeFile_exception_noCase_msg());
+                    "No set case to write management file for."
+            );
         }
 
         // Prepare the DOM document for writing
@@ -405,7 +382,7 @@ public final class CaseMetadata {
             xformer = tfactory.newTransformer();
         } catch (TransformerConfigurationException ex) {
             throw new CaseMetadataException(
-                    Bundle.CaseMetadata_writeFile_exception_errWriteToFile_msg(), ex);
+                    "Error writing to case file", ex);
         }
 
         //Setup indenting to "pretty print"
@@ -416,7 +393,7 @@ public final class CaseMetadata {
             xformer.transform(source, result);
         } catch (TransformerException ex) {
             throw new CaseMetadataException(
-                    Bundle.CaseMetadata_writeFile_exception_errWriteToFile_msg(), ex);
+                    "Error writing to case file", ex);
         }
 
         // preparing the output file
@@ -431,7 +408,7 @@ public final class CaseMetadata {
             bw.close();
         } catch (IOException ex) {
             throw new CaseMetadataException(
-                    Bundle.CaseMetadata_writeFile_exception_errWriteToFile_msg(), ex);
+                    "Error writing to case file", ex);
         }
     }
 
@@ -441,7 +418,7 @@ public final class CaseMetadata {
      *
      * @param conFilePath the path of the XML case configuration file path
      */
-    private void open(String conFilePath) throws CaseMetadataException {
+    private void read(String conFilePath) throws CaseMetadataException {
         File file = new File(conFilePath);
         Document doc;
 
@@ -452,20 +429,18 @@ public final class CaseMetadata {
             doc = db.parse(file);
         } catch (ParserConfigurationException | SAXException | IOException ex) {
             throw new CaseMetadataException(
-                    Bundle.CaseMetadata_open_exception_errReadXMLFile_msg(conFilePath), ex);
+                    "Error reading case XML file\\:" + conFilePath, ex);
         }
 
-        doc.getDocumentElement().normalize();
         doc.getDocumentElement().normalize();
 
         Element rootEl = doc.getDocumentElement();
         String rootName = rootEl.getNodeName();
 
-        // check if it's the autopsy case, if not, throws an error
         if (!rootName.equals(TOP_ROOT_NAME)) {
-            // throw an error ...
+            // throw an error because the xml is malformed
             if (RuntimeProperties.coreComponentsAreActive()) {
-                throw new CaseMetadataException(Bundle.CaseMetadata_open_msgDlg_noCaseHeaderTag_msg());
+                throw new CaseMetadataException("Root element not recognized as autopsy case tag");
             }
         } else {
             /*
@@ -473,65 +448,85 @@ public final class CaseMetadata {
              */
             Element rootElement = doc.getDocumentElement();
 
-            String createdVersion = ((Element) rootElement.getElementsByTagName(AUTOPSY_CRVERSION_NAME).item(0)).getTextContent(); // get the created version
-
+            NodeList cversionList = rootElement.getElementsByTagName(AUTOPSY_CRVERSION_NAME);
+            if(cversionList.getLength() == 0) {
+                throw new CaseMetadataException("Could not find created version in metadata");
+            }
+            String createdVersion = cversionList.item(0).getTextContent(); // get the created version
             // check if it has the same autopsy version as the current one
             if (!createdVersion.equals(System.getProperty("netbeans.buildnumber"))) {
                 // if not the same version, update the saved version in the xml to the current version
                 rootElement.getElementsByTagName(AUTOPSY_MVERSION_NAME).item(0).setTextContent(System.getProperty("netbeans.buildnumber"));
             }
+            
             String fullFileName = file.getName();
             String fileName = fullFileName.substring(0, fullFileName.lastIndexOf(".")); // remove the extension
             this.fileName = fileName;
+            
             NodeList rootNameList = doc.getElementsByTagName(CASE_ROOT_NAME);
             if (rootNameList.getLength() == 0) {
-                throw new CaseMetadataException(Bundle.CaseMetadata_open_caseRootError());
+                throw new CaseMetadataException("Couldn't get case root");
             }
             Element caseElement = (Element) rootNameList.item(0);
+            
             NodeList caseTypeList = caseElement.getElementsByTagName(CASE_TYPE);
             if (caseTypeList.getLength() == 0) {
-                throw new CaseMetadataException(Bundle.CaseMetadata_open_caseTypeError());
+                throw new CaseMetadataException("Couldn't get case type");
             }
-            String caseTypeString = ((Element) caseTypeList.item(0)).getTextContent();
-            this.caseType = caseTypeString.equals("") ? Case.CaseType.SINGLE_USER_CASE : Case.CaseType.fromString(caseTypeString);
+            String caseTypeString = caseTypeList.item(0).getTextContent();
+            this.caseType = Case.CaseType.fromString(caseTypeString);
+            if(this.caseType == null) {
+                throw new CaseMetadataException("Invalid case type");
+            }
+            
             NodeList caseNameList = caseElement.getElementsByTagName(NAME);
             if (caseNameList.getLength() == 0) {
-                throw new CaseMetadataException(Bundle.CaseMetadata_open_caseTypeError());
+                throw new CaseMetadataException("Couldn't get case name");
             }
-            this.caseName = ((Element) caseNameList.item(0)).getTextContent();
+            this.caseName = caseNameList.item(0).getTextContent();
+            if(this.caseName.isEmpty()) {
+                throw new CaseMetadataException("Invalid case name, cannot be empty");
+            }
+            
             Element numberElement = caseElement.getElementsByTagName(NUMBER).getLength() > 0 ? (Element) caseElement.getElementsByTagName(NUMBER).item(0) : null;
             this.caseNumber = numberElement != null ? numberElement.getTextContent() : "";
+            
             Element examinerElement = caseElement.getElementsByTagName(EXAMINER).getLength() > 0 ? (Element) caseElement.getElementsByTagName(EXAMINER).item(0) : null;
             this.examiner = examinerElement != null ? examinerElement.getTextContent() : "";
+            
             this.caseDirectory = conFilePath.substring(0, conFilePath.lastIndexOf("\\"));
             if (this.caseDirectory.isEmpty()) {
-                throw new CaseMetadataException(Bundle.CaseMetadata_open_exception_errReadXMLFile_msg(conFilePath));
+                throw new CaseMetadataException("Could not get a valid case directory");
             }
+            
             NodeList databaseNameList = caseElement.getElementsByTagName(DATABASE_NAME);
             if (databaseNameList.getLength() == 0) {
-                throw new CaseMetadataException(Bundle.CaseMetadata_open_caseDatabaseNameError());
+                throw new CaseMetadataException("Couldn't get database name");
             }
             Element databaseNameElement = (Element) databaseNameList.item(0);
             this.caseDatabaseName = databaseNameElement.getTextContent();
-            NodeList textIndexList = caseElement.getElementsByTagName(CASE_TEXT_INDEX_NAME);
-            if(textIndexList.getLength() == 0) {
-                throw new CaseMetadataException(Bundle.CaseMetadata_open_caseIndexError());
-            }
-            Element caseTextIndexNameElement = (Element)textIndexList.item(0);
-            this.caseTextIndexName = caseTextIndexNameElement.getTextContent();
             if (Case.CaseType.MULTI_USER_CASE == caseType && caseDatabaseName.isEmpty()) {
-                throw new CaseMetadataException(Bundle.CaseMetadata_open_exception_errReadXMLFile_msg(conFilePath));
+                throw new CaseMetadataException("Case database name cannot be empty in multi user case.");
             }
+            
+            NodeList textIndexList = caseElement.getElementsByTagName(CASE_TEXT_INDEX_NAME);
+            if (textIndexList.getLength() == 0) {
+                throw new CaseMetadataException("Couldn't get text index");
+            }
+            Element caseTextIndexNameElement = (Element) textIndexList.item(0);
+            this.caseTextIndexName = caseTextIndexNameElement.getTextContent();
+            
             NodeList createdDateList = rootElement.getElementsByTagName(CREATED_DATE_NAME);
-            if(createdDateList.getLength() == 0) {
-                throw new CaseMetadataException(Bundle.CaseMetadata_open_createdDateError());
+            if (createdDateList.getLength() == 0) {
+                throw new CaseMetadataException("Couldn't get created date");
             }
-            this.setCreatedDate(((Element)createdDateList.item(0)).getTextContent());
+            this.createdDate = createdDateList.item(0).getTextContent();
+            
             NodeList createdVersionList = rootElement.getElementsByTagName(AUTOPSY_CRVERSION_NAME);
-            if(createdVersionList.getLength() == 0) {
-                throw new CaseMetadataException(Bundle.CaseMetadata_open_createdVersionError());
+            if (createdVersionList.getLength() == 0) {
+                throw new CaseMetadataException("Couldn't get created version");
             }
-            this.setCreatedVersion((((Element)createdVersionList.item(0))).getTextContent());
+            this.createdVersion = createdVersionList.item(0).getTextContent();
         }
     }
 
