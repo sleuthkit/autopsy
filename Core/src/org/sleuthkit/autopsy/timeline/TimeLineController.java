@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.timeline;
 import java.awt.HeadlessException;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.ZoneId;
@@ -33,7 +34,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
@@ -49,7 +49,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.concurrent.Worker;
-import javafx.scene.control.Dialog;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.Immutable;
 import javax.swing.SwingUtilities;
@@ -139,9 +138,6 @@ public class TimeLineController {
 
     private final ReadOnlyStringWrapper status = new ReadOnlyStringWrapper();
 
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private Dialog<?> currentDialog;
-
     /**
      * status is a string that will be displayed in the status bar as a kind of
      * user hint/information when it is not empty
@@ -156,6 +152,7 @@ public class TimeLineController {
         status.set(string);
     }
     private final Case autoCase;
+    private final PerCaseTimelineProperties perCaseTimelineProperties;
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private final ObservableList<DescriptionFilter> quickHideMaskFilters = FXCollections.observableArrayList();
@@ -241,14 +238,8 @@ public class TimeLineController {
         return selectedTimeRange.getReadOnlyProperty();
     }
 
-    public ReadOnlyBooleanProperty getNewEventsFlag() {
-        return newEventsFlag.getReadOnlyProperty();
-    }
-
-    private final ReadOnlyBooleanWrapper needsHistogramRebuild = new ReadOnlyBooleanWrapper(false);
-
-    public ReadOnlyBooleanProperty getNeedsHistogramRebuild() {
-        return needsHistogramRebuild.getReadOnlyProperty();
+    public ReadOnlyBooleanProperty eventsDBStaleProperty() {
+        return eventsDBStale.getReadOnlyProperty();
     }
 
     synchronized public ReadOnlyBooleanProperty getCanAdvance() {
@@ -258,28 +249,26 @@ public class TimeLineController {
     synchronized public ReadOnlyBooleanProperty getCanRetreat() {
         return historyManager.getCanRetreat();
     }
-    private final ReadOnlyBooleanWrapper newEventsFlag = new ReadOnlyBooleanWrapper(false);
+    private final ReadOnlyBooleanWrapper eventsDBStale = new ReadOnlyBooleanWrapper(false);
 
     private final PromptDialogManager promptDialogManager = new PromptDialogManager(this);
 
-    public TimeLineController(Case autoCase) {
+    public TimeLineController(Case autoCase) throws IOException {
         this.autoCase = autoCase;
-
+        this.perCaseTimelineProperties = new PerCaseTimelineProperties(autoCase);
+        eventsDBStale.set(perCaseTimelineProperties.isDbStale());
+        eventsRepository = new EventsRepository(autoCase, currentParams.getReadOnlyProperty());
         /*
          * as the history manager's current state changes, modify the tags
          * filter to be in sync, and expose that as propery from
          * TimeLineController. Do we need to do this with datasource or hash hit
          * filters?
          */
-        historyManager.currentState().addListener(new InvalidationListener() {
-            public void invalidated(Observable observable) {
-                ZoomParams historyManagerParams = historyManager.getCurrentState();
-                eventsRepository.syncTagsFilter(historyManagerParams.getFilter().getTagsFilter());
-                currentParams.set(historyManagerParams);
-            }
+        historyManager.currentState().addListener((Observable observable) -> {
+            ZoomParams historyManagerParams = historyManager.getCurrentState();
+            eventsRepository.syncTagsFilter(historyManagerParams.getFilter().getTagsFilter());
+            currentParams.set(historyManagerParams);
         });
-
-        eventsRepository = new EventsRepository(autoCase, currentParams.getReadOnlyProperty());
         filteredEvents = eventsRepository.getEventsModel();
 
         InitialZoomState = new ZoomParams(filteredEvents.getSpanningInterval(),
@@ -316,19 +305,22 @@ public class TimeLineController {
     void rebuildRepo() {
         SwingUtilities.invokeLater(this::closeTimelineWindow);
         final CancellationProgressTask<?> rebuildRepository = eventsRepository.rebuildRepository();
+        boolean ingestRunning = IngestManager.getInstance().isIngestRunning();
         rebuildRepository.stateProperty().addListener((stateProperty, oldState, newSate) -> {
             //this will be on JFX thread
-            if (newSate == Worker.State.SUCCEEDED) {
-                //TODO: this looks hacky.  what is going on? should this be an event?
-                needsHistogramRebuild.set(true);
-                needsHistogramRebuild.set(false);
-                SwingUtilities.invokeLater(TimeLineController.this::showWindow);
+            setIngestRunning(ingestRunning);
+            switch (newSate) {
+                case SUCCEEDED:
+                    setEventsDBStale(false);
+                    SwingUtilities.invokeLater(TimeLineController.this::showWindow);
 
-                //TODO: should this be an event?
-                newEventsFlag.set(false);
-                historyManager.reset(filteredEvents.zoomParametersProperty().get());
-                TimeLineController.this.showFullRange();
-
+                    historyManager.reset(filteredEvents.zoomParametersProperty().get());
+                    TimeLineController.this.showFullRange();
+                    break;
+                case FAILED:
+                case CANCELLED:
+                    setEventsDBStale(true);
+                    break;
             }
         });
         promptDialogManager.showProgressDialog(rebuildRepository);
@@ -409,7 +401,7 @@ public class TimeLineController {
                 /*
                  * if the repo was not rebuilt at minimum rebuild the tags which
                  * may have been updated without our knowing it, since we
-                 * can't/aren't checking them. This should at elast be quick.
+                 * can't/aren't checking them. This should at least be quick.
                  * //TODO: can we check the tags to see if we need to do this?
                  */
                 if (checkAndPromptForRebuild() == false) {
@@ -425,7 +417,7 @@ public class TimeLineController {
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private boolean checkAndPromptForRebuild() {
         //if the repo is empty just (r)ebuild it with out asking,  they can always cancel part way through;
-        if (eventsRepository.getLastObjID() == -1) {
+        if (eventsRepository.countAllEvents() == 0) {
             rebuildRepo();
             return true;
         }
@@ -451,21 +443,20 @@ public class TimeLineController {
     private ArrayList<String> getRebuildReasons() {
         ArrayList<String> rebuildReasons = new ArrayList<>();
         //if ingest was running during last rebuild, prompt to rebuild
-        if (eventsRepository.getWasIngestRunning()) {
-            rebuildReasons.add(Bundle.TimeLineController_rebuildReasons_ingestWasRunning());
-        }
-        final SleuthkitCase sleuthkitCase = autoCase.getSleuthkitCase();
         try {
-            //if the last artifact and object ids don't match between skc and tldb, prompt to rebuild
-            if (sleuthkitCase.getLastObjectId() != eventsRepository.getLastObjID()
-                    || getCaseLastArtifactID(sleuthkitCase) != eventsRepository.getLastArtfactID()) {
-                rebuildReasons.add(Bundle.TimeLineController_rebuildReasons_outOfDate());
+            if (perCaseTimelineProperties.wasIngestRunning()) {
+                rebuildReasons.add(Bundle.TimeLineController_rebuildReasons_ingestWasRunning());
             }
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Error determing last object id from sleutkit case. We will assume the timeline is out of date.", ex); // NON-NLS
+
+        } catch (IOException ex) {
+            LOGGER.log(Level.SEVERE, "Error determing the state of the timeline db. We will assume the it is out of date.", ex); // NON-NLS
             MessageNotifyUtil.Notify.error(Bundle.TimeLineController_errorTitle(),
                     Bundle.TimeLineController_outOfDate_errorMessage());
             rebuildReasons.add(Bundle.TimeLineController_rebuildReasons_outOfDateError());
+        }
+        //if the events db is stale, prompt to rebuild
+        if (isEventsDBStale()) {
+            rebuildReasons.add(Bundle.TimeLineController_rebuildReasons_outOfDate());
         }
         // if the TLDB schema has been upgraded since last time TL ran, prompt for rebuild
         if (eventsRepository.hasNewColumns() == false) {
@@ -752,6 +743,38 @@ public class TimeLineController {
         }
     }
 
+    /**
+     * is the events db out of date
+     *
+     * @return true if the events db is out of date , false otherwise
+     */
+    public boolean isEventsDBStale() {
+        return eventsDBStale.get();
+    }
+
+    /**
+     *
+     * @param stale the value of stale
+     */
+    private void setEventsDBStale(final Boolean stale) {
+        eventsDBStale.set(stale);
+        try {
+            perCaseTimelineProperties.setDbStale(stale);
+        } catch (IOException ex) {
+            MessageNotifyUtil.Notify.error("Timeline", "Failed to mark the timeline db as " + (stale ? "" : "not ") + "stale. Some results may be out of date or missing.");
+            LOGGER.log(Level.SEVERE, "Error marking the timeline db as stale.", ex);
+        }
+    }
+
+    private void setIngestRunning(boolean ingestRunning) {
+        try {
+            perCaseTimelineProperties.setIngestRunning(ingestRunning);
+        } catch (IOException ex) {
+            MessageNotifyUtil.Notify.error("Timeline", "Failed to mark the timeline db as populated while ingest was" + (ingestRunning ? "" : "not ") + "running. Some results may be out of date or missing.");
+            LOGGER.log(Level.SEVERE, "Error marking the ingest state while the timeline db was populated.", ex);
+        }
+    }
+
     private class AutopsyIngestModuleListener implements PropertyChangeListener {
 
         @Override
@@ -773,15 +796,14 @@ public class TimeLineController {
 
             switch (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName())) {
                 case CONTENT_CHANGED:
-                case DATA_ADDED:
                     break;
+                case DATA_ADDED:
                 case FILE_DONE:
-                    Platform.runLater(() -> {
-                        newEventsFlag.set(true);
-                    });
+                    Platform.runLater(() -> setEventsDBStale(true));
                     break;
             }
         }
+
     }
 
     @Immutable
@@ -824,7 +846,11 @@ public class TimeLineController {
                     });
                     break;
                 case DATA_SOURCE_ADDED:
-                    SwingUtilities.invokeLater(TimeLineController.this::confirmOutOfDateRebuildIfWindowOpen);
+                    Platform.runLater(() -> {
+                        setEventsDBStale(true);
+                        SwingUtilities.invokeLater(TimeLineController.this::confirmOutOfDateRebuildIfWindowOpen);
+                    });
+
                     break;
 
                 case CURRENT_CASE:

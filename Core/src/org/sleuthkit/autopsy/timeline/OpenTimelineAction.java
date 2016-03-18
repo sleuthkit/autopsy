@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline;
 
+import java.io.IOException;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import org.openide.awt.ActionID;
@@ -31,6 +32,7 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.Installer;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.timeline.Timeline")
@@ -74,14 +76,18 @@ public class OpenTimelineAction extends CallableSystemAction {
             return;
         }
 
-        if (timeLineController == null) {
-            timeLineController = new TimeLineController(currentCase);
-        } else if (timeLineController.getAutopsyCase() != currentCase) {
-            timeLineController.closeTimeLine();
-            timeLineController = new TimeLineController(currentCase);
+        try {
+            if (timeLineController == null) {
+                timeLineController = new TimeLineController(currentCase);
+            } else if (timeLineController.getAutopsyCase() != currentCase) {
+                timeLineController.closeTimeLine();
+                timeLineController = new TimeLineController(currentCase);
+            }
+            timeLineController.openTimeLine();
+        } catch (IOException iOException) {
+            MessageNotifyUtil.Notify.error("Timeline", "Failed to initialize timeline settings.");
+            LOGGER.log(Level.SEVERE, "Failed to initialize per case timeline settings.");
         }
-
-        timeLineController.openTimeLine();
     }
 
     @Override
