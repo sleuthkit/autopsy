@@ -48,6 +48,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.apache.commons.io.FileUtils;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException;
@@ -418,8 +419,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
      *                               lower-level exception. If so,
      *                               CaseActionException.getCause will return a
      *                               Throwable (null otherwise).
-     * @throws CaseMetadataException if there is a problem creating the case
-     *                               metadata.
      */
     public static void create(String caseDir, String caseName, String caseNumber, String examiner) throws CaseActionException {
         create(caseDir, caseName, caseNumber, examiner, CaseType.SINGLE_USER_CASE);
@@ -446,6 +445,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @throws CaseMetadataException if there is a problem creating the case
      *                               metadata.
      */
+    @Messages({"Case.creationException=Could not create case: failed to make metadata file."})
     public static void create(String caseDir, String caseName, String caseNumber, String examiner, CaseType caseType) throws CaseActionException {
         logger.log(Level.INFO, "Creating case with case directory {0}, caseName {1}", new Object[]{caseDir, caseName}); //NON-NLS
 
@@ -480,7 +480,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         try {
             metadata = CaseMetadata.create(caseType, caseName, caseNumber, examiner, caseDir, dbName, indexName);
         } catch (CaseMetadataException ex) {
-            throw new CaseActionException("Could not create case", ex);
+            throw new CaseActionException(Bundle.Case_creationException(), ex);
         }
 
         /*

@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.StringWriter;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -95,37 +96,24 @@ public final class CaseMetadata {
         }
     }
 
-    final static String XSDFILE = "CaseSchema.xsd"; //NON-NLS
-    final static String TOP_ROOT_NAME = "AutopsyCase"; //NON-NLS
-    final static String CASE_ROOT_NAME = "Case"; //NON-NLS
+    private final static String XSDFILE = "CaseSchema.xsd"; //NON-NLS
+    private final static String TOP_ROOT_NAME = "AutopsyCase"; //NON-NLS
+    private final static String CASE_ROOT_NAME = "Case"; //NON-NLS
     // general metadata about the case file
-    final static String NAME = "Name"; //NON-NLS
-    final static String NUMBER = "Number"; //NON-NLS
-    final static String EXAMINER = "Examiner"; //NON-NLS
-    final static String CREATED_DATE_NAME = "CreatedDate"; //NON-NLS
-    final static String MODIFIED_DATE_NAME = "ModifiedDate"; //NON-NLS
-    final static String SCHEMA_VERSION_NAME = "SchemaVersion"; //NON-NLS
-    final static String AUTOPSY_CRVERSION_NAME = "AutopsyCreatedVersion"; //NON-NLS
-    final static String AUTOPSY_MVERSION_NAME = "AutopsySavedVersion"; //NON-NLS
-    final static String CASE_TEXT_INDEX_NAME = "TextIndexName"; //NON-NLS
+    private final static String NAME = "Name"; //NON-NLS
+    private final static String NUMBER = "Number"; //NON-NLS
+    private final static String EXAMINER = "Examiner"; //NON-NLS
+    private final static String CREATED_DATE_NAME = "CreatedDate"; //NON-NLS
+    private final static String MODIFIED_DATE_NAME = "ModifiedDate"; //NON-NLS
+    private final static String SCHEMA_VERSION_NAME = "SchemaVersion"; //NON-NLS
+    private final static String AUTOPSY_CRVERSION_NAME = "AutopsyCreatedVersion"; //NON-NLS
+    private final static String AUTOPSY_MVERSION_NAME = "AutopsySavedVersion"; //NON-NLS
+    private final static String CASE_TEXT_INDEX_NAME = "TextIndexName"; //NON-NLS
     // folders inside case directory
-    final static String LOG_FOLDER_NAME = "LogFolder"; //NON-NLS
-    final static String LOG_FOLDER_RELPATH = "Log"; //NON-NLS
-    final static String TEMP_FOLDER_NAME = "TempFolder"; //NON-NLS
-    final static String TEMP_FOLDER_RELPATH = "Temp"; //NON-NLS
-    final static String EXPORT_FOLDER_NAME = "ExportFolder"; //NON-NLS
-    final static String EXPORT_FOLDER_RELPATH = "Export"; //NON-NLS
-    final static String CACHE_FOLDER_NAME = "CacheFolder"; //NON-NLS
-    final static String CACHE_FOLDER_RELPATH = "Cache"; //NON-NLS
-    final static String CASE_TYPE = "CaseType"; //NON-NLS
-    final static String DATABASE_NAME = "DatabaseName"; //NON-NLS
-    // folders attribute
-    final static String RELATIVE_NAME = "Relative";    // relevant path info NON-NLS
-    // folder attr values
-    final static String RELATIVE_TRUE = "true";     // if it's a relative path NON-NLS
-    final static String RELATIVE_FALSE = "false";   // if it's not a relative path NON-NLS
+    private final static String CASE_TYPE = "CaseType"; //NON-NLS
+    private final static String DATABASE_NAME = "DatabaseName"; //NON-NLS
 
-    private final DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss (z)");
+    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss (z)");
     private Case.CaseType caseType;
     private String caseName;
     private String caseNumber;
@@ -134,7 +122,7 @@ public final class CaseMetadata {
     private String caseDatabaseName;
     private String caseTextIndexName;
     private String createdDate;
-    private static String schemaVersion = "2.0";
+    private static final String SCHEMA_VERSION = "2.0";
     private String fileName;
     private String createdVersion;
 
@@ -144,7 +132,7 @@ public final class CaseMetadata {
         this.caseName = caseName;
         this.caseNumber = caseNumber;
         this.examiner = examiner;
-        this.createdDate = this.dateFormat.format(new Date());
+        this.createdDate = this.DATE_FORMAT.format(new Date());
         this.caseDirectory = caseDirectory;
         this.caseDatabaseName = caseDatabaseName;
         this.caseTextIndexName = caseTextIndexName;
@@ -289,7 +277,7 @@ public final class CaseMetadata {
      *
      * @param createdVersion the createdVersion to set
      */
-    public void setCreatedVersion(String createdVersion) throws CaseMetadataException {
+    void setCreatedVersion(String createdVersion) throws CaseMetadataException {
         String oldCreatedVersion = this.createdVersion;
         this.createdVersion = createdVersion;
         try {
@@ -351,7 +339,7 @@ public final class CaseMetadata {
         rootElement.appendChild(crDateElement);
 
         Element mDateElement = doc.createElement(MODIFIED_DATE_NAME); // <ModifedDate> ... </ModifedDate>
-        mDateElement.appendChild(doc.createTextNode(dateFormat.format(new Date())));
+        mDateElement.appendChild(doc.createTextNode(DATE_FORMAT.format(new Date())));
         rootElement.appendChild(mDateElement);
 
         Element autVerElement = doc.createElement(AUTOPSY_CRVERSION_NAME); // <AutopsyVersion> ... </AutopsyVersion>
@@ -363,7 +351,7 @@ public final class CaseMetadata {
         rootElement.appendChild(autSavedVerElement);
 
         Element schVerElement = doc.createElement(SCHEMA_VERSION_NAME); // <SchemaVersion> ... </SchemaVersion>
-        schVerElement.appendChild(doc.createTextNode(schemaVersion));
+        schVerElement.appendChild(doc.createTextNode(SCHEMA_VERSION));
         rootElement.appendChild(schVerElement);
 
         Element caseElement = doc.createElement(CASE_ROOT_NAME); // <Case> ... </Case>
@@ -433,7 +421,7 @@ public final class CaseMetadata {
 
         // preparing the output file
         String xmlString = sw.toString();
-        File file = new File(this.getCaseDirectory() + File.separator + this.fileName + ".aut");
+        File file = new File(Paths.get(this.getCaseDirectory(), this.fileName + ".aut").toString());
 
         // write the file
         try {
