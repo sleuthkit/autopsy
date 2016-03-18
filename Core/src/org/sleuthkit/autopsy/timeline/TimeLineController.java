@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2015 Basis Technology Corp.
+ * Copyright 2014-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,8 +22,6 @@ import java.awt.HeadlessException;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -82,9 +80,6 @@ import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Controller in the MVC design along with model = {@link FilteredEventsModel}
@@ -155,10 +150,10 @@ public class TimeLineController {
     private final PerCaseTimelineProperties perCaseTimelineProperties;
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private final ObservableList<DescriptionFilter> quickHideMaskFilters = FXCollections.observableArrayList();
+    private final ObservableList<DescriptionFilter> quickHideFilters = FXCollections.observableArrayList();
 
     public ObservableList<DescriptionFilter> getQuickHideFilters() {
-        return quickHideMaskFilters;
+        return quickHideFilters;
     }
 
     /**
@@ -216,13 +211,12 @@ public class TimeLineController {
     @GuardedBy("this")
     private final ReadOnlyObjectWrapper<ZoomParams> currentParams = new ReadOnlyObjectWrapper<>();
 
-    //all members should be access with the intrinsict lock of this object held
     //selected events (ie shown in the result viewer)
     @GuardedBy("this")
     private final ObservableList<Long> selectedEventIDs = FXCollections.<Long>synchronizedObservableList(FXCollections.<Long>observableArrayList());
 
     /**
-     * @return an unmodifiable list of the selected event ids
+     * @return a list of the selected event ids
      */
     synchronized public ObservableList<Long> getSelectedEventIDs() {
         return selectedEventIDs;
@@ -249,7 +243,7 @@ public class TimeLineController {
     synchronized public ReadOnlyBooleanProperty getCanRetreat() {
         return historyManager.getCanRetreat();
     }
-    private final ReadOnlyBooleanWrapper eventsDBStale = new ReadOnlyBooleanWrapper(false);
+    private final ReadOnlyBooleanWrapper eventsDBStale = new ReadOnlyBooleanWrapper(true);
 
     private final PromptDialogManager promptDialogManager = new PromptDialogManager(this);
 
@@ -362,7 +356,7 @@ public class TimeLineController {
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    public void closeTimeLine() {
+    public void shutDownTimeLine() {
         if (mainFrame != null) {
             listeningToAutopsy = false;
             IngestManager.getInstance().removeIngestModuleEventListener(ingestModuleListener);
@@ -432,7 +426,6 @@ public class TimeLineController {
         return false;
     }
 
-    @SuppressWarnings("deprecation") // TODO (EUR-733): Do not use SleuthkitCase.getLastObjectId 
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
     @NbBundle.Messages({"TimeLineController.errorTitle=Timeline error.",
         "TimeLineController.outOfDate.errorMessage=Error determing if the timeline is out of date.  We will assume it should be updated.  See the logs for more details.",
@@ -442,8 +435,9 @@ public class TimeLineController {
         "TimeLineController.rebuildReasons.incompleteOldSchema=The Timeline events database was previously populated without incomplete information:  Some features may be unavailable or non-functional unless you update the events database."})
     private ArrayList<String> getRebuildReasons() {
         ArrayList<String> rebuildReasons = new ArrayList<>();
-        //if ingest was running during last rebuild, prompt to rebuild
+
         try {
+            //if ingest was running during last rebuild, prompt to rebuild
             if (perCaseTimelineProperties.wasIngestRunning()) {
                 rebuildReasons.add(Bundle.TimeLineController_rebuildReasons_ingestWasRunning());
             }
@@ -463,21 +457,6 @@ public class TimeLineController {
             rebuildReasons.add(Bundle.TimeLineController_rebuildReasons_incompleteOldSchema());
         }
         return rebuildReasons;
-    }
-
-    public static long getCaseLastArtifactID(final SleuthkitCase sleuthkitCase) {
-        //TODO: push this into sleuthkitCase
-        long caseLastArtfId = -1;
-        String query = "select Max(artifact_id) as max_id from blackboard_artifacts"; // NON-NLS //NOI18N
-        try (CaseDbQuery dbQuery = sleuthkitCase.executeQuery(query)) {
-            ResultSet resultSet = dbQuery.getResultSet();
-            while (resultSet.next()) {
-                caseLastArtfId = resultSet.getLong("max_id"); // NON-NLS //NOI18N
-            }
-        } catch (TskCoreException | SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error getting last artifact id: ", ex); // NON-NLS //NOI18N
-        }
-        return caseLastArtfId;
     }
 
     /**
@@ -803,7 +782,6 @@ public class TimeLineController {
                     break;
             }
         }
-
     }
 
     @Immutable
@@ -826,36 +804,26 @@ public class TimeLineController {
         public void propertyChange(PropertyChangeEvent evt) {
             switch (Case.Events.valueOf(evt.getPropertyName())) {
                 case BLACKBOARD_ARTIFACT_TAG_ADDED:
-                    executor.submit(() -> {
-                        filteredEvents.handleArtifactTagAdded((BlackBoardArtifactTagAddedEvent) evt);
-                    });
+                    executor.submit(() -> filteredEvents.handleArtifactTagAdded((BlackBoardArtifactTagAddedEvent) evt));
                     break;
                 case BLACKBOARD_ARTIFACT_TAG_DELETED:
-                    executor.submit(() -> {
-                        filteredEvents.handleArtifactTagDeleted((BlackBoardArtifactTagDeletedEvent) evt);
-                    });
+                    executor.submit(() -> filteredEvents.handleArtifactTagDeleted((BlackBoardArtifactTagDeletedEvent) evt));
                     break;
                 case CONTENT_TAG_ADDED:
-                    executor.submit(() -> {
-                        filteredEvents.handleContentTagAdded((ContentTagAddedEvent) evt);
-                    });
+                    executor.submit(() -> filteredEvents.handleContentTagAdded((ContentTagAddedEvent) evt));
                     break;
                 case CONTENT_TAG_DELETED:
-                    executor.submit(() -> {
-                        filteredEvents.handleContentTagDeleted((ContentTagDeletedEvent) evt);
-                    });
+                    executor.submit(() -> filteredEvents.handleContentTagDeleted((ContentTagDeletedEvent) evt));
                     break;
                 case DATA_SOURCE_ADDED:
                     Platform.runLater(() -> {
                         setEventsDBStale(true);
                         SwingUtilities.invokeLater(TimeLineController.this::confirmOutOfDateRebuildIfWindowOpen);
                     });
-
                     break;
-
                 case CURRENT_CASE:
                     OpenTimelineAction.invalidateController();
-                    SwingUtilities.invokeLater(TimeLineController.this::closeTimeLine);
+                    SwingUtilities.invokeLater(TimeLineController.this::shutDownTimeLine);
                     break;
             }
         }

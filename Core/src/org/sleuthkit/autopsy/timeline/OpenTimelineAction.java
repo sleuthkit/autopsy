@@ -80,7 +80,7 @@ public class OpenTimelineAction extends CallableSystemAction {
             if (timeLineController == null) {
                 timeLineController = new TimeLineController(currentCase);
             } else if (timeLineController.getAutopsyCase() != currentCase) {
-                timeLineController.closeTimeLine();
+                timeLineController.shutDownTimeLine();
                 timeLineController = new TimeLineController(currentCase);
             }
             timeLineController.openTimeLine();
