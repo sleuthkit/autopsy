@@ -55,7 +55,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         "FilesSetRulePanel.NoMimeTypeError=Please select a valid MIME type.",
         "FilesSetRulePanel.NoNameError=Name cannot be empty",
         "FilesSetRulePanel.NoPathError=Path cannot be empty",
-        "FilesSetRulePanel.ZeroFileSizeError=File size condition value must not be 0."
+        "FilesSetRulePanel.ZeroFileSizeError=File size condition value must not be 0 (Unless = is selected)."
     })
 
     private static final SortedSet<MediaType> mediaTypes = MimeTypes.getDefaultMimeTypes().getMediaTypeRegistry().getTypes();
@@ -362,7 +362,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
             }
         }
         if (this.fileSizeCheck.isSelected()) {
-            if ((Integer) this.fileSizeSpinner.getValue() == 0) {
+            if ((Integer) this.fileSizeSpinner.getValue() == 0 && !((String)this.equalitySymbolComboBox.getSelectedItem()).equals("=")) {
                 NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
                         Bundle.FilesSetRulePanel_ZeroFileSizeError(),
                         NotifyDescriptor.WARNING_MESSAGE);
@@ -443,7 +443,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
      */
     FilesSet.Rule.FileSizeCondition getFileSizeCondition() {
         FilesSet.Rule.FileSizeCondition condition = null;
-        if ((Integer) this.fileSizeSpinner.getValue() != 0) {
+        if ((Integer) this.fileSizeSpinner.getValue() != 0 || ((String)this.equalitySymbolComboBox.getSelectedItem()).equals("=")) {
             FilesSet.Rule.FileSizeCondition.COMPARATOR comparator = FilesSet.Rule.FileSizeCondition.COMPARATOR.fromSymbol((String) this.equalitySymbolComboBox.getSelectedItem());
             FilesSet.Rule.FileSizeCondition.SIZE_UNIT unit = FilesSet.Rule.FileSizeCondition.SIZE_UNIT.fromName((String) this.fileSizeComboBox.getSelectedItem());
             int fileSizeValue = (Integer) this.fileSizeSpinner.getValue();
