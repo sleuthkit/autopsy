@@ -170,7 +170,7 @@ public class GroupManager {
      * file is a part of
      */
     @SuppressWarnings({"rawtypes", "unchecked"})
-    synchronized public Set<GroupKey<?>> getGroupKeysForFile(DrawableFile<?> file) {
+    synchronized public Set<GroupKey<?>> getGroupKeysForFile(DrawableFile file) {
         Set<GroupKey<?>> resultSet = new HashSet<>();
         for (Comparable<?> val : groupBy.getValue(file)) {
             if (groupBy == DrawableAttribute.TAGS) {
@@ -194,7 +194,7 @@ public class GroupManager {
     synchronized public Set<GroupKey<?>> getGroupKeysForFileID(Long fileID) {
         try {
             if (nonNull(db)) {
-                DrawableFile<?> file = db.getFileFromID(fileID);
+                DrawableFile file = db.getFileFromID(fileID);
                 return getGroupKeysForFile(file);
             } else {
                 Logger.getLogger(GroupManager.class.getName()).log(Level.WARNING, "Failed to load file with id: {0} from database.  There is no database assigned.", fileID); //NON-NLS

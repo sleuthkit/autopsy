@@ -35,6 +35,7 @@ import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyDoubleProperty;
+import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -95,6 +96,7 @@ public final class ImageGalleryController implements Executor {
 
     private final Executor execDelegate = Executors.newSingleThreadExecutor();
     private Runnable showTree;
+    private Toolbar toolbar;
 
     @Override
     public void execute(Runnable command) {
@@ -134,6 +136,7 @@ public final class ImageGalleryController implements Executor {
     private final ReadOnlyBooleanWrapper stale = new ReadOnlyBooleanWrapper(false);
 
     private final ReadOnlyBooleanWrapper metaDataCollapsed = new ReadOnlyBooleanWrapper(false);
+    private final ReadOnlyDoubleWrapper thumbnailSize = new ReadOnlyDoubleWrapper(100);
 
     private final FileIDSelectionModel selectionModel = new FileIDSelectionModel(this);
 
@@ -159,6 +162,10 @@ public final class ImageGalleryController implements Executor {
 
     public void setMetaDataCollapsed(Boolean metaDataCollapsed) {
         this.metaDataCollapsed.set(metaDataCollapsed);
+    }
+
+    public ReadOnlyDoubleProperty thumbnailSizeProperty() {
+        return thumbnailSize.getReadOnlyProperty();
     }
 
     private GroupViewState getViewState() {
@@ -418,7 +425,9 @@ public final class ImageGalleryController implements Executor {
         dbWorkerThread = null;
         dbWorkerThread = restartWorker();
 
-        Toolbar.getDefault(this).reset();
+        if (toolbar != null) {
+            toolbar.reset();
+        }
 
         if (db != null) {
             db.closeDBCon();
@@ -439,7 +448,7 @@ public final class ImageGalleryController implements Executor {
     }
 
     @Nullable
-    synchronized public DrawableFile<?> getFileFromId(Long fileID) throws TskCoreException {
+    synchronized public DrawableFile getFileFromId(Long fileID) throws TskCoreException {
         if (Objects.isNull(db)) {
             LOGGER.log(Level.WARNING, "Could not get file from id, no DB set.  The case is probably closed."); //NON-NLS
             return null;
@@ -451,6 +460,14 @@ public final class ImageGalleryController implements Executor {
         fullUIStackPane = fullUIStack;
         this.centralStackPane = centralStack;
         Platform.runLater(this::checkForGroups);
+    }
+
+    public synchronized void setToolbar(Toolbar toolbar) {
+        if (this.toolbar != null) {
+            throw new IllegalStateException("Can not set the toolbar a second time!");
+        }
+        this.toolbar = toolbar;
+        thumbnailSize.bind(toolbar.thumbnailSizeProperty());
     }
 
     public ReadOnlyDoubleProperty regroupProgress() {
@@ -667,7 +684,7 @@ public final class ImageGalleryController implements Executor {
         @Override
         public void run() {
             try {
-                DrawableFile<?> drawableFile = DrawableFile.create(getFile(), true, getTaskDB().isVideoFile(getFile()));
+                DrawableFile drawableFile = DrawableFile.create(getFile(), true, false);
                 getTaskDB().updateFile(drawableFile);
             } catch (NullPointerException ex) {
                 // This is one of the places where we get many errors if the case is closed during processing.

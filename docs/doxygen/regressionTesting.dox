@@ -81,7 +81,7 @@ Other commands can be issued by adding the following arguments to the script
     -r, --rebuild
 Rebuild the gold standards from the test results for each image.
     -i, --ignore
-Ignores the ./input directory when searching for files. Only use in combinatin with a configuration file.
+Ignores the ./input directory when searching for files. Only use in combination with a configuration file.
     -u, --unallocated
 Ignores unallocated space when ingesting. Faster, but yields less accurate results.
     -k, --keep
@@ -153,7 +153,7 @@ For additional details regarding setting up and using Jemmy, please see
 	
 
 
-The Jemmy UI framework includes elements such as buttons, frames, dialog boxes and wizards. In order to manipulate these elements programatically, the associated ContainerOperators must be used. RegressionTest.java makes use of the following major operators:
+The Jemmy UI framework includes elements such as buttons, frames, dialog boxes and wizards. In order to manipulate these elements programmatically, the associated ContainerOperators must be used. RegressionTest.java makes use of the following major operators:
 	
 	JButtonOperator
 	JDialogOperator
@@ -174,7 +174,7 @@ For example, to find a JDialog whose display name is the string "Hash Database C
 
 	JDialog hashMainDialog =  JDialogOperator.waitJDialog("Hash Database Configuration", false, false);
 
-The two booleans are for searching the exact string including subsrtings, and for searching case sensitively. 
+The two booleans are for searching the exact string including substrings, and for searching case sensitively. 
 
 Note that the method used is called '.waitJDialog', and not '.findJDialog'. This is an important distinction regarding thoroughness of the find, but the functionality of the same. Refer to the link on Jemmy above for greater detail.
 
@@ -194,7 +194,7 @@ For further reference regarding ContainerOperators, please see
 	http://www.jarvana.com/jarvana/view/org/netbeans/jemmy/2.2.7.5/jemmy-2.2.7.5-javadoc.jar!/org/netbeans/jemmy/operators/ContainerOperator.html
 
 
-When an element has been selected, the individual components may be manipluated with ContainerOperators. 
+When an element has been selected, the individual components may be manipulated with ContainerOperators. 
 To select a button, use the code below, where cont is one of the ContainerOperators from above, text is the text displayed on the button, and index is the button's order if there are multiple with the same name (i.e. if there are three buttons labeled �preview�, the first's index is 0, then 1, then 2).
 
 JbuttonOperator jbo = new JbuttonOperator(ContainerOperator cont, String text, int index);

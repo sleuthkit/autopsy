@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2016 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,10 +35,10 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
-import org.sleuthkit.datamodel.TskDataException;
 
 /**
- * Detects the type of a file by an inspection of its contents.
+ * Detects the MIME type of a file by an inspection of its contents, using both
+ * user-defined type definitions and Tika.
  */
 public class FileTypeDetector {
 
@@ -49,11 +49,14 @@ public class FileTypeDetector {
     private static final Logger logger = Logger.getLogger(FileTypeDetector.class.getName());
 
     /**
-     * Constructs an object that detects the type of a file by an inspection of
-     * its contents.
+     * Constructs an object that detects the MIME type of a file by an
+     * inspection of its contents, using both user-defined type definitions and
+     * Tika.
      *
-     * @throws FileTypeDetector.FileTypeDetectorInitException if an
-     * initialization error occurs.
+     * @throws FileTypeDetectorInitException if an initialization error occurs,
+     *                                       e.g., user-defined file type
+     *                                       definitions exist but cannot be
+     *                                       loaded.
      */
     public FileTypeDetector() throws FileTypeDetectorInitException {
         try {
@@ -64,12 +67,27 @@ public class FileTypeDetector {
     }
 
     /**
+     * Gets the names of the user-defined MIME types.
+     *
+     * @return A list of the user-defined MIME types.
+     */
+    public List<String> getUserDefinedTypes() {
+        List<String> list = new ArrayList<>();
+        if (userDefinedFileTypes != null) {
+            for (FileType fileType : userDefinedFileTypes) {
+                list.add(fileType.getMimeType());
+            }
+        }
+        return list;
+    }
+
+    /**
      * Determines whether or not a given MIME type is detectable by this
      * detector.
      *
-     * @param mimeType The MIME type name, e.g. "text/html", to look up.
+     * @param mimeType The MIME type name (e.g., "text/html").
      *
-     * @return True if MIME type is detectable.
+     * @return True or false.
      */
     public boolean isDetectable(String mimeType) {
         return isDetectableAsUserDefinedType(mimeType) || isDetectableByTika(mimeType);
@@ -77,11 +95,11 @@ public class FileTypeDetector {
 
     /**
      * Determines whether or not a given MIME type is detectable as a
-     * user-defined file type.
+     * user-defined MIME type by this detector.
      *
-     * @param mimeType The MIME type name, e.g. "text/html", to look up.
+     * @param mimeType The MIME type name (e.g., "text/html").
      *
-     * @return True if MIME type is detectable.
+     * @return True or false.
      */
     private boolean isDetectableAsUserDefinedType(String mimeType) {
         for (FileType fileType : userDefinedFileTypes) {
@@ -95,9 +113,9 @@ public class FileTypeDetector {
     /**
      * Determines whether or not a given MIME type is detectable by Tika.
      *
-     * @param mimeType The MIME type name, e.g. "text/html", to look up.
+     * @param mimeType The MIME type name (e.g., "text/html").
      *
-     * @return True if MIME type is detectable.
+     * @return True or false.
      */
     private boolean isDetectableByTika(String mimeType) {
         String[] split = mimeType.split("/");
@@ -112,70 +130,70 @@ public class FileTypeDetector {
     }
 
     /**
-     * Look up the MIME type of a file using the blackboard. If it is not
-     * already posted, detect the type of the file, posting it to the blackboard
-     * if detection succeeds.
+     * Gets the MIME type of a file, detecting it if it is not already known. If
+     * detection is necessary, the result is added to the case database.
      *
-     * @param file The file to test.
+     * IMPORTANT: This method should not be called except by ingest modules; all
+     * other clients should call AbstractFile.getMIMEType, and may call
+     * FileTypeDetector.detect, if AbstractFile.getMIMEType returns null.
      *
-     * @return The MIME type name if detection was successful, null otherwise.
+     * @param file The file.
      *
-     * @throws TskCoreException
-     */
-    public String getFileType(AbstractFile file) throws TskCoreException {
-        String fileType = file.getMIMEType();
-        if (null != fileType) {
-            return fileType;
-        }
-        return detectAndPostToBlackboard(file);
-    }
-
-    /**
-     * Detect the MIME type of a file, posting it to the blackboard if detection
-     * succeeds. Note that this method should currently be called at most once
-     * per file.
+     * @return A MIME type name.
      *
-     * @param file The file to test.
-     *
-     * @return The MIME type name id detection was successful, null otherwise.
-     *
-     * @throws TskCoreException
+     * @throws TskCoreException if detection is required and there is a problem
+     *                          writing the result to the case database.
      */
     @SuppressWarnings("deprecation")
-    public String detectAndPostToBlackboard(AbstractFile file) throws TskCoreException {
-        String mimeType = detect(file);
+    public String getFileType(AbstractFile file) throws TskCoreException {
+        String mimeType = file.getMIMEType();
         if (null != mimeType) {
-            /**
-             * Add the file type attribute to the general info artifact. Note
-             * that no property change is fired for this blackboard posting
-             * because general info artifacts are different from other
-             * artifacts, e.g., they are not displayed in the results tree.
-             */
-            try {
-                file.setMIMEType(mimeType);
-                BlackboardArtifact getInfoArt = file.getGenInfoArtifact();
-                BlackboardAttribute batt = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG, FileTypeIdModuleFactory.getModuleName(), mimeType);
-                getInfoArt.addAttribute(batt);
-            } catch (TskDataException ex) {
-                //Swallowing exception so that the logs aren't clogged in the case that ingest is run multiple times.
-            }
+            return mimeType;
         }
+
+        mimeType = detect(file);
+        Case.getCurrentCase().getSleuthkitCase().setFileMIMEType(file, mimeType);
+
+        /*
+         * Add the file type attribute to the general info artifact. Note that
+         * no property change is fired for this blackboard posting because
+         * general info artifacts are different from other artifacts, e.g., they
+         * are not displayed in the results tree.
+         *
+         * SPECIAL NOTE: Adding a file type attribute to the general info
+         * artifact is meant to be replaced by the use of the MIME type field of
+         * the AbstractFile class (tsk_files.mime_type in the case database).
+         * The attribute is still added here to support backward compatibility,
+         * but it introduces a check-then-act race condition that can lead to
+         * duplicate attributes. Various mitigation strategies were considered.
+         * It was decided to go with the policy that this method would not be
+         * called outside of ingest (see note in method docs), at least until
+         * such time as the attribute is no longer created.
+         */
+        BlackboardArtifact getInfoArt = file.getGenInfoArtifact();
+        BlackboardAttribute batt = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG, FileTypeIdModuleFactory.getModuleName(), mimeType);
+        getInfoArt.addAttribute(batt);
+
         return mimeType;
     }
 
     /**
-     * Detect the MIME type of a file.
+     * Detects the MIME type of a file. The result is not added to the case
+     * database.
      *
      * @param file The file to test.
      *
-     * @return The MIME type name if detection was successful, null otherwise.
+     * @return A MIME type name. If file type could not be detected or results
+     *         were uncertain, octet-stream is returned.
      *
      * @throws TskCoreException
      */
     public String detect(AbstractFile file) throws TskCoreException {
-        // consistently mark non-regular files (refer TskData.TSK_FS_META_TYPE_ENUM),
-        // 0 sized files, unallocated, and unused blocks (refer TskData.TSK_DB_FILES_TYPE_ENUM)
-        // as octet-stream.
+        /*
+         * Mark non-regular files (refer to TskData.TSK_FS_META_TYPE_ENUM),
+         * zero-sized files, unallocated space, and unused blocks (refer to
+         * TskData.TSK_DB_FILES_TYPE_ENUM) as octet-stream.
+         */
         if (!file.isFile() || file.getSize() <= 0
                 || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
                 || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
@@ -183,8 +201,15 @@ public class FileTypeDetector {
             return MimeTypes.OCTET_STREAM;
         }
 
-        String fileType = detectUserDefinedType(file);
-        if (null == fileType) {
+        /*
+         * Give precedence to user-defined types.
+         */
+        String mimeType = detectUserDefinedType(file);
+        if (null == mimeType) {
+            /*
+             * The file does not match a user-defined type. Send the initial
+             * bytes to Tika.
+             */
             try {
                 byte buf[];
                 int len = file.read(buffer, 0, BUFFER_SIZE);
@@ -194,24 +219,25 @@ public class FileTypeDetector {
                 } else {
                     buf = buffer;
                 }
+                String tikaType = tika.detect(buf, file.getName());
 
-                String mimetype = tika.detect(buf, file.getName());
-
-                /**
-                 * Strip out any Tika enhancements to the MIME type name.
+                /*
+                 * Remove the Tika suffix from the MIME type name.
                  */
-                return mimetype.replace("tika-", ""); //NON-NLS
+                mimeType = tikaType.replace("tika-", ""); //NON-NLS
 
             } catch (Exception ignored) {
-                /**
-                 * This exception is swallowed rather than propagated because
-                 * files in images are not always consistent with their file
-                 * system meta data making for read errors, and Tika can be a
-                 * bit flaky at times, making this a best effort endeavor.
+                /*
+                 * This exception is swallowed and not logged rather than
+                 * propagated because files in data sources are not always
+                 * consistent with their file system metadata, making for read
+                 * errors. Also, Tika can be a bit flaky at times, making this a
+                 * best effort endeavor. Default to octet-stream.
                  */
+                mimeType = MimeTypes.OCTET_STREAM;
             }
         }
-        return fileType;
+        return mimeType;
     }
 
     /**
@@ -230,21 +256,26 @@ public class FileTypeDetector {
         for (FileType fileType : userDefinedFileTypes) {
             if (fileType.matches(file)) {
                 if (fileType.alertOnMatch()) {
+                    /*
+                     * Create an interesting file hit artifact.
+                     */
                     BlackboardArtifact artifact;
                     artifact = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
                     BlackboardAttribute setNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, FileTypeIdModuleFactory.getModuleName(), fileType.getFilesSetName());
                     artifact.addAttribute(setNameAttribute);
 
-                    /**
-                     * Use the MIME type as the category, i.e., the rule that
-                     * determined this file belongs to the interesting files
-                     * set.
+                    /*
+                     * Use the MIME type as the category attribute, i.e., the
+                     * rule that determined this file belongs to the interesting
+                     * files set.
                      */
                     BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, FileTypeIdModuleFactory.getModuleName(), fileType.getMimeType());
                     artifact.addAttribute(ruleNameAttribute);
 
+                    /*
+                     * Index the artifact for keyword search.
+                     */
                     try {
-                        // index the artifact for keyword search
                         Case.getCurrentCase().getServices().getBlackboard().indexArtifact(artifact);
                     } catch (Blackboard.BlackboardException | IllegalStateException ex) {
                         logger.log(Level.SEVERE, String.format("Unable to index blackboard artifact %d", artifact.getArtifactID()), ex); //NON-NLS
@@ -258,30 +289,54 @@ public class FileTypeDetector {
         return null;
     }
 
+    /*
+     * Exception thrown when a file type detector experiences an error
+     * condition.
+     */
     public static class FileTypeDetectorInitException extends Exception {
+
         private static final long serialVersionUID = 1L;
 
+        /**
+         * Constructs an exception to throw when a file type detector
+         * experiences an error condition.
+         *
+         * @param message The exception message,
+         */
         FileTypeDetectorInitException(String message) {
             super(message);
         }
 
+        /**
+         * Constructs an exception to throw when a file type detector
+         * experiences an error condition.
+         *
+         * @param message   The exception message,
+         * @param throwable The underlying cause of the exception.
+         */
         FileTypeDetectorInitException(String message, Throwable throwable) {
             super(message, throwable);
         }
+
     }
 
     /**
-     * Gets the list of user defined file types (MIME types)
+     * Gets the MIME type of a file, detecting it if it is not already known. If
+     * detection is necessary, the result is added to the case database.
      *
-     * @return the List<String> of user defined file types
+     * @param file The file.
+     *
+     * @return A MIME type name.
+     *
+     * @throws TskCoreException if detection is required and there is a problem
+     *                          writing the result to the case database.
+     * @deprecated Use getFileType instead and use AbstractFile.getMIMEType
+     * instead of querying the blackboard.
      */
-    public List<String> getUserDefinedTypes() {
-        List<String> list = new ArrayList<>();
-        if (userDefinedFileTypes != null) {
-            for (FileType fileType : userDefinedFileTypes) {
-                list.add(fileType.getMimeType());
-            }
-        }
-        return list;
+    @Deprecated
+    @SuppressWarnings("deprecation")
+    public String detectAndPostToBlackboard(AbstractFile file) throws TskCoreException {
+        return getFileType(file);
     }
+
 }

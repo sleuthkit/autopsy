@@ -26,7 +26,6 @@ import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
-import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 
 /**
  * A factory that creates file ingest modules that determine the types of files.
@@ -96,35 +95,6 @@ public class FileTypeIdModuleFactory extends IngestModuleFactoryAdapter {
      * @inheritDoc
      */
     @Override
-    public IngestModuleIngestJobSettings getDefaultIngestJobSettings() {
-        return new FileTypeIdModuleSettings();
-    }
-
-    /**
-     * @inheritDoc
-     */
-    @Override
-    public boolean hasIngestJobSettingsPanel() {
-        return true;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    @Override
-    public IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings) {
-        assert settings instanceof FileTypeIdModuleSettings;
-        if (!(settings instanceof FileTypeIdModuleSettings)) {
-            throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(),
-                    "FileTypeIdModuleFactory.getIngestJobSettingsPanel.exception.msg"));
-        }
-        return new FileTypeIdIngestJobSettingsPanel((FileTypeIdModuleSettings) settings);
-    }
-
-    /**
-     * @inheritDoc
-     */
-    @Override
     public boolean isFileIngestModuleFactory() {
         return true;
     }
@@ -134,11 +104,6 @@ public class FileTypeIdModuleFactory extends IngestModuleFactoryAdapter {
      */
     @Override
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
-        assert settings instanceof FileTypeIdModuleSettings;
-        if (!(settings instanceof FileTypeIdModuleSettings)) {
-            throw new IllegalArgumentException(
-                    NbBundle.getMessage(this.getClass(), "FileTypeIdModuleFactory.createFileIngestModule.exception.msg"));
-        }
-        return new FileTypeIdIngestModule((FileTypeIdModuleSettings) settings);
+        return new FileTypeIdIngestModule();
     }
 }

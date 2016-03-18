@@ -466,7 +466,11 @@ final class CollaborationMonitor {
          */
         @Override
         public void run() {
-            eventPublisher.publishRemotely(new CollaborationEvent(hostName, localTasksManager.getCurrentTasks()));
+            try {
+                eventPublisher.publishRemotely(new CollaborationEvent(hostName, localTasksManager.getCurrentTasks()));
+            } catch (Exception ex) {
+                logger.log(Level.SEVERE, "Unexpected exception in HeartbeatTask", ex); //NON-NLS
+            }
         }
     }
 
@@ -482,7 +486,11 @@ final class CollaborationMonitor {
          */
         @Override
         public void run() {
-            remoteTasksManager.finishStaleTasks();
+            try {
+                remoteTasksManager.finishStaleTasks();
+            } catch (Exception ex) {
+                logger.log(Level.SEVERE, "Unexpected exception in StaleTaskDetectionTask", ex); //NON-NLS
+            }
         }
     }
 

@@ -111,13 +111,13 @@ public class DrawableAttribute<T extends Comparable<T>> {
             new DrawableAttribute<>(AttributeName.CREATED_TIME, Bundle.DrawableAttribute_createdTime(),
                     true,
                     "clock--plus.png", //NON-NLS
-                    f -> Collections.singleton(ContentUtils.getStringTime(f.getCrtime(), f)));
+                    f -> Collections.singleton(ContentUtils.getStringTime(f.getCrtime(), f.getAbstractFile())));
 
     public final static DrawableAttribute<String> MODIFIED_TIME =
             new DrawableAttribute<>(AttributeName.MODIFIED_TIME, Bundle.DrawableAttribute_modifiedTime(),
                     true,
                     "clock--pencil.png", //NON-NLS
-                    f -> Collections.singleton(ContentUtils.getStringTime(f.getMtime(), f)));
+                    f -> Collections.singleton(ContentUtils.getStringTime(f.getMtime(), f.getAbstractFile())));
 
     public final static DrawableAttribute<String> MAKE =
             new DrawableAttribute<>(AttributeName.MAKE, Bundle.DrawableAttribute_cameraMake(),
@@ -168,9 +168,9 @@ public class DrawableAttribute<T extends Comparable<T>> {
             Arrays.asList(NAME, ANALYZED, CATEGORY, TAGS, PATH, CREATED_TIME,
                     MODIFIED_TIME, MD5_HASH, HASHSET, MAKE, MODEL, OBJ_ID, WIDTH, HEIGHT, MIME_TYPE);
 
-    private final Function<DrawableFile<?>, Collection<T>> extractor;
+    private final Function<DrawableFile, Collection<T>> extractor;
 
-    private DrawableAttribute(AttributeName name, String displayName, Boolean isDBColumn, String imageName, Function<DrawableFile<?>, Collection<T>> extractor) {
+    private DrawableAttribute(AttributeName name, String displayName, Boolean isDBColumn, String imageName, Function<DrawableFile, Collection<T>> extractor) {
         this.attrName = name;
         this.displayName = new ReadOnlyStringWrapper(displayName);
         this.isDBColumn = isDBColumn;
@@ -223,7 +223,7 @@ public class DrawableAttribute<T extends Comparable<T>> {
         return displayName.get();
     }
 
-    public Collection<T> getValue(DrawableFile<?> f) {
+    public Collection<T> getValue(DrawableFile f) {
         return extractor.apply(f);
     }
 

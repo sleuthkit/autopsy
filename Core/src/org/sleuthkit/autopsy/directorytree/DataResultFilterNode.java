@@ -271,8 +271,8 @@ public class DataResultFilterNode extends FilterNode {
             Content c = null;
             try {
                 for (BlackboardAttribute attr : art.getAttributes()) {
-                    if (attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()) {
-                        switch (attr.getValueType()) {
+                    if (attr.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()) {
+                        switch (attr.getAttributeType().getValueType()) {
                             case INTEGER:
                                 int i = attr.getValueInt();
                                 if (i != -1) {
