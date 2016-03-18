@@ -1927,7 +1927,7 @@ class ReportGenerator {
                     } else if (attr.getAttributeType().equals(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PATH))) {
                         String pathToShow = attr.getDisplayString();
                         if (pathToShow.isEmpty()) {
-                            pathToShow = getFileUniquePath(getContent());
+                            pathToShow = getFileUniquePath(content);
                         }
                         attributeDataArray[2] = pathToShow;
                     }
