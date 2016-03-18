@@ -72,7 +72,7 @@ public class TypeFilter extends UnionFilter<TypeFilter> {
     }
 
     @Override
-    @NbBundle.Messages("TypeFilter.displayName.text=Event Type Filter")
+    @NbBundle.Messages("TypeFilter.displayName.text=Event Type")
     public String getDisplayName() {
         return (eventType == RootEventType.getInstance())
                 ? Bundle.TypeFilter_displayName_text()
