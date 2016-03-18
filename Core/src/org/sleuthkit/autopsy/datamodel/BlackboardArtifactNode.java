@@ -297,15 +297,8 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
                     continue;
-                } else if (attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()
-                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()
-                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID()
-                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED.getTypeID()
-                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID()
-                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID()
-                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()
-                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()) {
-                    map.put(attribute.getAttributeType().getDisplayName(), attribute.getDisplayString());
+                } else if (attribute.getAttributeType().getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
+                    map.put(attribute.getAttributeType().getDisplayName(), ContentUtils.getStringTime(attribute.getValueLong(), associated));
                 } else if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getTypeID()
                         && attributeTypeID == ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()) {
                     /*
