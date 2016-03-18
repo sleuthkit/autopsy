@@ -45,7 +45,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
-import javax.persistence.PersistenceException;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import org.apache.commons.io.FilenameUtils;
@@ -516,14 +515,15 @@ public class HashDbManager implements PropertyChangeListener {
         hashDatabases.clear();
     }
 
-    private boolean writeHashSetConfigurationToDisk() throws HashDbManagerException {
+    private boolean writeHashSetConfigurationToDisk() {
 
         try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(DB_SERIALIZATION_FILE_PATH))) {
             HashDbSerializationSettings settings = new HashDbSerializationSettings(this.knownHashSets, this.knownBadHashSets);
             out.writeObject(settings);
             return true;
         } catch (IOException | TskCoreException ex) {
-            throw new HashDbManagerException(String.format("Failed to write settings to %s", DB_SERIALIZATION_FILE_PATH), ex);
+            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Could not wtite hash database settings.");
+            return false;
         }
     }
 
@@ -560,7 +560,7 @@ public class HashDbManager implements PropertyChangeListener {
         return f.exists() && f.canRead() && f.canWrite();
     }
 
-    private boolean readHashSetsConfigurationFromDisk() throws HashDbManagerException {
+    private boolean readHashSetsConfigurationFromDisk() {
         File fileSetFile = new File(DB_SERIALIZATION_FILE_PATH);
         if (fileSetFile.exists()) {
             try {
@@ -570,7 +570,8 @@ public class HashDbManager implements PropertyChangeListener {
                     return true;
                 }
             } catch (IOException | ClassNotFoundException ex) {
-                throw new PersistenceException(String.format("Failed to read settings from %s", DB_SERIALIZATION_FILE_PATH), ex);
+                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Could not read hash database settings.");
+                return false;
             }
         } else if (hashSetsConfigurationFileExists()) {
             boolean updatedSchema = false;
@@ -716,7 +717,8 @@ public class HashDbManager implements PropertyChangeListener {
             try {
                 this.setFields(new HashDbSerializationSettings(new ArrayList<>(), new ArrayList<>()));
             } catch (TskCoreException ex) {
-                throw new PersistenceException("Failed to create hash database settings", ex);
+                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Could not read hash database settings.");
+                return false;
             }
 
             return true;
