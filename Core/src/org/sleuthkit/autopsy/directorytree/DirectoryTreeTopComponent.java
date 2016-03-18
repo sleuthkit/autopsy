@@ -865,7 +865,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 String setName = null;
                 List<BlackboardAttribute> attributes = art.getAttributes();
                 for (BlackboardAttribute att : attributes) {
-                    int typeId = att.getAttributeTypeID();
+                    int typeId = att.getAttributeType().getTypeID();
                     if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
                         setName = att.getValueString();
                     }
@@ -882,7 +882,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 String keywordName = null;
                 List<BlackboardAttribute> attributes = art.getAttributes();
                 for (BlackboardAttribute att : attributes) {
-                    int typeId = att.getAttributeTypeID();
+                    int typeId = att.getAttributeType().getTypeID();
                     if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
                         listName = att.getValueString();
                     } else if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()) {
@@ -909,7 +909,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 String setName = null;
                 List<BlackboardAttribute> attributes = art.getAttributes();
                 for (BlackboardAttribute att : attributes) {
-                    int typeId = att.getAttributeTypeID();
+                    int typeId = att.getAttributeType().getTypeID();
                     if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
                         setName = att.getValueString();
                     }

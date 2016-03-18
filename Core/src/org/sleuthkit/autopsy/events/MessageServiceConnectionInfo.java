@@ -144,7 +144,7 @@ public final class MessageServiceConnectionInfo {
         } catch (JMSException ex) {
             String result;
             Throwable cause = ex.getCause();
-            if (cause != null) {
+            if (null != cause && null != cause.getMessage()) {
                 // there is more information from another exception
                 String msg = cause.getMessage();
                 if (msg.startsWith(CONNECTION_TIMED_OUT)) {

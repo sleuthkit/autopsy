@@ -226,7 +226,7 @@ public class RegressionTest extends TestCase {
 
     public void testConfigureHash() {
         logger.info("Hash Configure");
-        JDialog hashMainDialog = JDialogOperator.waitJDialog("Hash Set Configuration", false, false);
+        JDialog hashMainDialog = JDialogOperator.waitJDialog("Global Hash Lookup Settings", false, false);
         JDialogOperator hashMainDialogOperator = new JDialogOperator(hashMainDialog);
         List<String> databases = new ArrayList<String>();
         databases.add(getEscapedPath(System.getProperty("nsrl_path")));
@@ -234,7 +234,7 @@ public class RegressionTest extends TestCase {
         for (String database : databases) {
             JButtonOperator importButtonOperator = new JButtonOperator(hashMainDialogOperator, "Import");
             importButtonOperator.pushNoBlock();
-            JDialog addDatabaseDialog = JDialogOperator.waitJDialog("Import Hash Database", false, false);
+            JDialog addDatabaseDialog = JDialogOperator.waitJDialog("Global Keyword Search Settings", false, false);
             JDialogOperator addDatabaseDialogOperator = new JDialogOperator(addDatabaseDialog);
             JButtonOperator browseButtonOperator = new JButtonOperator(addDatabaseDialogOperator, "Open...", 0);
             browseButtonOperator.pushNoBlock();
@@ -266,7 +266,7 @@ public class RegressionTest extends TestCase {
 
     public void testConfigureSearch() {
         logger.info("Search Configure");
-        JDialog jd = JDialogOperator.waitJDialog("Advanced Keyword Search Configuration", false, false);
+        JDialog jd = JDialogOperator.waitJDialog("Global Keyword Search Settings", false, false);
         JDialogOperator jdo = new JDialogOperator(jd);
         String words = getEscapedPath(System.getProperty("keyword_path"));
         JButtonOperator jbo0 = new JButtonOperator(jdo, "Import List", 0);

@@ -80,7 +80,7 @@ class EvalDomainObj extends EvaluatableObject {
             for (BlackboardArtifact art : artList) {
 
                 for (BlackboardAttribute attr : art.getAttributes()) {
-                    if (attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()) {
+                    if (attr.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()) {
                         String url = attr.getValueString();
 
                         // Check whether the domain name is a substring of the URL (regardless 

@@ -40,7 +40,7 @@ public class DeleteFollowUpTagAction extends Action {
     private static final Logger LOGGER = Logger.getLogger(DeleteFollowUpTagAction.class.getName());
 
     @NbBundle.Messages("DeleteFollwUpTagAction.displayName=Delete Follow Up Tag")
-    public DeleteFollowUpTagAction(final ImageGalleryController controller, final DrawableFile<?> file) {
+    public DeleteFollowUpTagAction(final ImageGalleryController controller, final DrawableFile file) {
         super(Bundle.DeleteFollwUpTagAction_displayName());
         setEventHandler((ActionEvent t) -> {
             new SwingWorker<Void, Void>() {
@@ -52,7 +52,7 @@ public class DeleteFollowUpTagAction extends Action {
                     try {
                         final TagName followUpTagName = tagsManager.getFollowUpTagName();
 
-                        List<ContentTag> contentTagsByContent = tagsManager.getContentTagsByContent(file);
+                        List<ContentTag> contentTagsByContent = tagsManager.getContentTags(file);
                         for (ContentTag ct : contentTagsByContent) {
                             if (ct.getName().getDisplayName().equals(followUpTagName.getDisplayName())) {
                                 tagsManager.deleteContentTag(ct);

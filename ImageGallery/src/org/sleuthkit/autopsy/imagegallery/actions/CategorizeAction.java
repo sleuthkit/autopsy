@@ -137,7 +137,7 @@ public class CategorizeAction extends Action {
             TagName catZeroTagName = categoryManager.getTagName(Category.ZERO);
             for (long fileID : fileIDs) {
                 try {
-                    DrawableFile<?> file = controller.getFileFromId(fileID);   //drawable db access
+                    DrawableFile file = controller.getFileFromId(fileID);   //drawable db access
                     if (createUndo) {
                         Category oldCat = file.getCategory();  //drawable db access
                         TagName oldCatTagName = categoryManager.getTagName(oldCat);
@@ -146,8 +146,8 @@ public class CategorizeAction extends Action {
                         }
                     }
 
-                    final List<ContentTag> fileTags = tagsManager.getContentTagsByContent(file);
-                    if (tagName.equals(catZeroTagName)) {
+                    final List<ContentTag> fileTags = tagsManager.getContentTags(file);
+                    if (tagName == categoryManager.getTagName(Category.ZERO)) {
                         // delete all cat tags for cat-0
                         fileTags.stream()
                                 .filter(tag -> CategoryManager.isCategoryTagName(tag.getName()))

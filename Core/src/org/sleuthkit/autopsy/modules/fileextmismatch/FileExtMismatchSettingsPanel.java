@@ -69,8 +69,9 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         customizeComponents();
     }
 
+    @NbBundle.Messages({"FileExtMismatchSettingsPanel.Title=Global File Extension Mismatch Identification Settings"})    
     private void customizeComponents() {
-        setName(NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.name.text"));
+        setName(Bundle.FileExtMismatchSettingsPanel_Title());
 
         // Handle selections on the left table
         lsm = mimeTable.getSelectionModel();

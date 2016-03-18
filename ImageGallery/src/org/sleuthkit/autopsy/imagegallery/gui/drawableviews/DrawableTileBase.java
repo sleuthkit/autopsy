@@ -179,7 +179,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                 t.consume();
             }
 
-            private ContextMenu buildContextMenu(DrawableFile<?> file) {
+            private ContextMenu buildContextMenu(DrawableFile file) {
                 final ArrayList<MenuItem> menuItems = new ArrayList<>();
 
                 menuItems.add(CategorizeAction.getCategoriesMenu(getController()));
