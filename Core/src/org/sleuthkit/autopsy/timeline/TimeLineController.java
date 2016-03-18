@@ -250,7 +250,7 @@ public class TimeLineController {
     public TimeLineController(Case autoCase) throws IOException {
         this.autoCase = autoCase;
         this.perCaseTimelineProperties = new PerCaseTimelineProperties(autoCase);
-        eventsDBStale.set(perCaseTimelineProperties.isDbStale());
+        eventsDBStale.set(perCaseTimelineProperties.isDBStale());
         eventsRepository = new EventsRepository(autoCase, currentParams.getReadOnlyProperty());
         /*
          * as the history manager's current state changes, modify the tags

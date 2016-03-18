@@ -24,52 +24,86 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Objects;
 import java.util.Properties;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
- * Provides access to per-case timeline properties/settings.
+ * Provides access to per-case timeline properties (key-value store).
  */
 class PerCaseTimelineProperties {
 
-    public static final String STALE_KEY = "stale"; //NON-NLS
-    public static final String WAS_INGEST_RUNNING_KEY = "was_ingest_running"; // NON-NLS
+    private static final String STALE_KEY = "stale"; //NON-NLS
+    private static final String WAS_INGEST_RUNNING_KEY = "was_ingest_running"; // NON-NLS
 
-    private final Case theCase;
+    private final Case autoCase;
     private final Path propertiesPath;
 
     PerCaseTimelineProperties(Case c) {
-        this.theCase = c;
-        propertiesPath = Paths.get(theCase.getModuleDirectory(), "Timeline", "timeline.properties"); //NON-NLS
-    }
-
-    public synchronized boolean isDbStale() throws IOException {
-        String stale = getConfigSetting(STALE_KEY);
-        return StringUtils.isBlank(stale) ? true : Boolean.valueOf(stale);
-    }
-
-    public synchronized void setDbStale(Boolean stale) throws IOException {
-        setConfigSetting(STALE_KEY, stale.toString());
-    }
-
-    public synchronized boolean wasIngestRunning() throws IOException {
-        String stale = getConfigSetting(WAS_INGEST_RUNNING_KEY);
-        return StringUtils.isBlank(stale) ? true : Boolean.valueOf(stale);
-    }
-
-    public synchronized void setIngestRunning(Boolean stale) throws IOException {
-        setConfigSetting(WAS_INGEST_RUNNING_KEY, stale.toString());
+        Objects.requireNonNull(c, "Case must not be null");
+        this.autoCase = c;
+        propertiesPath = Paths.get(autoCase.getModuleDirectory(), "Timeline", "timeline.properties"); //NON-NLS
     }
 
     /**
-     * Makes a new config file of the specified name. Do not include the
-     * extension.
+     * Is the DB stale, i.e. does it need to be updated because new datasources
+     * (eg) have been added to the case.
      *
-     * @param moduleName - The name of the config file to make
+     * @return true if the db is stale
      *
-     * @return True if successfully created, false if already exists or an error
-     *         is thrown.
+     * @throws IOException if there is a problem reading the state from disk
+     */
+    public synchronized boolean isDBStale() throws IOException {
+
+        String stale = getProperty(STALE_KEY);
+        return StringUtils.isBlank(stale) ? true : Boolean.valueOf(stale);
+
+    }
+
+    /**
+     * record the state of the events db as stale(true) or not stale(false).
+     *
+     * @param stale the new state of the event db. true for stale, false for not
+     *              stale.
+     *
+     * @throws IOException if there was a problem writing the state to disk.
+     */
+    public synchronized void setDbStale(Boolean stale) throws IOException {
+        setProperty(STALE_KEY, stale.toString());
+    }
+
+    /**
+     * Was ingest running the last time the database was updated?
+     *
+     * @return true if ingest was running the last time the db was updated
+     *
+     * @throws IOException if there was a problem reading from disk
+     */
+    public synchronized boolean wasIngestRunning() throws IOException {
+        String stale = getProperty(WAS_INGEST_RUNNING_KEY);
+        return StringUtils.isBlank(stale) ? true : Boolean.valueOf(stale);
+    }
+
+    /**
+     * record whether ingest was running during the last time the database was
+     * updated
+     *
+     * @param ingestRunning true if ingest was running
+     *
+     * @throws IOException if there was a problem writing to disk
+     */
+    public synchronized void setIngestRunning(Boolean ingestRunning) throws IOException {
+        setProperty(WAS_INGEST_RUNNING_KEY, ingestRunning.toString());
+    }
+
+    /**
+     * Get a {@link Path} to the properties file. If the file does not exist, it
+     * will be created.
+     *
+     * @return the Path to the properties file.
+     *
+     * @throws IOException if there was a problem creating the properties file
      */
     private synchronized Path getPropertiesPath() throws IOException {
 
@@ -82,30 +116,30 @@ class PerCaseTimelineProperties {
     }
 
     /**
-     * Returns the given properties file's setting as specific by settingName.
+     * Returns the property with the given key.
      *
-     * @param moduleName  - The name of the config file to read from.
-     * @param settingName - The setting name to retrieve.
+     * @param propertyKey - The property key to get the value for.
      *
-     * @return - the value associated with the setting.
+     * @return - the value associated with the property.
      *
-     * @throws IOException
+     * @throws IOException if there was a problem reading the property from disk
      */
-    private synchronized String getConfigSetting(String settingName) throws IOException {
-        return getProperties().getProperty(settingName);
+    private synchronized String getProperty(String propertyKey) throws IOException {
+        return getProperties().getProperty(propertyKey);
     }
 
     /**
-     * Sets the given properties file to the given settings.
+     * Sets the given property to the given value.
      *
-     * @param moduleName  - The name of the module to be written to.
-     * @param settingName - The name of the setting to be modified.
-     * @param settingVal  - the value to set the setting to.
+     * @param propertyKey   - The key of the property to be modified.
+     * @param propertyValue - the value to set the property to.
+     *
+     * @throws IOException if there was a problem writing the property to disk
      */
-    private synchronized void setConfigSetting(String settingName, String settingVal) throws IOException {
+    private synchronized void setProperty(String propertyKey, String propertyValue) throws IOException {
         Path propertiesFile = getPropertiesPath();
         Properties props = getProperties(propertiesFile);
-        props.setProperty(settingName, settingVal);
+        props.setProperty(propertyKey, propertyValue);
 
         try (OutputStream fos = Files.newOutputStream(propertiesFile)) {
             props.store(fos, ""); //NON-NLS
@@ -113,26 +147,25 @@ class PerCaseTimelineProperties {
     }
 
     /**
-     * Returns the properties as specified by moduleName.
+     * Get a {@link Properties} object used to store the timeline properties.
      *
-     * @param moduleName
-     * @param propertiesFile the value of propertiesFile
+     * @return a properties object
      *
-     * @throws IOException
-     * @return the java.util.Properties
+     * @throws IOException if there was a problem reading the .properties file
      */
     private synchronized Properties getProperties() throws IOException {
         return getProperties(getPropertiesPath());
     }
 
     /**
-     * Returns the properties as specified by moduleName.
+     * Gets a {@link Properties} object populated form the given .properties
+     * file.
      *
-     * @param moduleName
+     * @param propertiesFile a path to the .properties file to load
      *
-     * @return Properties file as specified by moduleName.
+     * @return a properties object
      *
-     * @throws IOException
+     * @throws IOException if there was a problem reading the .properties file
      */
     private synchronized Properties getProperties(final Path propertiesFile) throws IOException {
         try (InputStream inputStream = Files.newInputStream(propertiesFile)) {
