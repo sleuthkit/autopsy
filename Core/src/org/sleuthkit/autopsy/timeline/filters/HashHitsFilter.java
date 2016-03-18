@@ -16,7 +16,7 @@ import org.openide.util.NbBundle;
 public class HashHitsFilter extends UnionFilter<HashSetFilter> {
 
     @Override
-    @NbBundle.Messages("hashHitsFilter.displayName.text=Only Hash Set Hits")
+    @NbBundle.Messages("hashHitsFilter.displayName.text=Hash Sets")
     public String getDisplayName() {
         return Bundle.hashHitsFilter_displayName_text();
     }

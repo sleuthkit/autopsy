@@ -10,7 +10,7 @@ Improvements:
 - New Embedded File Extractor module that incorporates ZIP file module and extracts images from Office documents
 - Views area counts updates when ZIP files and such are found
 - Updates to python scripting for new version of Python, scripts are reloaded each time ingest is run, and errors are better shown.
-- Updated right click actions to be consistent accross all file types
+- Updated right click actions to be consistent across all file types
 - Changed logic of Interesting Files module to look for substrings of parent path. 
 - Lots of minor fixes and enhancements
 
@@ -18,7 +18,7 @@ Improvements:
 ---------------- VERSION 3.1.2  --------------
 Improvements:
 - New PhotoRec carving ingest module
-- Regripper output is avaiable as a report instead of TOOL_OUTPUT artifact
+- Regripper output is available as a report instead of TOOL_OUTPUT artifact
 - Updated version of RegRipper
 - New STIX/Cybox report module (manually run after image has been analyzed)
 - File type module supports user defined file types and can alert when they are found
@@ -71,12 +71,12 @@ Improvements:
 - Times can be displayed in local time or GMT
 - New "EnCase-style" report that lists files and metadata in tab delimited file
 - Changed report wizard to make one report at a time
-- report improvements (only regnerate if data exists)
+- report improvements (only regenerate if data exists)
 - more error messages if recent activity module fails
 - more error checking in recent activity module and don't bail as quickly
 - Cleanup of recent activity module
 - better handle if ingest module throws exception during init()
-- do not run ingest if any module faile to init()
+- do not run ingest if any module failed to init()
 - Added FILE_DONE event to ingest manager
 - Added search engine parsers for linkedin, twitter, and facebook
 - HTML text is better formatted
@@ -484,7 +484,7 @@ Autopsy Windows
 03/05/05: Update: Added SSN and credit card seach patterns from
   Jerry Shenk.
 
-03/05/05: Update: Added temporal data when a note is creaed.
+03/05/05: Update: Added temporal data when a note is created.
 
 03/11/05: Update: Changed to new TSK names for srch_strings and img_stat
 
@@ -531,7 +531,7 @@ directory box, the recover bit is set so the full contents are shown.
 03/29/04: Update: Changed text for the data integrity option when
 adding a new image.
 
-04/20/04: Bug Fix: Fixed error that occured when data browsing with
+04/20/04: Bug Fix: Fixed error that occurred when data browsing with
 a raw or swap image.  The TSK usage for these file system types was
 inconsistent and it was fixed in version 1.69.  (BUG: 925382).
 (Reported by Harald Katzer)
@@ -670,7 +670,7 @@ number of bytes.
   than once.  (Paul Bakker)
 06/01/03: Bug Fix: Some keyword searches with $ in it were failing
 06/01/03: Update: Keyword searches are now saved to a file and can be
-  found in the keyword seach main menu
+  found in the keyword search main menu
 06/01/03: Update: Changed the format a little of the keyword search
   menu
 06/01/03: Update: Added grep cheat sheet
@@ -713,7 +713,7 @@ number of bytes.
 03/20/03: Update: passwd and group files are now imported in timelines
   by selecting the image - no more inode values
 03/20/03: Update: Cleaned up HTML code in timeline section
-03/21/03: Update: Added '-z' flag to usage of 'file' so that comressed
+03/21/03: Update: Added '-z' flag to usage of 'file' so that compressed
   files are opened.  
 03/21/03: Bug Fix: Some special values needed to be escaped in the
   grep keyword search (for non regular expressions) (\.]^$"-).
@@ -770,7 +770,7 @@ Interface Changes:
 
 
 --------------------------- Version 1.61 ---------------------------------
-08/28/02: Update: White space is allowed at the begining of the morgue file 
+08/28/02: Update: White space is allowed at the beginning of the morgue file 
 08/28/02: Bug Fix: No error is generated if md5.txt does not exist from 
   main menu
 08/28/02: Update: Improved error messages 
