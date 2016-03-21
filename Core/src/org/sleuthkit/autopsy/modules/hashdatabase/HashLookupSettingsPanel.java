@@ -82,8 +82,9 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         });
     }
 
+    @NbBundle.Messages({"HashLookupSettingsPanel.Title=Global Hash Lookup Settings"})
     private void customizeComponents() {
-        setName(NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.setName.hashSetConfig"));
+        setName(Bundle.HashLookupSettingsPanel_Title());
         this.ingestWarningLabel.setVisible(false);
         this.hashSetTable.setModel(hashSetTableModel);
         this.hashSetTable.setTableHeader(null);

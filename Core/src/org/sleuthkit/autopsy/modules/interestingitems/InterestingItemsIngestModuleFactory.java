@@ -20,8 +20,11 @@ package org.sleuthkit.autopsy.modules.interestingitems;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
@@ -36,6 +39,10 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
  */
 @ServiceProvider(service = IngestModuleFactory.class)
 final public class InterestingItemsIngestModuleFactory extends IngestModuleFactoryAdapter {
+
+    @Messages({
+        "InterestingItemsIngestModuleFactory.defaultSettingsError=Error getting default interesting files settings from file."
+    })
 
     @Override
     public String getModuleDisplayName() {
@@ -76,8 +83,12 @@ final public class InterestingItemsIngestModuleFactory extends IngestModuleFacto
         // definitions independent of the rules that make up the defintions.
         // Doing so also keeps the serialization simple.
         List<String> enabledFilesSetNames = new ArrayList<>();
-        for (String name : InterestingItemDefsManager.getInstance().getInterestingFilesSets().keySet()) {
-            enabledFilesSetNames.add(name);
+        try {
+            for (String name : InterestingItemDefsManager.getInstance().getInterestingFilesSets().keySet()) {
+                enabledFilesSetNames.add(name);
+            }
+        } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
+            MessageNotifyUtil.Message.error(Bundle.InterestingItemsIngestModuleFactory_defaultSettingsError());
         }
         return new FilesIdentifierIngestJobSettings(enabledFilesSetNames);
     }

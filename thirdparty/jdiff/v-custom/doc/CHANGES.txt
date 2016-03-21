@@ -25,7 +25,7 @@ task to specify the language version, e.g. for dealing with asserts.
 #875516 Some HTML elements in user comments were being processed incorrectly. 
 Thanks to Jojo Dijamco for pointing this bug out.
 
-#875470 @link tags were not exanded in user comments. 
+#875470 @link tags were not expanded in user comments. 
 #877437 Other issues with @link in user comments.
 Many thanks to Brian Duff for these bugs and their fixes.
 

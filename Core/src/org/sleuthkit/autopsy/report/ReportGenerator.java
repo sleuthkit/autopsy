@@ -53,10 +53,12 @@ import javax.swing.SwingWorker;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -1759,11 +1761,10 @@ class ReportGenerator {
      *
      * @return String unique path
      */
-    private String getFileUniquePath(long objId) {
+    private String getFileUniquePath(Content content) {
         try {
-            AbstractFile af = skCase.getAbstractFileById(objId);
-            if (af != null) {
-                return af.getUniquePath();
+            if (content != null) {
+                return content.getUniquePath();
             } else {
                 return "";
             }
@@ -1785,11 +1786,17 @@ class ReportGenerator {
         private List<BlackboardAttribute> attributes;
         private HashSet<String> tags;
         private List<String> rowData = null;
+        private Content content;
 
         ArtifactData(BlackboardArtifact artifact, List<BlackboardAttribute> attrs, HashSet<String> tags) {
             this.artifact = artifact;
             this.attributes = attrs;
             this.tags = tags;
+            try {
+                this.content = Case.getCurrentCase().getSleuthkitCase().getContentById(artifact.getObjectID());
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Could not get content from database");
+            }
         }
 
         public BlackboardArtifact getArtifact() {
@@ -1810,6 +1817,13 @@ class ReportGenerator {
 
         public long getObjectID() {
             return artifact.getObjectID();
+        }
+
+        /**
+         * @return the content
+         */
+        public Content getContent() {
+            return content;
         }
 
         /**
@@ -1881,8 +1895,8 @@ class ReportGenerator {
 
             List<String> orderedRowData = new ArrayList<>();
             if (ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID() == getArtifact().getArtifactTypeID()) {
-                AbstractFile file = skCase.getAbstractFileById(getObjectID());
-                if (file != null) {
+                if (content != null && content instanceof AbstractFile) {
+                    AbstractFile file = (AbstractFile) content;
                     orderedRowData.add(file.getName());
                     orderedRowData.add(file.getNameExtension());
                     String mimeType = file.getMIMEType();
@@ -1913,7 +1927,7 @@ class ReportGenerator {
                     } else if (attr.getAttributeType().equals(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PATH))) {
                         String pathToShow = attr.getDisplayString();
                         if (pathToShow.isEmpty()) {
-                            pathToShow = getFileUniquePath(getObjectID());
+                            pathToShow = getFileUniquePath(content);
                         }
                         attributeDataArray[2] = pathToShow;
                     }
@@ -1933,6 +1947,7 @@ class ReportGenerator {
 
             return orderedRowData;
         }
+
     }
 
     /**
@@ -1999,7 +2014,11 @@ class ReportGenerator {
             List<BlackboardAttribute> attributes = artData.getAttributes();
             for (BlackboardAttribute attribute : attributes) {
                 if (attribute.getAttributeType().equals(this.attributeType)) {
-                    return attribute.getDisplayString();
+                    if (attribute.getAttributeType().getValueType() != BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
+                        return attribute.getDisplayString();
+                    } else {
+                        return ContentUtils.getStringTime(attribute.getValueLong(), artData.getContent());
+                    }
                 }
             }
             return "";
@@ -2027,7 +2046,7 @@ class ReportGenerator {
 
         @Override
         public String getCellData(ArtifactData artData) {
-            return getFileUniquePath(artData.getObjectID());
+            return getFileUniquePath(artData.getContent());
             /*else if (this.columnHeader.equals(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tags"))) {
              return makeCommaSeparatedList(artData.getTags());
              }

@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import static java.util.Objects.isNull;
-import static java.util.Objects.nonNull;
 import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
@@ -183,11 +182,7 @@ public enum FileTypeUtils {
     }
 
     public static Optional<String> getMimeType(AbstractFile file) throws TskCoreException {
-        final FileTypeDetector fileTypeDetector = getFileTypeDetector();
-        if (nonNull(fileTypeDetector)) {
-            return Optional.ofNullable(fileTypeDetector.getFileType(file));
-        }
-        return Optional.empty();
+        return Optional.ofNullable(file.getMIMEType());
     }
 
     static boolean isDrawableMimeType(String mimeType) {
@@ -227,8 +222,8 @@ public enum FileTypeUtils {
         try {
             return getMimeType(file)
                     .map(String::toLowerCase)
-                    .map(mimeType ->
-                            mimeType.startsWith("video/")
+                    .map(mimeType
+                            -> mimeType.startsWith("video/")
                             || videoMimeTypes.contains(mimeType))
                     .orElseGet(() -> FileTypeUtils.videoExtensions.contains(file.getNameExtension()));
         } catch (TskCoreException ex) {
