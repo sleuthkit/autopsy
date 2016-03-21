@@ -686,8 +686,8 @@ class ReportGenerator {
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorTitle"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorText") + ex.getLocalizedMessage(),
                         MessageNotifyUtil.MessageType.ERROR);
-                logger.log(Level.SEVERE, "failed to generate reports", ex); //NON-NLS
                 logger.log(Level.SEVERE, "failed to generate reports", ex.getCause()); //NON-NLS
+                logger.log(Level.SEVERE, "failed to generate reports", ex); //NON-NLS
             } // catch and ignore if we were cancelled
             catch (java.util.concurrent.CancellationException ex) {
             } finally {
