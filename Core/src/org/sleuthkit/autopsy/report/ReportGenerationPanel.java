@@ -84,7 +84,8 @@ class ReportGenerationPanel extends javax.swing.JPanel {
         reportPanel.repaint();
         progressPanel.addPropertyChangeListener((PropertyChangeEvent evt) -> {
             String propName = evt.getPropertyName();
-            if (propName.equals(ReportProgressPanel.Events.COMPLETED.toString())) {
+            if (propName.equals(ReportProgressPanel.Events.COMPLETED.toString()) || 
+                    propName.equals(ReportProgressPanel.Events.CANCELED.toString())) {
                 SwingUtilities.invokeLater(() -> {
                     cancelButton.setEnabled(false);
                 });

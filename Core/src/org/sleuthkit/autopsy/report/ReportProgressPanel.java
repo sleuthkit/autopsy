@@ -49,7 +49,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
 
     public enum Events {
 
-        COMPLETED
+        COMPLETED, CANCELED
     }
 
     /**
@@ -392,6 +392,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
             case ERROR:
                 break;
             default:
+                ReportStatus oldValue = STATUS;
                 STATUS = ReportStatus.CANCELED;
                 reportProgressBar.setIndeterminate(false);
                 reportProgressBar.setValue(0);
@@ -401,6 +402,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                 reportProgressBar.setString("Cancelled"); //NON-NLS
                 processingLabel.setForeground(new Color(178, 34, 34));
                 processingLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.cancel.procLbl.text"));
+                pcs.firePropertyChange(Events.COMPLETED.toString(), oldValue, STATUS);
                 break;
         }
     }
