@@ -29,7 +29,7 @@ import org.openide.util.NbBundle;
 public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
 
     public DataSourcesFilter() {
-        getDisabledProperty().bind(Bindings.size(getSubFilters()).lessThanOrEqualTo(1));
+        disabledProperty().bind(Bindings.size(getSubFilters()).lessThanOrEqualTo(1));
         setSelected(false);
     }
 
@@ -69,7 +69,7 @@ public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
                 .map(DataSourceFilter::getDataSourceID)
                 .filter(t -> t == dataSourceFilter.getDataSourceID())
                 .findAny().isPresent() == false) {
-            dataSourceFilter.getDisabledProperty().bind(getDisabledProperty());
+            dataSourceFilter.disabledProperty().bind(disabledProperty());
             getSubFilters().add(dataSourceFilter);
             getSubFilters().sort(Comparator.comparing(DataSourceFilter::getDisplayName));
         }

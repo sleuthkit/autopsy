@@ -23,7 +23,7 @@ public class TagsFilter extends UnionFilter<TagNameFilter> {
     }
 
     public TagsFilter() {
-        getDisabledProperty().bind(Bindings.size(getSubFilters()).lessThan(1));
+        disabledProperty().bind(Bindings.size(getSubFilters()).lessThan(1));
         setSelected(false);
     }
 

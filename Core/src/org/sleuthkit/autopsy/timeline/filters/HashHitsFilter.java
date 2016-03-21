@@ -22,7 +22,7 @@ public class HashHitsFilter extends UnionFilter<HashSetFilter> {
     }
 
     public HashHitsFilter() {
-        getDisabledProperty().bind(Bindings.size(getSubFilters()).lessThan(1));
+        disabledProperty().bind(Bindings.size(getSubFilters()).lessThan(1));
         setSelected(false);
     }
 

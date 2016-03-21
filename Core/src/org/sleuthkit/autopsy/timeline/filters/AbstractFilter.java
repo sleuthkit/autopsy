@@ -38,7 +38,7 @@ public abstract class AbstractFilter implements Filter {
     }
 
     @Override
-    public SimpleBooleanProperty getDisabledProperty() {
+    public SimpleBooleanProperty disabledProperty() {
         return disabled;
     }
 
@@ -67,11 +67,11 @@ public abstract class AbstractFilter implements Filter {
         return "[" + (isSelected() ? "x" : " ") + "]"; // NON-NLS
     }
 
-    public final boolean isActive() {
+    public  boolean isActive() {
         return activeProperty.get();
     }
 
-    public final BooleanBinding activeProperty() {
+    public  BooleanBinding activeProperty() {
         return activeProperty;
     }
 }

@@ -77,7 +77,7 @@ public interface Filter {
      */
     void setDisabled(Boolean act);
 
-    SimpleBooleanProperty getDisabledProperty();
+    SimpleBooleanProperty disabledProperty();
 
     boolean isDisabled();
 
