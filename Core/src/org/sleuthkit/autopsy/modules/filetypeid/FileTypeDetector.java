@@ -158,7 +158,8 @@ public class FileTypeDetector {
      * @return A MIME type name. If file type could not be detected or results
      *         were uncertain, octet-stream is returned.
      *
-     * @throws TskCoreException
+     * @throws TskCoreException If there is a problem writing the result to the
+     *                          case database.
      */
     public String detect(AbstractFile file) throws TskCoreException {
         return detect(file, false);
@@ -175,7 +176,8 @@ public class FileTypeDetector {
      * @return A MIME type name. If file type could not be detected or results
      *         were uncertain, octet-stream is returned.
      *
-     * @throws TskCoreException
+     * @throws TskCoreException If there is a problem writing the result to the
+     *                          case database.
      */
     private String detect(AbstractFile file, boolean postToBlackBoard) throws TskCoreException {
         String mimeType = file.getMIMEType();
