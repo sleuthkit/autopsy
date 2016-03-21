@@ -84,28 +84,6 @@ import org.sqlite.SQLiteJDBCLoader;
  */
 public class EventDB {
 
-    /**
-     *
-     * enum to represent keys stored in db_info table
-     */
-    private enum DBInfoKey {
-
-        LAST_ARTIFACT_ID("last_artifact_id"), // NON-NLS
-        LAST_OBJECT_ID("last_object_id"), // NON-NLS
-        WAS_INGEST_RUNNING("was_ingest_running"); // NON-NLS
-
-        private final String keyName;
-
-        private DBInfoKey(String keyName) {
-            this.keyName = keyName;
-        }
-
-        @Override
-        public String toString() {
-            return keyName;
-        }
-    }
-
     private static final org.sleuthkit.autopsy.coreutils.Logger LOGGER = Logger.getLogger(EventDB.class.getName());
 
     static {
@@ -142,14 +120,12 @@ public class EventDB {
 
     private final String dbPath;
 
-    private PreparedStatement getDBInfoStmt;
     private PreparedStatement getEventByIDStmt;
     private PreparedStatement getMaxTimeStmt;
     private PreparedStatement getMinTimeStmt;
     private PreparedStatement getDataSourceIDsStmt;
     private PreparedStatement getHashSetNamesStmt;
     private PreparedStatement insertRowStmt;
-    private PreparedStatement recordDBInfoStmt;
     private PreparedStatement insertHashSetStmt;
     private PreparedStatement insertHashHitStmt;
     private PreparedStatement insertTagStmt;
@@ -394,14 +370,6 @@ public class EventDB {
         return resultIDs;
     }
 
-    long getLastArtfactID() {
-        return getDBInfo(DBInfoKey.LAST_ARTIFACT_ID, -1);
-    }
-
-    long getLastObjID() {
-        return getDBInfo(DBInfoKey.LAST_OBJECT_ID, -1);
-    }
-
     /**
      * this relies on the fact that no tskObj has ID 0 but 0 is the default
      * value for the datasource_id column in the events table.
@@ -487,10 +455,6 @@ public class EventDB {
             DBLock.unlock();
         }
         return -1l;
-    }
-
-    boolean getWasIngestRunning() {
-        return getDBInfo(DBInfoKey.WAS_INGEST_RUNNING, 0) != 0;
     }
 
     /**
@@ -614,8 +578,6 @@ public class EventDB {
                 getMaxTimeStmt = prepareStatement("SELECT Max(time) AS max FROM events"); // NON-NLS
                 getMinTimeStmt = prepareStatement("SELECT Min(time) AS min FROM events"); // NON-NLS
                 getEventByIDStmt = prepareStatement("SELECT * FROM events WHERE event_id =  ?"); // NON-NLS
-                recordDBInfoStmt = prepareStatement("INSERT OR REPLACE INTO db_info (key, value) values (?, ?)"); // NON-NLS
-                getDBInfoStmt = prepareStatement("SELECT value FROM db_info WHERE key = ?"); // NON-NLS
                 insertHashSetStmt = prepareStatement("INSERT OR IGNORE INTO hash_sets (hash_set_name)  values (?)"); //NON-NLS
                 selectHashSetStmt = prepareStatement("SELECT hash_set_id FROM hash_sets WHERE hash_set_name = ?"); //NON-NLS
                 insertHashHitStmt = prepareStatement("INSERT OR IGNORE INTO hash_set_hits (hash_set_id, event_id) values (?,?)"); //NON-NLS
@@ -938,18 +900,6 @@ public class EventDB {
         return eventIDs;
     }
 
-    void recordLastArtifactID(long lastArtfID) {
-        recordDBInfo(DBInfoKey.LAST_ARTIFACT_ID, lastArtfID);
-    }
-
-    void recordLastObjID(Long lastObjID) {
-        recordDBInfo(DBInfoKey.LAST_OBJECT_ID, lastObjID);
-    }
-
-    void recordWasIngestRunning(boolean wasIngestRunning) {
-        recordDBInfo(DBInfoKey.WAS_INGEST_RUNNING, (wasIngestRunning ? 1 : 0));
-    }
-
     void rollBackTransaction(EventTransaction trans) {
         trans.rollback();
     }
@@ -983,8 +933,7 @@ public class EventDB {
 
         try {
             LOGGER.log(Level.INFO, String.format("sqlite-jdbc version %s loaded in %s mode", // NON-NLS
-                    SQLiteJDBCLoader.getVersion(), SQLiteJDBCLoader.isNativeMode()
-                            ? "native" : "pure-java")); // NON-NLS
+                    SQLiteJDBCLoader.getVersion(), SQLiteJDBCLoader.isNativeMode() ? "native" : "pure-java")); // NON-NLS
         } catch (Exception exception) {
             LOGGER.log(Level.SEVERE, "Failed to determine if sqlite-jdbc is loaded in native or pure-java mode.", exception); //NON-NLS
         }
@@ -1220,47 +1169,11 @@ public class EventDB {
         return useSubTypes ? "sub_type" : "base_type"; //NON-NLS
     }
 
-    private long getDBInfo(DBInfoKey key, long defaultValue) {
-        DBLock.lock();
-        try {
-            getDBInfoStmt.setString(1, key.toString());
-
-            try (ResultSet rs = getDBInfoStmt.executeQuery()) {
-                long result = defaultValue;
-                while (rs.next()) {
-                    result = rs.getLong("value"); // NON-NLS
-                }
-                return result;
-            } catch (SQLException ex) {
-                LOGGER.log(Level.SEVERE, "failed to read key: " + key + " from db_info", ex); // NON-NLS
-            } finally {
-                DBLock.unlock();
-            }
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "failed to set key: " + key + " on getDBInfoStmt ", ex); // NON-NLS
-        }
-
-        return defaultValue;
-    }
 
     private PreparedStatement prepareStatement(String queryString) throws SQLException {
         PreparedStatement prepareStatement = con.prepareStatement(queryString);
         preparedStatements.add(prepareStatement);
         return prepareStatement;
-    }
-
-    private void recordDBInfo(DBInfoKey key, long value) {
-        DBLock.lock();
-        try {
-            recordDBInfoStmt.setString(1, key.toString());
-            recordDBInfoStmt.setLong(2, value);
-            recordDBInfoStmt.executeUpdate();
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "failed to set dbinfo  key: " + key + " value: " + value, ex); // NON-NLS
-        } finally {
-            DBLock.unlock();
-
-        }
     }
 
     /**
