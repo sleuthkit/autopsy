@@ -21,7 +21,6 @@
  */
 package org.sleuthkit.autopsy.coreutils;
 
-import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.io.Files;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
@@ -32,10 +31,10 @@ import java.io.InputStream;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Objects;
 import static java.util.Objects.nonNull;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -78,7 +77,7 @@ public class ImageUtils {
     /**
      * save thumbnails to disk as this format
      */
-    private static final String FORMAT = "png"; //NON-NLS //NOI18N
+    private static final String FORMAT = "png"; //NON-NLS
 
     public static final int ICON_SIZE_SMALL = 50;
     public static final int ICON_SIZE_MEDIUM = 100;
@@ -86,12 +85,11 @@ public class ImageUtils {
 
     private static final BufferedImage DEFAULT_THUMBNAIL;
 
-    private static final String IMAGE_GIF_MIME = "image/gif"; //NOI18N NON-NLS
-    private static final SortedSet<String> GIF_MIME_SET = ImmutableSortedSet.copyOf(new String[]{IMAGE_GIF_MIME});
+    private static final String GIF_EXTENSION = "gif";
+    private static final String IMAGE_GIF_MIME = "image/gif"; //NON-NLS
 
     private static final List<String> SUPPORTED_IMAGE_EXTENSIONS;
     private static final SortedSet<String> SUPPORTED_IMAGE_MIME_TYPES;
-    private static final List<String> CONDITIONAL_MIME_TYPES = Arrays.asList("audio/x-aiff", "application/octet-stream"); //NOI18N NON-NLS
 
     private static final boolean openCVLoaded;
 
@@ -119,14 +117,13 @@ public class ImageUtils {
             openCVLoadedTemp = true;
         } catch (UnsatisfiedLinkError e) {
             openCVLoadedTemp = false;
-            LOGGER.log(Level.SEVERE, "OpenCV Native code library failed to load", e); //NOI18N NON-NLS
+            LOGGER.log(Level.SEVERE, "OpenCV Native code library failed to load", e); //NON-NLS
             //TODO: show warning bubble
 
         }
 
         openCVLoaded = openCVLoadedTemp;
         SUPPORTED_IMAGE_EXTENSIONS = Arrays.asList(ImageIO.getReaderFileSuffixes());
-
         SUPPORTED_IMAGE_MIME_TYPES = new TreeSet<>(Arrays.asList(ImageIO.getReaderMIMETypes()));
         /*
          * special cases and variants that we support, but don't get registered
@@ -137,8 +134,8 @@ public class ImageUtils {
                 "image/x-ms-bmp", //NON-NLS
                 "image/x-portable-graymap", //NON-NLS
                 "image/x-portable-bitmap", //NON-NLS
-                "application/x-123")); //TODO: is this correct? -jm //NOI18N NON-NLS
-        SUPPORTED_IMAGE_MIME_TYPES.removeIf("application/octet-stream"::equals); //NOI18N NON-NLS
+                "application/x-123")); //TODO: is this correct? -jm //NON-NLS
+        SUPPORTED_IMAGE_MIME_TYPES.removeIf("application/octet-stream"::equals); //NON-NLS
     }
 
     /**
@@ -149,9 +146,9 @@ public class ImageUtils {
     /**
      * thread that saves generated thumbnails to disk in the background
      */
-    private static final Executor imageSaver
-            = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
-                    .namingPattern("icon saver-%d").build()); //NOI18N NON-NLS
+    private static final Executor imageSaver =
+            Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
+                    .namingPattern("thumbnail-saver-%d").build()); //NON-NLS
 
     public static List<String> getSupportedImageExtensions() {
         return Collections.unmodifiableList(SUPPORTED_IMAGE_EXTENSIONS);
@@ -165,48 +162,10 @@ public class ImageUtils {
      * Get the default thumbnail, which is the icon for a file. Used when we can
      * not generate content based thumbnail.
      *
-     * @return
-     *
-     * @deprecated use {@link  #getDefaultThumbnail() } instead.
-     */
-    @Deprecated
-    public static Image getDefaultIcon() {
-        return getDefaultThumbnail();
-    }
-
-    /**
-     * Get the default thumbnail, which is the icon for a file. Used when we can
-     * not generate content based thumbnail.
-     *
      * @return the default thumbnail
      */
     public static Image getDefaultThumbnail() {
         return DEFAULT_THUMBNAIL;
-    }
-
-    /**
-     * Can a thumbnail be generated for the content?
-     *
-     * Although this method accepts Content, it always returns false for objects
-     * that are not instances of AbstractFile.
-     *
-     * @param content A content object to test for thumbnail support.
-     *
-     * @return true if a thumbnail can be generated for the given content.
-     */
-    public static boolean thumbnailSupported(Content content) {
-
-        if (content.getSize() == 0) {
-            return false;
-        }
-        if (!(content instanceof AbstractFile)) {
-            return false;
-        }
-        AbstractFile file = (AbstractFile) content;
-
-        return VideoUtils.isVideoThumbnailSupported(file)
-                || isImageThumbnailSupported(file);
-
     }
 
     /**
@@ -218,8 +177,7 @@ public class ImageUtils {
      *         for.
      */
     public static boolean isImageThumbnailSupported(AbstractFile file) {
-        return isMediaThumbnailSupported(file, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_IMAGE_EXTENSIONS, CONDITIONAL_MIME_TYPES)
-                || hasImageFileHeader(file);
+        return hasImageFileHeader(file) || isMediaThumbnailSupported(file, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_IMAGE_EXTENSIONS);
     }
 
     /**
@@ -231,16 +189,11 @@ public class ImageUtils {
      * @return True or false
      */
     public static boolean isGIF(AbstractFile file) {
-        String mimeType = file.getMIMEType();
-        if (nonNull(mimeType)) {
-            return IMAGE_GIF_MIME.equalsIgnoreCase(mimeType);
-        } else {
-            return "gif".equalsIgnoreCase(file.getNameExtension()); //NOI18N            
-        }
+        return isMediaThumbnailSupported(file, Arrays.asList(IMAGE_GIF_MIME), Arrays.asList(GIF_EXTENSION));
     }
 
     /**
-     * Check if a file is "supported" by checking its mimetype and extension
+     * Check if a file is "supported" by checking its extension and/or MIME type
      *
      * //TODO: this should move to a better place. Should ImageUtils and
      * VideoUtils both implement/extend some base interface/abstract class. That
@@ -252,24 +205,26 @@ public class ImageUtils {
      * @param supportedExtension a set of extensions a file could have to be
      *                           supported if the mime lookup fails or is
      *                           inconclusive
-     * @param conditionalMimes   a set of mimetypes that a file could have to be
-     *                           supoprted if it also has a supported extension
      *
      * @return true if a thumbnail can be generated for the given file based on
      *         the given lists of supported mimetype and extensions
      */
-    static boolean isMediaThumbnailSupported(AbstractFile file, final SortedSet<String> supportedMimeTypes, final List<String> supportedExtension, List<String> conditionalMimes) {
-        if (file.getSize() == 0) {
+    static boolean isMediaThumbnailSupported(AbstractFile file, final Collection<String> supportedMimeTypes, final List<String> supportedExtension) {
+        if (false == file.isFile() || file.getSize() <= 0) {
             return false;
         }
-        String mimeType = file.getMIMEType();
+
         String extension = file.getNameExtension();
-        if (nonNull(mimeType)) {
-            return supportedMimeTypes.contains(mimeType)
-                    || (conditionalMimes.contains(mimeType.toLowerCase())
-                    && supportedExtension.contains(extension));
+
+        if (StringUtils.isNotBlank(extension) && supportedExtension.contains(extension)) {
+            return true;
         } else {
-            return StringUtils.isNotBlank(extension) && supportedExtension.contains(extension);
+            try {
+                return supportedMimeTypes.contains(getFileTypeDetector().detect(file));
+            } catch (FileTypeDetectorInitException | TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Error determining MIME type of " + getContentPathSafe(file), ex);
+                return false;
+            }
         }
     }
 
@@ -286,25 +241,6 @@ public class ImageUtils {
             fileTypeDetector = new FileTypeDetector();
         }
         return fileTypeDetector;
-    }
-
-    /**
-     * Get a thumbnail of a specified size for the given image. Generates the
-     * thumbnail if it is not already cached.
-     *
-     * @param content
-     * @param iconSize
-     *
-     * @return a thumbnail for the given image or a default one if there was a
-     *         problem making a thumbnail.
-     *
-     * @deprecated use {@link #getThumbnail(org.sleuthkit.datamodel.Content, int)
-     * } instead.
-     */
-    @Nonnull
-    @Deprecated
-    public static BufferedImage getIcon(Content content, int iconSize) {
-        return getThumbnail(content, iconSize);
     }
 
     /**
@@ -335,27 +271,6 @@ public class ImageUtils {
     }
 
     /**
-     * Get a thumbnail of a specified size for the given image. Generates the
-     * thumbnail if it is not already cached.
-     *
-     * @param content
-     * @param iconSize
-     *
-     * @return File object for cached image. Is guaranteed to exist, as long as
-     *         there was not an error generating or saving the thumbnail.
-     *
-     * @deprecated use {@link #getCachedThumbnailFile(org.sleuthkit.datamodel.Content, int)
-     * } instead.
-     *
-     */
-    @Nullable
-    @Deprecated
-    public static File getIconFile(Content content, int iconSize) {
-        return getCachedThumbnailFile(content, iconSize);
-
-    }
-
-    /**
      *
      * Get a thumbnail of a specified size for the given image. Generates the
      * thumbnail if it is not already cached.
@@ -370,22 +285,6 @@ public class ImageUtils {
     public static File getCachedThumbnailFile(Content content, int iconSize) {
         getThumbnail(content, iconSize);
         return getCachedThumbnailLocation(content.getId());
-    }
-
-    /**
-     * Get a file object for where the cached icon should exist. The returned
-     * file may not exist.
-     *
-     * @param id
-     *
-     * @return
-     *
-     * @deprecated use {@link #getCachedThumbnailLocation(long) } instead
-     */
-    @Deprecated
-
-    public static File getFile(long id) {
-        return getCachedThumbnailLocation(id);
     }
 
     /**
@@ -407,18 +306,6 @@ public class ImageUtils {
             return null;
         }
 
-    }
-
-    /**
-     * Do a direct check to see if the given file has an image file header.
-     * NOTE: Currently only jpeg and png are supported.
-     *
-     * @param file
-     *
-     * @return true if the given file has one of the supported image headers.
-     */
-    public static boolean hasImageFileHeader(AbstractFile file) {
-        return isJpegFileHeader(file) || isPngFileHeader(file);
     }
 
     /**
@@ -912,4 +799,109 @@ public class ImageUtils {
             return contentName;
         }
     }
+
+    /**
+     * Get the default thumbnail, which is the icon for a file. Used when we can
+     * not generate content based thumbnail.
+     *
+     * @return
+     *
+     * @deprecated use {@link  #getDefaultThumbnail() } instead.
+     */
+    @Deprecated
+    public static Image getDefaultIcon() {
+        return getDefaultThumbnail();
+    }
+
+    /**
+     * Get a file object for where the cached icon should exist. The returned
+     * file may not exist.
+     *
+     * @param id
+     *
+     * @return
+     *
+     * @deprecated use {@link #getCachedThumbnailLocation(long) } instead
+     */
+    @Deprecated
+
+    public static File getFile(long id) {
+        return getCachedThumbnailLocation(id);
+    }
+
+    /**
+     * Get a thumbnail of a specified size for the given image. Generates the
+     * thumbnail if it is not already cached.
+     *
+     * @param content
+     * @param iconSize
+     *
+     * @return a thumbnail for the given image or a default one if there was a
+     *         problem making a thumbnail.
+     *
+     * @deprecated use {@link #getThumbnail(org.sleuthkit.datamodel.Content, int)
+     * } instead.
+     */
+    @Nonnull
+    @Deprecated
+    public static BufferedImage getIcon(Content content, int iconSize) {
+        return getThumbnail(content, iconSize);
+    }
+
+    /**
+     * Get a thumbnail of a specified size for the given image. Generates the
+     * thumbnail if it is not already cached.
+     *
+     * @param content
+     * @param iconSize
+     *
+     * @return File object for cached image. Is guaranteed to exist, as long as
+     *         there was not an error generating or saving the thumbnail.
+     *
+     * @deprecated use {@link #getCachedThumbnailFile(org.sleuthkit.datamodel.Content, int)
+     * } instead.
+     *
+     */
+    @Nullable
+    @Deprecated
+    public static File getIconFile(Content content, int iconSize) {
+        return getCachedThumbnailFile(content, iconSize);
+
+    }
+
+    /**
+     * Do a direct check to see if the given file has an image file header.
+     * NOTE: Currently only jpeg and png are supported.
+     *
+     * @param file
+     *
+     * @return true if the given file has one of the supported image headers.
+     */
+    @Deprecated
+    public static boolean hasImageFileHeader(AbstractFile file) {
+        return isJpegFileHeader(file) || isPngFileHeader(file);
+    }
+
+    /**
+     * Can a thumbnail be generated for the content?
+     *
+     * Although this method accepts Content, it always returns false for objects
+     * that are not instances of AbstractFile.
+     *
+     * @param content A content object to test for thumbnail support.
+     *
+     * @return true if a thumbnail can be generated for the given content.
+     */
+    @Deprecated
+    public static boolean thumbnailSupported(Content content) {
+
+        if (!(content instanceof AbstractFile)) {
+            return false;
+        }
+        AbstractFile file = (AbstractFile) content;
+
+        return VideoUtils.isVideoThumbnailSupported(file)
+                || isImageThumbnailSupported(file);
+    }
+
 }

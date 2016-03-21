@@ -22,7 +22,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -77,6 +76,7 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 import org.sleuthkit.autopsy.imagegallery.gui.NoGroupsDialog;
 import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -443,7 +443,7 @@ public final class ImageGalleryController implements Executor {
     }
 
     @Nullable
-    synchronized public DrawableFile getFileFromId(Long fileID) throws TskCoreException {
+    synchronized public DrawableFile getFileFromId(Long fileID) throws TskCoreException, FileTypeDetector.FileTypeDetectorInitException {
         if (Objects.isNull(db)) {
             LOGGER.log(Level.WARNING, "Could not get file from id, no DB set.  The case is probably closed."); //NON-NLS
             return null;
@@ -848,23 +848,15 @@ public final class ImageGalleryController implements Executor {
             if (known) {
                 taskDB.removeFile(f.getId(), tr);  //remove known files
             } else {
-                Optional<String> mimeType = FileTypeUtils.getMimeType(f);
-                if (mimeType.isPresent()) {
-                    //mime type
-                    if (FileTypeUtils.isDrawableMimeType(mimeType.get())) {  //supported mimetype => analyzed
+
+                try {
+                    if (FileTypeUtils.hasDrawableMIMEType(f)) {  //supported mimetype => analyzed
                         taskDB.updateFile(DrawableFile.create(f, true, false), tr);
                     } else { //unsupported mimtype => analyzed but shouldn't include
                         taskDB.removeFile(f.getId(), tr);
                     }
-                } else {
-                    //no mime tyoe
-                    if (FileTypeUtils.isDrawable(f)) {
-                        //no mime type but supported =>  add as not analyzed
-                        taskDB.insertFile(DrawableFile.create(f, false, false), tr);
-                    } else {
-                        //no mime type, not supported  => remove ( should never get here)
-                        taskDB.removeFile(f.getId(), tr);
-                    }
+                } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+                    throw new RuntimeException(ex);
                 }
             }
         }
@@ -968,7 +960,7 @@ public final class ImageGalleryController implements Executor {
                                     //this file would have gotten scooped up in initial grab, but actually we don't need it
                                     queueDBWorkerTask(new RemoveFileTask(file, db));
                                 }
-                            } catch (TskCoreException ex) {
+                            } catch (TskCoreException | FileTypeDetector.FileTypeDetectorInitException ex) {
                                 //TODO: What to do here?
                                 LOGGER.log(Level.WARNING, "Unable to determine if file is drawable and not known.  Not making any changes to DB", ex); //NON-NLS
                                 throw new RuntimeException(ex);

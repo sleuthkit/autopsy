@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryPreferences;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -66,7 +67,7 @@ public class CategorizeGroupAction extends CategorizeAction {
                         if (false == Category.ZERO.equals(category) && newCat.equals(category) == false) {
                             catCountMap.merge(category, 1L, Long::sum);
                         }
-                    } catch (TskCoreException ex) {
+                    } catch (TskCoreException | FileTypeDetector.FileTypeDetectorInitException ex) {
                         LOGGER.log(Level.SEVERE, "Failed to categorize files.", ex);
                     }
                 }

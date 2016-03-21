@@ -34,7 +34,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -55,6 +54,7 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupKey;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy;
 import static org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy.GROUP_BY_VALUE;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -979,7 +979,7 @@ public final class DrawableDB {
      * @throws TskCoreException if unable to get a file from the currently open
      *                          {@link SleuthkitCase}
      */
-    private DrawableFile getFileFromID(Long id, boolean analyzed) throws TskCoreException {
+    private DrawableFile getFileFromID(Long id, boolean analyzed) throws TskCoreException, FileTypeDetector.FileTypeDetectorInitException {
         try {
             AbstractFile f = tskCase.getAbstractFileById(id);
             return DrawableFile.create(f, analyzed, isVideoFile(f));
@@ -997,7 +997,7 @@ public final class DrawableDB {
      * @throws TskCoreException if unable to get a file from the currently open
      *                          {@link SleuthkitCase}
      */
-    public DrawableFile getFileFromID(Long id) throws TskCoreException {
+    public DrawableFile getFileFromID(Long id) throws TskCoreException, FileTypeDetector.FileTypeDetectorInitException {
         try {
             AbstractFile f = tskCase.getAbstractFileById(id);
             return DrawableFile.create(f,
@@ -1174,10 +1174,18 @@ public final class DrawableDB {
      * @return returns true if this file is a video as determined by {@link ImageGalleryModule#isVideoFile(org.sleuthkit.datamodel.AbstractFile)
      *         } but caches the result. returns false if passed a null AbstractFile
      */
-    public boolean isVideoFile(AbstractFile f) {
-        return isNull(f) ? false
-                : videoFileMap.computeIfAbsent(f.getId(), id -> FileTypeUtils.isVideoFile(f));
+    public boolean isVideoFile(AbstractFile f) throws TskCoreException, FileTypeDetector.FileTypeDetectorInitException {
 
+        if (null == f) {
+            return false;
+        } else {
+            Boolean isVideo = videoFileMap.get(f.getId());
+            if (null == isVideo) {
+                isVideo = FileTypeUtils.hasVideoMIMEType(f);
+                videoFileMap.put(f.getId(), isVideo);
+            }
+            return isVideo;
+        }
     }
 
     /**
@@ -1242,8 +1250,8 @@ public final class DrawableDB {
         String fileIdsList = "(" + StringUtils.join(fileIDs, ",") + " )";
 
         //count the fileids that are in the given list and don't have a non-zero category assigned to them.
-        String name
-                = "SELECT COUNT(obj_id) FROM tsk_files where obj_id IN " + fileIdsList //NON-NLS
+        String name =
+                "SELECT COUNT(obj_id) FROM tsk_files where obj_id IN " + fileIdsList //NON-NLS
                 + " AND obj_id NOT IN (SELECT obj_id FROM content_tags WHERE content_tags.tag_name_id IN " + catTagNameIDs + ")"; //NON-NLS
         try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery(name);
                 ResultSet resultSet = executeQuery.getResultSet();) {

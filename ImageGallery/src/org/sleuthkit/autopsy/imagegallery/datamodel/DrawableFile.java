@@ -41,6 +41,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
 import org.sleuthkit.autopsy.imagegallery.ThumbnailCache;
 import org.sleuthkit.autopsy.imagegallery.utils.TaskUtils;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -59,8 +60,8 @@ public abstract class DrawableFile {
 
     private static final Logger LOGGER = Logger.getLogger(DrawableFile.class.getName());
 
-    public static DrawableFile create(AbstractFile abstractFileById, boolean analyzed) {
-        return create(abstractFileById, analyzed, FileTypeUtils.isVideoFile(abstractFileById));
+    public static DrawableFile create(AbstractFile abstractFileById, boolean analyzed) throws TskCoreException, FileTypeDetector.FileTypeDetectorInitException {
+        return create(abstractFileById, analyzed, FileTypeUtils.hasVideoMIMEType(abstractFileById));
     }
 
     /**
@@ -72,7 +73,7 @@ public abstract class DrawableFile {
                 : new ImageFile(abstractFileById, analyzed);
     }
 
-    public static DrawableFile create(Long id, boolean analyzed) throws TskCoreException, IllegalStateException {
+    public static DrawableFile create(Long id, boolean analyzed) throws TskCoreException, IllegalStateException, FileTypeDetector.FileTypeDetectorInitException {
         return create(Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(id), analyzed);
     }
 

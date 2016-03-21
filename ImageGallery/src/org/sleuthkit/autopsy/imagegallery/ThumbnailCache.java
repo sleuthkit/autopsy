@@ -44,6 +44,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
 import org.sleuthkit.autopsy.imagegallery.utils.TaskUtils;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -97,7 +98,7 @@ public enum ThumbnailCache {
      *         could not be generated
      */
     @Nullable
-    public Image get(DrawableFile file) {
+    public Image get(AbstractFile file) {
         try {
             return cache.get(file.getId(), () -> load(file));
         } catch (UncheckedExecutionException | CacheLoader.InvalidCacheLoadException | ExecutionException ex) {
@@ -109,7 +110,7 @@ public enum ThumbnailCache {
     @Nullable
     public Image get(Long fileID) {
         try {
-            return get(ImageGalleryController.getDefault().getFileFromId(fileID));
+            return get(ImageGalleryController.getDefault().getSleuthKitCase().getAbstractFileById(fileID));
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Failed to load thumbnail for file: " + fileID, ex.getCause()); //NON-NLS
             return null;
@@ -124,12 +125,12 @@ public enum ThumbnailCache {
      *
      * @return an (possibly empty) optional containing a thumbnail
      */
-    private Image load(DrawableFile file) {
+    private Image load(AbstractFile file) {
 
-        if (FileTypeUtils.isGIF(file.getAbstractFile())) {
+        if (ImageUtils.isGIF(file)) {
             //directly read gif to preserve potential animation,
             //NOTE: not saved to disk!
-            return new Image(new BufferedInputStream(new ReadContentInputStream(file.getAbstractFile())), MAX_THUMBNAIL_SIZE, MAX_THUMBNAIL_SIZE, true, true);
+            return new Image(new BufferedInputStream(new ReadContentInputStream(file)), MAX_THUMBNAIL_SIZE, MAX_THUMBNAIL_SIZE, true, true);
         }
 
         BufferedImage thumbnail = getCacheFile(file).map(cachFile -> {
@@ -149,7 +150,7 @@ public enum ThumbnailCache {
             }
             return null;
         }).orElseGet(() -> {
-            return ImageUtils.getThumbnail(file.getAbstractFile(), MAX_THUMBNAIL_SIZE);
+            return ImageUtils.getThumbnail(file, MAX_THUMBNAIL_SIZE);
         });
 
         WritableImage jfxthumbnail;
@@ -171,9 +172,9 @@ public enum ThumbnailCache {
      * @return a Optional containing a File to store the cached icon in or an
      *         empty optional if there was a problem.
      */
-    private static Optional<File> getCacheFile(DrawableFile file) {
+    private static Optional<File> getCacheFile(AbstractFile file) {
         try {
-            return Optional.of(ImageUtils.getCachedThumbnailFile(file.getAbstractFile(), MAX_THUMBNAIL_SIZE));
+            return Optional.of(ImageUtils.getCachedThumbnailFile(file, MAX_THUMBNAIL_SIZE));
 
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "Failed to create cache file.{0}", e.getLocalizedMessage()); //NON-NLS

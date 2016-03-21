@@ -45,6 +45,7 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableTagsManager;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TagName;
@@ -83,7 +84,6 @@ public class CategorizeAction extends Action {
     static public Menu getCategoriesMenu(ImageGalleryController controller) {
         return new CategoryMenu(controller);
     }
-
 
     final void addCatToFiles(Set<Long> ids) {
         Logger.getAnonymousLogger().log(Level.INFO, "categorizing{0} as {1}", new Object[]{ids.toString(), cat.getDisplayName()}); //NON-NLS
@@ -167,7 +167,7 @@ public class CategorizeAction extends Action {
                             tagsManager.addContentTag(file, tagName, "");
                         }
                     }
-                } catch (TskCoreException ex) {
+                } catch (TskCoreException | FileTypeDetector.FileTypeDetectorInitException ex) {
                     LOGGER.log(Level.SEVERE, "Error categorizing result", ex); //NON-NLS
                     JOptionPane.showMessageDialog(null,
                             Bundle.CategorizeTask_errorUnable_msg(fileID),

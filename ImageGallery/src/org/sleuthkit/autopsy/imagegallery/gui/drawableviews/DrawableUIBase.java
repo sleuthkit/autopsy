@@ -46,6 +46,7 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.actions.OpenExternalViewerAction;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -101,7 +102,7 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
             } else {
                 try {
                     fileOpt = Optional.ofNullable(getController().getFileFromId(fileIDOpt.get()));
-                } catch (TskCoreException ex) {
+                } catch (TskCoreException | FileTypeDetector.FileTypeDetectorInitException ex) {
                     Logger.getAnonymousLogger().log(Level.WARNING, "failed to get DrawableFile for obj_id" + fileIDOpt.get(), ex); //NON-NLS
                     fileOpt = Optional.empty();
                 }
