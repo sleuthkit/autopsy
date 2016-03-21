@@ -54,9 +54,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.timeline.CancellationProgressTask;
-import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
@@ -168,7 +166,7 @@ public class EventsRepository {
      */
     public Long getMaxTime() {
         return maxCache.getUnchecked("max"); // NON-NLS
-//        return eventDB.getMaxTime();
+
     }
 
     /**
@@ -176,32 +174,9 @@ public class EventsRepository {
      */
     public Long getMinTime() {
         return minCache.getUnchecked("min"); // NON-NLS
-//        return eventDB.getMinTime();
+
     }
 
-    private void recordLastArtifactID(long lastArtfID) {
-        eventDB.recordLastArtifactID(lastArtfID);
-    }
-
-    private void recordWasIngestRunning(Boolean wasIngestRunning) {
-        eventDB.recordWasIngestRunning(wasIngestRunning);
-    }
-
-    private void recordLastObjID(Long lastObjID) {
-        eventDB.recordLastObjID(lastObjID);
-    }
-
-    public boolean getWasIngestRunning() {
-        return eventDB.getWasIngestRunning();
-    }
-
-    public Long getLastObjID() {
-        return eventDB.getLastObjID();
-    }
-
-    public long getLastArtfactID() {
-        return eventDB.getLastArtfactID();
-    }
 
     public TimeLineEvent getEventById(Long eventID) {
         return idToEventCache.getUnchecked(eventID);
@@ -225,6 +200,10 @@ public class EventsRepository {
 
     synchronized public Map<EventType, Long> countEvents(ZoomParams params) {
         return eventCountsCache.getUnchecked(params);
+    }
+
+    synchronized public int countAllEvents() {
+        return eventDB.countAllEvents();
     }
 
     private void invalidateCaches() {
@@ -331,17 +310,7 @@ public class EventsRepository {
         }
     }
 
-    /**
-     *
-     * @param lastObjId     the value of lastObjId
-     * @param lastArtfID    the value of lastArtfID
-     * @param injestRunning the value of injestRunning
-     */
-    public void recordDBPopulationState(final long lastObjId, final long lastArtfID, final Boolean injestRunning) {
-        recordLastObjID(lastObjId);
-        recordLastArtifactID(lastArtfID);
-        recordWasIngestRunning(injestRunning);
-    }
+
 
     public boolean areFiltersEquivalent(RootFilter f1, RootFilter f2) {
         return SQLHelper.getSQLWhere(f1).equals(SQLHelper.getSQLWhere(f2));
@@ -470,11 +439,6 @@ public class EventsRepository {
         protected Void call() throws Exception {
             EventDB.EventTransaction trans = null;
 
-            //save paramaters for recording later
-            long lastObjId = skCase.getLastObjectId();
-            long lastArtfID = TimeLineController.getCaseLastArtifactID(skCase);
-            boolean injestRunning = IngestManager.getInstance().isIngestRunning();
-
             if (dbPopulationMode == DBPopulationMode.FULL) {
                 //drop old db, and add back MAC and artifact events
                 LOGGER.log(Level.INFO, "Beginning population of timeline db."); // NON-NLS
@@ -513,9 +477,6 @@ public class EventsRepository {
             Platform.runLater(() -> cancellable.set(false));
             restartProgressHandle(Bundle.progressWindow_msg_commitingDb(), "", -1D, 1, false);
             eventDB.commitTransaction(trans);
-            if (isCancelRequested() == false) {
-                recordDBPopulationState(lastObjId, lastArtfID, injestRunning);
-            }
 
             eventDB.analyze();
             populateFilterData(skCase);
