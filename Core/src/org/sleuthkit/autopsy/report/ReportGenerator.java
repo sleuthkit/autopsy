@@ -684,7 +684,7 @@ class ReportGenerator {
             } catch (InterruptedException | ExecutionException ex) {
                 MessageNotifyUtil.Notify.show(
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorTitle"),
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorText") + ex.getLocalizedMessage(),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorText") + ex.getCause().getLocalizedMessage(),
                         MessageNotifyUtil.MessageType.ERROR);
                 logger.log(Level.SEVERE, "failed to generate reports", ex); //NON-NLS
             } // catch and ignore if we were cancelled
