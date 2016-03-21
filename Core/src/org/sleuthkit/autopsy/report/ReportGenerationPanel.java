@@ -20,8 +20,11 @@ package org.sleuthkit.autopsy.report;
 
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import javax.swing.Box;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
@@ -49,6 +52,7 @@ class ReportGenerationPanel extends javax.swing.JPanel {
         c.gridy = 0;
         c.weightx = 1.0;
         glue = Box.createVerticalGlue();
+        
     }
 
     /**
@@ -78,6 +82,14 @@ class ReportGenerationPanel extends javax.swing.JPanel {
         // 80 px per progressPanel.
         reportPanel.setPreferredSize(new Dimension(600, 1 * 80));
         reportPanel.repaint();
+        progressPanel.addPropertyChangeListener((PropertyChangeEvent evt) -> {
+            String propName = evt.getPropertyName();
+            if (propName.equals(ReportProgressPanel.Events.COMPLETED.toString())) {
+                SwingUtilities.invokeLater(() -> {
+                    cancelButton.setEnabled(false);
+                });
+            }
+        });
         return progressPanel;
     }
 
@@ -238,4 +250,5 @@ class ReportGenerationPanel extends javax.swing.JPanel {
     private javax.swing.JLabel titleLabel;
     private javax.swing.JSeparator titleSeparator;
     // End of variables declaration//GEN-END:variables
+
 }
