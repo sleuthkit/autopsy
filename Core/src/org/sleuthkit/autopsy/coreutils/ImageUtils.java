@@ -149,8 +149,8 @@ public class ImageUtils {
     /**
      * thread that saves generated thumbnails to disk in the background
      */
-    private static final Executor imageSaver =
-            Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
+    private static final Executor imageSaver
+            = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
                     .namingPattern("icon saver-%d").build()); //NOI18N NON-NLS
 
     public static List<String> getSupportedImageExtensions() {
@@ -223,40 +223,19 @@ public class ImageUtils {
     }
 
     /**
-     * Does the image have a GIF mimetype.
+     * Checks the MIME type of a file to determine whether it is a GIF. If the
+     * MIME type is not known, checks for a "gif" extension.
      *
-     * @param file
+     * @param file The file to be checked.
      *
-     * @return true if the given file has a GIF mimetype
+     * @return True or false
      */
     public static boolean isGIF(AbstractFile file) {
-        try {
-            final FileTypeDetector myFileTypeDetector = getFileTypeDetector();
-            if (nonNull(myFileTypeDetector)) {
-                String fileType = myFileTypeDetector.getFileType(file);
-                return IMAGE_GIF_MIME.equalsIgnoreCase(fileType);
-            }
-        } catch (FileTypeDetectorInitException ex) {
-            LOGGER.log(Level.WARNING, "Failed to initialize FileTypeDetector.", ex); //NOI18N NON-NLS
-        } catch (TskCoreException ex) {
-            if (ex.getMessage().contains("An SQLException was provoked by the following failure: java.lang.InterruptedException")) { //NON-NLS
-                LOGGER.log(Level.WARNING, "Mime type look up with FileTypeDetector was interupted."); //NOI18N} NON-NLS
-                return "gif".equalsIgnoreCase(file.getNameExtension()); //NOI18N
-            } else {
-                LOGGER.log(Level.SEVERE, "Failed to get mime type of " + getContentPathSafe(file) + " with FileTypeDetector.", ex); //NOI18N} NON-NLS
-            }
-        }
-        LOGGER.log(Level.WARNING, "Falling back on direct mime type check for {0}.", getContentPathSafe(file)); //NOI18N NON-NLS
-        switch (file.isMimeType(GIF_MIME_SET)) {
-
-            case TRUE:
-                return true;
-            case UNDEFINED:
-                LOGGER.log(Level.WARNING, "Falling back on extension check."); //NOI18N NON-NLS
-                return "gif".equalsIgnoreCase(file.getNameExtension()); //NOI18N
-            case FALSE:
-            default:
-                return false;
+        String mimeType = file.getMIMEType();
+        if (nonNull(mimeType)) {
+            return IMAGE_GIF_MIME.equalsIgnoreCase(mimeType);
+        } else {
+            return "gif".equalsIgnoreCase(file.getNameExtension()); //NOI18N            
         }
     }
 
@@ -283,25 +262,15 @@ public class ImageUtils {
         if (file.getSize() == 0) {
             return false;
         }
-        final String extension = file.getNameExtension();
-        try {
-            String mimeType = getFileTypeDetector().getFileType(file);
-            if (Objects.nonNull(mimeType)) {
-                return supportedMimeTypes.contains(mimeType)
-                        || (conditionalMimes.contains(mimeType.toLowerCase()) && supportedExtension.contains(extension));
-            }
-        } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "Failed to look up mimetype for {0} using FileTypeDetector:{1}", new Object[]{getContentPathSafe(file), ex.toString()}); //NOI18N NON-NLS
-            LOGGER.log(Level.INFO, "Falling back on AbstractFile.isMimeType"); //NOI18N NON-NLS
-            AbstractFile.MimeMatchEnum mimeMatch = file.isMimeType(supportedMimeTypes);
-            if (mimeMatch == AbstractFile.MimeMatchEnum.TRUE) {
-                return true;
-            } else if (mimeMatch == AbstractFile.MimeMatchEnum.FALSE) {
-                return false;
-            }
+        String mimeType = file.getMIMEType();
+        String extension = file.getNameExtension();
+        if (nonNull(mimeType)) {
+            return supportedMimeTypes.contains(mimeType)
+                    || (conditionalMimes.contains(mimeType.toLowerCase())
+                    && supportedExtension.contains(extension));
+        } else {
+            return StringUtils.isNotBlank(extension) && supportedExtension.contains(extension);
         }
-        // if we have an extension, check it
-        return StringUtils.isNotBlank(extension) && supportedExtension.contains(extension);
     }
 
     /**
@@ -934,7 +903,7 @@ public class ImageUtils {
      *
      * @return
      */
-     static String getContentPathSafe(Content content) {
+    static String getContentPathSafe(Content content) {
         try {
             return content.getUniquePath();
         } catch (TskCoreException tskCoreException) {

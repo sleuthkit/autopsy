@@ -438,7 +438,7 @@ final class UserDefinedFileTypesManager {
             List<FileType> fileTypes = new ArrayList<>();
             /*
              * RC: Commenting out the loadDocument overload that validates
-             * agaisnt the XSD is a temp fix for a failure to provide an upgrade
+             * against the XSD is a temp fix for a failure to provide an upgrade
              * path when the RelativeToStart attribute was added to the
              * Signature element. The upgrade path can be supplied, but the plan
              * is to replace the use of XML with object serialization for the

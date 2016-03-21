@@ -17,7 +17,7 @@ import org.sleuthkit.datamodel.TagName;
 public class TagsFilter extends UnionFilter<TagNameFilter> {
 
     @Override
-    @NbBundle.Messages("tagsFilter.displayName.text=Only Events Tagged")
+    @NbBundle.Messages("tagsFilter.displayName.text=Tags")
     public String getDisplayName() {
         return Bundle.tagsFilter_displayName_text();
     }

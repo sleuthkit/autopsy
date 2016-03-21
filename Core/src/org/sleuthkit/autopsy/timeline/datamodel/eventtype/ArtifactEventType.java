@@ -147,7 +147,6 @@ public interface ArtifactEventType extends EventType {
         if (type.getArtifactType().getTypeID() != artf.getArtifactTypeID()) {
             throw new IllegalArgumentException();
         }
-
         if (artf.getAttribute(type.getDateTimeAttrubuteType()) == null) {
             LOGGER.log(Level.WARNING, "Artifact {0} has no date/time attribute, skipping it.", artf.getArtifactID()); // NON-NLS
             return null;
