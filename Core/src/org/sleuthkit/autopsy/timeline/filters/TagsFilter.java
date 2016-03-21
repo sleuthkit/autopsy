@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.timeline.filters;
 
 import java.util.Comparator;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ObservableBooleanValue;
@@ -46,9 +47,9 @@ public class TagsFilter extends UnionFilter<TagNameFilter> {
         filterCopy.setSelected(isSelected());
         filterCopy.setDisabled(isDisabled());
         //add a copy of each subfilter
-        this.getSubFilters().forEach((TagNameFilter t) -> {
-            filterCopy.addSubFilter(t.copyOf());
-        });
+        getSubFilters().forEach(tagNameFilter ->
+                filterCopy.addSubFilter(tagNameFilter.copyOf())
+        );
         return filterCopy;
     }
 
@@ -87,17 +88,6 @@ public class TagsFilter extends UnionFilter<TagNameFilter> {
         return areSubFiltersEqual(this, other);
     }
 
-    public void addSubFilter(TagNameFilter tagFilter) {
-        TagName newFilterTagName = tagFilter.getTagName();
-        if (getSubFilters().stream()
-                .map(TagNameFilter::getTagName)
-                .filter(newFilterTagName::equals)
-                .findAny().isPresent() == false) {
-            getSubFilters().add(tagFilter);
-        }
-        getSubFilters().sort(Comparator.comparing(TagNameFilter::getDisplayName));
-    }
-
     public void removeFilterForTag(TagName tagName) {
         getSubFilters().removeIf(subfilter -> subfilter.getTagName().equals(tagName));
         getSubFilters().sort(Comparator.comparing(TagNameFilter::getDisplayName));
@@ -107,4 +97,10 @@ public class TagsFilter extends UnionFilter<TagNameFilter> {
     public ObservableBooleanValue disabledProperty() {
         return Bindings.or(super.disabledProperty(), Bindings.isEmpty(getSubFilters()));
     }
+
+    @Override
+    Predicate<TagNameFilter> getDuplicatePredicate(TagNameFilter subfilter) {
+        return tagNameFilter -> subfilter.getTagName().equals(tagNameFilter.getTagName());
+    }
+
 }
