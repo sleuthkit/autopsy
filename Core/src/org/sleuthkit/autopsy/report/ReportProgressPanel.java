@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.report;
 
 import org.openide.util.NbBundle;
-
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -30,14 +29,22 @@ import java.io.IOException;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
+/**
+ * A panel used by a report generation module to show progress.
+ */
 public class ReportProgressPanel extends javax.swing.JPanel {
 
+    private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(ReportProgressPanel.class.getName());
+    private static final Color GREEN = new Color(50, 205, 50);
+    private static final Color RED = new Color(178, 34, 34);
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
-    private ReportStatus STATUS;
+    private ReportStatus status;
 
-    // Enum to represent if a report is waiting,
-    // running, done, or has been canceled
+    /**
+     * Used by a report generation module to communicate report generation
+     * status to this panel and its listeners.
+     */
     public enum ReportStatus {
 
         QUEUING,
@@ -47,269 +54,235 @@ public class ReportProgressPanel extends javax.swing.JPanel {
         ERROR
     }
 
-    public enum Events {
-
-        COMPLETED
-    }
-
     /**
-     * Creates new form ReportProgressPanel
+     * Constructs a panel used by report generation module to show progress.
+     *
+     * @param reportName The name of the report being generated.
+     * @param reportPath The path to the report file.
      */
     public ReportProgressPanel(String reportName, String reportPath) {
         initComponents();
-        customInit(reportName, reportPath);
-    }
-
-    private void customInit(String reportName, String reportPath) {
         reportProgressBar.setIndeterminate(true);
         reportProgressBar.setMaximum(100);
-
         reportLabel.setText(reportName);
-        processingLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.progress.queuing"));
-        STATUS = ReportStatus.QUEUING;
-
-        if (reportPath != null) {
+        status = ReportStatus.QUEUING;
+        if (null != reportPath) {
             pathLabel.setText("<html><u>" + shortenPath(reportPath) + "</u></html>"); //NON-NLS
             pathLabel.setToolTipText(reportPath);
-
-            // Add the "link" effect to the pathLabel
-            final String linkPath = reportPath;
+            String linkPath = reportPath;
             pathLabel.addMouseListener(new MouseListener() {
 
                 @Override
-                public void mouseClicked(MouseEvent e) {
+                public void mouseClicked(MouseEvent mouseEvent) {
                 }
 
                 @Override
-                public void mousePressed(MouseEvent e) {
+                public void mousePressed(MouseEvent mouseEvent) {
                 }
 
                 @Override
-                public void mouseReleased(MouseEvent e) {
+                public void mouseReleased(MouseEvent mouseEvent) {
                     File file = new File(linkPath);
                     try {
                         Desktop.getDesktop().open(file);
-                    } catch (IOException ex) {
-                    } catch (IllegalArgumentException ex) {
+                    } catch (IOException ioex) {
+                        logger.log(Level.SEVERE, "Error opening report file", ioex);
+                    } catch (IllegalArgumentException iaEx) {
+                        logger.log(Level.SEVERE, "Error opening report file", iaEx);
                         try {
-                            // try to open the parent path if the file doens't exist
                             Desktop.getDesktop().open(file.getParentFile());
-                        } catch (IOException ex1) {
+                        } catch (IOException ioEx2) {
+                            logger.log(Level.SEVERE, "Error opening report file parent", ioEx2);
                         }
                     }
                 }
 
                 @Override
-                public void mouseEntered(MouseEvent e) {
+                public void mouseEntered(MouseEvent e3) {
                     pathLabel.setForeground(Color.DARK_GRAY);
                     setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
                 }
 
                 @Override
-                public void mouseExited(MouseEvent e) {
+                public void mouseExited(MouseEvent e4) {
                     pathLabel.setForeground(Color.BLACK);
                     setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                 }
-
             });
         } else {
             pathLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.initPathLabel.noFile"));
         }
     }
 
+    /**
+     * Adds a property change listener to this panel.
+     *
+     * @param listener The listener to be added.
+     */
     @Override
     public void addPropertyChangeListener(PropertyChangeListener listener) {
         this.pcs.addPropertyChangeListener(listener);
     }
 
+    /**
+     * Removes a property change listener from this panel.
+     *
+     * @param listener The listener to be removed.
+     */
     @Override
     public void removePropertyChangeListener(PropertyChangeListener listener) {
         this.pcs.removePropertyChangeListener(listener);
     }
 
     /**
-     * Return a shortened version of the given path.
-     */
-    private String shortenPath(String path) {
-        if (path.length() > 100) {
-            path = path.substring(0, 10 + path.substring(10).indexOf(File.separator) + 1) + "..."
-                    + path.substring((path.length() - 70) + path.substring(path.length() - 70).indexOf(File.separator));
-        }
-        return path;
-    }
-
-    /**
-     * Return the current ReportStatus of this report.
+     * Gets the current status of the generation of the report.
      *
-     * @return ReportStatus status of this report
+     * @return The report generation status as a ReportStatus enum.
      */
     public ReportStatus getStatus() {
-        return STATUS;
+        return status;
     }
 
     /**
-     * Start the JProgressBar for this report.
-     *
-     * Enables the cancelButton, updates the processingLabel, and changes this
-     * report's ReportStatus.
+     * Starts the progress bar component of this panel.
      */
     public void start() {
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                processingLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.start.progress.text"));
-                STATUS = ReportStatus.RUNNING;
-            }
+        EventQueue.invokeLater(() -> {
+            status = ReportStatus.RUNNING;
         });
     }
 
     /**
-     * Set the maximum progress for this report's JProgressBar.
+     * Sets the maximum value of the progress bar component of this panel.
      *
-     * @param max maximum progress for JProgressBar
+     * @param max The maximum value.
      */
-    public void setMaximumProgress(final int max) {
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                if (STATUS != ReportStatus.CANCELED) {
-                    reportProgressBar.setMaximum(max);
-                }
+    public void setMaximumProgress(int max) {
+        EventQueue.invokeLater(() -> {
+            if (status != ReportStatus.CANCELED) {
+                reportProgressBar.setMaximum(max);
             }
         });
     }
 
     /**
-     * Increment the JProgressBar for this report by one unit.
+     * Increments the current value of the progress bar component of this panel
+     * by one unit.
      */
     public void increment() {
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                if (STATUS != ReportStatus.CANCELED) {
-                    reportProgressBar.setValue(reportProgressBar.getValue() + 1);
-                }
+        EventQueue.invokeLater(() -> {
+            if (status != ReportStatus.CANCELED) {
+                reportProgressBar.setValue(reportProgressBar.getValue() + 1);
             }
         });
     }
 
     /**
-     * Set the value of the JProgressBar for this report.
+     * Sets the current value of the progress bar component of this panel.
      *
-     * @param value value to be set at
+     * @param value The value to be set.
      */
-    public void setProgress(final int value) {
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                if (STATUS != ReportStatus.CANCELED) {
-                    reportProgressBar.setValue(value);
-                }
+    public void setProgress(int value) {
+        EventQueue.invokeLater(() -> {
+            if (status != ReportStatus.CANCELED) {
+                reportProgressBar.setValue(value);
             }
         });
     }
 
     /**
-     * Changes the status of the JProgressBar to be determinate or
+     * Changes the the progress bar component of this panel to be determinate or
      * indeterminate.
      *
-     * @param indeterminate sets the JProgressBar to be indeterminate if true,
-     *                      determinate otherwise
+     * @param indeterminate True if the progress bar should be set to
+     *                      indeterminate.
      */
-    public void setIndeterminate(final boolean indeterminate) {
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                if (STATUS != ReportStatus.CANCELED) {
-                    reportProgressBar.setIndeterminate(indeterminate);
-                }
+    public void setIndeterminate(boolean indeterminate) {
+        EventQueue.invokeLater(() -> {
+            if (status != ReportStatus.CANCELED) {
+                reportProgressBar.setIndeterminate(indeterminate);
             }
         });
     }
 
     /**
-     * Change the text of this report's status label. The text given will be the
-     * full text used. e.g. updateStatusLabel("Now processing files...") sets
-     * the label to "Now processing files..."
+     * Makes the components of this panel indicate the final status of
+     * generation of the report.
      *
-     * @param status String to use as status
-     */
-    public void updateStatusLabel(final String status) {
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                if (STATUS != ReportStatus.CANCELED) {
-                    processingLabel.setText(status);
-                }
-            }
-        });
-    }
-
-    /**
-     * Declare the report completed. This will fill the JProgressBar, update the
-     * cancelButton to completed, and disallow any cancellation of this report.
-     *
-     * @deprecated Use {@link #complete(ReportStatus)}
-     */
-    @Deprecated
-    public void complete() {
-        complete(ReportStatus.COMPLETE);
-    }
-
-    /**
-     * Declare the report completed ands sets if completed successfully or with
-     * errors. This will fill the JProgressBar, update the cancelButton to
-     * completed, and disallow any cancellation of this report.
-     *
-     * @param reportStatus set to appropriate ResultStatus enum.
+     * @param reportStatus The final status, must be COMPLETE or ERROR.
      */
     public void complete(ReportStatus reportStatus) {
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                // make sure we disable an indeterminate 
-                reportProgressBar.setIndeterminate(false);
-
-                if (STATUS != ReportStatus.CANCELED) {
-                    switch (reportStatus) {
-                        case COMPLETE: {
-                            ReportStatus oldValue = STATUS;
-                            STATUS = ReportStatus.COMPLETE;
-                            processingLabel.setForeground(Color.BLACK);
-                            processingLabel.setText(
-                                    NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.processLbl.text"));
-                            reportProgressBar.setValue(reportProgressBar.getMaximum());
-                            reportProgressBar.setStringPainted(true);
-                            // set reportProgressBar color as green.
-                            reportProgressBar.setForeground(new Color(50, 205, 50));
-                            reportProgressBar.setString("Complete"); //NON-NLS
-                            pcs.firePropertyChange(Events.COMPLETED.toString(), oldValue, STATUS);
-                            break;
-                        }
-                        case ERROR: {
-                            ReportStatus oldValue = STATUS;
-                            STATUS = ReportStatus.ERROR;
-                            processingLabel.setForeground(new Color(178, 34, 34));
-                            processingLabel.setText(
-                                    NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.processLb2.text"));
-                            reportProgressBar.setValue(reportProgressBar.getMaximum());
-                            reportProgressBar.setStringPainted(true);
-                            // set reportProgressBar color as red.
-                            reportProgressBar.setForeground(new Color(178, 34, 34));
-                            reportProgressBar.setString("Error"); //NON-NLS
-                            pcs.firePropertyChange(Events.COMPLETED.toString(), oldValue, STATUS);
-                            break;
-                        }
-                        // add finer grained result codes here.
-                        default: {
-                            logger.log(Level.SEVERE, "Invalid ReportStatus code {0}", reportStatus); //NON-NLS
-                            break;
-                        }
+        EventQueue.invokeLater(() -> {
+            reportProgressBar.setIndeterminate(false);
+            if (status != ReportStatus.CANCELED) {
+                switch (reportStatus) {
+                    case COMPLETE: {
+                        ReportStatus oldValue = status;
+                        status = ReportStatus.COMPLETE;
+                        reportProgressBar.setValue(reportProgressBar.getMaximum());
+                        reportProgressBar.setStringPainted(true);
+                        reportProgressBar.setForeground(GREEN);
+                        reportProgressBar.setString("Complete"); //NON-NLS
+                        pcs.firePropertyChange(ReportStatus.COMPLETE.toString(), oldValue, status);
+                        break;
+                    }
+                    case ERROR: {
+                        ReportStatus oldValue = status;
+                        status = ReportStatus.ERROR;
+                        reportProgressBar.setValue(reportProgressBar.getMaximum());
+                        reportProgressBar.setStringPainted(true);
+                        reportProgressBar.setForeground(RED);
+                        reportProgressBar.setString("Error"); //NON-NLS
+                        pcs.firePropertyChange(ReportStatus.COMPLETE.toString(), oldValue, status);
+                        break;
+                    }
+                    default: {
+                        break;
                     }
                 }
             }
         });
-        // Do something with the button to change the icon and make not clickable
+    }
+
+    /**
+     * Makes the components of this panel indicate generation of the report was
+     * cancelled.
+     */
+    void cancel() {
+        switch (status) {
+            case COMPLETE:
+                break;
+            case CANCELED:
+                break;
+            case ERROR:
+                break;
+            default:
+                ReportStatus oldValue = status;
+                status = ReportStatus.CANCELED;
+                reportProgressBar.setIndeterminate(false);
+                reportProgressBar.setValue(0);
+                reportProgressBar.setStringPainted(true);
+                reportProgressBar.setForeground(RED); // Red
+                reportProgressBar.setString("Cancelled"); //NON-NLS
+                pcs.firePropertyChange(ReportStatus.CANCELED.toString(), oldValue, status);
+                break;
+        }
+    }
+
+    /**
+     * Gets a shortened version of a file path.
+     *
+     * @param path The path to shorten.
+     *
+     * @return The shortened path.
+     */
+    private String shortenPath(String path) {
+        if (path.length() > 100) {
+            return path.substring(0, 10 + path.substring(10).indexOf(File.separator) + 1) + "..."
+                    + path.substring((path.length() - 70) + path.substring(path.length() - 70).indexOf(File.separator));
+        } else {
+            return path;
+        }
     }
 
     /**
@@ -324,7 +297,6 @@ public class ReportProgressPanel extends javax.swing.JPanel {
         reportProgressBar = new javax.swing.JProgressBar();
         reportLabel = new javax.swing.JLabel();
         pathLabel = new javax.swing.JLabel();
-        processingLabel = new javax.swing.JLabel();
         separationLabel = new javax.swing.JLabel();
 
         setFont(getFont().deriveFont(getFont().getStyle() & ~java.awt.Font.BOLD, 11));
@@ -337,9 +309,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
 
         pathLabel.setFont(pathLabel.getFont().deriveFont(pathLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(pathLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.pathLabel.text")); // NOI18N
-
-        processingLabel.setFont(processingLabel.getFont().deriveFont((processingLabel.getFont().getStyle() | java.awt.Font.ITALIC) & ~java.awt.Font.BOLD, 10));
-        org.openide.awt.Mnemonics.setLocalizedText(processingLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.processingLabel.text")); // NOI18N
+        pathLabel.setVerticalAlignment(javax.swing.SwingConstants.TOP);
 
         separationLabel.setFont(separationLabel.getFont().deriveFont(separationLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(separationLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.separationLabel.text")); // NOI18N
@@ -351,10 +321,9 @@ public class ReportProgressPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(processingLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(reportProgressBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGap(58, 58, 58))
+                        .addGap(0, 0, 0))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(reportLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -371,45 +340,40 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(reportLabel)
-                    .addComponent(pathLabel)
+                    .addComponent(pathLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(separationLabel))
-                .addGap(0, 0, 0)
-                .addComponent(processingLabel)
-                .addContainerGap(20, Short.MAX_VALUE))
+                .addGap(33, 33, 33))
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    /**
-     * Cancels the current report, based on it's status. If the report is
-     * complete or has already been completed, nothing happens.
-     */
-    void cancel() {
-        switch (STATUS) {
-            case COMPLETE:
-                break;
-            case CANCELED:
-                break;
-            case ERROR:
-                break;
-            default:
-                STATUS = ReportStatus.CANCELED;
-                reportProgressBar.setIndeterminate(false);
-                reportProgressBar.setValue(0);
-                reportProgressBar.setStringPainted(true);
-                // set reportProgressBar color as red.
-                reportProgressBar.setForeground(new Color(178, 34, 34));
-                reportProgressBar.setString("Cancelled"); //NON-NLS
-                processingLabel.setForeground(new Color(178, 34, 34));
-                processingLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.cancel.procLbl.text"));
-                break;
-        }
-    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel pathLabel;
-    private javax.swing.JLabel processingLabel;
     private javax.swing.JLabel reportLabel;
     private javax.swing.JProgressBar reportProgressBar;
     private javax.swing.JLabel separationLabel;
     // End of variables declaration//GEN-END:variables
+
+    /**
+     * Does nothing, the status label it used to update no longer exists.
+     *
+     * @param status String to use as status
+     *
+     * @deprecated
+     */
+    @Deprecated
+    public void updateStatusLabel(final String status) {
+    }
+
+    /**
+     * Makes the components of this panel indicate the generation of the report
+     * is completed.
+     *
+     * @deprecated Use {@link #complete(ReportStatus)}
+     */
+    @Deprecated
+    public void complete() {
+        complete(ReportStatus.COMPLETE);
+    }
+
 }
