@@ -134,7 +134,22 @@ public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture
     @Override
     public boolean isSupported(AbstractFile file) {
         String extension = file.getNameExtension();
-        //TODO: is this what we want, to require both extension and mimetype support?
+        /**
+         * Although it seems too restrictive, requiring both a supported
+         * extension and a supported MIME type prevents two undesirable
+         * behaviors:
+         *
+         * 1) Until AUT-1766 and AUT-1801 are fixed, we incorrectly identify all
+         * iff files as audio/aiff. This means that if this panel went with the
+         * looser 'mime type OR extension' criteria we use for images, then this
+         * panel would attempt (and fail) to display all iff files, even non
+         * audio ones.
+         *
+         * 2) The looser criteria means we are less confident about the files we
+         * are potentialy sending to GStreamer on 32bit jvms. We are less
+         * comfortable with the error handling for GStreamer, and don't want to
+         * send it files which might cause it trouble.
+         */
         if (AUDIO_EXTENSIONS.contains("." + extension) || getExtensionsList().contains("." + extension)) {
             SortedSet<String> mimeTypes = new TreeSet<>(getMimeTypes());
             try {

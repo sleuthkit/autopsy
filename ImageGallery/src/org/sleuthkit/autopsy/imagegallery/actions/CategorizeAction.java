@@ -84,6 +84,7 @@ public class CategorizeAction extends Action {
         return new CategoryMenu(controller);
     }
 
+
     final void addCatToFiles(Set<Long> ids) {
         Logger.getAnonymousLogger().log(Level.INFO, "categorizing{0} as {1}", new Object[]{ids.toString(), cat.getDisplayName()}); //NON-NLS
         controller.queueDBWorkerTask(new CategorizeTask(ids, cat, createUndo));
@@ -166,7 +167,7 @@ public class CategorizeAction extends Action {
                             tagsManager.addContentTag(file, tagName, "");
                         }
                     }
-                } catch (TskCoreException  ex) {
+                } catch (TskCoreException ex) {
                     LOGGER.log(Level.SEVERE, "Error categorizing result", ex); //NON-NLS
                     JOptionPane.showMessageDialog(null,
                             Bundle.CategorizeTask_errorUnable_msg(fileID),

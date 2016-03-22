@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -52,6 +53,7 @@ import javax.swing.SwingWorker;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -64,13 +66,13 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
-import org.sleuthkit.datamodel.BlackboardAttribute.Type;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.BlackboardAttribute.Type;
 
 /**
  * Instances of this class use GeneralReportModules, TableReportModules and
@@ -528,8 +530,8 @@ class ReportGenerator {
                 }
 
                 /*
-                 * Gets all of the attribute types of this artifact type by
-                 * adding all of the types to a set
+                 Gets all of the attribute types of this artifact type by adding
+                 all of the types to a set
                  */
                 Set<BlackboardAttribute.Type> attrTypeSet = new TreeSet<>((Type o1, Type o2) -> o1.getDisplayName().compareTo(o2.getDisplayName()));
                 for (ArtifactData data : artifactList) {
@@ -856,7 +858,7 @@ class ReportGenerator {
                 return;
             }
 
-            if (ImageUtils.isImageThumbnailSupported(file)) {
+            if (ImageUtils.thumbnailSupported(file)) {
                 images.add(file);
             }
         }
@@ -927,8 +929,8 @@ class ReportGenerator {
         } else {
             orderByClause = "ORDER BY list ASC"; //NON-NLS
         }
-        String keywordListQuery =
-                "SELECT att.value_text AS list " + //NON-NLS
+        String keywordListQuery
+                = "SELECT att.value_text AS list " + //NON-NLS
                 "FROM blackboard_attributes AS att, blackboard_artifacts AS art " + //NON-NLS
                 "WHERE att.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + " " + //NON-NLS
                 "AND art.artifact_type_id = " + ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + " " + //NON-NLS
@@ -970,8 +972,8 @@ class ReportGenerator {
             orderByClause = "ORDER BY list ASC, keyword ASC, parent_path ASC, name ASC, preview ASC"; //NON-NLS
         }
         // Query for keywords, grouped by list
-        String keywordsQuery =
-                "SELECT art.artifact_id, art.obj_id, att1.value_text AS keyword, att2.value_text AS preview, att3.value_text AS list, f.name AS name, f.parent_path AS parent_path " + //NON-NLS
+        String keywordsQuery
+                = "SELECT art.artifact_id, art.obj_id, att1.value_text AS keyword, att2.value_text AS preview, att3.value_text AS list, f.name AS name, f.parent_path AS parent_path " + //NON-NLS
                 "FROM blackboard_artifacts AS art, blackboard_attributes AS att1, blackboard_attributes AS att2, blackboard_attributes AS att3, tsk_files AS f " + //NON-NLS
                 "WHERE (att1.artifact_id = art.artifact_id) " + //NON-NLS
                 "AND (att2.artifact_id = art.artifact_id) " + //NON-NLS
@@ -1091,8 +1093,8 @@ class ReportGenerator {
         } else {
             orderByClause = "ORDER BY att.value_text ASC"; //NON-NLS
         }
-        String hashsetsQuery =
-                "SELECT att.value_text AS list " + //NON-NLS
+        String hashsetsQuery
+                = "SELECT att.value_text AS list " + //NON-NLS
                 "FROM blackboard_attributes AS att, blackboard_artifacts AS art " + //NON-NLS
                 "WHERE att.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + " " + //NON-NLS
                 "AND art.artifact_type_id = " + ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID() + " " + //NON-NLS
@@ -1128,8 +1130,8 @@ class ReportGenerator {
         } else {
             orderByClause = "ORDER BY att.value_text ASC, f.parent_path ASC, f.name ASC, size ASC"; //NON-NLS
         }
-        String hashsetHitsQuery =
-                "SELECT art.artifact_id, art.obj_id, att.value_text AS setname, f.name AS name, f.size AS size, f.parent_path AS parent_path " + //NON-NLS
+        String hashsetHitsQuery
+                = "SELECT art.artifact_id, art.obj_id, att.value_text AS setname, f.name AS name, f.size AS size, f.parent_path AS parent_path " + //NON-NLS
                 "FROM blackboard_artifacts AS art, blackboard_attributes AS att, tsk_files AS f " + //NON-NLS
                 "WHERE (att.artifact_id = art.artifact_id) " + //NON-NLS
                 "AND (f.obj_id = art.obj_id) " + //NON-NLS
@@ -2046,12 +2048,10 @@ class ReportGenerator {
         @Override
         public String getCellData(ArtifactData artData) {
             return getFileUniquePath(artData.getContent());
-            /*
-             * else if
-             * (this.columnHeader.equals(NbBundle.getMessage(this.getClass(),
-             * "ReportGenerator.artTableColHdr.tags"))) { return
-             * makeCommaSeparatedList(artData.getTags()); } return "";
-             */
+            /*else if (this.columnHeader.equals(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tags"))) {
+             return makeCommaSeparatedList(artData.getTags());
+             }
+             return "";*/
         }
 
         @Override

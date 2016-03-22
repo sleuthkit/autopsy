@@ -21,6 +21,7 @@
  */
 package org.sleuthkit.autopsy.coreutils;
 
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.io.Files;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
@@ -97,9 +98,9 @@ public class ImageUtils {
         ImageIO.scanForPlugins();
         BufferedImage tempImage;
         try {
-            tempImage = ImageIO.read(ImageUtils.class.getResourceAsStream("/org/sleuthkit/autopsy/images/file-icon.png"));//NON-NLS //NOI18N
+            tempImage = ImageIO.read(ImageUtils.class.getResourceAsStream("/org/sleuthkit/autopsy/images/file-icon.png"));//NON-NLS
         } catch (IOException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to load default icon.", ex); //NOI18N NON-NLS
+            LOGGER.log(Level.SEVERE, "Failed to load default icon.", ex); //NON-NLS
             tempImage = null;
         }
         DEFAULT_THUMBNAIL = tempImage;
@@ -108,10 +109,10 @@ public class ImageUtils {
         boolean openCVLoadedTemp;
         try {
             System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-            if (System.getProperty("os.arch").equals("amd64") || System.getProperty("os.arch").equals("x86_64")) { //NOI18N NON-NLS
-                System.loadLibrary("opencv_ffmpeg248_64"); //NOI18N NON-NLS
+            if (System.getProperty("os.arch").equals("amd64") || System.getProperty("os.arch").equals("x86_64")) { //NON-NLS
+                System.loadLibrary("opencv_ffmpeg248_64"); //NON-NLS
             } else {
-                System.loadLibrary("opencv_ffmpeg248"); //NOI18N NON-NLS
+                System.loadLibrary("opencv_ffmpeg248"); //NON-NLS
             }
 
             openCVLoadedTemp = true;
@@ -160,7 +161,7 @@ public class ImageUtils {
 
     /**
      * Get the default thumbnail, which is the icon for a file. Used when we can
-     * not generate content based thumbnail.
+     * not generate a content based thumbnail.
      *
      * @return the default thumbnail
      */
@@ -190,45 +191,48 @@ public class ImageUtils {
     }
 
     /**
-     * is the file an image that we can read and generate a thumbnail for
+     * Is the file an image that we can read and generate a thumbnail for?
      *
-     * @param file
+     * @param file the AbstractFile to test
      *
      * @return true if the file is an image we can read and generate thumbnail
      *         for.
      */
     public static boolean isImageThumbnailSupported(AbstractFile file) {
-        return isMediaThumbnailSupported(file, "image/", SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_IMAGE_EXTENSIONS) || hasImageFileHeader(file);
+        return isMediaThumbnailSupported(file, "image/", SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_IMAGE_EXTENSIONS) || hasImageFileHeader(file);//NON-NLS
     }
 
     /**
-     * Checks the MIME type of a file to determine whether it is a GIF. If the
-     * MIME type is not known, checks for a "gif" extension.
+     * Checks the MIME type and/or extension of a file to determine whether it
+     * is a GIF.
      *
-     * @param file The file to be checked.
+     * @param file the AbstractFile to test
      *
-     * @return True or false
+     * @return true if the file is a gif
      */
     public static boolean isGIF(AbstractFile file) {
         return isMediaThumbnailSupported(file, null, GIF_MIME_SET, GIF_EXTENSION_LIST);
     }
 
     /**
-     * Check if a file is "supported" by checking its extension and/or MIME type
+     * Check if making a thumbnail for the given file is supported by checking
+     * its extension and/or MIME type against the supplied collections.
      *
      * //TODO: this should move to a better place. Should ImageUtils and
      * VideoUtils both implement/extend some base interface/abstract class. That
      * would be the natural place to put this.
      *
-     * @param file
-     * @param supportedMimeTypes a set of mimetypes that the could have to be
-     *                           supported
-     * @param supportedExtension a set of extensions a file could have to be
-     *                           supported if the mime lookup fails or is
-     *                           inconclusive
+     * @param file               the AbstractFile to test
+     * @param mimeTypePrefix     a MIME 'top-level type name' such as "image/",
+     *                           including the "/". In addition to the list of
+     *                           supported MIME types, any type that starts with
+     *                           this prefix will be regarded as supported
+     * @param supportedMimeTypes a collection of mimetypes that are supported
+     * @param supportedExtension a collection of extensions that are supported
      *
      * @return true if a thumbnail can be generated for the given file based on
-     *         the given lists of supported mimetype and extensions
+     *         the given MIME type prefix and lists of supported MIME types and
+     *         extensions
      */
     static boolean isMediaThumbnailSupported(AbstractFile file, String mimeTypePrefix, final Collection<String> supportedMimeTypes, final List<String> supportedExtension) {
         if (false == file.isFile() || file.getSize() <= 0) {
@@ -247,18 +251,21 @@ public class ImageUtils {
                 }
                 return supportedMimeTypes.contains(mimeType);
             } catch (FileTypeDetectorInitException | TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Error determining MIME type of " + getContentPathSafe(file), ex);
+                LOGGER.log(Level.SEVERE, "Error determining MIME type of " + getContentPathSafe(file), ex);//NON-NLS
                 return false;
             }
         }
     }
 
     /**
-     * returns a lazily instatiated FileTypeDetector
+     * //TODO: AUT-2057 this FileTypeDetector needs to be recreated when the
+     * user adds new user defined file types.
+     *
+     * get a FileTypeDetector
      *
      * @return a FileTypeDetector
      *
-     * @throws FileTypeDetectorInitException if a initializing the
+     * @throws FileTypeDetectorInitException if initializing the
      *                                       FileTypeDetector failed.
      */
     synchronized private static FileTypeDetector getFileTypeDetector() throws FileTypeDetector.FileTypeDetectorInitException {
@@ -272,8 +279,8 @@ public class ImageUtils {
      * Get a thumbnail of a specified size for the given image. Generates the
      * thumbnail if it is not already cached.
      *
-     * @param content
-     * @param iconSize
+     * @param content  the content to generate a thumbnail for
+     * @param iconSize the size (one side of a square) in pixels to generate
      *
      * @return a thumbnail for the given image or a default one if there was a
      *         problem making a thumbnail.
@@ -300,8 +307,8 @@ public class ImageUtils {
      * Get a thumbnail of a specified size for the given image. Generates the
      * thumbnail if it is not already cached.
      *
-     * @param content
-     * @param iconSize
+     * @param content  the content to generate a thumbnail for
+     * @param iconSize the size (one side of a square) in pixels to generate
      *
      * @return File object for cached image. Is guaranteed to exist, as long as
      *         there was not an error generating or saving the thumbnail.
@@ -313,10 +320,10 @@ public class ImageUtils {
     }
 
     /**
-     * Get a file object for where the cached thumbnail should exist. The
-     * returned file may not exist.
+     * Get the location of the cached thumbnail for a file with the given fileID
+     * as a java {@link File}. The returned File may not exist on disk yet.
      *
-     * @param fileID
+     * @param fileID the fileID to get the cached thumbnail location for
      *
      * @return a File object representing the location of the cached thumbnail.
      *         This file may not actually exist(yet). Returns null if there was
@@ -325,19 +332,18 @@ public class ImageUtils {
     private static File getCachedThumbnailLocation(long fileID) {
         try {
             String cacheDirectory = Case.getCurrentCase().getCacheDirectory();
-            return Paths.get(cacheDirectory, "thumbnails", fileID + ".png").toFile(); //NOI18N NON-NLS
+            return Paths.get(cacheDirectory, "thumbnails", fileID + ".png").toFile(); //NON-NLS
         } catch (IllegalStateException e) {
             LOGGER.log(Level.WARNING, "Could not get cached thumbnail location.  No case is open."); //NON-NLS
             return null;
         }
-
     }
 
     /**
      * Do a direct check to see if the given file has an image file header.
      * NOTE: Currently only jpeg and png are supported.
      *
-     * @param file
+     * @param file the AbstractFile to check
      *
      * @return true if the given file has one of the supported image headers.
      */
@@ -348,7 +354,7 @@ public class ImageUtils {
     /**
      * Check if the given file is a jpeg based on header.
      *
-     * @param file
+     * @param file the AbstractFile to check
      *
      * @return true if jpeg file, false otherwise
      */
@@ -373,7 +379,7 @@ public class ImageUtils {
     /**
      * Check if the given file is a png based on header.
      *
-     * @param file
+     * @param file the AbstractFile to check
      *
      * @return true if png file, false otherwise
      */
@@ -405,7 +411,7 @@ public class ImageUtils {
 
         if (bytesRead != buffLength) {
             //ignore if can't read the first few bytes, not an image
-            throw new TskCoreException("Could not read " + buffLength + " bytes from " + file.getName()); //NOI18N
+            throw new TskCoreException("Could not read " + buffLength + " bytes from " + file.getName());//NON-NLS
         }
         return fileHeaderBuffer;
     }
@@ -422,7 +428,7 @@ public class ImageUtils {
      */
     static public int getImageWidth(AbstractFile file) throws IOException {
         return getImageProperty(file,
-                "ImageIO could not determine width of {0}: ", //NOI18N NON-NLS
+                "ImageIO could not determine width of {0}: ", //NON-NLS
                 imageReader -> imageReader.getWidth(0)
         );
     }
@@ -439,7 +445,7 @@ public class ImageUtils {
      */
     static public int getImageHeight(AbstractFile file) throws IOException {
         return getImageProperty(file,
-                "ImageIO could not determine height of {0}: ", //NOI18N NON-NLS
+                "ImageIO could not determine height of {0}: ", //NON-NLS
                 imageReader -> imageReader.getHeight(0)
         );
     }
@@ -536,7 +542,7 @@ public class ImageUtils {
      */
     static private class GetThumbnailTask extends ReadImageTaskBase {
 
-        private static final String FAILED_TO_READ_IMAGE_FOR_THUMBNAIL_GENERATION = "Failed to read {0} for thumbnail generation."; //NOI18N NON-NLS
+        private static final String FAILED_TO_READ_IMAGE_FOR_THUMBNAIL_GENERATION = "Failed to read {0} for thumbnail generation."; //NON-NLS
 
         private final int iconSize;
         private final File cacheFile;
@@ -570,7 +576,7 @@ public class ImageUtils {
                         return SwingFXUtils.toFXImage(cachedThumbnail, null);
                     }
                 } catch (Exception ex) {
-                    LOGGER.log(Level.WARNING, "ImageIO had a problem reading the cached thumbnail for {0}: " + ex.toString(), ImageUtils.getContentPathSafe(file)); //NOI18N NON-NLS
+                    LOGGER.log(Level.WARNING, "ImageIO had a problem reading the cached thumbnail for {0}: " + ex.toString(), ImageUtils.getContentPathSafe(file)); //NON-NLS
                     cacheFile.delete();  //since we can't read the file we might as well delete it.
                 }
             }
@@ -590,7 +596,7 @@ public class ImageUtils {
                     if (defaultOnFailure) {
                         thumbnail = DEFAULT_THUMBNAIL;
                     } else {
-                        throw new IIOException("Failed to generate a thumbnail for " + getContentPathSafe(file));
+                        throw new IIOException("Failed to generate a thumbnail for " + getContentPathSafe(file));//NON-NLS
                     }
                 }
 
@@ -610,7 +616,7 @@ public class ImageUtils {
                     thumbnail = ScalrWrapper.resizeFast(bufferedImage, iconSize);
                 } catch (IllegalArgumentException | OutOfMemoryError e) {
                     // if resizing does not work due to extreme aspect ratio or oom, crop the image instead.
-                    LOGGER.log(Level.WARNING, "Cropping {0}, because it could not be scaled: " + e.toString(), ImageUtils.getContentPathSafe(file)); //NOI18N NON-NLS
+                    LOGGER.log(Level.WARNING, "Cropping {0}, because it could not be scaled: " + e.toString(), ImageUtils.getContentPathSafe(file)); //NON-NLS
 
                     final int height = bufferedImage.getHeight();
                     final int width = bufferedImage.getWidth();
@@ -620,11 +626,11 @@ public class ImageUtils {
                         try {
                             thumbnail = ScalrWrapper.cropImage(bufferedImage, cropWidth, cropHeight);
                         } catch (Exception cropException) {
-                            LOGGER.log(Level.WARNING, "Could not crop {0}: " + cropException.toString(), ImageUtils.getContentPathSafe(file)); //NOI18N NON-NLS
+                            LOGGER.log(Level.WARNING, "Could not crop {0}: " + cropException.toString(), ImageUtils.getContentPathSafe(file)); //NON-NLS
                         }
                     }
                 } catch (Exception e) {
-                    LOGGER.log(Level.WARNING, "Could not scale {0}: " + e.toString(), ImageUtils.getContentPathSafe(file)); //NOI18N NON-NLS
+                    LOGGER.log(Level.WARNING, "Could not scale {0}: " + e.toString(), ImageUtils.getContentPathSafe(file)); //NON-NLS
                     throw e;
                 }
             }
@@ -657,19 +663,20 @@ public class ImageUtils {
                     }
                     ImageIO.write(thumbnail, FORMAT, cacheFile);
                 } catch (IllegalArgumentException | IOException ex) {
-                    LOGGER.log(Level.WARNING, "Could not write thumbnail for {0}: " + ex.toString(), ImageUtils.getContentPathSafe(file)); //NOI18N NON-NLS
+                    LOGGER.log(Level.WARNING, "Could not write thumbnail for {0}: " + ex.toString(), ImageUtils.getContentPathSafe(file)); //NON-NLS
                 }
             });
         }
     }
 
     /**
-     * Create a new {@link Task} that will read the fileinto memory as an
+     * Create a new {@link Task} that will read the file into memory as an
      * {@link javafx.scene.image.Image}
      *
      * Note: the returned task is suitable for running in a background thread,
      * but is not started automatically. Clients are responsible for running the
-     * task, monitoring its progress, and using its result.
+     * task, monitoring its progress, and using its result(including testing for
+     * null).
      *
      * @param file the file to read as an Image
      *
@@ -703,7 +710,7 @@ public class ImageUtils {
      */
     static private abstract class ReadImageTaskBase extends Task<javafx.scene.image.Image> implements IIOReadProgressListener {
 
-        private static final String IMAGEIO_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT = "ImageIO could not read {0}.  It may be unsupported or corrupt"; //NOI18N NON-NLS
+        private static final String IMAGEIO_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT = "ImageIO could not read {0}.  It may be unsupported or corrupt"; //NON-NLS
         final AbstractFile file;
 //        private ImageReader reader;
 
@@ -739,7 +746,7 @@ public class ImageUtils {
                         try {
                             bufferedImage = imageReader.read(0, param); //should always be same bufferedImage object
                         } catch (IOException iOException) {
-                            LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT + ": " + iOException.toString(), ImageUtils.getContentPathSafe(file)); //NOI18N
+                            LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT + ": " + iOException.toString(), ImageUtils.getContentPathSafe(file)); //NON-NLS
                         } finally {
                             imageReader.removeIIOReadProgressListener(ReadImageTaskBase.this);
                         }
@@ -825,14 +832,14 @@ public class ImageUtils {
      *
      * @param content
      *
-     * @return
+     * @return the unique path for the content, or if that fails, just the name.
      */
     static String getContentPathSafe(Content content) {
         try {
             return content.getUniquePath();
         } catch (TskCoreException tskCoreException) {
             String contentName = content.getName();
-            LOGGER.log(Level.SEVERE, "Failed to get unique path for " + contentName, tskCoreException); //NOI18N NON-NLS
+            LOGGER.log(Level.SEVERE, "Failed to get unique path for " + contentName, tskCoreException); //NON-NLS
             return contentName;
         }
     }

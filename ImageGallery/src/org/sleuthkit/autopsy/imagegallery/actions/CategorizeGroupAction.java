@@ -66,7 +66,7 @@ public class CategorizeGroupAction extends CategorizeAction {
                         if (false == Category.ZERO.equals(category) && newCat.equals(category) == false) {
                             catCountMap.merge(category, 1L, Long::sum);
                         }
-                    } catch (TskCoreException  ex) {
+                    } catch (TskCoreException ex) {
                         LOGGER.log(Level.SEVERE, "Failed to categorize files.", ex);
                     }
                 }
