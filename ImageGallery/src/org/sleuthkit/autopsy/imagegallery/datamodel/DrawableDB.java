@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -54,7 +55,6 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupKey;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy;
 import static org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy.GROUP_BY_VALUE;
-import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -979,7 +979,7 @@ public final class DrawableDB {
      * @throws TskCoreException if unable to get a file from the currently open
      *                          {@link SleuthkitCase}
      */
-    private DrawableFile getFileFromID(Long id, boolean analyzed) throws TskCoreException, FileTypeDetector.FileTypeDetectorInitException {
+    private DrawableFile getFileFromID(Long id, boolean analyzed) throws TskCoreException {
         try {
             AbstractFile f = tskCase.getAbstractFileById(id);
             return DrawableFile.create(f, analyzed, isVideoFile(f));
@@ -997,7 +997,7 @@ public final class DrawableDB {
      * @throws TskCoreException if unable to get a file from the currently open
      *                          {@link SleuthkitCase}
      */
-    public DrawableFile getFileFromID(Long id) throws TskCoreException{
+    public DrawableFile getFileFromID(Long id) throws TskCoreException {
         try {
             AbstractFile f = tskCase.getAbstractFileById(id);
             return DrawableFile.create(f,
@@ -1175,17 +1175,8 @@ public final class DrawableDB {
      *         } but caches the result. returns false if passed a null AbstractFile
      */
     public boolean isVideoFile(AbstractFile f) {
-
-        if (null == f) {
-            return false;
-        } else {
-            Boolean isVideo = videoFileMap.get(f.getId());
-            if (null == isVideo) {
-                isVideo = FileTypeUtils.hasVideoMIMEType(f);
-                videoFileMap.put(f.getId(), isVideo);
-            }
-            return isVideo;
-        }
+        return isNull(f) ? false
+                : videoFileMap.computeIfAbsent(f.getId(), id -> FileTypeUtils.hasVideoMIMEType(f));
     }
 
     /**

@@ -150,6 +150,10 @@ public enum FileTypeUtils {
     }
 
     static synchronized FileTypeDetector getFileTypeDetector() throws FileTypeDetector.FileTypeDetectorInitException {
+        /*
+         * TODO: EUR-740 recreate FileTypeDetector when the user creates new
+         * user defined file types
+         */
         if (isNull(FILE_TYPE_DETECTOR)) {
             FILE_TYPE_DETECTOR = new FileTypeDetector();
         }
@@ -181,6 +185,10 @@ public enum FileTypeUtils {
     }
 
     /**
+     *
+     * TODO: EUR-740 recreate FileTypeDetector when the user creates new user
+     * defined file types
+     *
      * does the given file have drawable/supported mime type
      *
      * @param file
@@ -192,7 +200,6 @@ public enum FileTypeUtils {
     static boolean hasDrawableMIMEType(AbstractFile file) throws TskCoreException, FileTypeDetector.FileTypeDetectorInitException {
         String mimeType = getFileTypeDetector().detect(file).toLowerCase();
         return isDrawableMimeType(mimeType) || (mimeType.equals("audio/x-aiff") && "tiff".equalsIgnoreCase(file.getNameExtension()));
-
     }
 
     /**

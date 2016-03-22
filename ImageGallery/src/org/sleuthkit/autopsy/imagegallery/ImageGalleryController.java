@@ -443,7 +443,7 @@ public final class ImageGalleryController implements Executor {
     }
 
     @Nullable
-    synchronized public DrawableFile getFileFromId(Long fileID) throws TskCoreException{
+    synchronized public DrawableFile getFileFromId(Long fileID) throws TskCoreException {
         if (Objects.isNull(db)) {
             LOGGER.log(Level.WARNING, "Could not get file from id, no DB set.  The case is probably closed."); //NON-NLS
             return null;
@@ -962,8 +962,9 @@ public final class ImageGalleryController implements Executor {
                                 }
                             } catch (TskCoreException | FileTypeDetector.FileTypeDetectorInitException ex) {
                                 //TODO: What to do here?
-                                LOGGER.log(Level.WARNING, "Unable to determine if file is drawable and not known.  Not making any changes to DB", ex); //NON-NLS
-                                throw new RuntimeException(ex);
+                                LOGGER.log(Level.SEVERE, "Unable to determine if file is drawable and not known.  Not making any changes to DB", ex); //NON-NLS
+                                MessageNotifyUtil.Notify.error("Image Gallery Error",
+                                        "Unable to determine if file is drawable and not known.  Not making any changes to DB.  See the logs for details.");
                             }
                         }
                     } else {   //TODO: keep track of what we missed for later
