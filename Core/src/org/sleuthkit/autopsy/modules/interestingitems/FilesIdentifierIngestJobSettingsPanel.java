@@ -26,6 +26,9 @@ import java.util.TreeMap;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
+import org.openide.util.Exceptions;
+import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 
@@ -33,6 +36,10 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
  * Ingest job settings panel for interesting files identifier ingest modules.
  */
 final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobSettingsPanel implements Observer {
+    @Messages({
+        "FilesIdentifierIngestJobSettingsPanel.updateError=Error updating interesting files sets settings file.",
+        "FilesIdentifierIngestJobSettingsPanel.getError=Error getting interesting files sets from settings file."
+    })
 
     private final FilesSetsTableModel tableModel;
 
@@ -75,7 +82,12 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
          * Observer.update().
          */
         List<FilesSetRow> filesSetRows = new ArrayList<>();
-        this.filesSetSnapshot = new TreeMap<>(InterestingItemDefsManager.getInstance().getInterestingFilesSets());
+        try {
+            this.filesSetSnapshot = new TreeMap<>(InterestingItemDefsManager.getInstance().getInterestingFilesSets());
+        } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
+            MessageNotifyUtil.Message.error(Bundle.FilesIdentifierIngestJobSettingsPanel_getError());
+            this.filesSetSnapshot = new TreeMap<>();
+        }
         for (FilesSet set : this.filesSetSnapshot.values()) {
             filesSetRows.add(new FilesSetRow(set, settings.interestingFilesSetIsEnabled(set.getName())));
         }
@@ -130,7 +142,13 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
 
         // Refresh the view of the interesting files set definitions.
         List<FilesSetRow> rowModels = new ArrayList<>();
-        TreeMap<String, FilesSet> newFilesSetSnapshot = new TreeMap<>(InterestingItemDefsManager.getInstance().getInterestingFilesSets());
+        TreeMap<String, FilesSet> newFilesSetSnapshot;
+        try {
+            newFilesSetSnapshot = new TreeMap<>(InterestingItemDefsManager.getInstance().getInterestingFilesSets());
+        } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
+            MessageNotifyUtil.Message.error(Bundle.FilesIdentifierIngestJobSettingsPanel_updateError());
+            return;
+        }
         for (FilesSet set : newFilesSetSnapshot.values()) {
             if (this.filesSetSnapshot.keySet().contains(set.getName())) {
                 // Preserve the current enabled/diabled state of the set.
