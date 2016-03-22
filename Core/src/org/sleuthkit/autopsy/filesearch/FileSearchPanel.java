@@ -97,11 +97,11 @@ class FileSearchPanel extends javax.swing.JPanel {
 
         List<FileSearchFilter> metadataFilters = new ArrayList<FileSearchFilter>();
         metadataFilters.add(new SizeSearchFilter());
+        metadataFilters.add(new MimeTypeFilter());
         metadataFilters.add(new DateSearchFilter());
         this.filterAreas.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.metadata"), metadataFilters));
 
         this.filterAreas.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.knownStatus"), new KnownStatusSearchFilter()));
-        this.filterAreas.add(new FilterArea("Test mime", new MimeTypeFilter()));
 
         for (FilterArea fa : this.filterAreas) {
             fa.setMaximumSize(new Dimension(Integer.MAX_VALUE, fa.getMinimumSize().height));
