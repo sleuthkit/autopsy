@@ -129,6 +129,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
             fileSetName = configPanel.getFileSetName();
         }
         run(deviceId, fileSetName, localFilePaths, progressMonitor, callback);
+        this.reset();
     }
 
     /**

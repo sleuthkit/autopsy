@@ -144,6 +144,8 @@ class LocalFilesPanel extends JPanel {
         selectedPaths.setText("");
         enableNext = false;
         errorLabel.setVisible(false);
+        displayName = "";
+        this.displayNameLabel.setText("Display Name: Default");
     }
 
     @Override
