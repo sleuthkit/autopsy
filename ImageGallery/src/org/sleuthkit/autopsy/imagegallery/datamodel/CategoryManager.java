@@ -248,7 +248,7 @@ public class CategoryManager {
             final DrawableTagsManager tagsManager = controller.getTagsManager();
             try {
                 //remove old category tag(s) if necessary
-                for (ContentTag ct : tagsManager.getContentTagsByContent(addedTag.getContent())) {
+                for (ContentTag ct : tagsManager.getContentTags(addedTag.getContent())) {
                     if (ct.getId() != addedTag.getId()
                             && CategoryManager.isCategoryTagName(ct.getName())) {
                         try {

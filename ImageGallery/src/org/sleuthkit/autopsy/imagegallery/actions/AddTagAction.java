@@ -90,10 +90,10 @@ public class AddTagAction extends Action {
                 DrawableTagsManager tagsManager = controller.getTagsManager();
                 for (Long fileID : selectedFiles) {
                     try {
-                        final DrawableFile<?> file = controller.getFileFromId(fileID);
+                        final DrawableFile file = controller.getFileFromId(fileID);
                         LOGGER.log(Level.INFO, "tagging {0} with {1} and comment {2}", new Object[]{file.getName(), tagName.getDisplayName(), comment}); //NON-NLS
 
-                        List<ContentTag> contentTags = tagsManager.getContentTagsByContent(file);
+                        List<ContentTag> contentTags = tagsManager.getContentTags(file);
                         Optional<TagName> duplicateTagName = contentTags.stream()
                                 .map(ContentTag::getName)
                                 .filter(tagName::equals)

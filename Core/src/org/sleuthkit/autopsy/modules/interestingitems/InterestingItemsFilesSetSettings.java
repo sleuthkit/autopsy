@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-16 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,22 +16,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.imagegallery.actions;
+package org.sleuthkit.autopsy.modules.interestingitems;
 
-import com.google.common.collect.ImmutableSet;
-import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.datamodel.TagName;
+import java.io.Serializable;
+import java.util.Map;
 
 /**
  *
+ * @author oliver
  */
-public class TagGroupAction extends AddTagAction {
-
-    public TagGroupAction(final TagName tagName, ImageGalleryController controller) {
-        super(controller, tagName, null);
-        setEventHandler(actionEvent ->
-                new AddTagAction(controller, tagName, ImmutableSet.copyOf(controller.viewState().get().getGroup().getFileIDs())).
-                handle(actionEvent)
-        );
+class InterestingItemsFilesSetSettings implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private Map<String, FilesSet> filesSets;
+    InterestingItemsFilesSetSettings(Map<String, FilesSet> filesSets) {
+        this.filesSets = filesSets;
     }
+
+    /**
+     * @return the filesSets
+     */
+    Map<String, FilesSet> getFilesSets() {
+        return filesSets;
+    }
+    
+    
+    
 }

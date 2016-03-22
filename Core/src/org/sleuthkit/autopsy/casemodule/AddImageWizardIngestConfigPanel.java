@@ -68,6 +68,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
     private final AddImageWizardChooseDataSourcePanel dataSourcePanel;
 
     private DataSourceProcessor dsProcessor;
+    private boolean cancelled;
 
     AddImageWizardIngestConfigPanel(AddImageWizardChooseDataSourcePanel dsPanel, AddImageAction action, AddImageWizardAddingProgressPanel proPanel) {
         this.addImageAction = action;
@@ -228,6 +229,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
             @Override
             void cleanup() throws Exception {
                 cancelDataSourceProcessing(dataSourceId);
+                cancelled = true;
             }
         };
 
@@ -244,7 +246,6 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
             public void doneEDT(DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errList, List<Content> contents) {
                 dataSourceProcessorDone(dataSourceId, result, errList, contents);
             }
-
         };
 
         progressPanel.setStateStarted();
@@ -258,9 +259,6 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
      * Cancels the data source processing - in case the users presses 'Cancel'
      */
     private void cancelDataSourceProcessing(UUID dataSourceId) {
-        new Thread(() -> {
-            Case.getCurrentCase().notifyFailedAddingDataSource(dataSourceId);
-        }).start();
         dsProcessor.cancel();
     }
 
@@ -303,21 +301,23 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
             progressPanel.addErrors(err, critErr);
         }
 
-        newContents.clear();
-        newContents.addAll(contents);
-
         //notify the UI of the new content added to the case
         new Thread(() -> {
-            if (!newContents.isEmpty()) {
-                Case.getCurrentCase().notifyDataSourceAdded(newContents.get(0), dataSourceId);
+            if (!contents.isEmpty()) {
+                Case.getCurrentCase().notifyDataSourceAdded(contents.get(0), dataSourceId);
             } else {
                 Case.getCurrentCase().notifyFailedAddingDataSource(dataSourceId);
             }
         }).start();
 
-        // Start ingest if we can
-        progressPanel.setStateStarted();
-        startIngest();
+        if (!cancelled) {
+            newContents.clear();
+            newContents.addAll(contents);
+            progressPanel.setStateStarted();
+            startIngest();
+        } else {
+            cancelled = false;
+        }
 
     }
 }

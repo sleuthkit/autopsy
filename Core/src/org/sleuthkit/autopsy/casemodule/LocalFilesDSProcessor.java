@@ -60,10 +60,10 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
 
     /**
      * Gets a string that describes the type of data sources this processor is
-     * able to process.
+     * able to add to the case database. The string is suitable for display in a
+     * type selection UI component (e.g., a combo box).
      *
-     * @return A string suitable for display in a data source processor
-     *         selection UI component (e.g., a combo box).
+     * @return A data source type display string for this data source processor.
      */
     public static String getType() {
         return DATA_SOURCE_TYPE;
@@ -71,10 +71,10 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
 
     /**
      * Gets a string that describes the type of data sources this processor is
-     * able to process.
+     * able to add to the case database. The string is suitable for display in a
+     * type selection UI component (e.g., a combo box).
      *
-     * @return A string suitable for display in a data source processor
-     *         selection UI component (e.g., a combo box).
+     * @return A data source type display string for this data source processor.
      */
     @Override
     public String getDataSourceType() {
@@ -83,9 +83,11 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
 
     /**
      * Gets the panel that allows a user to select a data source and do any
-     * configuration the data source processor may require.
+     * configuration required by the data source. The panel is less than 544
+     * pixels wide and less than 173 pixels high.
      *
-     * @return A JPanel less than 544 pixels wide and 173 pixels high.
+     * @return A selection and configuration panel for this data source
+     *         processor.
      */
     @Override
     public JPanel getPanel() {
@@ -94,10 +96,11 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
     }
 
     /**
-     * Indicates whether the settings in the panel are valid and complete.
+     * Indicates whether the settings in the selection and configuration panel
+     * are valid and complete.
      *
      * @return True if the settings are valid and complete and the processor is
-     *         ready to have its run method called; false otherwise.
+     *         ready to have its run method called, false otherwise.
      */
     @Override
     public boolean isPanelValid() {
@@ -105,16 +108,18 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
     }
 
     /**
-     * Adds a data source to the case database using a separate thread and the
-     * settings provided by the panel. Returns as soon as the background task is
-     * started and uses the callback object to signal task completion and return
-     * results.
+     * Adds a data source to the case database using a background task in a
+     * separate thread and the settings provided by the selection and
+     * configuration panel. Returns as soon as the background task is started.
+     * The background task uses a callback object to signal task completion and
+     * return results.
      *
-     * NOTE: This method should not be called unless isPanelValid returns true.
+     * This method should not be called unless isPanelValid returns true.
      *
-     * @param progressMonitor Progress monitor for reporting progress during
-     *                        processing.
-     * @param callback        Callback to call when processing is done.
+     * @param progressMonitor Progress monitor that will be used by the
+     *                        background task to report progress.
+     * @param callback        Callback that will be used by the background task
+     *                        to return results.
      */
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
@@ -127,10 +132,11 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
     }
 
     /**
-     * Adds a data source to the case database using a separate thread and the
-     * given settings instead of those provided by the panel. Returns as soon as
-     * the background task is started and uses the callback object to signal
-     * task completion and return results.
+     * Adds a data source to the case database using a background task in a
+     * separate thread and the given settings instead of those provided by the
+     * selection and configuration panel. Returns as soon as the background task
+     * is started and uses the callback object to signal task completion and
+     * return results.
      *
      * @param deviceId                 An ASCII-printable identifier for the
      *                                 device associated with the data source
@@ -153,18 +159,22 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
     }
 
     /**
-     * Requests cancellation of the data source processing task after it is
-     * started using the run method. Cancellation is not guaranteed.
+     * Requests cancellation of the background task that adds a data source to
+     * the case database, after the task is started using the run method. This
+     * is a "best effort" cancellation, with no guarantees that the case
+     * database will be unchanged. If cancellation succeeded, the list of new
+     * data sources returned by the background task will be empty.
+     * 
+     * TODO (AUT-1907): Implement cancellation by deleting rows added to the
+     * case database.
      */
     @Override
     public void cancel() {
-        /*
-         * Cancellation is not currently supported.
-         */
     }
 
     /**
-     * Resets the panel.
+     * Resets the selection and configuration panel for this data source
+     * processor.
      */
     @Override
     public void reset() {

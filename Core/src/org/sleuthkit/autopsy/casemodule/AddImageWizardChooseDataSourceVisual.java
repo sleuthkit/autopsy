@@ -146,6 +146,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
      *
      * @param panel instance of ImageTypePanel to change to
      */
+    @SuppressWarnings("deprecation")
     private void updateCurrentPanel(JPanel panel) {
         currentPanel = panel;
         typePanel.removeAll();

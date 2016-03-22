@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,8 +39,10 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.python.util.PythonObjectInputStream;
 
 /**
- * Encapsulates the ingest job settings for a particular context such as the Add
- * Data Source wizard or the Run Ingest Modules dialog.
+ * Encapsulates the ingest job settings for a particular execution context.
+ * Examples of execution contexts include the add data source wizard and the run
+ * ingest modules dialog. Different execution conterxts may have different
+ * ingest job settings.
  */
 public class IngestJobSettings {
 
@@ -60,19 +62,30 @@ public class IngestJobSettings {
     private boolean processUnallocatedSpace;
     private final List<String> warnings;
 
-    // Determines which modeules to run
+    /**
+     * The type of ingest modules to run.
+     */
     public enum IngestType {
 
-        // Run all modules
+        /**
+         * Run both data source level and file-level ingest modules.
+         */
         ALL_MODULES,
-        // Run only data source modules
+        /**
+         * Run only data source level ingest modules.
+         */
         DATA_SOURCE_ONLY,
-        // Run only files modules
+        /**
+         * Run only file level ingest modules.
+         */
         FILES_ONLY
     }
 
     /**
-     * Constructs an ingest job settings object for a given context.
+     * Constructs an ingest job settings object for a given execution context.
+     * Examples of execution contexts include the add data source wizard and the
+     * run ingest modules dialog. Different execution conterxts may have
+     * different ingest job settings.
      *
      * @param executionContext The ingest execution context identifier.
      */
@@ -87,7 +100,10 @@ public class IngestJobSettings {
     }
 
     /**
-     * Constructs an ingest job settings object for a given context.
+     * Constructs an ingest job settings object for a given context. Examples of
+     * execution contexts include the add data source wizard and the run ingest
+     * modules dialog. Different execution conterxts may have different ingest
+     * job settings.
      *
      * @param context    The context identifier string.
      * @param ingestType The type of modules ingest is running.
@@ -116,9 +132,12 @@ public class IngestJobSettings {
     }
 
     /**
-     * Get the ingest execution context identifier.
+     * Gets the ingest execution context identifier. Examples of execution
+     * contexts include the add data source wizard and the run ingest modules
+     * dialog. Different execution conterxts may have different ingest job
+     * settings.
      *
-     * @return The context string.
+     * @return The execution context identifier.
      */
     String getExecutionContext() {
         return this.executionContext;

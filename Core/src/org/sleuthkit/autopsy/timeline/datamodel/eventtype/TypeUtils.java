@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-16 Basis Technology Corp.
+ * Copyright 2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,22 +16,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.imagegallery.actions;
+package org.sleuthkit.autopsy.timeline.datamodel.eventtype;
 
-import com.google.common.collect.ImmutableSet;
-import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.datamodel.TagName;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  *
  */
-public class TagGroupAction extends AddTagAction {
+class TypeUtils {
 
-    public TagGroupAction(final TagName tagName, ImageGalleryController controller) {
-        super(controller, tagName, null);
-        setEventHandler(actionEvent ->
-                new AddTagAction(controller, tagName, ImmutableSet.copyOf(controller.viewState().get().getGroup().getFileIDs())).
-                handle(actionEvent)
-        );
+//TODO: this will be unncessary once their is BlackboardArtifact.Type constructr that takes a BlackboardArtifact.ARTIFACT_TYPE
+    static BlackboardArtifact.Type fromEnum(BlackboardArtifact.ARTIFACT_TYPE type) {
+        return new BlackboardArtifact.Type(type.getTypeID(), type.getLabel(), type.getDisplayName());
+    }
+
+    private TypeUtils() {
     }
 }
