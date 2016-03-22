@@ -443,7 +443,7 @@ public final class ImageGalleryController implements Executor {
     }
 
     @Nullable
-    synchronized public DrawableFile getFileFromId(Long fileID) throws TskCoreException, FileTypeDetector.FileTypeDetectorInitException {
+    synchronized public DrawableFile getFileFromId(Long fileID) throws TskCoreException{
         if (Objects.isNull(db)) {
             LOGGER.log(Level.WARNING, "Could not get file from id, no DB set.  The case is probably closed."); //NON-NLS
             return null;

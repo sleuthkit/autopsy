@@ -997,7 +997,7 @@ public final class DrawableDB {
      * @throws TskCoreException if unable to get a file from the currently open
      *                          {@link SleuthkitCase}
      */
-    public DrawableFile getFileFromID(Long id) throws TskCoreException, FileTypeDetector.FileTypeDetectorInitException {
+    public DrawableFile getFileFromID(Long id) throws TskCoreException{
         try {
             AbstractFile f = tskCase.getAbstractFileById(id);
             return DrawableFile.create(f,
@@ -1174,7 +1174,7 @@ public final class DrawableDB {
      * @return returns true if this file is a video as determined by {@link ImageGalleryModule#isVideoFile(org.sleuthkit.datamodel.AbstractFile)
      *         } but caches the result. returns false if passed a null AbstractFile
      */
-    public boolean isVideoFile(AbstractFile f) throws TskCoreException, FileTypeDetector.FileTypeDetectorInitException {
+    public boolean isVideoFile(AbstractFile f) {
 
         if (null == f) {
             return false;

@@ -96,7 +96,7 @@ public class VideoUtils {
     }
 
     public static boolean isVideoThumbnailSupported(AbstractFile file) {
-        return isMediaThumbnailSupported(file, SUPPORTED_VIDEO_MIME_TYPES, SUPPORTED_VIDEO_EXTENSIONS);
+        return isMediaThumbnailSupported(file, "video/", SUPPORTED_VIDEO_MIME_TYPES, SUPPORTED_VIDEO_EXTENSIONS);
     }
 
     @NbBundle.Messages({"# {0} - file name",

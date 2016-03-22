@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import static java.util.Objects.isNull;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.imageio.ImageIO;
@@ -31,6 +32,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -167,10 +169,6 @@ public enum FileTypeUtils {
         return hasDrawableMIMEType(file);
     }
 
-    public static String getMimeType(AbstractFile file) throws TskCoreException, FileTypeDetector.FileTypeDetectorInitException {
-        return getFileTypeDetector().getFileType(file);
-    }
-
     static boolean isDrawableMimeType(String mimeType) {
         if (StringUtils.isBlank(mimeType)) {
             return false;
@@ -192,7 +190,7 @@ public enum FileTypeUtils {
      *         mimetype could not be detected.
      */
     static boolean hasDrawableMIMEType(AbstractFile file) throws TskCoreException, FileTypeDetector.FileTypeDetectorInitException {
-        String mimeType = getMimeType(file).toLowerCase();
+        String mimeType = getFileTypeDetector().detect(file).toLowerCase();
         return isDrawableMimeType(mimeType) || (mimeType.equals("audio/x-aiff") && "tiff".equalsIgnoreCase(file.getNameExtension()));
 
     }
@@ -206,8 +204,31 @@ public enum FileTypeUtils {
      *         application/x-shockwave-flash, etc) or, if no mimetype is
      *         available, a video extension.
      */
-    public static boolean hasVideoMIMEType(AbstractFile file) throws TskCoreException, FileTypeDetector.FileTypeDetectorInitException {
-        String mimeType = getMimeType(file).toLowerCase();
-        return mimeType.startsWith("video/") || videoMimeTypes.contains(mimeType);
+    public static boolean hasVideoMIMEType(AbstractFile file) {
+        try {
+            String mimeType = getFileTypeDetector().detect(file).toLowerCase();
+            return mimeType.startsWith("video/") || videoMimeTypes.contains(mimeType);
+        } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Error determining MIME type of " + getContentPathSafe(file), ex);
+            return false;
+        }
+    }
+
+    /**
+     * Get the unique path for the content, or if that fails, just return the
+     * name.
+     *
+     * @param content
+     *
+     * @return
+     */
+    static String getContentPathSafe(Content content) {
+        try {
+            return content.getUniquePath();
+        } catch (TskCoreException tskCoreException) {
+            String contentName = content.getName();
+            LOGGER.log(Level.SEVERE, "Failed to get unique path for " + contentName, tskCoreException); //NOI18N NON-NLS
+            return contentName;
+        }
     }
 }

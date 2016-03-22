@@ -27,7 +27,7 @@ import org.openide.nodes.Node;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Complementary class to ThumbnailViewNode. Children node factory. Wraps around
@@ -134,9 +134,9 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
     static boolean isSupported(Node node) {
         if (node != null) {
-            AbstractFile file = node.getLookup().lookup(AbstractFile.class);
-            if (file != null) {
-                return ImageUtils.isImageThumbnailSupported(file);
+            Content content = node.getLookup().lookup(Content.class);
+            if (content != null) {
+                return ImageUtils.thumbnailSupported(content);
             }
         }
         return false;

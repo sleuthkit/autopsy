@@ -85,8 +85,8 @@ public class ImageUtils {
 
     private static final BufferedImage DEFAULT_THUMBNAIL;
 
-    private static final String GIF_EXTENSION = "gif";
-    private static final String IMAGE_GIF_MIME = "image/gif"; //NON-NLS
+    private static final List<String> GIF_EXTENSION_LIST = Arrays.asList("gif");
+    private static final SortedSet<String> GIF_MIME_SET = ImmutableSortedSet.copyOf(new String[]{"image/gif"});
 
     private static final List<String> SUPPORTED_IMAGE_EXTENSIONS;
     private static final SortedSet<String> SUPPORTED_IMAGE_MIME_TYPES;
@@ -169,6 +169,27 @@ public class ImageUtils {
     }
 
     /**
+     * Can a thumbnail be generated for the content?
+     *
+     * Although this method accepts Content, it always returns false for objects
+     * that are not instances of AbstractFile.
+     *
+     * @param content A content object to test for thumbnail support.
+     *
+     * @return true if a thumbnail can be generated for the given content.
+     */
+    public static boolean thumbnailSupported(Content content) {
+
+        if (!(content instanceof AbstractFile)) {
+            return false;
+        }
+        AbstractFile file = (AbstractFile) content;
+
+        return VideoUtils.isVideoThumbnailSupported(file)
+                || isImageThumbnailSupported(file);
+    }
+
+    /**
      * is the file an image that we can read and generate a thumbnail for
      *
      * @param file
@@ -177,7 +198,7 @@ public class ImageUtils {
      *         for.
      */
     public static boolean isImageThumbnailSupported(AbstractFile file) {
-        return hasImageFileHeader(file) || isMediaThumbnailSupported(file, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_IMAGE_EXTENSIONS);
+        return isMediaThumbnailSupported(file, "image/", SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_IMAGE_EXTENSIONS) || hasImageFileHeader(file);
     }
 
     /**
@@ -189,7 +210,7 @@ public class ImageUtils {
      * @return True or false
      */
     public static boolean isGIF(AbstractFile file) {
-        return isMediaThumbnailSupported(file, Arrays.asList(IMAGE_GIF_MIME), Arrays.asList(GIF_EXTENSION));
+        return isMediaThumbnailSupported(file, null, GIF_MIME_SET, GIF_EXTENSION_LIST);
     }
 
     /**
@@ -209,7 +230,7 @@ public class ImageUtils {
      * @return true if a thumbnail can be generated for the given file based on
      *         the given lists of supported mimetype and extensions
      */
-    static boolean isMediaThumbnailSupported(AbstractFile file, final Collection<String> supportedMimeTypes, final List<String> supportedExtension) {
+    static boolean isMediaThumbnailSupported(AbstractFile file, String mimeTypePrefix, final Collection<String> supportedMimeTypes, final List<String> supportedExtension) {
         if (false == file.isFile() || file.getSize() <= 0) {
             return false;
         }
@@ -220,7 +241,11 @@ public class ImageUtils {
             return true;
         } else {
             try {
-                return supportedMimeTypes.contains(getFileTypeDetector().detect(file));
+                String mimeType = getFileTypeDetector().detect(file);
+                if (StringUtils.isNotBlank(mimeTypePrefix) && mimeTypePrefix.startsWith(mimeTypePrefix)) {
+                    return true;
+                }
+                return supportedMimeTypes.contains(mimeType);
             } catch (FileTypeDetectorInitException | TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Error determining MIME type of " + getContentPathSafe(file), ex);
                 return false;
@@ -306,6 +331,18 @@ public class ImageUtils {
             return null;
         }
 
+    }
+
+    /**
+     * Do a direct check to see if the given file has an image file header.
+     * NOTE: Currently only jpeg and png are supported.
+     *
+     * @param file
+     *
+     * @return true if the given file has one of the supported image headers.
+     */
+    public static boolean hasImageFileHeader(AbstractFile file) {
+        return isJpegFileHeader(file) || isPngFileHeader(file);
     }
 
     /**
@@ -867,41 +904,6 @@ public class ImageUtils {
     public static File getIconFile(Content content, int iconSize) {
         return getCachedThumbnailFile(content, iconSize);
 
-    }
-
-    /**
-     * Do a direct check to see if the given file has an image file header.
-     * NOTE: Currently only jpeg and png are supported.
-     *
-     * @param file
-     *
-     * @return true if the given file has one of the supported image headers.
-     */
-    @Deprecated
-    public static boolean hasImageFileHeader(AbstractFile file) {
-        return isJpegFileHeader(file) || isPngFileHeader(file);
-    }
-
-    /**
-     * Can a thumbnail be generated for the content?
-     *
-     * Although this method accepts Content, it always returns false for objects
-     * that are not instances of AbstractFile.
-     *
-     * @param content A content object to test for thumbnail support.
-     *
-     * @return true if a thumbnail can be generated for the given content.
-     */
-    @Deprecated
-    public static boolean thumbnailSupported(Content content) {
-
-        if (!(content instanceof AbstractFile)) {
-            return false;
-        }
-        AbstractFile file = (AbstractFile) content;
-
-        return VideoUtils.isVideoThumbnailSupported(file)
-                || isImageThumbnailSupported(file);
     }
 
 }
