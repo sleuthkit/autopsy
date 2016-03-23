@@ -1176,8 +1176,7 @@ public final class DrawableDB {
      */
     public boolean isVideoFile(AbstractFile f) {
         return isNull(f) ? false
-                : videoFileMap.computeIfAbsent(f.getId(), id -> FileTypeUtils.isVideoFile(f));
-
+                : videoFileMap.computeIfAbsent(f.getId(), id -> FileTypeUtils.hasVideoMIMEType(f));
     }
 
     /**
@@ -1242,8 +1241,8 @@ public final class DrawableDB {
         String fileIdsList = "(" + StringUtils.join(fileIDs, ",") + " )";
 
         //count the fileids that are in the given list and don't have a non-zero category assigned to them.
-        String name
-                = "SELECT COUNT(obj_id) FROM tsk_files where obj_id IN " + fileIdsList //NON-NLS
+        String name =
+                "SELECT COUNT(obj_id) FROM tsk_files where obj_id IN " + fileIdsList //NON-NLS
                 + " AND obj_id NOT IN (SELECT obj_id FROM content_tags WHERE content_tags.tag_name_id IN " + catTagNameIDs + ")"; //NON-NLS
         try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery(name);
                 ResultSet resultSet = executeQuery.getResultSet();) {

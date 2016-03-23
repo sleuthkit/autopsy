@@ -210,29 +210,17 @@ public class ExtractedContent implements AutopsyVisitableItem {
 
             // these are shown in other parts of the UI tree
             doNotShow.add(new BlackboardArtifact.Type(
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID(),
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getLabel(),
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getDisplayName()));
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO));
             doNotShow.add(new BlackboardArtifact.Type(
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getLabel(),
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getDisplayName()));
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG));
             doNotShow.add(new BlackboardArtifact.Type(
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID(),
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getLabel(),
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName()));
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT));
             doNotShow.add(new BlackboardArtifact.Type(
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID(),
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getLabel(),
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName()));
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT));
             doNotShow.add(new BlackboardArtifact.Type(
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getLabel(),
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getDisplayName()));
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT));
             doNotShow.add(new BlackboardArtifact.Type(
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID(),
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getLabel(),
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getDisplayName()));
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT));
         }
 
         private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {

@@ -43,7 +43,6 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
      * TODO: Remove the setDataSourceOptionsCalled flag and the settings fields
      * when the deprecated method setDataSourceOptions is removed.
      */
-    private String deviceId;
     private List<String> localFilePaths;
     private boolean setDataSourceOptionsCalled;
 
@@ -123,10 +122,9 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         if (!setDataSourceOptionsCalled) {
-            deviceId = UUID.randomUUID().toString();
             localFilePaths = Arrays.asList(configPanel.getContentPaths().split(LocalFilesPanel.FILES_SEP));
         }
-        run(deviceId, "", localFilePaths, progressMonitor, callback);
+        run(UUID.randomUUID().toString(), configPanel.getFileSetName(), localFilePaths, progressMonitor, callback);
     }
 
     /**
@@ -162,7 +160,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
      * is a "best effort" cancellation, with no guarantees that the case
      * database will be unchanged. If cancellation succeeded, the list of new
      * data sources returned by the background task will be empty.
-     * 
+     *
      * TODO (AUT-1907): Implement cancellation by deleting rows added to the
      * case database.
      */
@@ -194,7 +192,8 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
      */
     @Deprecated
     public void setDataSourceOptions(String paths) {
-        this.localFilePaths = Arrays.asList(configPanel.getContentPaths().split(LocalFilesPanel.FILES_SEP));
+        //LocalFilesPanel.FILES_SEP is currently ","
+        this.localFilePaths = Arrays.asList(paths.split(LocalFilesPanel.FILES_SEP));
         setDataSourceOptionsCalled = true;
     }
 

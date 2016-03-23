@@ -37,7 +37,7 @@ public enum WebTypes implements EventType, ArtifactEventType {
 
     WEB_DOWNLOADS(NbBundle.getMessage(WebTypes.class, "WebTypes.webDownloads.name"),
             "downloads.png", // NON-NLS
-            TypeUtils.fromEnum(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD),
+            new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD),
             new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED),
             TopPrivateDomainExtractor.getInstance(),
             new AttributeExtractor(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH)),
@@ -61,7 +61,7 @@ public enum WebTypes implements EventType, ArtifactEventType {
     //TODO: review description separators
     WEB_COOKIE(NbBundle.getMessage(WebTypes.class, "WebTypes.webCookies.name"),
             "cookies.png", // NON-NLS
-            TypeUtils.fromEnum(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE),
+            new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE),
             new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME),
             TopPrivateDomainExtractor.getInstance(),
             new AttributeExtractor(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME)),
@@ -69,7 +69,7 @@ public enum WebTypes implements EventType, ArtifactEventType {
     //TODO: review description separators
     WEB_BOOKMARK(NbBundle.getMessage(WebTypes.class, "WebTypes.webBookmarks.name"),
             "bookmarks.png", // NON-NLS
-            TypeUtils.fromEnum(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK),
+            new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK),
             new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED),
             TopPrivateDomainExtractor.getInstance(),
             new AttributeExtractor(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL)),
@@ -77,7 +77,7 @@ public enum WebTypes implements EventType, ArtifactEventType {
     //TODO: review description separators
     WEB_HISTORY(NbBundle.getMessage(WebTypes.class, "WebTypes.webHistory.name"),
             "history.png", // NON-NLS
-            TypeUtils.fromEnum(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY),
+            new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY),
             new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED),
             TopPrivateDomainExtractor.getInstance(),
             new AttributeExtractor(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL)),
@@ -85,7 +85,7 @@ public enum WebTypes implements EventType, ArtifactEventType {
     //TODO: review description separators
     WEB_SEARCH(NbBundle.getMessage(WebTypes.class, "WebTypes.webSearch.name"),
             "searchquery.png", // NON-NLS
-            TypeUtils.fromEnum(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY),
+            new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY),
             new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED),
             new AttributeExtractor(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT)),
             TopPrivateDomainExtractor.getInstance(),
