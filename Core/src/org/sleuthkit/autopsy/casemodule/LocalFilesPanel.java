@@ -73,7 +73,7 @@ class LocalFilesPanel extends JPanel {
         localFileChooser.setMultiSelectionEnabled(true);
         errorLabel.setVisible(false);
         selectedPaths.setText("");
-        this.displayNameLabel.setText("Display Name: Default");
+        this.displayNameLabel.setText(NbBundle.getMessage(this.getClass(), "LocalFilesPanel.displayNameLabel.text"));
     }
 
     //@Override
@@ -145,7 +145,7 @@ class LocalFilesPanel extends JPanel {
         enableNext = false;
         errorLabel.setVisible(false);
         displayName = "";
-        this.displayNameLabel.setText("Display Name: Default");
+        this.displayNameLabel.setText(NbBundle.getMessage(this.getClass(), "LocalFilesPanel.displayNameLabel.text"));
     }
 
     @Override
@@ -262,7 +262,7 @@ class LocalFilesPanel extends JPanel {
                     .addComponent(errorLabel)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(displayNameLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jButton1)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
