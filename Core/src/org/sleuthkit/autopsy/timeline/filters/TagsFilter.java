@@ -7,7 +7,6 @@ package org.sleuthkit.autopsy.timeline.filters;
 
 import java.util.Comparator;
 import java.util.stream.Collectors;
-import javafx.beans.binding.Bindings;
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.TagName;
 
@@ -23,7 +22,6 @@ public class TagsFilter extends UnionFilter<TagNameFilter> {
     }
 
     public TagsFilter() {
-        disabledProperty().bind(Bindings.size(getSubFilters()).lessThan(1));
         setSelected(false);
     }
 
@@ -89,5 +87,4 @@ public class TagsFilter extends UnionFilter<TagNameFilter> {
         getSubFilters().sort(Comparator.comparing(TagNameFilter::getDisplayName));
     }
 
- 
 }

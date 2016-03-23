@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.timeline.filters;
 
 import java.util.Comparator;
 import java.util.stream.Collectors;
-import javafx.beans.binding.Bindings;
 import org.openide.util.NbBundle;
 
 /**
@@ -29,7 +28,6 @@ import org.openide.util.NbBundle;
 public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
 
     public DataSourcesFilter() {
-        disabledProperty().bind(Bindings.size(getSubFilters()).lessThanOrEqualTo(1));
         setSelected(false);
     }
 
@@ -69,7 +67,6 @@ public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
                 .map(DataSourceFilter::getDataSourceID)
                 .filter(t -> t == dataSourceFilter.getDataSourceID())
                 .findAny().isPresent() == false) {
-            dataSourceFilter.disabledProperty().bind(disabledProperty());
             getSubFilters().add(dataSourceFilter);
             getSubFilters().sort(Comparator.comparing(DataSourceFilter::getDisplayName));
         }

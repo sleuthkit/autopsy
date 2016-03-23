@@ -7,7 +7,6 @@ package org.sleuthkit.autopsy.timeline.filters;
 
 import java.util.Comparator;
 import java.util.stream.Collectors;
-import javafx.beans.binding.Bindings;
 import org.openide.util.NbBundle;
 
 /**
@@ -22,7 +21,6 @@ public class HashHitsFilter extends UnionFilter<HashSetFilter> {
     }
 
     public HashHitsFilter() {
-        disabledProperty().bind(Bindings.size(getSubFilters()).lessThan(1));
         setSelected(false);
     }
 

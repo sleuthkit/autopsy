@@ -68,7 +68,10 @@ public abstract class CompoundFilter<SubFilterType extends Filter> extends Abstr
         });
         this.subFilters.setAll(subFilters);
 
-        this.activeProperty().addListener(activeProperty1 -> {
+        this.selectedProperty().addListener(activeProperty1 -> {
+            getSubFilters().forEach(subFilter -> subFilter.setDisabled(isActive() == false));
+        });
+        this.disabledProperty().addListener(activeProperty1 -> {
             getSubFilters().forEach(subFilter -> subFilter.setDisabled(isActive() == false));
         });
     }
