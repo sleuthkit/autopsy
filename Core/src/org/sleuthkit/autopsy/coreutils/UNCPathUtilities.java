@@ -263,6 +263,11 @@ public class UNCPathUtilities {
      */
     synchronized private Map<String, String> getMappedDrives() {
         Map<String, String> driveMap = new HashMap<>();
+        
+        if (PlatformUtil.isWindowsOS() == false) {
+            return driveMap;
+        }
+        
         File mappedDrive = Paths.get(System.getenv(TEMP_FOLDER), nameString + MAPPED_DRIVES).toFile();
         try {
             Files.deleteIfExists(mappedDrive.toPath());
