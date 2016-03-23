@@ -60,10 +60,17 @@ public class VideoUtils {
                     "flm", "tmv", "4xm");  //NON-NLS
 
     private static final SortedSet<String> SUPPORTED_VIDEO_MIME_TYPES = new TreeSet<>(
-            Arrays.asList("application/x-shockwave-flash", "video/x-m4v", "video/x-flv", "video/quicktime", "video/avi", "video/msvideo", "video/x-msvideo", //NON-NLS
-                    "video/mp4", "video/x-ms-wmv", "video/mpeg", "video/asf")); //NON-NLS
-
-    private static final List<String> CONDITIONAL_MIME_TYPES = Arrays.asList("application/octet-stream"); //NON-NLS
+            Arrays.asList("application/x-shockwave-flash",
+                    "video/x-m4v",
+                    "video/x-flv",
+                    "video/quicktime",
+                    "video/avi",
+                    "video/msvideo",
+                    "video/x-msvideo", //NON-NLS
+                    "video/mp4",
+                    "video/x-ms-wmv",
+                    "video/mpeg",
+                    "video/asf")); //NON-NLS
 
     public static List<String> getSupportedVideoExtensions() {
         return SUPPORTED_VIDEO_EXTENSIONS;
@@ -89,7 +96,7 @@ public class VideoUtils {
     }
 
     public static boolean isVideoThumbnailSupported(AbstractFile file) {
-        return isMediaThumbnailSupported(file, SUPPORTED_VIDEO_MIME_TYPES, SUPPORTED_VIDEO_EXTENSIONS, CONDITIONAL_MIME_TYPES);
+        return isMediaThumbnailSupported(file, "video/", SUPPORTED_VIDEO_MIME_TYPES, SUPPORTED_VIDEO_EXTENSIONS);
     }
 
     @NbBundle.Messages({"# {0} - file name",

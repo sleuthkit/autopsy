@@ -60,7 +60,7 @@ public abstract class DrawableFile {
     private static final Logger LOGGER = Logger.getLogger(DrawableFile.class.getName());
 
     public static DrawableFile create(AbstractFile abstractFileById, boolean analyzed) {
-        return create(abstractFileById, analyzed, FileTypeUtils.isVideoFile(abstractFileById));
+        return create(abstractFileById, analyzed, FileTypeUtils.hasVideoMIMEType(abstractFileById));
     }
 
     /**

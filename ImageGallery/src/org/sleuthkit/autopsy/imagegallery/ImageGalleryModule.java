@@ -22,11 +22,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.apache.commons.lang3.StringUtils;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -105,7 +105,7 @@ public class ImageGalleryModule {
      * @return true if the given {@link AbstractFile} is "drawable" and not
      *         'known', else false
      */
-    public static boolean isDrawableAndNotKnown(AbstractFile abstractFile) throws TskCoreException {
+    public static boolean isDrawableAndNotKnown(AbstractFile abstractFile) throws TskCoreException, FileTypeDetector.FileTypeDetectorInitException {
         return (abstractFile.getKnown() != TskData.FileKnown.KNOWN) && FileTypeUtils.isDrawable(abstractFile);
     }
 }
