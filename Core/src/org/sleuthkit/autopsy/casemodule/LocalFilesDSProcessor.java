@@ -192,6 +192,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
      */
     @Deprecated
     public void setDataSourceOptions(String paths) {
+        //LocalFilesPanel.FILES_SEP is currently ","
         this.localFilePaths = Arrays.asList(paths.split(LocalFilesPanel.FILES_SEP));
         setDataSourceOptionsCalled = true;
     }
