@@ -32,10 +32,10 @@ import java.io.InputStream;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Objects;
 import static java.util.Objects.nonNull;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -78,7 +78,7 @@ public class ImageUtils {
     /**
      * save thumbnails to disk as this format
      */
-    private static final String FORMAT = "png"; //NON-NLS //NOI18N
+    private static final String FORMAT = "png"; //NON-NLS
 
     public static final int ICON_SIZE_SMALL = 50;
     public static final int ICON_SIZE_MEDIUM = 100;
@@ -86,12 +86,11 @@ public class ImageUtils {
 
     private static final BufferedImage DEFAULT_THUMBNAIL;
 
-    private static final String IMAGE_GIF_MIME = "image/gif"; //NOI18N NON-NLS
-    private static final SortedSet<String> GIF_MIME_SET = ImmutableSortedSet.copyOf(new String[]{IMAGE_GIF_MIME});
+    private static final List<String> GIF_EXTENSION_LIST = Arrays.asList("gif");
+    private static final SortedSet<String> GIF_MIME_SET = ImmutableSortedSet.copyOf(new String[]{"image/gif"});
 
     private static final List<String> SUPPORTED_IMAGE_EXTENSIONS;
     private static final SortedSet<String> SUPPORTED_IMAGE_MIME_TYPES;
-    private static final List<String> CONDITIONAL_MIME_TYPES = Arrays.asList("audio/x-aiff", "application/octet-stream"); //NOI18N NON-NLS
 
     private static final boolean openCVLoaded;
 
@@ -99,9 +98,9 @@ public class ImageUtils {
         ImageIO.scanForPlugins();
         BufferedImage tempImage;
         try {
-            tempImage = ImageIO.read(ImageUtils.class.getResourceAsStream("/org/sleuthkit/autopsy/images/file-icon.png"));//NON-NLS //NOI18N
+            tempImage = ImageIO.read(ImageUtils.class.getResourceAsStream("/org/sleuthkit/autopsy/images/file-icon.png"));//NON-NLS
         } catch (IOException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to load default icon.", ex); //NOI18N NON-NLS
+            LOGGER.log(Level.SEVERE, "Failed to load default icon.", ex); //NON-NLS
             tempImage = null;
         }
         DEFAULT_THUMBNAIL = tempImage;
@@ -110,23 +109,22 @@ public class ImageUtils {
         boolean openCVLoadedTemp;
         try {
             System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-            if (System.getProperty("os.arch").equals("amd64") || System.getProperty("os.arch").equals("x86_64")) { //NOI18N NON-NLS
-                System.loadLibrary("opencv_ffmpeg248_64"); //NOI18N NON-NLS
+            if (System.getProperty("os.arch").equals("amd64") || System.getProperty("os.arch").equals("x86_64")) { //NON-NLS
+                System.loadLibrary("opencv_ffmpeg248_64"); //NON-NLS
             } else {
-                System.loadLibrary("opencv_ffmpeg248"); //NOI18N NON-NLS
+                System.loadLibrary("opencv_ffmpeg248"); //NON-NLS
             }
 
             openCVLoadedTemp = true;
         } catch (UnsatisfiedLinkError e) {
             openCVLoadedTemp = false;
-            LOGGER.log(Level.SEVERE, "OpenCV Native code library failed to load", e); //NOI18N NON-NLS
+            LOGGER.log(Level.SEVERE, "OpenCV Native code library failed to load", e); //NON-NLS
             //TODO: show warning bubble
 
         }
 
         openCVLoaded = openCVLoadedTemp;
         SUPPORTED_IMAGE_EXTENSIONS = Arrays.asList(ImageIO.getReaderFileSuffixes());
-
         SUPPORTED_IMAGE_MIME_TYPES = new TreeSet<>(Arrays.asList(ImageIO.getReaderMIMETypes()));
         /*
          * special cases and variants that we support, but don't get registered
@@ -137,8 +135,8 @@ public class ImageUtils {
                 "image/x-ms-bmp", //NON-NLS
                 "image/x-portable-graymap", //NON-NLS
                 "image/x-portable-bitmap", //NON-NLS
-                "application/x-123")); //TODO: is this correct? -jm //NOI18N NON-NLS
-        SUPPORTED_IMAGE_MIME_TYPES.removeIf("application/octet-stream"::equals); //NOI18N NON-NLS
+                "application/x-123")); //TODO: is this correct? -jm //NON-NLS
+        SUPPORTED_IMAGE_MIME_TYPES.removeIf("application/octet-stream"::equals); //NON-NLS
     }
 
     /**
@@ -149,9 +147,9 @@ public class ImageUtils {
     /**
      * thread that saves generated thumbnails to disk in the background
      */
-    private static final Executor imageSaver
-            = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
-                    .namingPattern("icon saver-%d").build()); //NOI18N NON-NLS
+    private static final Executor imageSaver =
+            Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
+                    .namingPattern("thumbnail-saver-%d").build()); //NON-NLS
 
     public static List<String> getSupportedImageExtensions() {
         return Collections.unmodifiableList(SUPPORTED_IMAGE_EXTENSIONS);
@@ -163,20 +161,7 @@ public class ImageUtils {
 
     /**
      * Get the default thumbnail, which is the icon for a file. Used when we can
-     * not generate content based thumbnail.
-     *
-     * @return
-     *
-     * @deprecated use {@link  #getDefaultThumbnail() } instead.
-     */
-    @Deprecated
-    public static Image getDefaultIcon() {
-        return getDefaultThumbnail();
-    }
-
-    /**
-     * Get the default thumbnail, which is the icon for a file. Used when we can
-     * not generate content based thumbnail.
+     * not generate a content based thumbnail.
      *
      * @return the default thumbnail
      */
@@ -196,9 +181,6 @@ public class ImageUtils {
      */
     public static boolean thumbnailSupported(Content content) {
 
-        if (content.getSize() == 0) {
-            return false;
-        }
         if (!(content instanceof AbstractFile)) {
             return false;
         }
@@ -206,79 +188,84 @@ public class ImageUtils {
 
         return VideoUtils.isVideoThumbnailSupported(file)
                 || isImageThumbnailSupported(file);
-
     }
 
     /**
-     * is the file an image that we can read and generate a thumbnail for
+     * Is the file an image that we can read and generate a thumbnail for?
      *
-     * @param file
+     * @param file the AbstractFile to test
      *
      * @return true if the file is an image we can read and generate thumbnail
      *         for.
      */
     public static boolean isImageThumbnailSupported(AbstractFile file) {
-        return isMediaThumbnailSupported(file, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_IMAGE_EXTENSIONS, CONDITIONAL_MIME_TYPES)
-                || hasImageFileHeader(file);
+        return isMediaThumbnailSupported(file, "image/", SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_IMAGE_EXTENSIONS) || hasImageFileHeader(file);//NON-NLS
     }
 
     /**
-     * Checks the MIME type of a file to determine whether it is a GIF. If the
-     * MIME type is not known, checks for a "gif" extension.
+     * Checks the MIME type and/or extension of a file to determine whether it
+     * is a GIF.
      *
-     * @param file The file to be checked.
+     * @param file the AbstractFile to test
      *
-     * @return True or false
+     * @return true if the file is a gif
      */
     public static boolean isGIF(AbstractFile file) {
-        String mimeType = file.getMIMEType();
-        if (nonNull(mimeType)) {
-            return IMAGE_GIF_MIME.equalsIgnoreCase(mimeType);
-        } else {
-            return "gif".equalsIgnoreCase(file.getNameExtension()); //NOI18N            
-        }
+        return isMediaThumbnailSupported(file, null, GIF_MIME_SET, GIF_EXTENSION_LIST);
     }
 
     /**
-     * Check if a file is "supported" by checking its mimetype and extension
+     * Check if making a thumbnail for the given file is supported by checking
+     * its extension and/or MIME type against the supplied collections.
      *
      * //TODO: this should move to a better place. Should ImageUtils and
      * VideoUtils both implement/extend some base interface/abstract class. That
      * would be the natural place to put this.
      *
-     * @param file
-     * @param supportedMimeTypes a set of mimetypes that the could have to be
-     *                           supported
-     * @param supportedExtension a set of extensions a file could have to be
-     *                           supported if the mime lookup fails or is
-     *                           inconclusive
-     * @param conditionalMimes   a set of mimetypes that a file could have to be
-     *                           supoprted if it also has a supported extension
+     * @param file               the AbstractFile to test
+     * @param mimeTypePrefix     a MIME 'top-level type name' such as "image/",
+     *                           including the "/". In addition to the list of
+     *                           supported MIME types, any type that starts with
+     *                           this prefix will be regarded as supported
+     * @param supportedMimeTypes a collection of mimetypes that are supported
+     * @param supportedExtension a collection of extensions that are supported
      *
      * @return true if a thumbnail can be generated for the given file based on
-     *         the given lists of supported mimetype and extensions
+     *         the given MIME type prefix and lists of supported MIME types and
+     *         extensions
      */
-    static boolean isMediaThumbnailSupported(AbstractFile file, final SortedSet<String> supportedMimeTypes, final List<String> supportedExtension, List<String> conditionalMimes) {
-        if (file.getSize() == 0) {
+    static boolean isMediaThumbnailSupported(AbstractFile file, String mimeTypePrefix, final Collection<String> supportedMimeTypes, final List<String> supportedExtension) {
+        if (false == file.isFile() || file.getSize() <= 0) {
             return false;
         }
-        String mimeType = file.getMIMEType();
+
         String extension = file.getNameExtension();
-        if (nonNull(mimeType)) {
-            return supportedMimeTypes.contains(mimeType)
-                    || (conditionalMimes.contains(mimeType.toLowerCase())
-                    && supportedExtension.contains(extension));
+
+        if (StringUtils.isNotBlank(extension) && supportedExtension.contains(extension)) {
+            return true;
         } else {
-            return StringUtils.isNotBlank(extension) && supportedExtension.contains(extension);
+            try {
+                String mimeType = getFileTypeDetector().detect(file);
+                if (StringUtils.isNotBlank(mimeTypePrefix) && mimeType.startsWith(mimeTypePrefix)) {
+                    return true;
+                }
+                return supportedMimeTypes.contains(mimeType);
+            } catch (FileTypeDetectorInitException | TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Error determining MIME type of " + getContentPathSafe(file), ex);//NON-NLS
+                return false;
+            }
         }
     }
 
     /**
-     * returns a lazily instatiated FileTypeDetector
+     * //TODO: AUT-2057 this FileTypeDetector needs to be recreated when the
+     * user adds new user defined file types.
+     *
+     * get a FileTypeDetector
      *
      * @return a FileTypeDetector
      *
-     * @throws FileTypeDetectorInitException if a initializing the
+     * @throws FileTypeDetectorInitException if initializing the
      *                                       FileTypeDetector failed.
      */
     synchronized private static FileTypeDetector getFileTypeDetector() throws FileTypeDetector.FileTypeDetectorInitException {
@@ -292,27 +279,8 @@ public class ImageUtils {
      * Get a thumbnail of a specified size for the given image. Generates the
      * thumbnail if it is not already cached.
      *
-     * @param content
-     * @param iconSize
-     *
-     * @return a thumbnail for the given image or a default one if there was a
-     *         problem making a thumbnail.
-     *
-     * @deprecated use {@link #getThumbnail(org.sleuthkit.datamodel.Content, int)
-     * } instead.
-     */
-    @Nonnull
-    @Deprecated
-    public static BufferedImage getIcon(Content content, int iconSize) {
-        return getThumbnail(content, iconSize);
-    }
-
-    /**
-     * Get a thumbnail of a specified size for the given image. Generates the
-     * thumbnail if it is not already cached.
-     *
-     * @param content
-     * @param iconSize
+     * @param content  the content to generate a thumbnail for
+     * @param iconSize the size (one side of a square) in pixels to generate
      *
      * @return a thumbnail for the given image or a default one if there was a
      *         problem making a thumbnail.
@@ -335,33 +303,12 @@ public class ImageUtils {
     }
 
     /**
-     * Get a thumbnail of a specified size for the given image. Generates the
-     * thumbnail if it is not already cached.
-     *
-     * @param content
-     * @param iconSize
-     *
-     * @return File object for cached image. Is guaranteed to exist, as long as
-     *         there was not an error generating or saving the thumbnail.
-     *
-     * @deprecated use {@link #getCachedThumbnailFile(org.sleuthkit.datamodel.Content, int)
-     * } instead.
-     *
-     */
-    @Nullable
-    @Deprecated
-    public static File getIconFile(Content content, int iconSize) {
-        return getCachedThumbnailFile(content, iconSize);
-
-    }
-
-    /**
      *
      * Get a thumbnail of a specified size for the given image. Generates the
      * thumbnail if it is not already cached.
      *
-     * @param content
-     * @param iconSize
+     * @param content  the content to generate a thumbnail for
+     * @param iconSize the size (one side of a square) in pixels to generate
      *
      * @return File object for cached image. Is guaranteed to exist, as long as
      *         there was not an error generating or saving the thumbnail.
@@ -373,26 +320,10 @@ public class ImageUtils {
     }
 
     /**
-     * Get a file object for where the cached icon should exist. The returned
-     * file may not exist.
+     * Get the location of the cached thumbnail for a file with the given fileID
+     * as a java {@link File}. The returned File may not exist on disk yet.
      *
-     * @param id
-     *
-     * @return
-     *
-     * @deprecated use {@link #getCachedThumbnailLocation(long) } instead
-     */
-    @Deprecated
-
-    public static File getFile(long id) {
-        return getCachedThumbnailLocation(id);
-    }
-
-    /**
-     * Get a file object for where the cached thumbnail should exist. The
-     * returned file may not exist.
-     *
-     * @param fileID
+     * @param fileID the fileID to get the cached thumbnail location for
      *
      * @return a File object representing the location of the cached thumbnail.
      *         This file may not actually exist(yet). Returns null if there was
@@ -401,19 +332,18 @@ public class ImageUtils {
     private static File getCachedThumbnailLocation(long fileID) {
         try {
             String cacheDirectory = Case.getCurrentCase().getCacheDirectory();
-            return Paths.get(cacheDirectory, "thumbnails", fileID + ".png").toFile(); //NOI18N NON-NLS
+            return Paths.get(cacheDirectory, "thumbnails", fileID + ".png").toFile(); //NON-NLS
         } catch (IllegalStateException e) {
             LOGGER.log(Level.WARNING, "Could not get cached thumbnail location.  No case is open."); //NON-NLS
             return null;
         }
-
     }
 
     /**
      * Do a direct check to see if the given file has an image file header.
      * NOTE: Currently only jpeg and png are supported.
      *
-     * @param file
+     * @param file the AbstractFile to check
      *
      * @return true if the given file has one of the supported image headers.
      */
@@ -424,7 +354,7 @@ public class ImageUtils {
     /**
      * Check if the given file is a jpeg based on header.
      *
-     * @param file
+     * @param file the AbstractFile to check
      *
      * @return true if jpeg file, false otherwise
      */
@@ -449,7 +379,7 @@ public class ImageUtils {
     /**
      * Check if the given file is a png based on header.
      *
-     * @param file
+     * @param file the AbstractFile to check
      *
      * @return true if png file, false otherwise
      */
@@ -481,7 +411,7 @@ public class ImageUtils {
 
         if (bytesRead != buffLength) {
             //ignore if can't read the first few bytes, not an image
-            throw new TskCoreException("Could not read " + buffLength + " bytes from " + file.getName()); //NOI18N
+            throw new TskCoreException("Could not read " + buffLength + " bytes from " + file.getName());//NON-NLS
         }
         return fileHeaderBuffer;
     }
@@ -498,7 +428,7 @@ public class ImageUtils {
      */
     static public int getImageWidth(AbstractFile file) throws IOException {
         return getImageProperty(file,
-                "ImageIO could not determine width of {0}: ", //NOI18N NON-NLS
+                "ImageIO could not determine width of {0}: ", //NON-NLS
                 imageReader -> imageReader.getWidth(0)
         );
     }
@@ -515,7 +445,7 @@ public class ImageUtils {
      */
     static public int getImageHeight(AbstractFile file) throws IOException {
         return getImageProperty(file,
-                "ImageIO could not determine height of {0}: ", //NOI18N NON-NLS
+                "ImageIO could not determine height of {0}: ", //NON-NLS
                 imageReader -> imageReader.getHeight(0)
         );
     }
@@ -612,7 +542,7 @@ public class ImageUtils {
      */
     static private class GetThumbnailTask extends ReadImageTaskBase {
 
-        private static final String FAILED_TO_READ_IMAGE_FOR_THUMBNAIL_GENERATION = "Failed to read {0} for thumbnail generation."; //NOI18N NON-NLS
+        private static final String FAILED_TO_READ_IMAGE_FOR_THUMBNAIL_GENERATION = "Failed to read {0} for thumbnail generation."; //NON-NLS
 
         private final int iconSize;
         private final File cacheFile;
@@ -646,7 +576,7 @@ public class ImageUtils {
                         return SwingFXUtils.toFXImage(cachedThumbnail, null);
                     }
                 } catch (Exception ex) {
-                    LOGGER.log(Level.WARNING, "ImageIO had a problem reading the cached thumbnail for {0}: " + ex.toString(), ImageUtils.getContentPathSafe(file)); //NOI18N NON-NLS
+                    LOGGER.log(Level.WARNING, "ImageIO had a problem reading the cached thumbnail for {0}: " + ex.toString(), ImageUtils.getContentPathSafe(file)); //NON-NLS
                     cacheFile.delete();  //since we can't read the file we might as well delete it.
                 }
             }
@@ -666,7 +596,7 @@ public class ImageUtils {
                     if (defaultOnFailure) {
                         thumbnail = DEFAULT_THUMBNAIL;
                     } else {
-                        throw new IIOException("Failed to generate a thumbnail for " + getContentPathSafe(file));
+                        throw new IIOException("Failed to generate a thumbnail for " + getContentPathSafe(file));//NON-NLS
                     }
                 }
 
@@ -686,7 +616,7 @@ public class ImageUtils {
                     thumbnail = ScalrWrapper.resizeFast(bufferedImage, iconSize);
                 } catch (IllegalArgumentException | OutOfMemoryError e) {
                     // if resizing does not work due to extreme aspect ratio or oom, crop the image instead.
-                    LOGGER.log(Level.WARNING, "Cropping {0}, because it could not be scaled: " + e.toString(), ImageUtils.getContentPathSafe(file)); //NOI18N NON-NLS
+                    LOGGER.log(Level.WARNING, "Cropping {0}, because it could not be scaled: " + e.toString(), ImageUtils.getContentPathSafe(file)); //NON-NLS
 
                     final int height = bufferedImage.getHeight();
                     final int width = bufferedImage.getWidth();
@@ -696,11 +626,11 @@ public class ImageUtils {
                         try {
                             thumbnail = ScalrWrapper.cropImage(bufferedImage, cropWidth, cropHeight);
                         } catch (Exception cropException) {
-                            LOGGER.log(Level.WARNING, "Could not crop {0}: " + cropException.toString(), ImageUtils.getContentPathSafe(file)); //NOI18N NON-NLS
+                            LOGGER.log(Level.WARNING, "Could not crop {0}: " + cropException.toString(), ImageUtils.getContentPathSafe(file)); //NON-NLS
                         }
                     }
                 } catch (Exception e) {
-                    LOGGER.log(Level.WARNING, "Could not scale {0}: " + e.toString(), ImageUtils.getContentPathSafe(file)); //NOI18N NON-NLS
+                    LOGGER.log(Level.WARNING, "Could not scale {0}: " + e.toString(), ImageUtils.getContentPathSafe(file)); //NON-NLS
                     throw e;
                 }
             }
@@ -733,19 +663,20 @@ public class ImageUtils {
                     }
                     ImageIO.write(thumbnail, FORMAT, cacheFile);
                 } catch (IllegalArgumentException | IOException ex) {
-                    LOGGER.log(Level.WARNING, "Could not write thumbnail for {0}: " + ex.toString(), ImageUtils.getContentPathSafe(file)); //NOI18N NON-NLS
+                    LOGGER.log(Level.WARNING, "Could not write thumbnail for {0}: " + ex.toString(), ImageUtils.getContentPathSafe(file)); //NON-NLS
                 }
             });
         }
     }
 
     /**
-     * Create a new {@link Task} that will read the fileinto memory as an
+     * Create a new {@link Task} that will read the file into memory as an
      * {@link javafx.scene.image.Image}
      *
      * Note: the returned task is suitable for running in a background thread,
      * but is not started automatically. Clients are responsible for running the
-     * task, monitoring its progress, and using its result.
+     * task, monitoring its progress, and using its result(including testing for
+     * null).
      *
      * @param file the file to read as an Image
      *
@@ -779,7 +710,7 @@ public class ImageUtils {
      */
     static private abstract class ReadImageTaskBase extends Task<javafx.scene.image.Image> implements IIOReadProgressListener {
 
-        private static final String IMAGEIO_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT = "ImageIO could not read {0}.  It may be unsupported or corrupt"; //NOI18N NON-NLS
+        private static final String IMAGEIO_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT = "ImageIO could not read {0}.  It may be unsupported or corrupt"; //NON-NLS
         final AbstractFile file;
 //        private ImageReader reader;
 
@@ -815,7 +746,7 @@ public class ImageUtils {
                         try {
                             bufferedImage = imageReader.read(0, param); //should always be same bufferedImage object
                         } catch (IOException iOException) {
-                            LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT + ": " + iOException.toString(), ImageUtils.getContentPathSafe(file)); //NOI18N
+                            LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT + ": " + iOException.toString(), ImageUtils.getContentPathSafe(file)); //NON-NLS
                         } finally {
                             imageReader.removeIIOReadProgressListener(ReadImageTaskBase.this);
                         }
@@ -901,15 +832,85 @@ public class ImageUtils {
      *
      * @param content
      *
-     * @return
+     * @return the unique path for the content, or if that fails, just the name.
      */
     static String getContentPathSafe(Content content) {
         try {
             return content.getUniquePath();
         } catch (TskCoreException tskCoreException) {
             String contentName = content.getName();
-            LOGGER.log(Level.SEVERE, "Failed to get unique path for " + contentName, tskCoreException); //NOI18N NON-NLS
+            LOGGER.log(Level.SEVERE, "Failed to get unique path for " + contentName, tskCoreException); //NON-NLS
             return contentName;
         }
     }
+
+    /**
+     * Get the default thumbnail, which is the icon for a file. Used when we can
+     * not generate content based thumbnail.
+     *
+     * @return
+     *
+     * @deprecated use {@link  #getDefaultThumbnail() } instead.
+     */
+    @Deprecated
+    public static Image getDefaultIcon() {
+        return getDefaultThumbnail();
+    }
+
+    /**
+     * Get a file object for where the cached icon should exist. The returned
+     * file may not exist.
+     *
+     * @param id
+     *
+     * @return
+     *
+     * @deprecated use {@link #getCachedThumbnailLocation(long) } instead
+     */
+    @Deprecated
+
+    public static File getFile(long id) {
+        return getCachedThumbnailLocation(id);
+    }
+
+    /**
+     * Get a thumbnail of a specified size for the given image. Generates the
+     * thumbnail if it is not already cached.
+     *
+     * @param content
+     * @param iconSize
+     *
+     * @return a thumbnail for the given image or a default one if there was a
+     *         problem making a thumbnail.
+     *
+     * @deprecated use {@link #getThumbnail(org.sleuthkit.datamodel.Content, int)
+     * } instead.
+     */
+    @Nonnull
+    @Deprecated
+    public static BufferedImage getIcon(Content content, int iconSize) {
+        return getThumbnail(content, iconSize);
+    }
+
+    /**
+     * Get a thumbnail of a specified size for the given image. Generates the
+     * thumbnail if it is not already cached.
+     *
+     * @param content
+     * @param iconSize
+     *
+     * @return File object for cached image. Is guaranteed to exist, as long as
+     *         there was not an error generating or saving the thumbnail.
+     *
+     * @deprecated use {@link #getCachedThumbnailFile(org.sleuthkit.datamodel.Content, int)
+     * } instead.
+     *
+     */
+    @Nullable
+    @Deprecated
+    public static File getIconFile(Content content, int iconSize) {
+        return getCachedThumbnailFile(content, iconSize);
+
+    }
+
 }

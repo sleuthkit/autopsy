@@ -132,7 +132,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         return new Node[]{pageNode};
     }
 
-    public static boolean isSupported(Node node) {
+    static boolean isSupported(Node node) {
         if (node != null) {
             Content content = node.getLookup().lookup(Content.class);
             if (content != null) {
