@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -61,9 +61,9 @@ public class PromptDialogManager {
     static {
         Image x = null;
         try {
-            x = new Image(new URL("nbresloc:/org/netbeans/core/startup/frame.gif").openStream()); //NOI18N
+            x = new Image(new URL("nbresloc:/org/netbeans/core/startup/frame.gif").openStream()); //NON-NLS
         } catch (IOException ex) {
-            LOGGER.log(Level.WARNING, "Failed to load branded icon for progress dialog.", ex); //NOI18N NON-NLS
+            LOGGER.log(Level.WARNING, "Failed to load branded icon for progress dialog.", ex); //NON-NLS
         }
         LOGO = x;
     }
@@ -75,6 +75,12 @@ public class PromptDialogManager {
         this.controller = controller;
     }
 
+    /**
+     * bring the currently managed dialog (if there is one) to the front
+     *
+     * @return true if a dialog was brought to the front, or false of there is
+     *         no currently managed open dialog
+     */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     boolean bringCurrentDialogToFront() {
         if (currentDialog != null && currentDialog.isShowing()) {
@@ -86,12 +92,12 @@ public class PromptDialogManager {
 
     @NbBundle.Messages({"PromptDialogManager.progressDialog.title=Populating Timeline Data"})
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    public void showProgressDialog(CancellationProgressTask<?> task) {
+    void showProgressDialog(CancellationProgressTask<?> task) {
         currentDialog = new ProgressDialog(task);
         currentDialog.initModality(Modality.NONE);
-        currentDialog.headerTextProperty().bind(task.titleProperty());
-        setDialogIcons(currentDialog);
         currentDialog.setTitle(Bundle.PromptDialogManager_progressDialog_title());
+        setDialogIcons(currentDialog);
+        currentDialog.headerTextProperty().bind(task.titleProperty());
 
         DialogPane dialogPane = currentDialog.getDialogPane();
         dialogPane.setPrefSize(400, 200); //override autosizing which fails for some reason
@@ -100,6 +106,7 @@ public class PromptDialogManager {
         task.setOnCancelled(cancelled -> currentDialog.close());
         task.setOnSucceeded(succeeded -> currentDialog.close());
         task.setOnFailed(failed -> currentDialog.close());
+
         dialogPane.getButtonTypes().setAll(ButtonType.CANCEL);
         final Node cancelButton = dialogPane.lookupButton(ButtonType.CANCEL);
         cancelButton.disableProperty().bind(task.cancellableProperty().not());
@@ -117,14 +124,7 @@ public class PromptDialogManager {
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     static private void setDialogIcons(Dialog<?> dialog) {
-        Stage stage = (Stage) dialog.getDialogPane().getScene().getWindow();
-        stage.getIcons().setAll(LOGO);
-    }
-
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    static private void setDialogTitle(Dialog<?> dialog) {
-        Stage stage = (Stage) dialog.getDialogPane().getScene().getWindow();
-        stage.setTitle(Bundle.Timeline_confirmation_dialogs_title());
+        ((Stage) dialog.getDialogPane().getScene().getWindow()).getIcons().setAll(LOGO);
     }
 
     /**
@@ -141,7 +141,7 @@ public class PromptDialogManager {
         currentDialog.initModality(Modality.APPLICATION_MODAL);
         currentDialog.setHeaderText(Bundle.PromptDialogManager_confirmDuringIngest_headerText());
         setDialogIcons(currentDialog);
-        setDialogTitle(currentDialog);
+        currentDialog.setTitle(Bundle.Timeline_confirmation_dialogs_title());
 
         return currentDialog.showAndWait().map(SHOW_TIMELINE::equals).orElse(false);
     }
@@ -154,7 +154,7 @@ public class PromptDialogManager {
         currentDialog.initModality(Modality.APPLICATION_MODAL);
         currentDialog.setHeaderText(Bundle.PromptDialogManager_rebuildPrompt_headerText());
         setDialogIcons(currentDialog);
-        setDialogTitle(currentDialog);
+        currentDialog.setTitle(Bundle.Timeline_confirmation_dialogs_title());
 
         DialogPane dialogPane = currentDialog.getDialogPane();
         ListView<String> listView = new ListView<>(FXCollections.observableArrayList(rebuildReasons));

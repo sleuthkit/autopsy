@@ -320,19 +320,48 @@ public class EventsRepository {
         return dbWorker.isRunning();
     }
 
+    /**
+     *
+     * rebuild the entire repo.
+     *
+     * @param onStateChange called when he background task changes state.
+     *                      Clients can use this to handle failure, or cleanup
+     *                      operations for example.
+     *
+     * @return the task that will rebuild the repo in a background thread. The
+     *         task has already been started.
+     */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     public CancellationProgressTask<Void> rebuildRepository(Consumer<Worker.State> onStateChange) {
         return rebuildRepository(DBPopulationMode.FULL, onStateChange);
     }
 
+    /**
+     *
+     * drop and rebuild the tags in the repo.
+     *
+     * @param onStateChange called when he background task changes state.
+     *                      Clients can use this to handle failure, or cleanup
+     *                      operations for example.
+     *
+     * @return the task that will rebuild the repo in a background thread. The
+     *         task has already been started.
+     */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     public CancellationProgressTask<Void> rebuildTags(Consumer<Worker.State> onStateChange) {
         return rebuildRepository(DBPopulationMode.TAGS_ONLY, onStateChange);
     }
 
     /**
+     * rebuild the repo.
      *
-     * @param mode the value of mode
+     * @param mode          the rebuild mode to use.
+     * @param onStateChange called when he background task changes state.
+     *                      Clients can use this to handle failure, or cleanup
+     *                      operations for example.
+     *
+     * @return the task that will rebuild the repo in a background thread. The
+     *         task has already been started.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private CancellationProgressTask<Void> rebuildRepository(final DBPopulationMode mode, Consumer<Worker.State> onStateChange) {
@@ -409,7 +438,7 @@ public class EventsRepository {
             skCase = autoCase.getSleuthkitCase();
             tagsManager = autoCase.getServices().getTagsManager();
             this.dbPopulationMode = mode;
-            this.stateProperty().addListener(observable -> onStateChange.accept(getState()));
+            this.stateProperty().addListener(stateObservable -> onStateChange.accept(getState()));
         }
 
         void restartProgressHandle(String title, String message, Double workDone, double total, Boolean cancellable) {

@@ -290,6 +290,14 @@ public class TimeLineController {
         advance(filteredEvents.zoomParametersProperty().get().withTimeRange(boundingEventsInterval));
     }
 
+    /**
+     * rebuild the repo using the given repo builder (expected to be a member
+     * reference to {@link EventsRepository#rebuildRepository(java.util.function.Consumer)
+     * } or {@link EventsRepository#rebuildTags(java.util.function.Consumer) })
+     * and display the ui when it is done.
+     *
+     * @param repoBuilder
+     */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void rebuildRepoHelper(Function<Consumer<Worker.State>, CancellationProgressTask<?>> repoBuilder) {
         SwingUtilities.invokeLater(this::closeTimelineWindow);
@@ -314,11 +322,7 @@ public class TimeLineController {
     }
 
     /**
-     * rebuld the repo.
-     *
-     * @return False if the repo was not rebuilt because because the user
-     *         aborted after prompt about ingest running. True if the repo was
-     *         rebuilt.
+     * rebuld the entire repo.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     void rebuildRepo() {
@@ -329,7 +333,6 @@ public class TimeLineController {
      * Since tags might have changed while TimeLine wasn't listening, drop the
      * tags table and rebuild it by querying for all the tags and inserting them
      * in to the TimeLine DB.
-     *
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     void rebuildTagsTable() {
