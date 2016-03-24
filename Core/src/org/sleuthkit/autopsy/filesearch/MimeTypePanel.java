@@ -87,10 +87,10 @@ public class MimeTypePanel extends javax.swing.JPanel {
         setMinimumSize(new java.awt.Dimension(150, 150));
         setPreferredSize(new java.awt.Dimension(100, 100));
 
-        jList1.setModel(new javax.swing.AbstractListModel() {
+        jList1.setModel(new javax.swing.AbstractListModel<String>() {
             String[] strings = getMimeTypeArray();
             public int getSize() { return strings.length; }
-            public Object getElementAt(int i) { return strings[i]; }
+            public String getElementAt(int i) { return strings[i]; }
         });
         jList1.setMinimumSize(new java.awt.Dimension(0, 200));
         jScrollPane1.setViewportView(jList1);
