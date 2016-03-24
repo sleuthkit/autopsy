@@ -35,6 +35,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
@@ -44,6 +45,7 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
+import javafx.concurrent.Worker;
 import javax.swing.JOptionPane;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.Interval;
@@ -177,7 +179,6 @@ public class EventsRepository {
 
     }
 
-
     public TimeLineEvent getEventById(Long eventID) {
         return idToEventCache.getUnchecked(eventID);
     }
@@ -310,8 +311,6 @@ public class EventsRepository {
         }
     }
 
-
-
     public boolean areFiltersEquivalent(RootFilter f1, RootFilter f2) {
         return SQLHelper.getSQLWhere(f1).equals(SQLHelper.getSQLWhere(f2));
     }
@@ -322,13 +321,13 @@ public class EventsRepository {
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    public CancellationProgressTask<Void> rebuildRepository() {
-        return rebuildRepository(DBPopulationMode.FULL);
+    public CancellationProgressTask<Void> rebuildRepository(Consumer<Worker.State> onStateChange) {
+        return rebuildRepository(DBPopulationMode.FULL, onStateChange);
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    public CancellationProgressTask<Void> rebuildTags() {
-        return rebuildRepository(DBPopulationMode.TAGS_ONLY);
+    public CancellationProgressTask<Void> rebuildTags(Consumer<Worker.State> onStateChange) {
+        return rebuildRepository(DBPopulationMode.TAGS_ONLY, onStateChange);
     }
 
     /**
@@ -336,12 +335,12 @@ public class EventsRepository {
      * @param mode the value of mode
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private CancellationProgressTask<Void> rebuildRepository(final DBPopulationMode mode) {
+    private CancellationProgressTask<Void> rebuildRepository(final DBPopulationMode mode, Consumer<Worker.State> onStateChange) {
         LOGGER.log(Level.INFO, "(re)starting {0} db population task", mode); //NON-NLS
         if (dbWorker != null) {
             dbWorker.cancel();
         }
-        dbWorker = new DBPopulationWorker(mode);
+        dbWorker = new DBPopulationWorker(mode, onStateChange);
         workerExecutor.execute(dbWorker);
         return dbWorker;
     }
@@ -406,10 +405,11 @@ public class EventsRepository {
             }
         }
 
-        DBPopulationWorker(DBPopulationMode mode) {
+        DBPopulationWorker(DBPopulationMode mode, Consumer<Worker.State> onStateChange) {
             skCase = autoCase.getSleuthkitCase();
             tagsManager = autoCase.getServices().getTagsManager();
             this.dbPopulationMode = mode;
+            this.stateProperty().addListener(observable -> onStateChange.accept(getState()));
         }
 
         void restartProgressHandle(String title, String message, Double workDone, double total, Boolean cancellable) {

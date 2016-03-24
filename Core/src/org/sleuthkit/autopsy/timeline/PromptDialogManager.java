@@ -88,6 +88,7 @@ public class PromptDialogManager {
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     public void showProgressDialog(CancellationProgressTask<?> task) {
         currentDialog = new ProgressDialog(task);
+        currentDialog.initModality(Modality.NONE);
         currentDialog.headerTextProperty().bind(task.titleProperty());
         setDialogIcons(currentDialog);
         currentDialog.setTitle(Bundle.PromptDialogManager_progressDialog_title());
@@ -98,6 +99,7 @@ public class PromptDialogManager {
         //co-ordinate task cancelation and dialog hiding.
         task.setOnCancelled(cancelled -> currentDialog.close());
         task.setOnSucceeded(succeeded -> currentDialog.close());
+        task.setOnFailed(failed -> currentDialog.close());
         dialogPane.getButtonTypes().setAll(ButtonType.CANCEL);
         final Node cancelButton = dialogPane.lookupButton(ButtonType.CANCEL);
         cancelButton.disableProperty().bind(task.cancellableProperty().not());

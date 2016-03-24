@@ -30,6 +30,8 @@ import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.Observable;
@@ -288,26 +290,17 @@ public class TimeLineController {
         advance(filteredEvents.zoomParametersProperty().get().withTimeRange(boundingEventsInterval));
     }
 
-    /**
-     * rebuld the repo.
-     *
-     * @return False if the repo was not rebuilt because because the user
-     *         aborted after prompt about ingest running. True if the repo was
-     *         rebuilt.
-     */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    void rebuildRepo() {
+    private void rebuildRepoHelper(Function<Consumer<Worker.State>, CancellationProgressTask<?>> repoBuilder) {
         SwingUtilities.invokeLater(this::closeTimelineWindow);
-        final CancellationProgressTask<?> rebuildRepository = eventsRepository.rebuildRepository();
         boolean ingestRunning = IngestManager.getInstance().isIngestRunning();
-        rebuildRepository.stateProperty().addListener((stateProperty, oldState, newSate) -> {
-            //this will be on JFX thread
+        final CancellationProgressTask<?> rebuildRepository = repoBuilder.apply(newSate -> {
             setIngestRunning(ingestRunning);
+            //this will be on JFX thread
             switch (newSate) {
                 case SUCCEEDED:
                     setEventsDBStale(false);
                     SwingUtilities.invokeLater(TimeLineController.this::showWindow);
-
                     historyManager.reset(filteredEvents.zoomParametersProperty().get());
                     TimeLineController.this.showFullRange();
                     break;
@@ -318,7 +311,18 @@ public class TimeLineController {
             }
         });
         promptDialogManager.showProgressDialog(rebuildRepository);
+    }
 
+    /**
+     * rebuld the repo.
+     *
+     * @return False if the repo was not rebuilt because because the user
+     *         aborted after prompt about ingest running. True if the repo was
+     *         rebuilt.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    void rebuildRepo() {
+        rebuildRepoHelper(eventsRepository::rebuildRepository);
     }
 
     /**
@@ -329,17 +333,7 @@ public class TimeLineController {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     void rebuildTagsTable() {
-
-        SwingUtilities.invokeLater(this::closeTimelineWindow);
-        CancellationProgressTask<?> rebuildTags = eventsRepository.rebuildTags();
-        rebuildTags.stateProperty().addListener((stateProperty, oldState, newSate) -> {
-            //this will be on JFX thread
-            if (newSate == Worker.State.SUCCEEDED) {
-                SwingUtilities.invokeLater(TimeLineController.this::showWindow);
-                showFullRange();
-            }
-        });
-        promptDialogManager.showProgressDialog(rebuildTags);
+        rebuildRepoHelper(eventsRepository::rebuildTags);
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
