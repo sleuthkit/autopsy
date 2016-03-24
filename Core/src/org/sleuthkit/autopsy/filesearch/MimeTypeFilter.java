@@ -8,8 +8,7 @@ package org.sleuthkit.autopsy.filesearch;
 import java.awt.event.ActionListener;
 
 /**
- *
- * @author oliver
+ * Filter by mime type used in filter areas of file search by attribute.
  */
 class MimeTypeFilter extends AbstractFileSearchFilter<MimeTypePanel>  {
 
