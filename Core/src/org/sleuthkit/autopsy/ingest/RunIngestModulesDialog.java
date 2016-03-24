@@ -138,7 +138,7 @@ public final class RunIngestModulesDialog extends JDialog {
         buttonPanel.add(startButton);
         buttonPanel.add(new javax.swing.Box.Filler(new Dimension(10, 10), new Dimension(10, 10), new Dimension(10, 10)));
         buttonPanel.add(closeButton);
-        add(buttonPanel, BorderLayout.LINE_START);
+        add(buttonPanel, BorderLayout.LINE_END);
 
         /**
          * Add a handler for when the dialog window is closed directly,
