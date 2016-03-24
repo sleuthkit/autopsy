@@ -42,7 +42,6 @@ class AddImageWizardIngestConfigVisual extends JPanel {
     }
 
     private void customizeComponents() {
-        configPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         configPanel.setLayout(new BorderLayout());
         configPanel.add(ingestPanel, BorderLayout.CENTER);
     }
@@ -66,12 +65,9 @@ class AddImageWizardIngestConfigVisual extends JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        subtitleLabel = new javax.swing.JLabel();
         configPanel = new javax.swing.JPanel();
 
         setPreferredSize(new java.awt.Dimension(569, 300));
-
-        subtitleLabel.setText(org.openide.util.NbBundle.getMessage(AddImageWizardIngestConfigVisual.class, "AddImageWizardIngestConfigVisual.subtitleLabel.text")); // NOI18N
 
         configPanel.setPreferredSize(new java.awt.Dimension(569, 400));
 
@@ -83,31 +79,23 @@ class AddImageWizardIngestConfigVisual extends JPanel {
         );
         configPanelLayout.setVerticalGroup(
             configPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 258, Short.MAX_VALUE)
+            .addGap(0, 275, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(subtitleLabel)
-                .addContainerGap(218, Short.MAX_VALUE))
             .addComponent(configPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(6, 6, 6)
-                .addComponent(subtitleLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(configPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 258, Short.MAX_VALUE)
-                .addContainerGap())
+                .addComponent(configPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 25, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel configPanel;
-    private javax.swing.JLabel subtitleLabel;
     // End of variables declaration//GEN-END:variables
 }

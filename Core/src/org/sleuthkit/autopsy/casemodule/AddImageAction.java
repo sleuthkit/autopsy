@@ -22,6 +22,7 @@ import java.awt.Component;
 import java.awt.Dialog;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.MessageFormat;
 import java.util.logging.Level;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
@@ -119,6 +120,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
         wizardDescriptor = new WizardDescriptor(iterator);
         wizardDescriptor.setTitle(NbBundle.getMessage(this.getClass(), "AddImageAction.wizard.title"));
         wizardDescriptor.putProperty(NAME, e);
+        wizardDescriptor.setTitleFormat(new MessageFormat("{0}"));
 
         if (dialog != null) {
             dialog.setVisible(false); // hide the old one
