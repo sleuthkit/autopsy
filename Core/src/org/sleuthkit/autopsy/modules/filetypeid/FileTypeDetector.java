@@ -265,7 +265,6 @@ public class FileTypeDetector {
              * Add the MIME type to the files table in the case database.
              */
             Case.getCurrentCase().getSleuthkitCase().setFileMIMEType(file, mimeType);
-            file.setMIMEType(mimeType);
 
             /*
              * Post to the blackboard, adding the file type attribute to the
