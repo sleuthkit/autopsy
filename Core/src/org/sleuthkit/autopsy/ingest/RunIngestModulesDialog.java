@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -51,7 +52,7 @@ public final class RunIngestModulesDialog extends JDialog {
     private static final long serialVersionUID = 1L;
     private static final String TITLE = NbBundle.getMessage(RunIngestModulesDialog.class, "IngestDialog.title.text");
     private final IngestType ingestType;
-    private static Dimension DIMENSIONS = new Dimension(500, 300);
+    private static Dimension DIMENSIONS = new Dimension(500, 333);
     private final List<Content> dataSources = new ArrayList<>();
     private IngestJobSettingsPanel ingestJobSettingsPanel;
 
@@ -66,7 +67,6 @@ public final class RunIngestModulesDialog extends JDialog {
      */
     public RunIngestModulesDialog(JFrame frame, String title, boolean modal, List<Content> dataSources) {
         super(frame, title, modal);
-        frame.setResizable(true);
         this.dataSources.addAll(dataSources);
         this.ingestType = IngestType.ALL_MODULES;
     }
@@ -114,7 +114,7 @@ public final class RunIngestModulesDialog extends JDialog {
         IngestJobSettings ingestJobSettings = new IngestJobSettings(RunIngestModulesDialog.class.getCanonicalName(), this.ingestType);
         RunIngestModulesDialog.showWarnings(ingestJobSettings);
         this.ingestJobSettingsPanel = new IngestJobSettingsPanel(ingestJobSettings);
-        add(this.ingestJobSettingsPanel, BorderLayout.PAGE_START);
+        add(this.ingestJobSettingsPanel, BorderLayout.CENTER);
 
         // Add a start ingest button.
         JButton startButton = new JButton(NbBundle.getMessage(this.getClass(), "IngestDialog.startButton.title"));
@@ -136,13 +136,13 @@ public final class RunIngestModulesDialog extends JDialog {
 
         // Put the buttons in their own panel, under the settings panel.
         JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.LINE_AXIS));
-        buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 10));
-        buttonPanel.add(new javax.swing.Box.Filler(new Dimension(10, 10), new Dimension(10, 10), new Dimension(10, 10)));
+        buttonPanel.setLayout(new FlowLayout(FlowLayout.TRAILING));
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
         buttonPanel.add(startButton);
-        buttonPanel.add(new javax.swing.Box.Filler(new Dimension(10, 10), new Dimension(10, 10), new Dimension(10, 10)));
+        buttonPanel.add(new javax.swing.Box.Filler(new Dimension(5, 10), new Dimension(5, 10), new Dimension(5, 10)));
         buttonPanel.add(closeButton);
-        add(buttonPanel, BorderLayout.LINE_END);
+
+        add(buttonPanel, BorderLayout.SOUTH);
 
         /**
          * Add a handler for when the dialog window is closed directly,
