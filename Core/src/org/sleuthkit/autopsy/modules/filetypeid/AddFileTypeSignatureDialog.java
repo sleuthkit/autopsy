@@ -33,15 +33,11 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
 import org.sleuthkit.autopsy.ingest.RunIngestModulesDialog;
 import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.Directory;
 
 /**
  *
@@ -162,21 +158,18 @@ final class AddFileTypeSignatureDialog extends JDialog {
     @Messages({"AddFileTypeSignatureDialog.invalidSignature.message=Invalid signature"})
     private void doButtonAction(boolean okPressed) {
         if (okPressed) {
-            if (this.addFileTypeSigPanel.isValidSignature()) {
+            Signature sig = addFileTypeSigPanel.getSignature();
+            if (sig != null) {
                 Signature oldSignature = this.signature;
-                this.signature = this.addFileTypeSigPanel.getSignature();
+                this.signature = sig;
                 pcs.firePropertyChange(BUTTON_PRESSED.OK.toString(), oldSignature, signature);
                 setVisible(false);
-                clear();
-            } else {
-                JOptionPane.showMessageDialog(this, Bundle.AddFileTypeSignatureDialog_invalidSignature_message());
             }
         } else {
             Signature oldSignature = this.signature;
             this.signature = null;
             pcs.firePropertyChange(BUTTON_PRESSED.CANCEL.toString(), oldSignature, signature);
             setVisible(false);
-            clear();
         }
     }
 

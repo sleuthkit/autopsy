@@ -9,6 +9,7 @@ import java.nio.charset.Charset;
 import javax.swing.JOptionPane;
 import javax.xml.bind.DatatypeConverter;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
 
 /**
  *
@@ -17,6 +18,8 @@ import org.openide.util.NbBundle;
 class AddFileTypeSignaturePanel extends javax.swing.JPanel {
 
     private static final String RAW_SIGNATURE_TYPE_COMBO_BOX_ITEM = NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.signatureComboBox.rawItem");
+    private static final String START_OFFSET_RELATIVE_COMBO_BOX_ITEM = NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.offsetComboBox.startItem");
+    private static final String END_OFFSET_RELATIVE_COMBO_BOX_ITEM = NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.offsetComboBox.endItem");
 
     /**
      * Creates new form AddFileTypeSignaturePanel
@@ -24,24 +27,13 @@ class AddFileTypeSignaturePanel extends javax.swing.JPanel {
     AddFileTypeSignaturePanel() {
         initComponents();
     }
-    
+
     public Signature getSignature() {
-        /**
-         * Get the MIME type.
-         */
-        String typeName = mimeTypeTextField.getText();
-        if (typeName.isEmpty()) {
-            JOptionPane.showMessageDialog(null,
-                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidMIMEType.message"),
-                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidMIMEType.title"),
-                    JOptionPane.ERROR_MESSAGE);
-            return null;
-        }
 
         /**
          * Get the signature type.
          */
-        FileType.Signature.Type sigType = signatureTypeComboBox.getSelectedItem() == FileTypeIdGlobalSettingsPanel.RAW_SIGNATURE_TYPE_COMBO_BOX_ITEM ? FileType.Signature.Type.RAW : FileType.Signature.Type.ASCII;
+        FileType.Signature.Type sigType = signatureTypeComboBox.getSelectedItem() == RAW_SIGNATURE_TYPE_COMBO_BOX_ITEM ? FileType.Signature.Type.RAW : FileType.Signature.Type.ASCII;
 
         /**
          * Get the signature bytes.
@@ -64,7 +56,7 @@ class AddFileTypeSignaturePanel extends javax.swing.JPanel {
                         NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidRawSignatureBytes.message"),
                         NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidSignatureBytes.title"),
                         JOptionPane.ERROR_MESSAGE);
-                return;
+                return null;
             }
         } else {
             signatureBytes = sigString.getBytes(Charset.forName("UTF-8"));
@@ -74,16 +66,16 @@ class AddFileTypeSignaturePanel extends javax.swing.JPanel {
          * Get the offset.
          */
         long offset;
-        boolean isRelativeToStart = offsetRelativeToComboBox.getSelectedItem() == FileTypeIdGlobalSettingsPanel.START_OFFSET_RELATIVE_COMBO_BOX_ITEM;
+        boolean isRelativeToStart = offsetRelativeToComboBox.getSelectedItem() == START_OFFSET_RELATIVE_COMBO_BOX_ITEM;
         try {
-                offset = Long.parseUnsignedLong(offsetTextField.getText());
-                if(!isRelativeToStart && signatureBytes.length > offset+1) {
-                    JOptionPane.showMessageDialog(null,
+            offset = Long.parseUnsignedLong(offsetTextField.getText());
+            if (!isRelativeToStart && signatureBytes.length > offset + 1) {
+                JOptionPane.showMessageDialog(null,
                         NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidOffset.length"),
                         NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidOffset.title"),
                         JOptionPane.ERROR_MESSAGE);
-                    return null;
-                }
+                return null;
+            }
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(null,
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidOffset.message"),
@@ -95,31 +87,14 @@ class AddFileTypeSignaturePanel extends javax.swing.JPanel {
         /**
          * Get the interesting files set details.
          */
-        String filesSetName = "";
-        if (postHitCheckBox.isSelected()) {
-            filesSetName = filesSetNameTextField.getText();
-        }
-        if (postHitCheckBox.isSelected() && filesSetName.isEmpty()) {
-            JOptionPane.showMessageDialog(null,
-                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidInterestingFilesSetName.message"),
-                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidInterestingFilesSetName.title"),
-                    JOptionPane.ERROR_MESSAGE);
-            return null;
-        }
 
         /**
          * Put it all together and reset the file types list component.
          */
         FileType.Signature signature = new FileType.Signature(signatureBytes, offset, sigType, isRelativeToStart);
-        FileType fileType = new FileType(typeName, signature, filesSetName, postHitCheckBox.isSelected());
-        FileType selected = typesList.getSelectedValue();
-        if (selected != null) {
-            fileTypes.remove(selected);
-        }
-        fileTypes.add(fileType);
-        updateFileTypesListModel();
-        typesList.setSelectedValue(fileType, true);
+        return signature;
     }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
