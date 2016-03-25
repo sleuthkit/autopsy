@@ -655,6 +655,18 @@ class ReportGenerator {
                 }
 
                 ArrayList<String> rowData = new ArrayList<>(Arrays.asList(tag.getName().getDisplayName(), fileName, tag.getComment()));
+                Content content = tag.getContent();
+                if (content instanceof AbstractFile) {
+                    AbstractFile file = (AbstractFile) content;
+
+                    // Add metadata about the file to HTML output
+                    rowData.add(file.getMtimeAsDate());
+                    rowData.add(file.getCtimeAsDate());
+                    rowData.add(file.getAtimeAsDate());
+                    rowData.add(file.getCrtimeAsDate());
+                    rowData.add(Long.toString(file.getSize()));
+                    rowData.add(file.getMd5Hash());
+                }
                 for (TableReportModule module : tableModules) {
                     // @@@ This casting is a tricky little workaround to allow the HTML report module to slip in a content hyperlink.
                     if (module instanceof ReportHTML) {
