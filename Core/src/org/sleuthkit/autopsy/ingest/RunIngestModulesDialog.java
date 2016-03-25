@@ -27,12 +27,14 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
 import org.sleuthkit.datamodel.Content;
@@ -64,6 +66,7 @@ public final class RunIngestModulesDialog extends JDialog {
      */
     public RunIngestModulesDialog(JFrame frame, String title, boolean modal, List<Content> dataSources) {
         super(frame, title, modal);
+        frame.setResizable(true);
         this.dataSources.addAll(dataSources);
         this.ingestType = IngestType.ALL_MODULES;
     }
@@ -134,6 +137,7 @@ public final class RunIngestModulesDialog extends JDialog {
         // Put the buttons in their own panel, under the settings panel.
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.LINE_AXIS));
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 10));
         buttonPanel.add(new javax.swing.Box.Filler(new Dimension(10, 10), new Dimension(10, 10), new Dimension(10, 10)));
         buttonPanel.add(startButton);
         buttonPanel.add(new javax.swing.Box.Filler(new Dimension(10, 10), new Dimension(10, 10), new Dimension(10, 10)));
@@ -155,7 +159,6 @@ public final class RunIngestModulesDialog extends JDialog {
          * Show the dialog.
          */
         pack();
-        setResizable(false);
         setVisible(true);
     }
 
@@ -196,7 +199,7 @@ public final class RunIngestModulesDialog extends JDialog {
             JOptionPane.showMessageDialog(null, warningMessage.toString());
         }
     }
-    
+
     /**
      * Constructs a dialog box that allows a user to configure and execute
      * analysis of one or more data sources with ingest modules.
@@ -236,5 +239,5 @@ public final class RunIngestModulesDialog extends JDialog {
         this.dataSources.clear();
         this.dataSources.addAll(dataSources);
     }
-    
+
 }
