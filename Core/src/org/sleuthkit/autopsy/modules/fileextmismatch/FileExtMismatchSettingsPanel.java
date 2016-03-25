@@ -69,7 +69,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         customizeComponents();
     }
 
-    @NbBundle.Messages({"FileExtMismatchSettingsPanel.Title=Global File Extension Mismatch Identification Settings"})    
+    @NbBundle.Messages({"FileExtMismatchSettingsPanel.Title=Global File Extension Mismatch Identification Settings"})
     private void customizeComponents() {
         setName(Bundle.FileExtMismatchSettingsPanel_Title());
 
@@ -143,7 +143,6 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
 
         jScrollPane1 = new javax.swing.JScrollPane();
         jPanel1 = new javax.swing.JPanel();
-        saveButton = new javax.swing.JButton();
         jSplitPane1 = new javax.swing.JSplitPane();
         mimePanel = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
@@ -166,15 +165,6 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         saveMsgLabel = new javax.swing.JLabel();
 
         jPanel1.setPreferredSize(new java.awt.Dimension(687, 450));
-
-        saveButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/fileextmismatch/save16.png"))); // NOI18N NON-NLS
-        saveButton.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.saveButton.text")); // NOI18N
-        saveButton.setEnabled(false);
-        saveButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                saveButtonActionPerformed(evt);
-            }
-        });
 
         jSplitPane1.setDividerLocation(430);
 
@@ -247,7 +237,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
                 .addComponent(removeTypeButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(mimeRemoveErrLabel)
-                .addContainerGap(47, Short.MAX_VALUE))
+                .addContainerGap(83, Short.MAX_VALUE))
         );
 
         jSplitPane1.setLeftComponent(mimePanel);
@@ -336,21 +326,17 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 667, Short.MAX_VALUE)
+                    .addComponent(jSplitPane1)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(saveButton, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(saveMsgLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 145, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addComponent(saveMsgLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 145, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jSplitPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(saveButton)
+                .addComponent(jSplitPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 466, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(saveMsgLabel)
                 .addContainerGap())
@@ -415,10 +401,6 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         userExtTextField.setText("");
         setIsModified();
     }//GEN-LAST:event_addExtButtonActionPerformed
-
-    private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
-        store();
-    }//GEN-LAST:event_saveButtonActionPerformed
 
     private void addTypeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addTypeButtonActionPerformed
         String newMime = userTypeTextField.getText();
@@ -555,7 +537,6 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
             extErrorLabel.setText(" ");
 
             saveMsgLabel.setText(NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.store.msg"));
-            saveButton.setEnabled(false);
         } else {
             //error
             JOptionPane.showMessageDialog(this,
@@ -582,7 +563,6 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
     }
 
     private void setIsModified() {
-        saveButton.setEnabled(true);
         saveMsgLabel.setText(" ");
     }
 
@@ -592,18 +572,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
     }
 
     public void ok() {
-        // if data is unsaved
-        if (saveButton.isEnabled()) {
-            int choice = JOptionPane.showConfirmDialog(this,
-                    NbBundle.getMessage(this.getClass(),
-                            "FileExtMismatchConfigPanel.ok.confDlg.msg"),
-                    NbBundle.getMessage(this.getClass(),
-                            "FileExtMismatchConfigPanel.confDlg.title"),
-                    JOptionPane.YES_NO_OPTION);
-            if (choice == JOptionPane.YES_OPTION) {
-                store();
-            }
-        }
+        store();
         clearErrLabels();
         load(); // The next time this panel is opened, we want it to be fresh
     }
@@ -631,7 +600,6 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
     private javax.swing.JTable mimeTable;
     private javax.swing.JButton removeExtButton;
     private javax.swing.JButton removeTypeButton;
-    private javax.swing.JButton saveButton;
     private javax.swing.JLabel saveMsgLabel;
     private javax.swing.JTextField userExtTextField;
     private javax.swing.JTextField userTypeTextField;
