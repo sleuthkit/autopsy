@@ -1,5 +1,5 @@
 Manifest-Version: 1.0
 OpenIDE-Module: org.sleuthkit.autopsy.scalpel/1
-OpenIDE-Module-Implementation-Version: 1
+OpenIDE-Module-Implementation-Version: 2
 OpenIDE-Module-Localizing-Bundle: org/sleuthkit/autopsy/scalpel/Bundle.properties
 OpenIDE-Module-Specification-Version: 1.0
