@@ -190,9 +190,9 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
      * Sets the configuration of the data source processor without using the
      * configuration panel.
      *
-     * @param imagePath            Path to the image file.
+     * @param drivePath            Path to the local drive.
      * @param timeZone             The time zone to use when processing dates
-     *                             and times for the image, obtained from
+     *                             and times for the local drive, obtained from
      *                             java.util.TimeZone.getID.
      * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
      *                             FAT filesystem.
