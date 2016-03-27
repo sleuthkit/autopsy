@@ -27,8 +27,8 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <release-version>11</release-version>
-                        <specification-version>11.0</specification-version>
+                        <release-version>10</release-version>
+                        <specification-version>10.5</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -36,7 +36,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <release-version>11</release-version>
+                        <release-version>6</release-version>
                         <specification-version>6.3</specification-version>
                     </run-dependency>
                 </dependency>
