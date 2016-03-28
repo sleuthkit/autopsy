@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Component;
 import java.awt.Dialog;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.MessageFormat;
@@ -75,6 +76,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     static final String NOFATORPHANS_PROP = "nofatorphans"; //NON-NLS
 
     static final Logger logger = Logger.getLogger(AddImageAction.class.getName());
+    static final Dimension SIZE = new Dimension(825, 550);
 
     private WizardDescriptor wizardDescriptor;
     private WizardDescriptor.Iterator<WizardDescriptor> iterator;
@@ -126,6 +128,8 @@ public final class AddImageAction extends CallableSystemAction implements Presen
             dialog.setVisible(false); // hide the old one
         }
         dialog = DialogDisplayer.getDefault().createDialog(wizardDescriptor);
+        Dimension d = dialog.getSize();
+        dialog.setSize(SIZE);
         dialog.setVisible(true);
         dialog.toFront();
 
