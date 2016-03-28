@@ -51,11 +51,11 @@ final class AddFileTypeSignatureDialog extends JDialog {
     private final AddFileTypeSignaturePanel addFileTypeSigPanel;
     private static final String TITLE = NbBundle.getMessage(RunIngestModulesDialog.class, "IngestDialog.title.text");
     private Signature signature;
-    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+    private BUTTON_PRESSED result;
 
     enum BUTTON_PRESSED {
 
-        OK, CANCEL;
+        ADD, CANCEL;
     }
 
     /**
@@ -63,17 +63,24 @@ final class AddFileTypeSignatureDialog extends JDialog {
      * analysis of the contents of a directory with file-level ingest modules.
      *
      */
-    public AddFileTypeSignatureDialog() {
+    AddFileTypeSignatureDialog() {
         super(new JFrame(TITLE), TITLE, true);
         this.addFileTypeSigPanel = new AddFileTypeSignaturePanel();
         this.display();
     }
 
     /**
+     * @return the result
+     */
+    public BUTTON_PRESSED getResult() {
+        return result;
+    }
+
+    /**
      * Displays this dialog.
      */
     @Messages({
-        "AddFileTypeSignatureDialog.okButton.title=Ok",
+        "AddFileTypeSignatureDialog.addButton.title=Add",
         "AddFileTypeSignatureDialog.cancelButton.title=Cancel"})
     void display() {
         setLayout(new BorderLayout());
@@ -93,8 +100,8 @@ final class AddFileTypeSignatureDialog extends JDialog {
         add(this.addFileTypeSigPanel, BorderLayout.PAGE_START);
 
         // Add a start ingest button.
-        JButton okButton = new JButton(Bundle.AddFileTypeSignatureDialog_okButton_title());
-        okButton.addActionListener(new ActionListener() {
+        JButton addButton = new JButton(Bundle.AddFileTypeSignatureDialog_addButton_title());
+        addButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 doButtonAction(true);
@@ -114,7 +121,7 @@ final class AddFileTypeSignatureDialog extends JDialog {
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.LINE_AXIS));
         buttonPanel.add(new javax.swing.Box.Filler(new Dimension(10, 10), new Dimension(10, 10), new Dimension(10, 10)));
-        buttonPanel.add(okButton);
+        buttonPanel.add(addButton);
         buttonPanel.add(new javax.swing.Box.Filler(new Dimension(10, 10), new Dimension(10, 10), new Dimension(10, 10)));
         buttonPanel.add(closeButton);
         add(buttonPanel, BorderLayout.LINE_START);
@@ -138,16 +145,6 @@ final class AddFileTypeSignatureDialog extends JDialog {
         setVisible(true);
     }
 
-    @Override
-    public void addPropertyChangeListener(PropertyChangeListener pcl) {
-        pcs.addPropertyChangeListener(pcl);
-    }
-
-    @Override
-    public void removePropertyChangeListener(PropertyChangeListener pcl) {
-        pcs.removePropertyChangeListener(pcl);
-    }
-
     /**
      * Saves the ingest job settings, optionally starts an ingest job for each
      * data source, then closes the dialog
@@ -160,15 +157,13 @@ final class AddFileTypeSignatureDialog extends JDialog {
         if (okPressed) {
             Signature sig = addFileTypeSigPanel.getSignature();
             if (sig != null) {
-                Signature oldSignature = this.signature;
                 this.signature = sig;
-                pcs.firePropertyChange(BUTTON_PRESSED.OK.toString(), oldSignature, signature);
+                this.result = BUTTON_PRESSED.ADD;
                 setVisible(false);
             }
         } else {
-            Signature oldSignature = this.signature;
             this.signature = null;
-            pcs.firePropertyChange(BUTTON_PRESSED.CANCEL.toString(), oldSignature, signature);
+            this.result = BUTTON_PRESSED.CANCEL;
             setVisible(false);
         }
     }

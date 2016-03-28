@@ -6,9 +6,16 @@
 package org.sleuthkit.autopsy.modules.filetypeid;
 
 import java.nio.charset.Charset;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.xml.bind.DatatypeConverter;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
 
 /**
@@ -20,13 +27,46 @@ class AddFileTypeSignaturePanel extends javax.swing.JPanel {
     private static final String RAW_SIGNATURE_TYPE_COMBO_BOX_ITEM = NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.signatureComboBox.rawItem");
     private static final String START_OFFSET_RELATIVE_COMBO_BOX_ITEM = NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.offsetComboBox.startItem");
     private static final String END_OFFSET_RELATIVE_COMBO_BOX_ITEM = NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.offsetComboBox.endItem");
+    private static final String ASCII_SIGNATURE_TYPE_COMBO_BOX_ITEM = NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.signatureComboBox.asciiItem");
 
     /**
      * Creates new form AddFileTypeSignaturePanel
      */
     AddFileTypeSignaturePanel() {
         initComponents();
+        customizeComponents();
     }
+
+    /**
+     * Does child component initialization in addition to that done by the
+     * Matisse generated code.
+     */
+    private void customizeComponents() {
+        setSignatureTypeComboBoxModel();
+        setOffsetRealtiveToComboBoxModel();
+    }
+    /**
+     * Sets the model for the signature type combo box.
+     */
+    private void setSignatureTypeComboBoxModel() {
+        DefaultComboBoxModel<String> sigTypeComboBoxModel = new DefaultComboBoxModel<>();
+        sigTypeComboBoxModel.addElement(RAW_SIGNATURE_TYPE_COMBO_BOX_ITEM);
+        sigTypeComboBoxModel.addElement(ASCII_SIGNATURE_TYPE_COMBO_BOX_ITEM);
+        signatureTypeComboBox.setModel(sigTypeComboBoxModel);
+        signatureTypeComboBox.setSelectedItem(RAW_SIGNATURE_TYPE_COMBO_BOX_ITEM);
+    }
+
+    /**
+     * Sets the model for the signature type combo box.
+     */
+    private void setOffsetRealtiveToComboBoxModel() {
+        DefaultComboBoxModel<String> offsetRelComboBoxModel = new DefaultComboBoxModel<>();
+        offsetRelComboBoxModel.addElement(START_OFFSET_RELATIVE_COMBO_BOX_ITEM);
+        offsetRelComboBoxModel.addElement(END_OFFSET_RELATIVE_COMBO_BOX_ITEM);
+        offsetRelativeToComboBox.setModel(offsetRelComboBoxModel);
+        offsetRelativeToComboBox.setSelectedItem(START_OFFSET_RELATIVE_COMBO_BOX_ITEM);
+    }
+
 
     public Signature getSignature() {
 
@@ -87,7 +127,6 @@ class AddFileTypeSignaturePanel extends javax.swing.JPanel {
         /**
          * Get the interesting files set details.
          */
-
         /**
          * Put it all together and reset the file types list component.
          */
