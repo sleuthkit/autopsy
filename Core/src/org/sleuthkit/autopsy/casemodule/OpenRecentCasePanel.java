@@ -156,9 +156,6 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
 
         private static final long serialVersionUID = 1L;
 
-        /**
-         * @inheritDoc
-         */
         @Override
         public int getRowCount() {
             int count = 0;
@@ -170,17 +167,11 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
             return count;
         }
 
-        /**
-         * @inheritDoc
-         */
         @Override
         public int getColumnCount() {
             return 2;
         }
 
-        /**
-         * @inheritDoc
-         */
         @Override
         public String getColumnName(int column) {
             String colName = null;
@@ -197,9 +188,6 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
             return colName;
         }
 
-        /**
-         * @inheritDoc
-         */
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             Object ret = null;
@@ -217,17 +205,11 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
             return ret;
         }
 
-        /**
-         * @inheritDoc
-         */
         @Override
         public boolean isCellEditable(int rowIndex, int columnIndex) {
             return false;
         }
 
-        /**
-         * @inheritDoc
-         */
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         }

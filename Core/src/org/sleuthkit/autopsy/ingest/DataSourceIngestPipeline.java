@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2014-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -195,17 +195,11 @@ final class DataSourceIngestPipeline {
             return this.processingStartTime;
         }
 
-        /**
-         * @inheritDoc
-         */
         @Override
         public void startUp(IngestJobContext context) throws IngestModuleException {
             this.module.startUp(context);
         }
 
-        /**
-         * @inheritDoc
-         */
         @Override
         public IngestModule.ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
             this.processingStartTime = new Date();
