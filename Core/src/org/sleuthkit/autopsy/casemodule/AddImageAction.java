@@ -76,7 +76,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     static final String NOFATORPHANS_PROP = "nofatorphans"; //NON-NLS
 
     static final Logger logger = Logger.getLogger(AddImageAction.class.getName());
-    static final Dimension SIZE = new Dimension(825, 550);
+    static final Dimension SIZE = new Dimension(875, 550);
 
     private WizardDescriptor wizardDescriptor;
     private WizardDescriptor.Iterator<WizardDescriptor> iterator;

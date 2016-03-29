@@ -52,7 +52,7 @@ public final class RunIngestModulesDialog extends JDialog {
     private static final long serialVersionUID = 1L;
     private static final String TITLE = NbBundle.getMessage(RunIngestModulesDialog.class, "IngestDialog.title.text");
     private final IngestType ingestType;
-    private static Dimension DIMENSIONS = new Dimension(500, 333);
+    private static Dimension DIMENSIONS = new Dimension(585, 400);
     private final List<Content> dataSources = new ArrayList<>();
     private IngestJobSettingsPanel ingestJobSettingsPanel;
 
