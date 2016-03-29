@@ -26,6 +26,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BorderFactory;
@@ -37,6 +38,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
@@ -66,6 +68,7 @@ public final class RunIngestModulesDialog extends JDialog {
      */
     public RunIngestModulesDialog(JFrame frame, String title, boolean modal, List<Content> dataSources) {
         super(frame, title, modal);
+        this.setIconImage(null);
         this.dataSources.addAll(dataSources);
         this.ingestType = IngestType.ALL_MODULES;
     }
@@ -77,7 +80,7 @@ public final class RunIngestModulesDialog extends JDialog {
      * @param dataSources The data sources to be processed.
      */
     public RunIngestModulesDialog(List<Content> dataSources) {
-        this(new JFrame(TITLE), TITLE, true, dataSources);
+        this((JFrame)WindowManager.getDefault().getMainWindow(), TITLE, true, dataSources);
     }
 
     /**
