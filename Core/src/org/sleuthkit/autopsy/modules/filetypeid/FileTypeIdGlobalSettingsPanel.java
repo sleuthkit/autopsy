@@ -22,11 +22,12 @@ import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
 import java.util.Collections;
+import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
+import javax.swing.ListModel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
@@ -61,6 +62,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     private DefaultListModel<FileType> typesListModel;
     private java.util.List<FileType> fileTypes;
     private AddFileTypeSignatureDialog addSigDialog;
+    private DefaultListModel<Signature> signaturesListModel;
 
     /**
      * This panel implements a property change listener that listens to ingest
@@ -90,6 +92,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     private void customizeComponents() {
         setName(Bundle.FileTypeIdGlobalSettingsPanel_Title());
         setFileTypesListModel();
+        setSignaturesListModel();
         setSignatureTypeComboBoxModel();
         setOffsetRealtiveToComboBoxModel();
         clearTypeDetailsComponents();
@@ -103,6 +106,11 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     private void setFileTypesListModel() {
         typesListModel = new DefaultListModel<>();
         typesList.setModel(typesListModel);
+    }
+    
+    private void setSignaturesListModel() {
+        this.signaturesListModel = new DefaultListModel<>();
+        signatureList.setModel(signaturesListModel);
     }
 
     /**
@@ -259,21 +267,10 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         if (null != fileType) {
             mimeTypeTextField.setText(fileType.getMimeType());
             mimeTypeTextField.setEditable(false);
-            Signature signature = fileType.getSignature();
-            FileType.Signature.Type sigType = signature.getType();
-            String signatureBytes;
-            if (Signature.Type.RAW == signature.getType()) {
-                signatureBytes = DatatypeConverter.printHexBinary(signature.getSignatureBytes());
-            } else {
-                try {
-                    signatureBytes = new String(signature.getSignatureBytes(), "UTF-8");
-                } catch (UnsupportedEncodingException ex) {
-                    JOptionPane.showMessageDialog(null,
-                            ex.getLocalizedMessage(),
-                            NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.storeFailed.title"),
-                            JOptionPane.ERROR_MESSAGE);
-                    signatureBytes = "";
-                }
+            List<Signature> signatures = fileType.getSignatures();
+            this.signaturesListModel.clear();
+            for(Signature sig: signatures) {
+                signaturesListModel.addElement(sig);
             }
             postHitCheckBox.setSelected(fileType.alertOnMatch());
             filesSetNameTextField.setEnabled(postHitCheckBox.isSelected());
@@ -353,7 +350,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jList1 = new javax.swing.JList();
+        signatureList = new javax.swing.JList<Signature>();
         addSigButton = new javax.swing.JButton();
         editSigButton = new javax.swing.JButton();
         deleteSigButton = new javax.swing.JButton();
@@ -422,12 +419,12 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         jLabel3.setFont(jLabel3.getFont().deriveFont(jLabel3.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.jLabel3.text")); // NOI18N
 
-        jList1.setModel(new javax.swing.AbstractListModel() {
-            String[] strings = {};
-            public int getSize() { return strings.length; }
-            public Object getElementAt(int i) { return strings[i]; }
+        signatureList.setModel(new javax.swing.AbstractListModel<Signature>() {
+            Signature[] signatures = {};
+            public int getSize() { return signatures.length; }
+            public Signature getElementAt(int i) { return signatures[i]; }
         });
-        jScrollPane1.setViewportView(jList1);
+        jScrollPane1.setViewportView(signatureList);
 
         org.openide.awt.Mnemonics.setLocalizedText(addSigButton, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.addSigButton.text")); // NOI18N
         addSigButton.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -561,14 +558,14 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     }//GEN-LAST:event_postHitCheckBoxActionPerformed
 
     private void addSigButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addSigButtonActionPerformed
-       
+
     }//GEN-LAST:event_addSigButtonActionPerformed
 
     private void addButtonMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_addButtonMousePressed
         if (evt.getSource().equals(this.addSigButton)) {
             this.addSigDialog = new AddFileTypeSignatureDialog();
-            if(addSigDialog.getResult() == BUTTON_PRESSED.ADD) {
-                System.out.println("Gottem");
+            if (addSigDialog.getResult() == BUTTON_PRESSED.ADD) {
+                signaturesListModel.addElement(this.addSigDialog.getSignature());
             }
         }
     }//GEN-LAST:event_addButtonMousePressed
@@ -583,7 +580,6 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     private javax.swing.JLabel ingestRunningWarningLabel;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JList jList1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel mimeTypeLabel;
     private javax.swing.JTextField mimeTypeTextField;
@@ -591,6 +587,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     private javax.swing.JCheckBox postHitCheckBox;
     private javax.swing.JButton saveTypeButton;
     private javax.swing.JSeparator separator;
+    private javax.swing.JList<Signature> signatureList;
     private javax.swing.JList<FileType> typesList;
     private javax.swing.JScrollPane typesScrollPane;
     // End of variables declaration//GEN-END:variables

@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.modules.filetypeid;
 
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -55,7 +56,7 @@ class FileType implements Serializable {
      */
     FileType(String mimeType, List<Signature> signatures, String filesSetName, boolean alert) {
         this.mimeType = mimeType;
-        this.signatures = signatures;
+        this.signatures = new ArrayList<>(signatures);
         this.interestingFilesSetName = filesSetName;
         this.alert = alert;
     }
@@ -75,7 +76,11 @@ class FileType implements Serializable {
      * @return The signatures.
      */
     List<Signature> getSignatures() {
-        return Collections.unmodifiableList(this.signatures);
+        return this.signatures;
+    }
+    
+    void addSignature(Signature sig) {
+        this.signatures.add(sig);
     }
 
     /**

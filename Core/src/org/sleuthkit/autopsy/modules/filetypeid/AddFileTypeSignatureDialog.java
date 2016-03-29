@@ -53,6 +53,13 @@ final class AddFileTypeSignatureDialog extends JDialog {
     private Signature signature;
     private BUTTON_PRESSED result;
 
+    /**
+     * @return the signature
+     */
+    public Signature getSignature() {
+        return signature;
+    }
+
     enum BUTTON_PRESSED {
 
         ADD, CANCEL;
