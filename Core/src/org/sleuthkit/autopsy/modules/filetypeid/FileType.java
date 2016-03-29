@@ -19,16 +19,22 @@
 package org.sleuthkit.autopsy.modules.filetypeid;
 
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
+import javax.swing.JOptionPane;
+import javax.xml.bind.DatatypeConverter;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Represents a file type characterized by a file signature.
+ * Represents a file type characterized by a file signatures.
  * <p>
  * Thread-safe (immutable).
  */
@@ -36,24 +42,24 @@ class FileType implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private final String mimeType;
-    private final Signature signature;
+    private final List<Signature> signatures;
     private final String interestingFilesSetName;
     private final boolean alert;
 
     /**
      * Creates a representation of a file type characterized by a file
-     * signature.
+     * signatures.
      *
      * @param mimeType     The mime type to associate with this file type.
-     * @param signature    The signature that characterizes this file type.
+     * @param signature    The signatures that characterizes this file type.
      * @param filesSetName The name of an interesting files set that includes
      *                     files of this type, may be the empty string.
      * @param alert        Whether the user wishes to be alerted when a file
      *                     matching this type is encountered.
      */
-    FileType(String mimeType, final Signature signature, String filesSetName, boolean alert) {
+    FileType(String mimeType, List<Signature> signatures, String filesSetName, boolean alert) {
         this.mimeType = mimeType;
-        this.signature = new Signature(signature.getSignatureBytes(), signature.getOffset(), signature.getType(), signature.isRelativeToStart());
+        this.signatures = new ArrayList<>(signatures);
         this.interestingFilesSetName = filesSetName;
         this.alert = alert;
     }
@@ -68,12 +74,16 @@ class FileType implements Serializable {
     }
 
     /**
-     * Gets the signature associated with this file type.
+     * Gets the signatures associated with this file type.
      *
-     * @return The signature.
+     * @return The signatures.
      */
-    Signature getSignature() {
-        return new Signature(signature.getSignatureBytes(), signature.getOffset(), signature.getType(), signature.isRelativeToStart());
+    List<Signature> getSignatures() {
+        return this.signatures;
+    }
+
+    void addSignature(Signature sig) {
+        this.signatures.add(sig);
     }
 
     /**
@@ -84,7 +94,12 @@ class FileType implements Serializable {
      * @return True or false.
      */
     boolean matches(final AbstractFile file) {
-        return signature.containedIn(file);
+        for (Signature sig : this.signatures) {
+            if (!sig.containedIn(file)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -116,7 +131,7 @@ class FileType implements Serializable {
     public boolean equals(Object other) {
         if (other != null && other instanceof FileType) {
             FileType that = (FileType) other;
-            if (this.getMimeType().equals(that.getMimeType()) && this.getSignature().equals(that.getSignature())) {
+            if (this.getMimeType().equals(that.getMimeType()) && this.getSignatures().equals(that.getSignatures())) {
                 return true;
             }
         }
@@ -127,23 +142,23 @@ class FileType implements Serializable {
     public int hashCode() {
         int hash = 7;
         hash = 67 * hash + Objects.hashCode(this.mimeType);
-        hash = 67 * hash + Objects.hashCode(this.signature);
+        hash = 67 * hash + Objects.hashCode(this.signatures);
         return hash;
     }
 
     /**
-     * A file signature consisting of a sequence of bytes at a specific offset
+     * A file signatures consisting of a sequence of bytes at a specific offset
      * within a file.
      * <p>
      * Thread-safe (immutable).
      */
     static class Signature implements Serializable {
-        
+
         private static final long serialVersionUID = 1L;
         private static final Logger logger = Logger.getLogger(Signature.class.getName());
 
         /**
-         * The way the signature byte sequence should be interpreted.
+         * The way the signatures byte sequence should be interpreted.
          */
         enum Type {
 
@@ -156,7 +171,7 @@ class FileType implements Serializable {
         private final boolean isRelativeToStart;
 
         /**
-         * Creates a file signature consisting of a sequence of bytes at a
+         * Creates a file signatures consisting of a sequence of bytes at a
          * specific offset within a file.
          *
          * @param signatureBytes The signature bytes.
@@ -191,8 +206,8 @@ class FileType implements Serializable {
          * string, use one of the other constructors so that the string is
          * displayed to the user instead of the raw bytes.
          *
-         * @param signatureBytes The signature bytes.
-         * @param offset         The offset of the signature bytes.
+         * @param signatureBytes The signatures bytes.
+         * @param offset         The offset of the signatures bytes.
          */
         Signature(final byte[] signatureBytes, long offset) {
             this.signatureBytes = Arrays.copyOf(signatureBytes, signatureBytes.length);
@@ -202,7 +217,7 @@ class FileType implements Serializable {
         }
 
         /**
-         * Creates a file signature consisting of a sequence of bytes at a
+         * Creates a file signatures consisting of a sequence of bytes at a
          * specific offset within a file.
          *
          * @param signatureBytes    The signature bytes.
@@ -254,7 +269,7 @@ class FileType implements Serializable {
         }
 
         /**
-         * Gets the byte sequence of the signature.
+         * Gets the byte sequence of the signatures.
          *
          * @return The byte sequence as an array of bytes.
          */
@@ -263,7 +278,7 @@ class FileType implements Serializable {
         }
 
         /**
-         * Gets the offset of the signature.
+         * Gets the offset of the signatures.
          *
          * @return The offset.
          */
@@ -272,9 +287,9 @@ class FileType implements Serializable {
         }
 
         /**
-         * Gets the interpretation of the byte sequence for the signature.
+         * Gets the interpretation of the byte sequence for the signatures.
          *
-         * @return The signature type.
+         * @return The signatures type.
          */
         Type getType() {
             return type;
@@ -285,7 +300,7 @@ class FileType implements Serializable {
         }
 
         /**
-         * Determines whether or not the signature is contained within a given
+         * Determines whether or not the signatures is contained within a given
          * file.
          *
          * @param file The file to test
@@ -301,7 +316,7 @@ class FileType implements Serializable {
                 actualOffset = file.getSize() - 1 - offset;
             }
             if (file.getSize() < (actualOffset + signatureBytes.length)) {
-                return false; /// too small, can't contain this signature
+                return false; /// too small, can't contain this signatures
             }
             try {
                 byte[] buffer = new byte[signatureBytes.length];
@@ -338,6 +353,34 @@ class FileType implements Serializable {
             hash = 97 * hash + (int) (this.offset ^ (this.offset >>> 32));
             hash = 97 * hash + Objects.hashCode(this.type);
             return hash;
+        }
+        
+        @Override
+        public String toString() {
+            String signatureBytesString;
+            if (Signature.Type.RAW == this.getType()) {
+                signatureBytesString = DatatypeConverter.printHexBinary(this.getSignatureBytes());
+                signatureBytesString = "0x" + signatureBytesString;
+            } else {
+                try {
+                    signatureBytesString = new String(this.getSignatureBytes(), "UTF-8");
+                } catch (UnsupportedEncodingException ex) {
+                    JOptionPane.showMessageDialog(null,
+                            ex.getLocalizedMessage(),
+                            NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.storeFailed.title"),
+                            JOptionPane.ERROR_MESSAGE);
+                    signatureBytesString = "";
+                }
+            }
+            String startOrEnd;
+            if(this.isRelativeToStart) {
+                startOrEnd = "start";
+            }
+            else {
+                startOrEnd = "end";
+            }
+            return "(" + signatureBytesString + ", " + offset + " from " + startOrEnd + ")";
+                    
         }
     }
 
