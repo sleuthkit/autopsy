@@ -52,7 +52,6 @@ public final class RunIngestModulesDialog extends JDialog {
     private static final long serialVersionUID = 1L;
     private static final String TITLE = NbBundle.getMessage(RunIngestModulesDialog.class, "IngestDialog.title.text");
     private final IngestType ingestType;
-    private static Dimension DIMENSIONS = new Dimension(585, 400);
     private final List<Content> dataSources = new ArrayList<>();
     private IngestJobSettingsPanel ingestJobSettingsPanel;
 
@@ -101,11 +100,7 @@ public final class RunIngestModulesDialog extends JDialog {
         /**
          * Center the dialog.
          */
-        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-        setSize(DIMENSIONS);
-        int width = this.getSize().width;
-        int height = this.getSize().height;
-        setLocation((screenDimension.width - width) / 2, (screenDimension.height - height) / 2);
+        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();;
 
         /**
          * Get the default or saved ingest job settings for this context and use
@@ -114,6 +109,7 @@ public final class RunIngestModulesDialog extends JDialog {
         IngestJobSettings ingestJobSettings = new IngestJobSettings(RunIngestModulesDialog.class.getCanonicalName(), this.ingestType);
         RunIngestModulesDialog.showWarnings(ingestJobSettings);
         this.ingestJobSettingsPanel = new IngestJobSettingsPanel(ingestJobSettings);
+        setPreferredSize(this.ingestJobSettingsPanel.getPreferredSize());
         add(this.ingestJobSettingsPanel, BorderLayout.CENTER);
 
         // Add a start ingest button.
@@ -158,6 +154,9 @@ public final class RunIngestModulesDialog extends JDialog {
         /**
          * Show the dialog.
          */
+        int width = this.getPreferredSize().width;
+        int height = this.getPreferredSize().height;
+        setLocation((screenDimension.width - width) / 2, (screenDimension.height - height) / 2);
         pack();
         setVisible(true);
     }
