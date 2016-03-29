@@ -5,7 +5,7 @@
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this xmlFile except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
@@ -48,17 +48,17 @@ import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
 /**
- * Manages user-defined xmlFile types characterized by MIME type, signature, and
+ * Manages user-defined file types characterized by MIME type, signature, and
  * optional membership in an interesting files set.
  * <p>
  * Note that this class exposes a very simple get/set API that operates on the
- * user-defined xmlFile types as a complete set - there is no concept of adding,
- * editing or deleting xmlFile types singly. This works because this class is
- * not exposed outside of this ingest module package and is ONLY used in a very
- * specific paradigm. In this paradigm, there is a single modal writer of
- * xmlFile types in the form of a global settings panel that disables itself
- * when ingest is running so that multiple readers in the form of xmlFile ingest
- * modules get a consistent set of xmlFile type definitions.
+ * user-defined file types as a complete set - there is no concept of adding,
+ * editing or deleting file types singly. This works because this class is not
+ * exposed outside of this ingest module package and is ONLY used in a very
+ * specific paradigm. In this paradigm, there is a single modal writer of file
+ * types in the form of a global settings panel that disables itself when ingest
+ * is running so that multiple readers in the form of file ingest modules get a
+ * consistent set of file type definitions.
  * <p>
  * Thread-safe.
  */
@@ -81,28 +81,28 @@ final class UserDefinedFileTypesManager {
     private static UserDefinedFileTypesManager instance;
 
     /**
-     * File types to be persisted to the user-defined xmlFile type definitions
-     * xmlFile are stored in this mapping of MIME types to xmlFile types. Access
-     * to this map is guarded by the intrinsic lock of the user-defined xmlFile
-     * types manager for thread-safety.
+     * File types to be persisted to the user-defined file type definitions file
+     * are stored in this mapping of MIME types to file types. Access to this
+     * map is guarded by the intrinsic lock of the user-defined file types
+     * manager for thread-safety.
      */
     private final List<FileType> userDefinedFileTypes = new ArrayList<>();
 
     /**
-     * The combined set of user-defined xmlFile types and xmlFile types
-     * predefined by Autopsy are stored in this mapping of MIME types to xmlFile
-     * types. This is the current working set of xmlFile types. Access to this
-     * map is guarded by the intrinsic lock of the user-defined xmlFile types
-     * manager for thread-safety.
+     * The combined set of user-defined file types and file types predefined by
+     * Autopsy are stored in this mapping of MIME types to file types. This is
+     * the current working set of file types. Access to this map is guarded by
+     * the intrinsic lock of the user-defined file types manager for
+     * thread-safety.
      */
     private final List<FileType> fileTypes = new ArrayList<>();
 
     /**
-     * Gets the singleton manager of user-defined xmlFile types characterized by
+     * Gets the singleton manager of user-defined file types characterized by
      * MIME type, signature, and optional membership in an interesting files
      * set.
      *
-     * @return The user-defined xmlFile types manager singleton.
+     * @return The user-defined file types manager singleton.
      */
     synchronized static UserDefinedFileTypesManager getInstance() {
         if (instance == null) {
@@ -112,16 +112,16 @@ final class UserDefinedFileTypesManager {
     }
 
     /**
-     * Creates a manager of user-defined xmlFile types characterized by MIME
-     * type, signature, and optional membership in an interesting files set.
+     * Creates a manager of user-defined file types characterized by MIME type,
+     * signature, and optional membership in an interesting files set.
      */
     private UserDefinedFileTypesManager() {
     }
 
     /**
-     * Gets both the predefined and the user-defined xmlFile types.
+     * Gets both the predefined and the user-defined file types.
      *
-     * @return A mapping of xmlFile type names to xmlFile types, possibly empty.
+     * @return A mapping of file type names to file types, possibly empty.
      *
      * @throws
      * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException
@@ -139,9 +139,9 @@ final class UserDefinedFileTypesManager {
     }
 
     /**
-     * Gets the user-defined xmlFile types.
+     * Gets the user-defined file types.
      *
-     * @return A mapping of xmlFile type names to xmlFile types, possibly empty.
+     * @return A mapping of file type names to file types, possibly empty.
      *
      * @throws
      * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException
@@ -159,7 +159,7 @@ final class UserDefinedFileTypesManager {
     }
 
     /**
-     * Loads the MIME type to xmlFile type mappings with predefined and
+     * Loads the MIME type to file type mappings with predefined and
      * user-defined types.
      *
      * @throws
@@ -177,8 +177,8 @@ final class UserDefinedFileTypesManager {
     }
 
     /**
-     * Adds the predefined xmlFile types to the in-memory mappings of MIME types
-     * to xmlFile types.
+     * Adds the predefined file types to the in-memory mappings of MIME types to
+     * file types.
      *
      * @throws
      * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException
@@ -279,10 +279,10 @@ final class UserDefinedFileTypesManager {
     }
 
     /**
-     * Adds a user-defined xmlFile type to the in-memory mappings of MIME types
-     * to xmlFile types.
+     * Adds a user-defined file type to the in-memory mappings of MIME types to
+     * file types.
      *
-     * @param fileType The xmlFile type to add.
+     * @param fileType The file type to add.
      */
     private void addUserDefinedFileType(FileType fileType) {
         userDefinedFileTypes.add(fileType);
@@ -290,10 +290,10 @@ final class UserDefinedFileTypesManager {
     }
 
     /**
-     * Sets the user-defined xmlFile types.
+     * Sets the user-defined file types.
      *
-     * @param newFileTypes A mapping of xmlFile type names to user-defined
-     *                     xmlFile types.
+     * @param newFileTypes A mapping of file type names to user-defined file
+     *                     types.
      */
     synchronized void setUserDefinedFileTypes(List<FileType> newFileTypes) throws UserDefinedFileTypesException {
         String filePath = getFileTypeDefinitionsFilePath(USER_DEFINED_TYPES_XML_FILE);
@@ -301,11 +301,11 @@ final class UserDefinedFileTypesManager {
     }
 
     /**
-     * Gets the absolute path of a xmlFile type definitions xmlFile.
+     * Gets the absolute path of a file type definitions file.
      *
-     * @param fileName The name of the xmlFile.
+     * @param fileName The name of the file.
      *
-     * @return The absolute path to the xmlFile.
+     * @return The absolute path to the file.
      */
     private static String getFileTypeDefinitionsFilePath(String fileName) {
         Path filePath = Paths.get(PlatformUtil.getUserConfigDirectory(), fileName);
@@ -313,16 +313,16 @@ final class UserDefinedFileTypesManager {
     }
 
     /**
-     * Provides a mechanism for writing a set of xmlFile type definitions to an
-     * XML xmlFile.
+     * Provides a mechanism for writing a set of file type definitions to an XML
+     * file.
      */
     private static class DefinitionsWriter {
 
         /**
-         * Writes a set of xmlFile type definitions to an XML xmlFile.
+         * Writes a set of file type definitions to an XML file.
          *
-         * @param fileTypes A collection of xmlFile types.
-         * @param filePath  The path to the destination xmlFile.
+         * @param fileTypes A collection of file types.
+         * @param filePath  The path to the destination file.
          *
          * @throws ParserConfigurationException
          * @throws IOException
@@ -335,7 +335,7 @@ final class UserDefinedFileTypesManager {
                 UserDefinedFileTypesSettings settings = new UserDefinedFileTypesSettings(fileTypes);
                 out.writeObject(settings);
             } catch (IOException ex) {
-                throw new UserDefinedFileTypesException(String.format("Failed to write settings to %s", getFileTypeDefinitionsFilePath(USER_DEFINED_TYPES_SERIALIZATION_FILE)), ex);
+                throw new UserDefinedFileTypesException(String.format("Failed to write settings to %s", filePath), ex);
             }
         }
 
@@ -349,17 +349,17 @@ final class UserDefinedFileTypesManager {
     }
 
     /**
-     * Provides a mechanism for reading a set of xmlFile type definitions from
-     * an XML xmlFile.
+     * Provides a mechanism for reading a set of file type definitions from an
+     * XML file.
      */
     private static class DefinitionsReader {
 
         /**
-         * Reads a set of xmlFile type definitions from an XML xmlFile.
+         * Reads a set of file type definitions from an XML file.
          *
-         * @param filePath The path to the XML xmlFile.
+         * @param filePath The path to the XML file.
          *
-         * @return A collection of xmlFile types read from the XML xmlFile.
+         * @return A collection of file types read from the XML file.
          */
         private static List<FileType> readFileTypes(String filePath) throws IOException, SAXException, ParserConfigurationException {
             List<FileType> fileTypes = new ArrayList<>();
@@ -389,37 +389,32 @@ final class UserDefinedFileTypesManager {
         }
 
         /**
-         * Reads the xmlFile types
+         * Reads the file types
          *
-         * @param filePath the xmlFile path where the xmlFile types are to be
-         *                 read
+         * @param filePath the file path where the file types are to be read
          *
-         * @return the xmlFile types
+         * @return the file types
          *
-         * @throws ParserConfigurationException If the xmlFile cannot be read
+         * @throws ParserConfigurationException If the file cannot be read
          */
         private static List<FileType> readFileTypesSerialized() throws UserDefinedFileTypesException {
-            List<FileType> fileTypes = new ArrayList<>();
             File serializedDefs = new File(getFileTypeDefinitionsFilePath(USER_DEFINED_TYPES_SERIALIZATION_FILE));
-            if (serializedDefs.exists()) {
-                try {
-                    try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(serializedDefs))) {
-                        UserDefinedFileTypesSettings filesSetsSettings = (UserDefinedFileTypesSettings) in.readObject();
-                        return filesSetsSettings.getUserDefinedFileTypes();
-                    }
-                } catch (IOException | ClassNotFoundException ex) {
-                    throw new UserDefinedFileTypesException("Couldn't read serialized settings.", ex);
+            try {
+                try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(serializedDefs))) {
+                    UserDefinedFileTypesSettings filesSetsSettings = (UserDefinedFileTypesSettings) in.readObject();
+                    return filesSetsSettings.getUserDefinedFileTypes();
                 }
+            } catch (IOException | ClassNotFoundException ex) {
+                throw new UserDefinedFileTypesException("Couldn't read serialized settings.", ex);
             }
-            return fileTypes;
         }
 
         /**
-         * Gets a xmlFile type definition from a xmlFile type XML element.
+         * Gets a file type definition from a file type XML element.
          *
          * @param fileTypeElem The XML element.
          *
-         * @return A xmlFile type object.
+         * @return A file type object.
          *
          * @throws IllegalArgumentException
          * @throws NumberFormatException
@@ -433,7 +428,7 @@ final class UserDefinedFileTypesManager {
         }
 
         /**
-         * Gets the MIME type from a xmlFile type XML element.
+         * Gets the MIME type from a file type XML element.
          *
          * @param fileTypeElem The element
          *
@@ -444,7 +439,7 @@ final class UserDefinedFileTypesManager {
         }
 
         /**
-         * Gets the signature from a xmlFile type XML element.
+         * Gets the signature from a file type XML element.
          *
          * @param fileTypeElem The XML element.
          *
@@ -476,7 +471,7 @@ final class UserDefinedFileTypesManager {
         }
 
         /**
-         * Gets the interesting files set name from a xmlFile type XML element.
+         * Gets the interesting files set name from a file type XML element.
          *
          * @param fileTypeElem The XML element.
          *
@@ -493,7 +488,7 @@ final class UserDefinedFileTypesManager {
         }
 
         /**
-         * Gets the alert attribute from a xmlFile type XML element.
+         * Gets the alert attribute from a file type XML element.
          *
          * @param fileTypeElem The XML element.
          *
@@ -536,7 +531,7 @@ final class UserDefinedFileTypesManager {
      * uniform exception type, and throws the wrapper exception.
      *
      * @param ex         The exception to wrap.
-     * @param messageKey A key into the bundle xmlFile that maps to the desired
+     * @param messageKey A key into the bundle file that maps to the desired
      *                   message.
      *
      * @throws
@@ -551,7 +546,7 @@ final class UserDefinedFileTypesManager {
     /**
      * Used to translate more implementation-details-specific exceptions (which
      * are logged by this class) into more generic exceptions for propagation to
-     * clients of the user-defined xmlFile types manager.
+     * clients of the user-defined file types manager.
      */
     static class UserDefinedFileTypesException extends Exception {
 
