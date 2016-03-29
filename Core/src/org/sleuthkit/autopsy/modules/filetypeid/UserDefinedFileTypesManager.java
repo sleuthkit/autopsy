@@ -255,14 +255,14 @@ final class UserDefinedFileTypesManager {
         try {
             File serialized = new File(getFileTypeDefinitionsFilePath(USER_DEFINED_TYPES_SERIALIZATION_FILE));
             if (serialized.exists()) {
-                for (FileType fileType : DefinitionsReader.readFileTypesSerialized()) {
+                for (FileType fileType : readFileTypesSerialized()) {
                     addUserDefinedFileType(fileType);
                 }
             } else {
                 String filePath = getFileTypeDefinitionsFilePath(USER_DEFINED_TYPES_XML_FILE);
                 File xmlFile = new File(filePath);
                 if (xmlFile.exists()) {
-                    for (FileType fileType : DefinitionsReader.readFileTypes(filePath)) {
+                    for (FileType fileType : XMLDefinitionsReader.readFileTypes(filePath)) {
                         addUserDefinedFileType(fileType);
                     }
                 }
@@ -297,7 +297,7 @@ final class UserDefinedFileTypesManager {
      */
     synchronized void setUserDefinedFileTypes(List<FileType> newFileTypes) throws UserDefinedFileTypesException {
         String filePath = getFileTypeDefinitionsFilePath(USER_DEFINED_TYPES_XML_FILE);
-        DefinitionsWriter.writeFileTypes(newFileTypes, filePath);
+        writeFileTypes(newFileTypes, filePath);
     }
 
     /**
@@ -313,46 +313,52 @@ final class UserDefinedFileTypesManager {
     }
 
     /**
-     * Provides a mechanism for writing a set of file type definitions to an XML
-     * file.
+     * Writes a set of file types to a file.
+     *
+     * @param fileTypes A collection of file types.
+     * @param filePath  The path to the destination file.
+     *
+     * @throws ParserConfigurationException
+     * @throws IOException
+     * @throws FileNotFoundException
+     * @throws UnsupportedEncodingException
+     * @throws TransformerException
      */
-    private static class DefinitionsWriter {
+    private static void writeFileTypes(List<FileType> fileTypes, String filePath) throws UserDefinedFileTypesException {
+        try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(filePath))) {
+            UserDefinedFileTypesSettings settings = new UserDefinedFileTypesSettings(fileTypes);
+            out.writeObject(settings);
+        } catch (IOException ex) {
+            throw new UserDefinedFileTypesException(String.format("Failed to write settings to %s", filePath), ex);
+        }
+    }
 
-        /**
-         * Writes a set of file type definitions to an XML file.
-         *
-         * @param fileTypes A collection of file types.
-         * @param filePath  The path to the destination file.
-         *
-         * @throws ParserConfigurationException
-         * @throws IOException
-         * @throws FileNotFoundException
-         * @throws UnsupportedEncodingException
-         * @throws TransformerException
-         */
-        private static void writeFileTypes(List<FileType> fileTypes, String filePath) throws UserDefinedFileTypesException {
-            try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(filePath))) {
-                UserDefinedFileTypesSettings settings = new UserDefinedFileTypesSettings(fileTypes);
-                out.writeObject(settings);
-            } catch (IOException ex) {
-                throw new UserDefinedFileTypesException(String.format("Failed to write settings to %s", filePath), ex);
+    /**
+     * Reads the file types
+     *
+     * @param filePath the file path where the file types are to be read
+     *
+     * @return the file types
+     *
+     * @throws ParserConfigurationException If the file cannot be read
+     */
+    private static List<FileType> readFileTypesSerialized() throws UserDefinedFileTypesException {
+        File serializedDefs = new File(getFileTypeDefinitionsFilePath(USER_DEFINED_TYPES_SERIALIZATION_FILE));
+        try {
+            try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(serializedDefs))) {
+                UserDefinedFileTypesSettings filesSetsSettings = (UserDefinedFileTypesSettings) in.readObject();
+                return filesSetsSettings.getUserDefinedFileTypes();
             }
+        } catch (IOException | ClassNotFoundException ex) {
+            throw new UserDefinedFileTypesException("Couldn't read serialized settings.", ex);
         }
-
-        /**
-         * Private constructor suppresses creation of instances of this utility
-         * class.
-         */
-        private DefinitionsWriter() {
-        }
-
     }
 
     /**
      * Provides a mechanism for reading a set of file type definitions from an
      * XML file.
      */
-    private static class DefinitionsReader {
+    private static class XMLDefinitionsReader {
 
         /**
          * Reads a set of file type definitions from an XML file.
@@ -380,33 +386,12 @@ final class UserDefinedFileTypesManager {
                     NodeList fileTypeElems = fileTypesElem.getElementsByTagName(FILE_TYPE_TAG_NAME);
                     for (int i = 0; i < fileTypeElems.getLength(); ++i) {
                         Element fileTypeElem = (Element) fileTypeElems.item(i);
-                        FileType fileType = DefinitionsReader.parseFileType(fileTypeElem);
+                        FileType fileType = XMLDefinitionsReader.parseFileType(fileTypeElem);
                         fileTypes.add(fileType);
                     }
                 }
             }
             return fileTypes;
-        }
-
-        /**
-         * Reads the file types
-         *
-         * @param filePath the file path where the file types are to be read
-         *
-         * @return the file types
-         *
-         * @throws ParserConfigurationException If the file cannot be read
-         */
-        private static List<FileType> readFileTypesSerialized() throws UserDefinedFileTypesException {
-            File serializedDefs = new File(getFileTypeDefinitionsFilePath(USER_DEFINED_TYPES_SERIALIZATION_FILE));
-            try {
-                try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(serializedDefs))) {
-                    UserDefinedFileTypesSettings filesSetsSettings = (UserDefinedFileTypesSettings) in.readObject();
-                    return filesSetsSettings.getUserDefinedFileTypes();
-                }
-            } catch (IOException | ClassNotFoundException ex) {
-                throw new UserDefinedFileTypesException("Couldn't read serialized settings.", ex);
-            }
         }
 
         /**
@@ -420,10 +405,10 @@ final class UserDefinedFileTypesManager {
          * @throws NumberFormatException
          */
         private static FileType parseFileType(Element fileTypeElem) throws IllegalArgumentException, NumberFormatException {
-            String mimeType = DefinitionsReader.parseMimeType(fileTypeElem);
-            Signature signature = DefinitionsReader.parseSignature(fileTypeElem);
-            String filesSetName = DefinitionsReader.parseInterestingFilesSet(fileTypeElem);
-            boolean alert = DefinitionsReader.parseAlert(fileTypeElem);
+            String mimeType = XMLDefinitionsReader.parseMimeType(fileTypeElem);
+            Signature signature = XMLDefinitionsReader.parseSignature(fileTypeElem);
+            String filesSetName = XMLDefinitionsReader.parseInterestingFilesSet(fileTypeElem);
+            boolean alert = XMLDefinitionsReader.parseAlert(fileTypeElem);
             return new FileType(mimeType, signature, filesSetName, alert);
         }
 
@@ -521,7 +506,7 @@ final class UserDefinedFileTypesManager {
          * Private constructor suppresses creation of instanmces of this utility
          * class.
          */
-        private DefinitionsReader() {
+        private XMLDefinitionsReader() {
         }
 
     }

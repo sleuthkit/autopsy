@@ -19,27 +19,27 @@
 package org.sleuthkit.autopsy.modules.filetypeid;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
- * @author oliver
+ * Settings object for user defined file types
  */
 class UserDefinedFileTypesSettings implements Serializable {
+
     private static final long serialVersionUID = 1L;
     private List<FileType> userDefinedFileTypes;
-    
+
     UserDefinedFileTypesSettings(List<FileType> userDefinedFileTypes) {
         this.userDefinedFileTypes = userDefinedFileTypes;
     }
 
     /**
+     * Gets the list of file types contained within the settings
+     *
      * @return the userDefinedFileTypes
      */
     public List<FileType> getUserDefinedFileTypes() {
         return userDefinedFileTypes;
     }
-    
-    
+
 }
