@@ -25,6 +25,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
@@ -32,6 +33,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
 
 /**
@@ -78,6 +80,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         return this.settings;
     }
 
+    @Messages({"IngestJobSettingsPanel.noPerRunSettings=No per run settings for the selected module."})
     private void customizeComponents() {
         modulesTable.setModel(new IngestModulesTableModel());
         modulesTable.setTableHeader(null);
@@ -108,19 +111,22 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
                 if (!listSelectionModel.isSelectionEmpty()) {
                     int index = listSelectionModel.getMinSelectionIndex();
                     selectedModule = modules.get(index);
-                    simplePanel.removeAll();
+                    ingestSettingsPanel.removeAll();
                     if (null != selectedModule.getModuleSettingsPanel()) {
-                        simplePanel.add(selectedModule.getModuleSettingsPanel());
+                        ingestSettingsPanel.add(selectedModule.getModuleSettingsPanel());
                     }
-                    simplePanel.revalidate();
-                    simplePanel.repaint();
-                    advancedButton.setEnabled(null != selectedModule.getGlobalSettingsPanel());
+                    else {
+                        ingestSettingsPanel.add(new JLabel(Bundle.IngestJobSettingsPanel_noPerRunSettings()));
+                    }
+                    ingestSettingsPanel.revalidate();
+                    ingestSettingsPanel.repaint();
+                    globalSettingsButton.setEnabled(null != selectedModule.getGlobalSettingsPanel());
                     descriptionLabel.setText(selectedModule.getDescription());
                     descriptionLabel.setToolTipText(selectedModule.getDescription());
                 }
             }
         });
-
+        modulesTable.setRowSelectionInterval(0, 0);
         processUnallocCheckbox.setSelected(this.settings.getProcessUnallocatedSpace());
     }
 
@@ -137,20 +143,21 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         modulesScrollPane = new javax.swing.JScrollPane();
         modulesTable = new javax.swing.JTable();
         jPanel1 = new javax.swing.JPanel();
-        advancedButton = new javax.swing.JButton();
+        globalSettingsButton = new javax.swing.JButton();
         jSeparator2 = new javax.swing.JSeparator();
         descriptionLabel = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        simplePanel = new javax.swing.JPanel();
+        ingestSettingsPanel = new javax.swing.JPanel();
         jButtonSelectAll = new javax.swing.JButton();
         jButtonDeselectAll = new javax.swing.JButton();
         processUnallocCheckbox = new javax.swing.JCheckBox();
 
         setMaximumSize(new java.awt.Dimension(5750, 3000));
         setMinimumSize(new java.awt.Dimension(522, 257));
-        setPreferredSize(new java.awt.Dimension(575, 300));
+        setPreferredSize(new java.awt.Dimension(625, 450));
 
         modulesScrollPane.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(160, 160, 160)));
+        modulesScrollPane.setMinimumSize(new java.awt.Dimension(0, 0));
         modulesScrollPane.setPreferredSize(new java.awt.Dimension(160, 160));
 
         modulesTable.setBackground(new java.awt.Color(240, 240, 240));
@@ -169,12 +176,12 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         jPanel1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(160, 160, 160)));
         jPanel1.setPreferredSize(new java.awt.Dimension(338, 257));
 
-        advancedButton.setText(org.openide.util.NbBundle.getMessage(IngestJobSettingsPanel.class, "IngestJobSettingsPanel.advancedButton.text")); // NOI18N
-        advancedButton.setActionCommand(org.openide.util.NbBundle.getMessage(IngestJobSettingsPanel.class, "IngestJobSettingsPanel.advancedButton.actionCommand")); // NOI18N
-        advancedButton.setEnabled(false);
-        advancedButton.addActionListener(new java.awt.event.ActionListener() {
+        globalSettingsButton.setText(org.openide.util.NbBundle.getMessage(IngestJobSettingsPanel.class, "IngestJobSettingsPanel.globalSettingsButton.text")); // NOI18N
+        globalSettingsButton.setActionCommand(org.openide.util.NbBundle.getMessage(IngestJobSettingsPanel.class, "IngestJobSettingsPanel.globalSettingsButton.actionCommand")); // NOI18N
+        globalSettingsButton.setEnabled(false);
+        globalSettingsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                advancedButtonActionPerformed(evt);
+                globalSettingsButtonActionPerformed(evt);
             }
         });
 
@@ -183,36 +190,37 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         jScrollPane1.setBorder(null);
         jScrollPane1.setPreferredSize(new java.awt.Dimension(250, 180));
 
-        simplePanel.setLayout(new javax.swing.BoxLayout(simplePanel, javax.swing.BoxLayout.PAGE_AXIS));
-        jScrollPane1.setViewportView(simplePanel);
+        ingestSettingsPanel.setMinimumSize(new java.awt.Dimension(0, 300));
+        ingestSettingsPanel.setLayout(new javax.swing.BoxLayout(ingestSettingsPanel, javax.swing.BoxLayout.PAGE_AXIS));
+        jScrollPane1.setViewportView(ingestSettingsPanel);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jSeparator2, javax.swing.GroupLayout.Alignment.TRAILING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+            .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(descriptionLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 203, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(advancedButton)))
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(descriptionLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 302, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(globalSettingsButton)))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 211, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE)
+                .addGap(18, 18, 18)
                 .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 2, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(8, 8, 8)
+                .addComponent(descriptionLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(descriptionLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(advancedButton))
-                .addContainerGap())
+                .addComponent(globalSettingsButton)
+                .addGap(8, 8, 8))
         );
 
         jButtonSelectAll.setText(org.openide.util.NbBundle.getMessage(IngestJobSettingsPanel.class, "IngestJobSettingsPanel.jButtonSelectAll.text")); // NOI18N
@@ -244,8 +252,8 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(modulesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(modulesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 271, Short.MAX_VALUE)
                         .addGap(10, 10, 10))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(24, 24, 24)
@@ -255,8 +263,8 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
                                 .addComponent(jButtonSelectAll, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(18, 18, 18)
                                 .addComponent(jButtonDeselectAll)))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 30, Short.MAX_VALUE)))
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 310, Short.MAX_VALUE)
+                        .addGap(32, 32, 32)))
+                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 324, Short.MAX_VALUE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -265,20 +273,20 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 278, Short.MAX_VALUE)
-                        .addContainerGap())
-                    .addGroup(layout.createSequentialGroup()
                         .addComponent(modulesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jButtonDeselectAll)
                             .addComponent(jButtonSelectAll))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(processUnallocCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addComponent(processUnallocCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 378, Short.MAX_VALUE)
+                        .addContainerGap())))
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void advancedButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_advancedButtonActionPerformed
+    private void globalSettingsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_globalSettingsButtonActionPerformed
         final AdvancedConfigurationDialog dialog = new AdvancedConfigurationDialog();
 
         dialog.addApplyButtonListener(new ActionListener() {
@@ -299,7 +307,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         });
 
         dialog.display(selectedModule.getGlobalSettingsPanel());
-    }//GEN-LAST:event_advancedButtonActionPerformed
+    }//GEN-LAST:event_globalSettingsButtonActionPerformed
 
     private void jButtonSelectAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSelectAllActionPerformed
         SelectAllModules(true);
@@ -321,8 +329,9 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton advancedButton;
     private javax.swing.JLabel descriptionLabel;
+    private javax.swing.JButton globalSettingsButton;
+    private javax.swing.JPanel ingestSettingsPanel;
     private javax.swing.JButton jButtonDeselectAll;
     private javax.swing.JButton jButtonSelectAll;
     private javax.swing.JPanel jPanel1;
@@ -331,7 +340,6 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JScrollPane modulesScrollPane;
     private javax.swing.JTable modulesTable;
     private javax.swing.JCheckBox processUnallocCheckbox;
-    private javax.swing.JPanel simplePanel;
     private javax.swing.ButtonGroup timeGroup;
     // End of variables declaration//GEN-END:variables
 
