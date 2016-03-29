@@ -147,8 +147,8 @@ public class ImageUtils {
     /**
      * thread that saves generated thumbnails to disk in the background
      */
-    private static final Executor imageSaver =
-            Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
+    private static final Executor imageSaver
+            = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
                     .namingPattern("thumbnail-saver-%d").build()); //NON-NLS
 
     public static List<String> getSupportedImageExtensions() {
@@ -467,7 +467,7 @@ public class ImageUtils {
     /**
      * Private template method designed to be used as the implementation of
      * public methods that pull particular (usually meta-)data out of a image
-     * file. ./**
+     * file.
      *
      * @param <T>               the type of the property to be retrieved.
      * @param file              the file to extract the data from
@@ -528,8 +528,9 @@ public class ImageUtils {
      * but is not started automatically. Clients are responsible for running the
      * task, monitoring its progress, and using its result.
      *
-     * @param file     the file to create a thumbnail for
-     * @param iconSize the size of the thumbnail
+     * @param file             The file to create a thumbnail for.
+     * @param iconSize         The size of the thumbnail.
+     * @param defaultOnFailure Whether or not to default on failure.
      *
      * @return a new Task that returns a thumbnail as its result.
      */
