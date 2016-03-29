@@ -19,13 +19,16 @@
 package org.sleuthkit.autopsy.modules.filetypeid;
 
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
+import javax.swing.JOptionPane;
+import javax.xml.bind.DatatypeConverter;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -78,7 +81,7 @@ class FileType implements Serializable {
     List<Signature> getSignatures() {
         return this.signatures;
     }
-    
+
     void addSignature(Signature sig) {
         this.signatures.add(sig);
     }
@@ -150,7 +153,7 @@ class FileType implements Serializable {
      * Thread-safe (immutable).
      */
     static class Signature implements Serializable {
-        
+
         private static final long serialVersionUID = 1L;
         private static final Logger logger = Logger.getLogger(Signature.class.getName());
 
@@ -171,13 +174,8 @@ class FileType implements Serializable {
          * Creates a file signatures consisting of a sequence of bytes at a
          * specific offset within a file.
          *
-<<<<<<< HEAD
-         * @param signatureBytes The signatures bytes.
-         * @param offset         The offset of the signatures bytes.
-=======
          * @param signatureBytes The signature bytes.
          * @param offset         The offset of the signature bytes.
->>>>>>> upstream/develop
          * @param type           The type of data in the byte array. Impacts how
          *                       it is displayed to the user in the UI.
          */
@@ -189,19 +187,11 @@ class FileType implements Serializable {
         }
 
         /**
-<<<<<<< HEAD
-         * Creates a file signatures consisting of an ASCII string at a specific
-         * offset within a file.
-         *
-         * @param signatureString The ASCII string
-         * @param offset          The offset of the signatures bytes.
-=======
          * Creates a file signature consisting of an ASCII string at a specific
          * offset within a file.
          *
          * @param signatureString The ASCII string
          * @param offset          The offset of the signature bytes.
->>>>>>> upstream/develop
          */
         Signature(String signatureString, long offset) {
             this.signatureBytes = signatureString.getBytes(StandardCharsets.US_ASCII);
@@ -211,11 +201,7 @@ class FileType implements Serializable {
         }
 
         /**
-<<<<<<< HEAD
-         * Creates a file signatures consisting of a sequence of bytes at a
-=======
          * Creates a file signature consisting of a sequence of bytes at a
->>>>>>> upstream/develop
          * specific offset within a file. If bytes correspond to an ASCII
          * string, use one of the other constructors so that the string is
          * displayed to the user instead of the raw bytes.
@@ -234,19 +220,11 @@ class FileType implements Serializable {
          * Creates a file signatures consisting of a sequence of bytes at a
          * specific offset within a file.
          *
-<<<<<<< HEAD
-         * @param signatureBytes    The signatures bytes.
-         * @param offset            The offset of the signatures bytes.
-         * @param type              The type of data in the byte array. Impacts
-         *                          how it is displayed to the user in the UI.
-         * @param isRelativeToStart Determines whether this signatures is
-=======
          * @param signatureBytes    The signature bytes.
          * @param offset            The offset of the signature bytes.
          * @param type              The type of data in the byte array. Impacts
          *                          how it is displayed to the user in the UI.
          * @param isRelativeToStart Determines whether this signature is
->>>>>>> upstream/develop
          *                          relative to start.
          */
         Signature(final byte[] signatureBytes, long offset, Type type, boolean isRelativeToStart) {
@@ -257,21 +235,12 @@ class FileType implements Serializable {
         }
 
         /**
-<<<<<<< HEAD
-         * Creates a file signatures consisting of an ASCII string at a specific
-         * offset within a file.
-         *
-         * @param signatureString   The ASCII string
-         * @param offset            The offset of the signatures bytes.
-         * @param isRelativeToStart Determines whether this signatures is
-=======
          * Creates a file signature consisting of an ASCII string at a specific
          * offset within a file.
          *
          * @param signatureString   The ASCII string
          * @param offset            The offset of the signature bytes.
          * @param isRelativeToStart Determines whether this signature is
->>>>>>> upstream/develop
          *                          relative to start.
          */
         Signature(String signatureString, long offset, boolean isRelativeToStart) {
@@ -282,24 +251,14 @@ class FileType implements Serializable {
         }
 
         /**
-<<<<<<< HEAD
-         * Creates a file signatures consisting of a sequence of bytes at a
-=======
          * Creates a file signature consisting of a sequence of bytes at a
->>>>>>> upstream/develop
          * specific offset within a file. If bytes correspond to an ASCII
          * string, use one of the other constructors so that the string is
          * displayed to the user instead of the raw bytes.
          *
-<<<<<<< HEAD
-         * @param signatureBytes    The signatures bytes.
-         * @param offset            The offset of the signatures bytes.
-         * @param isRelativeToStart Determines whether this signatures is
-=======
          * @param signatureBytes    The signature bytes.
          * @param offset            The offset of the signature bytes.
          * @param isRelativeToStart Determines whether this signature is
->>>>>>> upstream/develop
          *                          relative to start.
          */
         Signature(final byte[] signatureBytes, long offset, boolean isRelativeToStart) {
@@ -394,6 +353,33 @@ class FileType implements Serializable {
             hash = 97 * hash + (int) (this.offset ^ (this.offset >>> 32));
             hash = 97 * hash + Objects.hashCode(this.type);
             return hash;
+        }
+        
+        @Override
+        public String toString() {
+            String signatureBytesString;
+            if (Signature.Type.RAW == this.getType()) {
+                signatureBytesString = DatatypeConverter.printHexBinary(this.getSignatureBytes());
+            } else {
+                try {
+                    signatureBytesString = new String(this.getSignatureBytes(), "UTF-8");
+                } catch (UnsupportedEncodingException ex) {
+                    JOptionPane.showMessageDialog(null,
+                            ex.getLocalizedMessage(),
+                            NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.storeFailed.title"),
+                            JOptionPane.ERROR_MESSAGE);
+                    signatureBytesString = "";
+                }
+            }
+            String startOrEnd;
+            if(this.isRelativeToStart) {
+                startOrEnd = "start";
+            }
+            else {
+                startOrEnd = "end";
+            }
+            return "(" + signatureBytesString + " from " + startOrEnd + ")";
+                    
         }
     }
 
