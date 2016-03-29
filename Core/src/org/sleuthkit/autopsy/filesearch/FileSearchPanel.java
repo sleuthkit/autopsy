@@ -60,8 +60,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 class FileSearchPanel extends javax.swing.JPanel {
 
-    private List<FilterArea> filterAreas = new ArrayList<FilterArea>();
-    private JButton searchButton;
+    private final List<FilterArea> filterAreas = new ArrayList<>();
     private static int resultWindowCount = 0; //keep track of result windows so they get unique names
     private static final String EMPTY_WHERE_CLAUSE = NbBundle.getMessage(DateSearchFilter.class, "FileSearchPanel.emptyWhereClause.text");
 
@@ -79,14 +78,6 @@ class FileSearchPanel extends javax.swing.JPanel {
      */
     private void customizeComponents() {
 
-        this.setLayout(new BorderLayout());
-
-        JPanel filterPanel = new JPanel();
-        filterPanel.setLayout(new BoxLayout(filterPanel, BoxLayout.Y_AXIS));
-        filterPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
-
-        this.add(filterPanel, BorderLayout.CENTER);
-
         JLabel label = new JLabel(NbBundle.getMessage(this.getClass(), "FileSearchPanel.custComp.label.text"));
         label.setAlignmentX(Component.LEFT_ALIGNMENT);
         label.setBorder(new EmptyBorder(0, 0, 10, 0));
@@ -95,8 +86,9 @@ class FileSearchPanel extends javax.swing.JPanel {
         // Create and add filter areas
         this.filterAreas.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.name"), new NameSearchFilter()));
 
-        List<FileSearchFilter> metadataFilters = new ArrayList<FileSearchFilter>();
+        List<FileSearchFilter> metadataFilters = new ArrayList<>();
         metadataFilters.add(new SizeSearchFilter());
+        metadataFilters.add(new MimeTypeFilter());
         metadataFilters.add(new DateSearchFilter());
         this.filterAreas.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.metadata"), metadataFilters));
 
@@ -107,11 +99,6 @@ class FileSearchPanel extends javax.swing.JPanel {
             fa.setAlignmentX(Component.LEFT_ALIGNMENT);
             filterPanel.add(fa);
         }
-
-        // Create and add search button
-        this.searchButton = new JButton(NbBundle.getMessage(this.getClass(), "FileSearchPanel.searchButton.text"));
-        this.searchButton.setAlignmentX(Component.LEFT_ALIGNMENT);
-        filterPanel.add(searchButton);
 
         addListenerToAll(new ActionListener() {
             @Override
@@ -234,7 +221,7 @@ class FileSearchPanel extends javax.swing.JPanel {
     }
 
     private Collection<FileSearchFilter> getFilters() {
-        Collection<FileSearchFilter> filters = new ArrayList<FileSearchFilter>();
+        Collection<FileSearchFilter> filters = new ArrayList<>();
 
         for (FilterArea fa : this.filterAreas) {
             filters.addAll(fa.getFilters());
@@ -244,7 +231,7 @@ class FileSearchPanel extends javax.swing.JPanel {
     }
 
     private Collection<FileSearchFilter> getEnabledFilters() {
-        Collection<FileSearchFilter> enabledFilters = new ArrayList<FileSearchFilter>();
+        Collection<FileSearchFilter> enabledFilters = new ArrayList<>();
 
         for (FileSearchFilter f : this.getFilters()) {
             if (f.isEnabled()) {
@@ -273,17 +260,38 @@ class FileSearchPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        filterPanel = new javax.swing.JPanel();
+        searchButton = new javax.swing.JButton();
+
+        setPreferredSize(new java.awt.Dimension(300, 300));
+
+        filterPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        filterPanel.setPreferredSize(new java.awt.Dimension(300, 400));
+        filterPanel.setLayout(new javax.swing.BoxLayout(filterPanel, javax.swing.BoxLayout.Y_AXIS));
+
+        searchButton.setText(org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.searchButton.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+            .addComponent(filterPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(searchButton)
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 376, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(filterPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(0, 0, 0)
+                .addComponent(searchButton)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPanel filterPanel;
+    private javax.swing.JButton searchButton;
     // End of variables declaration//GEN-END:variables
 }

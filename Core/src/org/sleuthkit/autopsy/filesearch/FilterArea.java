@@ -92,20 +92,22 @@ class FilterArea extends JPanel {
         filtersPanel = new JPanel();
         filtersPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        BoxLayout filtersPanelLayout = new BoxLayout(filtersPanel, BoxLayout.Y_AXIS);
-        filtersPanel.setLayout(filtersPanelLayout);
+        BoxLayout filtersPanelLayout = new BoxLayout(this, BoxLayout.Y_AXIS);
+        this.setLayout(filtersPanelLayout);
 
-        for (FileSearchFilter f : filters) {
+        for (int i = 0; i < filters.size(); i++) {
+            FileSearchFilter f = filters.get(i);
             JComponent filterComponent = f.getComponent();
             filterComponent.setAlignmentX(Component.LEFT_ALIGNMENT);
-            filterComponent.setBorder(new EmptyBorder(0, 0, 20, 0));
-            filtersPanel.add(filterComponent);
+            if (i != filters.size() - 1) {
+                filterComponent.setBorder(new EmptyBorder(0, 0, 15, 0));
+            }
+            else {
+                filterComponent.setBorder(new EmptyBorder(0, 0, 18, 0));
+            }
+            this.add(filterComponent);
         }
-
-        this.add(filtersPanel);
-
-        BoxLayout layout = new BoxLayout(this, BoxLayout.Y_AXIS);
-        this.setLayout(layout);
+        this.setAlignmentX(Component.LEFT_ALIGNMENT);
     }
 
     private void refresh() {

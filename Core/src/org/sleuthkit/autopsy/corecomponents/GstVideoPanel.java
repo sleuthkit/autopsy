@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import com.google.common.io.Files;
 import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
@@ -680,6 +681,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
                 progressLabel.setText(NbBundle.getMessage(this.getClass(), "GstVideoPanel.progress.buffering"));
                 progress.start(100);
                 try {
+                    Files.createParentDirs(tempFile);
                     return ContentUtils.writeToFile(sourceFile, tempFile, progress, this, true);
                 } catch (IOException ex) {
                     logger.log(Level.WARNING, "Error buffering file", ex); //NON-NLS

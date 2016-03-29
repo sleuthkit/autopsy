@@ -262,7 +262,6 @@ class ReportHTML implements TableReportModule {
                     break;
             }
         } else {  // no defined artifact found for this dataType 
-            logger.log(Level.WARNING, "useDataTypeIcon: no artifact found for data type = " + dataType); //NON-NLS
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png"); //NON-NLS
             iconFileName = "star.png"; //NON-NLS
             iconFilePath = path + File.separator + iconFileName;
@@ -561,15 +560,6 @@ class ReportHTML implements TableReportModule {
             return;
         }
         AbstractFile file = (AbstractFile) content;
-
-        // Add metadata about the file to HTML output
-        row.add(file.getMtimeAsDate());
-        row.add(file.getCtimeAsDate());
-        row.add(file.getAtimeAsDate());
-        row.add(file.getCrtimeAsDate());
-        row.add(Long.toString(file.getSize()));
-        row.add(file.getMd5Hash());
-
         // Add the hyperlink to the row. A column header for it was created in startTable().
         StringBuilder localFileLink = new StringBuilder();
         // Don't make a local copy of the file if it is a directory or unallocated space.

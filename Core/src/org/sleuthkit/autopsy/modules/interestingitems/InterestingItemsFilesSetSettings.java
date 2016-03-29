@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2016 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,20 +16,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.timeline.datamodel.eventtype;
+package org.sleuthkit.autopsy.modules.interestingitems;
 
-import org.sleuthkit.datamodel.BlackboardArtifact;
+import java.io.Serializable;
+import java.util.Map;
 
 /**
  *
+ * @author oliver
  */
-class TypeUtils {
-
-//TODO: this will be unncessary once their is BlackboardArtifact.Type constructr that takes a BlackboardArtifact.ARTIFACT_TYPE
-    static BlackboardArtifact.Type fromEnum(BlackboardArtifact.ARTIFACT_TYPE type) {
-        return new BlackboardArtifact.Type(type.getTypeID(), type.getLabel(), type.getDisplayName());
+class InterestingItemsFilesSetSettings implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private Map<String, FilesSet> filesSets;
+    InterestingItemsFilesSetSettings(Map<String, FilesSet> filesSets) {
+        this.filesSets = filesSets;
     }
 
-    private TypeUtils() {
+    /**
+     * @return the filesSets
+     */
+    Map<String, FilesSet> getFilesSets() {
+        return filesSets;
     }
+    
+    
+    
 }

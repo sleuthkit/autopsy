@@ -35,6 +35,7 @@ import org.openide.util.HelpCtx;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettingsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -271,7 +272,10 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
         cleanupTask.disable();
 
         // Get attention for the process finish
-        java.awt.Toolkit.getDefaultToolkit().beep(); //BEEP!
+        // this caused a crash on OS X
+        if (PlatformUtil.isWindowsOS() == true) {
+            java.awt.Toolkit.getDefaultToolkit().beep(); //BEEP!
+        }
         AddImageWizardAddingProgressVisual panel = progressPanel.getComponent();
         if (panel != null) {
             Window w = SwingUtilities.getWindowAncestor(panel);
