@@ -22,6 +22,7 @@ import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
@@ -34,6 +35,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.xml.bind.DatatypeConverter;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
@@ -107,7 +109,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         typesListModel = new DefaultListModel<>();
         typesList.setModel(typesListModel);
     }
-    
+
     private void setSignaturesListModel() {
         this.signaturesListModel = new DefaultListModel<>();
         signatureList.setModel(signaturesListModel);
@@ -269,7 +271,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
             mimeTypeTextField.setEditable(false);
             List<Signature> signatures = fileType.getSignatures();
             this.signaturesListModel.clear();
-            for(Signature sig: signatures) {
+            for (Signature sig : signatures) {
                 signaturesListModel.addElement(sig);
             }
             postHitCheckBox.setSelected(fileType.alertOnMatch());
@@ -528,7 +530,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
                             .addComponent(filesSetNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(saveTypeButton)
-                        .addGap(0, 54, Short.MAX_VALUE))))
+                        .addGap(0, 33, Short.MAX_VALUE))))
         );
 
         layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {deleteTypeButton, newTypeButton, saveTypeButton});
@@ -547,9 +549,51 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
             typesList.setSelectedIndex(0);
         }
     }//GEN-LAST:event_deleteTypeButtonActionPerformed
-
+    @Messages({
+        "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidSigList.message=Must have at least one signature.",
+        "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidSigList.title=Invalid Signature List"})
     private void saveTypeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveTypeButtonActionPerformed
-
+        String typeName = mimeTypeTextField.getText();
+        if (typeName.isEmpty()) {
+            JOptionPane.showMessageDialog(null,
+                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidMIMEType.message"),
+                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidMIMEType.title"),
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        List<Signature> sigList = new ArrayList<>();
+        for (int i = 0; i < this.signaturesListModel.getSize(); i++) {
+            sigList.add(this.signaturesListModel.elementAt(i));
+        }
+        if (sigList.isEmpty()) {
+            JOptionPane.showMessageDialog(null,
+                    Bundle.AddFileTypeSignatureDialog_invalidSignature_message(),
+                    Bundle.FileTypeIdGlobalSettingsPanel_JOptionPane_invalidSigList_title(),
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        /**
+         * Get the interesting files set details.
+         */
+        String filesSetName = "";
+        if (postHitCheckBox.isSelected()) {
+            filesSetName = filesSetNameTextField.getText();
+        }
+        if (postHitCheckBox.isSelected() && filesSetName.isEmpty()) {
+            JOptionPane.showMessageDialog(null,
+                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidInterestingFilesSetName.message"),
+                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidInterestingFilesSetName.title"),
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        FileType fileType = new FileType(typeName, sigList, filesSetName, postHitCheckBox.isSelected());
+        FileType selected = typesList.getSelectedValue();
+        if (selected != null) {
+            fileTypes.remove(selected);
+        }
+        fileTypes.add(fileType);
+        updateFileTypesListModel();
+        typesList.setSelectedValue(fileType, true);
     }//GEN-LAST:event_saveTypeButtonActionPerformed
 
     private void postHitCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_postHitCheckBoxActionPerformed

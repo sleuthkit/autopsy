@@ -360,6 +360,7 @@ class FileType implements Serializable {
             String signatureBytesString;
             if (Signature.Type.RAW == this.getType()) {
                 signatureBytesString = DatatypeConverter.printHexBinary(this.getSignatureBytes());
+                signatureBytesString = "0x" + signatureBytesString;
             } else {
                 try {
                     signatureBytesString = new String(this.getSignatureBytes(), "UTF-8");
@@ -378,7 +379,7 @@ class FileType implements Serializable {
             else {
                 startOrEnd = "end";
             }
-            return "(" + signatureBytesString + " from " + startOrEnd + ")";
+            return "(" + signatureBytesString + ", " + offset + " from " + startOrEnd + ")";
                     
         }
     }
