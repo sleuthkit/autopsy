@@ -68,7 +68,6 @@ public final class RunIngestModulesDialog extends JDialog {
      */
     public RunIngestModulesDialog(JFrame frame, String title, boolean modal, List<Content> dataSources) {
         super(frame, title, modal);
-        this.setIconImage(null);
         this.dataSources.addAll(dataSources);
         this.ingestType = IngestType.ALL_MODULES;
     }
@@ -80,7 +79,7 @@ public final class RunIngestModulesDialog extends JDialog {
      * @param dataSources The data sources to be processed.
      */
     public RunIngestModulesDialog(List<Content> dataSources) {
-        this((JFrame)WindowManager.getDefault().getMainWindow(), TITLE, true, dataSources);
+        this((JFrame) WindowManager.getDefault().getMainWindow(), TITLE, true, dataSources);
     }
 
     /**
