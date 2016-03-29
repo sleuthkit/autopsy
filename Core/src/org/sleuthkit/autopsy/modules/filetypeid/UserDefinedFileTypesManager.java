@@ -19,7 +19,9 @@
 package org.sleuthkit.autopsy.modules.filetypeid;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Path;
@@ -27,6 +29,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import javax.persistence.PersistenceException;
 import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -34,10 +37,13 @@ import org.w3c.dom.NodeList;
 import javax.xml.bind.DatatypeConverter;
 import javax.xml.transform.TransformerException;
 import org.openide.util.NbBundle;
+import org.openide.util.io.NbObjectInputStream;
+import org.openide.util.io.NbObjectOutputStream;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
@@ -59,7 +65,8 @@ import org.xml.sax.SAXException;
 final class UserDefinedFileTypesManager {
 
     private static final Logger logger = Logger.getLogger(UserDefinedFileTypesManager.class.getName());
-    private static final String USER_DEFINED_TYPE_DEFINITIONS_FILE = "UserFileTypeDefinitions.xml"; //NON-NLS
+    private static final String USER_DEFINED_TYPES_XML_FILE = "UserFileTypeDefinitions.xml"; //NON-NLS
+    private static final String USER_DEFINED_TYPES_SERIALIZATION_FILE = "UserFileTypeDefinitions.settings";
     private static final String FILE_TYPES_TAG_NAME = "FileTypes"; //NON-NLS
     private static final String FILE_TYPE_TAG_NAME = "FileType"; //NON-NLS
     private static final String MIME_TYPE_TAG_NAME = "MimeType"; //NON-NLS
@@ -246,11 +253,18 @@ final class UserDefinedFileTypesManager {
      */
     private void loadUserDefinedFileTypes() throws UserDefinedFileTypesException {
         try {
-            String filePath = getFileTypeDefinitionsFilePath(USER_DEFINED_TYPE_DEFINITIONS_FILE);
-            File file = new File(filePath);
-            if (file.exists() && file.canRead()) {
-                for (FileType fileType : XmlReader.readFileTypes(filePath)) {
+            File serialized = new File(getFileTypeDefinitionsFilePath(USER_DEFINED_TYPES_SERIALIZATION_FILE));
+            if (serialized.exists()) {
+                for (FileType fileType : readFileTypesSerialized()) {
                     addUserDefinedFileType(fileType);
+                }
+            } else {
+                String filePath = getFileTypeDefinitionsFilePath(USER_DEFINED_TYPES_XML_FILE);
+                File xmlFile = new File(filePath);
+                if (xmlFile.exists()) {
+                    for (FileType fileType : XMLDefinitionsReader.readFileTypes(filePath)) {
+                        addUserDefinedFileType(fileType);
+                    }
                 }
             }
 
@@ -282,14 +296,8 @@ final class UserDefinedFileTypesManager {
      *                     types.
      */
     synchronized void setUserDefinedFileTypes(List<FileType> newFileTypes) throws UserDefinedFileTypesException {
-        try {
-            String filePath = getFileTypeDefinitionsFilePath(USER_DEFINED_TYPE_DEFINITIONS_FILE);
-            XmlWriter.writeFileTypes(newFileTypes, filePath);
-        } catch (ParserConfigurationException | FileNotFoundException | UnsupportedEncodingException | TransformerException ex) {
-            throwUserDefinedFileTypesException(ex, "UserDefinedFileTypesManager.saveFileTypes.errorMessage");
-        } catch (IOException ex) {
-            throwUserDefinedFileTypesException(ex, "UserDefinedFileTypesManager.saveFileTypes.errorMessage");
-        }
+        String filePath = getFileTypeDefinitionsFilePath(USER_DEFINED_TYPES_XML_FILE);
+        writeFileTypes(newFileTypes, filePath);
     }
 
     /**
@@ -305,127 +313,52 @@ final class UserDefinedFileTypesManager {
     }
 
     /**
-     * Provides a mechanism for writing a set of file type definitions to an XML
-     * file.
+     * Writes a set of file types to a file.
+     *
+     * @param fileTypes A collection of file types.
+     * @param filePath  The path to the destination file.
+     *
+     * @throws ParserConfigurationException
+     * @throws IOException
+     * @throws FileNotFoundException
+     * @throws UnsupportedEncodingException
+     * @throws TransformerException
      */
-    private static class XmlWriter {
+    private static void writeFileTypes(List<FileType> fileTypes, String filePath) throws UserDefinedFileTypesException {
+        try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(filePath))) {
+            UserDefinedFileTypesSettings settings = new UserDefinedFileTypesSettings(fileTypes);
+            out.writeObject(settings);
+        } catch (IOException ex) {
+            throw new UserDefinedFileTypesException(String.format("Failed to write settings to %s", filePath), ex);
+        }
+    }
 
-        /**
-         * Writes a set of file type definitions to an XML file.
-         *
-         * @param fileTypes A collection of file types.
-         * @param filePath  The path to the destination file.
-         *
-         * @throws ParserConfigurationException
-         * @throws IOException
-         * @throws FileNotFoundException
-         * @throws UnsupportedEncodingException
-         * @throws TransformerException
-         */
-        private static void writeFileTypes(List<FileType> fileTypes, String filePath) throws ParserConfigurationException, IOException, FileNotFoundException, UnsupportedEncodingException, TransformerException {
-            Document doc = XMLUtil.createDocument();
-            Element fileTypesElem = doc.createElement(FILE_TYPES_TAG_NAME);
-            doc.appendChild(fileTypesElem);
-            for (FileType fileType : fileTypes) {
-                Element fileTypeElem = XmlWriter.createFileTypeElement(fileType, doc);
-                fileTypesElem.appendChild(fileTypeElem);
+    /**
+     * Reads the file types
+     *
+     * @param filePath the file path where the file types are to be read
+     *
+     * @return the file types
+     *
+     * @throws ParserConfigurationException If the file cannot be read
+     */
+    private static List<FileType> readFileTypesSerialized() throws UserDefinedFileTypesException {
+        File serializedDefs = new File(getFileTypeDefinitionsFilePath(USER_DEFINED_TYPES_SERIALIZATION_FILE));
+        try {
+            try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(serializedDefs))) {
+                UserDefinedFileTypesSettings filesSetsSettings = (UserDefinedFileTypesSettings) in.readObject();
+                return filesSetsSettings.getUserDefinedFileTypes();
             }
-            XMLUtil.saveDocument(doc, ENCODING_FOR_XML_FILE, filePath);
+        } catch (IOException | ClassNotFoundException ex) {
+            throw new UserDefinedFileTypesException("Couldn't read serialized settings.", ex);
         }
-
-        /**
-         * Creates an XML representation of a file type.
-         *
-         * @param fileType The file type object.
-         * @param doc      The WC3 DOM object to use to create the XML.
-         *
-         * @return An XML element.
-         */
-        private static Element createFileTypeElement(FileType fileType, Document doc) {
-            Element fileTypeElem = doc.createElement(FILE_TYPE_TAG_NAME);
-            XmlWriter.addMimeTypeElement(fileType, fileTypeElem, doc);
-            XmlWriter.addSignatureElement(fileType, fileTypeElem, doc);
-            XmlWriter.addInterestingFilesSetElement(fileType, fileTypeElem, doc);
-            XmlWriter.addAlertAttribute(fileType, fileTypeElem);
-            return fileTypeElem;
-        }
-
-        /**
-         * Add a MIME type child element to a file type XML element.
-         *
-         * @param fileType     The file type to use as a content source.
-         * @param fileTypeElem The parent file type element.
-         * @param doc          The WC3 DOM object to use to create the XML.
-         */
-        private static void addMimeTypeElement(FileType fileType, Element fileTypeElem, Document doc) {
-            Element typeNameElem = doc.createElement(MIME_TYPE_TAG_NAME);
-            typeNameElem.setTextContent(fileType.getMimeType());
-            fileTypeElem.appendChild(typeNameElem);
-        }
-
-        /**
-         * Add a signature child element to a file type XML element.
-         *
-         * @param fileType     The file type to use as a content source.
-         * @param fileTypeElem The parent file type element.
-         * @param doc          The WC3 DOM object to use to create the XML.
-         */
-        private static void addSignatureElement(FileType fileType, Element fileTypeElem, Document doc) {
-            Signature signature = fileType.getSignature();
-            Element signatureElem = doc.createElement(SIGNATURE_TAG_NAME);
-
-            Element bytesElem = doc.createElement(BYTES_TAG_NAME);
-            bytesElem.setTextContent(DatatypeConverter.printHexBinary(signature.getSignatureBytes()));
-            signatureElem.appendChild(bytesElem);
-
-            Element offsetElem = doc.createElement(OFFSET_TAG_NAME);
-            offsetElem.setTextContent(DatatypeConverter.printLong(signature.getOffset()));
-            offsetElem.setAttribute(RELATIVE_ATTRIBUTE, String.valueOf(signature.isRelativeToStart()));
-            signatureElem.appendChild(offsetElem);
-
-            signatureElem.setAttribute(SIGNATURE_TYPE_ATTRIBUTE, signature.getType().toString());
-            fileTypeElem.appendChild(signatureElem);
-        }
-
-        /**
-         * Add an interesting files set element to a file type XML element.
-         *
-         * @param fileType     The file type to use as a content source.
-         * @param fileTypeElem The parent file type element.
-         * @param doc          The WC3 DOM object to use to create the XML.
-         */
-        private static void addInterestingFilesSetElement(FileType fileType, Element fileTypeElem, Document doc) {
-            if (!fileType.getFilesSetName().isEmpty()) {
-                Element filesSetElem = doc.createElement(INTERESTING_FILES_SET_TAG_NAME);
-                filesSetElem.setTextContent(fileType.getFilesSetName());
-                fileTypeElem.appendChild(filesSetElem);
-            }
-        }
-
-        /**
-         * Add an alert attribute to a file type XML element.
-         *
-         * @param fileType     The file type to use as a content source.
-         * @param fileTypeElem The parent file type element.
-         */
-        private static void addAlertAttribute(FileType fileType, Element fileTypeElem) {
-            fileTypeElem.setAttribute(ALERT_ATTRIBUTE, Boolean.toString(fileType.alertOnMatch()));
-        }
-
-        /**
-         * Private constructor suppresses creation of instanmces of this utility
-         * class.
-         */
-        private XmlWriter() {
-        }
-
     }
 
     /**
      * Provides a mechanism for reading a set of file type definitions from an
      * XML file.
      */
-    private static class XmlReader {
+    private static class XMLDefinitionsReader {
 
         /**
          * Reads a set of file type definitions from an XML file.
@@ -434,7 +367,7 @@ final class UserDefinedFileTypesManager {
          *
          * @return A collection of file types read from the XML file.
          */
-        private static List<FileType> readFileTypes(String filePath) throws IOException, ParserConfigurationException, SAXException {
+        private static List<FileType> readFileTypes(String filePath) throws IOException, SAXException, ParserConfigurationException {
             List<FileType> fileTypes = new ArrayList<>();
             /*
              * RC: Commenting out the loadDocument overload that validates
@@ -453,7 +386,7 @@ final class UserDefinedFileTypesManager {
                     NodeList fileTypeElems = fileTypesElem.getElementsByTagName(FILE_TYPE_TAG_NAME);
                     for (int i = 0; i < fileTypeElems.getLength(); ++i) {
                         Element fileTypeElem = (Element) fileTypeElems.item(i);
-                        FileType fileType = XmlReader.parseFileType(fileTypeElem);
+                        FileType fileType = XMLDefinitionsReader.parseFileType(fileTypeElem);
                         fileTypes.add(fileType);
                     }
                 }
@@ -472,10 +405,10 @@ final class UserDefinedFileTypesManager {
          * @throws NumberFormatException
          */
         private static FileType parseFileType(Element fileTypeElem) throws IllegalArgumentException, NumberFormatException {
-            String mimeType = XmlReader.parseMimeType(fileTypeElem);
-            Signature signature = XmlReader.parseSignature(fileTypeElem);
-            String filesSetName = XmlReader.parseInterestingFilesSet(fileTypeElem);
-            boolean alert = XmlReader.parseAlert(fileTypeElem);
+            String mimeType = XMLDefinitionsReader.parseMimeType(fileTypeElem);
+            Signature signature = XMLDefinitionsReader.parseSignature(fileTypeElem);
+            String filesSetName = XMLDefinitionsReader.parseInterestingFilesSet(fileTypeElem);
+            boolean alert = XMLDefinitionsReader.parseAlert(fileTypeElem);
             return new FileType(mimeType, signature, filesSetName, alert);
         }
 
@@ -573,7 +506,7 @@ final class UserDefinedFileTypesManager {
          * Private constructor suppresses creation of instanmces of this utility
          * class.
          */
-        private XmlReader() {
+        private XMLDefinitionsReader() {
         }
 
     }

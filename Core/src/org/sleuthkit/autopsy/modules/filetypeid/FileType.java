@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.filetypeid;
 
+import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
@@ -33,8 +34,9 @@ import org.sleuthkit.datamodel.TskCoreException;
  * <p>
  * Thread-safe (immutable).
  */
-class FileType {
+class FileType implements Serializable {
 
+    private static final long serialVersionUID = 1L;
     private final String mimeType;
     private final List<Signature> signatures;
     private final String interestingFilesSetName;
@@ -142,8 +144,9 @@ class FileType {
      * <p>
      * Thread-safe (immutable).
      */
-    static class Signature {
-
+    static class Signature implements Serializable {
+        
+        private static final long serialVersionUID = 1L;
         private static final Logger logger = Logger.getLogger(Signature.class.getName());
 
         /**
@@ -163,8 +166,13 @@ class FileType {
          * Creates a file signatures consisting of a sequence of bytes at a
          * specific offset within a file.
          *
+<<<<<<< HEAD
          * @param signatureBytes The signatures bytes.
          * @param offset         The offset of the signatures bytes.
+=======
+         * @param signatureBytes The signature bytes.
+         * @param offset         The offset of the signature bytes.
+>>>>>>> upstream/develop
          * @param type           The type of data in the byte array. Impacts how
          *                       it is displayed to the user in the UI.
          */
@@ -176,11 +184,19 @@ class FileType {
         }
 
         /**
+<<<<<<< HEAD
          * Creates a file signatures consisting of an ASCII string at a specific
          * offset within a file.
          *
          * @param signatureString The ASCII string
          * @param offset          The offset of the signatures bytes.
+=======
+         * Creates a file signature consisting of an ASCII string at a specific
+         * offset within a file.
+         *
+         * @param signatureString The ASCII string
+         * @param offset          The offset of the signature bytes.
+>>>>>>> upstream/develop
          */
         Signature(String signatureString, long offset) {
             this.signatureBytes = signatureString.getBytes(StandardCharsets.US_ASCII);
@@ -190,7 +206,11 @@ class FileType {
         }
 
         /**
+<<<<<<< HEAD
          * Creates a file signatures consisting of a sequence of bytes at a
+=======
+         * Creates a file signature consisting of a sequence of bytes at a
+>>>>>>> upstream/develop
          * specific offset within a file. If bytes correspond to an ASCII
          * string, use one of the other constructors so that the string is
          * displayed to the user instead of the raw bytes.
@@ -209,11 +229,19 @@ class FileType {
          * Creates a file signatures consisting of a sequence of bytes at a
          * specific offset within a file.
          *
+<<<<<<< HEAD
          * @param signatureBytes    The signatures bytes.
          * @param offset            The offset of the signatures bytes.
          * @param type              The type of data in the byte array. Impacts
          *                          how it is displayed to the user in the UI.
          * @param isRelativeToStart Determines whether this signatures is
+=======
+         * @param signatureBytes    The signature bytes.
+         * @param offset            The offset of the signature bytes.
+         * @param type              The type of data in the byte array. Impacts
+         *                          how it is displayed to the user in the UI.
+         * @param isRelativeToStart Determines whether this signature is
+>>>>>>> upstream/develop
          *                          relative to start.
          */
         Signature(final byte[] signatureBytes, long offset, Type type, boolean isRelativeToStart) {
@@ -224,12 +252,21 @@ class FileType {
         }
 
         /**
+<<<<<<< HEAD
          * Creates a file signatures consisting of an ASCII string at a specific
          * offset within a file.
          *
          * @param signatureString   The ASCII string
          * @param offset            The offset of the signatures bytes.
          * @param isRelativeToStart Determines whether this signatures is
+=======
+         * Creates a file signature consisting of an ASCII string at a specific
+         * offset within a file.
+         *
+         * @param signatureString   The ASCII string
+         * @param offset            The offset of the signature bytes.
+         * @param isRelativeToStart Determines whether this signature is
+>>>>>>> upstream/develop
          *                          relative to start.
          */
         Signature(String signatureString, long offset, boolean isRelativeToStart) {
@@ -240,14 +277,24 @@ class FileType {
         }
 
         /**
+<<<<<<< HEAD
          * Creates a file signatures consisting of a sequence of bytes at a
+=======
+         * Creates a file signature consisting of a sequence of bytes at a
+>>>>>>> upstream/develop
          * specific offset within a file. If bytes correspond to an ASCII
          * string, use one of the other constructors so that the string is
          * displayed to the user instead of the raw bytes.
          *
+<<<<<<< HEAD
          * @param signatureBytes    The signatures bytes.
          * @param offset            The offset of the signatures bytes.
          * @param isRelativeToStart Determines whether this signatures is
+=======
+         * @param signatureBytes    The signature bytes.
+         * @param offset            The offset of the signature bytes.
+         * @param isRelativeToStart Determines whether this signature is
+>>>>>>> upstream/develop
          *                          relative to start.
          */
         Signature(final byte[] signatureBytes, long offset, boolean isRelativeToStart) {
