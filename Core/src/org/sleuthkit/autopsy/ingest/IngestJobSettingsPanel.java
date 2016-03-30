@@ -80,7 +80,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         return this.settings;
     }
 
-    @Messages({"IngestJobSettingsPanel.noPerRunSettings=No per run settings for the selected module."})
+    @Messages({"IngestJobSettingsPanel.noPerRunSettings=The selected module has no per-run settings."})
     private void customizeComponents() {
         modulesTable.setModel(new IngestModulesTableModel());
         modulesTable.setTableHeader(null);
@@ -114,8 +114,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
                     ingestSettingsPanel.removeAll();
                     if (null != selectedModule.getModuleSettingsPanel()) {
                         ingestSettingsPanel.add(selectedModule.getModuleSettingsPanel());
-                    }
-                    else {
+                    } else {
                         ingestSettingsPanel.add(new JLabel(Bundle.IngestJobSettingsPanel_noPerRunSettings()));
                     }
                     ingestSettingsPanel.revalidate();
