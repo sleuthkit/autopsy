@@ -93,7 +93,7 @@ final class FileExtMismatchModuleSettingsPanel extends IngestModuleIngestJobSett
                     .addComponent(skipTextPlain)
                     .addComponent(skipNoExtCheckBox)
                     .addComponent(skipKnownFiles))
-                .addGap(0, 138, Short.MAX_VALUE))
+                .addGap(0, 10, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
