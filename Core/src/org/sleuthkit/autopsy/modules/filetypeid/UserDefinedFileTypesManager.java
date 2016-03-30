@@ -321,7 +321,7 @@ final class UserDefinedFileTypesManager {
      *                     types.
      */
     synchronized void setUserDefinedFileTypes(List<FileType> newFileTypes) throws UserDefinedFileTypesException {
-        String filePath = getFileTypeDefinitionsFilePath(USER_DEFINED_TYPES_XML_FILE);
+        String filePath = getFileTypeDefinitionsFilePath(USER_DEFINED_TYPES_SERIALIZATION_FILE);
         writeFileTypes(newFileTypes, filePath);
     }
 

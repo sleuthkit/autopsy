@@ -292,6 +292,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         postHitCheckBox.setSelected(false);
         filesSetNameTextField.setText(""); //NON-NLS
         filesSetNameTextField.setEnabled(false);
+        this.signaturesListModel.clear();
         enableButtons();
     }
 
@@ -443,6 +444,11 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         org.openide.awt.Mnemonics.setLocalizedText(editSigButton, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.editSigButton.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(deleteSigButton, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.deleteSigButton.text")); // NOI18N
+        deleteSigButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteSigButtonActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -613,6 +619,13 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
             }
         }
     }//GEN-LAST:event_addButtonMousePressed
+
+    private void deleteSigButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteSigButtonActionPerformed
+        signaturesListModel.removeElementAt(this.signatureList.getSelectedIndex());
+        if (!this.signaturesListModel.isEmpty()) {
+            signatureList.setSelectedIndex(0);
+        }
+    }//GEN-LAST:event_deleteSigButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addSigButton;
