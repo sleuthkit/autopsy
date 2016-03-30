@@ -21,19 +21,18 @@ package org.sleuthkit.autopsy.modules.filetypeid;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
-import javax.swing.ListModel;
+import javax.swing.ListCellRenderer;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.xml.bind.DatatypeConverter;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
@@ -624,14 +623,16 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     }//GEN-LAST:event_addSigButtonActionPerformed
 
     private void deleteSigButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteSigButtonActionPerformed
-        signaturesListModel.removeElementAt(this.signatureList.getSelectedIndex());
-        if (!this.signaturesListModel.isEmpty()) {
-            signatureList.setSelectedIndex(0);
+        if (this.signatureList.getSelectedIndex() != -1) {
+            signaturesListModel.removeElementAt(this.signatureList.getSelectedIndex());
+            if (!this.signaturesListModel.isEmpty()) {
+                signatureList.setSelectedIndex(0);
+            }
         }
     }//GEN-LAST:event_deleteSigButtonActionPerformed
 
     private void editSigButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editSigButtonActionPerformed
-       if (evt.getSource().equals(this.editSigButton) && this.signatureList.getSelectedValue() != null) {
+        if (evt.getSource().equals(this.editSigButton) && this.signatureList.getSelectedValue() != null) {
             this.addSigDialog = new AddFileTypeSignatureDialog(this.signatureList.getSelectedValue());
             if (addSigDialog.getResult() == BUTTON_PRESSED.ADD) {
                 signaturesListModel.removeElementAt(this.signatureList.getSelectedIndex());
