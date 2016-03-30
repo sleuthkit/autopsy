@@ -73,7 +73,13 @@ final class AddFileTypeSignatureDialog extends JDialog {
     AddFileTypeSignatureDialog() {
         super(new JFrame(TITLE), TITLE, true);
         this.addFileTypeSigPanel = new AddFileTypeSignaturePanel();
-        this.display();
+        this.display(true);
+    }
+
+    AddFileTypeSignatureDialog(Signature toEdit) {
+        super(new JFrame(TITLE), TITLE, true);
+        this.addFileTypeSigPanel = new AddFileTypeSignaturePanel(toEdit);
+        this.display(false);
     }
 
     /**
@@ -88,8 +94,9 @@ final class AddFileTypeSignatureDialog extends JDialog {
      */
     @Messages({
         "AddFileTypeSignatureDialog.addButton.title=Add",
+        "AddFileTypeSignatureDialog.addButton.title2=Done",
         "AddFileTypeSignatureDialog.cancelButton.title=Cancel"})
-    void display() {
+    void display(boolean add) {
         setLayout(new BorderLayout());
 
         /**
@@ -106,8 +113,14 @@ final class AddFileTypeSignatureDialog extends JDialog {
          */
         add(this.addFileTypeSigPanel, BorderLayout.PAGE_START);
 
-        // Add a start ingest button.
-        JButton addButton = new JButton(Bundle.AddFileTypeSignatureDialog_addButton_title());
+        // Add the add/done button.
+        JButton addButton;
+        if (add) {
+            addButton = new JButton(Bundle.AddFileTypeSignatureDialog_addButton_title());
+        }
+        else {
+            addButton = new JButton(Bundle.AddFileTypeSignatureDialog_addButton_title2());
+        }
         addButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {

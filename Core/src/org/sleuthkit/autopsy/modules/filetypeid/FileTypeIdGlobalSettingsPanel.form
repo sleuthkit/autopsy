@@ -3,10 +3,10 @@
 <Form version="1.5" maxVersion="1.9" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
   <Properties>
     <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-      <Dimension value="[500, 300]"/>
+      <Dimension value="[552, 297]"/>
     </Property>
     <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-      <Dimension value="[500, 300]"/>
+      <Dimension value="[552, 297]"/>
     </Property>
   </Properties>
   <AuxValues>
@@ -92,7 +92,7 @@
                           <Group type="102" attributes="0">
                               <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="typesScrollPane" max="32767" attributes="0"/>
+                              <Component id="typesScrollPane" pref="183" max="32767" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="deleteTypeButton" linkSize="2" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -127,7 +127,6 @@
                       </Group>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="saveTypeButton" linkSize="2" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="0" pref="33" max="32767" attributes="0"/>
                   </Group>
               </Group>
           </Group>
@@ -343,7 +342,6 @@
         </Property>
       </Properties>
       <Events>
-        <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="addButtonMousePressed"/>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="addSigButtonActionPerformed"/>
       </Events>
     </Component>
@@ -353,6 +351,9 @@
           <ResourceString bundle="org/sleuthkit/autopsy/modules/filetypeid/Bundle.properties" key="FileTypeIdGlobalSettingsPanel.editSigButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="editSigButtonActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JButton" name="deleteSigButton">
       <Properties>

@@ -5,6 +5,7 @@
  */
 package org.sleuthkit.autopsy.modules.filetypeid;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
@@ -14,7 +15,9 @@ import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.xml.bind.DatatypeConverter;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
 
@@ -37,6 +40,11 @@ class AddFileTypeSignaturePanel extends javax.swing.JPanel {
         customizeComponents();
     }
 
+    AddFileTypeSignaturePanel(Signature toEdit) {
+        this();
+        this.setComponentValues(toEdit);
+    }
+
     /**
      * Does child component initialization in addition to that done by the
      * Matisse generated code.
@@ -45,6 +53,7 @@ class AddFileTypeSignaturePanel extends javax.swing.JPanel {
         setSignatureTypeComboBoxModel();
         setOffsetRealtiveToComboBoxModel();
     }
+
     /**
      * Sets the model for the signature type combo box.
      */
@@ -67,6 +76,29 @@ class AddFileTypeSignaturePanel extends javax.swing.JPanel {
         offsetRelativeToComboBox.setSelectedItem(START_OFFSET_RELATIVE_COMBO_BOX_ITEM);
     }
 
+    @Messages({"AddFileTypeSignaturePanel.signatureStringFail.text=Couldn't get signatures string"})
+    private void setComponentValues(Signature toEdit) {
+        if (toEdit.isRelativeToStart()) {
+            this.offsetRelativeToComboBox.setSelectedIndex(0);
+        } else {
+            this.offsetRelativeToComboBox.setSelectedIndex(1);
+        }
+        this.offsetTextField.setText(toEdit.getOffset() + "");
+        if (Signature.Type.RAW == toEdit.getType()) {
+            this.signatureTypeComboBox.setSelectedIndex(0);
+            this.signatureTextField.setText(DatatypeConverter.printHexBinary(toEdit.getSignatureBytes()));
+        } else {
+            this.signatureTypeComboBox.setSelectedIndex(1);
+            try {
+                this.signatureTextField.setText(new String(toEdit.getSignatureBytes(), "UTF-8"));
+            } catch (UnsupportedEncodingException ex) {
+                JOptionPane.showMessageDialog(null,
+                        ex.getLocalizedMessage(),
+                        Bundle.AddFileTypeSignaturePanel_signatureStringFail_text(),
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
 
     public Signature getSignature() {
 
@@ -79,11 +111,13 @@ class AddFileTypeSignaturePanel extends javax.swing.JPanel {
          * Get the signature bytes.
          */
         String sigString = signatureTextField.getText();
+
         if (sigString.isEmpty()) {
             JOptionPane.showMessageDialog(null,
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidSignature.message"),
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidSignature.title"),
                     JOptionPane.ERROR_MESSAGE);
+
             return null;
         }
         byte[] signatureBytes;
@@ -107,6 +141,7 @@ class AddFileTypeSignaturePanel extends javax.swing.JPanel {
          */
         long offset;
         boolean isRelativeToStart = offsetRelativeToComboBox.getSelectedItem() == START_OFFSET_RELATIVE_COMBO_BOX_ITEM;
+
         try {
             offset = Long.parseUnsignedLong(offsetTextField.getText());
             if (!isRelativeToStart && signatureBytes.length > offset + 1) {

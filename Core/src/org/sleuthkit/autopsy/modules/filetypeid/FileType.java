@@ -354,7 +354,7 @@ class FileType implements Serializable {
             hash = 97 * hash + Objects.hashCode(this.type);
             return hash;
         }
-        
+
         @Override
         public String toString() {
             String signatureBytesString;
@@ -367,20 +367,19 @@ class FileType implements Serializable {
                 } catch (UnsupportedEncodingException ex) {
                     JOptionPane.showMessageDialog(null,
                             ex.getLocalizedMessage(),
-                            NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.storeFailed.title"),
+                            Bundle.AddFileTypeSignaturePanel_signatureStringFail_text(),
                             JOptionPane.ERROR_MESSAGE);
                     signatureBytesString = "";
                 }
             }
             String startOrEnd;
-            if(this.isRelativeToStart) {
+            if (this.isRelativeToStart) {
                 startOrEnd = "start";
-            }
-            else {
+            } else {
                 startOrEnd = "end";
             }
-            return "(" + signatureBytesString + ", " + offset + " from " + startOrEnd + ")";
-                    
+            return  signatureBytesString + ", " + offset + " bytes from " + startOrEnd;
+
         }
     }
 
