@@ -1,7 +1,7 @@
 /*
  * Sleuth Kit Data Model
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.casemodule.services;
 import java.io.Closeable;
 import java.io.IOException;
 import org.openide.util.Lookup;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -30,87 +29,102 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
 
 /**
- * Provides utility methods for blackboard artifact indexing.
+ * Represents the blackboard, a place where artifacts and their attributes are
+ * posted.
+ *
+ * NOTE: This API of this class is under development.
  */
 public final class Blackboard implements Closeable {
 
     /**
-     * Index the text associated with the given artifact.
+     * Indexes the text associated with the an artifact.
      *
      * @param artifact The artifact to be indexed.
      *
-     * @throws
-     * org.sleuthkit.autopsy.casemodule.services.Blackboard.BlackboardException
+     * @throws BlackboardException If there is a problem indexing the artifact.
      */
     public void indexArtifact(BlackboardArtifact artifact) throws BlackboardException {
         KeywordSearchService searchService = Lookup.getDefault().lookup(KeywordSearchService.class);
         if (null == searchService) {
-            throw new BlackboardException(NbBundle.getMessage(this.getClass(), "Blackboard.keywordSearchNotFound.exception.msg"));
+            throw new BlackboardException("Keyword search service not found");
         }
-
         try {
             searchService.indexArtifact(artifact);
         } catch (TskCoreException ex) {
-            throw new BlackboardException(NbBundle.getMessage(this.getClass(), "Blackboard.unableToIndexArtifact.exception.msg"), ex);
+            throw new BlackboardException("Error indexing artifact", ex);
         }
     }
 
     /**
-     * Adds a new artifact type based upon the parameters given
+     * Gets an artifact type, creating it if it does not already exist. Use this
+     * method to define custom artifact types.
      *
-     * @param typeName The name of the new artifact type
-     * @param displayName The name displayed for the new attribute type
-     * @return A type object representing the artifact type added
-     * @throws
-     * org.sleuthkit.autopsy.casemodule.services.Blackboard.BlackboardException
+     * @param typeName    The type name of the artifact type.
+     * @param displayName The display name of the artifact type.
+     *
+     * @return A type object representing the artifact type.
+     *
+     * @throws BlackboardBlackboardException If there is a problem getting or
+     *                                       adding the artifact type.
      */
-    public BlackboardArtifact.Type addArtifactType(String typeName, String displayName) throws BlackboardException {
+    public BlackboardArtifact.Type getOrAddArtifactType(String typeName, String displayName) throws BlackboardException {
         try {
             return Case.getCurrentCase().getSleuthkitCase().addBlackboardArtifactType(typeName, displayName);
-        } catch (TskCoreException | TskDataException ex) {
-            throw new BlackboardException("New artifact type could not be added", ex);
+        } catch (TskDataException typeExistsEx) {
+            try {
+                return Case.getCurrentCase().getSleuthkitCase().getArtifactType(typeName);
+            } catch (TskCoreException ex) {
+                throw new BlackboardException("Failed to get or add artifact type", ex);
+            }
+        } catch (TskCoreException ex) {
+            throw new BlackboardException("Failed to get or add artifact type", ex);
         }
     }
 
     /**
-     * Adds a new attribute type based upon the parameters given
+     * Gets an attribute type, creating it if it does not already exist. Use
+     * this method to define custom attribute types.
      *
-     * @param attrTypeString The type name of the attribute type
-     * @param valueType The type of any attribute of this type's value
-     * @param displayName The name displayed for the new attribute type
-     * @throws
-     * org.sleuthkit.autopsy.casemodule.services.Blackboard.BlackboardException
+     * @param typeName    The type name of the attribute type.
+     * @param valueType   The value type of the attribute type.
+     * @param displayName The display name of the attribute type.
+     *
+     * @return A type object representing the attribute type.
+     *
+     * @throws BlackboardBlackboardException If there is a problem getting or
+     *                                       adding the attribute type.
      */
-    public BlackboardAttribute.Type addAttributeType(String attrTypeString, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE valueType, String displayName) throws BlackboardException {
+    public BlackboardAttribute.Type addAttributeType(String typeName, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE valueType, String displayName) throws BlackboardException {
         try {
-            return Case.getCurrentCase().getSleuthkitCase().addArtifactAttributeType(attrTypeString, valueType, displayName);
-        } catch (TskDataException ex) {
-            throw new BlackboardException("New attribute type could not be added", ex);
+            return Case.getCurrentCase().getSleuthkitCase().addArtifactAttributeType(typeName, valueType, displayName);
+        } catch (TskDataException typeExistsEx) {
+            try {
+                return Case.getCurrentCase().getSleuthkitCase().getAttributeType(typeName);
+            } catch (TskCoreException ex) {
+                throw new BlackboardException("Failed to get or add attribute type", ex);
+            }
         } catch (TskCoreException ex) {
-            throw new BlackboardException("New attribute type could not be added", ex);
+            throw new BlackboardException("Failed to get or add attribute type", ex);
         }
     }
 
+    /**
+     * Cloese this blackboard and releases any resources associated with it. 
+     * @throws IOException 
+     */
     @Override
     public void close() throws IOException {
     }
 
     /**
-     * Provides a system exception for the Keyword Search package.
+     * A blackboard exception.
      */
     public static final class BlackboardException extends Exception {
 
         private static final long serialVersionUID = 1L;
 
         /**
-         * Constructs a new exception with null as its message.
-         */
-        public BlackboardException() {
-            super();
-        }
-
-        /**
-         * Constructs a new exception with the specified message.
+         * Constructs a blackboard exception with the specified message.
          *
          * @param message The message.
          */
@@ -119,10 +133,11 @@ public final class Blackboard implements Closeable {
         }
 
         /**
-         * Constructs a new exception with the specified message and cause.
+         * Constructs a blackboard exception with the specified message and
+         * cause.
          *
          * @param message The message.
-         * @param cause The cause.
+         * @param cause   The cause.
          */
         public BlackboardException(String message, Throwable cause) {
             super(message, cause);
