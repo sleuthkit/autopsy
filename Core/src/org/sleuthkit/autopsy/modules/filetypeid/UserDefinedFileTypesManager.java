@@ -263,6 +263,49 @@ final class UserDefinedFileTypesManager {
             signatureList.add(new Signature(byteArray, 17, false));
             fileType = new FileType("image/x-tga", new ArrayList<>(signatureList), "", false); //NON-NLS
             fileTypes.add(fileType);
+
+            // Add rule for .ilbm
+            signatureList = new ArrayList<>();
+            signatureList.add(new Signature("FORM", 0L));
+            signatureList.add(new Signature("ILBM", 8L));
+            fileType = new FileType("image/x-ilbm", new ArrayList<>(signatureList), "", false);
+            fileTypes.add(fileType);
+            signatureList = new ArrayList<>();
+            signatureList.add(new Signature("FORM", 0L));
+            signatureList.add(new Signature("PBM", 8L));
+            fileType = new FileType("image/x-ilbm", new ArrayList<>(signatureList), "", false);
+            fileTypes.add(fileType);
+
+            // Add rule for .webp
+            signatureList = new ArrayList<>();
+            signatureList.add(new Signature("RIFF", 0L));
+            signatureList.add(new Signature("WEBP", 8L));
+            fileType = new FileType("image/webp", new ArrayList<>(signatureList), "", false);
+            fileTypes.add(fileType);
+
+            // Add rule for .aiff
+            signatureList = new ArrayList<>();
+            signatureList.add(new Signature("FORM", 0L));
+            signatureList.add(new Signature("AIFF", 8L));
+            fileType = new FileType("audio/aiff", new ArrayList<>(signatureList), "", false);
+            fileTypes.add(fileType);
+            signatureList = new ArrayList<>();
+            signatureList.add(new Signature("FORM", 0L));
+            signatureList.add(new Signature("AIFC", 8L));
+            fileType = new FileType("audio/aiff", new ArrayList<>(signatureList), "", false);
+            fileTypes.add(fileType);
+            signatureList = new ArrayList<>();
+            signatureList.add(new Signature("FORM", 0L));
+            signatureList.add(new Signature("8SVX", 8L));
+            fileType = new FileType("audio/aiff", new ArrayList<>(signatureList), "", false);
+            fileTypes.add(fileType);
+            
+            // Add .iff
+            signatureList = new ArrayList<>();
+            signatureList.add(new Signature("FORM", 0L));
+            fileType = new FileType("application/x-iff", new ArrayList<>(signatureList), "", false);
+            fileTypes.add(fileType);
+
         } // parseHexBinary() throws this if the argument passed in is not Hex
         catch (IllegalArgumentException e) {
             throw new UserDefinedFileTypesException("Error creating predefined file types", e); //
