@@ -68,19 +68,11 @@ public final class JythonModuleLoader {
     }
 
     private static <T> List<T> getInterfaceImplementations(LineFilter filter, Class<T> interfaceClass) {
-        List<T> objects = new ArrayList<>();
-        Set<File> pythonModuleDirs = new HashSet<>();
         PythonInterpreter interpreter = new PythonInterpreter();
-
-        // add python modules from 'autospy/build/cluster/InternalPythonModules' folder
-        // which are copied from 'autopsy/*/release/InternalPythonModules' folders.
-        for (File f : InstalledFileLocator.getDefault().locateAll("InternalPythonModules", JythonModuleLoader.class.getPackage().getName(), false)) { //NON-NLS
-            Collections.addAll(pythonModuleDirs, f.listFiles());
-        }
-        // add python modules from 'testuserdir/python_modules' folder
-        Collections.addAll(pythonModuleDirs, new File(PlatformUtil.getUserPythonModulesPath()).listFiles());
-
-        for (File file : pythonModuleDirs) {
+        List<T> objects = new ArrayList<>();
+        File pythonModulesDir = new File(PlatformUtil.getUserPythonModulesPath());
+        File[] files = pythonModulesDir.listFiles();
+        for (File file : files) {
             if (file.isDirectory()) {
                 File[] pythonScripts = file.listFiles(new PythonScriptFileFilter());
                 for (File script : pythonScripts) {
