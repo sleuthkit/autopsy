@@ -26,7 +26,7 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
                       <Component id="knownHashDbsLabel" min="-2" pref="272" max="-2" attributes="0"/>
-                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="18" max="32767" attributes="0"/>
                   </Group>
                   <Component id="knownBadHashDbsLabel" max="32767" attributes="0"/>
                   <Group type="102" attributes="0">
@@ -47,15 +47,15 @@
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
               <Component id="knownHashDbsLabel" min="-2" max="-2" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
-              <Component id="jScrollPane1" min="-2" pref="58" max="-2" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
+              <EmptySpace min="-2" max="-2" attributes="0"/>
+              <Component id="jScrollPane1" pref="54" max="32767" attributes="0"/>
+              <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
               <Component id="knownBadHashDbsLabel" min="-2" max="-2" attributes="0"/>
+              <EmptySpace min="-2" max="-2" attributes="0"/>
+              <Component id="jScrollPane2" pref="53" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jScrollPane2" min="-2" pref="58" max="-2" attributes="0"/>
-              <EmptySpace max="32767" attributes="0"/>
-              <Component id="alwaysCalcHashesCheckbox" min="-2" pref="35" max="-2" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
+              <Component id="alwaysCalcHashesCheckbox" min="-2" pref="27" max="-2" attributes="0"/>
+              <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -120,9 +120,6 @@
         <Property name="verticalAlignment" type="int" value="1"/>
         <Property name="verticalTextPosition" type="int" value="1"/>
       </Properties>
-      <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="alwaysCalcHashesCheckboxActionPerformed"/>
-      </Events>
     </Component>
     <Container class="javax.swing.JScrollPane" name="jScrollPane2">
       <Properties>
