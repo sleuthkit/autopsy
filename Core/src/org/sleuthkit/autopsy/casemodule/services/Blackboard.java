@@ -94,7 +94,7 @@ public final class Blackboard implements Closeable {
      * @throws BlackboardBlackboardException If there is a problem getting or
      *                                       adding the attribute type.
      */
-    public BlackboardAttribute.Type addAttributeType(String typeName, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE valueType, String displayName) throws BlackboardException {
+    public BlackboardAttribute.Type getOrAddAttributeType(String typeName, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE valueType, String displayName) throws BlackboardException {
         try {
             return Case.getCurrentCase().getSleuthkitCase().addArtifactAttributeType(typeName, valueType, displayName);
         } catch (TskDataException typeExistsEx) {
