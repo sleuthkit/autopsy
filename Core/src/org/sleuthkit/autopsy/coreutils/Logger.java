@@ -90,17 +90,21 @@ public final class Logger extends java.util.logging.Logger {
             fileHandler.setFormatter(new Formatter() {
                 @Override
                 public String format(LogRecord record) {
-                    if (record.getThrown() != null) {
+                    Throwable thrown = record.getThrown();
+                    if (thrown != null) {
                         String stackTrace = ""; //NON-NLS
-                        for (StackTraceElement traceElem : record.getThrown().getStackTrace()) {
-                            stackTrace += "\t" + traceElem.toString() + "\n"; //NON-NLS
+                        while (thrown != null) {
+                            stackTrace += thrown.toString() + "\n";
+                            for (StackTraceElement traceElem : record.getThrown().getStackTrace()) {
+                                stackTrace += "\t" + traceElem.toString() + "\n"; //NON-NLS
+                            }
+                            thrown = thrown.getCause();
                         }
                         return (new Timestamp(record.getMillis())).toString() + " " //NON-NLS
                                 + record.getSourceClassName() + " " //NON-NLS
                                 + record.getSourceMethodName() + "\n" //NON-NLS
                                 + record.getLevel() + ": " //NON-NLS
                                 + this.formatMessage(record) + "\n" //NON-NLS
-                                + record.getThrown().toString() + ":\n" //NON-NLS
                                 + stackTrace
                                 + "\n"; //NON-NLS
                     } else {
