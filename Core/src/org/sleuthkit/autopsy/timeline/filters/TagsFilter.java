@@ -31,6 +31,7 @@ public class TagsFilter extends UnionFilter<TagNameFilter> {
     public TagsFilter copyOf() {
         TagsFilter filterCopy = new TagsFilter();
         filterCopy.setSelected(isSelected());
+        filterCopy.setDisabled(isDisabled());
         //add a copy of each subfilter
         this.getSubFilters().forEach((TagNameFilter t) -> {
             filterCopy.addSubFilter(t.copyOf());

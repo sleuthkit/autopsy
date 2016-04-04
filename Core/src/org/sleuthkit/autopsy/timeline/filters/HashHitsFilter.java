@@ -30,6 +30,7 @@ public class HashHitsFilter extends UnionFilter<HashSetFilter> {
     public HashHitsFilter copyOf() {
         HashHitsFilter filterCopy = new HashHitsFilter();
         filterCopy.setSelected(isSelected());
+        filterCopy.setDisabled(isDisabled());
         //add a copy of each subfilter
         this.getSubFilters().forEach((HashSetFilter t) -> {
             filterCopy.addSubFilter(t.copyOf());

@@ -37,6 +37,7 @@ public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
     public DataSourcesFilter copyOf() {
         final DataSourcesFilter filterCopy = new DataSourcesFilter();
         filterCopy.setSelected(isSelected());
+        filterCopy.setDisabled(isDisabled());
         //add a copy of each subfilter
         this.getSubFilters().forEach((DataSourceFilter t) -> {
             filterCopy.addSubFilter(t.copyOf());
