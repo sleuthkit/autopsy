@@ -98,13 +98,13 @@ public class FileExtMismatchContextMenuActionsProvider implements ContextMenuAct
                                 // Check if already added
                                 HashMap<String, String[]> editableMap;
                                 try {
-                                    editableMap = FileExtMismatchXML.getDefault().load();
+                                    editableMap = FileExtMismatchSettings.readSettings().getSigTypeToExtMap();
                                     ArrayList<String> editedExtensions = new ArrayList<>(Arrays.asList(editableMap.get(mimeTypeStr)));
                                     if (editedExtensions.contains(extStr)) {
                                         // Informs the user that they have already added this extension to this MIME type
                                         actions.get(0).setEnabled(false);
                                     }
-                                } catch (FileExtMismatchXML.FileExtMismatchException ex) {
+                                } catch (FileExtMismatchSettings.FileExtMismatchSettingsException ex) {
                                     JOptionPane.showMessageDialog(null,
                                             NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.msg2"),
                                             NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.title"),

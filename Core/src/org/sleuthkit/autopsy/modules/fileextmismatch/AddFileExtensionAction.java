@@ -25,7 +25,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
-import org.openide.util.Exceptions;
 
 /**
  * Do the context menu action for adding a new filename extension to the
@@ -46,8 +45,8 @@ class AddFileExtensionAction extends AbstractAction {
     public void actionPerformed(ActionEvent event) {
         HashMap<String, String[]> editableMap;
         try {
-            editableMap = FileExtMismatchXML.getDefault().load();
-        } catch (FileExtMismatchXML.FileExtMismatchException ex) {
+            editableMap = FileExtMismatchSettings.readSettings().getSigTypeToExtMap();
+        } catch (FileExtMismatchSettings.FileExtMismatchSettingsException ex) {
             JOptionPane.showMessageDialog(null,
                     NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.msg"),
                     NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.title"),
@@ -61,14 +60,14 @@ class AddFileExtensionAction extends AbstractAction {
         editableMap.put(mimeTypeStr, editedExtensions.toArray(new String[0]));
 
         try {
-            if (!FileExtMismatchXML.getDefault().save(editableMap)) {
+            if (!FileExtMismatchSettings.writeSettings(new FileExtMismatchSettings(editableMap))) {
                 //error
                 JOptionPane.showMessageDialog(null,
                         NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.msg"),
                         NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.title"),
                         JOptionPane.ERROR_MESSAGE);
             } // else //in the future we might want to update the statusbar to give feedback to the user
-        } catch (FileExtMismatchXML.FileExtMismatchException ex) {
+        } catch (FileExtMismatchSettings.FileExtMismatchSettingsException ex) {
             JOptionPane.showMessageDialog(null,
                     NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.msg"),
                     NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.title"),

@@ -549,7 +549,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
     @Override
     public void saveSettings() {
         try {
-            if (FileExtMismatchXML.getDefault().save(editableMap)) {
+            if (FileExtMismatchSettings.writeSettings(new FileExtMismatchSettings(editableMap))) {
                 mimeErrLabel.setText(" ");
                 mimeRemoveErrLabel.setText(" ");
                 extRemoveErrLabel.setText(" ");
@@ -566,7 +566,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
                                 "FileExtMismatchConfigPanel.save.msgDlg.title"),
                         JOptionPane.ERROR_MESSAGE);
             }
-        } catch (FileExtMismatchXML.FileExtMismatchException ex) {
+        } catch (FileExtMismatchSettings.FileExtMismatchSettingsException ex) {
             //error
             JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(this.getClass(),
@@ -582,9 +582,9 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         try {
             // Load the configuration into a buffer that the user can modify. They can choose
             // to save it back to the file after making changes.
-            editableMap = FileExtMismatchXML.getDefault().load();
+            editableMap = FileExtMismatchSettings.readSettings().getSigTypeToExtMap();
 
-        } catch (FileExtMismatchXML.FileExtMismatchException ex) {
+        } catch (FileExtMismatchSettings.FileExtMismatchSettingsException ex) {
             //error
             JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(this.getClass(),

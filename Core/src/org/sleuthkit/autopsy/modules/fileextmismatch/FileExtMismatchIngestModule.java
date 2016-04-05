@@ -92,10 +92,9 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
         jobId = context.getJobId();
         refCounter.incrementAndGet(jobId);
 
-        FileExtMismatchXML xmlLoader = FileExtMismatchXML.getDefault();
         try {
-            SigTypeToExtMap = xmlLoader.load();
-        } catch (FileExtMismatchXML.FileExtMismatchException ex) {
+            SigTypeToExtMap = FileExtMismatchSettings.readSettings().getSigTypeToExtMap();
+        } catch (FileExtMismatchSettings.FileExtMismatchSettingsException ex) {
             throw new IngestModuleException("Could not load file extension mismatch configurations.", ex);
         }
         try {
