@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -51,7 +51,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 /**
- * Provides access to case metadata.
+ * Provides access to the case metadata stored in the case metadata file.
  */
 public final class CaseMetadata {
 
@@ -75,7 +75,6 @@ public final class CaseMetadata {
     private final static String XSDFILE = "CaseSchema.xsd"; //NON-NLS
     private final static String TOP_ROOT_NAME = "AutopsyCase"; //NON-NLS
     private final static String CASE_ROOT_NAME = "Case"; //NON-NLS
-    // general metadata about the case file
     private final static String NAME = "Name"; //NON-NLS
     private final static String NUMBER = "Number"; //NON-NLS
     private final static String EXAMINER = "Examiner"; //NON-NLS
@@ -85,7 +84,6 @@ public final class CaseMetadata {
     private final static String AUTOPSY_CRVERSION_NAME = "AutopsyCreatedVersion"; //NON-NLS
     private final static String AUTOPSY_MVERSION_NAME = "AutopsySavedVersion"; //NON-NLS
     private final static String CASE_TEXT_INDEX_NAME = "TextIndexName"; //NON-NLS
-    // folders inside case directory
     private final static String CASE_TYPE = "CaseType"; //NON-NLS
     private final static String DATABASE_NAME = "DatabaseName"; //NON-NLS
 
@@ -449,7 +447,7 @@ public final class CaseMetadata {
             Element rootElement = doc.getDocumentElement();
 
             NodeList cversionList = rootElement.getElementsByTagName(AUTOPSY_CRVERSION_NAME);
-            if(cversionList.getLength() == 0) {
+            if (cversionList.getLength() == 0) {
                 throw new CaseMetadataException("Could not find created version in metadata");
             }
             String createdVersion = cversionList.item(0).getTextContent(); // get the created version
@@ -458,47 +456,47 @@ public final class CaseMetadata {
                 // if not the same version, update the saved version in the xml to the current version
                 rootElement.getElementsByTagName(AUTOPSY_MVERSION_NAME).item(0).setTextContent(System.getProperty("netbeans.buildnumber"));
             }
-            
+
             String fullFileName = file.getName();
             String fileName = fullFileName.substring(0, fullFileName.lastIndexOf(".")); // remove the extension
             this.fileName = fileName;
-            
+
             NodeList rootNameList = doc.getElementsByTagName(CASE_ROOT_NAME);
             if (rootNameList.getLength() == 0) {
                 throw new CaseMetadataException("Couldn't get case root");
             }
             Element caseElement = (Element) rootNameList.item(0);
-            
+
             NodeList caseTypeList = caseElement.getElementsByTagName(CASE_TYPE);
             if (caseTypeList.getLength() == 0) {
                 throw new CaseMetadataException("Couldn't get case type");
             }
             String caseTypeString = caseTypeList.item(0).getTextContent();
             this.caseType = Case.CaseType.fromString(caseTypeString);
-            if(this.caseType == null) {
+            if (this.caseType == null) {
                 throw new CaseMetadataException("Invalid case type");
             }
-            
+
             NodeList caseNameList = caseElement.getElementsByTagName(NAME);
             if (caseNameList.getLength() == 0) {
                 throw new CaseMetadataException("Couldn't get case name");
             }
             this.caseName = caseNameList.item(0).getTextContent();
-            if(this.caseName.isEmpty()) {
+            if (this.caseName.isEmpty()) {
                 throw new CaseMetadataException("Invalid case name, cannot be empty");
             }
-            
+
             Element numberElement = caseElement.getElementsByTagName(NUMBER).getLength() > 0 ? (Element) caseElement.getElementsByTagName(NUMBER).item(0) : null;
             this.caseNumber = numberElement != null ? numberElement.getTextContent() : "";
-            
+
             Element examinerElement = caseElement.getElementsByTagName(EXAMINER).getLength() > 0 ? (Element) caseElement.getElementsByTagName(EXAMINER).item(0) : null;
             this.examiner = examinerElement != null ? examinerElement.getTextContent() : "";
-            
+
             this.caseDirectory = conFilePath.substring(0, conFilePath.lastIndexOf("\\"));
             if (this.caseDirectory.isEmpty()) {
                 throw new CaseMetadataException("Could not get a valid case directory");
             }
-            
+
             NodeList databaseNameList = caseElement.getElementsByTagName(DATABASE_NAME);
             if (databaseNameList.getLength() == 0) {
                 throw new CaseMetadataException("Couldn't get database name");
@@ -508,20 +506,20 @@ public final class CaseMetadata {
             if (Case.CaseType.MULTI_USER_CASE == caseType && caseDatabaseName.isEmpty()) {
                 throw new CaseMetadataException("Case database name cannot be empty in multi user case.");
             }
-            
+
             NodeList textIndexList = caseElement.getElementsByTagName(CASE_TEXT_INDEX_NAME);
             if (textIndexList.getLength() == 0) {
                 throw new CaseMetadataException("Couldn't get text index");
             }
             Element caseTextIndexNameElement = (Element) textIndexList.item(0);
             this.caseTextIndexName = caseTextIndexNameElement.getTextContent();
-            
+
             NodeList createdDateList = rootElement.getElementsByTagName(CREATED_DATE_NAME);
             if (createdDateList.getLength() == 0) {
                 throw new CaseMetadataException("Couldn't get created date");
             }
             this.createdDate = createdDateList.item(0).getTextContent();
-            
+
             NodeList createdVersionList = rootElement.getElementsByTagName(AUTOPSY_CRVERSION_NAME);
             if (createdVersionList.getLength() == 0) {
                 throw new CaseMetadataException("Couldn't get created version");
