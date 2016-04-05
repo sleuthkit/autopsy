@@ -269,11 +269,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
     private final SleuthkitCase db;
     // Track the current case (only set with changeCase() method)
     private static Case currentCase = null;
-    private final CaseType caseType;
     private final Services services;
     private static final Logger logger = Logger.getLogger(Case.class.getName());
-    static final String CASE_EXTENSION = "aut"; //NON-NLS
-    static final String CASE_DOT_EXTENSION = "." + CASE_EXTENSION;
     private final static String CACHE_FOLDER = "Cache"; //NON-NLS
     private final static String EXPORT_FOLDER = "Export"; //NON-NLS
     private final static String LOG_FOLDER = "Log"; //NON-NLS
@@ -295,7 +292,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
         this.examiner = examiner;
         this.configFilePath = configFilePath;
         this.caseMetadata = caseMetadata;
-        this.caseType = type;
         this.db = db;
         this.services = new Services(db);
     }
@@ -421,12 +417,12 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @param examiner   The examiner to associate with the case, can be the
      *                   empty string.
      *
-     * @throws CaseActionException   if there is a problem creating the case.
-     *                               The exception will have a user-friendly
-     *                               message and may be a wrapper for a
-     *                               lower-level exception. If so,
-     *                               CaseActionException.getCause will return a
-     *                               Throwable (null otherwise).
+     * @throws CaseActionException if there is a problem creating the case. The
+     *                             exception will have a user-friendly message
+     *                             and may be a wrapper for a lower-level
+     *                             exception. If so,
+     *                             CaseActionException.getCause will return a
+     *                             Throwable (null otherwise).
      */
     public static void create(String caseDir, String caseName, String caseNumber, String examiner) throws CaseActionException {
         create(caseDir, caseName, caseNumber, examiner, CaseType.SINGLE_USER_CASE);
@@ -483,10 +479,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
         /*
          * Create the case metadata (.aut) file.
          */
-        String configFilePath = caseDir + File.separator + caseName + CASE_DOT_EXTENSION;
+        String configFilePath = caseDir + File.separator + caseName + CaseMetadata.getFileExtension();
         CaseMetadata metadata;
         try {
-            metadata = CaseMetadata.create(caseType, caseName, caseNumber, examiner, caseDir, dbName, indexName);
+            metadata = CaseMetadata.create(caseDir, caseType, caseName, caseNumber, examiner, dbName, indexName);
         } catch (CaseMetadataException ex) {
             throw new CaseActionException(Bundle.Case_creationException(), ex);
         }
@@ -602,8 +598,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
         /*
          * Verify the extension of the case metadata file.
          */
-        if (!caseMetadataFilePath.endsWith(CASE_DOT_EXTENSION)) {
-            throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.checkFile.msg", CASE_DOT_EXTENSION));
+        if (!caseMetadataFilePath.endsWith(CaseMetadata.getFileExtension())) {
+            throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.checkFile.msg", CaseMetadata.getFileExtension()));
         }
 
         try {
@@ -900,7 +896,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      */
     void updateCaseName(String oldCaseName, String oldPath, String newCaseName, String newPath) throws CaseActionException {
         try {
-            caseMetadata.setCaseName(newCaseName); // set the case
+            getCaseMetadata().setCaseName(newCaseName); // set the case
             name = newCaseName; // change the local value
             eventPublisher.publish(new AutopsyEvent(Events.NAME.toString(), oldCaseName, newCaseName));
             SwingUtilities.invokeLater(() -> {
@@ -953,6 +949,13 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     /**
+     * @return the caseMetadata
+     */
+    CaseMetadata getCaseMetadata() {
+        return caseMetadata;
+    }
+
+    /**
      * Gets the application name
      *
      * @return appName
@@ -997,10 +1000,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @return caseDirectoryPath
      */
     public String getCaseDirectory() {
-        if (caseMetadata == null) {
+        if (getCaseMetadata() == null) {
             return "";
         } else {
-            return caseMetadata.getCaseDirectory();
+            return getCaseMetadata().getCaseDirectory();
         }
     }
 
@@ -1010,7 +1013,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @return
      */
     public CaseType getCaseType() {
-        return this.caseType;
+        return this.getCaseMetadata().getCaseType();
     }
 
     /**
@@ -1128,7 +1131,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
     private String getHostDirectory() {
         String caseDirectory = getCaseDirectory();
         Path hostPath;
-        if (caseType == CaseType.MULTI_USER_CASE) {
+        if (getCaseMetadata().getCaseType() == CaseType.MULTI_USER_CASE) {
             hostPath = Paths.get(caseDirectory, NetworkUtils.getLocalHostName());
         } else {
             hostPath = Paths.get(caseDirectory);
@@ -1199,10 +1202,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @return case creation date
      */
     public String getCreatedDate() {
-        if (caseMetadata == null) {
+        if (getCaseMetadata() == null) {
             return "";
         } else {
-            return caseMetadata.getCreatedDate();
+            return getCaseMetadata().getCreatedDate();
         }
     }
 
@@ -1212,10 +1215,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @return Index name.
      */
     public String getTextIndexName() {
-        if (caseMetadata == null) {
+        if (getCaseMetadata() == null) {
             return "";
         } else {
-            return caseMetadata.getTextIndexName();
+            return getCaseMetadata().getTextIndexName();
         }
     }
 

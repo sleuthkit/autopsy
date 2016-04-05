@@ -72,7 +72,6 @@ public final class CaseMetadata {
         }
     }
 
-    private final static String XSDFILE = "CaseSchema.xsd"; //NON-NLS
     private final static String TOP_ROOT_NAME = "AutopsyCase"; //NON-NLS
     private final static String CASE_ROOT_NAME = "Case"; //NON-NLS
     private final static String NAME = "Name"; //NON-NLS
@@ -86,6 +85,8 @@ public final class CaseMetadata {
     private final static String CASE_TEXT_INDEX_NAME = "TextIndexName"; //NON-NLS
     private final static String CASE_TYPE = "CaseType"; //NON-NLS
     private final static String DATABASE_NAME = "DatabaseName"; //NON-NLS
+    private static final String SCHEMA_VERSION = "2.0";
+    private static final String FILE_EXTENSION = ".aut";
 
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss (z)");
     private Case.CaseType caseType;
@@ -96,7 +97,6 @@ public final class CaseMetadata {
     private String caseDatabaseName;
     private String caseTextIndexName;
     private String createdDate;
-    private static final String SCHEMA_VERSION = "2.0";
     private String fileName;
     private String createdVersion;
 
@@ -106,7 +106,7 @@ public final class CaseMetadata {
         this.caseName = caseName;
         this.caseNumber = caseNumber;
         this.examiner = examiner;
-        this.createdDate = this.DATE_FORMAT.format(new Date());
+        this.createdDate = CaseMetadata.DATE_FORMAT.format(new Date());
         this.caseDirectory = caseDirectory;
         this.caseDatabaseName = caseDatabaseName;
         this.caseTextIndexName = caseTextIndexName;
@@ -114,18 +114,6 @@ public final class CaseMetadata {
         this.createdVersion = System.getProperty("netbeans.buildnumber");
         this.write();
 
-    }
-
-    /**
-     * Constructs an object that provides access to case metadata.
-     *
-     * @param metadataFilePath Path to the metadata (.aut) file for a case.
-     *
-     * @deprecated Use open instead
-     */
-    @Deprecated
-    public CaseMetadata(Path metadataFilePath) throws CaseMetadataException {
-        this(metadataFilePath.toString());
     }
 
     /**
@@ -150,7 +138,7 @@ public final class CaseMetadata {
      * @throws
      * org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException
      */
-    public static CaseMetadata open(Path metadataFilePath) throws CaseMetadataException {
+    static CaseMetadata open(Path metadataFilePath) throws CaseMetadataException {
         CaseMetadata metadata = new CaseMetadata(metadataFilePath.toString());
         return metadata;
     }
@@ -171,7 +159,7 @@ public final class CaseMetadata {
      * @throws
      * org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException
      */
-    public static CaseMetadata create(Case.CaseType caseType, String caseName, String caseNumber, String examiner, String caseDirectory, String caseDatabaseName, String caseTextIndexName) throws CaseMetadataException {
+    static CaseMetadata create(String caseDirectory, Case.CaseType caseType, String caseName, String caseNumber, String examiner, String caseDatabaseName, String caseTextIndexName) throws CaseMetadataException {
         CaseMetadata metadata = new CaseMetadata(caseType, caseName, caseNumber, examiner, caseDirectory, caseDatabaseName, caseTextIndexName);
         return metadata;
     }
@@ -217,7 +205,7 @@ public final class CaseMetadata {
      *
      * @return The case directory.
      */
-    public String getCaseDirectory() {
+    String getCaseDirectory() {
         return caseDirectory;
     }
 
@@ -235,7 +223,7 @@ public final class CaseMetadata {
      *
      * @return The date this case was created as a string
      */
-    public String getCreatedDate() {
+    String getCreatedDate() {
         return this.createdDate;
     }
 
@@ -244,6 +232,13 @@ public final class CaseMetadata {
      */
     public String getCreatedVersion() {
         return createdVersion;
+    }
+
+    /**
+     * @return the FILE_EXTENSION
+     */
+    public static String getFileExtension() {
+        return FILE_EXTENSION;
     }
 
     /**
@@ -396,7 +391,7 @@ public final class CaseMetadata {
 
         // preparing the output file
         String xmlString = sw.toString();
-        File file = new File(Paths.get(this.getCaseDirectory(), this.fileName + ".aut").toString());
+        File file = new File(Paths.get(this.getCaseDirectory(), this.fileName + getFileExtension()).toString());
 
         // write the file
         try {
@@ -526,6 +521,18 @@ public final class CaseMetadata {
             }
             this.createdVersion = createdVersionList.item(0).getTextContent();
         }
+    }
+
+    /**
+     * Constructs an object that provides access to case metadata.
+     *
+     * @param metadataFilePath Path to the metadata (.aut) file for a case.
+     *
+     * @deprecated Use open instead
+     */
+    @Deprecated
+    public CaseMetadata(Path metadataFilePath) throws CaseMetadataException {
+        this(metadataFilePath.toString());
     }
 
 }

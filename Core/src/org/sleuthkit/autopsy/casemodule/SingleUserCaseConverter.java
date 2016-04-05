@@ -46,7 +46,7 @@ import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 public class SingleUserCaseConverter {
 
     private static final String AUTOPSY_DB_FILE = "autopsy.db"; //NON-NLS
-    private static final String DOTAUT = ".aut"; //NON-NLS
+    private static final String DOTAUT = CaseMetadata.getFileExtension(); //NON-NLS
     private static final String TIMELINE_FOLDER = "Timeline"; //NON-NLS
     private static final String TIMELINE_FILE = "events.db"; //NON-NLS
     private static final String POSTGRES_DEFAULT_DB_NAME = "postgres"; //NON-NLS
@@ -190,11 +190,11 @@ public class SingleUserCaseConverter {
         copyImages(icd);
 
         // Create new .aut file
-        CaseMetadata newCaseMetadata = CaseMetadata.create(CaseType.MULTI_USER_CASE,
+        CaseMetadata newCaseMetadata = CaseMetadata.create(icd.getCaseOutputFolder().toString(),
+                CaseType.MULTI_USER_CASE,
                 icd.getNewCaseName(),
                 oldCaseMetadata.getCaseNumber(),
                 oldCaseMetadata.getExaminer(),
-                icd.getCaseOutputFolder().toString(),
                 dbName, solrName);
         // Set created date. This calls writefile, no need to call it again
         newCaseMetadata.setCreatedDate(oldCaseMetadata.getCreatedDate());
