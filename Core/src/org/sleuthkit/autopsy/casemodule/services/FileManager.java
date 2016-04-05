@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -512,6 +512,7 @@ public class FileManager implements Closeable {
      * Helper (internal) method to recursively add contents of a folder. Node
      * passed in can be a file or directory. Children of directories are added.
      *
+     * @param trans              A case database transaction.
      * @param parentVd           Dir that is the parent of localFile
      * @param localFile          File/Dir that we are adding
      * @param addProgressUpdater notifier to receive progress notifications on
@@ -569,6 +570,7 @@ public class FileManager implements Closeable {
      * @param parentFile parent file object container (such as virtual
      *                   directory, another local file, or fscontent File),
      * @param localFile  File that we are adding
+     * @param trans      A case database transaction.
      *
      * @return newly created local file object added to the database
      *

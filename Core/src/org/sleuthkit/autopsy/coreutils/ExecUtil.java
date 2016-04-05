@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013-2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -96,9 +96,6 @@ public final class ExecUtil {
             this.startTimeInSeconds = (new Date().getTime()) / 1000;
         }
 
-        /**
-         * @inheritDoc
-         */
         @Override
         public boolean shouldTerminateProcess() {
             long currentTimeInSeconds = (new Date().getTime()) / 1000;
@@ -120,9 +117,6 @@ public final class ExecUtil {
      */
     public static int execute(ProcessBuilder processBuilder) throws SecurityException, IOException {
         return ExecUtil.execute(processBuilder, 30, TimeUnit.DAYS, new ProcessTerminator() {
-            /**
-             * @inheritDoc
-             */
             @Override
             public boolean shouldTerminateProcess() {
                 return false;

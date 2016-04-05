@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -714,16 +714,14 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     /**
-     * Adds the image to the current case after it has been added to the DB.
+     * Adds an image to the current case after it has been added to the DB.
      * Sends out event and reopens windows if needed.
      *
-     * @param imgPaths the paths of the image that being added
-     * @param imgId    the ID of the image that being added
-     * @param timeZone the timeZone of the image where it's added
+     * @param imgPath  The path of the image file.
+     * @param imgId    The ID of the image.
+     * @param timeZone The time zone of the image.
      *
-     * @deprecated As of release 4.0, replaced by {@link #notifyAddingDataSource(java.util.UUID) and
-     * {@link #notifyDataSourceAdded(org.sleuthkit.datamodel.Content, java.util.UUID) and
-     * {@link #notifyFailedAddingDataSource(java.util.UUID)}
+     * @deprecated As of release 4.0
      */
     @Deprecated
     public Image addImage(String imgPath, long imgId, String timeZone) throws CaseActionException {

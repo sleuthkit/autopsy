@@ -355,6 +355,7 @@ def normalize_db_entry(line, table):
     object_index = line.find('INSERT INTO "tsk_objects"')
     report_index = line.find('INSERT INTO "reports"')
     layout_index = line.find('INSERT INTO "tsk_file_layout"')
+    data_source_info_index = line.find('INSERT INTO "data_source_info"')
     parens = line[line.find('(') + 1 : line.find(')')]
     fields_list = parens.replace(" ", "").split(',')
     
@@ -394,6 +395,10 @@ def normalize_db_entry(line, table):
         fields_list[1] = "AutopsyTestCase"
         fields_list[2] = "0"
         newLine = ('INSERT INTO "reports" VALUES(' + ','.join(fields_list) + ');')
+        return newLine
+    elif (data_source_info_index != -1):
+        fields_list[1] = "{device id}"
+        newLine = ('INSERT INTO "data_source_info" VALUES(' + ','.join(fields_list) + ');')
         return newLine
     else:
         return line

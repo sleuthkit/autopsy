@@ -126,7 +126,7 @@ public enum ThumbnailCache {
      */
     private Image load(DrawableFile file) {
 
-        if (FileTypeUtils.isGIF(file.getAbstractFile())) {
+        if (ImageUtils.isGIF(file.getAbstractFile())) {
             //directly read gif to preserve potential animation,
             //NOTE: not saved to disk!
             return new Image(new BufferedInputStream(new ReadContentInputStream(file.getAbstractFile())), MAX_THUMBNAIL_SIZE, MAX_THUMBNAIL_SIZE, true, true);

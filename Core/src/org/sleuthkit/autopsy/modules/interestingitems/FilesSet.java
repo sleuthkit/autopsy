@@ -354,7 +354,6 @@ final class FilesSet implements Serializable {
 
             private static final long serialVersionUID = 1L;
 
-            
             /**
              * Represents a comparison item for file size
              */
@@ -442,7 +441,7 @@ final class FilesSet implements Serializable {
                 this.unit = unit;
                 this.sizeValue = sizeValue;
             }
-            
+
             /**
              * Gets the comparator of this condition
              *
@@ -469,7 +468,6 @@ final class FilesSet implements Serializable {
             int getSizeValue() {
                 return sizeValue;
             }
-
 
             @Override
             public boolean passes(AbstractFile file) {

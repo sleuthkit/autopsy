@@ -560,15 +560,6 @@ class ReportHTML implements TableReportModule {
             return;
         }
         AbstractFile file = (AbstractFile) content;
-
-        // Add metadata about the file to HTML output
-        row.add(file.getMtimeAsDate());
-        row.add(file.getCtimeAsDate());
-        row.add(file.getAtimeAsDate());
-        row.add(file.getCrtimeAsDate());
-        row.add(Long.toString(file.getSize()));
-        row.add(file.getMd5Hash());
-
         // Add the hyperlink to the row. A column header for it was created in startTable().
         StringBuilder localFileLink = new StringBuilder();
         // Don't make a local copy of the file if it is a directory or unallocated space.

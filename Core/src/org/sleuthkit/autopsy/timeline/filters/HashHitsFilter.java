@@ -8,6 +8,7 @@ package org.sleuthkit.autopsy.timeline.filters;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 import javafx.beans.binding.Bindings;
+import javafx.beans.value.ObservableBooleanValue;
 import org.openide.util.NbBundle;
 
 /**
@@ -16,13 +17,12 @@ import org.openide.util.NbBundle;
 public class HashHitsFilter extends UnionFilter<HashSetFilter> {
 
     @Override
-    @NbBundle.Messages("hashHitsFilter.displayName.text=Only Hash Set Hits")
+    @NbBundle.Messages("hashHitsFilter.displayName.text=Hash Sets")
     public String getDisplayName() {
         return Bundle.hashHitsFilter_displayName_text();
     }
 
     public HashHitsFilter() {
-        getDisabledProperty().bind(Bindings.size(getSubFilters()).lessThan(1));
         setSelected(false);
     }
 
@@ -80,5 +80,10 @@ public class HashHitsFilter extends UnionFilter<HashSetFilter> {
             getSubFilters().add(hashSetFilter);
             getSubFilters().sort(Comparator.comparing(HashSetFilter::getDisplayName));
         }
+    }
+
+    @Override
+    public ObservableBooleanValue disabledProperty() {
+        return Bindings.or(super.disabledProperty(), Bindings.isEmpty(getSubFilters()));
     }
 }

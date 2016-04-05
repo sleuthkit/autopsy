@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,6 +40,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 public class GetTagNameAndCommentDialog extends JDialog {
 
+    private static final long serialVersionUID = 1L;
     private static final String NO_TAG_NAMES_MESSAGE = NbBundle.getMessage(GetTagNameAndCommentDialog.class,
             "GetTagNameAndCommentDialog.noTags");
     private final HashMap<String, TagName> tagNames = new HashMap<>();
@@ -47,8 +48,8 @@ public class GetTagNameAndCommentDialog extends JDialog {
 
     public static class TagNameAndComment {
 
-        private TagName tagName;
-        private String comment;
+        private final TagName tagName;
+        private final String comment;
 
         private TagNameAndComment(TagName tagName, String comment) {
             this.tagName = tagName;
@@ -67,8 +68,7 @@ public class GetTagNameAndCommentDialog extends JDialog {
     /**
      * Show the Tag Name and Comment Dialog and return the TagNameAndContent
      * chosen by the user. The dialog will be centered with the main autopsy
-     * window as its owner. To set another window as the owner use {@link #doDialog(java.awt.Window)
-     * }
+     * window as its owner. 
      *
      * @return a TagNameAndComment instance containing the TagName selected by
      *         the user and the entered comment, or null if the user canceled

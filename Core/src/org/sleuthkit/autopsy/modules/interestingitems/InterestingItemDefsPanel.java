@@ -87,7 +87,10 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         this.rulesList.addListSelectionListener(new InterestingItemDefsPanel.RulesListSelectionListener());
     }
 
+    @NbBundle.Messages({"InterestingItemDefsPanel.Title=Global Interesting Items Settings"})
     private void customInit() {
+        setName(Bundle.InterestingItemDefsPanel_Title());
+        
         Set<String> fileTypesCollated = new HashSet<>();
         for (MediaType mediaType : mediaTypes) {
             fileTypesCollated.add(mediaType.toString());
