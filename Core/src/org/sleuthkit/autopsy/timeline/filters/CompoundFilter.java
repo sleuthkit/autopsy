@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-15 Basis Technology Corp.
+ * Copyright 2014-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,10 +33,7 @@ import javafx.collections.ObservableList;
  * a {@link CompoundFilter} uses listeners to enforce the following
  * relationships between it and its sub-filters:
  * <ol>
- * <le>if a filter becomes active, and all its sub-filters were inactive, make
- * them all active</le>
- * <le>if a filter becomes inactive and all its sub-filters were active, make
- * them all inactive</le>
+ * <le>if a filter becomes inactive disable all of its subfilters</le>
  * <le>if a sub-filter changes active state set the parent filter active if any
  * of its sub-filters are active.</le>
  * </ol>
