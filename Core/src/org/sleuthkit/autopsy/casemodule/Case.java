@@ -261,10 +261,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
         }
     };
 
-    private String name;
-    private String number;
-    private String examiner;
-    private String configFilePath;
     private final CaseMetadata caseMetadata;
     private final SleuthkitCase db;
     // Track the current case (only set with changeCase() method)
@@ -286,11 +282,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
     /**
      * Constructor for the Case class
      */
-    private Case(String name, String number, String examiner, String configFilePath, CaseMetadata caseMetadata, SleuthkitCase db, CaseType type) {
-        this.name = name;
-        this.number = number;
-        this.examiner = examiner;
-        this.configFilePath = configFilePath;
+    private Case(CaseMetadata caseMetadata, SleuthkitCase db) {
         this.caseMetadata = caseMetadata;
         this.db = db;
         this.services = new Services(db);
@@ -362,7 +354,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     NbBundle.getMessage(Case.class, "IntervalErrorReport.ErrorText"));
             doCaseChange(currentCase);
             SwingUtilities.invokeLater(() -> {
-                RecentCases.getInstance().addRecentCase(currentCase.name, currentCase.configFilePath); // update the recent cases
+                RecentCases.getInstance().addRecentCase(currentCase.getName(), currentCase.g()); // update the recent cases
             });
             if (CaseType.MULTI_USER_CASE == newCase.getCaseType()) {
                 try {
@@ -515,7 +507,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.databaseConnectionInfo.error.msg"), ex);
         }
 
-        Case newCase = new Case(caseName, caseNumber, examiner, configFilePath, metadata, db, caseType);
+        Case newCase = new Case(metadata, db);
         changeCase(newCase);
     }
 
@@ -674,7 +666,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     }
                 }
             }
-            Case openedCase = new Case(caseName, caseNumber, examiner, caseMetadataFilePath, metadata, db, caseType);
+            Case openedCase = new Case(metadata, db);
             changeCase(openedCase);
 
         } catch (CaseMetadataException ex) {
@@ -871,7 +863,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         try {
             boolean result = deleteCaseDirectory(caseDir); // delete the directory
 
-            RecentCases.getInstance().removeRecentCase(this.name, this.configFilePath); // remove it from the recent case
+            RecentCases.getInstance().removeRecentCase(this.caseMetadata.getCaseName(), this.caseMetadata.getCaseDirectory()); // remove it from the recent case
             Case.changeCase(null);
             if (result == false) {
                 throw new CaseActionException(
@@ -897,7 +889,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
     void updateCaseName(String oldCaseName, String oldPath, String newCaseName, String newPath) throws CaseActionException {
         try {
             getCaseMetadata().setCaseName(newCaseName); // set the case
-            name = newCaseName; // change the local value
+            caseMetadata.setCaseName(newCaseName); // change the local value
             eventPublisher.publish(new AutopsyEvent(Events.NAME.toString(), oldCaseName, newCaseName));
             SwingUtilities.invokeLater(() -> {
                 try {
@@ -919,24 +911,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
      */
     public static boolean existsCurrentCase() {
         return currentCase != null;
-    }
-
-    /**
-     * Uses the given path to store it as the configuration file path
-     *
-     * @param givenPath the given config file path
-     */
-    private void setConfigFilePath(String givenPath) {
-        configFilePath = givenPath;
-    }
-
-    /**
-     * Get the config file path in the given path
-     *
-     * @return configFilePath the path of the configuration file
-     */
-    String getConfigFilePath() {
-        return configFilePath;
     }
 
     /**

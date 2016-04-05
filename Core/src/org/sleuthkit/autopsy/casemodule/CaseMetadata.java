@@ -230,7 +230,7 @@ public final class CaseMetadata {
     /**
      * @return the createdVersion
      */
-    public String getCreatedVersion() {
+    String getCreatedVersion() {
         return createdVersion;
     }
 
