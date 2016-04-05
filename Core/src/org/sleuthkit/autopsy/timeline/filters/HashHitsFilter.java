@@ -66,7 +66,7 @@ public class HashHitsFilter extends UnionFilter<HashSetFilter> {
         }
         final HashHitsFilter other = (HashHitsFilter) obj;
 
-        if (isSelected() != other.isSelected()) {
+        if (isActive() != other.isActive()) {
             return false;
         }
 

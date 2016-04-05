@@ -126,7 +126,7 @@ public class TypeFilter extends UnionFilter<TypeFilter> {
         }
         final TypeFilter other = (TypeFilter) obj;
 
-        if (isSelected() != other.isSelected()) {
+        if (isActive() != other.isActive()) {
             return false;
         }
 

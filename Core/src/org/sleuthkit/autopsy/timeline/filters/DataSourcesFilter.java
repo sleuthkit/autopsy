@@ -88,7 +88,7 @@ public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
         }
         final DataSourcesFilter other = (DataSourcesFilter) obj;
 
-        if (isSelected() != other.isSelected()) {
+        if (isActive() != other.isActive()) {
             return false;
         }
 

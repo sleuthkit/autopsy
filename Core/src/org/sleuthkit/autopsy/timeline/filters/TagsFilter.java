@@ -67,7 +67,7 @@ public class TagsFilter extends UnionFilter<TagNameFilter> {
         }
         final TagsFilter other = (TagsFilter) obj;
 
-        if (isSelected() != other.isSelected()) {
+        if (isActive() != other.isActive()) {
             return false;
         }
 

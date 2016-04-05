@@ -93,9 +93,7 @@ public abstract class CompoundFilter<SubFilterType extends Filter> extends Abstr
         for (int i = 0; i < oneFilter.getSubFilters().size(); i++) {
             final SubFilterType subFilter = oneFilter.getSubFilters().get(i);
             final SubFilterType otherSubFilter = otherFilter.getSubFilters().get(i);
-            if (subFilter.equals(otherSubFilter) == false
-                    || subFilter.isDisabled() != otherSubFilter.isDisabled()
-                    || subFilter.isSelected() != otherSubFilter.isSelected()) {
+            if (subFilter.equals(otherSubFilter) == false) {
                 return false;
             }
         }
