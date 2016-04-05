@@ -74,8 +74,8 @@ public class StatusBar extends ToolBar {
         taskLabel.setVisible(false);
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        refreshLabel.visibleProperty().bind(this.controller.getNewEventsFlag());
-        refreshLabel.managedProperty().bind(this.controller.getNewEventsFlag());
+        refreshLabel.visibleProperty().bind(this.controller.eventsDBStaleProperty());
+        refreshLabel.managedProperty().bind(this.controller.eventsDBStaleProperty());
         taskLabel.textProperty().bind(this.controller.taskTitleProperty());
         messageLabel.textProperty().bind(this.controller.taskMessageProperty());
         progressBar.progressProperty().bind(this.controller.taskProgressProperty());
@@ -83,6 +83,5 @@ public class StatusBar extends ToolBar {
 
         statusLabel.textProperty().bind(this.controller.getStatusProperty());
         statusLabel.visibleProperty().bind(statusLabel.textProperty().isNotEmpty());
-
     }
 }

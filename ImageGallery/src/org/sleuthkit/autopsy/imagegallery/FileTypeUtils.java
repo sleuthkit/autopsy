@@ -23,16 +23,16 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import static java.util.Objects.isNull;
-import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.imageio.ImageIO;
-import org.sleuthkit.autopsy.coreutils.ImageUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -149,13 +149,13 @@ public enum FileTypeUtils {
         return Collections.unmodifiableSet(supportedExtensions);
     }
 
-    static synchronized FileTypeDetector getFileTypeDetector() {
+    static synchronized FileTypeDetector getFileTypeDetector() throws FileTypeDetector.FileTypeDetectorInitException {
+        /*
+         * TODO: EUR-740 recreate FileTypeDetector when the user creates new
+         * user defined file types
+         */
         if (isNull(FILE_TYPE_DETECTOR)) {
-            try {
-                FILE_TYPE_DETECTOR = new FileTypeDetector();
-            } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-                LOGGER.log(Level.SEVERE, "Failed to initialize File Type Detector, will fall back on extensions in some situations.", ex); //NON-NLS
-            }
+            FILE_TYPE_DETECTOR = new FileTypeDetector();
         }
         return FILE_TYPE_DETECTOR;
     }
@@ -169,24 +169,12 @@ public enum FileTypeUtils {
      *
      * @return true if this file is supported or false if not
      */
-    public static boolean isDrawable(AbstractFile file) throws TskCoreException {
-        return hasDrawableMimeType(file).orElseGet(() -> {
-            return FileTypeUtils.supportedExtensions.contains(file.getNameExtension().toLowerCase())
-                    || ImageUtils.isJpegFileHeader(file)
-                    || ImageUtils.isPngFileHeader(file);
-        });
-    }
-
-    public static boolean isGIF(AbstractFile file) {
-        return ImageUtils.isGIF(file);
-    }
-
-    public static Optional<String> getMimeType(AbstractFile file) throws TskCoreException {
-        return Optional.ofNullable(file.getMIMEType());
+    public static boolean isDrawable(AbstractFile file) throws TskCoreException, FileTypeDetector.FileTypeDetectorInitException {
+        return hasDrawableMIMEType(file);
     }
 
     static boolean isDrawableMimeType(String mimeType) {
-        if (isNull(mimeType)) {
+        if (StringUtils.isBlank(mimeType)) {
             return false;
         } else {
             String mimeTypeLower = mimeType.toLowerCase();
@@ -197,6 +185,10 @@ public enum FileTypeUtils {
     }
 
     /**
+     *
+     * TODO: EUR-740 recreate FileTypeDetector when the user creates new user
+     * defined file types
+     *
      * does the given file have drawable/supported mime type
      *
      * @param file
@@ -205,8 +197,9 @@ public enum FileTypeUtils {
      *         type. False if a non image/video mimetype. empty Optional if a
      *         mimetype could not be detected.
      */
-    static Optional<Boolean> hasDrawableMimeType(AbstractFile file) throws TskCoreException {
-        return getMimeType(file).map(FileTypeUtils::isDrawableMimeType);
+    static boolean hasDrawableMIMEType(AbstractFile file) throws TskCoreException, FileTypeDetector.FileTypeDetectorInitException {
+        String mimeType = getFileTypeDetector().detect(file).toLowerCase();
+        return isDrawableMimeType(mimeType) || (mimeType.equals("audio/x-aiff") && "tiff".equalsIgnoreCase(file.getNameExtension()));
     }
 
     /**
@@ -218,16 +211,31 @@ public enum FileTypeUtils {
      *         application/x-shockwave-flash, etc) or, if no mimetype is
      *         available, a video extension.
      */
-    public static boolean isVideoFile(AbstractFile file) {
+    public static boolean hasVideoMIMEType(AbstractFile file) {
         try {
-            return getMimeType(file)
-                    .map(String::toLowerCase)
-                    .map(mimeType
-                            -> mimeType.startsWith("video/")
-                            || videoMimeTypes.contains(mimeType))
-                    .orElseGet(() -> FileTypeUtils.videoExtensions.contains(file.getNameExtension()));
-        } catch (TskCoreException ex) {
-            return FileTypeUtils.videoExtensions.contains(file.getNameExtension());
+            String mimeType = getFileTypeDetector().detect(file).toLowerCase();
+            return mimeType.startsWith("video/") || videoMimeTypes.contains(mimeType);
+        } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Error determining MIME type of " + getContentPathSafe(file), ex);
+            return false;
+        }
+    }
+
+    /**
+     * Get the unique path for the content, or if that fails, just return the
+     * name.
+     *
+     * @param content
+     *
+     * @return
+     */
+    static String getContentPathSafe(Content content) {
+        try {
+            return content.getUniquePath();
+        } catch (TskCoreException tskCoreException) {
+            String contentName = content.getName();
+            LOGGER.log(Level.SEVERE, "Failed to get unique path for " + contentName, tskCoreException); //NOI18N NON-NLS
+            return contentName;
         }
     }
 }

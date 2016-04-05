@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -60,7 +60,8 @@ public class UNCPathUtilities {
     /**
      * This method converts a passed in path to UNC if it is not already UNC.
      * The UNC path will end up in one of the following two forms:
-     * \\hostname\somefolder\otherfolder or \\IP_ADDRESS\somefolder\otherfolder
+     * "\\hostname\somefolder\otherfolder" or
+     * "\\IP_ADDRESS\somefolder\otherfolder"
      *
      * This is accomplished by checking the mapped drives list the operating
      * system maintains and substituting where required. If the drive of the
@@ -167,9 +168,10 @@ public class UNCPathUtilities {
     /**
      * Takes a UNC path that may have an IP address in it and converts it to
      * hostname, if it can resolve the hostname. Given
-     * \\10.11.12.13\some\folder, the result will be \\TEDS_COMPUTER\some\folder
-     * if the IP address 10.11.12.13 belongs to a machine with the hostname
-     * TEDS_COMPUTER and the local machine is able to resolve the hostname.
+     * "\\10.11.12.13\some\folder", the result will be
+     * "\\TEDS_COMPUTER\some\folder" if the IP address 10.11.12.13 belongs to a
+     * machine with the hostname TEDS_COMPUTER and the local machine is able to
+     * resolve the hostname.
      *
      * @param inputPath the path to convert to a hostname UNC path
      *
@@ -186,9 +188,10 @@ public class UNCPathUtilities {
     /**
      * Takes a UNC path that may have an IP address in it and converts it to
      * hostname, if it can resolve the hostname. Given
-     * \\10.11.12.13\some\folder, the result will be \\TEDS_COMPUTER\some\folder
-     * if the IP address 10.11.12.13 belongs to a machine with the hostname
-     * TEDS_COMPUTER and the local machine is able to resolve the hostname.
+     * "\\10.11.12.13\some\folder", the result will be
+     * "\\TEDS_COMPUTER\some\folder" if the IP address 10.11.12.13 belongs to a
+     * machine with the hostname TEDS_COMPUTER and the local machine is able to
+     * resolve the hostname.
      *
      * @param inputPath a String of the path to convert to a hostname UNC path
      *
@@ -263,6 +266,11 @@ public class UNCPathUtilities {
      */
     synchronized private Map<String, String> getMappedDrives() {
         Map<String, String> driveMap = new HashMap<>();
+
+        if (PlatformUtil.isWindowsOS() == false) {
+            return driveMap;
+        }
+
         File mappedDrive = Paths.get(System.getenv(TEMP_FOLDER), nameString + MAPPED_DRIVES).toFile();
         try {
             Files.deleteIfExists(mappedDrive.toPath());

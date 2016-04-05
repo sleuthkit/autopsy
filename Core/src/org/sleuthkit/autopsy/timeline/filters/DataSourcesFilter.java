@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.timeline.filters;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 import javafx.beans.binding.Bindings;
+import javafx.beans.value.ObservableBooleanValue;
 import org.openide.util.NbBundle;
 
 /**
@@ -29,7 +30,6 @@ import org.openide.util.NbBundle;
 public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
 
     public DataSourcesFilter() {
-        getDisabledProperty().bind(Bindings.size(getSubFilters()).lessThanOrEqualTo(1));
         setSelected(false);
     }
 
@@ -69,7 +69,6 @@ public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
                 .map(DataSourceFilter::getDataSourceID)
                 .filter(t -> t == dataSourceFilter.getDataSourceID())
                 .findAny().isPresent() == false) {
-            dataSourceFilter.getDisabledProperty().bind(getDisabledProperty());
             getSubFilters().add(dataSourceFilter);
             getSubFilters().sort(Comparator.comparing(DataSourceFilter::getDisplayName));
         }
@@ -100,4 +99,10 @@ public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
     public int hashCode() {
         return 9;
     }
+
+    @Override
+    public ObservableBooleanValue disabledProperty() {
+        return Bindings.or(super.disabledProperty(), Bindings.size(getSubFilters()).lessThanOrEqualTo(1));
+    }
+
 }

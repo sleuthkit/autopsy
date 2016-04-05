@@ -347,9 +347,9 @@ final public class VisualizationPanel extends BorderPane {
         refreshTimeUI(); //populate the viz
 
         //this should use an event(EventBus) , not this weird observable pattern
-        controller.getNeedsHistogramRebuild().addListener((observable, oldValue, newValue) -> {
-            if (newValue) {
-                refreshHistorgram();
+        controller.eventsDBStaleProperty().addListener(staleProperty -> {
+            if (controller.isEventsDBStale()) {
+                Platform.runLater(VisualizationPanel.this::refreshHistorgram);
             }
         });
         refreshHistorgram();
@@ -569,7 +569,7 @@ final public class VisualizationPanel extends BorderPane {
 
             titledPane.setText(Bundle.NoEventsDialog_titledPane_text());
             noEventsDialogLabel.setText(NbBundle.getMessage(NoEventsDialog.class, "VisualizationPanel.noEventsDialogLabel.text")); // NON-NLS
-         
+
             dismissButton.setOnAction(actionEvent -> closeCallback.run());
 
             ActionUtils.configureButton(new ZoomToEvents(controller), zoomButton);

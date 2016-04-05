@@ -28,7 +28,9 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import javax.swing.JPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Video viewer part of the Media View layered pane. Uses different engines
@@ -131,18 +133,38 @@ public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture
 
     @Override
     public boolean isSupported(AbstractFile file) {
-        /*
-         * TODO (AUT-2042): Is this the logic we want?
-         */
         String extension = file.getNameExtension();
+        /**
+         * Although it seems too restrictive, requiring both a supported
+         * extension and a supported MIME type prevents two undesirable
+         * behaviors:
+         *
+         * 1) Until AUT-1766 and AUT-1801 are fixed, we incorrectly identify all
+         * iff files as audio/aiff. This means that if this panel went with the
+         * looser 'mime type OR extension' criteria we use for images, then this
+         * panel would attempt (and fail) to display all iff files, even non
+         * audio ones.
+         *
+         * 2) The looser criteria means we are less confident about the files we
+         * are potentialy sending to GStreamer on 32bit jvms. We are less
+         * comfortable with the error handling for GStreamer, and don't want to
+         * send it files which might cause it trouble.
+         */
         if (AUDIO_EXTENSIONS.contains("." + extension) || getExtensionsList().contains("." + extension)) {
             SortedSet<String> mimeTypes = new TreeSet<>(getMimeTypes());
-            String mimeType = file.getMIMEType();
-            if (nonNull(mimeType)) {
-                return mimeTypes.contains(mimeType);
-            } else {
-                return getExtensionsList().contains("." + extension);
+            try {
+                String mimeType = new FileTypeDetector().detect(file);
+                if (nonNull(mimeType)) {
+                    return mimeTypes.contains(mimeType);
+                }
+            } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
+                logger.log(Level.WARNING, "Failed to look up mimetype for " + file.getName() + " using FileTypeDetector.  Fallingback on AbstractFile.isMimeType", ex);
+                if (!mimeTypes.isEmpty() && file.isMimeType(mimeTypes) == AbstractFile.MimeMatchEnum.TRUE) {
+                    return true;
+                }
             }
+
+            return getExtensionsList().contains("." + extension);
         }
         return false;
     }
