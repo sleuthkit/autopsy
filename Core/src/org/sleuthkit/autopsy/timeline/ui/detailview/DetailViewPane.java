@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -95,7 +96,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
         //initialize chart;
         chart = new DetailsChart(controller, detailsChartDateAxis, pinnedDateAxis, verticalAxis, getSelectedNodes());
         setCenter(chart);
-        settingsNodes = new DetailViewSettingsPane(chart.getLayoutSettings()).getChildrenUnmodifiable();
+        settingsNodes = new ArrayList<>(new DetailViewSettingsPane(chart.getLayoutSettings()).getChildrenUnmodifiable());
 
 //        //bind layout fo axes and spacers
         detailsChartDateAxis.getTickMarks().addListener((Observable observable) -> layoutDateLabels());

@@ -179,9 +179,6 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
         Tooltip.install(this, AbstractVisualizationPane.getDefaultTooltip());
 
         dateAxis.setAutoRanging(false);
-//        verticalAxis.setVisible(false);//TODO: why doesn't this hide the vertical axis, instead we have to turn off all parts individually? -jm
-//        verticalAxis.setTickLabelsVisible(false);
-//        verticalAxis.setTickMarkVisible(false);
         setLegendVisible(false);
         setPadding(Insets.EMPTY);
         setAlternativeColumnFillVisible(true);

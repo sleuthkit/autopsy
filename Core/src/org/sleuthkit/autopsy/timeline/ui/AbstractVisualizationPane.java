@@ -134,9 +134,6 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
         return controller;
     }
 
-//    public ObservableList<XYChart.Series<X, Y>> getDataSeries() {
-//        return FXCollections.unmodifiableObservableList(dataSeries);
-//    }
     /**
      * @return the list of nodes containing settings widgets to insert into this
      *         visualization's header
