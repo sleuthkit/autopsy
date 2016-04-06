@@ -93,25 +93,25 @@ public final class CaseMetadata {
     private String caseName;
     private String caseNumber;
     private String examiner;
-    private String caseDirectory;
     private String caseDatabaseName;
     private String caseTextIndexName;
     private String createdDate;
     private String fileName;
     private String createdVersion;
+    private final String configFilePath;
 
-    private CaseMetadata(Case.CaseType caseType, String caseName, String caseNumber, String examiner, String caseDirectory, String caseDatabaseName, String caseTextIndexName) throws CaseMetadataException {
+    private CaseMetadata(String caseDirectory, Case.CaseType caseType, String caseName, String caseNumber, String examiner, String caseDatabaseName, String caseTextIndexName) throws CaseMetadataException {
 
         this.caseType = caseType;
         this.caseName = caseName;
         this.caseNumber = caseNumber;
         this.examiner = examiner;
         this.createdDate = CaseMetadata.DATE_FORMAT.format(new Date());
-        this.caseDirectory = caseDirectory;
         this.caseDatabaseName = caseDatabaseName;
         this.caseTextIndexName = caseTextIndexName;
         this.fileName = caseName;
         this.createdVersion = System.getProperty("netbeans.buildnumber");
+        configFilePath = Paths.get(caseDirectory, caseName + FILE_EXTENSION).toString();
         this.write();
 
     }
@@ -125,6 +125,7 @@ public final class CaseMetadata {
      * org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException
      */
     private CaseMetadata(String metadataFilePath) throws CaseMetadataException {
+        this.configFilePath = metadataFilePath;
         this.read(metadataFilePath);
     }
 
@@ -160,7 +161,7 @@ public final class CaseMetadata {
      * org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException
      */
     static CaseMetadata create(String caseDirectory, Case.CaseType caseType, String caseName, String caseNumber, String examiner, String caseDatabaseName, String caseTextIndexName) throws CaseMetadataException {
-        CaseMetadata metadata = new CaseMetadata(caseType, caseName, caseNumber, examiner, caseDirectory, caseDatabaseName, caseTextIndexName);
+        CaseMetadata metadata = new CaseMetadata(caseDirectory, caseType, caseName, caseNumber, examiner, caseDatabaseName, caseTextIndexName);
         return metadata;
     }
 
@@ -192,21 +193,21 @@ public final class CaseMetadata {
     }
 
     /**
+     * Gets the path to the metadata file file
+     *
+     * @return The path to the metadata file
+     */
+    public String getConfigFilePath() {
+        return configFilePath;
+    }
+
+    /**
      * Gets the examiner.
      *
      * @return The examiner, may be empty.
      */
     public String getExaminer() {
         return examiner;
-    }
-
-    /**
-     * Gets the case directory.
-     *
-     * @return The case directory.
-     */
-    String getCaseDirectory() {
-        return caseDirectory;
     }
 
     /**
@@ -391,7 +392,7 @@ public final class CaseMetadata {
 
         // preparing the output file
         String xmlString = sw.toString();
-        File file = new File(Paths.get(this.getCaseDirectory(), this.fileName + getFileExtension()).toString());
+        File file = new File(this.configFilePath);
 
         // write the file
         try {
@@ -486,11 +487,6 @@ public final class CaseMetadata {
 
             Element examinerElement = caseElement.getElementsByTagName(EXAMINER).getLength() > 0 ? (Element) caseElement.getElementsByTagName(EXAMINER).item(0) : null;
             this.examiner = examinerElement != null ? examinerElement.getTextContent() : "";
-
-            this.caseDirectory = conFilePath.substring(0, conFilePath.lastIndexOf("\\"));
-            if (this.caseDirectory.isEmpty()) {
-                throw new CaseMetadataException("Could not get a valid case directory");
-            }
 
             NodeList databaseNameList = caseElement.getElementsByTagName(DATABASE_NAME);
             if (databaseNameList.getLength() == 0) {

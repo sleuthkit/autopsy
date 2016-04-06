@@ -263,6 +263,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
     private final CaseMetadata caseMetadata;
     private final SleuthkitCase db;
+    private final String caseDirectory;
     // Track the current case (only set with changeCase() method)
     private static Case currentCase = null;
     private final Services services;
@@ -282,10 +283,11 @@ public class Case implements SleuthkitCase.ErrorObserver {
     /**
      * Constructor for the Case class
      */
-    private Case(CaseMetadata caseMetadata, SleuthkitCase db) {
+    private Case(CaseMetadata caseMetadata, SleuthkitCase db, String caseDirectory) {
         this.caseMetadata = caseMetadata;
         this.db = db;
         this.services = new Services(db);
+        this.caseDirectory = caseDirectory;
     }
 
     /**
@@ -354,7 +356,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     NbBundle.getMessage(Case.class, "IntervalErrorReport.ErrorText"));
             doCaseChange(currentCase);
             SwingUtilities.invokeLater(() -> {
-                RecentCases.getInstance().addRecentCase(currentCase.getName(), currentCase.g()); // update the recent cases
+                RecentCases.getInstance().addRecentCase(currentCase.getName(), currentCase.getConfigFilePath()); // update the recent cases
             });
             if (CaseType.MULTI_USER_CASE == newCase.getCaseType()) {
                 try {
@@ -438,8 +440,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
      *                   (null otherwise).
      *
      * @throws CaseActionException   if there is a problem creating the case.
-     * @throws CaseMetadataException if there is a problem creating the case
-     *                               metadata.
      */
     @Messages({"Case.creationException=Could not create case: failed to make metadata file."})
     public static void create(String caseDir, String caseName, String caseNumber, String examiner, CaseType caseType) throws CaseActionException {
@@ -471,7 +471,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
         /*
          * Create the case metadata (.aut) file.
          */
-        String configFilePath = caseDir + File.separator + caseName + CaseMetadata.getFileExtension();
         CaseMetadata metadata;
         try {
             metadata = CaseMetadata.create(caseDir, caseType, caseName, caseNumber, examiner, dbName, indexName);
@@ -507,7 +506,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.databaseConnectionInfo.error.msg"), ex);
         }
 
-        Case newCase = new Case(metadata, db);
+        Case newCase = new Case(metadata, db, caseDir);
         changeCase(newCase);
     }
 
@@ -599,24 +598,23 @@ public class Case implements SleuthkitCase.ErrorObserver {
              * Get the case metadata required to open the case database.
              */
             CaseMetadata metadata = CaseMetadata.open(Paths.get(caseMetadataFilePath));
-            String caseName = metadata.getCaseName();
-            String caseNumber = metadata.getCaseNumber();
-            String examiner = metadata.getExaminer();
             CaseType caseType = metadata.getCaseType();
-            String caseDir = metadata.getCaseDirectory();
 
             /*
              * Open the case database.
              */
             SleuthkitCase db;
+            String caseDir;
             if (caseType == CaseType.SINGLE_USER_CASE) {
-                String dbPath = Paths.get(caseDir, "autopsy.db").toString(); //NON-NLS
+                String dbPath = metadata.getCaseDatabaseName(); //NON-NLS
                 db = SleuthkitCase.openCase(dbPath);
+                caseDir = new File(dbPath).getParent();
             } else {
                 if (!UserPreferences.getIsMultiUserModeEnabled()) {
                     throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.multiUserCaseNotEnabled"));
                 }
                 try {
+                    caseDir = new File(metadata.getConfigFilePath()).getParent();
                     db = SleuthkitCase.openCase(metadata.getCaseDatabaseName(), UserPreferences.getDatabaseConnectionInfo(), caseDir);
                 } catch (UserPreferencesException ex) {
                     throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.databaseConnectionInfo.error.msg"), ex);
@@ -666,7 +664,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     }
                 }
             }
-            Case openedCase = new Case(metadata, db);
+            Case openedCase = new Case(metadata, db, caseDir);
             changeCase(openedCase);
 
         } catch (CaseMetadataException ex) {
@@ -837,6 +835,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
         return this.db;
     }
 
+    public String getConfigFilePath() {
+        return this.caseMetadata.getConfigFilePath();
+    }
+
     /**
      * Closes this case. This methods close the xml and clear all the fields.
      */
@@ -863,7 +865,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         try {
             boolean result = deleteCaseDirectory(caseDir); // delete the directory
 
-            RecentCases.getInstance().removeRecentCase(this.caseMetadata.getCaseName(), this.caseMetadata.getCaseDirectory()); // remove it from the recent case
+            RecentCases.getInstance().removeRecentCase(this.caseMetadata.getCaseName(), this.caseMetadata.getConfigFilePath()); // remove it from the recent case
             Case.changeCase(null);
             if (result == false) {
                 throw new CaseActionException(
@@ -947,7 +949,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @return name
      */
     public String getName() {
-        return name;
+        return caseMetadata.getCaseName();
     }
 
     /**
@@ -956,7 +958,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @return number
      */
     public String getNumber() {
-        return number;
+        return caseMetadata.getCaseNumber();
     }
 
     /**
@@ -965,7 +967,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @return examiner
      */
     public String getExaminer() {
-        return examiner;
+        return caseMetadata.getExaminer();
     }
 
     /**
@@ -974,11 +976,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @return caseDirectoryPath
      */
     public String getCaseDirectory() {
-        if (getCaseMetadata() == null) {
-            return "";
-        } else {
-            return getCaseMetadata().getCaseDirectory();
-        }
+        return this.caseDirectory;
     }
 
     /**
@@ -1176,11 +1174,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @return case creation date
      */
     public String getCreatedDate() {
-        if (getCaseMetadata() == null) {
-            return "";
-        } else {
-            return getCaseMetadata().getCreatedDate();
-        }
+        return getCaseMetadata().getCreatedDate();
     }
 
     /**
@@ -1189,11 +1183,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @return Index name.
      */
     public String getTextIndexName() {
-        if (getCaseMetadata() == null) {
-            return "";
-        } else {
-            return getCaseMetadata().getTextIndexName();
-        }
+        return getCaseMetadata().getTextIndexName();
     }
 
     /**
@@ -1556,7 +1546,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
             if (RuntimeProperties.coreComponentsAreActive()) {
                 SwingUtilities.invokeLater(() -> {
-                    updateMainWindowTitle(currentCase.name);
+                    updateMainWindowTitle(currentCase.getName());
                 });
             } else {
                 SwingUtilities.invokeLater(() -> {
