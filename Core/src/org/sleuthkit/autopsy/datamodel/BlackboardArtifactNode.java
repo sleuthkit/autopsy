@@ -286,25 +286,19 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
      *                 are put
      * @param artifact to extract properties from
      */
-    @SuppressWarnings("deprecation") // TODO: Remove this when TSK_TAGGED_ARTIFACT rows are removed in a database upgrade.
+    @SuppressWarnings("deprecation")
     private void fillPropertyMap(Map<String, Object> map, BlackboardArtifact artifact) {
         try {
             for (BlackboardAttribute attribute : artifact.getAttributes()) {
-                final int attributeTypeID = attribute.getAttributeTypeID();
+                final int attributeTypeID = attribute.getAttributeType().getTypeID();
                 //skip some internal attributes that user shouldn't see
                 if (attributeTypeID == ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_TAGGED_ARTIFACT.getTypeID()
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
-                } else if (attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()
-                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()
-                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID()
-                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED.getTypeID()
-                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID()
-                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID()
-                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()
-                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()) {
-                    map.put(attribute.getAttributeTypeDisplayName(), ContentUtils.getStringTime(attribute.getValueLong(), associated));
+                    continue;
+                } else if (attribute.getAttributeType().getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
+                    map.put(attribute.getAttributeType().getDisplayName(), ContentUtils.getStringTime(attribute.getValueLong(), associated));
                 } else if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getTypeID()
                         && attributeTypeID == ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()) {
                     /*
@@ -318,9 +312,9 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                     if (value.length() > 512) {
                         value = value.substring(0, 512);
                     }
-                    map.put(attribute.getAttributeTypeDisplayName(), value);
+                    map.put(attribute.getAttributeType().getDisplayName(), value);
                 } else {
-                    map.put(attribute.getAttributeTypeDisplayName(), attribute.getDisplayString());
+                    map.put(attribute.getAttributeType().getDisplayName(), attribute.getDisplayString());
                 }
             }
         } catch (TskException ex) {

@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.timeline.filters;
 
 import java.util.Set;
 import java.util.stream.Collectors;
+import javafx.beans.binding.BooleanBinding;
 import javafx.collections.FXCollections;
 
 /**
@@ -70,7 +71,7 @@ public class RootFilter extends IntersectionFilter<Filter> {
     public RootFilter copyOf() {
         Set<Filter> annonymousSubFilters = getSubFilters().stream()
                 .filter(subFilter ->
-                         !(subFilter.equals(knownFilter)
+                        !(subFilter.equals(knownFilter)
                         || subFilter.equals(tagsFilter)
                         || subFilter.equals(hashFilter)
                         || subFilter.equals(typeFilter)
@@ -107,5 +108,18 @@ public class RootFilter extends IntersectionFilter<Filter> {
             return false;
         }
         return areSubFiltersEqual(this, (CompoundFilter<Filter>) obj);
+    }
+
+    public boolean isActive() {
+        return true;
+    }
+
+    public BooleanBinding activeProperty() {
+        return new BooleanBinding() {
+            @Override
+            protected boolean computeValue() {
+                return true;
+            }
+        };
     }
 }

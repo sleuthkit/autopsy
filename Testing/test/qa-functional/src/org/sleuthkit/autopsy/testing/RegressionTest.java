@@ -234,7 +234,7 @@ public class RegressionTest extends TestCase {
         for (String database : databases) {
             JButtonOperator importButtonOperator = new JButtonOperator(hashMainDialogOperator, "Import");
             importButtonOperator.pushNoBlock();
-            JDialog addDatabaseDialog = JDialogOperator.waitJDialog("Global Keyword Search Settings", false, false);
+            JDialog addDatabaseDialog = JDialogOperator.waitJDialog("Import Hash Database", false, false);
             JDialogOperator addDatabaseDialogOperator = new JDialogOperator(addDatabaseDialog);
             JButtonOperator browseButtonOperator = new JButtonOperator(addDatabaseDialogOperator, "Open...", 0);
             browseButtonOperator.pushNoBlock();

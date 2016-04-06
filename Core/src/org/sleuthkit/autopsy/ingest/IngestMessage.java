@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -168,12 +168,9 @@ public class IngestMessage {
         return hash;
     }
 
-    //factory methods
     /**
      * Create a message of specified type
      *
-     * @param ID          ID of the message, unique in the context of module
-     *                    that generated it
      * @param messageType message type
      * @param source      originating module
      * @param subject     message subject to be displayed
@@ -210,8 +207,6 @@ public class IngestMessage {
     /**
      * Create error message
      *
-     * @param ID          ID of the message, unique in the context of module
-     *                    that generated it
      * @param source      originating module
      * @param subject     message subject to be displayed
      * @param detailsHtml html formatted detailed message (without leading and

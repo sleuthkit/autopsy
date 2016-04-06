@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2013 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -385,7 +385,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     /**
      * Sets the DataView (The tabbed panel) by offset
      *
-     * @param page Page to display (1-based counting)
+     * @param offset Page to display (1-based counting)
      */
     private void setDataViewByOffset(long offset) {
         if (this.dataSource == null) {

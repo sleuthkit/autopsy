@@ -20,16 +20,13 @@ package org.sleuthkit.autopsy.imagegallery;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyBooleanProperty;
@@ -79,14 +76,12 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 import org.sleuthkit.autopsy.imagegallery.gui.NoGroupsDialog;
 import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.FileSystem;
-import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
-import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
  * Connects different parts of ImageGallery together and is hub for flow of
@@ -853,23 +848,15 @@ public final class ImageGalleryController implements Executor {
             if (known) {
                 taskDB.removeFile(f.getId(), tr);  //remove known files
             } else {
-                Optional<String> mimeType = FileTypeUtils.getMimeType(f);
-                if (mimeType.isPresent()) {
-                    //mime type
-                    if (FileTypeUtils.isDrawableMimeType(mimeType.get())) {  //supported mimetype => analyzed
+
+                try {
+                    if (FileTypeUtils.hasDrawableMIMEType(f)) {  //supported mimetype => analyzed
                         taskDB.updateFile(DrawableFile.create(f, true, false), tr);
                     } else { //unsupported mimtype => analyzed but shouldn't include
                         taskDB.removeFile(f.getId(), tr);
                     }
-                } else {
-                    //no mime tyoe
-                    if (FileTypeUtils.isDrawable(f)) {
-                        //no mime type but supported =>  add as not analyzed
-                        taskDB.insertFile(DrawableFile.create(f, false, false), tr);
-                    } else {
-                        //no mime type, not supported  => remove ( should never get here)
-                        taskDB.removeFile(f.getId(), tr);
-                    }
+                } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+                    throw new RuntimeException(ex);
                 }
             }
         }
@@ -916,37 +903,8 @@ public final class ImageGalleryController implements Executor {
 
         @Override
         List<AbstractFile> getFiles() throws TskCoreException {
-            if (dataSource instanceof Image) {
-                List<FileSystem> fileSystems = ((Image) dataSource).getFileSystems();
-                if (fileSystems.isEmpty()) {
-                    /*
-                     * no filesystems, don't bother with the initial population,
-                     * just sort things out on file_done events
-                     */
-                    progressHandle.finish();
-                    return Collections.emptyList();
-                }
-                //use this clause to only grab files from the newly added filesystems.
-                String fsQuery = fileSystems.stream()
-                        .map(fileSystem -> String.valueOf(fileSystem.getId()))
-                        .collect(Collectors.joining(" OR fs_obj_id = ", "(fs_obj_id = ", ") ")); //NON-NLS
-
-                return tskCase.findAllFilesWhere(fsQuery + " AND " + DRAWABLE_QUERY); //NON-NLS
-            } else if (dataSource instanceof VirtualDirectory) {
-                /*
-                 * fs_obj_id is set only for file system files, so we will match
-                 * the VirtualDirectory's name in the parent path.
-                 *
-                 * TODO: A future database schema could probably make this
-                 * cleaner. If we had a datasource_id column in the files table
-                 * we could just match agains that.
-                 */
-                return tskCase.findAllFilesWhere(" parent_path LIKE '/" + dataSource.getName() + "/%' AND " + DRAWABLE_QUERY); //NON-NLS
-            } else {
-                String msg = "Uknown datasource type: " + dataSource.getClass().getName();
-                LOGGER.log(Level.SEVERE, msg);
-                throw new IllegalArgumentException(msg);
-            }
+            long datasourceID = dataSource.getDataSource().getId();
+            return tskCase.findAllFilesWhere("data_source_obj_id = " + datasourceID + " AND " + DRAWABLE_QUERY);
         }
 
         @Override
@@ -1002,10 +960,11 @@ public final class ImageGalleryController implements Executor {
                                     //this file would have gotten scooped up in initial grab, but actually we don't need it
                                     queueDBWorkerTask(new RemoveFileTask(file, db));
                                 }
-                            } catch (TskCoreException ex) {
+                            } catch (TskCoreException | FileTypeDetector.FileTypeDetectorInitException ex) {
                                 //TODO: What to do here?
-                                LOGGER.log(Level.WARNING, "Unable to determine if file is drawable and not known.  Not making any changes to DB", ex); //NON-NLS
-                                throw new RuntimeException(ex);
+                                LOGGER.log(Level.SEVERE, "Unable to determine if file is drawable and not known.  Not making any changes to DB", ex); //NON-NLS
+                                MessageNotifyUtil.Notify.error("Image Gallery Error",
+                                        "Unable to determine if file is drawable and not known.  Not making any changes to DB.  See the logs for details.");
                             }
                         }
                     } else {   //TODO: keep track of what we missed for later
