@@ -27,9 +27,6 @@ import java.util.List;
 import java.util.Set;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
@@ -39,9 +36,7 @@ import org.w3c.dom.NodeList;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.Serializable;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
@@ -51,8 +46,8 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.FileUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.openide.util.Exceptions;
 import org.openide.util.io.NbObjectInputStream;
-import org.openide.util.io.NbObjectOutputStream;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -63,6 +58,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupSettings.HashDbInfo;
 
 /**
  * This class implements a singleton that manages the set of hash databases used
@@ -70,7 +66,6 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
  */
 public class HashDbManager implements PropertyChangeListener {
 
-    private static final String ROOT_ELEMENT = "hash_sets"; //NON-NLS
     private static final String SET_ELEMENT = "hash_set"; //NON-NLS
     private static final String SET_NAME_ATTRIBUTE = "name"; //NON-NLS
     private static final String SET_TYPE_ATTRIBUTE = "type"; //NON-NLS
@@ -80,8 +75,6 @@ public class HashDbManager implements PropertyChangeListener {
     private static final String LEGACY_PATH_NUMBER_ATTRIBUTE = "number"; //NON-NLS
     private static final String CONFIG_FILE_NAME = "hashsets.xml"; //NON-NLS
     private static final String DB_SERIALIZATION_FILE_NAME = "hashDbs.settings";
-    private static final String XSD_FILE_NAME = "HashsetsSchema.xsd"; //NON-NLS
-    private static final String ENCODING = "UTF-8"; //NON-NLS
     private static final String HASH_DATABASE_FILE_EXTENSON = "kdb"; //NON-NLS
     private static HashDbManager instance = null;
     private final String configFilePath = PlatformUtil.getUserConfigDirectory() + File.separator + CONFIG_FILE_NAME;
@@ -488,7 +481,11 @@ public class HashDbManager implements PropertyChangeListener {
      * @return True on success, false otherwise.
      */
     synchronized boolean save() {
-        return writeHashSetConfigurationToDisk();
+        try {
+            return HashLookupSettings.writeSettings(new HashLookupSettings(this.knownHashSets, this.knownBadHashSets));
+        } catch (TskCoreException ex) {
+            return false;
+        }
     }
 
     /**
@@ -515,65 +512,19 @@ public class HashDbManager implements PropertyChangeListener {
         hashDatabases.clear();
     }
 
-    private boolean writeHashSetConfigurationToDisk() {
-
-        try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(DB_SERIALIZATION_FILE_PATH))) {
-            HashDbSerializationSettings settings = new HashDbSerializationSettings(this.knownHashSets, this.knownBadHashSets);
-            out.writeObject(settings);
-            return true;
-        } catch (IOException | TskCoreException ex) {
-            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Could not wtite hash database settings.");
-            return false;
-        }
-    }
-
-    private static void writeHashDbsToDisk(Document doc, Element rootEl, List<HashDb> hashDbs) {
-        for (HashDb db : hashDbs) {
-            // Get the path for the hash database before writing anything, in
-            // case an exception is thrown.  
-            String path;
-            try {
-                if (db.hasIndexOnly()) {
-                    path = db.getIndexPath();
-                } else {
-                    path = db.getDatabasePath();
-                }
-            } catch (TskCoreException ex) {
-                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error getting path of hash database " + db.getHashSetName() + ", discarding from hash database configuration", ex); //NON-NLS
-                continue;
-            }
-
-            Element setElement = doc.createElement(SET_ELEMENT);
-            setElement.setAttribute(SET_NAME_ATTRIBUTE, db.getHashSetName());
-            setElement.setAttribute(SET_TYPE_ATTRIBUTE, db.getKnownFilesType().toString());
-            setElement.setAttribute(SEARCH_DURING_INGEST_ATTRIBUTE, Boolean.toString(db.getSearchDuringIngest()));
-            setElement.setAttribute(SEND_INGEST_MESSAGES_ATTRIBUTE, Boolean.toString(db.getSendIngestMessages()));
-            Element pathElement = doc.createElement(PATH_ELEMENT);
-            pathElement.setTextContent(path);
-            setElement.appendChild(pathElement);
-            rootEl.appendChild(setElement);
-        }
-    }
-
-    private boolean hashSetsConfigurationFileExists() {
-        File f = new File(configFilePath);
-        return f.exists() && f.canRead() && f.canWrite();
-    }
-
     private boolean readHashSetsConfigurationFromDisk() {
-        File fileSetFile = new File(DB_SERIALIZATION_FILE_PATH);
-        if (fileSetFile.exists()) {
-            try {
-                try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(DB_SERIALIZATION_FILE_PATH))) {
-                    HashDbSerializationSettings filesSetsSettings = (HashDbSerializationSettings) in.readObject();
-                    this.setFields(filesSetsSettings);
-                    return true;
-                }
-            } catch (IOException | ClassNotFoundException ex) {
-                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Could not read hash database settings.");
-                return false;
+
+        File f = new File(configFilePath);
+        try {
+            HashLookupSettings settings = HashLookupSettings.readSettings();
+            if (settings != null) {
+                this.setFields(settings);
             }
-        } else if (hashSetsConfigurationFileExists()) {
+            return true;
+        } catch (HashLookupSettings.HashLookupSettingsException ex) {
+            Logger.getLogger(HashDbManager.class.getName()).log(Level.WARNING, "Could not read Hash lookup settings from disk.", ex);
+        }
+        if (f.exists()) {
             boolean updatedSchema = false;
 
             // Open the XML document that implements the configuration file.
@@ -708,14 +659,19 @@ public class HashDbManager implements PropertyChangeListener {
                     Logger.getLogger(HashDbManager.class.getName()).log(Level.WARNING, "Failed to save backup of old format configuration file to " + backupFilePath, ex); //NON-NLS
                     JOptionPane.showMessageDialog(null, baseMessage, messageBoxTitle, JOptionPane.INFORMATION_MESSAGE);
                 }
-
-                writeHashSetConfigurationToDisk();
+                HashLookupSettings settings;
+                try {
+                    settings = new HashLookupSettings(this.knownHashSets, this.knownBadHashSets);
+                    HashLookupSettings.writeSettings(settings);
+                } catch (TskCoreException ex) {
+                    Logger.getLogger(HashDbManager.class.getName()).log(Level.WARNING, "Failed to write settings to disk.", ex); //NON-NLS
+                }
             }
 
             return true;
         } else {
             try {
-                this.setFields(new HashDbSerializationSettings(new ArrayList<>(), new ArrayList<>()));
+                this.setFields(new HashLookupSettings(new ArrayList<>(), new ArrayList<>()));
             } catch (TskCoreException ex) {
                 Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Could not read hash database settings.");
                 return false;
@@ -725,24 +681,11 @@ public class HashDbManager implements PropertyChangeListener {
         }
     }
 
-    private void setFields(HashDbSerializationSettings settings) {
-        Map<HashDbManager.HashDb, String> knownPathMap = settings.getKnownPathMap();
-        Map<HashDbManager.HashDb, String> knownBadPathMap = settings.getKnownBadPathMap();
-        for (HashDbManager.HashDb hashDb : settings.getKnownHashSets()) {
+    private void setFields(HashLookupSettings settings) {
+        List<HashDbInfo> hashDbInfoList = settings.getHashDbInfoList();
+        for (HashDbInfo hashDb : hashDbInfoList) {
             try {
-                addExistingHashDatabaseInternal(hashDb.getHashSetName(), knownPathMap.get(hashDb), hashDb.getSearchDuringIngest(), hashDb.getSendIngestMessages(), HashDb.KnownFilesType.KNOWN);
-            } catch (HashDbManagerException | TskCoreException ex) {
-                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash database", ex); //NON-NLS
-                JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(this.getClass(),
-                                "HashDbManager.unableToOpenHashDbMsg", hashDb.getHashSetName()),
-                        NbBundle.getMessage(this.getClass(), "HashDbManager.openHashDbErr"),
-                        JOptionPane.ERROR_MESSAGE);
-            }
-        }
-        for (HashDbManager.HashDb hashDb : settings.getKnownBadHashSets()) {
-            try {
-                addExistingHashDatabaseInternal(hashDb.getHashSetName(), knownBadPathMap.get(hashDb), hashDb.getSearchDuringIngest(), hashDb.getSendIngestMessages(), HashDb.KnownFilesType.KNOWN_BAD);
+                addExistingHashDatabaseInternal(hashDb.getHashSetName(), getValidFilePath(hashDb.getHashSetName(), hashDb.getPath()) , hashDb.getSearchDuringIngest(), hashDb.getSendIngestMessages(), hashDb.getKnownFilesType());
             } catch (HashDbManagerException | TskCoreException ex) {
                 Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash database", ex); //NON-NLS
                 JOptionPane.showMessageDialog(null,
