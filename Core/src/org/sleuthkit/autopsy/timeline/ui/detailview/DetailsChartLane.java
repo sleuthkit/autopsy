@@ -1,16 +1,31 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2016 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Range;
 import com.google.common.collect.TreeRangeMap;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -76,7 +91,7 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)//at start of layout pass
     private double descriptionWidth;
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)//at start of layout pass
-    private Set<String> activeQuickHidefilters;
+    private Set<String> activeQuickHidefilters = new HashSet<>();
 
     boolean quickHideFiltersEnabled() {
         return useQuickHideFilters;
@@ -158,18 +173,15 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
         this.selectedNodes = parentChart.getSelectedNodes();
         this.useQuickHideFilters = useQuickHideFilters;
 
-        //add a dummy deries or the chart is never rendered
-        //JMTODO: test if this is necessary
-        final Series<DateTime, Y> series = new Series<>();
-        setData(FXCollections.observableArrayList());
-        getData().add(series);
+        //add a dummy series or the chart is never rendered
+        setData(FXCollections.observableList(Arrays.asList(new Series<DateTime, Y>())));
 
         Tooltip.install(this, AbstractVisualizationPane.getDefaultTooltip());
 
         dateAxis.setAutoRanging(false);
-        verticalAxis.setVisible(false);//TODO: why doesn't this hide the vertical axis, instead we have to turn off all parts individually? -jm
-        verticalAxis.setTickLabelsVisible(false);
-        verticalAxis.setTickMarkVisible(false);
+//        verticalAxis.setVisible(false);//TODO: why doesn't this hide the vertical axis, instead we have to turn off all parts individually? -jm
+//        verticalAxis.setTickLabelsVisible(false);
+//        verticalAxis.setTickMarkVisible(false);
         setLegendVisible(false);
         setPadding(Insets.EMPTY);
         setAlternativeColumnFillVisible(true);
@@ -181,7 +193,7 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
             }
         });
 
-//        //add listener for events that should trigger layout
+        //add listener for events that should trigger layout
         layoutSettings.bandByTypeProperty().addListener(layoutInvalidationListener);
         layoutSettings.oneEventPerRowProperty().addListener(layoutInvalidationListener);
         layoutSettings.truncateAllProperty().addListener(layoutInvalidationListener);
@@ -351,13 +363,13 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
         //use this recursive function to flatten the tree of nodes into an single stream.
         Function<EventNodeBase<?>, Stream<EventNodeBase<?>>> stripeFlattener =
                 new Function<EventNodeBase<?>, Stream<EventNodeBase<?>>>() {
-                    @Override
-                    public Stream<EventNodeBase<?>> apply(EventNodeBase<?> node) {
-                        return Stream.concat(
-                                Stream.of(node),
-                                node.getSubNodes().stream().flatMap(this::apply));
-                    }
-                };
+            @Override
+            public Stream<EventNodeBase<?>> apply(EventNodeBase<?> node) {
+                return Stream.concat(
+                        Stream.of(node),
+                        node.getSubNodes().stream().flatMap(this::apply));
+            }
+        };
 
         return sortedNodes.stream()
                 .flatMap(stripeFlattener)
