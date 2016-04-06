@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,6 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.awt.*;
 import java.nio.file.Paths;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -41,9 +40,8 @@ import org.openide.NotifyDescriptor;
 import org.openide.util.actions.CallableSystemAction;
 
 /**
- * The form where user can change / update the properties of the current case.
- *
- * @author jantonius
+ * The form where user can change / update the properties of the current case
+ * metadata.
  */
 class CasePropertiesForm extends javax.swing.JPanel {
 
@@ -89,7 +87,7 @@ class CasePropertiesForm extends javax.swing.JPanel {
         caseDirTextArea.setText(caseDir);
         current = currentCase;
 
-        CaseMetadata caseMetadata = new CaseMetadata(Paths.get(currentCase.getConfigFilePath()));
+        CaseMetadata caseMetadata = currentCase.getCaseMetadata();
         tbDbName.setText(caseMetadata.getCaseDatabaseName());
         Case.CaseType caseType = caseMetadata.getCaseType();
         tbDbType.setText(caseType.getLocalizedDisplayName());
@@ -103,15 +101,16 @@ class CasePropertiesForm extends javax.swing.JPanel {
 
         // create the headers and add all the rows
         // Header names are internationalized via the generated code, do not overwrite.
-        String[] headers = {imagesTable.getColumnName(0), 
-                            imagesTable.getColumnName(1)};
+        String[] headers = {imagesTable.getColumnName(0),
+            imagesTable.getColumnName(1)};
         String[][] rows = new String[totalImages][];
 
         int i = 0;
         for (long key : imgPaths.keySet()) {
             String path = imgPaths.get(key);
             String shortenPath = shrinkPath(path, 70);
-            rows[i++] = new String[]{shortenPath};
+            rows[i] = new String[]{shortenPath};
+            i++;
         }
 
         // create the table inside with the imgPaths information
@@ -124,61 +123,17 @@ class CasePropertiesForm extends javax.swing.JPanel {
             }
         };
         imagesTable.setModel(model);
-
-//        // set the size of the remove column
-//        TableColumn removeCol = imagesTable.getColumnModel().getColumn(lastColumn);
-//        removeCol.setPreferredWidth(75);
-//        removeCol.setMaxWidth(75);
-//        removeCol.setMinWidth(75);
-//        removeCol.setResizable(false);
-//        // create the delete action to remove the image from the current case
-//        Action delete = new AbstractAction()
-//        {
-//            @Override
-//            public void actionPerformed(ActionEvent e)
-//            {
-//                // get the image path
-//                JTable table = (JTable)e.getSource();
-//                int modelRow = Integer.valueOf(e.getActionCommand());
-//                String removeColumn = table.getValueAt(modelRow, lastColumn).toString();
-//                // get the image ID
-//                int selectedID = Integer.parseInt(removeColumn.substring(0, removeColumn.indexOf('|')));
-//                String imagePath = removeColumn.substring(removeColumn.indexOf('|') + 1);
-//
-//                // throw the confirmation first
-//                String confMsg = "Are you sure want to remove image \"" + imagePath + "\" from this case?";
-//                NotifyDescriptor d = new NotifyDescriptor.Confirmation(confMsg, "Create directory", NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
-//                d.setValue(NotifyDescriptor.NO_OPTION);
-//
-//                Object res = DialogDisplayer.getDefault().notify(d);
-//                // if user select "Yes"
-//                if(res != null && res == DialogDescriptor.YES_OPTION){
-//                    // remove the image in the case class and in the xml config file
-//                    try {
-//                        current.removeImage(selectedID, imagePath);
-//                    } catch (Exception ex) {
-//                        Logger.getLogger(CasePropertiesForm.class.getName()).log(Level.WARNING, "Error: couldn't remove image.", ex);
-//                    }
-//                    // remove the row of the image path
-//                    ((DefaultTableModel)table.getModel()).removeRow(modelRow);
-//                }
-//            }
-//        };
-//
-//        ButtonColumn buttonColumn = new ButtonColumn(imagesTable, delete, 1, "Remove");
-//        buttonColumn.setMnemonic(KeyEvent.VK_D);
     }
 
-    /** 
-     * In this generated code below, there are 2 strings "Path" and "Remove" that are
-     * table column headers in the DefaultTableModel. When this model is generated,
-     * it puts the hard coded English strings into the generated code. And then about 15
-     * lines later, it separately internationalizes them using:
-     * imagesTable.getColumnModel().getColumn(0).setHeaderValue().
-     * There is no way to prevent the GUI designer from putting the hard coded
-     * English strings into the generated code. So, they remain, and are not used.
+    /**
+     * In this generated code below, there are 2 strings "Path" and "Remove"
+     * that are table column headers in the DefaultTableModel. When this model
+     * is generated, it puts the hard coded English strings into the generated
+     * code. And then about 15 lines later, it separately internationalizes them
+     * using: imagesTable.getColumnModel().getColumn(0).setHeaderValue(). There
+     * is no way to prevent the GUI designer from putting the hard coded English
+     * strings into the generated code. So, they remain, and are not used.
      */
-    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -429,9 +384,6 @@ class CasePropertiesForm extends javax.swing.JPanel {
     private void updateCaseNameButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateCaseNameButtonActionPerformed
         String oldCaseName = Case.getCurrentCase().getName();
         String newCaseName = caseNameTextField.getText();
-        //String oldPath = caseDirTextArea.getText() + File.separator + oldCaseName + ".aut";
-        //String newPath = caseDirTextArea.getText() + File.separator + newCaseName + ".aut";
-
         // check if the old and new case name is not equal
         if (!oldCaseName.equals(newCaseName)) {
 

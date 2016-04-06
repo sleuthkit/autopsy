@@ -81,8 +81,7 @@ final class CaseDeleteAction extends CallableSystemAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         Case currentCase = Case.getCurrentCase();
-        File configFile = new File(currentCase.getConfigFilePath());
-        File caseFolder = new File(configFile.getParent());
+        File caseFolder = new File(currentCase.getCaseDirectory());
         String caseName = currentCase.getName();
         if (!caseFolder.exists()) {
             // throw an error
