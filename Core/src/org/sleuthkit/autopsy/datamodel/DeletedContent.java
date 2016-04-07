@@ -146,6 +146,16 @@ public class DeletedContent implements AutopsyVisitableItem {
                     NAME));
             return s;
         }
+
+        /*
+         * TODO (AUT-1849): Correct or remove peristent column reordering code
+         *
+         * Added to support this feature.
+         */
+//        @Override
+//        public String getItemType() {
+//            return "DeletedContent"; //NON-NLS
+//        }
     }
 
     public static class DeletedContentsChildren extends ChildFactory<DeletedContent.DeletedContentFilter> {
@@ -275,6 +285,16 @@ public class DeletedContent implements AutopsyVisitableItem {
                 updateDisplayName();
             }
 
+            /*
+             * TODO (AUT-1849): Correct or remove peristent column reordering
+             * code
+             *
+             * Added to support this feature.
+             */
+//            @Override
+//            public String getItemType() {
+//                return "DeletedContentChildren"; //NON-NLS
+//            }
             // update the display name when new events are fired
             private class DeletedContentNodeObserver implements Observer {
 
@@ -337,7 +357,6 @@ public class DeletedContent implements AutopsyVisitableItem {
             private final Observer observer = new DeletedContentChildrenObserver();
 
             // Cause refresh of children if there are changes
-
             private class DeletedContentChildrenObserver implements Observer {
 
                 @Override

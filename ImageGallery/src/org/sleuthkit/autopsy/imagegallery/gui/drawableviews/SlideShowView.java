@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,59 +19,43 @@
 package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
 import java.io.IOException;
-import java.lang.ref.SoftReference;
-import java.util.ArrayList;
-import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.Observable;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.SplitMenuButton;
-import javafx.scene.control.ToggleButton;
-import javafx.scene.control.ToolBar;
+import javafx.scene.control.ProgressBar;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import static javafx.scene.input.KeyCode.LEFT;
 import static javafx.scene.input.KeyCode.RIGHT;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.Border;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.BorderStroke;
-import javafx.scene.layout.BorderStrokeStyle;
-import javafx.scene.layout.BorderWidths;
-import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
+import javafx.scene.layout.Pane;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
 import javafx.scene.media.MediaPlayer;
-import javafx.scene.text.Text;
-import org.openide.util.Exceptions;
+import org.controlsfx.control.MaskerPane;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
-import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
-import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
+import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
-import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.VideoFile;
-import org.sleuthkit.autopsy.imagegallery.gui.GuiUtils;
 import org.sleuthkit.autopsy.imagegallery.gui.VideoPlayer;
+import static org.sleuthkit.autopsy.imagegallery.gui.drawableviews.DrawableUIBase.exec;
 import static org.sleuthkit.autopsy.imagegallery.gui.drawableviews.DrawableView.CAT_BORDER_WIDTH;
-import org.sleuthkit.datamodel.TagName;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Displays the files of a group one at a time. Designed to be embedded in a
@@ -84,121 +68,59 @@ public class SlideShowView extends DrawableTileBase {
     private static final Logger LOGGER = Logger.getLogger(SlideShowView.class.getName());
 
     @FXML
-    private ToggleButton cat0Toggle;
-    @FXML
-    private ToggleButton cat1Toggle;
-    @FXML
-    private ToggleButton cat2Toggle;
-    @FXML
-    private ToggleButton cat3Toggle;
-    @FXML
-    private ToggleButton cat4Toggle;
-    @FXML
-    private ToggleButton cat5Toggle;
-
-    @FXML
-    private SplitMenuButton tagSplitButton;
-
-    @FXML
-    private Region spring;
-    @FXML
     private Button leftButton;
     @FXML
     private Button rightButton;
-    @FXML
-    private ToolBar toolBar;
+
     @FXML
     private BorderPane footer;
-    private Task<Node> mediaTask;
+    @FXML
+    private Pane innerPane;
 
-    SlideShowView(GroupPane gp) {
-        super(gp);
-        FXMLConstructor.construct(this, "SlideShowView.fxml");
+    private volatile MediaLoadTask mediaTask;
+
+    SlideShowView(GroupPane gp, ImageGalleryController controller) {
+        super(gp, controller);
+        FXMLConstructor.construct(this, "SlideShowView.fxml"); //NON-NLS
     }
 
     @FXML
     @Override
     protected void initialize() {
         super.initialize();
-        assert cat0Toggle != null : "fx:id=\"cat0Toggle\" was not injected: check your FXML file 'SlideShowView.fxml'.";
-        assert cat1Toggle != null : "fx:id=\"cat1Toggle\" was not injected: check your FXML file 'SlideShowView.fxml'.";
-        assert cat2Toggle != null : "fx:id=\"cat2Toggle\" was not injected: check your FXML file 'SlideShowView.fxml'.";
-        assert cat3Toggle != null : "fx:id=\"cat3Toggle\" was not injected: check your FXML file 'SlideShowView.fxml'.";
-        assert cat4Toggle != null : "fx:id=\"cat4Toggle\" was not injected: check your FXML file 'SlideShowView.fxml'.";
-        assert cat5Toggle != null : "fx:id=\"cat5Toggle\" was not injected: check your FXML file 'SlideShowView.fxml'.";
         assert leftButton != null : "fx:id=\"leftButton\" was not injected: check your FXML file 'SlideShowView.fxml'.";
         assert rightButton != null : "fx:id=\"rightButton\" was not injected: check your FXML file 'SlideShowView.fxml'.";
-        assert tagSplitButton != null : "fx:id=\"tagSplitButton\" was not injected: check your FXML file 'SlideShowView.fxml'.";
-
-        Platform.runLater(() -> {
-            HBox.setHgrow(spring, Priority.ALWAYS);
-            spring.setMinWidth(Region.USE_PREF_SIZE);
-        });
 
         imageView.fitWidthProperty().bind(imageBorder.widthProperty().subtract(CAT_BORDER_WIDTH * 2));
-        imageView.fitHeightProperty().bind(heightProperty().subtract(CAT_BORDER_WIDTH * 4).subtract(footer.heightProperty()).subtract(toolBar.heightProperty()));
+        imageView.fitHeightProperty().bind(heightProperty().subtract(CAT_BORDER_WIDTH * 4).subtract(footer.heightProperty()));
 
-        tagSplitButton.setOnAction((ActionEvent t) -> {
-            try {
-                GuiUtils.createSelTagMenuItem(getController().getTagsManager().getFollowUpTagName(), tagSplitButton, getController()).getOnAction().handle(t);
-            } catch (TskCoreException ex) {
-                Exceptions.printStackTrace(ex);
+        leftButton.setOnAction(actionEvent -> cycleSlideShowImage(-1));
+        rightButton.setOnAction(sctionEvent -> cycleSlideShowImage(1));
+
+        innerPane.addEventHandler(MouseEvent.MOUSE_CLICKED, clickEvent -> {
+            if (clickEvent.getButton() == MouseButton.PRIMARY) {
+                getFile().ifPresent(file -> {
+                    final long fileID = file.getId();
+                    getGroupPane().makeSelection(false, fileID);
+                    if (clickEvent.getClickCount() > 1) {
+                        getGroupPane().activateTileViewer();
+                    }
+                });
+                clickEvent.consume();
             }
-        });
-
-        tagSplitButton.setGraphic(new ImageView(DrawableAttribute.TAGS.getIcon()));
-        tagSplitButton.showingProperty().addListener((ObservableValue<? extends Boolean> ov, Boolean t, Boolean t1) -> {
-            if (t1) {
-                ArrayList<MenuItem> selTagMenues = new ArrayList<>();
-                for (final TagName tn : getController().getTagsManager().getNonCategoryTagNames()) {
-                    MenuItem menuItem = GuiUtils.createSelTagMenuItem(tn, tagSplitButton, getController());
-                    selTagMenues.add(menuItem);
-                }
-                tagSplitButton.getItems().setAll(selTagMenues);
-            }
-        });
-
-        //configure category toggles
-        cat0Toggle.setBorder(new Border(new BorderStroke(Category.ZERO.getColor(), BorderStrokeStyle.SOLID, new CornerRadii(1), new BorderWidths(1))));
-        cat1Toggle.setBorder(new Border(new BorderStroke(Category.ONE.getColor(), BorderStrokeStyle.SOLID, new CornerRadii(1), new BorderWidths(1))));
-        cat2Toggle.setBorder(new Border(new BorderStroke(Category.TWO.getColor(), BorderStrokeStyle.SOLID, new CornerRadii(1), new BorderWidths(1))));
-        cat3Toggle.setBorder(new Border(new BorderStroke(Category.THREE.getColor(), BorderStrokeStyle.SOLID, new CornerRadii(1), new BorderWidths(1))));
-        cat4Toggle.setBorder(new Border(new BorderStroke(Category.FOUR.getColor(), BorderStrokeStyle.SOLID, new CornerRadii(1), new BorderWidths(1))));
-        cat5Toggle.setBorder(new Border(new BorderStroke(Category.FIVE.getColor(), BorderStrokeStyle.SOLID, new CornerRadii(1), new BorderWidths(1))));
-
-        cat0Toggle.selectedProperty().addListener(new CategorizeToggleHandler(Category.ZERO));
-        cat1Toggle.selectedProperty().addListener(new CategorizeToggleHandler(Category.ONE));
-        cat2Toggle.selectedProperty().addListener(new CategorizeToggleHandler(Category.TWO));
-        cat3Toggle.selectedProperty().addListener(new CategorizeToggleHandler(Category.THREE));
-        cat4Toggle.selectedProperty().addListener(new CategorizeToggleHandler(Category.FOUR));
-        cat5Toggle.selectedProperty().addListener(new CategorizeToggleHandler(Category.FIVE));
-
-        cat0Toggle.toggleGroupProperty().addListener((o, oldGroup, newGroup) -> {
-            newGroup.selectedToggleProperty().addListener((ov, oldToggle, newToggle) -> {
-                if (newToggle == null) {
-                    oldToggle.setSelected(true);
-                }
-            });
-        });
-
-        leftButton.setOnAction((ActionEvent t) -> {
-            cycleSlideShowImage(-1);
-        });
-        rightButton.setOnAction((ActionEvent t) -> {
-            cycleSlideShowImage(1);
         });
 
         //set up key listener equivalents of buttons
-        addEventFilter(KeyEvent.KEY_PRESSED, (KeyEvent t) -> {
-            if (t.getEventType() == KeyEvent.KEY_PRESSED) {
-                switch (t.getCode()) {
+        addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
+            if (keyEvent.getEventType() == KeyEvent.KEY_PRESSED) {
+                switch (keyEvent.getCode()) {
                     case LEFT:
                         cycleSlideShowImage(-1);
-                        t.consume();
+                        keyEvent.consume();
                         break;
                     case RIGHT:
                         cycleSlideShowImage(1);
-                        t.consume();
+                        keyEvent.consume();
                         break;
                 }
             }
@@ -206,12 +128,11 @@ public class SlideShowView extends DrawableTileBase {
 
         syncButtonVisibility();
 
-        getGroupPane().grouping().addListener((Observable observable) -> {
+        getGroupPane().grouping().addListener(observable -> {
             syncButtonVisibility();
             if (getGroupPane().getGroup() != null) {
-                getGroupPane().getGroup().fileIds().addListener((Observable observable1) -> {
-                    syncButtonVisibility();
-                });
+                getGroupPane().getGroup().getFileIDs().addListener((Observable observable1) ->
+                        syncButtonVisibility());
             }
         });
     }
@@ -219,7 +140,7 @@ public class SlideShowView extends DrawableTileBase {
     @ThreadConfined(type = ThreadType.ANY)
     private void syncButtonVisibility() {
         try {
-            final boolean hasMultipleFiles = getGroupPane().getGroup().fileIds().size() > 1;
+            final boolean hasMultipleFiles = getGroupPane().getGroup().getFileIDs().size() > 1;
             Platform.runLater(() -> {
                 rightButton.setVisible(hasMultipleFiles);
                 leftButton.setVisible(hasMultipleFiles);
@@ -228,7 +149,7 @@ public class SlideShowView extends DrawableTileBase {
             });
         } catch (NullPointerException ex) {
             // The case has likely been closed
-            LOGGER.log(Level.WARNING, "Error accessing groupPane");
+            LOGGER.log(Level.WARNING, "Error accessing groupPane"); //NON-NLS
         }
     }
 
@@ -239,187 +160,188 @@ public class SlideShowView extends DrawableTileBase {
         }
     }
 
-    /** {@inheritDoc } */
+    /**
+     * {@inheritDoc }
+     */
     @Override
     synchronized public void setFile(final Long fileID) {
         super.setFile(fileID);
-
-        getFileID().ifPresent((Long id) -> {
-            getGroupPane().makeSelection(false, id);
-        });
+        getFileID().ifPresent(id -> getGroupPane().makeSelection(false, id));
+        getFile().ifPresent(getGroupPane()::syncCatToggle);
     }
 
     @Override
-    protected void disposeContent() {
+    synchronized protected void disposeContent() {
         stopVideo();
 
-        super.disposeContent();
         if (mediaTask != null) {
             mediaTask.cancel(true);
         }
         mediaTask = null;
-        mediaCache = null;
+        super.disposeContent();
     }
-    private SoftReference<Node> mediaCache;
 
-    /** {@inheritDoc } */
     @Override
-    Node getContentNode() {
-        if (getFile().isPresent() == false) {
-            mediaCache = null;
-            return super.getContentNode();
-        } else {
-            DrawableFile<?> file = getFile().get();
+    synchronized protected void updateContent() {
+        disposeContent();
+        if (getFile().isPresent()) {
+            DrawableFile file = getFile().get();
             if (file.isVideo()) {
-                Node mediaNode = (isNull(mediaCache)) ? null : mediaCache.get();
-                if (nonNull(mediaNode)) {
-                    return mediaNode;
-                } else {
-                    if (isNull(mediaTask)) {
-                        mediaTask = new MediaLoadTask(((VideoFile<?>) file));
-                        new Thread(mediaTask).start();
-                    } else if (mediaTask.isDone()) {
-                        return null;
-                    }
-                    return getLoadingProgressIndicator();
-                }
+                doMediaLoadTask((VideoFile) file);
+            } else {
+                doReadImageTask(file);
             }
-            return super.getContentNode();
         }
     }
 
-    /** {@inheritDoc } */
+    synchronized private Node doMediaLoadTask(VideoFile file) {
+
+        //specially handling for videos
+        MediaLoadTask myTask = new MediaLoadTask(file);
+        mediaTask = myTask;
+        Node progressNode = newProgressIndicator(myTask);
+        Platform.runLater(() -> imageBorder.setCenter(progressNode));
+
+        //called on fx thread
+        myTask.setOnSucceeded(succeedded -> {
+            showMedia(file, myTask);
+            synchronized (SlideShowView.this) {
+                mediaTask = null;
+            }
+        });
+        myTask.setOnFailed(failed -> {
+            showErrorNode(getMediaLoadErrorLabel(myTask), file);
+            synchronized (SlideShowView.this) {
+                mediaTask = null;
+            }
+        });
+        myTask.setOnCancelled(cancelled -> {
+            disposeContent();
+        });
+
+        exec.execute(myTask);
+        return progressNode;
+    }
+
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private void showMedia(DrawableFile file, Task<Node> mediaTask) {
+        //Note that all error conditions are allready logged in readImageTask.succeeded()
+        try {
+            Node mediaNode = mediaTask.get();
+            if (nonNull(mediaNode)) {
+                //we have non-null media node show it
+                imageBorder.setCenter(mediaNode);
+            } else {
+                showErrorNode(getMediaLoadErrorLabel(mediaTask), file);
+            }
+        } catch (InterruptedException | ExecutionException ex) {
+            showErrorNode(getMediaLoadErrorLabel(mediaTask), file);
+        }
+    }
+
+    private String getMediaLoadErrorLabel(Task<Node> mediaTask) {
+        return Bundle.DrawableUIBase_errorLabel_text() + ": " + mediaTask.getException().getLocalizedMessage();
+    }
+
+    /**
+     *
+     * @param file      the value of file
+     * @param imageTask the value of imageTask
+     */
+    @Override
+    Node newProgressIndicator(final Task<?> imageTask) {
+        MaskerPane maskerPane = new MaskerPane();
+        ProgressIndicator loadingProgressIndicator = new ProgressBar(-1);
+        maskerPane.setProgressNode(loadingProgressIndicator);
+
+        maskerPane.textProperty().bind(imageTask.messageProperty());
+        loadingProgressIndicator.progressProperty().bind(imageTask.progressProperty());
+        return maskerPane;
+    }
+
+    /**
+     * {@inheritDoc }
+     */
     @Override
     protected String getTextForLabel() {
-        return getFile().map(file -> file.getName()).orElse("") + " " + getSupplementalText();
+        return getFile().map(DrawableFile::getName).orElse("") + " " + getSupplementalText();
     }
 
     /**
      * cycle the image displayed in thes SlideShowview, to the next/previous one
      * in the group.
      *
-     * @param direction the direction to cycle:
-     *                  -1 => left / back
-     *                  1 => right / forward
+     * @param direction the direction to cycle: -1 => left / back 1 => right /
+     *                  forward
      */
     @ThreadConfined(type = ThreadType.JFX)
     synchronized private void cycleSlideShowImage(int direction) {
         stopVideo();
-        final int groupSize = getGroupPane().getGroup().fileIds().size();
-        final Integer nextIndex = getFileID().map(fileID -> {
-            final int currentIndex = getGroupPane().getGroup().fileIds().indexOf(fileID);
-            return (currentIndex + direction + groupSize) % groupSize;
-        }).orElse(0);
-        setFile(getGroupPane().getGroup().fileIds().get(nextIndex)
-        );
+        final int groupSize = getGroupPane().getGroup().getFileIDs().size();
+        final Integer nextIndex = getFileID()
+                .map(fileID -> {
+                    final int currentIndex = getGroupPane().getGroup().getFileIDs().indexOf(fileID);
+                    return (currentIndex + direction + groupSize) % groupSize;
+                }).orElse(0);
+        setFile(getGroupPane().getGroup().getFileIDs().get(nextIndex));
+
     }
 
     /**
      * @return supplemental text to include in the label, specifically: "image x
      *         of y"
      */
+    @NbBundle.Messages({"# {0} - file id number",
+            "# {1} - number of file ids",
+            "SlideShowView.supplementalText={0} of {1} in group"})
     private String getSupplementalText() {
-        final ObservableList<Long> fileIds = getGroupPane().getGroup().fileIds();
-        return getFileID().map(fileID -> " ( " + (fileIds.indexOf(fileID) + 1) + " of " + fileIds.size() + " in group )")
+        final ObservableList<Long> fileIds = getGroupPane().getGroup().getFileIDs();
+        return getFileID().map(fileID -> " ( " + Bundle.SlideShowView_supplementalText(fileIds.indexOf(fileID) + 1, fileIds.size()) + " )")
                 .orElse("");
 
     }
 
-    /** {@inheritDoc } */
+    /**
+     * {@inheritDoc }
+     */
     @Override
     @ThreadConfined(type = ThreadType.ANY)
     public Category updateCategory() {
-        if (getFile().isPresent()) {
-            final Category category = super.updateCategory();
-            ToggleButton toggleForCategory = getToggleForCategory(category);
-            Platform.runLater(() -> {
-                toggleForCategory.setSelected(true);
-            });
-            return category;
+        Optional<DrawableFile> file = getFile();
+        if (file.isPresent()) {
+            Category updateCategory = super.updateCategory();
+            Platform.runLater(() -> getGroupPane().syncCatToggle(file.get()));
+            return updateCategory;
         } else {
             return Category.ZERO;
         }
     }
 
-    private ToggleButton getToggleForCategory(Category category) {
-        switch (category) {
-            case ZERO:
-                return cat0Toggle;
-            case ONE:
-                return cat1Toggle;
-            case TWO:
-                return cat2Toggle;
-            case THREE:
-                return cat3Toggle;
-            case FOUR:
-                return cat4Toggle;
-            case FIVE:
-                return cat5Toggle;
-            default:
-                throw new IllegalArgumentException(category.name());
-        }
-    }
-
-    private class CategorizeToggleHandler implements ChangeListener<Boolean> {
-
-        private final Category cat;
-
-        public CategorizeToggleHandler(Category cat) {
-            this.cat = cat;
-        }
-
-        @Override
-        public void changed(ObservableValue<? extends Boolean> ov, Boolean t, Boolean t1) {
-            getFileID().ifPresent(fileID -> {
-                if (t1) {
-                    FileIDSelectionModel.getInstance().clearAndSelect(fileID);
-                    new CategorizeAction(getController()).addTag(getController().getTagsManager().getTagName(cat), "");
-                }
-            });
-        }
-    }
-
     @Override
-    CachedLoaderTask<Image, DrawableFile<?>> getNewImageLoadTask(DrawableFile<?> file) {
+    Task<Image> newReadImageTask(DrawableFile file) {
+        return file.getReadFullSizeImageTask();
 
-        return new ImageLoaderTask(file) {
-
-            @Override
-            Image load() {
-                return isCancelled() ? null : file.getFullSizeImage();
-            }
-        };
     }
 
-    private class MediaLoadTask extends CachedLoaderTask<Node, VideoFile<?>> {
+    @NbBundle.Messages({"# {0} - file name",
+        "MediaLoadTask.messageText=Reading video: {0}"})
+    private class MediaLoadTask extends Task<Node> {
 
-        public MediaLoadTask(VideoFile<?> file) {
-            super(file);
+        private final VideoFile file;
+
+        MediaLoadTask(VideoFile file) {
+            updateMessage(Bundle.MediaLoadTask_messageText(file.getName()));
+            this.file = file;
         }
 
         @Override
-        void saveToCache(Node result) {
-            synchronized (SlideShowView.this) {
-                mediaCache = new SoftReference<>(result);
-            }
-        }
-
-        @Override
-        Node load() {
+        protected Node call() throws Exception {
             try {
                 final Media media = file.getMedia();
                 return new VideoPlayer(new MediaPlayer(media), file);
             } catch (MediaException | IOException | OutOfMemoryError ex) {
-                Logger.getLogger(VideoFile.class.getName()).log(Level.WARNING, "failed to initialize MediaControl for file " + file.getName(), ex);
-
-                if (file.isDisplayableAsImage()) {
-                    Image fullSizeImage = file.getFullSizeImage();
-                    Platform.runLater(() -> {
-                        imageView.setImage(fullSizeImage);
-                    });
-                    return imageView;
-                }
-                return new Text(ex.getLocalizedMessage() + "\nSee the logs for details.\n\nTry the \"Open In External Viewer\" action.");
+                LOGGER.log(Level.WARNING, "Failed to initialize VideoPlayer for {0} : " + ex.toString(), file.getContentPathSafe()); //NON-NLS
+                return doReadImageTask(file);
             }
         }
     }

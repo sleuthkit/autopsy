@@ -18,19 +18,20 @@
  */
 package org.sleuthkit.autopsy.timeline.zooming;
 
-import java.net.URL;
 import java.time.temporal.ChronoUnit;
-import java.util.ResourceBundle;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
+import javafx.scene.control.TitledPane;
+import javafx.scene.control.Tooltip;
 import javafx.util.StringConverter;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.VisualizationMode;
 import org.sleuthkit.autopsy.timeline.actions.Back;
 import org.sleuthkit.autopsy.timeline.actions.Forward;
@@ -44,13 +45,7 @@ import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
  * has sliders to provide context/control over three axes of zooming (timescale,
  * event hierarchy, and description detail).
  */
-public class ZoomSettingsPane extends TitledPane implements TimeLineView {
-
-    @FXML
-    private ResourceBundle resources;
-
-    @FXML
-    private URL location;
+public class ZoomSettingsPane extends TitledPane {
 
     @FXML
     private Button backButton;
@@ -105,16 +100,34 @@ public class ZoomSettingsPane extends TitledPane implements TimeLineView {
         timeUnitLabel.setText(NbBundle.getMessage(this.getClass(), "ZoomSettingsPane.timeUnitLabel.text"));
         zoomLabel.setText(NbBundle.getMessage(this.getClass(), "ZoomSettingsPane.zoomLabel.text"));
         historyLabel.setText(NbBundle.getMessage(this.getClass(), "ZoomSettingsPane.historyLabel.text"));
-    }
 
-    public ZoomSettingsPane() {
-        FXMLConstructor.construct(this, "ZoomSettingsPane.fxml"); // NON-NLS
-    }
+        initializeSlider(timeUnitSlider,
+                () -> {
+                    TimeUnits requestedUnit = TimeUnits.values()[new Double(timeUnitSlider.getValue()).intValue()];
+                    if (requestedUnit == TimeUnits.FOREVER) {
+                        controller.showFullRange();
+                    } else {
+                        controller.pushTimeRange(IntervalUtils.getIntervalAround(IntervalUtils.middleOf(ZoomSettingsPane.this.filteredEvents.timeRangeProperty().get()), requestedUnit.getPeriod()));
+                    }
+                },
+                this.filteredEvents.timeRangeProperty(),
+                () -> {
+                    RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(this.filteredEvents.timeRangeProperty().get());
+                    ChronoUnit chronoUnit = rangeInfo.getPeriodSize().getChronoUnit();
+                    timeUnitSlider.setValue(TimeUnits.fromChronoUnit(chronoUnit).ordinal() - 1);
+                });
 
-    @Override
-    synchronized public void setController(TimeLineController controller) {
-        this.controller = controller;
-        setModel(controller.getEventsModel());
+        initializeSlider(descrLODSlider,
+                () -> controller.pushDescrLOD(DescriptionLoD.values()[Math.round(descrLODSlider.valueProperty().floatValue())]),
+                this.filteredEvents.descriptionLODProperty(), () -> {
+                    descrLODSlider.setValue(this.filteredEvents.descriptionLODProperty().get().ordinal());
+                });
+
+        initializeSlider(typeZoomSlider,
+                () -> controller.pushEventTypeZoom(EventTypeZoomLevel.values()[Math.round(typeZoomSlider.valueProperty().floatValue())]),
+                this.filteredEvents.eventTypeZoomProperty(),
+                () -> typeZoomSlider.setValue(this.filteredEvents.eventTypeZoomProperty().get().ordinal()));
+
         descrLODSlider.disableProperty().bind(controller.viewModeProperty().isEqualTo(VisualizationMode.COUNTS));
         Back back = new Back(controller);
         backButton.disableProperty().bind(back.disabledProperty());
@@ -131,47 +144,10 @@ public class ZoomSettingsPane extends TitledPane implements TimeLineView {
 
     }
 
-    @Override
-    public void setModel(FilteredEventsModel filteredEvents) {
-        this.filteredEvents = filteredEvents;
-
-        initializeSlider(timeUnitSlider,
-                () -> {
-                    TimeUnits requestedUnit = TimeUnits.values()[new Double(timeUnitSlider.getValue()).intValue()];
-                    if (requestedUnit == TimeUnits.FOREVER) {
-                        controller.showFullRange();
-                    } else {
-                        controller.pushTimeRange(IntervalUtils.getIntervalAround(IntervalUtils.middleOf(ZoomSettingsPane.this.filteredEvents.timeRangeProperty().get()), requestedUnit.getPeriod()));
-                    }
-                },
-                this.filteredEvents.timeRangeProperty(),
-                () -> {
-                    RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(this.filteredEvents.timeRangeProperty().get());
-                    ChronoUnit chronoUnit = rangeInfo.getPeriodSize().getChronoUnit();
-
-                    timeUnitSlider.setValue(TimeUnits.fromChronoUnit(chronoUnit).ordinal() - 1);
-                });
-
-        initializeSlider(descrLODSlider,
-                () -> {
-                    DescriptionLoD newLOD = DescriptionLoD.values()[Math.round(descrLODSlider.valueProperty().floatValue())];
-                    if (controller.pushDescrLOD(newLOD) == false) {
-                        descrLODSlider.setValue(new DescrLODConverter().fromString(filteredEvents.getDescriptionLOD().toString()));
-                    }
-                }, this.filteredEvents.descriptionLODProperty(),
-                () -> {
-                    descrLODSlider.setValue(this.filteredEvents.descriptionLODProperty().get().ordinal());
-                });
-
-        initializeSlider(typeZoomSlider,
-                () -> {
-                    EventTypeZoomLevel newZoomLevel = EventTypeZoomLevel.values()[Math.round(typeZoomSlider.valueProperty().floatValue())];
-                    controller.pushEventTypeZoom(newZoomLevel);
-                },
-                this.filteredEvents.eventTypeZoomProperty(),
-                () -> {
-                    typeZoomSlider.setValue(this.filteredEvents.eventTypeZoomProperty().get().ordinal());
-                });
+    public ZoomSettingsPane(TimeLineController controller) {
+        this.controller = controller;
+        this.filteredEvents = controller.getEventsModel();
+        FXMLConstructor.construct(this, "ZoomSettingsPane.fxml"); // NON-NLS
     }
 
     /**
@@ -206,10 +182,11 @@ public class ZoomSettingsPane extends TitledPane implements TimeLineView {
             slider.valueProperty().removeListener(sliderListener);
             slider.valueChangingProperty().removeListener(sliderListener);
 
-            Platform.runLater(driverChangHandler);
-
-            slider.valueProperty().addListener(sliderListener);
-            slider.valueChangingProperty().addListener(sliderListener);
+            Platform.runLater(() -> {
+                driverChangHandler.run();
+                slider.valueProperty().addListener(sliderListener);
+                slider.valueChangingProperty().addListener(sliderListener);
+            });
         });
     }
 

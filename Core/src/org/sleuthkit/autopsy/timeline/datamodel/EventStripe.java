@@ -19,13 +19,11 @@
 package org.sleuthkit.autopsy.timeline.datamodel;
 
 import com.google.common.base.Preconditions;
-import java.util.Collections;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSortedSet;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 import java.util.SortedSet;
-import java.util.TreeSet;
 import javax.annotation.concurrent.Immutable;
 import org.python.google.common.base.Objects;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
@@ -50,7 +48,7 @@ public final class EventStripe implements EventBundle<EventCluster> {
 
     private final EventCluster parent;
 
-    private final SortedSet<EventCluster> clusters = new TreeSet<>(Comparator.comparing(EventCluster::getStartMillis));
+    private final ImmutableSortedSet<EventCluster> clusters;
 
     /**
      * the type of all the events
@@ -70,43 +68,70 @@ public final class EventStripe implements EventBundle<EventCluster> {
     /**
      * the set of ids of the events
      */
-    private final Set<Long> eventIDs = new HashSet<>();
+    private final ImmutableSet<Long> eventIDs;
 
     /**
      * the ids of the subset of events that have at least one tag applied to
      * them
      */
-    private final Set<Long> tagged = new HashSet<>();
+    private final ImmutableSet<Long> tagged;
 
     /**
      * the ids of the subset of events that have at least one hash set hit
      */
-    private final Set<Long> hashHits = new HashSet<>();
+    private final ImmutableSet<Long> hashHits;
+
+    public EventStripe withParent(EventCluster parent) {
+        EventStripe eventStripe = new EventStripe(parent, this.type, this.description, this.lod, clusters, eventIDs, tagged, hashHits);
+        return eventStripe;
+    }
+
+    private EventStripe(EventCluster parent, EventType type, String description, DescriptionLoD lod, SortedSet<EventCluster> clusters, ImmutableSet<Long> eventIDs, ImmutableSet<Long> tagged, ImmutableSet<Long> hashHits) {
+        this.parent = parent;
+        this.type = type;
+        this.description = description;
+        this.lod = lod;
+        this.clusters = ImmutableSortedSet.copyOf(Comparator.comparing(EventCluster::getStartMillis), clusters);
+
+        this.eventIDs = eventIDs;
+        this.tagged = tagged;
+        this.hashHits = hashHits;
+    }
 
     public EventStripe(EventCluster cluster, EventCluster parent) {
-        clusters.add(cluster);
+        this.clusters = ImmutableSortedSet.orderedBy(Comparator.comparing(EventCluster::getStartMillis))
+                .add(cluster).build();
 
         type = cluster.getEventType();
         description = cluster.getDescription();
         lod = cluster.getDescriptionLoD();
-        eventIDs.addAll(cluster.getEventIDs());
-        tagged.addAll(cluster.getEventIDsWithTags());
-        hashHits.addAll(cluster.getEventIDsWithHashHits());
+        eventIDs = cluster.getEventIDs();
+        tagged = cluster.getEventIDsWithTags();
+        hashHits = cluster.getEventIDsWithHashHits();
         this.parent = parent;
     }
 
     private EventStripe(EventStripe u, EventStripe v) {
-        clusters.addAll(u.clusters);
-        clusters.addAll(v.clusters);
+        clusters = ImmutableSortedSet.orderedBy(Comparator.comparing(EventCluster::getStartMillis))
+                .addAll(u.getClusters())
+                .addAll(v.getClusters())
+                .build();
+
         type = u.getEventType();
         description = u.getDescription();
         lod = u.getDescriptionLoD();
-        eventIDs.addAll(u.getEventIDs());
-        eventIDs.addAll(v.getEventIDs());
-        tagged.addAll(u.getEventIDsWithTags());
-        tagged.addAll(v.getEventIDsWithTags());
-        hashHits.addAll(u.getEventIDsWithHashHits());
-        hashHits.addAll(v.getEventIDsWithHashHits());
+        eventIDs = ImmutableSet.<Long>builder()
+                .addAll(u.getEventIDs())
+                .addAll(v.getEventIDs())
+                .build();
+        tagged = ImmutableSet.<Long>builder()
+                .addAll(u.getEventIDsWithTags())
+                .addAll(v.getEventIDsWithTags())
+                .build();
+        hashHits = ImmutableSet.<Long>builder()
+                .addAll(u.getEventIDsWithHashHits())
+                .addAll(v.getEventIDsWithHashHits())
+                .build();
         parent = u.getParentBundle().orElse(v.getParentBundle().orElse(null));
     }
 
@@ -131,18 +156,21 @@ public final class EventStripe implements EventBundle<EventCluster> {
     }
 
     @Override
-    public Set<Long> getEventIDs() {
-        return Collections.unmodifiableSet(eventIDs);
+    @SuppressWarnings("ReturnOfCollectionOrArrayField")
+    public ImmutableSet<Long> getEventIDs() {
+        return eventIDs;
     }
 
     @Override
-    public Set<Long> getEventIDsWithHashHits() {
-        return Collections.unmodifiableSet(hashHits);
+    @SuppressWarnings("ReturnOfCollectionOrArrayField")
+    public ImmutableSet<Long> getEventIDsWithHashHits() {
+        return hashHits;
     }
 
     @Override
-    public Set<Long> getEventIDsWithTags() {
-        return Collections.unmodifiableSet(tagged);
+    @SuppressWarnings("ReturnOfCollectionOrArrayField")
+    public ImmutableSet<Long> getEventIDsWithTags() {
+        return tagged;
     }
 
     @Override
@@ -155,7 +183,14 @@ public final class EventStripe implements EventBundle<EventCluster> {
         return clusters.last().getEndMillis();
     }
 
-    public SortedSet< EventCluster> getClusters() {
-        return Collections.unmodifiableSortedSet(clusters);
+    @Override
+    @SuppressWarnings("ReturnOfCollectionOrArrayField")
+    public ImmutableSortedSet< EventCluster> getClusters() {
+        return clusters;
+    }
+
+    @Override
+    public String toString() {
+        return "EventStripe{" + "description=" + description + ", eventIDs=" + eventIDs.size() + '}'; //NON-NLS
     }
 }

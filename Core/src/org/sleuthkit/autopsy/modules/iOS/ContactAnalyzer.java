@@ -30,8 +30,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -50,9 +53,11 @@ class ContactAnalyzer {
     private java.io.File jFile = null;
     private String moduleName = iOSModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(ContactAnalyzer.class.getName());
+    private Blackboard blackboard;
 
     public void findContacts() {
 
+        blackboard = Case.getCurrentCase().getServices().getBlackboard();
         List<AbstractFile> absFiles;
         try {
             SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
@@ -129,17 +134,25 @@ class ContactAnalyzer {
                     name = resultSet.getString("display_name"); //NON-NLS
                     data1 = resultSet.getString("data1"); //NON-NLS
                     mimetype = resultSet.getString("mimetype"); //NON-NLS
-//                    System.out.println(resultSet.getString("data1") + resultSet.getString("mimetype") + resultSet.getString("display_name")); //Test code
                     if (name.equals(oldName) == false) {
                         bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT);
-                        bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), moduleName, name));
+                        bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, moduleName, name));
                     }
                     if (mimetype.equals("vnd.android.cursor.item/phone_v2")) { //NON-NLS
-                        bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID(), moduleName, data1));
+                        bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, moduleName, data1));
                     } else {
-                        bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL.getTypeID(), moduleName, data1));
+                        bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL, moduleName, data1));
                     }
                     oldName = name;
+                    
+                    try {
+                        // index the artifact for keyword search
+                        blackboard.indexArtifact(bba);
+                    } catch (Blackboard.BlackboardException ex) {
+                        logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", bba.getDisplayName()), ex); //NON-NLS
+                        MessageNotifyUtil.Notify.error(
+                                NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), bba.getDisplayName());
+                    }                    
                 }
 
             } catch (Exception e) {
@@ -184,8 +197,6 @@ class ContactAnalyzer {
         int c;
         final int EOF = -1;
         istream = new ReadContentInputStream(file);
-        //File outFile =  new File("Data.txt");          
-        //  System.out.println("Type characters to write in File – Press Ctrl+z to end ");  
         try {
             ostream = new FileOutputStream(jFile);
             while ((c = istream.read()) != EOF) {

@@ -38,7 +38,10 @@ import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -73,11 +76,12 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     private FileTypeDetector fileTypeDetector;
     private final HashSet<String> supportedMimeTypes = new HashSet<>();
     private TimeZone timeZone = null;
+    private Blackboard blackboard;
 
     ExifParserFileIngestModule() {
-        supportedMimeTypes.add("audio/x-wav");
-        supportedMimeTypes.add("image/jpeg");
-        supportedMimeTypes.add("image/tiff");
+        supportedMimeTypes.add("audio/x-wav"); //NON-NLS
+        supportedMimeTypes.add("image/jpeg"); //NON-NLS
+        supportedMimeTypes.add("image/tiff"); //NON-NLS
     }
 
     @Override
@@ -87,12 +91,14 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            throw new IngestModuleException(NbBundle.getMessage(this.getClass(), "ExifParserFileIngestModule.startUp.fileTypeDetectorInitializationException.msg"));
+            throw new IngestModuleException(NbBundle.getMessage(this.getClass(), "ExifParserFileIngestModule.startUp.fileTypeDetectorInitializationException.msg"), ex);
         }
     }
 
     @Override
     public ProcessResult process(AbstractFile content) {
+        blackboard = Case.getCurrentCase().getServices().getBlackboard();
+        
         //skip unalloc
         if (content.getType().equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
             return ProcessResult.OK;
@@ -153,7 +159,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                 }
                 Date date = exifDir.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL, timeZone);
                 if (date != null) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(), ExifParserModuleFactory.getModuleName(), date.getTime() / 1000));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED, ExifParserModuleFactory.getModuleName(), date.getTime() / 1000));
                 }
             }
 
@@ -164,13 +170,13 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                 if (loc != null) {
                     double latitude = loc.getLatitude();
                     double longitude = loc.getLongitude();
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(), ExifParserModuleFactory.getModuleName(), latitude));
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(), ExifParserModuleFactory.getModuleName(), longitude));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE, ExifParserModuleFactory.getModuleName(), latitude));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE, ExifParserModuleFactory.getModuleName(), longitude));
                 }
 
                 Rational altitude = gpsDir.getRational(GpsDirectory.TAG_ALTITUDE);
                 if (altitude != null) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID(), ExifParserModuleFactory.getModuleName(), altitude.doubleValue()));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE, ExifParserModuleFactory.getModuleName(), altitude.doubleValue()));
                 }
             }
 
@@ -179,12 +185,12 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             if (devDir != null) {
                 String model = devDir.getString(ExifIFD0Directory.TAG_MODEL);
                 if (model != null && !model.isEmpty()) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), ExifParserModuleFactory.getModuleName(), model));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL, ExifParserModuleFactory.getModuleName(), model));
                 }
 
                 String make = devDir.getString(ExifIFD0Directory.TAG_MAKE);
                 if (make != null && !make.isEmpty()) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID(), ExifParserModuleFactory.getModuleName(), make));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE, ExifParserModuleFactory.getModuleName(), make));
                 }
             }
 
@@ -192,6 +198,15 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             if (!attributes.isEmpty()) {
                 BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF);
                 bba.addAttributes(attributes);
+                
+                try {
+                    // index the artifact for keyword search
+                    blackboard.indexArtifact(bba);
+                } catch (Blackboard.BlackboardException ex) {
+                    logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", bba.getDisplayName()), ex); //NON-NLS
+                    MessageNotifyUtil.Notify.error(
+                        NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), bba.getDisplayName());
+                }
                 filesToFire = true;
             }
 

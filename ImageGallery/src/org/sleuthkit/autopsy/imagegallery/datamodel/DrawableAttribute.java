@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,8 +25,11 @@ import java.util.List;
 import java.util.function.Function;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.StringProperty;
+import javafx.scene.Node;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.TagName;
 
@@ -37,16 +40,40 @@ import org.sleuthkit.datamodel.TagName;
  * TODO: Review and refactor DrawableAttribute related code with an eye to usage
  * of type paramaters and multivalued attributes
  */
+@NbBundle.Messages({"DrawableAttribute.md5hash=MD5 Hash",
+    "DrawableAttribute.name=Name",
+    "DrawableAttribute.analyzed=Analyzed",
+    "DrawableAttribute.category=Category",
+    "DrawableAttribute.tags=Tags",
+    "DrawableAttribute.path=Path",
+    "DrawableAttribute.createdTime=Created Time",
+    "DrawableAttribute.modifiedTime=Modified Time",
+    "DrawableAttribute.cameraMake=Camera Make",
+    "DrawableAttribute.cameraModel=Camera Model",
+    "DrawableAttribute.hashSet=Hashset",
+    "DrawableAttribute.intObjID=Internal Object ID",
+    "DrawableAttribute.width=Width",
+    "DrawableAttribute.height=Height",
+    "DrawableAttribute.mimeType=MIME type"})
 public class DrawableAttribute<T extends Comparable<T>> {
 
-    public final static DrawableAttribute<String> MD5_HASH
-            = new DrawableAttribute<>(AttributeName.MD5_HASH, "MD5 Hash", false, "icon-hashtag.png", f -> Collections.singleton(f.getMd5Hash()));
+    public final static DrawableAttribute<String> MD5_HASH =
+            new DrawableAttribute<>(AttributeName.MD5_HASH, Bundle.DrawableAttribute_md5hash(),
+                    false,
+                    "icon-hashtag.png", // NON-NLS
+                    f -> Collections.singleton(f.getMd5Hash()));
 
-    public final static DrawableAttribute<String> NAME
-            = new DrawableAttribute<>(AttributeName.NAME, "Name", true, "folder-rename.png", f -> Collections.singleton(f.getName()));
+    public final static DrawableAttribute<String> NAME =
+            new DrawableAttribute<>(AttributeName.NAME, Bundle.DrawableAttribute_name(),
+                    true,
+                    "folder-rename.png", //NON-NLS
+                    f -> Collections.singleton(f.getName()));
 
-    public final static DrawableAttribute<Boolean> ANALYZED
-            = new DrawableAttribute<>(AttributeName.ANALYZED, "Analyzed", true, "", f -> Collections.singleton(f.isAnalyzed()));
+    public final static DrawableAttribute<Boolean> ANALYZED =
+            new DrawableAttribute<>(AttributeName.ANALYZED, Bundle.DrawableAttribute_analyzed(),
+                    true,
+                    "",
+                    f -> Collections.singleton(f.isAnalyzed()));
 
     /**
      * since categories are really just tags in autopsy, they are not dealt with
@@ -56,55 +83,101 @@ public class DrawableAttribute<T extends Comparable<T>> {
      * //TODO: this has lead to awkward hard to maintain code, and little
      * advantage. move categories into DrawableDB?
      */
-    public final static DrawableAttribute<Category> CATEGORY
-            = new DrawableAttribute<>(AttributeName.CATEGORY, "Category", false, "category-icon.png", f -> Collections.singleton(f.getCategory()));
+    public final static DrawableAttribute<Category> CATEGORY =
+            new DrawableAttribute<Category>(AttributeName.CATEGORY, Bundle.DrawableAttribute_category(),
+                    false,
+                    "category-icon.png", //NON-NLS
+                    f -> Collections.singleton(f.getCategory())) {
 
-    public final static DrawableAttribute<TagName> TAGS
-            = new DrawableAttribute<>(AttributeName.TAGS, "Tags", false, "tag_red.png", DrawableFile::getTagNames);
+                @Override
+                public Node getGraphicForValue(Category val) {
+                    return val.getGraphic();
+                }
+            };
 
-    public final static DrawableAttribute<String> PATH
-            = new DrawableAttribute<>(AttributeName.PATH, "Path", true, "folder_picture.png", f -> Collections.singleton(f.getDrawablePath()));
+    public final static DrawableAttribute<TagName> TAGS =
+            new DrawableAttribute<>(AttributeName.TAGS, Bundle.DrawableAttribute_tags(),
+                    false,
+                    "tag_red.png", //NON-NLS
+                    DrawableFile::getTagNames);
 
-    public final static DrawableAttribute<String> CREATED_TIME
-            = new DrawableAttribute<>(AttributeName.CREATED_TIME, "Created Time", true, "clock--plus.png", f -> Collections.singleton(ContentUtils.getStringTime(f.getCrtime(), f)));
+    public final static DrawableAttribute<String> PATH =
+            new DrawableAttribute<>(AttributeName.PATH, Bundle.DrawableAttribute_path(),
+                    true,
+                    "folder_picture.png", //NON-NLS
+                    f -> Collections.singleton(f.getDrawablePath()));
 
-    public final static DrawableAttribute<String> MODIFIED_TIME
-            = new DrawableAttribute<>(AttributeName.MODIFIED_TIME, "Modified Time", true, "clock--pencil.png", f -> Collections.singleton(ContentUtils.getStringTime(f.getMtime(), f)));
+    public final static DrawableAttribute<String> CREATED_TIME =
+            new DrawableAttribute<>(AttributeName.CREATED_TIME, Bundle.DrawableAttribute_createdTime(),
+                    true,
+                    "clock--plus.png", //NON-NLS
+                    f -> Collections.singleton(ContentUtils.getStringTime(f.getCrtime(), f.getAbstractFile())));
 
-    public final static DrawableAttribute<String> MAKE
-            = new DrawableAttribute<>(AttributeName.MAKE, "Camera Make", true, "camera.png", f -> Collections.singleton(f.getMake()));
+    public final static DrawableAttribute<String> MODIFIED_TIME =
+            new DrawableAttribute<>(AttributeName.MODIFIED_TIME, Bundle.DrawableAttribute_modifiedTime(),
+                    true,
+                    "clock--pencil.png", //NON-NLS
+                    f -> Collections.singleton(ContentUtils.getStringTime(f.getMtime(), f.getAbstractFile())));
 
-    public final static DrawableAttribute<String> MODEL
-            = new DrawableAttribute<>(AttributeName.MODEL, "Camera Model", true, "camera.png", f -> Collections.singleton(f.getModel()));
+    public final static DrawableAttribute<String> MAKE =
+            new DrawableAttribute<>(AttributeName.MAKE, Bundle.DrawableAttribute_cameraMake(),
+                    true,
+                    "camera.png", //NON-NLS
+                    f -> Collections.singleton(f.getMake()));
 
-    public final static DrawableAttribute<String> HASHSET
-            = new DrawableAttribute<>(AttributeName.HASHSET, "Hashset", true, "hashset_hits.png", DrawableFile::getHashSetNamesUnchecked);
+    public final static DrawableAttribute<String> MODEL =
+            new DrawableAttribute<>(AttributeName.MODEL, Bundle.DrawableAttribute_cameraModel(),
+                    true,
+                    "camera.png", //NON-NLS
+                    f -> Collections.singleton(f.getModel()));
 
-    public final static DrawableAttribute<Long> OBJ_ID
-            = new DrawableAttribute<>(AttributeName.OBJ_ID, "Internal Object ID", true, "", f -> Collections.singleton(f.getId()));
+    public final static DrawableAttribute<String> HASHSET =
+            new DrawableAttribute<>(AttributeName.HASHSET, Bundle.DrawableAttribute_hashSet(),
+                    true,
+                    "hashset_hits.png", //NON-NLS
+                    DrawableFile::getHashSetNamesUnchecked);
 
-    public final static DrawableAttribute<Double> WIDTH
-            = new DrawableAttribute<>(AttributeName.WIDTH, "Width", true, "arrow-resize.png", f -> Collections.singleton(f.getWidth()));
+    public final static DrawableAttribute<Long> OBJ_ID =
+            new DrawableAttribute<>(AttributeName.OBJ_ID, Bundle.DrawableAttribute_intObjID(),
+                    true,
+                    "",
+                    f -> Collections.singleton(f.getId()));
 
-    public final static DrawableAttribute<Double> HEIGHT
-            = new DrawableAttribute<>(AttributeName.HEIGHT, "Height", true, "arrow-resize-090.png", f -> Collections.singleton(f.getHeight()));
+    public final static DrawableAttribute<Double> WIDTH =
+            new DrawableAttribute<>(AttributeName.WIDTH, Bundle.DrawableAttribute_width(),
+                    false,
+                    "arrow-resize.png", //NON-NLS
+                    f -> Collections.singleton(f.getWidth()));
 
-    final private static List< DrawableAttribute<?>> groupables
-            = Arrays.asList(PATH, HASHSET, CATEGORY, TAGS, MAKE, MODEL);
+    public final static DrawableAttribute<Double> HEIGHT =
+            new DrawableAttribute<>(AttributeName.HEIGHT, Bundle.DrawableAttribute_height(),
+                    false,
+                    "arrow-resize-090.png", //NON-NLS
+                    f -> Collections.singleton(f.getHeight()));
 
-    final private static List<DrawableAttribute<?>> values
-            = Arrays.asList(NAME, ANALYZED, CATEGORY, TAGS, PATH, CREATED_TIME,
-                    MODIFIED_TIME, MD5_HASH, HASHSET, MAKE, MODEL, OBJ_ID, WIDTH, HEIGHT);
+    public final static DrawableAttribute<String> MIME_TYPE =
+            new DrawableAttribute<>(AttributeName.MIME_TYPE, Bundle.DrawableAttribute_mimeType(),
+                    false,
+                    "mime_types.png", //NON-NLS
+                    f -> Collections.singleton(f.getMIMEType()));
 
-    private final Function<DrawableFile<?>, Collection<T>> extractor;
+    final private static List< DrawableAttribute<?>> groupables =
+            Arrays.asList(PATH, HASHSET, CATEGORY, TAGS, MAKE, MODEL, MIME_TYPE);
 
-    private DrawableAttribute(AttributeName name, String displayName, Boolean isDBColumn, String imageName, Function<DrawableFile<?>, Collection<T>> extractor) {
+    final private static List<DrawableAttribute<?>> values =
+            Arrays.asList(NAME, ANALYZED, CATEGORY, TAGS, PATH, CREATED_TIME,
+                    MODIFIED_TIME, MD5_HASH, HASHSET, MAKE, MODEL, OBJ_ID, WIDTH, HEIGHT, MIME_TYPE);
+
+    private final Function<DrawableFile, Collection<T>> extractor;
+
+    private DrawableAttribute(AttributeName name, String displayName, Boolean isDBColumn, String imageName, Function<DrawableFile, Collection<T>> extractor) {
         this.attrName = name;
         this.displayName = new ReadOnlyStringWrapper(displayName);
         this.isDBColumn = isDBColumn;
-        this.imageName = imageName;
         this.extractor = extractor;
+        this.imageName = imageName;
     }
+    private final String imageName;
 
     private Image icon;
 
@@ -114,15 +187,24 @@ public class DrawableAttribute<T extends Comparable<T>> {
 
     private final StringProperty displayName;
 
-    private final String imageName;
-
     public Image getIcon() {
-        if (icon == null) {
-            if (StringUtils.isBlank(imageName) == false) {
-                this.icon = new Image("org/sleuthkit/autopsy/imagegallery/images/" + imageName, true);
-            }
+        /*
+         * There is some issue with loading this in the constructor which gets
+         * called at class load time, so instead we load them lazily the first
+         * time they are needed
+         */
+        if (null == icon && StringUtils.isNotBlank(imageName)) {
+            this.icon = new Image("org/sleuthkit/autopsy/imagegallery/images/" + imageName, true); //NON-NLS
         }
         return icon;
+    }
+
+    /**
+     * TODO: override this to load per value icons form some attributes like
+     * mime-type and category
+     */
+    public Node getGraphicForValue(T val) {
+        return new ImageView(getIcon());
     }
 
     public static List<DrawableAttribute<?>> getGroupableAttrs() {
@@ -141,6 +223,10 @@ public class DrawableAttribute<T extends Comparable<T>> {
         return displayName.get();
     }
 
+    public Collection<T> getValue(DrawableFile f) {
+        return extractor.apply(f);
+    }
+
     public static enum AttributeName {
 
         NAME,
@@ -156,10 +242,7 @@ public class DrawableAttribute<T extends Comparable<T>> {
         OBJ_ID,
         WIDTH,
         HEIGHT,
-        MD5_HASH;
-    }
-
-    public Collection<T> getValue(DrawableFile<?> f) {
-        return extractor.apply(f);
+        MD5_HASH,
+        MIME_TYPE;
     }
 }

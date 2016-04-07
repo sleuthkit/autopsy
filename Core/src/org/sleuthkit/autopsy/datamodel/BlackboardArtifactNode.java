@@ -97,7 +97,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         this.associated = this.getLookup().lookup(Content.class);
         this.setName(Long.toString(artifact.getArtifactID()));
         this.setDisplayName();
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/" + getIcon(BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID()))); //NON-NLS
+        this.setIconBaseWithExtension(ExtractedContent.getIconFilePath(artifact.getArtifactTypeID())); //NON-NLS
     }
 
     /**
@@ -117,7 +117,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         if (artifact != null && artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
             try {
                 for (BlackboardAttribute attribute : artifact.getAttributes()) {
-                    if (attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
+                    if (attribute.getAttributeType().getTypeID() == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
                         BlackboardArtifact associatedArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
                         if (associatedArtifact != null) {
                             displayName = associatedArtifact.getDisplayName() + " Artifact"; // NON-NLS
@@ -131,7 +131,6 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         this.setDisplayName(displayName);
     }
 
-    @Override
     protected Sheet createSheet() {
         Sheet s = super.createSheet();
         Sheet.Set ss = s.get(Sheet.PROPERTIES);
@@ -167,38 +166,24 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         // If mismatch, add props for extension and file type
         if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID()) {
             String ext = "";
+            String actualMimeType = "";
             if (associated instanceof AbstractFile) {
                 AbstractFile af = (AbstractFile) associated;
                 ext = af.getNameExtension();
+                actualMimeType = af.getMIMEType();
+                if (actualMimeType == null) {
+                    actualMimeType = "";
+                }
             }
             ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.ext.name"),
                     NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.ext.displayName"),
                     NO_DESCR,
                     ext));
-
-            try {
-                String actualMimeType = "";
-                ArrayList<BlackboardArtifact> artList = associated.getAllArtifacts();
-                for (BlackboardArtifact art : artList) {
-                    List<BlackboardAttribute> atrList = art.getAttributes();
-                    for (BlackboardAttribute att : atrList) {
-                        if (att.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID()) {
-                            actualMimeType = att.getValueString();
-                        }
-                    }
-                }
-                if (actualMimeType.isEmpty()) {
-                    logger.log(Level.WARNING, "Could not find expected TSK_FILE_TYPE_SIG attribute."); //NON-NLS
-                } else {
-                    ss.put(new NodeProperty<>(
-                            NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.mimeType.name"),
-                            NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.mimeType.displayName"),
-                            NO_DESCR,
-                            actualMimeType));
-                }
-            } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Error while searching for TSK_FILE_TYPE_SIG attribute: ", ex); //NON-NLS
-            }
+            ss.put(new NodeProperty<>(
+                    NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.mimeType.name"),
+                    NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.mimeType.displayName"),
+                    NO_DESCR,
+                    actualMimeType));
         }
 
         if (Arrays.asList(SHOW_UNIQUE_PATH).contains(artifactTypeId)) {
@@ -301,25 +286,19 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
      *                 are put
      * @param artifact to extract properties from
      */
-    @SuppressWarnings("deprecation") // TODO: Remove this when TSK_TAGGED_ARTIFACT rows are removed in a database upgrade.
+    @SuppressWarnings("deprecation")
     private void fillPropertyMap(Map<String, Object> map, BlackboardArtifact artifact) {
         try {
             for (BlackboardAttribute attribute : artifact.getAttributes()) {
-                final int attributeTypeID = attribute.getAttributeTypeID();
+                final int attributeTypeID = attribute.getAttributeType().getTypeID();
                 //skip some internal attributes that user shouldn't see
                 if (attributeTypeID == ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_TAGGED_ARTIFACT.getTypeID()
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
-                } else if (attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()
-                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()
-                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID()
-                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED.getTypeID()
-                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID()
-                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID()
-                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()
-                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()) {
-                    map.put(attribute.getAttributeTypeDisplayName(), ContentUtils.getStringTime(attribute.getValueLong(), associated));
+                    continue;
+                } else if (attribute.getAttributeType().getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
+                    map.put(attribute.getAttributeType().getDisplayName(), ContentUtils.getStringTime(attribute.getValueLong(), associated));
                 } else if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getTypeID()
                         && attributeTypeID == ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()) {
                     /*
@@ -333,9 +312,9 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                     if (value.length() > 512) {
                         value = value.substring(0, 512);
                     }
-                    map.put(attribute.getAttributeTypeDisplayName(), value);
+                    map.put(attribute.getAttributeType().getDisplayName(), value);
                 } else {
-                    map.put(attribute.getAttributeTypeDisplayName(), attribute.getDisplayString());
+                    map.put(attribute.getAttributeType().getDisplayName(), attribute.getDisplayString());
                 }
             }
         } catch (TskException ex) {
@@ -399,7 +378,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
             String keyword = null;
             String regexp = null;
             for (BlackboardAttribute att : attributes) {
-                final int attributeTypeID = att.getAttributeTypeID();
+                final int attributeTypeID = att.getAttributeType().getTypeID();
                 if (attributeTypeID == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()) {
                     keyword = att.getValueString();
                 } else if (attributeTypeID == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID()) {
@@ -424,66 +403,18 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         return null;
     }
 
-    // @@@ TODO: Merge with ArtifactTypeNode.getIcon()
-    private String getIcon(BlackboardArtifact.ARTIFACT_TYPE type) {
-        switch (type) {
-            case TSK_WEB_BOOKMARK:
-                return "bookmarks.png"; //NON-NLS
-            case TSK_WEB_COOKIE:
-                return "cookies.png"; //NON-NLS
-            case TSK_WEB_HISTORY:
-                return "history.png"; //NON-NLS
-            case TSK_WEB_DOWNLOAD:
-                return "downloads.png"; //NON-NLS
-            case TSK_INSTALLED_PROG:
-                return "programs.png"; //NON-NLS
-            case TSK_RECENT_OBJECT:
-                return "recent_docs.png"; //NON-NLS
-            case TSK_DEVICE_ATTACHED:
-                return "usb_devices.png"; //NON-NLS
-            case TSK_WEB_SEARCH_QUERY:
-                return "searchquery.png"; //NON-NLS
-            case TSK_TAG_FILE:
-                return "blue-tag-icon-16.png"; //NON-NLS
-            case TSK_TAG_ARTIFACT:
-                return "green-tag-icon-16.png"; //NON-NLS
-            case TSK_METADATA_EXIF:
-                return "camera-icon-16.png"; //NON-NLS
-            case TSK_EMAIL_MSG:
-                return "mail-icon-16.png"; //NON-NLS
-            case TSK_CONTACT:
-                return "contact.png"; //NON-NLS
-            case TSK_MESSAGE:
-                return "message.png"; //NON-NLS
-            case TSK_CALLLOG:
-                return "calllog.png"; //NON-NLS
-            case TSK_CALENDAR_ENTRY:
-                return "calendar.png"; //NON-NLS
-            case TSK_SPEED_DIAL_ENTRY:
-                return "speeddialentry.png"; //NON-NLS
-            case TSK_BLUETOOTH_PAIRING:
-                return "bluetooth.png"; //NON-NLS
-            case TSK_GPS_BOOKMARK:
-                return "gpsfav.png"; //NON-NLS
-            case TSK_GPS_LAST_KNOWN_LOCATION:
-                return "gps-lastlocation.png"; //NON-NLS
-            case TSK_GPS_SEARCH:
-                return "gps-search.png"; //NON-NLS
-            case TSK_SERVICE_ACCOUNT:
-                return "account-icon-16.png"; //NON-NLS
-            case TSK_ENCRYPTION_DETECTED:
-                return "encrypted-file.png"; //NON-NLS
-            case TSK_EXT_MISMATCH_DETECTED:
-                return "mismatch-16.png"; //NON-NLS
-            case TSK_OS_INFO:
-                return "computer.png"; //NON-NLS
-            default:
-                return "artifact-icon.png"; //NON-NLS                
-        }
-    }
-
     @Override
     public boolean isLeafTypeNode() {
         return true;
     }
+
+    /*
+     * TODO (AUT-1849): Correct or remove peristent column reordering code
+     *
+     * Added to support this feature.
+     */
+//    @Override
+//    public String getItemType() {
+//        return "BlackboardArtifact"; //NON-NLS
+//    }
 }

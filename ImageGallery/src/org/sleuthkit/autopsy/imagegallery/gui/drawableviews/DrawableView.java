@@ -12,10 +12,10 @@ import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
@@ -52,7 +52,7 @@ public interface DrawableView {
 
     Region getCategoryBorderRegion();
 
-    Optional<DrawableFile<?>> getFile();
+    Optional<DrawableFile> getFile();
 
     void setFile(final Long fileID);
 
@@ -92,7 +92,7 @@ public interface DrawableView {
         } catch (NullPointerException ex) {
             // I think this happens when we're in the process of removing images from the view while
             // also trying to update it? 
-            Logger.getLogger(DrawableView.class.getName()).log(Level.WARNING, "Error looking up hash set hits");
+            Logger.getLogger(DrawableView.class.getName()).log(Level.WARNING, "Error looking up hash set hits"); //NON-NLS
             return false;
         }
     }
@@ -125,9 +125,7 @@ public interface DrawableView {
         if (getFile().isPresent()) {
             final Category category = getFile().map(DrawableFile::getCategory).orElse(Category.ZERO);
             final Border border = hasHashHit() && (category == Category.ZERO) ? HASH_BORDER : getCategoryBorder(category);
-            Platform.runLater(() -> {
-                getCategoryBorderRegion().setBorder(border);
-            });
+            Platform.runLater(() -> getCategoryBorderRegion().setBorder(border));
             return category;
         } else {
             return Category.ZERO;

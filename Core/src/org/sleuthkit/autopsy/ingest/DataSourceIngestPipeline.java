@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2014-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -109,9 +109,9 @@ final class DataSourceIngestPipeline {
                     this.job.updateDataSourceIngestProgressBarDisplayName(displayName);
                     this.job.switchDataSourceIngestProgressBarToIndeterminate();
                     DataSourceIngestPipeline.ingestManager.setIngestTaskProgress(task, module.getDisplayName());
-                    logger.log(Level.INFO, "{0} analysis of {1} (jobId={2}) starting", new Object[]{module.getDisplayName(), this.job.getDataSource().getName(), this.job.getDataSource().getId()});
+                    logger.log(Level.INFO, "{0} analysis of {1} (jobId={2}) starting", new Object[]{module.getDisplayName(), this.job.getDataSource().getName(), this.job.getDataSource().getId()}); //NON-NLS
                     module.process(dataSource, new DataSourceIngestModuleProgress(this.job));
-                    logger.log(Level.INFO, "{0} analysis of {1} (jobId={2}) finished", new Object[]{module.getDisplayName(), this.job.getDataSource().getName(), this.job.getDataSource().getId()});
+                    logger.log(Level.INFO, "{0} analysis of {1} (jobId={2}) finished", new Object[]{module.getDisplayName(), this.job.getDataSource().getName(), this.job.getDataSource().getId()}); //NON-NLS
                 } catch (Throwable ex) { // Catch-all exception firewall
                     errors.add(new IngestModuleError(module.getDisplayName(), ex));
                     String msg = ex.getMessage();
@@ -119,7 +119,7 @@ final class DataSourceIngestPipeline {
                     if (msg == null) {
                         msg = ex.toString();
                     }
-                    MessageNotifyUtil.Notify.error(module.getDisplayName() + " Error", msg);
+                    MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "DataSourceIngestPipeline.moduleError.title.text", module.getDisplayName()), msg);
                 }
                 if (this.job.isCancelled()) {
                     break;
@@ -195,17 +195,11 @@ final class DataSourceIngestPipeline {
             return this.processingStartTime;
         }
 
-        /**
-         * @inheritDoc
-         */
         @Override
         public void startUp(IngestJobContext context) throws IngestModuleException {
             this.module.startUp(context);
         }
 
-        /**
-         * @inheritDoc
-         */
         @Override
         public IngestModule.ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
             this.processingStartTime = new Date();

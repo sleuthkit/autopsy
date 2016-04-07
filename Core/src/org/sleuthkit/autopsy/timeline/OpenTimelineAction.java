@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,8 +18,8 @@
  */
 package org.sleuthkit.autopsy.timeline;
 
+import java.io.IOException;
 import java.util.logging.Level;
-import javax.swing.JOptionPane;
 import org.joda.time.Interval;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
@@ -28,10 +28,11 @@ import org.openide.awt.ActionRegistration;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
-import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.Installer;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.timeline.Timeline")
 @ActionRegistration(displayName = "#CTL_MakeTimeline", lazy = false)
@@ -59,37 +60,46 @@ public class OpenTimelineAction extends CallableSystemAction {
     }
 
     @Override
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void performAction() {
         showTimeline(null);
     }
 
+    @NbBundle.Messages({
+        "OpenTimelineAction.settingsErrorMessage=Failed to initialize timeline settings.",
+        "OpenTimeLineAction.msgdlg.text=Could not create timeline, there are no data sources."})
     public void showTimeline(Interval interval) {
         //check case
         if (!Case.isCaseOpen()) {
             return;
         }
-        final Case currentCase = Case.getCurrentCase();
-
-        if (currentCase.hasData() == false) {
-            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                    NbBundle.getMessage(this.getClass(), "OpenTimeLineAction.msgdlg.text"));
-            LOGGER.log(Level.INFO, "Could not create timeline, there are no data sources.");// NON-NLS
-            return;
-        }
-        synchronized (OpenTimelineAction.class) {
-            if (timeLineController == null) {
-                timeLineController = new TimeLineController(currentCase);
-            } else if (timeLineController.getAutopsyCase() != currentCase) {
-                timeLineController.closeTimeLine();
-                timeLineController = new TimeLineController(currentCase);
+        try {
+            Case currentCase = Case.getCurrentCase();
+            if (currentCase.hasData() == false) {
+                MessageNotifyUtil.Message.info(Bundle.OpenTimeLineAction_msgdlg_text());
+                LOGGER.log(Level.INFO, "Could not create timeline, there are no data sources.");// NON-NLS
+                return;
             }
+            try {
+                if (timeLineController == null) {
+                    timeLineController = new TimeLineController(currentCase);
+                } else if (timeLineController.getAutopsyCase() != currentCase) {
+                    timeLineController.shutDownTimeLine();
+                    timeLineController = new TimeLineController(currentCase);
+                }
+                timeLineController.openTimeLine(interval);
+            } catch (IOException iOException) {
+                MessageNotifyUtil.Message.error(Bundle.OpenTimelineAction_settingsErrorMessage());
+                LOGGER.log(Level.SEVERE, "Failed to initialize per case timeline settings.", iOException);
+            }
+        } catch (IllegalStateException e) {
+            //there is no case...   Do nothing.
         }
-        timeLineController.openTimeLine(interval);
     }
 
     @Override
     public String getName() {
-        return NbBundle.getMessage(TimeLineTopComponent.class, "OpenTimelineAction.title");
+        return NbBundle.getMessage(OpenTimelineAction.class, "CTL_MakeTimeline");
     }
 
     @Override
@@ -101,5 +111,4 @@ public class OpenTimelineAction extends CallableSystemAction {
     public boolean asynchronous() {
         return false; // run on edt
     }
-
 }

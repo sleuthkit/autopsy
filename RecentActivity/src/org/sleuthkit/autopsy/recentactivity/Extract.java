@@ -32,6 +32,8 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.Blackboard;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.datamodel.*;
@@ -75,7 +77,7 @@ abstract class Extract {
     }
 
     /**
-     * Generic method for adding a blackboard artifact to the blackboard
+     * Generic method for adding a blackboard artifact to the blackboard and indexing it
      *
      * @param type         is a blackboard.artifact_type enum to determine which
      *                     type the artifact should be
@@ -89,8 +91,27 @@ abstract class Extract {
         try {
             BlackboardArtifact bbart = content.newArtifact(type);
             bbart.addAttributes(bbattributes);
+            // index the artifact for keyword search
+            this.indexArtifact(bbart);
         } catch (TskException ex) {
             logger.log(Level.SEVERE, "Error while trying to add an artifact", ex); //NON-NLS
+        }
+    }
+    
+    /**
+     * Method to index a blackboard artifact for keyword search
+     *
+     * @param bbart Blackboard artifact to be indexed
+     */
+    void indexArtifact(BlackboardArtifact bbart) {
+        Blackboard blackboard = Case.getCurrentCase().getServices().getBlackboard();
+        try {
+            // index the artifact for keyword search
+            blackboard.indexArtifact(bbart);
+        } catch (Blackboard.BlackboardException ex) {
+            logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", bbart.getDisplayName()), ex); //NON-NLS
+            MessageNotifyUtil.Notify.error(
+                    NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), bbart.getDisplayName());
         }
     }
 

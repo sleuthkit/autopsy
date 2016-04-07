@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -35,7 +36,7 @@ public class UNCPathUtilities {
 
     private static Map<String, String> drives;
     private static final String MAPPED_DRIVES = "_mapped_drives.txt"; //NON-NLS
-    private static final String TEMP_FOLDER = "TEMP";
+    private static final String TEMP_FOLDER = "TEMP"; //NON-NLS
     private static final String DATA_TRIGGER = "----------"; //NON-NLS
     private static final String OK_TXT = "OK"; //NON-NLS
     private static final String COLON = ":"; //NON-NLS
@@ -59,7 +60,8 @@ public class UNCPathUtilities {
     /**
      * This method converts a passed in path to UNC if it is not already UNC.
      * The UNC path will end up in one of the following two forms:
-     * \\hostname\somefolder\otherfolder or \\IP_ADDRESS\somefolder\otherfolder
+     * "\\hostname\somefolder\otherfolder" or
+     * "\\IP_ADDRESS\somefolder\otherfolder"
      *
      * This is accomplished by checking the mapped drives list the operating
      * system maintains and substituting where required. If the drive of the
@@ -83,7 +85,7 @@ public class UNCPathUtilities {
                 String uncPath = null;
                 try {
                     String currentDrive = Paths.get(inputPath).getRoot().toString().substring(STARTING_OFFSET, REPLACEMENT_SIZE);
-                    String uncMapping = drives.get(currentDrive);
+                    String uncMapping = drives.get(currentDrive.toUpperCase());
                     if (uncMapping != null) {
                         uncPath = uncMapping + inputPath.substring(REPLACEMENT_SIZE, inputPath.length());
                     }
@@ -166,9 +168,10 @@ public class UNCPathUtilities {
     /**
      * Takes a UNC path that may have an IP address in it and converts it to
      * hostname, if it can resolve the hostname. Given
-     * \\10.11.12.13\some\folder, the result will be \\TEDS_COMPUTER\some\folder
-     * if the IP address 10.11.12.13 belongs to a machine with the hostname
-     * TEDS_COMPUTER and the local machine is able to resolve the hostname.
+     * "\\10.11.12.13\some\folder", the result will be
+     * "\\TEDS_COMPUTER\some\folder" if the IP address 10.11.12.13 belongs to a
+     * machine with the hostname TEDS_COMPUTER and the local machine is able to
+     * resolve the hostname.
      *
      * @param inputPath the path to convert to a hostname UNC path
      *
@@ -185,9 +188,10 @@ public class UNCPathUtilities {
     /**
      * Takes a UNC path that may have an IP address in it and converts it to
      * hostname, if it can resolve the hostname. Given
-     * \\10.11.12.13\some\folder, the result will be \\TEDS_COMPUTER\some\folder
-     * if the IP address 10.11.12.13 belongs to a machine with the hostname
-     * TEDS_COMPUTER and the local machine is able to resolve the hostname.
+     * "\\10.11.12.13\some\folder", the result will be
+     * "\\TEDS_COMPUTER\some\folder" if the IP address 10.11.12.13 belongs to a
+     * machine with the hostname TEDS_COMPUTER and the local machine is able to
+     * resolve the hostname.
      *
      * @param inputPath a String of the path to convert to a hostname UNC path
      *
@@ -262,6 +266,11 @@ public class UNCPathUtilities {
      */
     synchronized private Map<String, String> getMappedDrives() {
         Map<String, String> driveMap = new HashMap<>();
+
+        if (PlatformUtil.isWindowsOS() == false) {
+            return driveMap;
+        }
+
         File mappedDrive = Paths.get(System.getenv(TEMP_FOLDER), nameString + MAPPED_DRIVES).toFile();
         try {
             Files.deleteIfExists(mappedDrive.toPath());
@@ -293,7 +302,7 @@ public class UNCPathUtilities {
                     }
                 }
             }
-        } catch (IOException | InterruptedException ex) {
+        } catch (IOException | InterruptedException | NoSuchElementException | IllegalStateException ex) {
             // if we couldn't do it, no big deal  
             Logger.getLogger(UNCPathUtilities.class.getName()).log(Level.WARNING, "Unable to parse 'net use' output", ex); //NON-NLS
         } finally {

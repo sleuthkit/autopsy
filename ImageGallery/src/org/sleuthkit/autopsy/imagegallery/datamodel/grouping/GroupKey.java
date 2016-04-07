@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.imagegallery.datamodel.grouping;
 
 import java.util.Map;
 import java.util.Objects;
+import javafx.scene.Node;
 import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.datamodel.TagName;
@@ -51,12 +52,12 @@ public class GroupKey<T extends Comparable<T>> implements Comparable<GroupKey<T>
     public String getValueDisplayName() {
         return Objects.equals(attr, DrawableAttribute.TAGS)
                 ? ((TagName) getValue()).getDisplayName()
-                : getValue().toString();
+                : Objects.toString(getValue(), "unknown");
     }
 
     @Override
     public String toString() {
-        return "GroupKey: " + getAttribute().attrName + " = " + getValue();
+        return "GroupKey: " + getAttribute().attrName + " = " + getValue(); //NON-NLS
     }
 
     @Override
@@ -88,4 +89,7 @@ public class GroupKey<T extends Comparable<T>> implements Comparable<GroupKey<T>
         return val.compareTo(o.val);
     }
 
+    public Node getGraphic() {
+        return attr.getGraphicForValue(val);
+    }
 }

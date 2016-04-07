@@ -100,4 +100,14 @@ public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
     public boolean isLeafTypeNode() {
         return false;
     }
+
+    /*
+     * TODO (AUT-1849): Correct or remove peristent column reordering code
+     *
+     * Added to support this feature.
+     */
+//    @Override
+//    public String getItemType() {
+//        return "Directory"; //NON-NLS
+//    }
 }

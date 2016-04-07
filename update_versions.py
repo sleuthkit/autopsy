@@ -67,6 +67,10 @@ COMPATIBLE = 101
 NON_COMPATIBLE = 102
 ERROR = 1
 
+# Set this to true when developing the script.  It does not delete
+# the cloned repo each time - making it much faster to run.
+TESTING = False
+
 # An Autopsy module object
 class Module:
     # Initialize it with a name, return code, and version numbers
@@ -147,9 +151,9 @@ class Spec:
             return 1
         return -1
 
-    def overflow(self):
+    def incrementIncompat(self):
         return str(self.left + 1) + ".0"
-    def increment(self):
+    def incrementCompat(self):
         return str(self.left) + "." + str(self.right + 1)
     def get(self):
         spec_str = str(self.left) + "." + str(self.right)
@@ -579,12 +583,12 @@ def update_versions(modules, source):
             print("  Error finding manifeset and project properties files")
             return
         if module.ret == COMPATIBLE:
-            versions = [versions[0].set(versions[0].increment()), versions[1] + 1, versions[2]]
+            versions = [versions[0].set(versions[0].incrementCompat()), versions[1] + 1, versions[2]]
             set_specification(project, manifest, versions[0])
             set_implementation(manifest, versions[1])
             module.set_versions(versions)
         elif module.ret == NON_COMPATIBLE:
-            versions = [versions[0].set(versions[0].overflow()), versions[1] + 1, versions[2] + 1]
+            versions = [versions[0].set(versions[0].incrementIncompat()), versions[1] + 1, versions[2] + 1]
             set_specification(project, manifest, versions[0])
             set_implementation(manifest, versions[1])
             set_release(manifest, versions[2])
@@ -641,17 +645,23 @@ def print_version_updates(modules):
         if module.ret == COMPATIBLE:
             output = (module.name + ":\n")
             output += ("\tMajor Release:\tNo Change.\n")            
-            output += ("\tSpecification:\t" + str(versions[0]) + "\t->\t" + str(versions[0].increment()) + "\n")
-            output += ("\tImplementation:\t" + str(versions[1]) + "\t->\t" + str(float(versions[1]) + 1) + "\n")
+            output += ("\tSpecification:\t" + str(versions[0]) + "\t->\t" + str(versions[0].incrementCompat()) + "\n")
+            if versions[1] is None:
+                output += ("\tImplementation: Not defined\n")
+            else:
+                output += ("\tImplementation:\t" + str(versions[1]) + "\t->\t" + str(versions[1] + 1) + "\n")
             output += ("\n")
             print(output)
             sys.stdout.flush()
             f.write(output)
         elif module.ret == NON_COMPATIBLE:
             output = (module.name + ":\n")
-            output += ("\Major Release:\t" + str(versions[2]) + "\t->\t" + str(float(versions[2]) + 1) + "\n")
-            output += ("\tSpecification:\t" + str(versions[0]) + "\t->\t" + str(versions[0].overflow()) + "\n")
-            output += ("\tImplementation:\t" + str(versions[1]) + "\t->\t" + str(float(versions[1]) + 1) + "\n")
+            output += ("\tMajor Release:\t" + str(versions[2]) + "\t->\t" + str(versions[2] + 1) + "\n")
+            output += ("\tSpecification:\t" + str(versions[0]) + "\t->\t" + str(versions[0].incrementIncompat()) + "\n")
+            if versions[1] is None:
+                output += ("\tImplementation: Not defined\n")
+            else:
+                output += ("\tImplementation:\t" + str(versions[1]) + "\t->\t" + str(versions[1] + 1) + "\n")
             output += ("\n")
             print(output)
             sys.stdout.flush()
@@ -659,19 +669,24 @@ def print_version_updates(modules):
         elif module.ret == ERROR:
             output = (module.name + ":\n")
             output += ("\t*Unable to detect necessary changes\n")
-            output += ("\Major Release:\t\t" + str(versions[2]) + "\n")
+            output += ("\tMajor Release:\t\t" + str(versions[2]) + "\n")
             output += ("\tSpecification:\t" + str(versions[0]) + "\n")
-            output += ("\tImplementation:\t" + str(versions[1]) + "\n")
+            if versions[1] is None:
+                output += ("\tImplementation: Not defined\n")
+            else:
+                output += ("\tImplementation:\t" + str(versions[1]) + "\n")
             output += ("\n")
             print(output)
             f.write(output)
             sys.stdout.flush()
         elif module.ret == NO_CHANGES:
             output = (module.name + ":\n")
+            output += ("\tMajor Release:\tNo Change.\n")
+            output += ("\tSpecification:\tNo Change.\n")
             if versions[1] is None:
-                output += ("\tImplementation: None\n")
+                output += ("\tImplementation: Not defined\n")
             else:
-                output += ("\tImplementation:\t" + str(versions[1]) + "\t->\t" + str(float(versions[1]) + 1) + "\n")
+                output += ("\tImplementation:\t" + str(versions[1]) + "\t->\t" + str(versions[1] + 1) + "\n")
                 output += ("\n")
             print(output)
             sys.stdout.flush()
@@ -679,7 +694,7 @@ def print_version_updates(modules):
         elif module.ret is None:
             output = ("Added " + module.name + ":\n")
             if module.release() != 1 and module.release() != 0:
-                output += ("Major Release:\t\t" + str(module.release()) + "\t->\t" + "1\n")
+                output += ("\tMajor Release:\t\t" + str(module.release()) + "\t->\t" + "1\n")
                 output += ("\n")
             if module.spec() != "1.0" and module.spec() != "0.0":
                 output += ("\tSpecification:\t" + str(module.spec()) + "\t->\t" + "1.0\n")
@@ -862,7 +877,7 @@ def main():
 
     # Check if javadoc and jdiff are present.
     jdiff = fix_path(os.path.abspath("./thirdparty/jdiff/v-custom/jdiff.jar"))
-    if(not os.path.isdir(jdiff)):
+    if(not os.path.isfile(jdiff)):
         printt("jdiff not found. Exiting...")
         return 1
     try:
@@ -875,7 +890,7 @@ def main():
     # 2) Get the modules in the clone and the source
     # 3) Generate the xml comparison
     # -----------------------------------------------
-    if not del_dir("./build/" + tag):
+    if (not TESTING) and (not del_dir("./build/" + tag)):
         print("\n\n=========================================")
         print(" Failed to delete previous Autopsy clone.")
         print(" Unable to continue...")
@@ -894,8 +909,9 @@ def main():
     gen_xml(tag_dir, tag_modules, apiname_tag)
     gen_xml(source, source_modules, apiname_cur)
 
-    printt("Deleting cloned Autopsy directory...")
-    print("Clone successfully deleted" if del_dir(tag_dir) else "Failed to delete clone")
+    if not TESTING:
+        printt("Deleting cloned Autopsy directory...")
+        print("Clone successfully deleted" if del_dir(tag_dir) else "Failed to delete clone")
     sys.stdout.flush()
 
     # -----------------------------------------------------

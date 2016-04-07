@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,13 +22,18 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
 /**
  * Ingest job options for the file type identifier ingest module instances.
+ *
+ * @deprecated This class is obsolete (files are no longer skipped for any
+ * reason by file typing) but it is retained for backwards compatibility because
+ * it was erroneously made part of the public API and so that old settings files
+ * can be deserialized successfully (and ignored).
  */
-// TODO: This class does not need to be public.
+@Deprecated
 public class FileTypeIdModuleSettings implements IngestModuleIngestJobSettings {
 
     private static final long serialVersionUID = 1L;
     private boolean skipKnownFiles = true;
-    private boolean skipSmallFiles = false; // No longer used.
+    private final boolean skipSmallFiles = false; // No longer used.
 
     FileTypeIdModuleSettings() {
     }
@@ -37,9 +42,6 @@ public class FileTypeIdModuleSettings implements IngestModuleIngestJobSettings {
         this.skipKnownFiles = skipKnownFiles;
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public long getVersionNumber() {
         return serialVersionUID;

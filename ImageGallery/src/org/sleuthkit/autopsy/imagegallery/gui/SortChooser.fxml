@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.control.Tooltip?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import org.controlsfx.control.SegmentedButton?>
+
+<fx:root id="HBox" alignment="CENTER" spacing="5.0" type="HBox" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <Label fx:id="label" text="Sort By:">
+         <labelFor>
+            <ComboBox fx:id="sortByBox" />
+         </labelFor>
+      </Label>
+      <fx:reference fx:id="sortBox" source="sortByBox" />
+      <SegmentedButton>
+         <buttons>
+            <RadioButton fx:id="ascRadio" contentDisplay="LEFT" mnemonicParsing="false" selected="true">
+               <toggleGroup>
+                  <ToggleGroup fx:id="orderGroup" />
+               </toggleGroup>
+               <graphic>
+                  <ImageView fitHeight="0.0" fitWidth="0.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../images/sort_ascending.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
+               <tooltip>
+                  <Tooltip text="Ascending" />
+               </tooltip>
+            </RadioButton>
+            <RadioButton fx:id="descRadio" contentDisplay="LEFT" mnemonicParsing="false" selected="false" toggleGroup="$orderGroup">
+               <graphic>
+                  <ImageView fitHeight="0.0" fitWidth="0.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../images/sort_descending.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
+               <tooltip>
+                  <Tooltip text="Descending" />
+               </tooltip>
+            </RadioButton>
+         </buttons>
+      </SegmentedButton>
+   </children>
+   <padding>
+      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+   </padding>
+</fx:root>

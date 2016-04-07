@@ -25,6 +25,8 @@ Regardless of the type of data source, there are some common steps in the proces
 
 \image html select-data-source-type.PNG
 
+NOTE: If you are adding a data source to a multi-user case, ensure that all Autopsy clients will have access to the data source at the same path. We recommend using UNC paths to ensure this consistent mapping. 
+
 2) Autopsy will perform a basic examination of the data source and populate an embedded database with an entry for each file in the data source. No content is analyzed in the process, only the files are enumerated. 
 
 3) While it is examining the data source, you will be prompted with a list of ingest modules to enable. 
@@ -42,9 +44,11 @@ You cannot remove a data source from a case.
 \section ds_img Adding a Disk Image
 
 Autopsy supports disk images in the following formats: 
-- Raw Single (For example: *.img, *.dd, *.raw, etc)
+- Raw Single (For example: *.img, *.dd, *.raw, *.bin)
 - Raw Split (For example: *.001, *.002, *.aa, *.ab, etc)
-- EnCase (For example: *.e01, *e02, etc)
+- EnCase (For example: *.e01, *.e02, etc)
+- Virtual Machines (For example: *.vmdk, *.vhd)
+
 
 To add a disk image:
 

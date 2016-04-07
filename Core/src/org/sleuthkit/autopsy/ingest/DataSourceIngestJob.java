@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -79,7 +79,7 @@ final class DataSourceIngestJob {
          */
         FINALIZATION
     };
-    private Stages stage = DataSourceIngestJob.Stages.INITIALIZATION;
+    private volatile Stages stage = DataSourceIngestJob.Stages.INITIALIZATION;
     private final Object stageCompletionCheckLock = new Object();
 
     /**
@@ -118,6 +118,8 @@ final class DataSourceIngestJob {
      */
     private volatile boolean currentDataSourceIngestModuleCancelled;
     private volatile boolean cancelled;
+    private volatile IngestJob.CancellationReason cancellationReason = IngestJob.CancellationReason.NOT_CANCELLED;
+    private final Object cancellationStateMonitor = new Object();
     private final List<String> cancelledDataSourceIngestModules = new CopyOnWriteArrayList<>();
 
     /**
@@ -148,6 +150,8 @@ final class DataSourceIngestJob {
     private long estimatedFilesToProcess;
     private long processedFiles;
     private ProgressHandle fileIngestProgress;
+    private String currentFileIngestModule = "";
+    private String currentFileIngestTask = "";
 
     /**
      * A data source ingest job uses this field to report its creation time.
@@ -277,6 +281,15 @@ final class DataSourceIngestJob {
     }
 
     /**
+     * Get the ingest execution context identifier.
+     *
+     * @return The context string.
+     */
+    String getExecutionContext() {
+        return this.settings.getExecutionContext();
+    }
+
+    /**
      * Gets the data source to be ingested by this job.
      *
      * @return A Content object representing the data source.
@@ -347,10 +360,10 @@ final class DataSourceIngestJob {
         List<IngestModuleError> errors = startUpIngestPipelines();
         if (errors.isEmpty()) {
             if (this.hasFirstStageDataSourceIngestPipeline() || this.hasFileIngestPipeline()) {
-                logger.log(Level.INFO, "Starting first stage analysis for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id});
+                logger.log(Level.INFO, "Starting first stage analysis for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id}); //NON-NLS
                 this.startFirstStage();
             } else if (this.hasSecondStageDataSourceIngestPipeline()) {
-                logger.log(Level.INFO, "Starting second stage analysis for {0} (jobId={1}), no first stage configured", new Object[]{dataSource.getName(), this.id});
+                logger.log(Level.INFO, "Starting second stage analysis for {0} (jobId={1}), no first stage configured", new Object[]{dataSource.getName(), this.id}); //NON-NLS
                 this.startSecondStage();
             }
         }
@@ -366,38 +379,45 @@ final class DataSourceIngestJob {
     private List<IngestModuleError> startUpIngestPipelines() {
         List<IngestModuleError> errors = new ArrayList<>();
 
-        // Start up the first stage data source ingest pipeline.
+        /*
+         * Start the data-source-level ingest module pipelines.
+         */
         errors.addAll(this.firstStageDataSourceIngestPipeline.startUp());
-
-        // Start up the second stage data source ingest pipeline.
         errors.addAll(this.secondStageDataSourceIngestPipeline.startUp());
 
-        // Start up the file ingest pipelines (one per file ingest thread). 
-        for (FileIngestPipeline pipeline : this.fileIngestPipelinesQueue) {
-            errors.addAll(pipeline.startUp());
-            if (!errors.isEmpty()) {
-                // If there are start up errors, the ingest job will not proceed 
-                // and the errors will ultimately be reported to the user for 
-                // possible remedy so shut down the pipelines now that an
-                // attempt has been made to start up the data source ingest  
-                // pipeline and at least one copy of the file ingest pipeline.
-                // pipeline. There is no need to complete starting up all of the 
-                // file ingest pipeline copies since any additional start up 
-                // errors are likely redundant.
-                while (!this.fileIngestPipelinesQueue.isEmpty()) {
-                    pipeline = this.fileIngestPipelinesQueue.poll();
-                    if (pipeline.isRunning()) {
-                        List<IngestModuleError> shutDownErrors = pipeline.shutDown();
-                        if (!shutDownErrors.isEmpty()) {
-                            logIngestModuleErrors(shutDownErrors);
+        /*
+         * If the data-source-level ingest pipelines were successfully started,
+         * start the Start the file-level ingest pipelines (one per file ingest
+         * thread).
+         */
+        if (errors.isEmpty()) {
+            for (FileIngestPipeline pipeline : this.fileIngestPipelinesQueue) {
+                errors.addAll(pipeline.startUp());
+                if (!errors.isEmpty()) {
+                    /*
+                     * If there are start up errors, the ingest job will not
+                     * proceed, so shut down any file ingest pipelines that did
+                     * start up.
+                     */
+                    while (!this.fileIngestPipelinesQueue.isEmpty()) {
+                        FileIngestPipeline startedPipeline = this.fileIngestPipelinesQueue.poll();
+                        if (startedPipeline.isRunning()) {
+                            List<IngestModuleError> shutDownErrors = startedPipeline.shutDown();
+                            if (!shutDownErrors.isEmpty()) {
+                                /*
+                                 * The start up errors will ultimately be
+                                 * reported to the user for possible remedy, but
+                                 * the shut down errors are logged here.
+                                 */
+                                logIngestModuleErrors(shutDownErrors);
+                            }
                         }
                     }
+                    break;
                 }
-                break;
             }
         }
 
-        logIngestModuleErrors(errors);
         return errors;
     }
 
@@ -437,13 +457,13 @@ final class DataSourceIngestJob {
          * Schedule the first stage tasks.
          */
         if (this.hasFirstStageDataSourceIngestPipeline() && this.hasFileIngestPipeline()) {
-            logger.log(Level.INFO, "Scheduling first stage data source and file level analysis tasks for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id});
+            logger.log(Level.INFO, "Scheduling first stage data source and file level analysis tasks for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id}); //NON-NLS
             DataSourceIngestJob.taskScheduler.scheduleIngestTasks(this);
         } else if (this.hasFirstStageDataSourceIngestPipeline()) {
-            logger.log(Level.INFO, "Scheduling first stage data source level analysis tasks for {0} (jobId={1}), no file level analysis configured", new Object[]{dataSource.getName(), this.id});
+            logger.log(Level.INFO, "Scheduling first stage data source level analysis tasks for {0} (jobId={1}), no file level analysis configured", new Object[]{dataSource.getName(), this.id}); //NON-NLS
             DataSourceIngestJob.taskScheduler.scheduleDataSourceIngestTask(this);
         } else {
-            logger.log(Level.INFO, "Scheduling file level analysis tasks for {0} (jobId={1}), no first stage data source level analysis configured", new Object[]{dataSource.getName(), this.id});
+            logger.log(Level.INFO, "Scheduling file level analysis tasks for {0} (jobId={1}), no first stage data source level analysis configured", new Object[]{dataSource.getName(), this.id}); //NON-NLS
             DataSourceIngestJob.taskScheduler.scheduleFileIngestTasks(this);
 
             /**
@@ -462,7 +482,7 @@ final class DataSourceIngestJob {
      * Starts the second stage of this ingest job.
      */
     private void startSecondStage() {
-        logger.log(Level.INFO, "Starting second stage analysis for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id});
+        logger.log(Level.INFO, "Starting second stage analysis for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id}); //NON-NLS
         this.stage = DataSourceIngestJob.Stages.SECOND;
         if (this.doUI) {
             this.startDataSourceIngestProgressBar();
@@ -470,7 +490,7 @@ final class DataSourceIngestJob {
         synchronized (this.dataSourceIngestPipelineLock) {
             this.currentDataSourceIngestPipeline = this.secondStageDataSourceIngestPipeline;
         }
-        logger.log(Level.INFO, "Scheduling second stage data source level analysis tasks for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id});
+        logger.log(Level.INFO, "Scheduling second stage data source level analysis tasks for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id}); //NON-NLS
         DataSourceIngestJob.taskScheduler.scheduleDataSourceIngestTask(this);
     }
 
@@ -496,7 +516,7 @@ final class DataSourceIngestJob {
                         String dialogTitle = NbBundle.getMessage(DataSourceIngestJob.this.getClass(), "IngestJob.cancellationDialog.title");
                         JOptionPane.showConfirmDialog(null, panel, dialogTitle, JOptionPane.OK_OPTION, JOptionPane.PLAIN_MESSAGE);
                         if (panel.cancelAllDataSourceIngestModules()) {
-                            DataSourceIngestJob.this.cancel();
+                            DataSourceIngestJob.this.cancel(IngestJob.CancellationReason.USER_CANCELLED);
                         } else {
                             DataSourceIngestJob.this.cancelCurrentDataSourceIngestModule();
                         }
@@ -525,7 +545,7 @@ final class DataSourceIngestJob {
                         // the cancel button on the progress bar and the OK button
                         // of a cancelation confirmation dialog supplied by 
                         // NetBeans. 
-                        DataSourceIngestJob.this.cancel();
+                        DataSourceIngestJob.this.cancel(IngestJob.CancellationReason.USER_CANCELLED);
                         return true;
                     }
                 });
@@ -559,7 +579,7 @@ final class DataSourceIngestJob {
      * job and starts the second stage, if appropriate.
      */
     private void finishFirstStage() {
-        logger.log(Level.INFO, "Finished first stage analysis for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id});
+        logger.log(Level.INFO, "Finished first stage analysis for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id}); //NON-NLS
 
         // Shut down the file ingest pipelines. Note that no shut down is
         // required for the data source ingest pipeline because data source 
@@ -609,7 +629,7 @@ final class DataSourceIngestJob {
      * Shuts down the ingest pipelines and progress bars for this job.
      */
     private void finish() {
-        logger.log(Level.INFO, "Finished analysis for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id});
+        logger.log(Level.INFO, "Finished analysis for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id}); //NON-NLS
         this.stage = DataSourceIngestJob.Stages.FINALIZATION;
 
         if (this.doUI) {
@@ -909,8 +929,10 @@ final class DataSourceIngestJob {
     /**
      * Requests cancellation of ingest, i.e., a shutdown of the data source
      * level and file level ingest pipelines.
+     *
+     * @param reason The cancellation reason.
      */
-    void cancel() {
+    void cancel(IngestJob.CancellationReason reason) {
         if (this.doUI) {
             /**
              * Put a cancellation message on data source level ingest progress
@@ -940,11 +962,30 @@ final class DataSourceIngestJob {
                     this.fileIngestProgress.setDisplayName(
                             NbBundle.getMessage(this.getClass(), "IngestJob.progress.cancelling",
                                     displayName));
+                    if (!this.currentFileIngestModule.isEmpty() && !this.currentFileIngestTask.isEmpty()) {
+                        this.fileIngestProgress.progress(NbBundle.getMessage(this.getClass(),
+                                "IngestJob.progress.fileIngest.cancelMessage",
+                                this.currentFileIngestModule, this.currentFileIngestTask));
+                    }
+
                 }
             }
         }
 
-        this.cancelled = true;
+        /*
+         * If the work is not already done, show this job as cancelled for the
+         * given reason.
+         */
+        if (Stages.FINALIZATION != stage) {
+            synchronized (cancellationStateMonitor) {
+                /*
+                 * These fields are volatile for reading, synchronized on the
+                 * monitor here for writing.
+                 */
+                this.cancelled = true;
+                this.cancellationReason = reason;
+            }
+        }
 
         /**
          * Tell the task scheduler to cancel all pending tasks, i.e., tasks not
@@ -955,6 +996,18 @@ final class DataSourceIngestJob {
     }
 
     /**
+     * Set the current module name being run and the file name it is running on.
+     * To be used for more detailed cancelling.
+     *
+     * @param moduleName Name of module currently running.
+     * @param taskName   Name of file the module is running on.
+     */
+    void setCurrentFileIngestModule(String moduleName, String taskName) {
+        this.currentFileIngestModule = moduleName;
+        this.currentFileIngestTask = taskName;
+    }
+
+    /**
      * Queries whether or not cancellation, i.e., a shutdown of the data source
      * level and file level ingest pipelines for this job, has been requested.
      *
@@ -962,6 +1015,15 @@ final class DataSourceIngestJob {
      */
     boolean isCancelled() {
         return this.cancelled;
+    }
+
+    /**
+     * Gets the reason this job was cancelled.
+     *
+     * @return The cancellation reason, may be not cancelled.
+     */
+    IngestJob.CancellationReason getCancellationReason() {
+        return this.cancellationReason;
     }
 
     /**
@@ -1000,6 +1062,7 @@ final class DataSourceIngestJob {
         private final long estimatedFilesToProcess;
         private final IngestTasksScheduler.IngestJobTasksSnapshot tasksSnapshot;
         private final boolean jobCancelled;
+        private final IngestJob.CancellationReason jobCancellationReason;
         private final List<String> cancelledDataSourceModules;
 
         /**
@@ -1028,6 +1091,7 @@ final class DataSourceIngestJob {
             }
 
             this.jobCancelled = cancelled;
+            this.jobCancellationReason = cancellationReason;
             this.cancelledDataSourceModules = new ArrayList<>(DataSourceIngestJob.this.cancelledDataSourceIngestModules);
 
             if (getIngestTasksSnapshot) {
@@ -1164,6 +1228,15 @@ final class DataSourceIngestJob {
 
         boolean isCancelled() {
             return this.jobCancelled;
+        }
+
+        /**
+         * Gets the reason this job was cancelled.
+         *
+         * @return The cancellation reason, may be not cancelled.
+         */
+        IngestJob.CancellationReason getCancellationReason() {
+            return this.jobCancellationReason;
         }
 
         /**

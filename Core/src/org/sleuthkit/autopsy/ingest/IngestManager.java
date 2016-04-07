@@ -71,28 +71,27 @@ public class IngestManager {
     private static IngestManager instance;
     private final Object ingestMessageBoxLock = new Object();
 
-    /**
-     * The ingest manager maintains a mapping of ingest job IDs to running
+    /*
+     * The ingest manager maintains a mapping of ingest job ids to running
      * ingest jobs.
      */
-    private final ConcurrentHashMap<Long, IngestJob> jobsById;
+    private final Map<Long, IngestJob> jobsById;
 
-    /**
+    /*
      * Each runnable/callable task the ingest manager submits to its thread
      * pools is given a unique thread/task ID.
      */
     private final AtomicLong nextThreadId;
 
-    /**
-     * Ingest jobs may be queued to be started on a pool thread by ingest job
-     * starters. A mapping of thread/task IDs to the result objects associated
-     * with each ingest job starter is maintained to provide handles that can be
-     * used to cancel the ingest job starter.
+    /*
+     * Ingest jobs may be queued to be started on a pool thread by start ingest
+     * job tasks. A mapping of task ids to the Future objects for each task is
+     * maintained to allow for task cancellation.
      */
-    private final ConcurrentHashMap<Long, Future<Void>> ingestJobStarters;
+    private final Map<Long, Future<Void>> startIngestJobTasks;
     private final ExecutorService startIngestJobsThreadPool;
 
-    /**
+    /*
      * Ingest jobs use an ingest task scheduler to break themselves down into
      * data source level and file level tasks. The ingest scheduler puts these
      * ingest tasks into queues for execution on ingest manager pool threads by
@@ -106,8 +105,8 @@ public class IngestManager {
     private int numberOfFileIngestThreads;
     private final ExecutorService fileIngestThreadPool;
 
-    private static final String JOB_EVENT_CHANNEL_NAME = "%s-Ingest-Job-Events";
-    private static final String MODULE_EVENT_CHANNEL_NAME = "%s-Ingest-Module-Events";
+    private static final String JOB_EVENT_CHANNEL_NAME = "%s-Ingest-Job-Events"; //NON-NLS
+    private static final String MODULE_EVENT_CHANNEL_NAME = "%s-Ingest-Module-Events"; //NON-NLS
     private static final Set<String> jobEventNames = Stream.of(IngestJobEvent.values())
             .map(IngestJobEvent::toString)
             .collect(Collectors.toSet());
@@ -118,14 +117,14 @@ public class IngestManager {
     private AutopsyEventPublisher moduleEventPublisher;
     private final ExecutorService eventPublishingExecutor;
 
-    /**
+    /*
      * The ingest manager uses an ingest monitor to determine when system
      * resources are under pressure. If the monitor detects such a situation, it
      * calls back to the ingest manager to cancel all ingest jobs in progress.
      */
     private final IngestMonitor ingestMonitor;
 
-    /**
+    /*
      * The ingest manager provides access to a top component that is used by
      * ingest module to post messages for the user. A count of the posts is used
      * as a cap to avoid bogging down the application.
@@ -134,7 +133,7 @@ public class IngestManager {
     private volatile IngestMessageTopComponent ingestMessageBox;
     private final AtomicLong ingestErrorMessagePosts;
 
-    /**
+    /*
      * The ingest manager supports reporting of ingest processing progress by
      * collecting snapshots of the activities of the ingest threads, ingest job
      * progress, and ingest module run times.
@@ -142,13 +141,13 @@ public class IngestManager {
     private final ConcurrentHashMap<Long, IngestThreadActivitySnapshot> ingestThreadActivitySnapshots;
     private final ConcurrentHashMap<String, Long> ingestModuleRunTimes;
 
-    /**
+    /*
      * The ingest job creation capability of the ingest manager can be turned on
      * and off to support an orderly shut down of the application.
      */
     private volatile boolean jobCreationIsEnabled;
 
-    /**
+    /*
      * Ingest manager subscribes to service outage notifications. If key
      * services are down, ingest manager cancels all ingest jobs in progress.
      */
@@ -264,8 +263,8 @@ public class IngestManager {
         this.dataSourceIngestThreadPool = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-data-source-ingest-%d").build()); //NON-NLS
         this.startIngestJobsThreadPool = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-start-ingest-jobs-%d").build()); //NON-NLS
         this.nextThreadId = new AtomicLong(0L);
-        this.jobsById = new ConcurrentHashMap<>();
-        this.ingestJobStarters = new ConcurrentHashMap<>();
+        this.jobsById = new HashMap<>();
+        this.startIngestJobTasks = new ConcurrentHashMap<>();
 
         this.servicesMonitor = ServicesMonitor.getInstance();
         subscribeToServiceMonitorEvents();
@@ -329,7 +328,7 @@ public class IngestManager {
             public void propertyChange(PropertyChangeEvent evt) {
                 if (evt.getNewValue().equals(ServicesMonitor.ServiceStatus.DOWN.toString())) {
 
-                    // check whether a milti-user case is currently being processed
+                    // check whether a multi-user case is currently being processed
                     try {
                         if (!Case.isCaseOpen() || Case.getCurrentCase().getCaseType() != Case.CaseType.MULTI_USER_CASE) {
                             return;
@@ -357,7 +356,7 @@ public class IngestManager {
                     }
 
                     // cancel ingest if running
-                    cancelAllIngestJobs();
+                    cancelAllIngestJobs(IngestJob.CancellationReason.SERVICES_DOWN);
                 }
             }
         };
@@ -396,7 +395,6 @@ public class IngestManager {
         jobEventPublisher.closeRemoteEventChannel();
         moduleEventPublisher.closeRemoteEventChannel();
         this.jobCreationIsEnabled = false;
-        cancelAllIngestJobs();
         clearIngestMessageBox();
     }
 
@@ -475,13 +473,13 @@ public class IngestManager {
      * @param dataSources The data sources to process.
      * @param settings    The settings for the ingest job.
      */
-    public synchronized void queueIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
-        if (this.jobCreationIsEnabled) {
+    public void queueIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
+        if (jobCreationIsEnabled) {
             IngestJob job = new IngestJob(dataSources, settings, RuntimeProperties.coreComponentsAreActive());
             if (job.hasIngestPipeline()) {
                 long taskId = nextThreadId.incrementAndGet();
                 Future<Void> task = startIngestJobsThreadPool.submit(new StartIngestJobTask(taskId, job));
-                ingestJobStarters.put(taskId, task);
+                startIngestJobTasks.put(taskId, task);
             }
         }
     }
@@ -516,13 +514,6 @@ public class IngestManager {
     private boolean startIngestJob(IngestJob job) {
         boolean success = false;
         if (this.jobCreationIsEnabled) {
-            /**
-             * TODO: This is not really reliable.
-             */
-            if (RuntimeProperties.coreComponentsAreActive() && jobsById.size() == 1) {
-                clearIngestMessageBox();
-            }
-
             // multi-user cases must have multi-user database service running            
             if (Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) {
                 try {
@@ -552,24 +543,22 @@ public class IngestManager {
                 ingestMonitor.start();
             }
 
-            /**
-             * Add the job to the jobs map now so that isIngestRunning() will
-             * return true while the modules read global settings during start
-             * up. This works because the core global settings panels restrict
-             * changes while analysis is in progress.
-             */
-            this.jobsById.put(job.getId(), job);
+            synchronized (jobsById) {
+                jobsById.put(job.getId(), job);
+            }
             List<IngestModuleError> errors = job.start();
             if (errors.isEmpty()) {
                 this.fireIngestJobStarted(job.getId());
                 IngestManager.logger.log(Level.INFO, "Ingest job {0} started", job.getId()); //NON-NLS
                 success = true;
             } else {
-                this.jobsById.remove(job.getId());
-                for (IngestModuleError error : errors) {
-                    logger.log(Level.SEVERE, String.format("Error starting %s ingest module", error.getModuleDisplayName()), error.getModuleError()); //NON-NLS
+                synchronized (jobsById) {
+                    this.jobsById.remove(job.getId());
                 }
-                IngestManager.logger.log(Level.INFO, "Ingest job {0} could not be started", job.getId()); //NON-NLS
+                for (IngestModuleError error : errors) {
+                    logger.log(Level.SEVERE, String.format("Error starting %s ingest module for job %d", error.getModuleDisplayName(), job.getId()), error.getModuleError()); //NON-NLS
+                }
+                IngestManager.logger.log(Level.SEVERE, "Ingest job {0} could not be started", job.getId()); //NON-NLS
                 if (RuntimeProperties.coreComponentsAreActive()) {
                     EventQueue.invokeLater(new Runnable() {
 
@@ -607,13 +596,15 @@ public class IngestManager {
 
     synchronized void finishIngestJob(IngestJob job) {
         long jobId = job.getId();
-        this.jobsById.remove(jobId);
+        synchronized (jobsById) {
+            jobsById.remove(jobId);
+        }
         if (!job.isCancelled()) {
             IngestManager.logger.log(Level.INFO, "Ingest job {0} completed", jobId); //NON-NLS
-            this.fireIngestJobCompleted(jobId);
+            fireIngestJobCompleted(jobId);
         } else {
             IngestManager.logger.log(Level.INFO, "Ingest job {0} cancelled", jobId); //NON-NLS
-            this.fireIngestJobCancelled(jobId);
+            fireIngestJobCancelled(jobId);
         }
     }
 
@@ -623,21 +614,42 @@ public class IngestManager {
      * @return True or false.
      */
     public boolean isIngestRunning() {
-        return !this.jobsById.isEmpty();
+        synchronized (jobsById) {
+            return !jobsById.isEmpty();
+        }
     }
 
     /**
      * Cancels all ingest jobs in progress.
+     *
+     * @deprecated Use cancelAllIngestJobs(IngestJob.CancellationReason reason)
+     * instead.
      */
-    public synchronized void cancelAllIngestJobs() {
-        // Stop creating new ingest jobs.
-        for (Future<Void> handle : ingestJobStarters.values()) {
+    @Deprecated
+    public void cancelAllIngestJobs() {
+        cancelAllIngestJobs(IngestJob.CancellationReason.USER_CANCELLED);
+    }
+
+    /**
+     * Cancels all ingest jobs in progress.
+     *
+     * @param reason The cancellation reason.
+     */
+    public void cancelAllIngestJobs(IngestJob.CancellationReason reason) {
+        /*
+         * Cancel the start job tasks.
+         */
+        for (Future<Void> handle : startIngestJobTasks.values()) {
             handle.cancel(true);
         }
 
-        // Cancel all the jobs already created. 
-        for (IngestJob job : this.jobsById.values()) {
-            job.cancel();
+        /*
+         * Cancel the jobs in progress.
+         */
+        synchronized (jobsById) {
+            for (IngestJob job : this.jobsById.values()) {
+                job.cancel(reason);
+            }
         }
     }
 
@@ -898,8 +910,10 @@ public class IngestManager {
      */
     List<DataSourceIngestJob.Snapshot> getIngestJobSnapshots() {
         List<DataSourceIngestJob.Snapshot> snapShots = new ArrayList<>();
-        for (IngestJob job : this.jobsById.values()) {
-            snapShots.addAll(job.getDataSourceIngestJobSnapshots());
+        synchronized (jobsById) {
+            for (IngestJob job : jobsById.values()) {
+                snapShots.addAll(job.getDataSourceIngestJobSnapshots());
+            }
         }
         return snapShots;
     }
@@ -936,7 +950,9 @@ public class IngestManager {
         public Void call() {
             try {
                 if (Thread.currentThread().isInterrupted()) {
-                    jobsById.remove(job.getId());
+                    synchronized (jobsById) {
+                        jobsById.remove(job.getId());
+                    }
                     return null;
                 }
 
@@ -948,7 +964,7 @@ public class IngestManager {
                             if (progress != null) {
                                 progress.setDisplayName(NbBundle.getMessage(this.getClass(), "IngestManager.StartIngestJobsTask.run.cancelling", displayName));
                             }
-                            Future<?> handle = ingestJobStarters.remove(threadId);
+                            Future<?> handle = startIngestJobTasks.remove(threadId);
                             handle.cancel(true);
                             return true;
                         }
@@ -963,7 +979,7 @@ public class IngestManager {
                 if (null != progress) {
                     progress.finish();
                 }
-                ingestJobStarters.remove(threadId);
+                startIngestJobTasks.remove(threadId);
             }
         }
 

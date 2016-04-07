@@ -108,6 +108,16 @@ public class Tags implements AutopsyVisitableItem {
             properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "TagsNode.createSheet.name.name"), NbBundle.getMessage(this.getClass(), "TagsNode.createSheet.name.displayName"), "", getName()));
             return propertySheet;
         }
+
+        /*
+         * TODO (AUT-1849): Correct or remove peristent column reordering code
+         *
+         * Added to support this feature.
+         */
+//        @Override
+//        public String getItemType() {
+//            return "TagsRoots"; //NON-NLS
+//        }
     }
 
     private class TagNameNodeFactory extends ChildFactory.Detachable<TagName> implements Observer {
@@ -265,6 +275,16 @@ public class Tags implements AutopsyVisitableItem {
         public void update(Observable o, Object arg) {
             updateDisplayName();
         }
+
+        /*
+         * TODO (AUT-1849): Correct or remove peristent column reordering code
+         *
+         * Added to support this feature.
+         */
+//        @Override
+//        public String getItemType() {
+//            return "TagsName"; //NON-NLS
+//        }
     }
 
     /**
@@ -360,6 +380,16 @@ public class Tags implements AutopsyVisitableItem {
         public void update(Observable o, Object arg) {
             updateDisplayName();
         }
+
+        /*
+         * TODO (AUT-1849): Correct or remove peristent column reordering code
+         *
+         * Added to support this feature.
+         */
+//        @Override
+//        public String getItemType() {
+//            return "TagsContentType"; //NON-NLS
+//        }
     }
 
     private class ContentTagNodeFactory extends ChildFactory<ContentTag> implements Observer {
@@ -453,6 +483,16 @@ public class Tags implements AutopsyVisitableItem {
         public void update(Observable o, Object arg) {
             updateDisplayName();
         }
+
+        /*
+         * TODO (AUT-1849): Correct or remove peristent column reordering code
+         *
+         * Added to support this feature.
+         */
+//        @Override
+//        public String getItemType() {
+//            return "TagsBlackboardArtifact"; //NON-NLS
+//        }
     }
 
     private class BlackboardArtifactTagNodeFactory extends ChildFactory<BlackboardArtifactTag> implements Observer {

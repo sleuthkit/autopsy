@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.datamodel;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.Action;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
@@ -112,70 +113,52 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
     // file based off it's extension
     static String getIconForFileType(AbstractFile file) {
         // Get the name, extension
-        String name = file.getName();
-        int dotIndex = name.lastIndexOf(".");
-        if (dotIndex == -1) {
-            return "org/sleuthkit/autopsy/images/file-icon.png"; //NON-NLS
-        }
-        String ext = name.substring(dotIndex).toLowerCase();
+        String ext = file.getNameExtension();
 
-        // Images
-        for (String s : FileTypeExtensions.getImageExtensions()) {
-            if (ImageUtils.thumbnailSupported(file) || ext.equals(s)) {
-                return "org/sleuthkit/autopsy/images/image-file.png"; //NON-NLS
-            }
+        if (StringUtils.isBlank(ext)) {
+            return "org/sleuthkit/autopsy/images/file-icon.png"; //NON-NLS
+        } else {
+            ext = "." + ext;
+        }
+
+        if (ImageUtils.isImageThumbnailSupported(file)
+                || FileTypeExtensions.getImageExtensions().contains(ext)) {
+            return "org/sleuthkit/autopsy/images/image-file.png"; //NON-NLS
         }
         // Videos
-        for (String s : FileTypeExtensions.getVideoExtensions()) {
-            if (ext.equals(s)) {
-                return "org/sleuthkit/autopsy/images/video-file.png"; //NON-NLS
-            }
+        if (FileTypeExtensions.getVideoExtensions().contains(ext)) {
+            return "org/sleuthkit/autopsy/images/video-file.png"; //NON-NLS
         }
         // Audio Files
-        for (String s : FileTypeExtensions.getAudioExtensions()) {
-            if (ext.equals(s)) {
-                return "org/sleuthkit/autopsy/images/audio-file.png"; //NON-NLS
-            }
+        if (FileTypeExtensions.getAudioExtensions().contains(ext)) {
+            return "org/sleuthkit/autopsy/images/audio-file.png"; //NON-NLS
         }
         // Documents
-        for (String s : FileTypeExtensions.getDocumentExtensions()) {
-            if (ext.equals(s)) {
-                return "org/sleuthkit/autopsy/images/doc-file.png"; //NON-NLS
-            }
+        if (FileTypeExtensions.getDocumentExtensions().contains(ext)) {
+            return "org/sleuthkit/autopsy/images/doc-file.png"; //NON-NLS
         }
         // Executables / System Files
-        for (String s : FileTypeExtensions.getExecutableExtensions()) {
-            if (ext.equals(s)) {
-                return "org/sleuthkit/autopsy/images/exe-file.png"; //NON-NLS
-            }
+        if (FileTypeExtensions.getExecutableExtensions().contains(ext)) {
+            return "org/sleuthkit/autopsy/images/exe-file.png"; //NON-NLS
         }
         // Text Files
-        for (String s : FileTypeExtensions.getTextExtensions()) {
-            if (ext.equals(s)) {
-                return "org/sleuthkit/autopsy/images/text-file.png"; //NON-NLS
-            }
+        if (FileTypeExtensions.getTextExtensions().contains(ext)) {
+            return "org/sleuthkit/autopsy/images/text-file.png"; //NON-NLS
         }
         // Web Files
-        for (String s : FileTypeExtensions.getWebExtensions()) {
-            if (ext.equals(s)) {
-                return "org/sleuthkit/autopsy/images/web-file.png"; //NON-NLS
-            }
+        if (FileTypeExtensions.getWebExtensions().contains(ext)) {
+            return "org/sleuthkit/autopsy/images/web-file.png"; //NON-NLS
         }
         // PDFs
-        for (String s : FileTypeExtensions.getPDFExtensions()) {
-            if (ext.equals(s)) {
-                return "org/sleuthkit/autopsy/images/pdf-file.png"; //NON-NLS
-            }
+        if (FileTypeExtensions.getPDFExtensions().contains(ext)) {
+            return "org/sleuthkit/autopsy/images/pdf-file.png"; //NON-NLS
         }
         // Archives
-        for (String s : FileTypeExtensions.getArchiveExtensions()) {
-            if (ext.equals(s)) {
-                return "org/sleuthkit/autopsy/images/archive-file.png"; //NON-NLS
-            }
+        if (FileTypeExtensions.getArchiveExtensions().contains(ext)) {
+            return "org/sleuthkit/autopsy/images/archive-file.png"; //NON-NLS
         }
         // Else return the default
         return "org/sleuthkit/autopsy/images/file-icon.png"; //NON-NLS
-
     }
 
     @Override
@@ -185,4 +168,14 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
         // not will check if it has children using the Content API
         return true;
     }
+
+    /*
+     * TODO (AUT-1849): Correct or remove peristent column reordering code
+     *
+     * Added to support this feature.
+     */
+//    @Override
+//    public String getItemType() {
+//        return "File"; //NON-NLS
+//    }
 }

@@ -50,7 +50,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class PlatformUtil {
 
-    private static final String PYTHON_MODULES_SUBDIRECTORY = "python_modules";
+    private static final String PYTHON_MODULES_SUBDIRECTORY = "python_modules"; //NON-NLS
     private static String javaPath = null;
     public static final String OS_NAME_UNKNOWN = NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.nameUnknown");
     public static final String OS_VERSION_UNKNOWN = NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.verUnknown");
@@ -80,13 +80,13 @@ public class PlatformUtil {
         File coreFolder = InstalledFileLocator.getDefault().locate("core", PlatformUtil.class.getPackage().getName(), false); //NON-NLS
 
         File rootPath = coreFolder.getParentFile();
-        String modulesPath = rootPath.getAbsolutePath() + File.separator + "modules";
+        String modulesPath = rootPath.getAbsolutePath() + File.separator + "modules"; //NON-NLS
         File modulesPathF = new File(modulesPath);
         if (modulesPathF.exists() && modulesPathF.isDirectory()) {
             return modulesPath;
         } else {
             rootPath = rootPath.getParentFile();
-            modulesPath = rootPath.getAbsolutePath() + File.separator + "modules";
+            modulesPath = rootPath.getAbsolutePath() + File.separator + "modules"; //NON-NLS
             modulesPathF = new File(modulesPath);
             if (modulesPathF.exists() && modulesPathF.isDirectory()) {
                 return modulesPath;
@@ -104,7 +104,7 @@ public class PlatformUtil {
      *         not found
      */
     public static String getUserModulesPath() {
-        return getUserDirectory().getAbsolutePath() + File.separator + "modules";
+        return getUserDirectory().getAbsolutePath() + File.separator + "modules"; //NON-NLS
     }
 
     /**
@@ -310,7 +310,19 @@ public class PlatformUtil {
             return (System.getProperty("os.arch").contains("64")); //NON-NLS
         }
     }
-
+    
+    
+    /**
+     * Attempts to determine whether the JVM is 64-bit or 32-bit. 
+     * May not be completely reliable for non-Windows operating systems.
+     *
+     * @return True if the JVM is 64-bit. False otherwise.
+     */
+    public static boolean is64BitJVM() {
+        return (System.getProperty("sun.arch.data.model").equals("64"));
+    }
+    
+    
     /**
      * Get a list of all physical drives attached to the client's machine. Error
      * threshold of 4 non-existent physical drives before giving up.

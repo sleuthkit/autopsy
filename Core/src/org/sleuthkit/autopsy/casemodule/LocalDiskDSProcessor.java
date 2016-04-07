@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2014 Basis Technology Corp.
+ * Copyright 2013-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,169 +18,194 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.util.Calendar;
+import java.util.UUID;
 import javax.swing.JPanel;
-
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
+/**
+ * A local drive data source processor that implements the DataSourceProcessor
+ * service provider interface to allow integration with the add data source
+ * wizard. It also provides a run method overload to allow it to be used
+ * independently of the wizard.
+ */
 @ServiceProvider(service = DataSourceProcessor.class)
 public class LocalDiskDSProcessor implements DataSourceProcessor {
 
-    static final Logger logger = Logger.getLogger(ImageDSProcessor.class.getName());
-
-    // Data source type handled by this processor
-    private static final String dsType = NbBundle.getMessage(LocalDiskDSProcessor.class, "LocalDiskDSProcessor.dsType.text");
-
-    // The Config UI panel that plugins into the Choose Data Source Wizard
-    private final LocalDiskPanel localDiskPanel;
-
-    // The Background task that does the actual work of adding the local Disk 
-    // Adding a local disk is exactly same as adding an Image.
+    private static final String DATA_SOURCE_TYPE = NbBundle.getMessage(LocalDiskDSProcessor.class, "LocalDiskDSProcessor.dsType.text");
+    private final LocalDiskPanel configPanel;
     private AddImageTask addDiskTask;
-
-    // true if cancelled by the caller
-    private boolean cancelled = false;
-
-    DataSourceProcessorCallback callbackObj = null;
-
-    // set to TRUE if the image options have been set via API and config Jpanel should be ignored
-    private boolean localDiskOptionsSet = false;
-
-    // data source options
-    private String localDiskPath;
-    private String timeZone;
-    private boolean noFatOrphans;
-
     /*
-     * A no argument constructor is required for the NM lookup() method to
-     * create an object
+     * TODO: Remove the setDataSourceOptionsCalled flag and the settings fields
+     * when the deprecated method setDataSourceOptions is removed.
+     */
+    private String deviceId;
+    private String drivePath;
+    private String timeZone;
+    private boolean ignoreFatOrphanFiles;
+    private boolean setDataSourceOptionsCalled;
+
+    /**
+     * Constructs a local drive data source processor that implements the
+     * DataSourceProcessor service provider interface to allow integration with
+     * the add data source wizard. It also provides a run method overload to
+     * allow it to be used independently of the wizard.
      */
     public LocalDiskDSProcessor() {
-
-        // Create the config panel
-        localDiskPanel = LocalDiskPanel.getDefault();
-
-    }
-
-    // this static method is used by the wizard to determine dsp type for 'core' data source processors
-    public static String getType() {
-        return dsType;
+        configPanel = LocalDiskPanel.getDefault();
     }
 
     /**
-     * Returns the Data source type (string) handled by this DSP
+     * Gets a string that describes the type of data sources this processor is
+     * able to add to the case database. The string is suitable for display in a
+     * type selection UI component (e.g., a combo box).
      *
-     * @return String the data source type
+     * @return A data source type display string for this data source processor.
+     */
+    public static String getType() {
+        return DATA_SOURCE_TYPE;
+    }
+
+    /**
+     * Gets a string that describes the type of data sources this processor is
+     * able to add to the case database. The string is suitable for display in a
+     * type selection UI component (e.g., a combo box).
      *
+     * @return A data source type display string for this data source processor.
      */
     @Override
     public String getDataSourceType() {
-        return dsType;
+        return DATA_SOURCE_TYPE;
     }
 
     /**
-     * Returns the JPanel for collecting the Data source information
+     * Gets the panel that allows a user to select a data source and do any
+     * configuration required by the data source. The panel is less than 544
+     * pixels wide and less than 173 pixels high.
      *
-     * @return JPanel the config panel 
-     *
+     * @return A selection and configuration panel for this data source
+     *         processor.
      */
     @Override
     public JPanel getPanel() {
-
-        localDiskPanel.select();
-        return localDiskPanel;
+        configPanel.select();
+        return configPanel;
     }
 
     /**
-     * Validates the data collected by the JPanel
+     * Indicates whether the settings in the selection and configuration panel
+     * are valid and complete.
      *
-     * @return String returns NULL if success, error string if there is any
-     *         errors  
-     *
+     * @return True if the settings are valid and complete and the processor is
+     *         ready to have its run method called, false otherwise.
      */
     @Override
     public boolean isPanelValid() {
-        return localDiskPanel.validatePanel();
+        return configPanel.validatePanel();
     }
 
     /**
-     * Runs the data source processor. This must kick off processing the data
-     * source in background
+     * Adds a data source to the case database using a background task in a
+     * separate thread and the settings provided by the selection and
+     * configuration panel. Returns as soon as the background task is started.
+     * The background task uses a callback object to signal task completion and
+     * return results.
      *
-     * @param progressMonitor Progress monitor to report progress during
-     *                        processing
-     * @param cbObj           callback to call when processing is done.
+     * This method should not be called unless isPanelValid returns true.
      *
+     * @param progressMonitor Progress monitor that will be used by the
+     *                        background task to report progress.
+     * @param callback        Callback that will be used by the background task
+     *                        to return results.
      */
     @Override
-    public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback cbObj) {
-
-        callbackObj = cbObj;
-        cancelled = false;
-
-        if (!localDiskOptionsSet) {
-            // get the image options from the panel
-            localDiskPath = localDiskPanel.getContentPaths();
-            timeZone = localDiskPanel.getTimeZone();
-            noFatOrphans = localDiskPanel.getNoFatOrphans();
+    public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        if (!setDataSourceOptionsCalled) {
+            deviceId = UUID.randomUUID().toString();
+            drivePath = configPanel.getContentPaths();
+            timeZone = configPanel.getTimeZone();
+            ignoreFatOrphanFiles = configPanel.getNoFatOrphans();
         }
-
-        addDiskTask = new AddImageTask(localDiskPath, timeZone, noFatOrphans, progressMonitor, cbObj);
+        addDiskTask = new AddImageTask(deviceId, drivePath, timeZone, ignoreFatOrphanFiles, progressMonitor, callback);
         new Thread(addDiskTask).start();
-
     }
 
     /**
-     * Cancel the data source processing
+     * Adds a data source to the case database using a background task in a
+     * separate thread and the given settings instead of those provided by the
+     * selection and configuration panel. Returns as soon as the background task
+     * is started and uses the callback object to signal task completion and
+     * return results.
      *
+     * @param deviceId             An ASCII-printable identifier for the device
+     *                             associated with the data source that is
+     *                             intended to be unique across multiple cases
+     *                             (e.g., a UUID).
+     * @param drivePath            Path to the local drive.
+     * @param timeZone             The time zone to use when processing dates
+     *                             and times for the image, obtained from
+     *                             java.util.TimeZone.getID.
+     * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
+     *                             FAT filesystem.
+     * @param progressMonitor      Progress monitor for reporting progress
+     *                             during processing.
+     * @param callback             Callback to call when processing is done.
+     */
+    public void run(String deviceId, String drivePath, String timeZone, boolean ignoreFatOrphanFiles, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        addDiskTask = new AddImageTask(deviceId, drivePath, timeZone, ignoreFatOrphanFiles, progressMonitor, callback);
+        new Thread(addDiskTask).start();
+    }
+
+    /**
+     * Requests cancellation of the background task that adds a data source to
+     * the case database, after the task is started using the run method. This
+     * is a "best effort" cancellation, with no guarantees that the case
+     * database will be unchanged. If cancellation succeeded, the list of new
+     * data sources returned by the background task will be empty.
      */
     @Override
     public void cancel() {
-
-        cancelled = true;
-
         addDiskTask.cancelTask();
     }
 
     /**
-     * Reset the data source processor
-   *
+     * Resets the selection and configuration panel for this data source
+     * processor.
      */
     @Override
     public void reset() {
-
-        // reset the config panel
-        localDiskPanel.reset();
-
-        // reset state 
-        localDiskOptionsSet = false;
-        localDiskPath = null;
+        configPanel.reset();
+        deviceId = null;
+        drivePath = null;
         timeZone = null;
-        noFatOrphans = false;
-
+        ignoreFatOrphanFiles = false;
+        setDataSourceOptionsCalled = false;
     }
 
     /**
-     * Sets the data source options externally. To be used by a client that does
-     * not have a UI and does not use the JPanel to collect this information
-     * from a user.
+     * Sets the configuration of the data source processor without using the
+     * configuration panel.
      *
-     * @param diskPath path to the local disk
-     * @param tz       time zone
-     * @param noFat    whether to parse FAT orphans
-   *
+     * @param drivePath            Path to the local drive.
+     * @param timeZone             The time zone to use when processing dates
+     *                             and times for the local drive, obtained from
+     *                             java.util.TimeZone.getID.
+     * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
+     *                             FAT filesystem.
+     *
+     * @deprecated Use the provided overload of the run method instead.
      */
-    public void setDataSourceOptions(String diskPath, String tz, boolean noFat) {
-
-        this.localDiskPath = diskPath;
-        this.timeZone = tz;
-        this.noFatOrphans = noFat;
-
-        localDiskOptionsSet = true;
-
+    @Deprecated
+    public void setDataSourceOptions(String drivePath, String timeZone, boolean ignoreFatOrphanFiles) {
+        this.deviceId = UUID.randomUUID().toString();
+        this.drivePath = drivePath;
+        this.timeZone = Calendar.getInstance().getTimeZone().getID();
+        this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
+        setDataSourceOptionsCalled = true;
     }
+
 }

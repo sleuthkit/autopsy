@@ -61,6 +61,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.DataSources;
 import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
+import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.ExtractedContent;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.KnownFileFilterNode;
@@ -619,8 +620,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 DirectoryTreeTopComponent.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                 try {
 
-                    // make sure dataResult is open, redundant?
-                    //dataResult.open();
                     Node treeNode = DirectoryTreeTopComponent.this.getSelectedNode();
                     if (treeNode != null) {
                         DirectoryTreeFilterNode.OriginalNode origin = treeNode.getLookup().lookup(DirectoryTreeFilterNode.OriginalNode.class);
@@ -632,7 +631,18 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         //set node, wrap in filter node first to filter out children
                         Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
                         Node kffn = new KnownFileFilterNode(drfn, KnownFileFilterNode.getSelectionContext(originNode));
+                        /*
+                         * TODO (AUT-1849): Correct or remove peristent column
+                         * reordering code
+                         *
+                         * The following conditional was added to support this
+                         * feature.
+                         */
+//                        if(originNode instanceof DisplayableItemNode) {
+//                            dataResult.setNode(new TableFilterNode(kffn, true, ((DisplayableItemNode) originNode).getItemType()));
+//                        } else {
                         dataResult.setNode(new TableFilterNode(kffn, true));
+//                        }
 
                         String displayName = "";
                         Content content = originNode.getLookup().lookup(Content.class);
@@ -769,7 +779,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
         Node imagesNode = imagesNodeOrig.getNode();
 
-        DataSourcesNode.DataSourcesNodeChildren contentRootChildren = (DataSourcesNode.DataSourcesNodeChildren) imagesNode.getChildren();        
+        DataSourcesNode.DataSourcesNodeChildren contentRootChildren = (DataSourcesNode.DataSourcesNodeChildren) imagesNode.getChildren();
         contentRootChildren.refreshContentKeys();
 
         //final TreeView tree = getTree();
@@ -842,19 +852,20 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
     @Override
     public void viewArtifact(final BlackboardArtifact art) {
-        BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromID(art.getArtifactTypeID());
+        int typeID = art.getArtifactTypeID();
+        String typeName = art.getArtifactTypeName();
         Children rootChilds = em.getRootContext().getChildren();
         Node treeNode = null;
         Node resultsNode = rootChilds.findChild(ResultsNode.NAME);
         Children resultsChilds = resultsNode.getChildren();
-        if (type.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT)) {
-            Node hashsetRootNode = resultsChilds.findChild(type.getLabel());
+        if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
+            Node hashsetRootNode = resultsChilds.findChild(typeName);
             Children hashsetRootChilds = hashsetRootNode.getChildren();
             try {
                 String setName = null;
                 List<BlackboardAttribute> attributes = art.getAttributes();
                 for (BlackboardAttribute att : attributes) {
-                    int typeId = att.getAttributeTypeID();
+                    int typeId = att.getAttributeType().getTypeID();
                     if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
                         setName = att.getValueString();
                     }
@@ -863,15 +874,15 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             } catch (TskException ex) {
                 logger.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             }
-        } else if (type.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT)) {
-            Node keywordRootNode = resultsChilds.findChild(type.getLabel());
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+            Node keywordRootNode = resultsChilds.findChild(typeName);
             Children keywordRootChilds = keywordRootNode.getChildren();
             try {
                 String listName = null;
                 String keywordName = null;
                 List<BlackboardAttribute> attributes = art.getAttributes();
                 for (BlackboardAttribute att : attributes) {
-                    int typeId = att.getAttributeTypeID();
+                    int typeId = att.getAttributeType().getTypeID();
                     if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
                         listName = att.getValueString();
                     } else if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()) {
@@ -890,15 +901,15 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             } catch (TskException ex) {
                 logger.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             }
-        } else if (type.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT)
-                || type.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT)) {
-            Node interestingItemsRootNode = resultsChilds.findChild(type.getLabel());
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID()
+                || typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
+            Node interestingItemsRootNode = resultsChilds.findChild(typeName);
             Children interestingItemsRootChildren = interestingItemsRootNode.getChildren();
             try {
                 String setName = null;
                 List<BlackboardAttribute> attributes = art.getAttributes();
                 for (BlackboardAttribute att : attributes) {
-                    int typeId = att.getAttributeTypeID();
+                    int typeId = att.getAttributeType().getTypeID();
                     if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
                         setName = att.getValueString();
                     }
@@ -913,7 +924,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             if (extractedChilds == null) {
                 return;
             }
-            treeNode = extractedChilds.findChild(type.getLabel());
+            treeNode = extractedChilds.findChild(typeName);
         }
 
         if (treeNode == null) {

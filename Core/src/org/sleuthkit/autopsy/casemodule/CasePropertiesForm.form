@@ -1,4 +1,4 @@
-<?xml version="1.1" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 
 <Form version="1.5" maxVersion="1.7" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
   <NonVisualComponents>
@@ -37,48 +37,43 @@
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="casePropLabel" pref="440" max="32767" attributes="0"/>
-                  <Component id="genInfoLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                  <Component id="imgInfoLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Component id="imagesTableScrollPane" alignment="0" pref="440" max="32767" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
-                      <EmptySpace min="-2" pref="181" max="-2" attributes="0"/>
-                      <Component id="OKButton" min="-2" pref="78" max="-2" attributes="0"/>
-                  </Group>
-                  <Group type="102" alignment="0" attributes="0">
-                      <Group type="103" groupAlignment="1" attributes="0">
-                          <Group type="102" alignment="1" attributes="0">
-                              <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="caseNameLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="caseNumberLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                              </Group>
-                              <EmptySpace min="-2" pref="25" max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="caseNameTextField" pref="246" max="32767" attributes="1"/>
-                                  <Component id="caseNumberTextField" alignment="0" pref="246" max="32767" attributes="1"/>
-                              </Group>
-                          </Group>
-                          <Group type="102" attributes="0">
-                              <Component id="examinerLabel" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace min="-2" pref="45" max="-2" attributes="0"/>
-                              <Component id="examinerTextField" pref="246" max="32767" attributes="1"/>
-                          </Group>
-                          <Group type="102" alignment="0" attributes="0">
-                              <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="caseDirLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="crDateLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                              </Group>
-                              <EmptySpace type="separate" max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="jScrollPane2" pref="246" max="32767" attributes="0"/>
-                                  <Component id="crDateTextField" alignment="0" pref="246" max="32767" attributes="1"/>
-                              </Group>
-                          </Group>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="caseNameLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="caseNumberLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="examinerLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="caseDirLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="crDateLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lbDbType" alignment="0" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="caseNameTextField" alignment="0" pref="245" max="32767" attributes="1"/>
+                          <Component id="caseNumberTextField" alignment="0" pref="245" max="32767" attributes="1"/>
+                          <Component id="examinerTextField" alignment="0" pref="245" max="32767" attributes="1"/>
+                          <Component id="crDateTextField" alignment="0" max="32767" attributes="1"/>
+                          <Component id="jScrollPane2" alignment="0" max="32767" attributes="0"/>
+                          <Component id="tbDbType" alignment="0" max="32767" attributes="0"/>
+                          <Component id="tbDbName" alignment="0" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="updateCaseNameButton" min="-2" max="-2" attributes="1"/>
-                          <Component id="deleteCaseButton" alignment="0" max="32767" attributes="1"/>
+                          <Component id="deleteCaseButton" max="32767" attributes="1"/>
+                          <Component id="updateCaseNameButton" max="32767" attributes="1"/>
                       </Group>
+                  </Group>
+                  <Group type="102" attributes="0">
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="genInfoLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="imgInfoLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Group type="102" alignment="0" attributes="0">
+                              <EmptySpace min="-2" pref="181" max="-2" attributes="0"/>
+                              <Component id="OKButton" min="-2" pref="78" max="-2" attributes="0"/>
+                          </Group>
+                          <Component id="lbDbName" alignment="0" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -92,38 +87,51 @@
               <Component id="casePropLabel" min="-2" pref="33" max="-2" attributes="0"/>
               <EmptySpace type="separate" max="-2" attributes="0"/>
               <Component id="genInfoLabel" min="-2" max="-2" attributes="0"/>
-              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="caseNameLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="caseNameTextField" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="updateCaseNameButton" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="caseNumberLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="caseNumberTextField" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace type="separate" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="examinerLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="examinerTextField" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace pref="19" max="32767" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="crDateLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="crDateTextField" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" alignment="0" attributes="0">
+                  <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="caseDirLabel" min="-2" max="-2" attributes="0"/>
                           <Component id="jScrollPane2" min="-2" pref="40" max="-2" attributes="0"/>
+                          <Component id="caseDirLabel" min="-2" pref="14" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace min="-2" pref="39" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="tbDbType" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="lbDbType" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="lbDbName" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="tbDbName" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="imgInfoLabel" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <Component id="deleteCaseButton" min="-2" max="-2" attributes="0"/>
+                  <Group type="102" alignment="0" attributes="0">
+                      <EmptySpace min="-2" pref="9" max="-2" attributes="0"/>
+                      <Component id="deleteCaseButton" min="-2" max="-2" attributes="0"/>
+                  </Group>
               </Group>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Component id="imagesTableScrollPane" min="-2" pref="170" max="-2" attributes="0"/>
@@ -137,8 +145,10 @@
   <SubComponents>
     <Component class="javax.swing.JLabel" name="casePropLabel">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Tahoma" size="24" style="1"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="true" component="casePropLabel" property="font" relativeSize="false" size="24"/>
+          </FontInfo>
         </Property>
         <Property name="horizontalAlignment" type="int" value="0"/>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -148,6 +158,11 @@
     </Component>
     <Component class="javax.swing.JLabel" name="caseNameLabel">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="false" component="caseNameLabel" property="font" relativeSize="false" size="11"/>
+          </FontInfo>
+        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesForm.caseNameLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
@@ -155,6 +170,11 @@
     </Component>
     <Component class="javax.swing.JLabel" name="crDateLabel">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="false" component="crDateLabel" property="font" relativeSize="false" size="11"/>
+          </FontInfo>
+        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesForm.crDateLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
@@ -162,6 +182,11 @@
     </Component>
     <Component class="javax.swing.JLabel" name="caseDirLabel">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="false" component="caseDirLabel" property="font" relativeSize="false" size="11"/>
+          </FontInfo>
+        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesForm.caseDirLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
@@ -170,6 +195,11 @@
     <Component class="javax.swing.JTextField" name="crDateTextField">
       <Properties>
         <Property name="editable" type="boolean" value="false"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="false" component="crDateTextField" property="font" relativeSize="false" size="11"/>
+          </FontInfo>
+        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesForm.crDateTextField.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
@@ -177,6 +207,11 @@
     </Component>
     <Component class="javax.swing.JTextField" name="caseNameTextField">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="false" component="caseNameTextField" property="font" relativeSize="false" size="11"/>
+          </FontInfo>
+        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesForm.caseNameTextField.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
@@ -184,6 +219,11 @@
     </Component>
     <Component class="javax.swing.JButton" name="updateCaseNameButton">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="false" component="updateCaseNameButton" property="font" relativeSize="false" size="11"/>
+          </FontInfo>
+        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesForm.updateCaseNameButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
@@ -194,8 +234,10 @@
     </Component>
     <Component class="javax.swing.JLabel" name="genInfoLabel">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Tahoma" size="14" style="1"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="true" component="genInfoLabel" property="font" relativeSize="false" size="14"/>
+          </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesForm.genInfoLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
@@ -204,8 +246,10 @@
     </Component>
     <Component class="javax.swing.JLabel" name="imgInfoLabel">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Tahoma" size="14" style="1"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="true" component="imgInfoLabel" property="font" relativeSize="false" size="14"/>
+          </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesForm.imgInfoLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
@@ -214,12 +258,24 @@
     </Component>
     <Component class="javax.swing.JButton" name="OKButton">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="false" component="OKButton" property="font" relativeSize="false" size="11"/>
+          </FontInfo>
+        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesForm.OKButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
     <Container class="javax.swing.JScrollPane" name="imagesTableScrollPane">
+      <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="false" component="imagesTableScrollPane" property="font" relativeSize="false" size="11"/>
+          </FontInfo>
+        </Property>
+      </Properties>
       <AuxValues>
         <AuxValue name="autoScrollPane" type="java.lang.Boolean" value="true"/>
       </AuxValues>
@@ -228,11 +284,34 @@
       <SubComponents>
         <Component class="javax.swing.JTable" name="imagesTable">
           <Properties>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font bold="false" component="imagesTable" property="font" relativeSize="false" size="11"/>
+              </FontInfo>
+            </Property>
             <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.editors2.TableModelEditor">
               <Table columnCount="2" rowCount="0">
                 <Column editable="false" title="Path" type="java.lang.Object"/>
                 <Column editable="true" title="Remove" type="java.lang.Object"/>
               </Table>
+            </Property>
+            <Property name="columnModel" type="javax.swing.table.TableColumnModel" editor="org.netbeans.modules.form.editors2.TableColumnModelEditor">
+              <TableColumnModel selectionModel="0">
+                <Column maxWidth="-1" minWidth="-1" prefWidth="-1" resizable="true">
+                  <Title editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                    <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesForm.imagesTable.path" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  </Title>
+                  <Editor/>
+                  <Renderer/>
+                </Column>
+                <Column maxWidth="-1" minWidth="-1" prefWidth="-1" resizable="true">
+                  <Title editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                    <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesForm.imagesTable.remove" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  </Title>
+                  <Editor/>
+                  <Renderer/>
+                </Column>
+              </TableColumnModel>
             </Property>
             <Property name="showHorizontalLines" type="boolean" value="false"/>
             <Property name="showVerticalLines" type="boolean" value="false"/>
@@ -245,6 +324,13 @@
       </SubComponents>
     </Container>
     <Container class="javax.swing.JScrollPane" name="jScrollPane2">
+      <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="false" component="jScrollPane2" property="font" relativeSize="false" size="11"/>
+          </FontInfo>
+        </Property>
+      </Properties>
       <AuxValues>
         <AuxValue name="autoScrollPane" type="java.lang.Boolean" value="true"/>
       </AuxValues>
@@ -253,11 +339,11 @@
       <SubComponents>
         <Component class="javax.swing.JTextArea" name="caseDirTextArea">
           <Properties>
+            <Property name="editable" type="boolean" value="false"/>
             <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="f0" green="f0" red="f0" type="rgb"/>
             </Property>
             <Property name="columns" type="int" value="20"/>
-            <Property name="editable" type="boolean" value="false"/>
             <Property name="rows" type="int" value="1"/>
             <Property name="requestFocusEnabled" type="boolean" value="false"/>
           </Properties>
@@ -266,6 +352,11 @@
     </Container>
     <Component class="javax.swing.JButton" name="deleteCaseButton">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="false" component="deleteCaseButton" property="font" relativeSize="false" size="11"/>
+          </FontInfo>
+        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesForm.deleteCaseButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
@@ -276,6 +367,11 @@
     </Component>
     <Component class="javax.swing.JLabel" name="caseNumberLabel">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="false" component="caseNumberLabel" property="font" relativeSize="false" size="11"/>
+          </FontInfo>
+        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesForm.caseNumberLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
@@ -283,6 +379,11 @@
     </Component>
     <Component class="javax.swing.JLabel" name="examinerLabel">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="false" component="examinerLabel" property="font" relativeSize="false" size="11"/>
+          </FontInfo>
+        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesForm.examinerLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
@@ -291,6 +392,11 @@
     <Component class="javax.swing.JTextField" name="caseNumberTextField">
       <Properties>
         <Property name="editable" type="boolean" value="false"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="false" component="caseNumberTextField" property="font" relativeSize="false" size="11"/>
+          </FontInfo>
+        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesForm.caseNumberTextField.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
@@ -299,8 +405,63 @@
     <Component class="javax.swing.JTextField" name="examinerTextField">
       <Properties>
         <Property name="editable" type="boolean" value="false"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="false" component="examinerTextField" property="font" relativeSize="false" size="11"/>
+          </FontInfo>
+        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesForm.examinerTextField.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lbDbType">
+      <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="false" component="lbDbType" property="font" relativeSize="false" size="11"/>
+          </FontInfo>
+        </Property>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesForm.lbDbType.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="tbDbType">
+      <Properties>
+        <Property name="editable" type="boolean" value="false"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="false" component="tbDbType" property="font" relativeSize="false" size="11"/>
+          </FontInfo>
+        </Property>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesForm.tbDbType.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lbDbName">
+      <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="false" component="lbDbName" property="font" relativeSize="false" size="11"/>
+          </FontInfo>
+        </Property>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesForm.lbDbName.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="tbDbName">
+      <Properties>
+        <Property name="editable" type="boolean" value="false"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="false" component="tbDbName" property="font" relativeSize="false" size="11"/>
+          </FontInfo>
+        </Property>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesForm.tbDbName.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>

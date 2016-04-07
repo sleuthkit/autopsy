@@ -177,7 +177,7 @@
                     <compile-dependency/>
                     <run-dependency>
                         <release-version>3</release-version>
-                        <specification-version>1.0</specification-version>
+                        <specification-version>1.1</specification-version>
                     </run-dependency>
                 </dependency>
             </module-dependencies>
@@ -202,6 +202,7 @@
                 <package>org.sleuthkit.autopsy.menuactions</package>
                 <package>org.sleuthkit.autopsy.modules.filetypeid</package>
                 <package>org.sleuthkit.autopsy.modules.hashdatabase</package>
+                <package>org.sleuthkit.autopsy.modules.vmextractor</package>
                 <package>org.sleuthkit.autopsy.report</package>
                 <package>org.sleuthkit.datamodel</package>
             </public-packages>
@@ -278,8 +279,8 @@
                 <binary-origin>release/modules/ext/jdom-2.0.5-contrib.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/Tsk_DataModel.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/Tsk_DataModel.jar</binary-origin>
+                <runtime-relative-path>ext/Tsk_DataModel_PostgreSQL.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/Tsk_DataModel_PostgreSQL.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>

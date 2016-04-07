@@ -43,7 +43,7 @@ public enum DescriptionLoD {
         try {
             return values()[ordinal() + 1];
         } catch (ArrayIndexOutOfBoundsException e) {
-            return FULL;
+            return null;
         }
     }
 
@@ -51,7 +51,7 @@ public enum DescriptionLoD {
         try {
             return values()[ordinal() - 1];
         } catch (ArrayIndexOutOfBoundsException e) {
-            return SHORT;
+            return null;
         }
     }
 

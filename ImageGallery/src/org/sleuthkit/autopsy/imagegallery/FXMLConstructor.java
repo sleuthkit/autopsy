@@ -21,10 +21,10 @@ package org.sleuthkit.autopsy.imagegallery;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.logging.Level;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
 import org.apache.commons.lang3.StringUtils;
-import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * This class supports programmer productivity by abstracting frequently used
@@ -36,9 +36,10 @@ import org.openide.util.Exceptions;
  */
 public class FXMLConstructor {
 
-    static public void construct(Node n, String fxmlFileName) {
-        final String name = "nbres:/" + StringUtils.replace(n.getClass().getPackage().getName(), ".", "/") + "/" + fxmlFileName;
-//        System.out.println(name);
+    private static Logger logger = Logger.getLogger(FXMLConstructor.class.getName());
+
+    static public void construct(Object n, String fxmlFileName) {
+        final String name = "nbres:/" + StringUtils.replace(n.getClass().getPackage().getName(), ".", "/") + "/" + fxmlFileName; //NON-NLS
 
         try {
             FXMLLoader fxmlLoader = new FXMLLoader(new URL(name));
@@ -52,11 +53,13 @@ public class FXMLConstructor {
                     fxmlLoader.setClassLoader(FXMLLoader.getDefaultClassLoader());
                     fxmlLoader.load();
                 } catch (IOException ex) {
-                    Exceptions.printStackTrace(ex);
+                    String msg = String.format("Failed to load fxml file %s", fxmlFileName); //NON-NLS
+                    logger.log(Level.SEVERE, msg, ex);
                 }
             }
         } catch (MalformedURLException ex) {
-            Exceptions.printStackTrace(ex);
+            String msg = String.format("Malformed URL %s", name); //NON-NLS
+            logger.log(Level.SEVERE, msg, ex);
         }
 
     }

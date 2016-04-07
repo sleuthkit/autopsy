@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,36 +23,40 @@ import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 
 /**
- * This class is used to filter the nodes that we want to show on the
- * "TreeTableView". So basically we just want to show one layer of nodes from
- * it's parent.
- *
- * @author jantonius
+ * A filter node that creates at most one layer of child nodes for the node it
+ * wraps. It is designed to be used for nodes displayed in Autopsy table views.
  */
 public class TableFilterNode extends FilterNode {
 
-    private boolean createChild;
+    private final boolean createChildren;
 
     /**
-     * the constructor
+     * Constructs a filter node that creates at most one layer of child nodes
+     * for the node it wraps. It is designed to be used for nodes displayed in
+     * Autopsy table views.
+     *
+     * @param wrappedNode    The node to wrap in the filter node.
+     * @param createChildren True if a children (child factory) object should be
+     *                       created for the wrapped node.
      */
-    public TableFilterNode(Node arg, boolean crChild) {
-        super(arg, TableFilterChildren.createInstance(arg, crChild));
-        this.createChild = crChild;
+    public TableFilterNode(Node wrappedNode, boolean createChildren) {
+        super(wrappedNode, TableFilterChildren.createInstance(wrappedNode, createChildren));
+        this.createChildren = createChildren;
     }
 
     /**
-     * Override the display name / header for the first (tree) column on the
-     * "TreeTableView".
+     * Returns a display name for the wrapped node, for use in the first column
+     * of an Autopsy table view.
      *
-     * @return disName the display name for the first column
+     * @return The display name.
      */
     @Override
     public String getDisplayName() {
-        if (createChild) {
+        if (createChildren) {
             return NbBundle.getMessage(this.getClass(), "TableFilterNode.displayName.text");
         } else {
             return super.getDisplayName();
         }
     }
+
 }

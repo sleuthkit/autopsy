@@ -143,6 +143,16 @@ public class FileSize implements AutopsyVisitableItem {
                     NAME));
             return s;
         }
+
+        /*
+         * TODO (AUT-1849): Correct or remove peristent column reordering code
+         *
+         * Added to support this feature.
+         */
+//        @Override
+//        public String getItemType() {
+//            return "FileSizeRoot"; //NON-NLS
+//        }
     }
 
     /*
@@ -281,6 +291,16 @@ public class FileSize implements AutopsyVisitableItem {
                 updateDisplayName();
             }
 
+            /*
+             * TODO (AUT-1849): Correct or remove peristent column reordering
+             * code
+             *
+             * Added to support this feature.
+             */
+//            @Override
+//            public String getItemType() {
+//                return "FileSize"; //NON-NLS
+//            }
             // update the display name when new events are fired
             private class FileSizeNodeObserver implements Observer {
 

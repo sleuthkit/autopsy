@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,14 +23,17 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.lang.ref.SoftReference;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
+import org.apache.commons.lang3.StringUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -57,14 +60,12 @@ class ThumbnailViewNode extends FilterNode {
 
     @Override
     public String getDisplayName() {
-        if (super.getDisplayName().length() > 15) {
-            return super.getDisplayName().substring(0, 15).concat("...");
-        } else {
-            return super.getDisplayName();
-        }
+        return StringUtils.abbreviate(super.getDisplayName(), 18);
     }
 
     @Override
+    @NbBundle.Messages({"# {0} - file name",
+        "ThumbnailViewNode.progressHandle.text=Generating thumbnail for {0}"})
     public Image getIcon(int type) {
         Image icon = null;
 
@@ -81,7 +82,7 @@ class ThumbnailViewNode extends FilterNode {
             }
             if (swingWorker == null || swingWorker.isDone()) {
                 swingWorker = new SwingWorker<Image, Object>() {
-                    final private ProgressHandle progressHandle = ProgressHandleFactory.createHandle("generating thumbnail for video file " + content.getName());
+                    final private ProgressHandle progressHandle = ProgressHandleFactory.createHandle(Bundle.ThumbnailViewNode_progressHandle_text(content.getName()));
 
                     @Override
                     protected Image doInBackground() throws Exception {
@@ -94,16 +95,18 @@ class ThumbnailViewNode extends FilterNode {
                         super.done();
                         try {
                             iconCache = new SoftReference<>(super.get());
-                            progressHandle.finish();
                             fireIconChange();
+                        } catch (InterruptedException | ExecutionException ex) {
+                            Logger.getLogger(ThumbnailViewNode.class.getName()).log(Level.SEVERE, "Error getting thumbnail icon for " + content.getName(), ex); //NON-NLS
+                        } finally {
+                            progressHandle.finish();
                             if (timer != null) {
                                 timer.stop();
                                 timer = null;
+
                             }
-                        } catch (InterruptedException | ExecutionException ex) {
-                            Exceptions.printStackTrace(ex);
+                            swingWorker = null;
                         }
-                        swingWorker = null;
                     }
                 };
                 swingWorker.execute();

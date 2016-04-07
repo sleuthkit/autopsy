@@ -25,28 +25,29 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 
 /**
- * This class is used to add the action to the run ingest modules menu item. 
- * When the image is pressed, it should open the wizard for ingest modules.
+ * This class is used to add the action to the run ingest modules menu item.
+ * When the data source is pressed, it should open the wizard for ingest
+ * modules.
  */
 final class RunIngestModulesAction extends AbstractAction {
 
-    Image image;
+    Content dataSource;
 
     /**
      * the constructor
      */
-    public RunIngestModulesAction(Image image) {
-        this.image = image;
+    public RunIngestModulesAction(Content dataSource) {
+        this.dataSource = dataSource;
     }
 
     /**
-     * Runs the ingest modules wizard on the image.
+     * Runs the ingest modules wizard on the data source.
      *
      * @param e the action event
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        final RunIngestModulesDialog ingestDialog = new RunIngestModulesDialog(Collections.<Content>singletonList(image));
+        final RunIngestModulesDialog ingestDialog = new RunIngestModulesDialog(Collections.<Content>singletonList(dataSource));
         ingestDialog.display();
     }
 }

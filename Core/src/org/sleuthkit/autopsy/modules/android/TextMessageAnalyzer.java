@@ -29,14 +29,15 @@ import java.util.logging.Level;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -46,8 +47,10 @@ class TextMessageAnalyzer {
 
     private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(TextMessageAnalyzer.class.getName());
+    private static Blackboard blackboard;
 
     public static void findTexts(Content dataSource, FileManager fileManager) {
+        blackboard = Case.getCurrentCase().getServices().getBlackboard();
         try {
 
             List<AbstractFile> absFiles = fileManager.findFiles(dataSource, "mmssms.db"); //NON-NLS
@@ -102,26 +105,34 @@ class TextMessageAnalyzer {
 
                 BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE); //create Message artifact and then add attributes from result set.
                 if (resultSet.getString("type").equals("1")) { //NON-NLS
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID(), moduleName,
+                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION, moduleName,
                             NbBundle.getMessage(TextMessageAnalyzer.class,
                                     "TextMessageAnalyzer.bbAttribute.incoming")));
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getTypeID(), moduleName, address));
+                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM, moduleName, address));
                 } else {
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID(), moduleName,
+                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION, moduleName,
                             NbBundle.getMessage(TextMessageAnalyzer.class,
                                     "TextMessageAnalyzer.bbAttribute.outgoing")));
-                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getTypeID(), moduleName, address));
+                    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO, moduleName, address));
                 }
-                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), moduleName, date));
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, moduleName, date));
 
-                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_READ_STATUS.getTypeID(), moduleName, read));
-                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID(), moduleName, subject));
-                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), moduleName, body));
-                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID(), moduleName,
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_READ_STATUS, moduleName, read));
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT, moduleName, subject));
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT, moduleName, body));
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE, moduleName,
                         NbBundle.getMessage(TextMessageAnalyzer.class,
                                 "TextMessageAnalyzer.bbAttribute.smsMessage")));
+                
+                try {
+                    // index the artifact for keyword search
+                    blackboard.indexArtifact(bba);
+                } catch (Blackboard.BlackboardException ex) {
+                    logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", bba.getDisplayName()), ex); //NON-NLS
+                    MessageNotifyUtil.Notify.error(
+                        NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), bba.getDisplayName());
+                }
             }
-
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error parsing text messages to Blackboard", e); //NON-NLS
         } finally {

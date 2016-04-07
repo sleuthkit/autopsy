@@ -18,7 +18,7 @@ You do not need to configure anything with this module unless you want to define
 
 From there, you can define rules based on the offset of the signature and if the signature is a byte sequence of an ASCII string.
 
-\image html filetype.png
+\image html filetype.PNG
 
 Using the Module
 ======
@@ -36,6 +36,6 @@ This module does not have obvious impacts in the user interface, though it is us
 
 To see the file type of an individual file, view the "Results" tab in the lower right when you navigate to the file. You should see a page in there that mentions the file type.
 
-The Views area of the tree does not take the results of this module into account. That part of the tree relies on extension.  We will be upating it in the future to rely on extension when there is no output from this module for the file. 
+The Views area of the tree does not take the results of this module into account. That part of the tree relies on extension.  We will be updating it in the future to rely on extension when there is no output from this module for the file. 
 
 */

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,26 +23,35 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
+import java.awt.Cursor;
+import java.util.logging.Level;
+import org.openide.DialogDescriptor;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
- * This class is used to add the action to the recent case menu item. When the
- * the recent case menu is pressed, it should open that selected case.
+ * An action listener that opens a recent case.
  */
 class RecentItems implements ActionListener {
 
-    final String caseName;
-    final String casePath;
-    private JPanel caller; // for error handling
+    private static final Logger logger = Logger.getLogger(RecentItems.class.getName());
+    private final String caseName;
+    private final String caseMetaDataFilePath;
 
     /**
-     * the constructor
+     * Constructs an action listener that opens a recent case.
+     *
+     * @param caseName             The name of the case.
+     * @param caseMetaDataFilePath The path to the case metadata file.
      */
-    public RecentItems(String caseName, String casePath) {
+    public RecentItems(String caseName, String caseMetaDataFilePath) {
         this.caseName = caseName;
-        this.casePath = casePath;
+        this.caseMetaDataFilePath = caseMetaDataFilePath;
     }
 
     /**
@@ -52,31 +61,65 @@ class RecentItems implements ActionListener {
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        // check if the file exists
-        if (caseName.equals("") || casePath.equals("") || (!new File(casePath).exists())) {
-            // throw an error here
-            JOptionPane.showMessageDialog(caller,
-                    NbBundle.getMessage(this.getClass(), "RecentItems.openRecentCase.msgDlg.text",
-                            caseName),
-                    NbBundle.getMessage(this.getClass(), "RecentItems.openRecentCase.msgDlg.err"),
-                    JOptionPane.ERROR_MESSAGE);
-            RecentCases.getInstance().removeRecentCase(caseName, casePath); // remove the recent case if it doesn't exist anymore
+        /*
+         * If ingest is running, do a dialog to warn the user and confirm the
+         * intent to close the current case and leave the ingest process
+         * incomplete.
+         */
+        if (IngestManager.getInstance().isIngestRunning()) {
+            NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(
+                    NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning"),
+                    NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning.title"),
+                    NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
+            descriptor.setValue(NotifyDescriptor.NO_OPTION);
+            Object res = DialogDisplayer.getDefault().notify(descriptor);
+            if (res != null && res == DialogDescriptor.YES_OPTION) {
+                Case currentCase = null;
+                try {
+                    currentCase = Case.getCurrentCase();
+                    currentCase.closeCase();
+                } catch (IllegalStateException ignored) {
+                    /*
+                     * No current case.
+                     */
+                } catch (CaseActionException ex) {
+                    logger.log(Level.SEVERE, String.format("Error closing case at %s while ingest was running", (null!= currentCase ? currentCase.getCaseDirectory() : "?")),ex); //NON-NLS
+                }
+            } else {
+                return;
+            }
+        }
 
-            //if case is not opened, open the start window
+        /*
+         * Open the case. 
+         */
+        if (caseName.equals("") || caseMetaDataFilePath.equals("") || (!new File(caseMetaDataFilePath).exists())) {
+            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                    NbBundle.getMessage(this.getClass(), "RecentItems.openRecentCase.msgDlg.text", caseName),
+                    NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"),
+                    JOptionPane.ERROR_MESSAGE);
+            RecentCases.getInstance().removeRecentCase(caseName, caseMetaDataFilePath);
             if (Case.isCaseOpen() == false) {
                 EventQueue.invokeLater(() -> {
                     StartupWindowProvider.getInstance().open();
                 });
-
             }
         } else {
+            SwingUtilities.invokeLater(() -> {
+                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            });
             new Thread(() -> {
-                // Create case.
                 try {
-                    Case.open(casePath);
+                    Case.open(caseMetaDataFilePath);
                 } catch (CaseActionException ex) {
                     SwingUtilities.invokeLater(() -> {
-                        JOptionPane.showMessageDialog(null, ex.getMessage(), NbBundle.getMessage(RecentItems.this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), JOptionPane.ERROR_MESSAGE);
+                        logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseMetaDataFilePath), ex); //NON-NLS
+                        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                        JOptionPane.showMessageDialog(
+                                WindowManager.getDefault().getMainWindow(),
+                                ex.getMessage(), // Should be user-friendly
+                                NbBundle.getMessage(RecentItems.this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), //NON-NLS
+                                JOptionPane.ERROR_MESSAGE);
                         if (!Case.isCaseOpen()) {
                             StartupWindowProvider.getInstance().open();
                         }

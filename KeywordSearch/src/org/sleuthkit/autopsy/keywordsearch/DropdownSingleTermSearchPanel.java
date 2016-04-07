@@ -154,7 +154,7 @@ public class DropdownSingleTermSearchPanel extends KeywordSearchPanel {
         org.openide.awt.Mnemonics.setLocalizedText(selectAllMenuItem, org.openide.util.NbBundle.getMessage(DropdownSingleTermSearchPanel.class, "DropdownSearchPanel.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
 
-        keywordTextField.setFont(new java.awt.Font("Monospaced", 0, 14)); // NOI18N
+        keywordTextField.setFont(new java.awt.Font("Monospaced", 0, 14)); // NOI18N NON-NLS
         keywordTextField.setText(org.openide.util.NbBundle.getMessage(DropdownSingleTermSearchPanel.class, "DropdownSearchPanel.keywordTextField.text")); // NOI18N
         keywordTextField.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(192, 192, 192), 1, true));
         keywordTextField.setMinimumSize(new java.awt.Dimension(2, 25));
@@ -170,7 +170,7 @@ public class DropdownSingleTermSearchPanel extends KeywordSearchPanel {
             }
         });
 
-        searchButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/search-icon.png"))); // NOI18N
+        searchButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/search-icon.png"))); // NOI18N NON-NLS
         org.openide.awt.Mnemonics.setLocalizedText(searchButton, org.openide.util.NbBundle.getMessage(DropdownSingleTermSearchPanel.class, "DropdownSearchPanel.searchButton.text")); // NOI18N
         searchButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {

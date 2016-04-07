@@ -44,9 +44,11 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
@@ -86,6 +88,8 @@ class SevenZipExtractor {
     private String moduleDirRelative;
     private String moduleDirAbsolute;
 
+    private Blackboard blackboard;
+
     private String getLocalRootAbsPath(String uniqueArchiveFileName) {
         return moduleDirAbsolute + File.separator + uniqueArchiveFileName;
     }
@@ -95,13 +99,13 @@ class SevenZipExtractor {
      */
     private enum SupportedArchiveExtractionFormats {
 
-        ZIP("application/zip"),
-        SEVENZ("application/x-7z-compressed"),
-        GZIP("application/gzip"),
-        XGZIP("application/x-gzip"),
-        XBZIP2("application/x-bzip2"),
-        XTAR("application/x-tar"),
-        XGTAR("application/x-gtar");
+        ZIP("application/zip"), //NON-NLS
+        SEVENZ("application/x-7z-compressed"), //NON-NLS
+        GZIP("application/gzip"), //NON-NLS
+        XGZIP("application/x-gzip"), //NON-NLS
+        XBZIP2("application/x-bzip2"), //NON-NLS
+        XTAR("application/x-tar"), //NON-NLS
+        XGTAR("application/x-gtar"); //NON-NLS
 
         private final String mimeType;
 
@@ -129,7 +133,7 @@ class SevenZipExtractor {
                 String details = NbBundle.getMessage(SevenZipExtractor.class, "EmbeddedFileExtractorIngestModule.ArchiveExtractor.init.errCantInitLib",
                         e.getMessage());
                 services.postMessage(IngestMessage.createErrorMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), msg, details));
-                throw new IngestModuleException(e.getMessage());
+                throw new IngestModuleException(e.getMessage(), e);
             }
         }
         this.context = context;
@@ -225,7 +229,7 @@ class SevenZipExtractor {
             }
 
         } catch (SevenZipException ex) {
-            logger.log(Level.SEVERE, "Error getting archive item size and cannot detect if zipbomb. ", ex); //NON-NLS
+            logger.log(Level.WARNING, "Error getting archive item size and cannot detect if zipbomb. ", ex); //NON-NLS
             return false;
         }
     }
@@ -241,15 +245,7 @@ class SevenZipExtractor {
     private ArchiveFormat get7ZipOptions(AbstractFile archiveFile) {
         // try to get the file type from the BB
         String detectedFormat = null;
-        try {
-            ArrayList<BlackboardAttribute> attributes = archiveFile.getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
-            for (BlackboardAttribute attribute : attributes) {
-                detectedFormat = attribute.getValueString();
-                break;
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Couldn't obtain file attributes for file: " + archiveFile.toString(), ex); //NON-NLS
-        }
+        detectedFormat = archiveFile.getMIMEType();
 
         if (detectedFormat == null) {
             logger.log(Level.WARNING, "Could not detect format for file: {0}", archiveFile); //NON-NLS
@@ -285,6 +281,7 @@ class SevenZipExtractor {
      * @return list of unpacked derived files
      */
     void unpack(AbstractFile archiveFile) {
+        blackboard = Case.getCurrentCase().getServices().getBlackboard();
         String archiveFilePath;
         try {
             archiveFilePath = archiveFile.getUniquePath();
@@ -352,7 +349,7 @@ class SevenZipExtractor {
             final ISimpleInArchive simpleInArchive = inArchive.getSimpleInterface();
 
             //setup the archive local root folder
-            final String uniqueArchiveFileName = EmbeddedFileExtractorIngestModule.getUniqueName(archiveFile);
+            final String uniqueArchiveFileName = FileUtil.escapeFileName(EmbeddedFileExtractorIngestModule.getUniqueName(archiveFile));
             final String localRootAbsPath = getLocalRootAbsPath(uniqueArchiveFileName);
             final File localRoot = new File(localRootAbsPath);
             if (!localRoot.exists()) {
@@ -387,12 +384,21 @@ class SevenZipExtractor {
                     if (dotI != -1) {
                         String base = archName.substring(0, dotI);
                         String ext = archName.substring(dotI);
+                        int colonIndex = ext.lastIndexOf(":");
+                        if (colonIndex != -1) {
+                            // If alternate data stream is found, fix the name 
+                            // so Windows doesn't choke on the colon character.
+                            ext = ext.substring(0, colonIndex);
+                        }
                         switch (ext) {
                             case ".gz": //NON-NLS
                                 useName = base;
                                 break;
                             case ".tgz": //NON-NLS
                                 useName = base + ".tar"; //NON-NLS
+                                break;
+                            case ".bz2": //NON-NLS
+                                useName = base;
                                 break;
                         }
                     }
@@ -410,7 +416,6 @@ class SevenZipExtractor {
                 }
                 archiveFilePath = FileUtil.escapeFileName(archiveFilePath);
                 ++itemNumber;
-                logger.log(Level.INFO, "Extracted item path: {0}", pathInArchive); //NON-NLS
 
                 //check if possible zip bomb
                 if (isZipBombArchiveItemCheck(archiveFile, item)) {
@@ -461,7 +466,7 @@ class SevenZipExtractor {
                     }
                 }
 
-                final String uniqueExtractedName = uniqueArchiveFileName + File.separator + (item.getItemIndex() / 1000) + File.separator + item.getItemIndex() + "_" + new File(pathInArchive).getName();
+                final String uniqueExtractedName = FileUtil.escapeFileName(uniqueArchiveFileName + File.separator + (item.getItemIndex() / 1000) + File.separator + item.getItemIndex() + "_" + new File(pathInArchive).getName());
 
                 //final String localRelPath = unpackDir + File.separator + localFileRelPath;
                 final String localRelPath = moduleDirRelative + File.separator + uniqueExtractedName;
@@ -504,10 +509,11 @@ class SevenZipExtractor {
                 SevenZipExtractor.UnpackStream unpackStream = null;
                 if (!isDir) {
                     try {
-                        if (size != null)
+                        if (size != null) {
                             unpackStream = new SevenZipExtractor.KnownSizeUnpackStream(localAbsPath, size);
-                        else
+                        } else {
                             unpackStream = new SevenZipExtractor.UnknownSizeUnpackStream(localAbsPath, freeDiskSpace);
+                        }
                         item.extractSlow(unpackStream);
                     } catch (Exception e) {
                         //could be something unexpected with this file, move on
@@ -548,7 +554,7 @@ class SevenZipExtractor {
             }
 
         } catch (SevenZipException ex) {
-            logger.log(Level.SEVERE, "Error unpacking file: {0}", archiveFile); //NON-NLS
+            logger.log(Level.WARNING, "Error unpacking file: {0}", archiveFile); //NON-NLS
             //inbox message
 
             // print a message if the file is allocated
@@ -588,7 +594,17 @@ class SevenZipExtractor {
             String encryptionType = fullEncryption ? ENCRYPTION_FULL : ENCRYPTION_FILE_LEVEL;
             try {
                 BlackboardArtifact artifact = archiveFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED);
-                artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), EmbeddedFileExtractorModuleFactory.getModuleName(), encryptionType));
+                artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, EmbeddedFileExtractorModuleFactory.getModuleName(), encryptionType));
+
+                try {
+                    // index the artifact for keyword search
+                    blackboard.indexArtifact(artifact);
+                } catch (Blackboard.BlackboardException ex) {
+                    logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", artifact.getDisplayName()), ex); //NON-NLS
+                    MessageNotifyUtil.Notify.error(
+                            NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), artifact.getDisplayName());
+                }
+
                 services.fireModuleDataEvent(new ModuleDataEvent(EmbeddedFileExtractorModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED));
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error creating blackboard artifact for encryption detected for file: " + archiveFilePath, ex); //NON-NLS
@@ -628,11 +644,11 @@ class SevenZipExtractor {
         }
 
         public abstract long getSize();
-        
+
         OutputStream getOutput() {
             return output;
         }
-        
+
         String getLocalAbsPath() {
             return localAbsPath;
         }

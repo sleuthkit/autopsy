@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,9 +28,11 @@ import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.ErrorInfo;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -41,6 +43,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * Uses a standard representation of results data (e.g., artifacts, derived
@@ -52,6 +55,7 @@ public final class ExternalResultsImporter {
     private static final Logger logger = Logger.getLogger(ExternalResultsImporter.class.getName());
     private static final HashSet<Integer> standardArtifactTypeIds = new HashSet<>();
     private final List<ErrorInfo> errors = new ArrayList<>();
+    private Blackboard blackboard;
 
     static {
         for (BlackboardArtifact.ARTIFACT_TYPE artifactType : BlackboardArtifact.ARTIFACT_TYPE.values()) {
@@ -71,6 +75,7 @@ public final class ExternalResultsImporter {
      *         interface.
      */
     public List<ErrorInfo> importResults(ExternalResults results) {
+        blackboard = Case.getCurrentCase().getServices().getBlackboard();
         // Import files first, they may be artifactData sources.
         importDerivedFiles(results);
         importArtifacts(results);
@@ -127,9 +132,9 @@ public final class ExternalResultsImporter {
         for (ExternalResults.Artifact artifactData : results.getArtifacts()) {
             try {
                 // Add the artifact to the case database.
-                int artifactTypeId = caseDb.getArtifactTypeID(artifactData.getType());
+                int artifactTypeId = caseDb.getArtifactType(artifactData.getType()).getTypeID();
                 if (artifactTypeId == -1) {
-                    artifactTypeId = caseDb.addArtifactType(artifactData.getType(), artifactData.getType());
+                    artifactTypeId = caseDb.addBlackboardArtifactType(artifactData.getType(), artifactData.getType()).getTypeID();
                 }
                 Content sourceFile = findFileInCaseDatabase(artifactData.getSourceFilePath());
                 if (sourceFile != null) {
@@ -138,25 +143,45 @@ public final class ExternalResultsImporter {
                     // Add the artifact's attributes to the case database.
                     Collection<BlackboardAttribute> attributes = new ArrayList<>();
                     for (ExternalResults.ArtifactAttribute attributeData : artifactData.getAttributes()) {
-                        int attributeTypeId = caseDb.getAttrTypeID(attributeData.getType());
-                        if (attributeTypeId == -1) {
-                            attributeTypeId = caseDb.addAttrType(attributeData.getType(), attributeData.getType());
+                        BlackboardAttribute.Type attributeType = caseDb.getAttributeType(attributeData.getType());
+                        if (attributeType == null) {
+                            switch (attributeData.getValueType()) {
+                                case "text": //NON-NLS
+                                    attributeType = caseDb.addArtifactAttributeType(attributeData.getType(), BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.fromLabel("String"), attributeData.getType()); //NON-NLS
+                                    break;
+                                case "int32": //NON-NLS
+                                    attributeType = caseDb.addArtifactAttributeType(attributeData.getType(), BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.fromLabel("Integer"), attributeData.getType()); //NON-NLS
+                                    break;
+                                case "int64": //NON-NLS
+                                    attributeType = caseDb.addArtifactAttributeType(attributeData.getType(), BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.fromLabel("Long"), attributeData.getType()); //NON-NLS
+                                    break;
+                                case "double": //NON-NLS
+                                    attributeType = caseDb.addArtifactAttributeType(attributeData.getType(), BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.fromLabel("Double"), attributeData.getType()); //NON-NLS
+                                    break;
+                                case "datetime": //NON-NLS
+                                    attributeType = caseDb.addArtifactAttributeType(attributeData.getType(), BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.fromLabel("DateTime"), attributeData.getType()); //NON-NLS
+                            }
                         }
+
                         switch (attributeData.getValueType()) {
                             case "text": //NON-NLS
-                                attributes.add(new BlackboardAttribute(attributeTypeId, attributeData.getSourceModule(), attributeData.getValue()));
+                                attributes.add(new BlackboardAttribute(attributeType, attributeData.getSourceModule(), attributeData.getValue()));
                                 break;
                             case "int32": //NON-NLS
                                 int intValue = Integer.parseInt(attributeData.getValue());
-                                attributes.add(new BlackboardAttribute(attributeTypeId, attributeData.getSourceModule(), intValue));
+                                attributes.add(new BlackboardAttribute(attributeType, attributeData.getSourceModule(), intValue));
                                 break;
                             case "int64": //NON-NLS
                                 long longValue = Long.parseLong(attributeData.getValue());
-                                attributes.add(new BlackboardAttribute(attributeTypeId, attributeData.getSourceModule(), longValue));
+                                attributes.add(new BlackboardAttribute(attributeType, attributeData.getSourceModule(), longValue));
                                 break;
                             case "double": //NON-NLS
                                 double doubleValue = Double.parseDouble(attributeData.getValue());
-                                attributes.add(new BlackboardAttribute(attributeTypeId, attributeData.getSourceModule(), doubleValue));
+                                attributes.add(new BlackboardAttribute(attributeType, attributeData.getSourceModule(), doubleValue));
+                                break;
+                            case "datetime": //NON-NLS
+                                long dateTimeValue = Long.parseLong(attributeData.getValue());
+                                attributes.add(new BlackboardAttribute(attributeType, attributeData.getSourceModule(), dateTimeValue));
                                 break;
                             default:
                                 String errorMessage = NbBundle.getMessage(this.getClass(),
@@ -171,6 +196,15 @@ public final class ExternalResultsImporter {
                     }
                     artifact.addAttributes(attributes);
 
+                    try {
+                        // index the artifact for keyword search
+                        blackboard.indexArtifact(artifact);
+                    } catch (Blackboard.BlackboardException ex) {
+                        logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", artifact.getDisplayName()), ex); //NON-NLS
+                        MessageNotifyUtil.Notify.error(
+                                NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), artifact.getDisplayName());
+                    }
+
                     if (standardArtifactTypeIds.contains(artifactTypeId)) {
                         IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(this.getClass().getSimpleName(), BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactTypeId)));
                     }
@@ -181,7 +215,7 @@ public final class ExternalResultsImporter {
                     ExternalResultsImporter.logger.log(Level.SEVERE, errorMessage);
                     this.errors.add(new ErrorInfo(ExternalResultsImporter.class.getName(), errorMessage));
                 }
-            } catch (TskCoreException ex) {
+            } catch (TskCoreException | TskDataException ex) {
                 String errorMessage = NbBundle.getMessage(this.getClass(),
                         "ExternalResultsImporter.importArtifacts.errMsg2.text",
                         artifactData.getType(), artifactData.getSourceFilePath());
@@ -258,15 +292,6 @@ public final class ExternalResultsImporter {
         return relativePath;
     }
 
-//    private static boolean isStandardArtifactType(int artifactTypeId) {        
-//        for (BlackboardArtifact.ARTIFACT_TYPE art : BlackboardArtifact.ARTIFACT_TYPE.values()) {
-//            if (art.getTypeID() == artifactTypeId) {
-//                return true;
-//            }
-//        }
-//        return false;
-//    }    
-//    
     private void recordError(String errorMessage) {
         ExternalResultsImporter.logger.log(Level.SEVERE, errorMessage);
         this.errors.add(new ErrorInfo(this.getClass().getName(), errorMessage));

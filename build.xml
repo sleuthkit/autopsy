@@ -11,6 +11,21 @@
       correct version of the platform.  These are used for other reasons.  We should merge the two. -->
     <property name="netbeans-plat-version" value="8.0.2" />
     <property name="nbplatform.active.dir" value="${basedir}/netbeans-plat/${netbeans-plat-version}" />
+    
+    <!-- Supported java versions.-->
+    <condition property="supported-java-versions">
+        <or>
+            <matches string="${java.version}" pattern="1\.8\.0_6[6-9]"/>
+            <matches string="${java.version}" pattern="1\.8\.0_[7-9][0-9]"/>
+            <matches string="${java.version}" pattern="1\.8\.[1-9]_[0-9][0-9]"/>
+            <equals arg1="${ant.java.version}" arg2="1.9"/>
+        </or>
+    </condition>
+    
+    <!-- Verify that the java version running is . -->
+    <fail message="Unsupported Java version: ${ant.java.version}. 
+            Make sure that the Java version is 1.8.0_66 or higher."
+    unless="supported-java-versions"/>
 
     <!-- Determine platform and include specific file -->
     <condition property="os.family" value="unix">  
@@ -98,6 +113,8 @@
             <fileset dir="${zip-tmp}/${app.name}/autopsy/modules/lib">
                 <include name="libtsk_jni.dll" />
                 <include name="libewf.dll" />
+                <include name="libvmdk.dll"/>
+                <include name="libvhdi.dll"/>
                 <include name="zlib.dll" />
                 <include name="libintl-8.dll"/>
                 <include name="ssleay32.dll"/>

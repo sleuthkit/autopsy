@@ -1,4 +1,4 @@
-                  Last Updated: 27 April 2015
+                  Last Updated: 30 October 2015
 
 This file outlines what it takes to build Autopsy from source.
 
@@ -12,9 +12,8 @@ STEPS:
 1) Get Java Setup
 
 1a) Download and install JDK version 1.8.  For the current version of JavaFX 
-that we use, you'll need 1.8.0_40 or greater. You can now use 32-bit or 64-bit, 
-but special work is needed to get The Sleuth Kit to compile as 64-bit.  So, 
-32-bit is easier, but if you intend to use PostgreSQL, choose 64-bit.
+that we use, you'll need 1.8.0_66 or greater. You can now use 32-bit or 64-bit, 
+but special work is needed to get The Sleuth Kit to compile as 64-bit.
 
 Autopsy has been used and tested with Oracle JavaSE and the included JavaFX support
 (http://www.oracle.com/technetwork/java/javase/downloads/index.html).
@@ -38,14 +37,16 @@ to the root 64-bit JRE directory.
 2) Get Sleuth Kit Setup
 2a) Download and build a Release version of Sleuth Kit (TSK) 4.0. See
     win32\BUILDING.txt in the TSK package for more information. You need to 
-    build the tsk_jni project. Select the Release_PostgreSQL x64 target. You can
-    use a released version or download the latest from github:
+    build the tsk_jni project. Select the Release_PostgreSQL Win32 or x64 target,
+    depending upon your target build. You can use a released version or download 
+    the latest from github:
 - git://github.com/sleuthkit/sleuthkit.git
 
-2b) Build the TSK JAR file by typing 'ant PostgreSQL' in bindings/java in the 
-    TSK source code folder from a command line. Note it is case sensitive. You 
-    can also add the code to a NetBeans project and build it from there, 
-    selecting the PostgreSQL target.
+2b) Build the TSK JAR file by typing 'ant dist-PostgreSQL' in
+    bindings/java in the
+    TSK source code folder from a command line. Note it is case
+    sensitive. You can also add the code to a NetBeans project and build
+    it from there, selecting the dist-PostgreSQL target.
 
 2c) Set TSK_HOME environment variable to the root directory of TSK
 
@@ -54,8 +55,8 @@ from the TSK root directory to install the libraries and such in
 the needed places (i.e. '/usr/local').
 
 
-3) Get gstreamer Setup.  gstreamer is used to view video files. You
-can either download it and install it or manually by unziping the
+3) For 32-bit targets, get GStreamer Setup. GStreamer is used to view video files.
+You can either download it and install it or manually by unzipping the
 version that is included in the 'thirdparty/gstreamer' folder.  You
 will need the 'bin' and 'lib/gstreamer-1.0' folders to be in your
 Windows PATH environment variable.
@@ -69,7 +70,7 @@ yet, so we don't have instructions for that yet.
 
 git clone https://github.com/sleuthkit/autopsy.git
 
-4b) if you plan to contribute and submit patches, login to Github and create your own Autopsy fork.
+4b) If you plan to contribute and submit patches, login to Github and create your own Autopsy fork.
 Then, clone your fork and work on that source-tree:
 
 git clone https://github.com/YOUR_USERNAME/autopsy.git
@@ -78,13 +79,13 @@ You will be able to submit patches by committing and pushing changes to your for
 and by submitting pull requests to the main Autopsy repository.
 
 5) Compile Autopsy
-5a) using Netbeans IDE:
+5a) Using Netbeans IDE:
 - Start NetBeans IDE and open the Autopsy project.
 - Choose to build the Autopsy project / module. It is the highest level project
     that will cause the other modules to be compiled.
 
-5b) without Netbeans IDE (requires JDK and ant >= 1.7.1):
-- from root directory of Autopsy source execute:
+5b) Without Netbeans IDE (requires JDK and ant >= 1.7.1):
+- From root directory of Autopsy source execute:
 ant
 (to build Autopsy)
 ant run
@@ -109,12 +110,12 @@ dependency libraries into the Autopsy code structure so that they can
 be found when Autopsy is run and packaged.  At run-time, the native
 library inside of the JAR file will be extracted and used. 
 
-- On a Unix system, the ant taget copies only the JNI library and
+- On a Unix system, the ant target copies only the JNI library and
 then relies on the other libraries (libtsk, libewf, zilb, etc.) to
 be installed on the system in their standard locations (i.e.
 /usr/local).
 
-- Everytime that you do a source code update of TSK, make sure you
+- Every time that you do a source code update of TSK, make sure you
 rebuild both the libtsk_dll, the JAR file, and then rebuild Autopsy 
 so that it copies the latest data model JAR file. 
 

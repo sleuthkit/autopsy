@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import javafx.beans.Observable;
@@ -31,7 +32,6 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.ListChangeListener;
 import javafx.collections.MapChangeListener;
 import javax.annotation.concurrent.GuardedBy;
-import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
@@ -41,7 +41,6 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent.DeletedContentTagInfo;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
 import org.sleuthkit.autopsy.timeline.db.EventsRepository;
@@ -112,7 +111,7 @@ public final class FilteredEventsModel {
     @GuardedBy("this")
     private final ReadOnlyObjectWrapper<ZoomParams> requestedZoomParamters = new ReadOnlyObjectWrapper<>();
 
-    private final EventBus eventbus = new EventBus("Event_Repository_EventBus");
+    private final EventBus eventbus = new EventBus("Event_Repository_EventBus"); //NON-NLS
 
     /**
      * The underlying repo for events. Atomic access to repo is synchronized
@@ -154,7 +153,7 @@ public final class FilteredEventsModel {
                 if (zoomParams.getTypeZoomLevel().equals(requestedTypeZoom.get()) == false
                         || zoomParams.getDescriptionLOD().equals(requestedLOD.get()) == false
                         || zoomParams.getFilter().equals(requestedFilter.get()) == false
-                        || zoomParams.getTimeRange().equals(requestedTimeRange.get()) == false) {
+                        || Objects.equals(zoomParams.getTimeRange(), requestedTimeRange.get()) == false) {
 
                     requestedTypeZoom.set(zoomParams.getTypeZoomLevel());
                     requestedFilter.set(zoomParams.getFilter());
@@ -295,7 +294,7 @@ public final class FilteredEventsModel {
      *         repository, ignoring any filters or requested ranges
      */
     public Interval getSpanningInterval() {
-        return new Interval(getMinTime() * 1000, 1000 + getMaxTime() * 1000, DateTimeZone.UTC);
+        return new Interval(getMinTime() * 1000, 1000 + getMaxTime() * 1000);
     }
 
     /**
@@ -328,7 +327,7 @@ public final class FilteredEventsModel {
      * @return a list of event clusters at the requested zoom levels that are
      *         within the requested time range and pass the requested filter
      */
-    public List<EventCluster> getEventClusters() {
+    public List<EventStripe> getEventStripes() {
         final Interval range;
         final RootFilter filter;
         final EventTypeZoomLevel zoom;
@@ -339,7 +338,7 @@ public final class FilteredEventsModel {
             zoom = requestedTypeZoom.get();
             lod = requestedLOD.get();
         }
-        return repo.getEventClusters(new ZoomParams(range, zoom, filter, lod));
+        return repo.getEventStripes(new ZoomParams(range, zoom, filter, lod));
     }
 
     /**
@@ -349,21 +348,21 @@ public final class FilteredEventsModel {
      *         range and pass the requested filter, using the given aggregation
      *         to control the grouping of events
      */
-    public List<EventCluster> getEventClusters(ZoomParams params) {
-        return repo.getEventClusters(params);
+    public List<EventStripe> getEventStripes(ZoomParams params) {
+        return repo.getEventStripes(params);
     }
 
     synchronized public boolean handleContentTagAdded(ContentTagAddedEvent evt) {
         ContentTag contentTag = evt.getAddedTag();
         Content content = contentTag.getContent();
-        Set<Long> updatedEventIDs = repo.addTag(content.getId(), null, contentTag);
+        Set<Long> updatedEventIDs = repo.addTag(content.getId(), null, contentTag, null);
         return postTagsUpdated(updatedEventIDs);
     }
 
     synchronized public boolean handleArtifactTagAdded(BlackBoardArtifactTagAddedEvent evt) {
         BlackboardArtifactTag artifactTag = evt.getAddedTag();
         BlackboardArtifact artifact = artifactTag.getArtifact();
-        Set<Long> updatedEventIDs = repo.addTag(artifact.getObjectID(), artifact.getArtifactID(), artifactTag);;
+        Set<Long> updatedEventIDs = repo.addTag(artifact.getObjectID(), artifact.getArtifactID(), artifactTag, null);
         return postTagsUpdated(updatedEventIDs);
     }
 
@@ -375,7 +374,7 @@ public final class FilteredEventsModel {
             Set<Long> updatedEventIDs = repo.deleteTag(content.getId(), null, deletedTagInfo.getTagID(), tagged);
             return postTagsUpdated(updatedEventIDs);
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "unable to determine tagged status of content.", ex);
+            LOGGER.log(Level.SEVERE, "unable to determine tagged status of content.", ex); //NON-NLS
         }
         return false;
     }
@@ -388,7 +387,7 @@ public final class FilteredEventsModel {
             Set<Long> updatedEventIDs = repo.deleteTag(artifact.getObjectID(), artifact.getArtifactID(), deletedTagInfo.getTagID(), tagged);
             return postTagsUpdated(updatedEventIDs);
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "unable to determine tagged status of artifact.", ex);
+            LOGGER.log(Level.SEVERE, "unable to determine tagged status of artifact.", ex); //NON-NLS
         }
         return false;
     }

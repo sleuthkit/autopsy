@@ -109,4 +109,14 @@ public class ImageNode extends AbstractContentNode<Image> {
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
     }
+
+    /*
+     * TODO (AUT-1849): Correct or remove peristent column reordering code
+     *
+     * Added to support this feature.
+     */
+//    @Override
+//    public String getItemType() {
+//        return "Image"; //NON-NLS
+//    }
 }

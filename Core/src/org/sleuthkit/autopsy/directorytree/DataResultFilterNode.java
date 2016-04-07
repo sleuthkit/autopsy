@@ -253,16 +253,16 @@ public class DataResultFilterNode extends FilterNode {
                     .filter(artEventType -> artEventType.getArtifactType().getTypeID() == ba.getArtifactTypeID())
                     .filter(artEventType -> {
                         try {
-                            return ba.getAttributes(artEventType.getDateTimeAttrubuteType()).isEmpty() == false;
+                            return ba.getAttribute(artEventType.getDateTimeAttrubuteType()) != null;
                         } catch (TskCoreException ex) {
                             Logger.getLogger(DataResultFilterNode.class.getName()).log(Level.WARNING, "Error retreiving blackboard arttributes from blackboard artifact.", ex);
                             return false;
                         }
                     }).findAny().isPresent();
-            if (hasTimeStamp){
+            if (hasTimeStamp) {
                 actions.add(ViewInTimeLineAction.getInstance());
             }
-            
+
             return actions;
         }
 
@@ -289,8 +289,8 @@ public class DataResultFilterNode extends FilterNode {
             Content c = null;
             try {
                 for (BlackboardAttribute attr : art.getAttributes()) {
-                    if (attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()) {
-                        switch (attr.getValueType()) {
+                    if (attr.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()) {
+                        switch (attr.getAttributeType().getValueType()) {
                             case INTEGER:
                                 int i = attr.getValueInt();
                                 if (i != -1) {

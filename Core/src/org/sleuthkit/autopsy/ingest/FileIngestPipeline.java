@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.ingest;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -119,6 +121,7 @@ final class FileIngestPipeline {
             for (PipelineModule module : this.modules) {
                 try {
                     FileIngestPipeline.ingestManager.setIngestTaskProgress(task, module.getDisplayName());
+                    this.job.setCurrentFileIngestModule(module.getDisplayName(), task.getFile().getName());
                     module.process(file);
                 } catch (Throwable ex) { // Catch-all exception firewall
                     errors.add(new IngestModuleError(module.getDisplayName(), ex));
@@ -127,7 +130,7 @@ final class FileIngestPipeline {
                     if (msg == null) {
                         msg = ex.toString();
                     }
-                    MessageNotifyUtil.Notify.error(module.getDisplayName() + " Error", msg);
+                    MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "FileIngestPipeline.moduleError.title.text", module.getDisplayName()), msg);
                 }
                 if (this.job.isCancelled()) {
                     break;
@@ -160,7 +163,7 @@ final class FileIngestPipeline {
                     if (msg == null) {
                         msg = ex.toString();
                     }
-                    MessageNotifyUtil.Notify.error(module.getDisplayName() + " Error", msg);
+                    MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "FileIngestPipeline.moduleError.title.text", module.getDisplayName()), msg);
                 }
             }
         }

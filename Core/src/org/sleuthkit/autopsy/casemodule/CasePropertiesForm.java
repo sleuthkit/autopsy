@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,12 +24,11 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.awt.*;
+import java.nio.file.Paths;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.Map;
 import java.util.logging.Level;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JOptionPane;
@@ -41,13 +40,14 @@ import org.openide.NotifyDescriptor;
 import org.openide.util.actions.CallableSystemAction;
 
 /**
- * The form where user can change / update the properties of the current case.
- *
- * @author jantonius
+ * The form where user can change / update the properties of the current case
+ * metadata.
  */
 class CasePropertiesForm extends javax.swing.JPanel {
 
-    Case current = null;
+    private static final long serialVersionUID = 1L;
+
+    private Case current = null;
     private static JPanel caller;    // panel for error
 
     // Shrink a path to fit in targetLength (if necessary), by replaceing part
@@ -78,27 +78,39 @@ class CasePropertiesForm extends javax.swing.JPanel {
     /**
      * Creates new form CasePropertiesForm
      */
-    CasePropertiesForm(Case currentCase, String crDate, String caseDir, Map<Long, String> imgPaths) {
+    CasePropertiesForm(Case currentCase, String crDate, String caseDir, Map<Long, String> imgPaths) throws CaseMetadata.CaseMetadataException {
         initComponents();
         caseNameTextField.setText(currentCase.getName());
         caseNumberTextField.setText(currentCase.getNumber());
         examinerTextField.setText(currentCase.getExaminer());
         crDateTextField.setText(crDate);
         caseDirTextArea.setText(caseDir);
-
         current = currentCase;
+
+        CaseMetadata caseMetadata = currentCase.getCaseMetadata();
+        tbDbName.setText(caseMetadata.getCaseDatabase());
+        Case.CaseType caseType = caseMetadata.getCaseType();
+        tbDbType.setText(caseType.getLocalizedDisplayName());
+        if (caseType == Case.CaseType.SINGLE_USER_CASE) {
+            deleteCaseButton.setEnabled(true);
+        } else {
+            deleteCaseButton.setEnabled(false);
+        }
 
         int totalImages = imgPaths.size();
 
         // create the headers and add all the rows
-        String[] headers = {"Path"}; //NON-NLS
+        // Header names are internationalized via the generated code, do not overwrite.
+        String[] headers = {imagesTable.getColumnName(0),
+            imagesTable.getColumnName(1)};
         String[][] rows = new String[totalImages][];
 
         int i = 0;
         for (long key : imgPaths.keySet()) {
             String path = imgPaths.get(key);
             String shortenPath = shrinkPath(path, 70);
-            rows[i++] = new String[]{shortenPath};
+            rows[i] = new String[]{shortenPath};
+            i++;
         }
 
         // create the table inside with the imgPaths information
@@ -111,51 +123,17 @@ class CasePropertiesForm extends javax.swing.JPanel {
             }
         };
         imagesTable.setModel(model);
-
-//        // set the size of the remove column
-//        TableColumn removeCol = imagesTable.getColumnModel().getColumn(lastColumn);
-//        removeCol.setPreferredWidth(75);
-//        removeCol.setMaxWidth(75);
-//        removeCol.setMinWidth(75);
-//        removeCol.setResizable(false);
-//        // create the delete action to remove the image from the current case
-//        Action delete = new AbstractAction()
-//        {
-//            @Override
-//            public void actionPerformed(ActionEvent e)
-//            {
-//                // get the image path
-//                JTable table = (JTable)e.getSource();
-//                int modelRow = Integer.valueOf(e.getActionCommand());
-//                String removeColumn = table.getValueAt(modelRow, lastColumn).toString();
-//                // get the image ID
-//                int selectedID = Integer.parseInt(removeColumn.substring(0, removeColumn.indexOf('|')));
-//                String imagePath = removeColumn.substring(removeColumn.indexOf('|') + 1);
-//
-//                // throw the confirmation first
-//                String confMsg = "Are you sure want to remove image \"" + imagePath + "\" from this case?";
-//                NotifyDescriptor d = new NotifyDescriptor.Confirmation(confMsg, "Create directory", NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
-//                d.setValue(NotifyDescriptor.NO_OPTION);
-//
-//                Object res = DialogDisplayer.getDefault().notify(d);
-//                // if user select "Yes"
-//                if(res != null && res == DialogDescriptor.YES_OPTION){
-//                    // remove the image in the case class and in the xml config file
-//                    try {
-//                        current.removeImage(selectedID, imagePath);
-//                    } catch (Exception ex) {
-//                        Logger.getLogger(CasePropertiesForm.class.getName()).log(Level.WARNING, "Error: couldn't remove image.", ex);
-//                    }
-//                    // remove the row of the image path
-//                    ((DefaultTableModel)table.getModel()).removeRow(modelRow);
-//                }
-//            }
-//        };
-//
-//        ButtonColumn buttonColumn = new ButtonColumn(imagesTable, delete, 1, "Remove");
-//        buttonColumn.setMnemonic(KeyEvent.VK_D);
     }
 
+    /**
+     * In this generated code below, there are 2 strings "Path" and "Remove"
+     * that are table column headers in the DefaultTableModel. When this model
+     * is generated, it puts the hard coded English strings into the generated
+     * code. And then about 15 lines later, it separately internationalizes them
+     * using: imagesTable.getColumnModel().getColumn(0).setHeaderValue(). There
+     * is no way to prevent the GUI designer from putting the hard coded English
+     * strings into the generated code. So, they remain, and are not used.
+     */
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -186,26 +164,36 @@ class CasePropertiesForm extends javax.swing.JPanel {
         examinerLabel = new javax.swing.JLabel();
         caseNumberTextField = new javax.swing.JTextField();
         examinerTextField = new javax.swing.JTextField();
+        lbDbType = new javax.swing.JLabel();
+        tbDbType = new javax.swing.JTextField();
+        lbDbName = new javax.swing.JLabel();
+        tbDbName = new javax.swing.JTextField();
 
         jTextArea1.setColumns(20);
         jTextArea1.setRows(5);
         jScrollPane1.setViewportView(jTextArea1);
 
-        casePropLabel.setFont(casePropLabel.getFont().deriveFont(Font.BOLD, 24));
+        casePropLabel.setFont(casePropLabel.getFont().deriveFont(casePropLabel.getFont().getStyle() | java.awt.Font.BOLD, 24));
         casePropLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         casePropLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.casePropLabel.text")); // NOI18N
 
+        caseNameLabel.setFont(caseNameLabel.getFont().deriveFont(caseNameLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         caseNameLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.caseNameLabel.text")); // NOI18N
 
+        crDateLabel.setFont(crDateLabel.getFont().deriveFont(crDateLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         crDateLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.crDateLabel.text")); // NOI18N
 
+        caseDirLabel.setFont(caseDirLabel.getFont().deriveFont(caseDirLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         caseDirLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.caseDirLabel.text")); // NOI18N
 
         crDateTextField.setEditable(false);
+        crDateTextField.setFont(crDateTextField.getFont().deriveFont(crDateTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         crDateTextField.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.crDateTextField.text")); // NOI18N
 
+        caseNameTextField.setFont(caseNameTextField.getFont().deriveFont(caseNameTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         caseNameTextField.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.caseNameTextField.text")); // NOI18N
 
+        updateCaseNameButton.setFont(updateCaseNameButton.getFont().deriveFont(updateCaseNameButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         updateCaseNameButton.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.updateCaseNameButton.text")); // NOI18N
         updateCaseNameButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -213,21 +201,24 @@ class CasePropertiesForm extends javax.swing.JPanel {
             }
         });
 
-        genInfoLabel.setFont(genInfoLabel.getFont().deriveFont(Font.BOLD, 14));
-        genInfoLabel.setText(
-                org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.genInfoLabel.text")); // NOI18N
+        genInfoLabel.setFont(genInfoLabel.getFont().deriveFont(genInfoLabel.getFont().getStyle() | java.awt.Font.BOLD, 14));
+        genInfoLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.genInfoLabel.text")); // NOI18N
 
-        imgInfoLabel.setFont(imgInfoLabel.getFont().deriveFont(Font.BOLD, 14));
+        imgInfoLabel.setFont(imgInfoLabel.getFont().deriveFont(imgInfoLabel.getFont().getStyle() | java.awt.Font.BOLD, 14));
         imgInfoLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.imgInfoLabel.text")); // NOI18N
 
+        OKButton.setFont(OKButton.getFont().deriveFont(OKButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         OKButton.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.OKButton.text")); // NOI18N
 
+        imagesTableScrollPane.setFont(imagesTableScrollPane.getFont().deriveFont(imagesTableScrollPane.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+
+        imagesTable.setFont(imagesTable.getFont().deriveFont(imagesTable.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         imagesTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
             new String [] {
-                "Path", "Remove" //NON-NLS
+                "Path", "Remove"
             }
         ) {
             boolean[] canEdit = new boolean [] {
@@ -243,14 +234,21 @@ class CasePropertiesForm extends javax.swing.JPanel {
         imagesTable.getTableHeader().setReorderingAllowed(false);
         imagesTable.setUpdateSelectionOnSort(false);
         imagesTableScrollPane.setViewportView(imagesTable);
+        if (imagesTable.getColumnModel().getColumnCount() > 0) {
+            imagesTable.getColumnModel().getColumn(0).setHeaderValue(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.imagesTable.columnModel.title0")); // NOI18N
+            imagesTable.getColumnModel().getColumn(1).setHeaderValue(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.imagesTable.columnModel.title1")); // NOI18N
+        }
 
+        jScrollPane2.setFont(jScrollPane2.getFont().deriveFont(jScrollPane2.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+
+        caseDirTextArea.setEditable(false);
         caseDirTextArea.setBackground(new java.awt.Color(240, 240, 240));
         caseDirTextArea.setColumns(20);
-        caseDirTextArea.setEditable(false);
         caseDirTextArea.setRows(1);
         caseDirTextArea.setRequestFocusEnabled(false);
         jScrollPane2.setViewportView(caseDirTextArea);
 
+        deleteCaseButton.setFont(deleteCaseButton.getFont().deriveFont(deleteCaseButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         deleteCaseButton.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.deleteCaseButton.text")); // NOI18N
         deleteCaseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -258,15 +256,33 @@ class CasePropertiesForm extends javax.swing.JPanel {
             }
         });
 
+        caseNumberLabel.setFont(caseNumberLabel.getFont().deriveFont(caseNumberLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         caseNumberLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.caseNumberLabel.text")); // NOI18N
 
+        examinerLabel.setFont(examinerLabel.getFont().deriveFont(examinerLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         examinerLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.examinerLabel.text")); // NOI18N
 
         caseNumberTextField.setEditable(false);
+        caseNumberTextField.setFont(caseNumberTextField.getFont().deriveFont(caseNumberTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         caseNumberTextField.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.caseNumberTextField.text")); // NOI18N
 
         examinerTextField.setEditable(false);
+        examinerTextField.setFont(examinerTextField.getFont().deriveFont(examinerTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         examinerTextField.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.examinerTextField.text")); // NOI18N
+
+        lbDbType.setFont(lbDbType.getFont().deriveFont(lbDbType.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        lbDbType.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.lbDbType.text")); // NOI18N
+
+        tbDbType.setEditable(false);
+        tbDbType.setFont(tbDbType.getFont().deriveFont(tbDbType.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        tbDbType.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.tbDbType.text")); // NOI18N
+
+        lbDbName.setFont(lbDbName.getFont().deriveFont(lbDbName.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        lbDbName.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.lbDbName.text")); // NOI18N
+
+        tbDbName.setEditable(false);
+        tbDbName.setFont(tbDbName.getFont().deriveFont(tbDbName.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        tbDbName.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.tbDbName.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -276,38 +292,37 @@ class CasePropertiesForm extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(casePropLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 440, Short.MAX_VALUE)
-                    .addComponent(genInfoLabel)
-                    .addComponent(imgInfoLabel)
                     .addComponent(imagesTableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 440, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(181, 181, 181)
-                        .addComponent(OKButton, javax.swing.GroupLayout.PREFERRED_SIZE, 78, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(caseNameLabel)
-                                    .addComponent(caseNumberLabel))
-                                .addGap(25, 25, 25)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(caseNameTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 246, Short.MAX_VALUE)
-                                    .addComponent(caseNumberTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 246, Short.MAX_VALUE)))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(examinerLabel)
-                                .addGap(45, 45, 45)
-                                .addComponent(examinerTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 246, Short.MAX_VALUE))
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(caseDirLabel)
-                                    .addComponent(crDateLabel))
-                                .addGap(18, 18, 18)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 246, Short.MAX_VALUE)
-                                    .addComponent(crDateTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 246, Short.MAX_VALUE))))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(caseNameLabel)
+                            .addComponent(caseNumberLabel)
+                            .addComponent(examinerLabel)
+                            .addComponent(caseDirLabel)
+                            .addComponent(crDateLabel)
+                            .addComponent(lbDbType))
+                        .addGap(18, 18, 18)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(caseNameTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 245, Short.MAX_VALUE)
+                            .addComponent(caseNumberTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 245, Short.MAX_VALUE)
+                            .addComponent(examinerTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 245, Short.MAX_VALUE)
+                            .addComponent(crDateTextField)
+                            .addComponent(jScrollPane2)
+                            .addComponent(tbDbType)
+                            .addComponent(tbDbName))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(updateCaseNameButton)
-                            .addComponent(deleteCaseButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                            .addComponent(deleteCaseButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(updateCaseNameButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(genInfoLabel)
+                            .addComponent(imgInfoLabel)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(181, 181, 181)
+                                .addComponent(OKButton, javax.swing.GroupLayout.PREFERRED_SIZE, 78, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(lbDbName))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -317,32 +332,42 @@ class CasePropertiesForm extends javax.swing.JPanel {
                 .addComponent(casePropLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addComponent(genInfoLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(caseNameLabel)
                     .addComponent(caseNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(updateCaseNameButton))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(caseNumberLabel)
                     .addComponent(caseNumberTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(examinerLabel)
                     .addComponent(examinerTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 19, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(crDateLabel)
                     .addComponent(crDateTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(caseDirLabel)
-                            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(39, 39, 39)
+                            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(caseDirLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(tbDbType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lbDbType))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(lbDbName)
+                            .addComponent(tbDbName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(18, 18, 18)
                         .addComponent(imgInfoLabel))
-                    .addComponent(deleteCaseButton))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(9, 9, 9)
+                        .addComponent(deleteCaseButton)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(imagesTableScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 170, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -359,9 +384,6 @@ class CasePropertiesForm extends javax.swing.JPanel {
     private void updateCaseNameButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateCaseNameButtonActionPerformed
         String oldCaseName = Case.getCurrentCase().getName();
         String newCaseName = caseNameTextField.getText();
-        //String oldPath = caseDirTextArea.getText() + File.separator + oldCaseName + ".aut";
-        //String newPath = caseDirTextArea.getText() + File.separator + newCaseName + ".aut";
-
         // check if the old and new case name is not equal
         if (!oldCaseName.equals(newCaseName)) {
 
@@ -399,7 +421,7 @@ class CasePropertiesForm extends javax.swing.JPanel {
                     Object res = DialogDisplayer.getDefault().notify(d);
                     if (res != null && res == DialogDescriptor.YES_OPTION) {
                         // if user select "Yes"
-                        String oldPath = current.getConfigFilePath();
+                        String oldPath = current.getCaseMetadata().getFilePath().toString();
                         try {
                             current.updateCaseName(oldCaseName, oldPath, newCaseName, oldPath);
                         } catch (Exception ex) {
@@ -445,6 +467,10 @@ class CasePropertiesForm extends javax.swing.JPanel {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTextArea jTextArea1;
+    private javax.swing.JLabel lbDbName;
+    private javax.swing.JLabel lbDbType;
+    private javax.swing.JTextField tbDbName;
+    private javax.swing.JTextField tbDbType;
     private javax.swing.JButton updateCaseNameButton;
     // End of variables declaration//GEN-END:variables
 

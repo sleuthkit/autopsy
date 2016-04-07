@@ -28,14 +28,15 @@ import java.util.logging.Level;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -46,6 +47,7 @@ class CacheLocationAnalyzer {
 
     private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(CacheLocationAnalyzer.class.getName());
+    private static Blackboard blackboard;
 
     /**
      * cache.cell stores mobile tower GPS locations and cache.wifi stores GPS
@@ -53,9 +55,10 @@ class CacheLocationAnalyzer {
      */
     public static void findGeoLocations(Content dataSource, FileManager fileManager) {
 
+        blackboard = Case.getCurrentCase().getServices().getBlackboard();
         try {
             List<AbstractFile> abstractFiles = fileManager.findFiles(dataSource, "cache.cell"); //NON-NLS
-            abstractFiles.addAll(fileManager.findFiles(dataSource, "cache.wifi"));
+            abstractFiles.addAll(fileManager.findFiles(dataSource, "cache.wifi")); //NON-NLS
 
             for (AbstractFile abstractFile : abstractFiles) {
                 try {
@@ -126,10 +129,10 @@ class CacheLocationAnalyzer {
                 Long timestamp = new BigInteger(bytes).longValue() / 1000;
 
                 BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT);
-                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(), moduleName, latitude));
-                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(), moduleName, longitude));
-                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), moduleName, timestamp));
-                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), moduleName,
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE, moduleName, latitude));
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE, moduleName, longitude));
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, moduleName, timestamp));
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, moduleName,
                         NbBundle.getMessage(CacheLocationAnalyzer.class,
                                 "CacheLocationAnalyzer.bbAttribute.fileLocationHistory",
                                 file.getName())));
@@ -137,6 +140,15 @@ class CacheLocationAnalyzer {
                 //Not storing these for now.
                 //    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(),moduleName, accuracy));       
                 //    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT.getTypeID(),moduleName, confidence));
+                
+                try {
+                    // index the artifact for keyword search
+                    blackboard.indexArtifact(bba);
+                } catch (Blackboard.BlackboardException ex) {
+                    logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", bba.getDisplayName()), ex); //NON-NLS
+                    MessageNotifyUtil.Notify.error(
+                            NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), bba.getDisplayName());
+                }
             }
 
         } catch (Exception e) {

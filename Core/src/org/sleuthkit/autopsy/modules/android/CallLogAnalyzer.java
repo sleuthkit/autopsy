@@ -28,18 +28,18 @@ import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -50,6 +50,7 @@ class CallLogAnalyzer {
 
     private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(CallLogAnalyzer.class.getName());
+    private static Blackboard blackboard;
 
     /**
      * the names of tables that potentially hold call logs in the dbs
@@ -57,6 +58,7 @@ class CallLogAnalyzer {
     private static final Iterable<String> tableNames = Arrays.asList("calls", "logs"); //NON-NLS
 
     public static void findCallLogs(Content dataSource, FileManager fileManager) {
+	blackboard = Case.getCurrentCase().getServices().getBlackboard();
         try {
             List<AbstractFile> absFiles = fileManager.findFiles(dataSource, "logs.db"); //NON-NLS
             absFiles.addAll(fileManager.findFiles(dataSource, "contacts.db")); //NON-NLS
@@ -98,14 +100,23 @@ class CallLogAnalyzer {
                         try {
                             BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG); //create a call log and then add attributes from result set.
                             if (direction == CallDirection.OUTGOING) {
-                                bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getTypeID(), moduleName, number));
+                                bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO, moduleName, number));
                             } else { /// Covers INCOMING and MISSED
-                                bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getTypeID(), moduleName, number));
+                                bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM, moduleName, number));
                             }
-                            bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID(), moduleName, date));
-                            bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID(), moduleName, duration + date));
-                            bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID(), moduleName, directionString));
-                            bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), moduleName, name));
+                            bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_START, moduleName, date));
+                            bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_END, moduleName, duration + date));
+                            bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DIRECTION, moduleName, directionString));
+                            bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, moduleName, name));
+
+                            try {
+                                // index the artifact for keyword search
+                                blackboard.indexArtifact(bba);
+                            } catch (Blackboard.BlackboardException ex) {
+                                logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", bba.getDisplayName()), ex); //NON-NLS
+                                MessageNotifyUtil.Notify.error(
+                                        NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), bba.getDisplayName());
+                            }
                         } catch (TskCoreException ex) {
                             logger.log(Level.SEVERE, "Error posting call log record to the Blackboard", ex); //NON-NLS
                         }

@@ -62,11 +62,9 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
         if (UserPreferences.getIsMultiUserModeEnabled()) {
             multiUserCaseRadioButton.setEnabled(true);
             multiUserCaseRadioButton.setSelected(true);
-            multiUserSettingsWarningLabel.setVisible(false);
         } else {
             multiUserCaseRadioButton.setEnabled(false);
             singleUserCaseRadioButton.setSelected(true);
-            multiUserSettingsWarningLabel.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.MultiUserDisabled.text"));
         }
         validateSettings();
     }
@@ -214,20 +212,25 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
         caseDirTextField = new javax.swing.JTextField();
         singleUserCaseRadioButton = new javax.swing.JRadioButton();
         multiUserCaseRadioButton = new javax.swing.JRadioButton();
-        multiUserSettingsWarningLabel = new javax.swing.JLabel();
         caseParentDirWarningLabel = new javax.swing.JLabel();
+        caseTypeLabel = new javax.swing.JLabel();
 
-        jLabel1.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() | java.awt.Font.BOLD, 14));
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.jLabel1.text_1")); // NOI18N
 
+        caseNameLabel.setFont(caseNameLabel.getFont().deriveFont(caseNameLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(caseNameLabel, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.caseNameLabel.text_1")); // NOI18N
 
+        caseDirLabel.setFont(caseDirLabel.getFont().deriveFont(caseDirLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(caseDirLabel, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.caseDirLabel.text")); // NOI18N
 
+        caseNameTextField.setFont(caseNameTextField.getFont().deriveFont(caseNameTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         caseNameTextField.setText(org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.caseNameTextField.text_1")); // NOI18N
 
+        caseParentDirTextField.setFont(caseParentDirTextField.getFont().deriveFont(caseParentDirTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         caseParentDirTextField.setText(org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.caseParentDirTextField.text")); // NOI18N
 
+        caseDirBrowseButton.setFont(caseDirBrowseButton.getFont().deriveFont(caseDirBrowseButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(caseDirBrowseButton, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.caseDirBrowseButton.text")); // NOI18N
         caseDirBrowseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -235,12 +238,15 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
             }
         });
 
+        jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.jLabel2.text_1")); // NOI18N
 
         caseDirTextField.setEditable(false);
+        caseDirTextField.setFont(caseDirTextField.getFont().deriveFont(caseDirTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         caseDirTextField.setText(org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.caseDirTextField.text_1")); // NOI18N
 
         caseTypeButtonGroup.add(singleUserCaseRadioButton);
+        singleUserCaseRadioButton.setFont(singleUserCaseRadioButton.getFont().deriveFont(singleUserCaseRadioButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(singleUserCaseRadioButton, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.singleUserCaseRadioButton.text")); // NOI18N
         singleUserCaseRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -249,6 +255,7 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
         });
 
         caseTypeButtonGroup.add(multiUserCaseRadioButton);
+        multiUserCaseRadioButton.setFont(multiUserCaseRadioButton.getFont().deriveFont(multiUserCaseRadioButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(multiUserCaseRadioButton, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.multiUserCaseRadioButton.text")); // NOI18N
         multiUserCaseRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -256,11 +263,12 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
             }
         });
 
-        multiUserSettingsWarningLabel.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(multiUserSettingsWarningLabel, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.multiUserSettingsWarningLabel.text")); // NOI18N
-
+        caseParentDirWarningLabel.setFont(caseParentDirWarningLabel.getFont().deriveFont(caseParentDirWarningLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         caseParentDirWarningLabel.setForeground(new java.awt.Color(255, 0, 0));
         org.openide.awt.Mnemonics.setLocalizedText(caseParentDirWarningLabel, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.caseParentDirWarningLabel.text")); // NOI18N
+
+        caseTypeLabel.setFont(caseTypeLabel.getFont().deriveFont(caseTypeLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        org.openide.awt.Mnemonics.setLocalizedText(caseTypeLabel, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.caseTypeLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -278,25 +286,27 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
                                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                                         .addComponent(jLabel1)
                                         .addGap(0, 227, Short.MAX_VALUE))
-                                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                        .addComponent(caseDirLabel)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(caseParentDirTextField))
                                     .addGroup(layout.createSequentialGroup()
                                         .addComponent(caseNameLabel)
                                         .addGap(26, 26, 26)
                                         .addComponent(caseNameTextField))
-                                    .addComponent(multiUserSettingsWarningLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(caseDirLabel)
+                                            .addComponent(caseTypeLabel))
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addGroup(layout.createSequentialGroup()
+                                                .addComponent(singleUserCaseRadioButton)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                .addComponent(multiUserCaseRadioButton)
+                                                .addGap(0, 0, Short.MAX_VALUE))
+                                            .addComponent(caseParentDirTextField))))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(caseDirBrowseButton)))
                         .addContainerGap())
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(singleUserCaseRadioButton)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(multiUserCaseRadioButton))
-                            .addComponent(caseParentDirWarningLabel))
+                        .addComponent(caseParentDirWarningLabel)
                         .addGap(0, 0, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
@@ -313,19 +323,18 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
                     .addComponent(caseDirLabel)
                     .addComponent(caseParentDirTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(caseDirBrowseButton))
-                .addGap(18, 18, 18)
-                .addComponent(jLabel2)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(caseDirTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(singleUserCaseRadioButton)
-                    .addComponent(multiUserCaseRadioButton))
+                    .addComponent(multiUserCaseRadioButton)
+                    .addComponent(caseTypeLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(caseDirTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(27, 27, 27)
                 .addComponent(caseParentDirWarningLabel)
-                .addGap(1, 1, 1)
-                .addComponent(multiUserSettingsWarningLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(21, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -367,10 +376,10 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
     private javax.swing.JTextField caseParentDirTextField;
     private javax.swing.JLabel caseParentDirWarningLabel;
     private javax.swing.ButtonGroup caseTypeButtonGroup;
+    private javax.swing.JLabel caseTypeLabel;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JRadioButton multiUserCaseRadioButton;
-    private javax.swing.JLabel multiUserSettingsWarningLabel;
     private javax.swing.JRadioButton singleUserCaseRadioButton;
     // End of variables declaration//GEN-END:variables
 

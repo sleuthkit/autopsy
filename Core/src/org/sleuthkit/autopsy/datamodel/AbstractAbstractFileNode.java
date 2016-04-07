@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
@@ -42,7 +43,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     private static final Logger LOGGER = Logger.getLogger(AbstractAbstractFileNode.class.getName());
 
     /**
-     * @param <T>          type of the AbstractFile data to encapsulate
+     * @param <T> type of the AbstractFile data to encapsulate
      * @param abstractFile file to encapsulate
      */
     AbstractAbstractFileNode(T abstractFile) {
@@ -60,7 +61,13 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 }
             }
         }
+        // Listen for case events so that we can detect when case is closed
+        Case.addPropertyChangeListener(pcl);
+    }
 
+    private void removeListeners() {
+        IngestManager.getInstance().removeIngestModuleEventListener(pcl);
+        Case.removePropertyChangeListener(pcl);
     }
 
     private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
@@ -90,6 +97,11 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                     // Skip
                 }
 
+            }
+        } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+            if (evt.getNewValue() == null) {
+                // case was closed. Remove listeners so that we don't get called with a stale case handle
+                removeListeners();
             }
         }
     };
@@ -218,13 +230,20 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
 
                     }
                 },
+        MIMETYPE {
+                    @Override
+                    public String toString() {
+                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.mimeType");
+
+                    }
+                },
     }
 
     /**
      * Fill map with AbstractFile properties
      *
-     * @param map     map with preserved ordering, where property names/values
-     *                are put
+     * @param map map with preserved ordering, where property names/values are
+     * put
      * @param content to extract properties from
      */
     public static void fillPropertyMap(Map<String, Object> map, AbstractFile content) {
@@ -256,6 +275,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         map.put(AbstractFilePropertyType.HASHSETS.toString(), getHashSetHitsForFile(content));
         map.put(AbstractFilePropertyType.MD5HASH.toString(), content.getMd5Hash() == null ? "" : content.getMd5Hash());
         map.put(AbstractFilePropertyType.ObjectID.toString(), content.getId());
+        map.put(AbstractFilePropertyType.MIMETYPE.toString(), content.getMIMEType() == null ? "" : content.getMIMEType());
     }
 
     static String getContentDisplayName(AbstractFile file) {

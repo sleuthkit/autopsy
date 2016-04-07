@@ -36,8 +36,9 @@ final class KeywordSearchGlobalSettingsPanel extends IngestModuleGlobalSettingsP
         customizeComponents();
     }
 
+    @NbBundle.Messages({"KeywordSearchGlobalSettingsPanel.Title=Global Keyword Search Settings"})
     private void customizeComponents() {
-        setName(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.title"));
+        setName(Bundle.KeywordSearchGlobalSettingsPanel_Title());
         listsPanel = new GlobalListSettingsPanel();
         languagesPanel = new KeywordSearchGlobalLanguageSettingsPanel();
         generalPanel = new KeywordSearchGlobalSearchSettingsPanel();

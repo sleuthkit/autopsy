@@ -18,76 +18,52 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
-import java.awt.image.BufferedImage;
-import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.lang.ref.SoftReference;
-import java.util.logging.Level;
-import javafx.embed.swing.SwingFXUtils;
+import javafx.concurrent.Task;
 import javafx.scene.image.Image;
-import javax.imageio.ImageIO;
+import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
  * ImageGallery data model object that represents an image file. It is a
  * wrapper(/decorator?/adapter?) around {@link AbstractFile} and provides
  * methods to get an thumbnail sized and a full sized {@link  Image}.
  */
-public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
+public class ImageFile extends DrawableFile {
 
     private static final Logger LOGGER = Logger.getLogger(ImageFile.class.getName());
 
-    static {
-        ImageIO.scanForPlugins();
-    }
-
-    ImageFile(T f, Boolean analyzed) {
+    ImageFile(AbstractFile f, Boolean analyzed) {
         super(f, analyzed);
-
     }
-
 
     @Override
-    public Image getFullSizeImage() {
-        Image image = (imageRef != null) ? imageRef.get() : null;
-        if (image == null || image.isError()) {
-            if (FileTypeUtils.isGIF(getAbstractFile())) {
-                //directly read gif to preserve potential animation,
-                image = new Image(new BufferedInputStream(new ReadContentInputStream(getAbstractFile())));
-            }
-        }
-        if (image == null || image.isError()) {
-            try (BufferedInputStream readContentInputStream = new BufferedInputStream(new ReadContentInputStream(this.getAbstractFile()))) {
-                BufferedImage read = ImageIO.read(readContentInputStream);
-                image = SwingFXUtils.toFXImage(read, null);
-            } catch (IOException | NullPointerException ex) {
-                LOGGER.log(Level.WARNING, "unable to read file " + getName());
-                return null;
-            }
-        }
-        imageRef = new SoftReference<>(image);
-        return image;
+    String getMessageTemplate(final Exception exception) {
+        return "Failed to read image {0}: " + exception.toString(); //NON-NLS
+    }
+
+    @Override
+    Task<Image> getReadFullSizeImageTaskHelper() {
+        return ImageUtils.newReadImageTask(this.getAbstractFile());
     }
 
     @Override
     Double getWidth() {
-        final Image fullSizeImage = getFullSizeImage();
-        if (fullSizeImage != null) {
-            return fullSizeImage.getWidth();
+        try {
+            return (double) ImageUtils.getImageWidth(this.getAbstractFile());
+        } catch (IOException ex) {
+            return -1.0;
         }
-        return -1.0;
     }
 
     @Override
     Double getHeight() {
-        final Image fullSizeImage = getFullSizeImage();
-        if (fullSizeImage != null) {
-            return fullSizeImage.getHeight();
+        try {
+            return (double) ImageUtils.getImageHeight(this.getAbstractFile());
+        } catch (IOException ex) {
+            return -1.0;
         }
-        return -1.0;
     }
 
     @Override

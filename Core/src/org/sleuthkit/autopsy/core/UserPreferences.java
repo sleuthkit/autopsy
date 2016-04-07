@@ -30,6 +30,7 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.TskData.DbType;
 
@@ -39,6 +40,7 @@ import org.sleuthkit.datamodel.TskData.DbType;
  */
 public final class UserPreferences {
 
+    private static final boolean isWindowsOS = PlatformUtil.isWindowsOS();
     private static final Preferences preferences = NbPreferences.forModule(UserPreferences.class);
     public static final String KEEP_PREFERRED_VIEWER = "KeepPreferredViewer"; // NON-NLS    
     public static final String HIDE_KNOWN_FILES_IN_DATA_SOURCES_TREE = "HideKnownFilesInDataSourcesTree"; //NON-NLS 
@@ -145,7 +147,7 @@ public final class UserPreferences {
     public static CaseDbConnectionInfo getDatabaseConnectionInfo() throws UserPreferencesException {
         DbType dbType;
         try {
-            dbType = DbType.valueOf(preferences.get(EXTERNAL_DATABASE_TYPE, "POSTGRESQL"));
+            dbType = DbType.valueOf(preferences.get(EXTERNAL_DATABASE_TYPE, "POSTGRESQL")); //NON-NLS
         } catch (Exception ex) {
             dbType = DbType.SQLITE;
         }
@@ -177,6 +179,9 @@ public final class UserPreferences {
     }
 
     public static boolean getIsMultiUserModeEnabled() {
+        if (!isWindowsOS) {
+            return false;
+        }
         return preferences.getBoolean(IS_MULTI_USER_MODE_ENABLED, false);
     }
 
@@ -285,7 +290,7 @@ public final class UserPreferences {
      */
     static final class TextConverter {
 
-        private static final char[] TMP = "hgleri21auty84fwe".toCharArray();
+        private static final char[] TMP = "hgleri21auty84fwe".toCharArray(); //NON-NLS
         private static final byte[] SALT = {
             (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
             (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,};
@@ -301,9 +306,9 @@ public final class UserPreferences {
          */
         static String convertTextToHexText(String property) throws UserPreferencesException {
             try {
-                SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
+                SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES"); //NON-NLS
                 SecretKey key = keyFactory.generateSecret(new PBEKeySpec(TMP));
-                Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES");
+                Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES"); //NON-NLS
                 pbeCipher.init(Cipher.ENCRYPT_MODE, key, new PBEParameterSpec(SALT, 20));
                 return base64Encode(pbeCipher.doFinal(property.getBytes("UTF-8")));
             } catch (Exception ex) {
@@ -327,9 +332,9 @@ public final class UserPreferences {
          */
         static String convertHexTextToText(String property) throws UserPreferencesException {
             try {
-                SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
+                SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES"); //NON-NLS
                 SecretKey key = keyFactory.generateSecret(new PBEKeySpec(TMP));
-                Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES");
+                Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES"); //NON-NLS
                 pbeCipher.init(Cipher.DECRYPT_MODE, key, new PBEParameterSpec(SALT, 20));
                 return new String(pbeCipher.doFinal(base64Decode(property)), "UTF-8");
             } catch (Exception ex) {

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,8 +45,8 @@ public final class ContentChangedEvent extends AutopsyEvent implements Serializa
      * Constructs a event to be published when new content is added to a case or
      * there is a change a recorded attribute of existing content.
      *
-     * @param contentEvent A ModuleContentEvent object containing the data
-     *                     associated with the content addition or change.
+     * @param eventData A ModuleContentEvent object containing the data
+     *                  associated with the content addition or change.
      */
     public ContentChangedEvent(ModuleContentEvent eventData) {
         /**
@@ -89,7 +89,7 @@ public final class ContentChangedEvent extends AutopsyEvent implements Serializa
             eventData = new ModuleContentEvent(data.moduleName, content);
             return eventData;
         } catch (IllegalStateException | TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error doing lazy load for remote event", ex);
+            logger.log(Level.SEVERE, "Error doing lazy load for remote event", ex); //NON-NLS
             return null;
         }
     }

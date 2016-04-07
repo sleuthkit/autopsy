@@ -78,12 +78,12 @@ class PstParser {
      * @return ParseResult: OK on success, ERROR on an error, ENCRYPT if failed
      *         because the file is encrypted.
      */
-    ParseResult parse(File file) {
+    ParseResult parse(File file, long fileID) {
         PSTFile pstFile;
         long failures;
         try {
             pstFile = new PSTFile(file);
-            failures = processFolder(pstFile.getRootFolder(), "\\", true);
+            failures = processFolder(pstFile.getRootFolder(), "\\", true, fileID);
             if (failures > 0) {
                 addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "PstParser.parse.errMsg.failedToParseNMsgs", failures));
@@ -124,7 +124,7 @@ class PstParser {
      * @throws PSTException
      * @throws IOException
      */
-    private long processFolder(PSTFolder folder, String path, boolean root) {
+    private long processFolder(PSTFolder folder, String path, boolean root, long fileID) {
         String newPath = (root ? path : path + "\\" + folder.getDisplayName());
         long failCount = 0L; // Number of emails that failed
         if (folder.hasSubfolders()) {
@@ -137,7 +137,7 @@ class PstParser {
             }
 
             for (PSTFolder f : subFolders) {
-                failCount += processFolder(f, newPath, false);
+                failCount += processFolder(f, newPath, false, fileID);
             }
         }
 
@@ -146,7 +146,7 @@ class PstParser {
             // A folder's children are always emails, never other folders.
             try {
                 while ((email = (PSTMessage) folder.getNextChild()) != null) {
-                    results.add(extractEmailMessage(email, newPath));
+                    results.add(extractEmailMessage(email, newPath, fileID));
                 }
             } catch (PSTException | IOException ex) {
                 failCount++;
@@ -165,14 +165,19 @@ class PstParser {
      *
      * @return
      */
-    private EmailMessage extractEmailMessage(PSTMessage msg, String localPath) {
+    private EmailMessage extractEmailMessage(PSTMessage msg, String localPath, long fileID) {
         EmailMessage email = new EmailMessage();
         email.setRecipients(msg.getDisplayTo());
         email.setCc(msg.getDisplayCC());
         email.setBcc(msg.getDisplayBCC());
         email.setSender(getSender(msg.getSenderName(), msg.getSenderEmailAddress()));
         email.setSentDate(msg.getMessageDeliveryTime());
-        email.setTextBody(msg.getBody());
+        if(msg.getTransportMessageHeaders().isEmpty()) {
+            email.setTextBody(msg.getBody());
+        } else {
+            email.setTextBody(msg.getBody() + "\n-----HEADERS-----\n\n" + msg.getTransportMessageHeaders() + "\n\n---END HEADERS--\n\n");
+        }
+        
         email.setHtmlBody(msg.getBodyHTML());
         String rtf = "";
         try {
@@ -186,7 +191,7 @@ class PstParser {
         email.setId(msg.getDescriptorNodeId());
 
         if (msg.hasAttachments()) {
-            extractAttachments(email, msg);
+            extractAttachments(email, msg, fileID);
         }
 
         return email;
@@ -198,7 +203,7 @@ class PstParser {
      * @param email
      * @param msg
      */
-    private void extractAttachments(EmailMessage email, PSTMessage msg) {
+    private void extractAttachments(EmailMessage email, PSTMessage msg, long fileID) {
         int numberOfAttachments = msg.getNumberOfAttachments();
         String outputDirPath = ThunderbirdMboxFileIngestModule.getModuleOutputPath() + File.separator;
         for (int x = 0; x < numberOfAttachments; x++) {
@@ -215,14 +220,14 @@ class PstParser {
                 if (filename.isEmpty()) {
                     filename = attach.getFilename();
                 }
-                String uniqueFilename = msg.getDescriptorNodeId() + "-" + filename;
+                String uniqueFilename = fileID + "-" + msg.getDescriptorNodeId() + "-" + attach.getContentId() + "-" + filename;
                 String outPath = outputDirPath + uniqueFilename;
                 saveAttachmentToDisk(attach, outPath);
 
                 EmailMessage.Attachment attachment = new EmailMessage.Attachment();
 
-                long crTime = attach.getCreationTime().getTime() / 1000;
-                long mTime = attach.getModificationTime().getTime() / 1000;
+                long crTime = attach.getCreationTime() != null ? attach.getCreationTime().getTime() / 1000 : 0;
+                long mTime = attach.getModificationTime() != null ? attach.getModificationTime().getTime() / 1000 : 0;
                 String relPath = getRelModuleOutputPath() + File.separator + uniqueFilename;
                 attachment.setName(filename);
                 attachment.setCrTime(crTime);
@@ -230,7 +235,11 @@ class PstParser {
                 attachment.setLocalPath(relPath);
                 attachment.setSize(attach.getFilesize());
                 email.addAttachment(attachment);
-            } catch (PSTException | IOException ex) {
+            } catch (PSTException | IOException | NullPointerException ex) {
+                /**
+                 * Swallowing null pointer as it is caused by a problem with
+                 * getting input stream (library problem).
+                 */
                 addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "PstParser.extractAttch.errMsg.failedToExtractToDisk",
                                 filename));
@@ -256,19 +265,20 @@ class PstParser {
             int bufferSize = 8176;
             byte[] buffer = new byte[bufferSize];
             int count = attachmentStream.read(buffer);
-            
-            if(count == -1) {
-                throw new IOException("attachmentStream invalid (read() fails). File "+attach.getLongFilename()+ " skipped");
+
+            if (count == -1) {
+                throw new IOException("attachmentStream invalid (read() fails). File " + attach.getLongFilename() + " skipped");
             }
-            
+
             while (count == bufferSize) {
                 out.write(buffer);
                 count = attachmentStream.read(buffer);
             }
-
-            byte[] endBuffer = new byte[count];
-            System.arraycopy(buffer, 0, endBuffer, 0, count);
-            out.write(endBuffer);
+            if (count != -1) {
+                byte[] endBuffer = new byte[count];
+                System.arraycopy(buffer, 0, endBuffer, 0, count);
+                out.write(endBuffer);
+            }
         }
     }
 

@@ -56,6 +56,7 @@ class EvalFileObj extends EvaluatableObject {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public synchronized ObservableResult evaluate() {
 
         Case case1 = Case.getCurrentCase();
@@ -172,7 +173,7 @@ class EvalFileObj extends EvaluatableObject {
                 if (h.getSimpleHashValue() != null) {
                     if (h.getType().getValue().equals("MD5")) { //NON-NLS
                         String newClause = "";
-                        if (h.getSimpleHashValue().getValue().toString().toLowerCase().contains("##comma##")) {
+                        if (h.getSimpleHashValue().getValue().toString().toLowerCase().contains("##comma##")) { //NON-NLS
                             String[] parts = h.getSimpleHashValue().getValue().toString().toLowerCase().split("##comma##"); //NON-NLS
                             String hashList = "";
                             for (String s : parts) {
@@ -181,7 +182,7 @@ class EvalFileObj extends EvaluatableObject {
                                 }
                                 hashList += "\'" + s + "\'";
                             }
-                            newClause = "md5 IN (" + hashList + ")";
+                            newClause = "md5 IN (" + hashList + ")"; //NON-NLS
                         } else {
                             newClause = "md5=\'" + h.getSimpleHashValue().getValue().toString().toLowerCase() + "\'"; //NON-NLS
                         }
@@ -258,48 +259,22 @@ class EvalFileObj extends EvaluatableObject {
 
                             if (obj.getFileFormat() != null) {
 
-                                boolean foundMatch = false;
-                                String formatsFound = "";
-                                List<BlackboardArtifact> arts = file.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO);
-                                for (BlackboardArtifact artifact : arts) {
-                                    for (BlackboardAttribute attr : artifact.getAttributes()) {
-                                        if (attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID()) {
-                                            if (!formatsFound.isEmpty()) {
-                                                formatsFound += ", ";
-                                            }
-                                            formatsFound += attr.getValueString();
-                                            if (attr.getValueString().equalsIgnoreCase(obj.getFileFormat().getValue().toString())) {
-                                                foundMatch = true;
-                                            }
-
-                                            // Try again looking for the last part of the Autopsy version as a substring
-                                            // of the STIX version
-                                            String type = attr.getValueString().replaceFirst("^.*/", "");
-
-                                            // This is reversed of how the comparison normally go
-                                            if (compareStringObject(type, ConditionTypeEnum.CONTAINS, null, obj.getFileFormat().getValue().toString())) {
-                                                foundMatch = true;
-                                            }
-                                        }
+                                String formatsFound = file.getMIMEType();
+                                if (formatsFound != null) {
+                                    if (!(formatsFound.equalsIgnoreCase(obj.getFileFormat().getValue().toString()))) {
+                                        addWarning("Warning: Did not match File_Format field " + obj.getFileFormat().getValue().toString() //NON-NLS
+                                                + " against " + formatsFound); //NON-NLS
                                     }
+                                } else {
+                                    addWarning("Warning: Did not match File_Format field " + obj.getFileFormat().getValue().toString() //NON-NLS
+                                            + " (no file formats found)"); //NON-NLS
                                 }
-
                                 // It looks like the STIX file formats can be different than what Autopsy stores
                                 // (mime vs. unix file), so don't kill a file based on this field not matching.
                                 //if (!foundMatch) {
                                 //    passedTests = false;
                                 //}
-                                if (formatsFound.isEmpty()) {
-                                    addWarning("Warning: Did not match File_Format field " + obj.getFileFormat().getValue().toString() //NON-NLS
-                                            + " (no file formats found)"); //NON-NLS
-                                } else {
-                                    if (!foundMatch) {
-                                        addWarning("Warning: Did not match File_Format field " + obj.getFileFormat().getValue().toString() //NON-NLS
-                                                + " against " + formatsFound); //NON-NLS
-                                    }
-                                }
                             }
-
                             if (passedTests) {
                                 secondaryHits.add(file);
                             }
@@ -445,7 +420,7 @@ class EvalFileObj extends EvaluatableObject {
      * Return the SQL clause for an unsigned long object. Splits into fields and
      * call the more generic version of the function.
      *
-     * @param longObj   The Cybox UnsignedLong object
+     * @param longObj The Cybox UnsignedLong object
      * @param fieldName Name of the field to test against
      *
      * @return SQL clause
@@ -462,10 +437,10 @@ class EvalFileObj extends EvaluatableObject {
     /**
      * Return the SQL clause for a numeric object.
      *
-     * @param valueStr       Value (as string)
-     * @param typeCondition  Cybox condition
+     * @param valueStr Value (as string)
+     * @param typeCondition Cybox condition
      * @param applyCondition Cybox apply_condition
-     * @param fieldName      Name of the field to test against
+     * @param fieldName Name of the field to test against
      *
      * @return SQL clause
      *
@@ -573,10 +548,10 @@ class EvalFileObj extends EvaluatableObject {
     /**
      * Return the SQL clause for a String object
      *
-     * @param valueStr       Value as a string
-     * @param condition      Cybox condition
+     * @param valueStr Value as a string
+     * @param condition Cybox condition
      * @param applyCondition Cybox apply_condition
-     * @param fieldName      Name of the field we're testing against
+     * @param fieldName Name of the field we're testing against
      *
      * @return SQL clause
      *
@@ -646,7 +621,7 @@ class EvalFileObj extends EvaluatableObject {
      * Create the SQL clause for a timestamp object. Converts the time into a
      * numeric field and then creates the clause from that.
      *
-     * @param dateObj   Cybox DateTimeObject
+     * @param dateObj Cybox DateTimeObject
      * @param fieldName Name of the field we're testing against
      *
      * @return SQL clause
@@ -700,7 +675,7 @@ class EvalFileObj extends EvaluatableObject {
     /**
      * Add a new clause to the existing clause
      *
-     * @param a_clause    Current clause
+     * @param a_clause Current clause
      * @param a_newClause New clause
      *
      * @return Full clause

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,14 +25,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.LnkEnums.CommonCLSIDS;
 import org.sleuthkit.autopsy.coreutils.LnkEnums.DriveType;
 import org.sleuthkit.autopsy.coreutils.LnkEnums.NetworkProviderType;
 
 /**
- *
- * @author dfickling Parse lnk files using documentation from
+ * Parse lnk files using documentation from:
  * http://msdn.microsoft.com/en-us/library/dd871305(v=prot.13).aspx
  * http://msdn.microsoft.com/en-us/library/windows/desktop/cc144090(v=vs.85).aspx#unknown_74413
  * http://blog.0x01000000.org/2010/08/10/lnk-parsing-youre-doing-it-wrong-i/
@@ -67,12 +65,12 @@ public class JLnkParser {
             int showCommand = bb.getInt();
             short hotkey = bb.getShort();
             bb.get(new byte[10]); // reserved (???)
-            List<String> linkTargetIdList = new ArrayList<String>();
+            List<String> linkTargetIdList = new ArrayList<>();
             if ((linkFlags & LnkEnums.LinkFlags.HasLinkTargetIDList.getFlag())
                     == LnkEnums.LinkFlags.HasLinkTargetIDList.getFlag()) {
                 int idListSize = bb.getShort();
                 int bytesRead = 0;
-                List<byte[]> linkTargetIdListBytes = new ArrayList<byte[]>();
+                List<byte[]> linkTargetIdListBytes = new ArrayList<>();
                 while (true) {
                     short itemIdSize = bb.getShort();
                     if (itemIdSize == 0) {
@@ -82,7 +80,7 @@ public class JLnkParser {
                     byte[] theArray = new byte[itemIdSize - 2];
                     bb.get(theArray); // an idlist data object
                     linkTargetIdListBytes.add(theArray);
-                    bytesRead = bytesRead + itemIdSize;
+                    bytesRead += itemIdSize;
                 }
                 linkTargetIdList = parseLinkTargetIdList(linkTargetIdListBytes);
             }
@@ -272,7 +270,7 @@ public class JLnkParser {
     }
 
     private List<String> parseLinkTargetIdList(List<byte[]> idList) {
-        List<String> ret = new ArrayList<String>();
+        List<String> ret = new ArrayList<>();
         if (!idList.isEmpty()) {
             CommonCLSIDS clsid = CommonCLSIDS.valueOf(Arrays.copyOfRange(idList.remove(0), 2, 18));
             switch (clsid) {
@@ -295,7 +293,7 @@ public class JLnkParser {
     }
 
     private List<String> parsePathElements(List<byte[]> idList) {
-        List<String> ret = new ArrayList<String>();
+        List<String> ret = new ArrayList<>();
         for (byte[] pathElement : idList) {
             ByteBuffer bb = ByteBuffer.wrap(pathElement);
             bb.order(ByteOrder.LITTLE_ENDIAN);

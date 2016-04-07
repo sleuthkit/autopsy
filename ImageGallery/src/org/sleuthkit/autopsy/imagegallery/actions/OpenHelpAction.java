@@ -23,11 +23,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.URI;
+import java.util.logging.Level;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 @ActionID(
         category = "Help",
@@ -43,9 +44,9 @@ public final class OpenHelpAction implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         try {
-            Desktop.getDesktop().browse(URI.create("http://sleuthkit.org/autopsy/docs/user-docs/"));
+            Desktop.getDesktop().browse(URI.create("http://sleuthkit.org/autopsy/docs/user-docs/4.0/image_gallery_page.html")); //NON-NLS
         } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
+            Logger.getLogger(OpenHelpAction.class.getName()).log(Level.SEVERE, "failed to open help page", ex); //NON-NLS
         }
     }
 }

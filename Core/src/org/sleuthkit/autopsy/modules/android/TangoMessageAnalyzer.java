@@ -29,14 +29,15 @@ import java.util.logging.Level;
 import org.apache.commons.codec.binary.Base64;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -46,8 +47,10 @@ class TangoMessageAnalyzer {
 
     private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(TangoMessageAnalyzer.class.getName());
+    private static Blackboard blackboard;
 
     public static void findTangoMessages(Content dataSource, FileManager fileManager) {
+        blackboard = Case.getCurrentCase().getServices().getBlackboard();
         List<AbstractFile> absFiles;
         try {
             absFiles = fileManager.findFiles(dataSource, "tc.db"); //NON-NLS
@@ -101,14 +104,22 @@ class TangoMessageAnalyzer {
                 payload = resultSet.getString("payload"); //NON-NLS
 
                 BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE); //create a call log and then add attributes from result set.
-                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), moduleName, create_time));
-                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID(), moduleName, direction));
-                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), moduleName, decodeMessage(conv_id, payload)));
-                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID(), moduleName,
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, moduleName, create_time));
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION, moduleName, direction));
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT, moduleName, decodeMessage(conv_id, payload)));
+                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE, moduleName,
                         NbBundle.getMessage(TangoMessageAnalyzer.class,
                                 "TangoMessageAnalyzer.bbAttribute.tangoMessage")));
+                
+                try {
+                    // index the artifact for keyword search
+                    blackboard.indexArtifact(bba);
+                } catch (Blackboard.BlackboardException ex) {
+                    logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", bba.getDisplayName()), ex); //NON-NLS
+                    MessageNotifyUtil.Notify.error(
+                        NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), bba.getDisplayName());
+                }
             }
-
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error parsing Tango messages to the Blackboard", e); //NON-NLS
         } finally {

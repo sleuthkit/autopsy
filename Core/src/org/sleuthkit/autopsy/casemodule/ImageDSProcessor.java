@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2014 Basis Technology Corp.
+ * Copyright 2013-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,201 +20,213 @@ package org.sleuthkit.autopsy.casemodule;
 
 import javax.swing.JPanel;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.UUID;
 import javax.swing.filechooser.FileFilter;
-
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 
 /**
- * Image data source processor. Handles the addition of "disk images" to
- * Autopsy.
- *
- * An instance of this class is created via the Netbeans Lookup() method.
- *
+ * A image file data source processor that implements the DataSourceProcessor
+ * service provider interface to allow integration with the add data source
+ * wizard. It also provides a run method overload to allow it to be used
+ * independently of the wizard.
  */
 @ServiceProvider(service = DataSourceProcessor.class)
 public class ImageDSProcessor implements DataSourceProcessor {
 
-    static final Logger logger = Logger.getLogger(ImageDSProcessor.class.getName());
-
-    // Data source type handled by this processor
-    private final static String dsType = NbBundle.getMessage(ImageDSProcessor.class, "ImageDSProcessor.dsType.text");
-
-    // The Config UI panel that plugins into the Choose Data Source Wizard
-    private final ImageFilePanel imageFilePanel;
-
-    // The Background task that does the actual work of adding the image 
+    private final static String DATA_SOURCE_TYPE = NbBundle.getMessage(ImageDSProcessor.class, "ImageDSProcessor.dsType.text");
+    private static final List<String> allExt = new ArrayList<>();
+    private static final GeneralFilter rawFilter = new GeneralFilter(GeneralFilter.RAW_IMAGE_EXTS, GeneralFilter.RAW_IMAGE_DESC);
+    private static final GeneralFilter encaseFilter = new GeneralFilter(GeneralFilter.ENCASE_IMAGE_EXTS, GeneralFilter.ENCASE_IMAGE_DESC);
+    private static final GeneralFilter virtualMachineFilter = new GeneralFilter(GeneralFilter.VIRTUAL_MACHINE_EXTS, GeneralFilter.VIRTUAL_MACHINE_DESC);
+    private static final String allDesc = NbBundle.getMessage(ImageDSProcessor.class, "ImageDSProcessor.allDesc.text");
+    private static final GeneralFilter allFilter = new GeneralFilter(allExt, allDesc);
+    private static final List<FileFilter> filtersList = new ArrayList<>();
+    private final ImageFilePanel configPanel;
     private AddImageTask addImageTask;
-
-    // true of cancelled by the caller
-    private boolean cancelled = false;
-
-    DataSourceProcessorCallback callbackObj = null;
-
-    // set to TRUE if the image options have been set via API and config Jpanel should be ignored
-    private boolean imageOptionsSet = false;
-
-    // image options
+    /*
+     * TODO: Remove the setDataSourceOptionsCalled flag and the settings fields
+     * when the deprecated method setDataSourceOptions is removed.
+     */
+    private String deviceId;
     private String imagePath;
     private String timeZone;
-    private boolean noFatOrphans;
-
-    static final GeneralFilter rawFilter = new GeneralFilter(GeneralFilter.RAW_IMAGE_EXTS, GeneralFilter.RAW_IMAGE_DESC);
-    static final GeneralFilter encaseFilter = new GeneralFilter(GeneralFilter.ENCASE_IMAGE_EXTS, GeneralFilter.ENCASE_IMAGE_DESC);
-
-    static final List<String> allExt = new ArrayList<>();
-
-    static {
-        allExt.addAll(GeneralFilter.RAW_IMAGE_EXTS);
-        allExt.addAll(GeneralFilter.ENCASE_IMAGE_EXTS);
-    }
-    static final String allDesc = NbBundle.getMessage(ImageDSProcessor.class, "ImageDSProcessor.allDesc.text");
-    static final GeneralFilter allFilter = new GeneralFilter(allExt, allDesc);
-
-    static final List<FileFilter> filtersList = new ArrayList<>();
+    private boolean ignoreFatOrphanFiles;
+    private boolean setDataSourceOptionsCalled;
 
     static {
         filtersList.add(allFilter);
         filtersList.add(rawFilter);
         filtersList.add(encaseFilter);
-    }
-
-    /*
-     * A no argument constructor is required for the NM lookup() method to
-     * create an object
-     */
-    public ImageDSProcessor() {
-
-        // Create the config panel
-        imageFilePanel = ImageFilePanel.createInstance(ImageDSProcessor.class.getName(), filtersList);
-
-    }
-
-    // this static method is used by the wizard to determine dsp type for 'core' data source processors
-    public static String getType() {
-        return dsType;
+        filtersList.add(virtualMachineFilter);
+        allExt.addAll(GeneralFilter.RAW_IMAGE_EXTS);
+        allExt.addAll(GeneralFilter.ENCASE_IMAGE_EXTS);
+        allExt.addAll(GeneralFilter.VIRTUAL_MACHINE_EXTS);
     }
 
     /**
-     * Returns the Data source type (string) handled by this DSP
+     * Constructs an image file data source processor that implements the
+     * DataSourceProcessor service provider interface to allow integration with
+     * the add data source wizard. It also provides a run method overload to
+     * allow it to be used independently of the wizard.
+     */
+    public ImageDSProcessor() {
+        configPanel = ImageFilePanel.createInstance(ImageDSProcessor.class.getName(), filtersList);
+    }
+
+    /**
+     * Gets a string that describes the type of data sources this processor is
+     * able to add to the case database. The string is suitable for display in a
+     * type selection UI component (e.g., a combo box).
      *
-     * @return String the data source type
+     * @return A data source type display string for this data source processor.
+     */
+    public static String getType() {
+        return DATA_SOURCE_TYPE;
+    }
+
+    /**
+     * Gets a string that describes the type of data sources this processor is
+     * able to add to the case database. The string is suitable for display in a
+     * type selection UI component (e.g., a combo box).
      *
+     * @return A data source type display string for this data source processor.
      */
     @Override
     public String getDataSourceType() {
-        return dsType;
+        return getType();
     }
 
     /**
-     * Returns the JPanel for collecting the Data source information
+     * Gets the panel that allows a user to select a data source and do any
+     * configuration required by the data source. The panel is less than 544
+     * pixels wide and less than 173 pixels high.
      *
-     * @return JPanel the config panel 
-     *
+     * @return A selection and configuration panel for this data source
+     *         processor.
      */
     @Override
     public JPanel getPanel() {
-
-        imageFilePanel.readSettings();
-        imageFilePanel.select();
-
-        return imageFilePanel;
+        configPanel.readSettings();
+        configPanel.select();
+        return configPanel;
     }
 
     /**
-     * Validates the data collected by the JPanel
+     * Indicates whether the settings in the selection and configuration panel
+     * are valid and complete.
      *
-     * @return String returns NULL if success, error string if there is any
-     *         errors  
-     *
+     * @return True if the settings are valid and complete and the processor is
+     *         ready to have its run method called, false otherwise.
      */
     @Override
     public boolean isPanelValid() {
-
-        return imageFilePanel.validatePanel();
+        return configPanel.validatePanel();
     }
 
     /**
-     * Runs the data source processor. This must kick off processing the data
-     * source in background
+     * Adds a data source to the case database using a background task in a
+     * separate thread and the settings provided by the selection and
+     * configuration panel. Returns as soon as the background task is started.
+     * The background task uses a callback object to signal task completion and
+     * return results.
      *
-     * @param progressMonitor Progress monitor to report progress during
-     *                        processing
-     * @param cbObj           callback to call when processing is done.
+     * This method should not be called unless isPanelValid returns true.
      *
+     * @param progressMonitor Progress monitor that will be used by the
+     *                        background task to report progress.
+     * @param callback        Callback that will be used by the background task
+     *                        to return results.
      */
     @Override
-    public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback cbObj) {
-
-        callbackObj = cbObj;
-        cancelled = false;
-
-        if (!imageOptionsSet) {
-            //tell the panel to save the current settings
-            imageFilePanel.storeSettings();
-
-            // get the image options from the panel
-            imagePath = imageFilePanel.getContentPaths();
-            timeZone = imageFilePanel.getTimeZone();
-            noFatOrphans = imageFilePanel.getNoFatOrphans();
+    public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        if (!setDataSourceOptionsCalled) {
+            configPanel.storeSettings();
+            deviceId = UUID.randomUUID().toString();
+            imagePath = configPanel.getContentPaths();
+            timeZone = configPanel.getTimeZone();
+            ignoreFatOrphanFiles = configPanel.getNoFatOrphans();
         }
-
-        addImageTask = new AddImageTask(imagePath, timeZone, noFatOrphans, progressMonitor, cbObj);
-        new Thread(addImageTask).start();
-
+        run(deviceId, imagePath, timeZone, ignoreFatOrphanFiles, progressMonitor, callback);
     }
 
     /**
-     * Cancel the data source processing
+     * Adds a data source to the case database using a background task in a
+     * separate thread and the given settings instead of those provided by the
+     * selection and configuration panel. Returns as soon as the background task
+     * is started and uses the callback object to signal task completion and
+     * return results.
      *
+     * @param deviceId             An ASCII-printable identifier for the device
+     *                             associated with the data source that is
+     *                             intended to be unique across multiple cases
+     *                             (e.g., a UUID).
+     * @param imagePath            Path to the image file.
+     * @param timeZone             The time zone to use when processing dates
+     *                             and times for the image, obtained from
+     *                             java.util.TimeZone.getID.
+     * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
+     *                             FAT filesystem.
+     * @param progressMonitor      Progress monitor for reporting progress
+     *                             during processing.
+     * @param callback             Callback to call when processing is done.
+     */
+    public void run(String deviceId, String imagePath, String timeZone, boolean ignoreFatOrphanFiles, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        addImageTask = new AddImageTask(deviceId, imagePath, timeZone, ignoreFatOrphanFiles, progressMonitor, callback);
+        new Thread(addImageTask).start();
+    }
+
+    /**
+     * Requests cancellation of the background task that adds a data source to
+     * the case database, after the task is started using the run method. This
+     * is a "best effort" cancellation, with no guarantees that the case
+     * database will be unchanged. If cancellation succeeded, the list of new
+     * data sources returned by the background task will be empty.
      */
     @Override
     public void cancel() {
-
-        cancelled = true;
         addImageTask.cancelTask();
     }
 
     /**
-     * Reset the data source processor
-   *
+     * Resets the selection and configuration panel for this data source
+     * processor.
      */
     @Override
     public void reset() {
-
-        // reset the config panel
-        imageFilePanel.reset();
-
-        // reset state 
-        imageOptionsSet = false;
+        deviceId = null;
         imagePath = null;
         timeZone = null;
-        noFatOrphans = false;
+        ignoreFatOrphanFiles = false;
+        configPanel.reset();
+        setDataSourceOptionsCalled = false;
     }
 
     /**
-     * Sets the data source options externally. To be used by a client that does
-     * not have a UI and does not use the JPanel to collect this information
-     * from a user.
+     * Sets the configuration of the data source processor without using the
+     * selection and configuration panel.
      *
-     * @param imgPath path to thew image or first image
-     * @param tz      timeZone
-     * @param noFat   whether to parse FAT orphans
-   *
+     * @param imagePath            Path to the image file.
+     * @param timeZone             The time zone to use when processing dates
+     *                             and times for the image, obtained from
+     *                             java.util.TimeZone.getID.
+     * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
+     *                             FAT filesystem.
+     *
+     * @deprecated Use the provided overload of the run method instead.
      */
-    public void setDataSourceOptions(String imgPath, String tz, boolean noFat) {
-
-        this.imagePath = imgPath;
-        this.timeZone = tz;
-        this.noFatOrphans = noFat;
-
-        imageOptionsSet = true;
-
+    @Deprecated
+    public void setDataSourceOptions(String imagePath, String timeZone, boolean ignoreFatOrphanFiles) {
+        this.deviceId = UUID.randomUUID().toString();
+        this.imagePath = imagePath;
+        this.timeZone = Calendar.getInstance().getTimeZone().getID();
+        this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
+        setDataSourceOptionsCalled = true;
     }
 
 }

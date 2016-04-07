@@ -25,12 +25,11 @@ import javax.swing.SwingUtilities;
 import org.joda.time.format.DateTimeFormatter;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.TimeLineView;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.explorernodes.EventRootNode;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
+import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.explorernodes.EventRootNode;
 
 /**
  * Since it was too hard to derive from {@link DataResultPanel}, this class
@@ -39,16 +38,16 @@ import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
  * {@link DataResultPanel}. That is, this class acts as a sort of bridge/adapter
  * between a FilteredEventsModel instance and a DataResultPanel instance.
  */
-public class TimeLineResultView implements TimeLineView {
+public class TimeLineResultView {
 
     /**
      * the {@link DataResultPanel} that is the real view proxied by this class
      */
     private final DataResultPanel dataResultPanel;
 
-    private TimeLineController controller;
+    private final TimeLineController controller;
 
-    private FilteredEventsModel filteredEvents;
+    private final FilteredEventsModel filteredEvents;
 
     private Set<Long> selectedEventIDs = new HashSet<>();
 
@@ -56,19 +55,11 @@ public class TimeLineResultView implements TimeLineView {
         return dataResultPanel;
     }
 
-    public TimeLineResultView(DataContent dataContent) {
-        dataResultPanel = DataResultPanel.createInstanceUninitialized("", "", Node.EMPTY, 0, dataContent);
-    }
+    public TimeLineResultView(TimeLineController controller, DataContent dataContent) {
 
-    /**
-     * Set the Controller for this class. Also sets the model provided by the
-     * controller as the model for this view.
-     *
-     * @param controller
-     */
-    @Override
-    public void setController(TimeLineController controller) {
         this.controller = controller;
+        this.filteredEvents = controller.getEventsModel();
+        dataResultPanel = DataResultPanel.createInstanceUninitialized("", "", Node.EMPTY, 0, dataContent);
 
         //set up listeners on relevant properties
         TimeLineController.getTimeZone().addListener((Observable observable) -> {
@@ -78,18 +69,7 @@ public class TimeLineResultView implements TimeLineView {
         controller.getSelectedEventIDs().addListener((Observable o) -> {
             refresh();
         });
-
-        setModel(controller.getEventsModel());
-    }
-
-    /**
-     * Set the Model for this View
-     *
-     * @param filteredEvents
-     */
-    @Override
-    synchronized public void setModel(final FilteredEventsModel filteredEvents) {
-        this.filteredEvents = filteredEvents;
+        refresh();
     }
 
     /**

@@ -190,7 +190,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
-
+    @SuppressWarnings("deprecation")
     private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
         String oldText = pathTextField.getText();
         // set the current directory of the FileChooser if the ImagePath Field is valid

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,9 @@ import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.control.SplitPane;
+import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.netbeans.api.settings.ConvertAsProperties;
@@ -40,7 +42,8 @@ import org.sleuthkit.autopsy.imagegallery.gui.SummaryTablePane;
 import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
 import org.sleuthkit.autopsy.imagegallery.gui.drawableviews.GroupPane;
 import org.sleuthkit.autopsy.imagegallery.gui.drawableviews.MetaDataPane;
-import org.sleuthkit.autopsy.imagegallery.gui.navpanel.NavPanel;
+import org.sleuthkit.autopsy.imagegallery.gui.navpanel.GroupTree;
+import org.sleuthkit.autopsy.imagegallery.gui.navpanel.HashHitGroupList;
 
 /**
  * Top component which displays ImageGallery interface.
@@ -65,7 +68,7 @@ import org.sleuthkit.autopsy.imagegallery.gui.navpanel.NavPanel;
 })
 public final class ImageGalleryTopComponent extends TopComponent implements ExplorerManager.Provider, Lookup.Provider {
 
-    public final static String PREFERRED_ID = "ImageGalleryTopComponent";
+    public final static String PREFERRED_ID = "ImageGalleryTopComponent"; // NON-NLS
     private static final Logger LOGGER = Logger.getLogger(ImageGalleryTopComponent.class.getName());
     private static boolean topComponentInitialized = false;
 
@@ -78,11 +81,11 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         //            }
         //        }
         //        timeLineController.openTimeLine();
-        final ImageGalleryTopComponent tc = (ImageGalleryTopComponent) WindowManager.getDefault().findTopComponent("ImageGalleryTopComponent");
+        final ImageGalleryTopComponent tc = (ImageGalleryTopComponent) WindowManager.getDefault().findTopComponent(PREFERRED_ID);
         if (tc != null) {
             topComponentInitialized = true;
             WindowManager.getDefault().isTopComponentFloating(tc);
-            Mode mode = WindowManager.getDefault().findMode("timeline");
+            Mode mode = WindowManager.getDefault().findMode("timeline"); // NON-NLS
             if (mode != null) {
                 mode.dockInto(tc);
             }
@@ -92,13 +95,13 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
     }
 
     public static void closeTopComponent() {
-        if(topComponentInitialized){
-            final TopComponent etc = WindowManager.getDefault().findTopComponent("ImageGalleryTopComponent");
+        if (topComponentInitialized) {
+            final TopComponent etc = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
             if (etc != null) {
                 try {
                     etc.close();
                 } catch (Exception e) {
-                    LOGGER.log(Level.SEVERE, "failed to close ImageGalleryTopComponent", e);
+                    LOGGER.log(Level.SEVERE, "failed to close " + PREFERRED_ID, e); // NON-NLS
                 }
             }
         }
@@ -122,7 +125,8 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
 
     private GroupPane groupPane;
 
-    private NavPanel navPanel;
+    private GroupTree groupTree;
+    private HashHitGroupList hashHitList;
 
     private VBox leftPane;
 
@@ -132,7 +136,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
 
         setName(Bundle.CTL_ImageGalleryTopComponent());
         setToolTipText(Bundle.HINT_ImageGalleryTopComponent());
-        
+
         initComponents();
 
         Platform.runLater(() -> {//initialize jfx ui
@@ -144,21 +148,29 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             fullUIStack.getChildren().add(borderPane);
             splitPane = new SplitPane();
             borderPane.setCenter(splitPane);
-            borderPane.setTop(Toolbar.getDefault(controller));
+            Toolbar toolbar = new Toolbar(controller);
+            borderPane.setTop(toolbar);
             borderPane.setBottom(new StatusBar(controller));
 
             metaDataTable = new MetaDataPane(controller);
 
-            navPanel = new NavPanel(controller);
-            leftPane = new VBox(navPanel, new SummaryTablePane(controller));
+            groupTree = new GroupTree(controller);
+            hashHitList = new HashHitGroupList(controller);
+
+            TabPane tabPane = new TabPane(groupTree, hashHitList);
+            tabPane.setPrefWidth(TabPane.USE_COMPUTED_SIZE);
+            tabPane.setMinWidth(TabPane.USE_PREF_SIZE);
+            VBox.setVgrow(tabPane, Priority.ALWAYS);
+            leftPane = new VBox(tabPane, new SummaryTablePane(controller));
             SplitPane.setResizableWithParent(leftPane, Boolean.FALSE);
             SplitPane.setResizableWithParent(groupPane, Boolean.TRUE);
             SplitPane.setResizableWithParent(metaDataTable, Boolean.FALSE);
             splitPane.getItems().addAll(leftPane, centralStack, metaDataTable);
-            splitPane.setDividerPositions(0.0, 1.0);
+            splitPane.setDividerPositions(0.1, 1.0);
 
             ImageGalleryController.getDefault().setStacks(fullUIStack, centralStack);
-            ImageGalleryController.getDefault().setNavPanel(navPanel);
+            ImageGalleryController.getDefault().setToolbar(toolbar);
+            ImageGalleryController.getDefault().setShowTree(() -> tabPane.getSelectionModel().select(groupTree));
         });
     }
 

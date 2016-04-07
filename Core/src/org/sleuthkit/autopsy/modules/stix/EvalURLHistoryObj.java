@@ -152,7 +152,7 @@ class EvalURLHistoryObj extends EvaluatableObject {
                         boolean foundBrowserNameMatch = false;
 
                         for (BlackboardAttribute attr : art.getAttributes()) {
-                            if ((attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID())
+                            if ((attr.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID())
                                     && (haveURL)) {
                                 if (entry.getURL().getValue() instanceof AnyURIObjectPropertyType) {
                                     foundURLMatch = compareStringObject(entry.getURL().getValue().getValue().toString(),
@@ -163,12 +163,12 @@ class EvalURLHistoryObj extends EvaluatableObject {
                                     addWarning("Non-AnyURIObjectPropertyType found in URL value field"); //NON-NLS
                                 }
                             }
-                            if ((attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID())
+                            if ((attr.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID())
                                     && (haveHostname)) {
                                 foundHostnameMatch = compareStringObject(entry.getHostname().getHostnameValue(),
                                         attr.getValueString());
                             }
-                            if ((attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID())
+                            if ((attr.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID())
                                     && (haveReferrer)) {
                                 if (entry.getReferrerURL().getValue() instanceof AnyURIObjectPropertyType) {
                                     foundReferrerMatch = compareStringObject(entry.getReferrerURL().getValue().getValue().toString(),
@@ -179,18 +179,17 @@ class EvalURLHistoryObj extends EvaluatableObject {
                                     addWarning("Non-AnyURIObjectPropertyType found in URL value field"); //NON-NLS
                                 }
                             }
-                            if ((attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE.getTypeID())
+                            if ((attr.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE.getTypeID())
                                     && (havePageTitle)) {
-                                //System.out.println("Page title: " + attr.getValueString() + " " + entry.getPageTitle());
                                 foundPageTitleMatch = compareStringObject(entry.getPageTitle(),
                                         attr.getValueString());
                             }
-                            if ((attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME.getTypeID())
+                            if ((attr.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME.getTypeID())
                                     && (haveUserProfile)) {
                                 foundUserProfileMatch = compareStringObject(entry.getUserProfileName(),
                                         attr.getValueString());
                             }
-                            if ((attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())
+                            if ((attr.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())
                                     && (haveBrowserName)) {
                                 foundBrowserNameMatch = compareStringObject(obj.getBrowserInformation().getName(),
                                         null, null, attr.getValueString());
@@ -241,7 +240,7 @@ class EvalURLHistoryObj extends EvaluatableObject {
                     boolean foundBrowserNameMatch = false;
 
                     for (BlackboardAttribute attr : art.getAttributes()) {
-                        if ((attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())
+                        if ((attr.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())
                                 && (haveBrowserName)) {
                             foundBrowserNameMatch = compareStringObject(obj.getBrowserInformation().getName(),
                                     null, null, attr.getValueString());

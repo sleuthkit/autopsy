@@ -27,6 +27,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class ViewInTimeLineAction extends AbstractAction {
 
+    private static final long serialVersionUID = 1L;
+
     // This class is a singleton to support multi-selection of nodes, since 
     // org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick up an Action if every 
     // node in the array returns a reference to the same action object from Node.getActions(boolean).    
@@ -51,15 +53,17 @@ public class ViewInTimeLineAction extends AbstractAction {
 
         //for each artifact, get all datetime attributes for that artifact type
         for (BlackboardArtifact bbart : Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class)) {
-            Set<BlackboardAttribute.ATTRIBUTE_TYPE> attributeTypes = ArtifactEventType.getAllArtifactEventTypes().stream()
+            Set<BlackboardAttribute.Type> attributeTypes = ArtifactEventType.getAllArtifactEventTypes().stream()
                     .filter(artEventType -> bbart.getArtifactTypeID() == artEventType.getArtifactType().getTypeID())
                     .map(ArtifactEventType::getDateTimeAttrubuteType)
                     .collect(Collectors.toSet());
 
-            for (BlackboardAttribute.ATTRIBUTE_TYPE type : attributeTypes) {
+            for (BlackboardAttribute.Type type : attributeTypes) {
                 try {
-                    Set<Long> collect1 = bbart.getAttributes(type).stream().map(BlackboardAttribute::getValueLong).collect(Collectors.toSet());
-                    timestamps.addAll(collect1);
+                    BlackboardAttribute attribute = bbart.getAttribute(type);
+                    if (attribute != null) {
+                        timestamps.add(attribute.getValueLong());
+                    }
                 } catch (TskCoreException ex) {
                     Exceptions.printStackTrace(ex);
                 }

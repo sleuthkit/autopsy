@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,6 +35,7 @@ import org.openide.util.Lookup;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
+import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.casemodule.OpenFromArguments;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -43,8 +44,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  */
 public class Installer extends ModuleInstall {
 
-    private static Installer instance;
+    private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(Installer.class.getName());
+    private static Installer instance;
 
     public synchronized static Installer getDefault() {
         if (instance == null) {
@@ -61,13 +63,15 @@ public class Installer extends ModuleInstall {
     public void restored() {
         super.restored();
 
-        setupLAF();
+        setLookAndFeel();
         UIManager.put("ViewTabDisplayerUI", "org.sleuthkit.autopsy.corecomponents.NoTabsTabDisplayerUI");
         UIManager.put(DefaultTabbedContainerUI.KEY_VIEW_CONTENT_BORDER, BorderFactory.createEmptyBorder());
         UIManager.put("TabbedPane.contentBorderInsets", new Insets(0, 0, 0, 0));
 
         /*
-         * Open the passed in case, if an aut file was double clicked.
+         * Open the case if a case metadata file was double-clicked. This only
+         * works if the user has associated files with ".aut" extensions with
+         * Autopsy.
          */
         WindowManager.getDefault().invokeWhenUIReady(() -> {
             Collection<? extends OptionProcessor> processors = Lookup.getDefault().lookupAll(OptionProcessor.class);
@@ -75,20 +79,19 @@ public class Installer extends ModuleInstall {
                 if (processor instanceof OpenFromArguments) {
                     OpenFromArguments argsProcessor = (OpenFromArguments) processor;
                     final String caseFile = argsProcessor.getDefaultArg();
-                    if (caseFile != null && !caseFile.equals("") && caseFile.endsWith(".aut") && new File(caseFile).exists()) { //NON-NLS
+                    if (caseFile != null && !caseFile.equals("") && caseFile.endsWith(CaseMetadata.getFileExtension()) && new File(caseFile).exists()) { //NON-NLS
                         new Thread(() -> {
-                            // Create case.
                             try {
                                 Case.open(caseFile);
                             } catch (Exception ex) {
-                                logger.log(Level.SEVERE, "Error opening case: ", ex); //NON-NLS
+                                logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseFile), ex); //NON-NLS
                             }
                         }).start();
                         return;
                     }
                 }
             }
-            Case.invokeStartupDialog(); // bring up the startup dialog
+            Case.invokeStartupDialog();
         });
 
     }
@@ -101,26 +104,27 @@ public class Installer extends ModuleInstall {
     @Override
     public void close() {
         new Thread(() -> {
+            String caseDirName = null;
             try {
                 if (Case.isCaseOpen()) {
-                    Case.getCurrentCase().closeCase();
+                    Case currentCase = Case.getCurrentCase();
+                    caseDirName = currentCase.getCaseDirectory();
+                    currentCase.closeCase();
                 }
-            } catch (CaseActionException | IllegalStateException unused) {
-                // Exception already logged. Shutting down, no need to do popup.
+            } catch (CaseActionException ex) {
+                logger.log(Level.SEVERE, String.format("Error closing case with case directory %s", (null != caseDirName ? caseDirName : "?")), ex); //NON-NLS
+            } catch (IllegalStateException ignored) {
+                /*
+                 * No current case. Case.isCaseOpen is not reliable. 
+                 */
             }
         }).start();
     }
 
-    private void setupLAF() {
-
-        //TODO apply custom skinning 
-        //UIManager.put("nimbusBase", new Color());
-        //UIManager.put("nimbusBlueGrey", new Color());
-        //UIManager.put("control", new Color());
+    private void setLookAndFeel() {
         if (System.getProperty("os.name").toLowerCase().contains("mac")) { //NON-NLS
-            setupMacOsXLAF();
+            setOSXLookAndFeel();
         }
-
     }
 
     /**
@@ -128,37 +132,33 @@ public class Installer extends ModuleInstall {
      * dependent elements that set the Menu Bar to be in the correct place on
      * Mac OS X.
      */
-    private void setupMacOsXLAF() {
+    private void setOSXLookAndFeel() {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
-            logger.log(Level.WARNING, "Unable to set theme. ", ex); //NON-NLS
+            logger.log(Level.WARNING, "Error setting OS-X look-and-feel", ex); //NON-NLS
         }
 
-        final String[] UI_MENU_ITEM_KEYS = new String[]{"MenuBarUI", //NON-NLS
-    };
-
-        Map<Object, Object> uiEntries = new TreeMap<>();
-
         // Store the keys that deal with menu items
+        final String[] UI_MENU_ITEM_KEYS = new String[]{"MenuBarUI",}; //NON-NLS    
+        Map<Object, Object> uiEntries = new TreeMap<>();
         for (String key : UI_MENU_ITEM_KEYS) {
             uiEntries.put(key, UIManager.get(key));
         }
 
-        //use Metal if available
+        // Use Metal if available.
         for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
             if ("Nimbus".equals(info.getName())) { //NON-NLS
                 try {
                     UIManager.setLookAndFeel(info.getClassName());
-                } catch (ClassNotFoundException | InstantiationException |
-                        IllegalAccessException | UnsupportedLookAndFeelException ex) {
-                    logger.log(Level.WARNING, "Unable to set theme. ", ex); //NON-NLS
+                } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
+                    logger.log(Level.WARNING, "Error setting OS-X look-and-feel", ex); //NON-NLS
                 }
                 break;
             }
         }
 
-        // Overwrite the Metal menu item keys to use the Aqua versions
+        // Overwrite the Metal menu item keys to use the Aqua versions.
         uiEntries.entrySet().stream().forEach((entry) -> {
             UIManager.put(entry.getKey(), entry.getValue());
         });

@@ -23,6 +23,7 @@ import java.util.logging.Level;
 import javafx.event.ActionEvent;
 import javax.swing.SwingWorker;
 import org.controlsfx.control.action.Action;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
@@ -38,8 +39,9 @@ public class DeleteFollowUpTagAction extends Action {
 
     private static final Logger LOGGER = Logger.getLogger(DeleteFollowUpTagAction.class.getName());
 
-    public DeleteFollowUpTagAction(final ImageGalleryController controller, final DrawableFile<?> file) {
-        super("Delete Follow Up Tag");
+    @NbBundle.Messages("DeleteFollwUpTagAction.displayName=Delete Follow Up Tag")
+    public DeleteFollowUpTagAction(final ImageGalleryController controller, final DrawableFile file) {
+        super(Bundle.DeleteFollwUpTagAction_displayName());
         setEventHandler((ActionEvent t) -> {
             new SwingWorker<Void, Void>() {
 
@@ -50,14 +52,14 @@ public class DeleteFollowUpTagAction extends Action {
                     try {
                         final TagName followUpTagName = tagsManager.getFollowUpTagName();
 
-                        List<ContentTag> contentTagsByContent = tagsManager.getContentTagsByContent(file);
+                        List<ContentTag> contentTagsByContent = tagsManager.getContentTags(file);
                         for (ContentTag ct : contentTagsByContent) {
                             if (ct.getName().getDisplayName().equals(followUpTagName.getDisplayName())) {
                                 tagsManager.deleteContentTag(ct);
                             }
                         }
                     } catch (TskCoreException ex) {
-                        LOGGER.log(Level.SEVERE, "Failed to delete follow up tag.", ex);
+                        LOGGER.log(Level.SEVERE, "Failed to delete follow up tag.", ex); //NON-NLS
                     }
                     return null;
                 }

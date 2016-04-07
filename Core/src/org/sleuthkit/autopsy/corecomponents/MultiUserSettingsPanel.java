@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2013-2016 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.corecomponents;
 
@@ -23,6 +36,7 @@ import javax.swing.ImageIcon;
 import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.events.MessageServiceException;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
@@ -35,11 +49,13 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     private static final String PORT_PROMPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbPort.toolTipText");
     private static final String USER_NAME_PROMPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbUsername.toolTipText");
     private static final String PASSWORD_PROMPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbPassword.toolTipText");
+    private static final String USER_NAME_PROMPT_OPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgUsername.toolTipText");
+    private static final String PASSWORD_PROMPT_OPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgPassword.toolTipText");
     private static final String INCOMPLETE_SETTINGS_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.incomplete");
     private static final String INVALID_DB_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidDatabasePort");
     private static final String INVALID_MESSAGE_SERVICE_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidMessageServicePort");
     private static final String INVALID_INDEXING_SERVER_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidIndexingServerPort");
-    private static final int DEFAULT_MESSAGE_SERVICE_PORT = 61616;
+    private static final String NON_WINDOWS_OS_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.nonWindowsOs.msg");
     private static final long serialVersionUID = 1L;
     private final MultiUserSettingsPanelController controller;
     private final Collection<JTextField> textBoxes = new ArrayList<>();
@@ -47,6 +63,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     private static final Logger logger = Logger.getLogger(MultiUserSettingsPanel.class.getName());
     private final ImageIcon goodIcon;
     private final ImageIcon badIcon;
+    private static final boolean isWindowsOS = PlatformUtil.isWindowsOS();
 
     /**
      * Creates new form AutopsyMultiUserSettingsPanel
@@ -68,14 +85,16 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         textPrompts.add(new TextPrompt(PASSWORD_PROMPT, tbDbPassword));
         textPrompts.add(new TextPrompt(HOST_NAME_OR_IP_PROMPT, tbMsgHostname));
         textPrompts.add(new TextPrompt(PORT_PROMPT, tbMsgPort));
-        textPrompts.add(new TextPrompt(USER_NAME_PROMPT, tbMsgUsername));
-        textPrompts.add(new TextPrompt(PASSWORD_PROMPT, tbMsgPassword));
+        textPrompts.add(new TextPrompt(USER_NAME_PROMPT_OPT, tbMsgUsername));
+        textPrompts.add(new TextPrompt(PASSWORD_PROMPT_OPT, tbMsgPassword));
         textPrompts.add(new TextPrompt(HOST_NAME_OR_IP_PROMPT, tbSolrHostname));
         textPrompts.add(new TextPrompt(PORT_PROMPT, tbSolrPort));
         configureTextPrompts(textPrompts);
 
-        /* Set each textbox with a "statusIcon" property enabling the 
-         DocumentListeners to know which icon to erase when changes are made */
+        /*
+         * Set each textbox with a "statusIcon" property enabling the
+         * DocumentListeners to know which icon to erase when changes are made
+         */
         tbDbHostname.getDocument().putProperty("statusIcon", lbTestDatabase);
         tbDbPort.getDocument().putProperty("statusIcon", lbTestDatabase);
         tbDbUsername.getDocument().putProperty("statusIcon", lbTestDatabase);
@@ -105,6 +124,10 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         addDocumentListeners(textBoxes, textBoxChangedListener);
         goodIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/good.png", false));
         badIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/bad.png", false));
+        if (!isWindowsOS) {
+            cbEnableMultiUser.setEnabled(false);
+            cbEnableMultiUser.setSelected(false);
+        }
         enableMultiUserComponents(textBoxes, cbEnableMultiUser.isSelected());
     }
 
@@ -143,6 +166,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jScrollPane = new javax.swing.JScrollPane();
         pnOverallPanel = new javax.swing.JPanel();
         pnDatabaseSettings = new javax.swing.JPanel();
         tbDbHostname = new javax.swing.JTextField();
@@ -174,26 +198,27 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
         pnDatabaseSettings.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        tbDbHostname.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        tbDbHostname.setFont(tbDbHostname.getFont().deriveFont(tbDbHostname.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
         tbDbHostname.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbHostname.text")); // NOI18N
         tbDbHostname.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbHostname.toolTipText")); // NOI18N
 
-        tbDbPort.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        tbDbPort.setFont(tbDbPort.getFont().deriveFont(tbDbPort.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
         tbDbPort.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbPort.text")); // NOI18N
         tbDbPort.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbPort.toolTipText")); // NOI18N
 
-        tbDbUsername.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        tbDbUsername.setFont(tbDbUsername.getFont().deriveFont(tbDbUsername.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
         tbDbUsername.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbUsername.text")); // NOI18N
         tbDbUsername.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbUsername.toolTipText")); // NOI18N
 
-        tbDbPassword.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        tbDbPassword.setFont(tbDbPassword.getFont().deriveFont(tbDbPassword.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
         tbDbPassword.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbPassword.text")); // NOI18N
         tbDbPassword.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbPassword.toolTipText")); // NOI18N
 
-        lbDatabaseSettings.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        lbDatabaseSettings.setFont(lbDatabaseSettings.getFont().deriveFont(lbDatabaseSettings.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
         org.openide.awt.Mnemonics.setLocalizedText(lbDatabaseSettings, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.lbDatabaseSettings.text")); // NOI18N
         lbDatabaseSettings.setVerticalAlignment(javax.swing.SwingConstants.TOP);
 
+        bnTestDatabase.setFont(bnTestDatabase.getFont().deriveFont(bnTestDatabase.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(bnTestDatabase, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.bnTestDatabase.text")); // NOI18N
         bnTestDatabase.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -252,15 +277,16 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
         pnSolrSettings.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        lbSolrSettings.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        lbSolrSettings.setFont(lbSolrSettings.getFont().deriveFont(lbSolrSettings.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
         org.openide.awt.Mnemonics.setLocalizedText(lbSolrSettings, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.lbSolrSettings.text")); // NOI18N
 
-        tbSolrHostname.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        tbSolrHostname.setFont(tbSolrHostname.getFont().deriveFont(tbSolrHostname.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
         tbSolrHostname.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbSolrHostname.toolTipText")); // NOI18N
 
-        tbSolrPort.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        tbSolrPort.setFont(tbSolrPort.getFont().deriveFont(tbSolrPort.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
         tbSolrPort.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbSolrPort.toolTipText")); // NOI18N
 
+        bnTestSolr.setFont(bnTestSolr.getFont().deriveFont(bnTestSolr.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(bnTestSolr, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.bnTestSolr.text")); // NOI18N
         bnTestSolr.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -313,25 +339,26 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
         pnMessagingSettings.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        lbMessageServiceSettings.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        lbMessageServiceSettings.setFont(lbMessageServiceSettings.getFont().deriveFont(lbMessageServiceSettings.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
         org.openide.awt.Mnemonics.setLocalizedText(lbMessageServiceSettings, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.lbMessageServiceSettings.text")); // NOI18N
 
-        tbMsgHostname.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        tbMsgHostname.setFont(tbMsgHostname.getFont().deriveFont(tbMsgHostname.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
         tbMsgHostname.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgHostname.text")); // NOI18N
         tbMsgHostname.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgHostname.toolTipText")); // NOI18N
 
-        tbMsgUsername.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        tbMsgUsername.setFont(tbMsgUsername.getFont().deriveFont(tbMsgUsername.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
         tbMsgUsername.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgUsername.text")); // NOI18N
         tbMsgUsername.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgUsername.toolTipText")); // NOI18N
 
-        tbMsgPort.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        tbMsgPort.setFont(tbMsgPort.getFont().deriveFont(tbMsgPort.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
         tbMsgPort.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgPort.text")); // NOI18N
         tbMsgPort.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgPort.toolTipText")); // NOI18N
 
-        tbMsgPassword.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        tbMsgPassword.setFont(tbMsgPassword.getFont().deriveFont(tbMsgPassword.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
         tbMsgPassword.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgPassword.text")); // NOI18N
         tbMsgPassword.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgPassword.toolTipText")); // NOI18N
 
+        bnTestMessageService.setFont(bnTestMessageService.getFont().deriveFont(bnTestMessageService.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(bnTestMessageService, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.bnTestMessageService.text")); // NOI18N
         bnTestMessageService.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -388,6 +415,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
+        cbEnableMultiUser.setFont(cbEnableMultiUser.getFont().deriveFont(cbEnableMultiUser.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(cbEnableMultiUser, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.cbEnableMultiUser.text")); // NOI18N
         cbEnableMultiUser.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -396,7 +424,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         });
 
         tbOops.setEditable(false);
-        tbOops.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        tbOops.setFont(tbOops.getFont().deriveFont(tbOops.getFont().getStyle() | java.awt.Font.BOLD, 12));
         tbOops.setForeground(new java.awt.Color(255, 0, 0));
         tbOops.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbOops.text")); // NOI18N
         tbOops.setBorder(null);
@@ -432,22 +460,28 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
                 .addContainerGap(39, Short.MAX_VALUE))
         );
 
+        jScrollPane.setViewportView(pnOverallPanel);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(pnOverallPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 555, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(jScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 555, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(pnOverallPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 559, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 537, Short.MAX_VALUE)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
     /**
      * Enables/disables the multi-user settings, based upon input provided
      *
-     * @param enabled true means enable, false means disable
+     * @param textFields The text fields to enable/disable.
+     * @param enabled True means enable, false means disable.
      */
     private static void enableMultiUserComponents(Collection<JTextField> textFields, boolean enabled) {
         for (JTextField textField : textFields) {
@@ -457,7 +491,11 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
     private void cbEnableMultiUserItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cbEnableMultiUserItemStateChanged
         if (!cbEnableMultiUser.isSelected()) {
-            tbOops.setText("");
+            if (!isWindowsOS) {
+                tbOops.setText(NON_WINDOWS_OS_MSG);
+            } else {
+                tbOops.setText("");
+            }
             bnTestDatabase.setEnabled(false);
             lbTestDatabase.setIcon(null);
             bnTestSolr.setEnabled(false);
@@ -627,57 +665,69 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Tests whether or not values have been entered in all of the message
-     * service settings text fields.
+     * Tests whether or not values have been entered in all of the required
+     * message service settings text fields.
      *
      * @return True or false.
      */
     private boolean messageServiceFieldsArePopulated() {
-        return !tbMsgHostname.getText().trim().isEmpty()
-                && !tbMsgPort.getText().trim().isEmpty()
-                && !tbMsgUsername.getText().trim().isEmpty()
-                && tbMsgPassword.getPassword().length != 0;
+
+        if ((tbMsgHostname.getText().trim().isEmpty())
+                || (tbMsgPort.getText().trim().isEmpty())) {
+            return false;
+        }
+
+        // user name and pw are optional, but make sure they are both set or both empty
+        boolean isUserSet = (tbMsgUsername.getText().trim().isEmpty() == false);
+        boolean isPwSet = (tbMsgPassword.getPassword().length != 0);
+        return (isUserSet == isPwSet);
     }
 
     void store() {
-        DbType dbType = DbType.SQLITE;
-
-        if (cbEnableMultiUser.isSelected()) {
-            dbType = DbType.POSTGRESQL;
+        if (!isWindowsOS) {
+            return;
         }
 
-        UserPreferences.setIsMultiUserModeEnabled(cbEnableMultiUser.isSelected());
+        boolean multiUserCasesEnabled = cbEnableMultiUser.isSelected();
+        UserPreferences.setIsMultiUserModeEnabled(multiUserCasesEnabled);
+        if (multiUserCasesEnabled == false) {
+            return;
+        }
 
+        /*
+         * Currently only supporting multi-user cases with PostgreSQL case
+         * databases.
+         */
+        DbType dbType = DbType.POSTGRESQL;
         CaseDbConnectionInfo info = new CaseDbConnectionInfo(
                 tbDbHostname.getText().trim(),
                 tbDbPort.getText().trim(),
                 tbDbUsername.getText().trim(),
                 new String(tbDbPassword.getPassword()),
                 dbType);
-
         try {
             UserPreferences.setDatabaseConnectionInfo(info);
         } catch (UserPreferencesException ex) {
-            logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error saving case database connection info", ex); //NON-NLS
         }
 
-        int port = 0;
+        int msgServicePort = 0;
         try {
-            port = Integer.parseInt(this.tbMsgPort.getText().trim());
+            msgServicePort = Integer.parseInt(this.tbMsgPort.getText().trim());
         } catch (NumberFormatException ex) {
-            logger.log(Level.SEVERE, "Bad port setting", ex);
+            logger.log(Level.SEVERE, "Could not parse messaging service port setting", ex);
         }
 
         MessageServiceConnectionInfo msgServiceInfo = new MessageServiceConnectionInfo(
                 tbMsgHostname.getText().trim(),
-                port,
+                msgServicePort,
                 tbMsgUsername.getText().trim(),
                 new String(tbMsgPassword.getPassword()));
 
         try {
             UserPreferences.setMessageServiceConnectionInfo(msgServiceInfo);
         } catch (UserPreferencesException ex) {
-            logger.log(Level.SEVERE, "Error accessing messaging service connection info", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error saving messaging service connection info", ex); //NON-NLS
         }
 
         UserPreferences.setIndexingServerHost(tbSolrHostname.getText().trim());
@@ -691,7 +741,11 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
      * @return true if it's okay, false otherwise.
      */
     boolean valid() {
-        tbOops.setText("");
+        if (!isWindowsOS) {
+            tbOops.setText(NON_WINDOWS_OS_MSG);
+        } else {
+            tbOops.setText("");
+        }
 
         if (cbEnableMultiUser.isSelected()) {
             return checkFieldsAndEnableButtons()
@@ -800,6 +854,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JButton bnTestMessageService;
     private javax.swing.JButton bnTestSolr;
     private javax.swing.JCheckBox cbEnableMultiUser;
+    private javax.swing.JScrollPane jScrollPane;
     private javax.swing.JLabel lbDatabaseSettings;
     private javax.swing.JLabel lbMessageServiceSettings;
     private javax.swing.JLabel lbSolrSettings;

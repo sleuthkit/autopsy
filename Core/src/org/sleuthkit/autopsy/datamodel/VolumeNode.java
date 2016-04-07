@@ -26,6 +26,7 @@ import javax.swing.Action;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.directorytree.ExplorerNodeActionVisitor;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -63,14 +64,20 @@ public class VolumeNode extends AbstractContentNode<Volume> {
         // set name, display name, and icon
         String volName = nameForVolume(vol);
 
-        long end = vol.getStart() + (vol.getSize() - 1);
+        long end = vol.getStart() + (vol.getLength() - 1);
         String tempVolName = volName + " (" + vol.getDescription() + ": " + vol.getStart() + "-" + end + ")";
         this.setDisplayName(tempVolName);
 
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/vol-icon.png"); //NON-NLS
         // Listen for ingest events so that we can detect new added files (e.g. carved)
         IngestManager.getInstance().addIngestModuleEventListener(pcl);
+        // Listen for case events so that we can detect when case is closed
+        Case.addPropertyChangeListener(pcl);
+    }
 
+    private void removeListeners() {
+        IngestManager.getInstance().removeIngestModuleEventListener(pcl);
+        Case.removePropertyChangeListener(pcl);
     }
 
     private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
@@ -104,6 +111,11 @@ public class VolumeNode extends AbstractContentNode<Volume> {
                 }
             } catch (TskCoreException ex) {
                 // Do nothing.
+            }
+        } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+            if (evt.getNewValue() == null) {
+                // case was closed. Remove listeners so that we don't get called with a stale case handle
+                removeListeners();
             }
         }
     };
@@ -177,4 +189,14 @@ public class VolumeNode extends AbstractContentNode<Volume> {
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
     }
+
+    /*
+     * TODO (AUT-1849): Correct or remove peristent column reordering code
+     *
+     * Added to support this feature.
+     */
+//    @Override
+//    public String getItemType() {
+//        return "Volume"; //NON-NLS
+//    }
 }

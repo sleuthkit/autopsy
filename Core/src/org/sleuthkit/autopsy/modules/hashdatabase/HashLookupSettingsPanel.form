@@ -4,6 +4,11 @@
   <NonVisualComponents>
     <Component class="javax.swing.JLabel" name="jLabel2">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="false" component="jLabel2" property="font" relativeSize="false" size="11"/>
+          </FontInfo>
+        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashLookupSettingsPanel.jLabel2.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
@@ -11,6 +16,11 @@
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel4">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="false" component="jLabel4" property="font" relativeSize="false" size="11"/>
+          </FontInfo>
+        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashLookupSettingsPanel.jLabel4.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
@@ -18,6 +28,11 @@
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel6">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="false" component="jLabel6" property="font" relativeSize="false" size="11"/>
+          </FontInfo>
+        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashLookupSettingsPanel.jLabel6.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
@@ -25,8 +40,10 @@
     </Component>
     <Component class="javax.swing.JButton" name="jButton3">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Tahoma" size="14" style="0"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="false" component="jButton3" property="font" relativeSize="false" size="14"/>
+          </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashLookupSettingsPanel.jButton3.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
@@ -239,6 +256,11 @@
           <SubComponents>
             <Component class="javax.swing.JLabel" name="ingestWarningLabel">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="false" component="ingestWarningLabel" property="font" relativeSize="false" size="11"/>
+                  </FontInfo>
+                </Property>
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                   <Image iconType="3" name="/org/sleuthkit/autopsy/modules/hashdatabase/warning16.png"/>
                 </Property>
@@ -256,6 +278,11 @@
               <SubComponents>
                 <Component class="javax.swing.JTable" name="hashSetTable">
                   <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                      <FontInfo relative="true">
+                        <Font bold="false" component="hashSetTable" property="font" relativeSize="false" size="11"/>
+                      </FontInfo>
+                    </Property>
                     <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.editors2.TableModelEditor">
                       <Table columnCount="0" rowCount="0"/>
                     </Property>
@@ -279,6 +306,11 @@
             </Container>
             <Component class="javax.swing.JButton" name="deleteDatabaseButton">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="false" component="deleteDatabaseButton" property="font" relativeSize="false" size="11"/>
+                  </FontInfo>
+                </Property>
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                   <Image iconType="3" name="/org/sleuthkit/autopsy/modules/hashdatabase/delete16.png"/>
                 </Property>
@@ -301,6 +333,11 @@
             </Component>
             <Component class="javax.swing.JButton" name="importDatabaseButton">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="false" component="importDatabaseButton" property="font" relativeSize="false" size="11"/>
+                  </FontInfo>
+                </Property>
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                   <Image iconType="3" name="/org/sleuthkit/autopsy/modules/hashdatabase/import16.png"/>
                 </Property>
@@ -323,6 +360,11 @@
             </Component>
             <Component class="javax.swing.JLabel" name="hashDatabasesLabel">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="false" component="hashDatabasesLabel" property="font" relativeSize="false" size="11"/>
+                  </FontInfo>
+                </Property>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashLookupSettingsPanel.hashDatabasesLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
@@ -330,6 +372,11 @@
             </Component>
             <Component class="javax.swing.JLabel" name="nameLabel">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="false" component="nameLabel" property="font" relativeSize="false" size="11"/>
+                  </FontInfo>
+                </Property>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashLookupSettingsPanel.nameLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
@@ -337,6 +384,11 @@
             </Component>
             <Component class="javax.swing.JLabel" name="hashDbNameLabel">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="false" component="hashDbNameLabel" property="font" relativeSize="false" size="11"/>
+                  </FontInfo>
+                </Property>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashLookupSettingsPanel.hashDbNameLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
@@ -344,6 +396,11 @@
             </Component>
             <Component class="javax.swing.JLabel" name="hashDbLocationLabel">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="false" component="hashDbLocationLabel" property="font" relativeSize="false" size="11"/>
+                  </FontInfo>
+                </Property>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashLookupSettingsPanel.hashDbLocationLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
@@ -351,6 +408,11 @@
             </Component>
             <Component class="javax.swing.JLabel" name="locationLabel">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="false" component="locationLabel" property="font" relativeSize="false" size="11"/>
+                  </FontInfo>
+                </Property>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashLookupSettingsPanel.locationLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
@@ -358,6 +420,11 @@
             </Component>
             <Component class="javax.swing.JLabel" name="typeLabel">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="false" component="typeLabel" property="font" relativeSize="false" size="11"/>
+                  </FontInfo>
+                </Property>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashLookupSettingsPanel.typeLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
@@ -365,6 +432,11 @@
             </Component>
             <Component class="javax.swing.JLabel" name="hashDbTypeLabel">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="false" component="hashDbTypeLabel" property="font" relativeSize="false" size="11"/>
+                  </FontInfo>
+                </Property>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashLookupSettingsPanel.hashDbTypeLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
@@ -372,6 +444,11 @@
             </Component>
             <Component class="javax.swing.JLabel" name="hashDbIndexStatusLabel">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="false" component="hashDbIndexStatusLabel" property="font" relativeSize="false" size="11"/>
+                  </FontInfo>
+                </Property>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashLookupSettingsPanel.hashDbIndexStatusLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
@@ -379,6 +456,11 @@
             </Component>
             <Component class="javax.swing.JLabel" name="indexLabel">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="false" component="indexLabel" property="font" relativeSize="false" size="11"/>
+                  </FontInfo>
+                </Property>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashLookupSettingsPanel.indexLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
@@ -386,6 +468,11 @@
             </Component>
             <Component class="javax.swing.JButton" name="indexButton">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="false" component="indexButton" property="font" relativeSize="false" size="11"/>
+                  </FontInfo>
+                </Property>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashLookupSettingsPanel.indexButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
@@ -397,6 +484,11 @@
             </Component>
             <Component class="javax.swing.JCheckBox" name="sendIngestMessagesCheckBox">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="false" component="sendIngestMessagesCheckBox" property="font" relativeSize="false" size="11"/>
+                  </FontInfo>
+                </Property>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashLookupSettingsPanel.sendIngestMessagesCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
@@ -407,6 +499,11 @@
             </Component>
             <Component class="javax.swing.JLabel" name="informationLabel">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="false" component="informationLabel" property="font" relativeSize="false" size="11"/>
+                  </FontInfo>
+                </Property>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashLookupSettingsPanel.informationLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
@@ -414,6 +511,11 @@
             </Component>
             <Component class="javax.swing.JLabel" name="optionsLabel">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="false" component="optionsLabel" property="font" relativeSize="false" size="11"/>
+                  </FontInfo>
+                </Property>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashLookupSettingsPanel.optionsLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
@@ -425,6 +527,11 @@
             </Component>
             <Component class="javax.swing.JButton" name="createDatabaseButton">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="false" component="createDatabaseButton" property="font" relativeSize="false" size="11"/>
+                  </FontInfo>
+                </Property>
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                   <Image iconType="3" name="/org/sleuthkit/autopsy/modules/hashdatabase/new16.png"/>
                 </Property>
@@ -447,6 +554,11 @@
             </Component>
             <Component class="javax.swing.JLabel" name="indexPathLabelLabel">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="false" component="indexPathLabelLabel" property="font" relativeSize="false" size="11"/>
+                  </FontInfo>
+                </Property>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashLookupSettingsPanel.indexPathLabelLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
@@ -454,6 +566,11 @@
             </Component>
             <Component class="javax.swing.JLabel" name="indexPathLabel">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="false" component="indexPathLabel" property="font" relativeSize="false" size="11"/>
+                  </FontInfo>
+                </Property>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashLookupSettingsPanel.indexPathLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
@@ -461,6 +578,11 @@
             </Component>
             <Component class="javax.swing.JButton" name="addHashesToDatabaseButton">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="false" component="addHashesToDatabaseButton" property="font" relativeSize="false" size="11"/>
+                  </FontInfo>
+                </Property>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashLookupSettingsPanel.addHashesToDatabaseButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>

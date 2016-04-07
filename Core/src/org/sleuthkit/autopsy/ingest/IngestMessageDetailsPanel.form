@@ -74,8 +74,10 @@
             <Property name="contentType" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/ingest/Bundle.properties" key="IngestMessageDetailsPanel.messageDetailsPane.contentType" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-              <Font name="Tahoma" size="10" style="0"/>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font bold="false" component="messageDetailsPane" property="font" relativeSize="false" size="10"/>
+              </FontInfo>
             </Property>
             <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/ingest/Bundle.properties" key="IngestMessageDetailsPanel.messageDetailsPane.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
@@ -136,6 +138,11 @@
         </Component>
         <Component class="javax.swing.JButton" name="viewArtifactButton">
           <Properties>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font bold="false" component="viewArtifactButton" property="font" relativeSize="false" size="11"/>
+              </FontInfo>
+            </Property>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
               <Image iconType="3" name="/org/sleuthkit/autopsy/ingest/goto_res.png"/>
             </Property>
@@ -153,6 +160,11 @@
         </Component>
         <Component class="javax.swing.JButton" name="viewContentButton">
           <Properties>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font bold="false" component="viewContentButton" property="font" relativeSize="false" size="11"/>
+              </FontInfo>
+            </Property>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
               <Image iconType="3" name="/org/sleuthkit/autopsy/ingest/goto_dir.png"/>
             </Property>

@@ -85,6 +85,20 @@ public class Installer extends ModuleInstall {
             } catch (UnsatisfiedLinkError e) {
                 logger.log(Level.SEVERE, "Error loading EWF library, ", e); //NON-NLS
             }
+            
+            try {
+                System.loadLibrary("libvmdk"); //NON-NLS
+                logger.log(Level.INFO, "VMDK library loaded"); //NON-NLS
+            } catch (UnsatisfiedLinkError e) {
+                logger.log(Level.SEVERE, "Error loading VMDK library, ", e); //NON-NLS
+            }
+            
+            try {
+                System.loadLibrary("libvhdi"); //NON-NLS
+                logger.log(Level.INFO, "VHDI library loaded"); //NON-NLS
+            } catch (UnsatisfiedLinkError e) {
+                logger.log(Level.SEVERE, "Error loading VHDI library, ", e); //NON-NLS
+            }
 
             /* PostgreSQL */
             try {
@@ -108,11 +122,16 @@ public class Installer extends ModuleInstall {
                 logger.log(Level.SEVERE, "Error loading SSLEAY32 library, ", e); //NON-NLS
             }
 
+            // This library name is different in 32-bit versus 64-bit
+            String libintlName = "libintl-8"; //NON-NLS
+            if (PlatformUtil.is64BitJVM() == false) {
+                libintlName = "intl"; //NON-NLS
+            }
             try {
-                System.loadLibrary("libintl-8"); //NON-NLS
-                logger.log(Level.INFO, "libintl-8 library loaded"); //NON-NLS
+                System.loadLibrary(libintlName); //NON-NLS
+                logger.log(Level.INFO, libintlName + " library loaded"); //NON-NLS
             } catch (UnsatisfiedLinkError e) {
-                logger.log(Level.SEVERE, "Error loading libintl-8 library, ", e); //NON-NLS
+                logger.log(Level.SEVERE, "Error loading " + libintlName + " library, ", e); //NON-NLS
             }
 
             try {

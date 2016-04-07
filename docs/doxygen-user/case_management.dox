@@ -14,7 +14,9 @@ There are several ways to create a new case:
 
 The New Case wizard dialog will open and you will need to enter the case name and base directory. A directory for the case will be created inside of the "base directory". If the directory already exists, you will need to either delete the existing directory or choose a different combination of names.
 
-\image html case-newcase.png
+\image html case-newcase.PNG
+
+NOTE: You will only have the option of making a multi-user case if you have configured Autopsy with multi-user settings.  See \ref install_multiuser_page for installation instructions and \ref creating_multi_user_cases for details on creating multi-user cases.
 
 You will also be prompted for optional information, such as investigator name and case number.  
 

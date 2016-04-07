@@ -190,6 +190,16 @@ public class EmailExtracted implements AutopsyVisitableItem {
 
             return s;
         }
+
+        /*
+         * TODO (AUT-1849): Correct or remove peristent column reordering code
+         *
+         * Added to support this feature.
+         */
+//        @Override
+//        public String getItemType() {
+//            return "EmailExtractedRoot"; //NON-NLS
+//        }
     }
 
     /**
@@ -221,7 +231,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
                          * for the event to have a null oldValue.
                          */
                         ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
-                        if (null != eventData && eventData.getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG) {
+                        if (null != eventData && eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
                             emailResults.update();
                         }
                     } catch (IllegalStateException notUsed) {
@@ -340,6 +350,16 @@ public class EmailExtracted implements AutopsyVisitableItem {
         public void update(Observable o, Object arg) {
             updateDisplayName();
         }
+
+        /*
+         * TODO (AUT-1849): Correct or remove peristent column reordering code
+         *
+         * Added to support this feature.
+         */
+//        @Override
+//        public String getItemType() {
+//            return "EmailExtractedAccount"; //NON-NLS
+//        }
     }
 
     /**
@@ -426,6 +446,16 @@ public class EmailExtracted implements AutopsyVisitableItem {
         public void update(Observable o, Object arg) {
             updateDisplayName();
         }
+
+        /*
+         * TODO (AUT-1849): Correct or remove peristent column reordering code
+         *
+         * Added to support this feature.
+         */
+//        @Override
+//        public String getItemType() {
+//            return "EmailExtractedFolder"; //NON-NLS
+//        }
     }
 
     /**

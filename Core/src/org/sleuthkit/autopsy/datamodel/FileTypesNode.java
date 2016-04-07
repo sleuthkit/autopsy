@@ -39,7 +39,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 public class FileTypesNode extends DisplayableItemNode {
 
     private static final String FNAME = NbBundle.getMessage(FileTypesNode.class, "FileTypesNode.fname.text");
-
+    private final FileTypeExtensionFilters.RootFilter filter;
     /**
      *
      * @param skCase
@@ -48,7 +48,8 @@ public class FileTypesNode extends DisplayableItemNode {
      */
     FileTypesNode(SleuthkitCase skCase, FileTypeExtensionFilters.RootFilter filter) {
         super(Children.create(new FileTypesChildren(skCase, filter, null), true), Lookups.singleton(filter == null ? FNAME : filter.getName()));
-        init(filter);
+        this.filter = filter;
+        init();
     }
 
     /**
@@ -60,10 +61,11 @@ public class FileTypesNode extends DisplayableItemNode {
      */
     private FileTypesNode(SleuthkitCase skCase, FileTypeExtensionFilters.RootFilter filter, Observable o) {
         super(Children.create(new FileTypesChildren(skCase, filter, o), true), Lookups.singleton(filter == null ? FNAME : filter.getName()));
-        init(filter);
+        this.filter = filter;
+        init();
     }
 
-    private void init(FileTypeExtensionFilters.RootFilter filter) {
+    private void init() {
         // root node of tree
         if (filter == null) {
             super.setName(FNAME);
@@ -101,6 +103,22 @@ public class FileTypesNode extends DisplayableItemNode {
                 getName()));
         return s;
     }
+
+    /*
+     * TODO (AUT-1849): Correct or remove peristent column reordering code
+     *
+     * Added to support this feature.
+     */
+//    @Override
+//    public String getItemType() {
+//        if(filter == null)
+//            return "FileTypes"; //NON-NLS
+//        if (filter.equals(FileTypeExtensionFilters.RootFilter.TSK_DOCUMENT_FILTER))
+//            return "FileTypesDoc"; //NON-NLS
+//        if (filter.equals(FileTypeExtensionFilters.RootFilter.TSK_EXECUTABLE_FILTER))
+//            return "FileTypesExe"; //NON-NLS
+//        return "FileTypes"; //NON-NLS
+//    }
 
     /**
      *

@@ -21,9 +21,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
-
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.keywordsearch.KeywordSearch.QueryType;
 import org.openide.util.NbBundle;
 
 /**
@@ -86,6 +84,12 @@ abstract class KeywordSearchPanel extends javax.swing.JPanel {
     public void search() {
         boolean isIngestRunning = IngestManager.getInstance().isIngestRunning();
 
+        if (filesIndexed == 0) {
+            try { // see if another node added any indexed files
+                filesIndexed = KeywordSearch.getServer().queryNumIndexedFiles();
+            } catch (KeywordSearchModuleException | NoOpenCoreException ignored) {
+            }
+        }
         if (filesIndexed == 0) {
             if (isIngestRunning) {
                 KeywordSearchUtil.displayDialog(keywordSearchErrorDialogHeader, NbBundle.getMessage(this.getClass(),

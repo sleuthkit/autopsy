@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,20 +27,30 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import javafx.beans.Observable;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
+import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.Tooltip;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.effect.Effect;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
@@ -51,10 +61,11 @@ import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import static javafx.scene.layout.Region.USE_COMPUTED_SIZE;
-import static javafx.scene.layout.Region.USE_PREF_SIZE;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.util.Duration;
+import org.controlsfx.control.action.Action;
+import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -64,6 +75,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
+import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.EventBundleNodeBase.show;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -72,10 +84,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  *
  */
+@NbBundle.Messages({"EventBundleNodeBase.toolTip.loading=loading..."})
 public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentType>, ParentType extends EventBundle<BundleType>, ParentNodeType extends EventBundleNodeBase<ParentType, BundleType, ?>> extends StackPane {
 
     private static final Logger LOGGER = Logger.getLogger(EventBundleNodeBase.class.getName());
-    private static final Image HASH_PIN = new Image("/org/sleuthkit/autopsy/images/hashset_hits.png"); //NOI18N
+    private static final Image HASH_PIN = new Image("/org/sleuthkit/autopsy/images/hashset_hits.png"); //NOI18N NON-NLS
     private static final Image TAG = new Image("/org/sleuthkit/autopsy/images/green-tag-icon-16.png"); // NON-NLS //NOI18N
 
     static final CornerRadii CORNER_RADII_3 = new CornerRadii(3);
@@ -96,9 +109,9 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         b.setManaged(show);
     }
 
-    protected final EventDetailChart chart;
+    protected final EventDetailsChart chart;
     final SimpleObjectProperty<DescriptionLoD> descLOD = new SimpleObjectProperty<>();
-    final SimpleObjectProperty<DescriptionVisibility> descVisibility = new SimpleObjectProperty<>(DescriptionVisibility.SHOWN);
+    final SimpleObjectProperty<DescriptionVisibility> descVisibility = new SimpleObjectProperty<>();
     protected final BundleType eventBundle;
 
     protected final ParentNodeType parentNode;
@@ -110,7 +123,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
     final Background defaultBackground;
     final Color evtColor;
 
-    final List<ParentNodeType> subNodes = new ArrayList<>();
+    final ObservableList<ParentNodeType> subNodes = FXCollections.observableArrayList();
     final Pane subNodePane = new Pane();
     final Label descrLabel = new Label();
     final Label countLabel = new Label();
@@ -119,13 +132,13 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
     final ImageView tagIV = new ImageView(TAG);
     final HBox infoHBox = new HBox(5, descrLabel, countLabel, hashIV, tagIV);
 
-    private Tooltip tooltip;
+    private final Tooltip tooltip = new Tooltip(Bundle.EventBundleNodeBase_toolTip_loading());
+    private Timeline timeline;
 
-    public EventBundleNodeBase(EventDetailChart chart, BundleType eventBundle, ParentNodeType parentNode) {
+    public EventBundleNodeBase(EventDetailsChart chart, BundleType eventBundle, ParentNodeType parentNode) {
         this.eventBundle = eventBundle;
         this.parentNode = parentNode;
         this.chart = chart;
-
         this.descLOD.set(eventBundle.getDescriptionLoD());
         sleuthkitCase = chart.getController().getAutopsyCase().getSleuthkitCase();
         eventsModel = chart.getController().getEventsModel();
@@ -142,36 +155,30 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
 
         setBackground(defaultBackground);
         setAlignment(Pos.TOP_LEFT);
-
-        setPrefHeight(USE_COMPUTED_SIZE);
-        heightProperty().addListener((Observable observable) -> {
-            chart.layoutPlotChildren();
-        });
-        setMaxHeight(USE_PREF_SIZE);
         setMaxWidth(USE_PREF_SIZE);
-        setLayoutX(chart.getXAxis().getDisplayPosition(new DateTime(eventBundle.getStartMillis())) - getLayoutXCompensation());
-
-        //initialize info hbox
-        infoHBox.setMinWidth(USE_PREF_SIZE);
         infoHBox.setMaxWidth(USE_PREF_SIZE);
-        infoHBox.setPadding(new Insets(2, 5, 2, 5));
-        infoHBox.setAlignment(Pos.TOP_LEFT);
-        infoHBox.setPickOnBounds(true);
-
-        //set up subnode pane sizing contraints
-        subNodePane.setPrefHeight(USE_COMPUTED_SIZE);
-        subNodePane.setMaxHeight(USE_PREF_SIZE);
         subNodePane.setPrefWidth(USE_COMPUTED_SIZE);
         subNodePane.setMinWidth(USE_PREF_SIZE);
         subNodePane.setMaxWidth(USE_PREF_SIZE);
+        /*
+         * This triggers the layout when a mousover causes the action buttons to
+         * interesect with another node, forcing it down.
+         */
+        heightProperty().addListener(heightProp -> chart.requestChartLayout());
+        Platform.runLater(() ->
+                setLayoutX(chart.getXAxis().getDisplayPosition(new DateTime(eventBundle.getStartMillis())) - getLayoutXCompensation())
+        );
+
+        //initialize info hbox
+        infoHBox.setPadding(new Insets(2, 3, 2, 3));
+        infoHBox.setAlignment(Pos.TOP_LEFT);
+
+        Tooltip.install(this, this.tooltip);
 
         //set up mouse hover effect and tooltip
         setOnMouseEntered((MouseEvent e) -> {
-            /*
-             * defer tooltip creation till needed, this had a surprisingly large
-             * impact on speed of loading the chart
-             */
-            installTooltip();
+
+            Tooltip.uninstall(chart, AbstractVisualizationPane.getDefaultTooltip());
             showHoverControls(true);
             toFront();
         });
@@ -179,13 +186,15 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
             showHoverControls(false);
             if (parentNode != null) {
                 parentNode.showHoverControls(true);
+            } else {
+                Tooltip.install(chart, AbstractVisualizationPane.getDefaultTooltip());
             }
         });
+        setOnMouseClicked(new ClickHandler());
+        descVisibility.addListener(observable -> setDescriptionVisibiltiyImpl(descVisibility.get()));
+        descVisibility.set(DescriptionVisibility.SHOWN); //trigger listener for initial value
 
-        setDescriptionVisibility(DescriptionVisibility.SHOWN);
-        descVisibility.addListener((ObservableValue<? extends DescriptionVisibility> observable, DescriptionVisibility oldValue, DescriptionVisibility newValue) -> {
-            setDescriptionVisibility(newValue);
-        });
+        Bindings.bindContent(subNodePane.getChildren(), subNodes);
     }
 
     final DescriptionLoD getDescriptionLoD() {
@@ -202,16 +211,35 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
                 : 0;
     }
 
+    /**
+     * install whatever buttons are visible on hover for this node. likes
+     * tooltips, this had a surprisingly large impact on speed of loading the
+     * chart
+     */
+    abstract void installActionButtons();
+
+    /**
+     * defer tooltip content creation till needed, this had a surprisingly large
+     * impact on speed of loading the chart
+     */
     @NbBundle.Messages({"# {0} - counts",
         "# {1} - event type",
         "# {2} - description",
         "# {3} - start date/time",
         "# {4} - end date/time",
-        "EventBundleNodeBase.tooltip.text={0} {1} events\n{2}\nbetween\t{3}\nand   \t{4}"})
+        "EventBundleNodeBase.tooltip.text={0} {1} events\n{2}\nbetween\t{3}\nand   \t{4}",
+        "EventBundleNodeBase.toolTip.loading2=loading tooltip",
+        "# {0} - hash set count string",
+        "EventBundleNodeBase.toolTip.hashSetHits=\n\nHash Set Hits\n{0}",
+        "# {0} - tag count string",
+        "EventBundleNodeBase.toolTip.tags=\n\nTags\n{0}"})
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void installTooltip() {
-        if (tooltip == null) {
+        if (tooltip.getText().equalsIgnoreCase(Bundle.EventBundleNodeBase_toolTip_loading())) {
             final Task<String> tooltTipTask = new Task<String>() {
+                {
+                    updateTitle(Bundle.EventBundleNodeBase_toolTip_loading2());
+                }
 
                 @Override
                 protected String call() throws Exception {
@@ -226,7 +254,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
                                 }
                             }
                         } catch (TskCoreException ex) {
-                            LOGGER.log(Level.SEVERE, "Error getting hashset hit info for event.", ex);
+                            LOGGER.log(Level.SEVERE, "Error getting hashset hit info for event.", ex); //NON-NLS
                         }
                     }
                     String hashSetCountsString = hashSetCounts.entrySet().stream()
@@ -244,25 +272,22 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
                     return Bundle.EventBundleNodeBase_tooltip_text(getEventIDs().size(), getEventType(), getDescription(),
                             TimeLineController.getZonedFormatter().print(getStartMillis()),
                             TimeLineController.getZonedFormatter().print(getEndMillis() + 1000))
-                            + (hashSetCountsString.isEmpty() ? "" : "\n\nHash Set Hits\n" + hashSetCountsString)
-                            + (tagCountsString.isEmpty() ? "" : "\n\nTags\n" + tagCountsString);
+                            + (hashSetCountsString.isEmpty() ? "" : Bundle.EventBundleNodeBase_toolTip_hashSetHits(hashSetCountsString))
+                            + (tagCountsString.isEmpty() ? "" : Bundle.EventBundleNodeBase_toolTip_tags(tagCountsString));
                 }
 
                 @Override
                 protected void succeeded() {
                     super.succeeded();
                     try {
-                        tooltip = new Tooltip(get());
-                        tooltip.setAutoHide(true);
-                        Tooltip.install(EventBundleNodeBase.this, tooltip);
+                        tooltip.setText(get());
+                        tooltip.setGraphic(null);
                     } catch (InterruptedException | ExecutionException ex) {
-                        LOGGER.log(Level.SEVERE, "Tooltip generation failed.", ex);
-                        Tooltip.uninstall(EventBundleNodeBase.this, tooltip);
-                        tooltip = null;
+                        LOGGER.log(Level.SEVERE, "Tooltip generation failed.", ex); //NON-NLS
                     }
                 }
             };
-
+            new Thread(tooltTipTask).start();
             chart.getController().monitorTask(tooltTipTask);
         }
     }
@@ -288,12 +313,14 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         return subNodes;
     }
 
-    abstract void setDescriptionVisibility(DescriptionVisibility get);
+    abstract void setDescriptionVisibiltiyImpl(DescriptionVisibility get);
 
     void showHoverControls(final boolean showControls) {
         Effect dropShadow = dropShadowMap.computeIfAbsent(getEventType(),
                 eventType -> new DropShadow(-10, eventType.getColor()));
         setEffect(showControls ? dropShadow : null);
+        installTooltip();
+        enableTooltip(showControls);
         if (parentNode != null) {
             parentNode.showHoverControls(false);
         }
@@ -320,18 +347,87 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
     }
 
     @Override
+    public Orientation getContentBias() {
+        return Orientation.HORIZONTAL;
+    }
+
+    @Override
     protected void layoutChildren() {
         chart.layoutEventBundleNodes(subNodes, 0);
         super.layoutChildren();
     }
 
+    abstract ParentNodeType createChildNode(ParentType rawChild);
+
     /**
      * @param w the maximum width the description label should have
      */
-    abstract void setDescriptionWidth(double w);
+    abstract void setMaxDescriptionWidth(double w);
 
-    void setDescriptionVisibilityLevel(DescriptionVisibility get) {
+    void setDescriptionVisibility(DescriptionVisibility get) {
         descVisibility.set(get);
+    }
+
+    void enableTooltip(boolean toolTipEnabled) {
+        if (toolTipEnabled) {
+            Tooltip.install(this, tooltip);
+        } else {
+            Tooltip.uninstall(this, tooltip);
+        }
+    }
+
+    void animateTo(double xLeft, double yTop) {
+        if (timeline != null) {
+            timeline.stop();
+            Platform.runLater(chart::requestChartLayout);
+        }
+        timeline = new Timeline(new KeyFrame(Duration.millis(100),
+                new KeyValue(layoutXProperty(), xLeft),
+                new KeyValue(layoutYProperty(), yTop))
+        );
+        timeline.setOnFinished(finished -> Platform.runLater(chart::requestChartLayout));
+        timeline.play();
+    }
+
+    abstract EventHandler<MouseEvent> getDoubleClickHandler();
+
+    abstract Collection<? extends Action> getActions();
+
+    /**
+     * event handler used for mouse events on {@link EventStripeNode}s
+     */
+    private class ClickHandler implements EventHandler<MouseEvent> {
+
+        private ContextMenu contextMenu;
+
+        @Override
+        public void handle(MouseEvent t) {
+            if (t.getButton() == MouseButton.PRIMARY) {
+                if (t.getClickCount() > 1) {
+                    getDoubleClickHandler().handle(t);
+                } else if (t.isShiftDown()) {
+                    chart.selectedNodes.add(EventBundleNodeBase.this);
+                } else if (t.isShortcutDown()) {
+                    chart.selectedNodes.removeAll(EventBundleNodeBase.this);
+                } else {
+                    chart.selectedNodes.setAll(EventBundleNodeBase.this);
+                }
+                t.consume();
+            } else if (t.getButton() == MouseButton.SECONDARY) {
+                ContextMenu chartContextMenu = chart.getChartContextMenu(t);
+                if (contextMenu == null) {
+                    contextMenu = new ContextMenu();
+                    contextMenu.setAutoHide(true);
+
+                    contextMenu.getItems().addAll(ActionUtils.createContextMenu(getActions()).getItems());
+
+                    contextMenu.getItems().add(new SeparatorMenuItem());
+                    contextMenu.getItems().addAll(chartContextMenu.getItems());
+                }
+                contextMenu.show(EventBundleNodeBase.this, t.getScreenX(), t.getScreenY());
+                t.consume();
+            }
+        }
     }
 
 }

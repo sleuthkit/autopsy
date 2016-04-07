@@ -121,4 +121,14 @@ class ContentTagNode extends DisplayableItemNode {
     public boolean isLeafTypeNode() {
         return true;
     }
+
+    /*
+     * TODO (AUT-1849): Correct or remove peristent column reordering code
+     *
+     * Added to support this feature.
+     */
+//    @Override
+//    public String getItemType() {
+//        return "ContentTag"; //NON-NLS
+//    }
 }

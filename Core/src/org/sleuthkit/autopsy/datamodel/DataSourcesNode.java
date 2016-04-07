@@ -57,6 +57,16 @@ public class DataSourcesNode extends DisplayableItemNode {
     }
 
     /*
+     * TODO (AUT-1849): Correct or remove peristent column reordering code
+     *
+     * Added to support this feature.
+     */
+//    @Override
+//    public String getItemType() {
+//        return "DataSources"; //NON-NLS
+//    }
+
+    /*
      * Custom Keys implementation that listens for new data sources being added.
      */
     public static class DataSourcesNodeChildren extends AbstractContentChildren<Content> {

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-14 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.imagegallery.gui.navpanel;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +27,6 @@ import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import javafx.application.Platform;
-import javafx.collections.FXCollections;
 import javafx.scene.control.TreeItem;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -38,7 +38,7 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
  * {@link GroupTreeCell}. Each GroupTreeItem has a TreeNode which has a path
  * segment and may or may not have a group
  */
-class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeItem> {
+class GroupTreeItem extends TreeItem<GroupTreeNode> {
 
     static final Executor treeInsertTread = Executors.newSingleThreadExecutor();
 
@@ -64,11 +64,12 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
     /**
      * the comparator if any used to sort the children of this item
      */
-    private TreeNodeComparators comp;
+    private Comparator<DrawableGroup> comp;
 
-    public GroupTreeItem(String t, DrawableGroup g, TreeNodeComparators comp) {
-        super(new TreeNode(t, g));
-        this.comp = comp;
+    GroupTreeItem(String t, DrawableGroup g, boolean expanded) {
+        super(new GroupTreeNode(t, g));
+        setExpanded(expanded);
+        comp = GroupComparators.ALPHABETICAL;
     }
 
     /**
@@ -91,7 +92,7 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
      * @param g    Group to add
      * @param tree True if it is part of a tree (versus a list)
      */
-    synchronized void insert(List<String> path, DrawableGroup g, Boolean tree) {
+    synchronized void insert(List<String> path, DrawableGroup g, boolean tree) {
         if (tree) {
             // Are we at the end of the recursion?
             if (path.isEmpty()) {
@@ -100,17 +101,18 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
                 String prefix = path.get(0);
 
                 GroupTreeItem prefixTreeItem = childMap.computeIfAbsent(prefix, (String t) -> {
-                    final GroupTreeItem newTreeItem = new GroupTreeItem(t, null, comp);
+                    final GroupTreeItem newTreeItem = new GroupTreeItem(t, null, false);
 
                     Platform.runLater(() -> {
                         getChildren().add(newTreeItem);
+                        getChildren().sort(Comparator.comparing(treeItem -> treeItem.getValue().getGroup(), Comparator.nullsLast(comp)));
                     });
                     return newTreeItem;
                 });
 
                 // recursively go into the path
                 treeInsertTread.execute(() -> {
-                    prefixTreeItem.insert(path.subList(1, path.size()), g, tree);
+                    prefixTreeItem.insert(path.subList(1, path.size()), g, true);
                 });
 
             }
@@ -118,23 +120,14 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
             String join = StringUtils.join(path, "/");
             //flat list
             childMap.computeIfAbsent(join, (String t) -> {
-                final GroupTreeItem newTreeItem = new GroupTreeItem(t, g, comp);
-                newTreeItem.setExpanded(true);
-
+                final GroupTreeItem newTreeItem = new GroupTreeItem(t, g, true);
                 Platform.runLater(() -> {
                     getChildren().add(newTreeItem);
-                    if (comp != null) {
-                        FXCollections.sort(getChildren(), comp);
-                    }
+                    getChildren().sort(Comparator.comparing(treeItem -> treeItem.getValue().getGroup(), Comparator.nullsLast(comp)));
                 });
                 return newTreeItem;
             });
         }
-    }
-
-    @Override
-    public int compareTo(GroupTreeItem o) {
-        return comp.compare(this, o);
     }
 
     synchronized GroupTreeItem getTreeItemForPath(List<String> path) {
@@ -177,9 +170,9 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
      * @param newComp
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    synchronized void resortChildren(TreeNodeComparators newComp) {
+    synchronized void resortChildren(Comparator<DrawableGroup> newComp) {
         this.comp = newComp;
-        FXCollections.sort(getChildren(), comp);
+        getChildren().sort(Comparator.comparing(treeItem -> treeItem.getValue().getGroup(), Comparator.nullsLast(comp)));
         for (GroupTreeItem ti : childMap.values()) {
             ti.resortChildren(comp);
         }

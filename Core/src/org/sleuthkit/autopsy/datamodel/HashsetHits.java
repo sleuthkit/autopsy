@@ -168,6 +168,16 @@ public class HashsetHits implements AutopsyVisitableItem {
 
             return s;
         }
+
+        /*
+         * TODO (AUT-1849): Correct or remove peristent column reordering code
+         *
+         * Added to support this feature.
+         */
+//        @Override
+//        public String getItemType() {
+//            return "HashsetRoot"; //NON-NLS
+//        }
     }
 
     /**
@@ -199,7 +209,7 @@ public class HashsetHits implements AutopsyVisitableItem {
                          * oldValue if the event is a remote event.
                          */
                         ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
-                        if (null != eventData && eventData.getArtifactType() == ARTIFACT_TYPE.TSK_HASHSET_HIT) {
+                        if (null != eventData && eventData.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
                             hashsetResults.update();
                         }
                     } catch (IllegalStateException notUsed) {
@@ -321,6 +331,16 @@ public class HashsetHits implements AutopsyVisitableItem {
         public void update(Observable o, Object arg) {
             updateDisplayName();
         }
+
+        /*
+         * TODO (AUT-1849): Correct or remove peristent column reordering code
+         *
+         * Added to support this feature.
+         */
+//        @Override
+//        public String getItemType() {
+//            return "HashsetName"; //NON-NLS
+//        }
     }
 
     /**

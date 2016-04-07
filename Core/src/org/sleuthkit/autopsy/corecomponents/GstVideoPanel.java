@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import com.google.common.io.Files;
 import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
@@ -349,7 +350,6 @@ public class GstVideoPanel extends MediaViewVideoPanel {
             }
             playbin.getState();
 
-            //System.out.println("Seeking to " + timeStamp + "milliseconds.");
             if (!playbin.seek(timeStamp, unit)) {
                 logger.log(Level.INFO, "There was a problem seeking to " + timeStamp + " " + unit.name().toLowerCase()); //NON-NLS
             }
@@ -681,6 +681,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
                 progressLabel.setText(NbBundle.getMessage(this.getClass(), "GstVideoPanel.progress.buffering"));
                 progress.start(100);
                 try {
+                    Files.createParentDirs(tempFile);
                     return ContentUtils.writeToFile(sourceFile, tempFile, progress, this, true);
                 } catch (IOException ex) {
                     logger.log(Level.WARNING, "Error buffering file", ex); //NON-NLS

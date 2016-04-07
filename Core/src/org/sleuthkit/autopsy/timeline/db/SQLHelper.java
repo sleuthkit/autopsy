@@ -42,10 +42,10 @@ import org.sleuthkit.autopsy.timeline.filters.TagsFilter;
 import org.sleuthkit.autopsy.timeline.filters.TextFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.filters.UnionFilter;
-import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import static org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD.FULL;
 import static org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD.MEDIUM;
+import org.sleuthkit.autopsy.timeline.zooming.TimeUnits;
 import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.DAYS;
 import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.HOURS;
 import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.MINUTES;
@@ -62,12 +62,12 @@ class SQLHelper {
 
     static String useHashHitTablesHelper(RootFilter filter) {
         HashHitsFilter hashHitFilter = filter.getHashHitsFilter();
-        return hashHitFilter.isActive() ? " LEFT JOIN hash_set_hits " : " ";
+        return hashHitFilter.isActive() ? " LEFT JOIN hash_set_hits " : " "; //NON-NLS
     }
 
     static String useTagTablesHelper(RootFilter filter) {
         TagsFilter tagsFilter = filter.getTagsFilter();
-        return tagsFilter.isActive() ? " LEFT JOIN tags " : " ";
+        return tagsFilter.isActive() ? " LEFT JOIN tags " : " "; //NON-NLS
     }
 
     /**
@@ -93,13 +93,13 @@ class SQLHelper {
         return filter.getSubFilters().stream()
                 .filter(Filter::isSelected)
                 .map(SQLHelper::getSQLWhere)
-                .collect(Collectors.joining(" and ", "( ", ")"));
+                .collect(Collectors.joining(" and ", "( ", ")")); //NON-NLS
     }
 
     private static String getSQLWhere(UnionFilter<?> filter) {
         return filter.getSubFilters().stream()
                 .filter(Filter::isSelected).map(SQLHelper::getSQLWhere)
-                .collect(Collectors.joining(" or ", "( ", ")"));
+                .collect(Collectors.joining(" or ", "( ", ")")); //NON-NLS
     }
 
     static String getSQLWhere(RootFilter filter) {
@@ -143,7 +143,7 @@ class SQLHelper {
         } else {
             throw new IllegalArgumentException("getSQLWhere not defined for " + filter.getClass().getCanonicalName());
         }
-        result = StringUtils.deleteWhitespace(result).equals("(1and1and1)") ? "1" : result;
+        result = StringUtils.deleteWhitespace(result).equals("(1and1and1)") ? "1" : result; //NON-NLS
         result = StringUtils.deleteWhitespace(result).equals("()") ? "1" : result;
         return result;
     }
@@ -158,7 +158,7 @@ class SQLHelper {
 
     private static String getSQLWhere(DescriptionFilter filter) {
         if (filter.isActive()) {
-            String likeOrNotLike = (filter.getFilterMode() == DescriptionFilter.FilterMode.INCLUDE ? "" : " NOT") + " LIKE '";
+            String likeOrNotLike = (filter.getFilterMode() == DescriptionFilter.FilterMode.INCLUDE ? "" : " NOT") + " LIKE '"; //NON-NLS
             return "(" + getDescriptionColumn(filter.getDescriptionLoD()) + likeOrNotLike + filter.getDescription() + "'  )"; // NON-NLS
         } else {
             return "1";
@@ -172,8 +172,8 @@ class SQLHelper {
                     .filter((TagNameFilter t) -> t.isSelected() && !t.isDisabled())
                     .map((TagNameFilter t) -> String.valueOf(t.getTagName().getId()))
                     .collect(Collectors.joining(", ", "(", ")"));
-            return "(events.event_id == tags.event_id AND "
-                    + "tags.tag_name_id IN " + tagNameIDs + ") ";
+            return "(events.event_id == tags.event_id AND " //NON-NLS
+                    + "tags.tag_name_id IN " + tagNameIDs + ") "; //NON-NLS
         } else {
             return "1";
         }
@@ -187,7 +187,7 @@ class SQLHelper {
                     .filter((HashSetFilter t) -> t.isSelected() && !t.isDisabled())
                     .map((HashSetFilter t) -> String.valueOf(t.getHashSetID()))
                     .collect(Collectors.joining(", ", "(", ")"));
-            return "(hash_set_hits.hash_set_id IN " + hashSetIDs + " AND hash_set_hits.event_id == events.event_id)";
+            return "(hash_set_hits.hash_set_id IN " + hashSetIDs + " AND hash_set_hits.event_id == events.event_id)"; //NON-NLS
         } else {
             return "1";
         }
@@ -195,14 +195,14 @@ class SQLHelper {
 
     private static String getSQLWhere(DataSourceFilter filter) {
         if (filter.isActive()) {
-            return "(datasource_id = '" + filter.getDataSourceID() + "')";
+            return "(datasource_id = '" + filter.getDataSourceID() + "')"; //NON-NLS
         } else {
             return "1";
         }
     }
 
     private static String getSQLWhere(DataSourcesFilter filter) {
-        return (filter.isActive()) ? "(datasource_id in ("
+        return (filter.isActive()) ? "(datasource_id in (" //NON-NLS
                 + filter.getSubFilters().stream()
                 .filter(AbstractFilter::isActive)
                 .map((dataSourceFilter) -> String.valueOf(dataSourceFilter.getDataSourceID()))
@@ -215,9 +215,9 @@ class SQLHelper {
                 return "1";
             }
             String strippedFilterText = StringUtils.strip(filter.getText());
-            return "((med_description like '%" + strippedFilterText + "%')"
-                    + " or (full_description like '%" + strippedFilterText + "%')"
-                    + " or (short_description like '%" + strippedFilterText + "%'))";
+            return "((med_description like '%" + strippedFilterText + "%')" //NON-NLS
+                    + " or (full_description like '%" + strippedFilterText + "%')" //NON-NLS
+                    + " or (short_description like '%" + strippedFilterText + "%'))"; //NON-NLS
         } else {
             return "1";
         }
@@ -240,7 +240,7 @@ class SQLHelper {
                 return "1"; //then collapse clause to true
             }
         }
-        return "(sub_type IN (" + StringUtils.join(getActiveSubTypes(typeFilter), ",") + "))";
+        return "(sub_type IN (" + StringUtils.join(getActiveSubTypes(typeFilter), ",") + "))"; //NON-NLS
     }
 
     private static List<Integer> getActiveSubTypes(TypeFilter filter) {
@@ -260,14 +260,15 @@ class SQLHelper {
      * requested period size. That is, with all info more granular that that
      * requested dropped (replaced with zeros).
      *
-     * @param info the {@link RangeDivisionInfo} with the requested period size
+     * @param timeUnit the {@link TimeUnits} instance describing what
+     *                 granularity to build a strftime string for
      *
      * @return a String formatted according to the sqlite strftime spec
      *
      * @see https://www.sqlite.org/lang_datefunc.html
      */
-    static String getStrfTimeFormat(@Nonnull RangeDivisionInfo info) {
-        switch (info.getPeriodSize()) {
+    static String getStrfTimeFormat(@Nonnull TimeUnits timeUnit) {
+        switch (timeUnit) {
             case YEARS:
                 return "%Y-01-01T00:00:00"; // NON-NLS
             case MONTHS:
@@ -287,12 +288,12 @@ class SQLHelper {
     static String getDescriptionColumn(DescriptionLoD lod) {
         switch (lod) {
             case FULL:
-                return "full_description";
+                return "full_description"; //NON-NLS
             case MEDIUM:
-                return "med_description";
+                return "med_description"; //NON-NLS
             case SHORT:
             default:
-                return "short_description";
+                return "short_description"; //NON-NLS
         }
     }
 

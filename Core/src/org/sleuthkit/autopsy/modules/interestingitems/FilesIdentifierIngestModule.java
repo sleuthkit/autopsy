@@ -24,7 +24,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
+import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
@@ -40,6 +46,9 @@ import org.sleuthkit.datamodel.TskCoreException;
  * files that match interesting files set definitions.
  */
 final class FilesIdentifierIngestModule implements FileIngestModule {
+    @Messages({
+        "FilesIdentifierIngestModule.getFilesError=Error getting interesting files sets from file."
+    })
 
     private static final Object sharedResourcesLock = new Object();
     private static final Logger logger = Logger.getLogger(FilesIdentifierIngestModule.class.getName());
@@ -47,6 +56,7 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
     private static final Map<Long, List<FilesSet>> interestingFileSetsByJob = new ConcurrentHashMap<>();
     private final FilesIdentifierIngestJobSettings settings;
     private IngestJobContext context;
+    private Blackboard blackboard;
 
     /**
      * Construct an interesting files identifier ingest module for an ingest
@@ -72,10 +82,14 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
                 // synchronized definitions manager method eliminates the need 
                 // to disable the interesting files set definition UI during ingest.
                 List<FilesSet> filesSets = new ArrayList<>();
-                for (FilesSet set : InterestingItemDefsManager.getInstance().getInterestingFilesSets().values()) {
-                    if (settings.interestingFilesSetIsEnabled(set.getName())) {
-                        filesSets.add(set);
+                try {
+                    for (FilesSet set : InterestingItemDefsManager.getInstance().getInterestingFilesSets().values()) {
+                        if (settings.interestingFilesSetIsEnabled(set.getName())) {
+                            filesSets.add(set);
+                        }
                     }
+                } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
+                    throw new IngestModuleException(Bundle.FilesIdentifierIngestModule_getFilesError(), ex);
                 }
                 FilesIdentifierIngestModule.interestingFileSetsByJob.put(context.getJobId(), filesSets);
             }
@@ -87,6 +101,8 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
      */
     @Override
     public ProcessResult process(AbstractFile file) {
+        blackboard = Case.getCurrentCase().getServices().getBlackboard();
+        
         // See if the file belongs to any defined interesting files set.
         List<FilesSet> filesSets = FilesIdentifierIngestModule.interestingFileSetsByJob.get(this.context.getJobId());
         for (FilesSet filesSet : filesSets) {
@@ -103,18 +119,27 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
                     // (i.e., rows that differ only in artifact id), but doing
                     // otherwise would requires reworking the interesting files
                     // set hit artifact.
-                    BlackboardAttribute setNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), moduleName, filesSet.getName());
+                    BlackboardAttribute setNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, moduleName, filesSet.getName());
                     artifact.addAttribute(setNameAttribute);
 
                     // Add a category attribute to the artifact to record the 
                     // interesting files set membership rule that was satisfied.
-                    BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID(), moduleName, ruleSatisfied);
+                    BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, moduleName, ruleSatisfied);
                     artifact.addAttribute(ruleNameAttribute);
-
+                    
+                    try {
+                        // index the artifact for keyword search
+                        blackboard.indexArtifact(artifact);
+                    } catch (Blackboard.BlackboardException ex) {
+                        logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", artifact.getDisplayName()), ex); //NON-NLS
+                        MessageNotifyUtil.Notify.error(
+                                NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), artifact.getDisplayName());
+                    }
+                    
                     IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, Collections.singletonList(artifact)));
 
                 } catch (TskCoreException ex) {
-                    FilesIdentifierIngestModule.logger.log(Level.SEVERE, "Error posting to the blackboard", ex); //NOI18N
+                    FilesIdentifierIngestModule.logger.log(Level.SEVERE, "Error posting to the blackboard", ex); //NOI18N NON-NLS
                 }
             }
         }

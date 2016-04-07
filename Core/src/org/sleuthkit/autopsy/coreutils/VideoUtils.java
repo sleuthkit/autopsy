@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.coreutils;
 
+import com.google.common.io.Files;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -32,6 +33,7 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.opencv.core.Mat;
 import org.opencv.highgui.VideoCapture;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
 import static org.sleuthkit.autopsy.coreutils.ImageUtils.isMediaThumbnailSupported;
@@ -43,25 +45,32 @@ import org.sleuthkit.datamodel.AbstractFile;
  */
 public class VideoUtils {
 
-    private static final List<String> SUPPORTED_VIDEO_EXTENSIONS
-            = Arrays.asList("mov", "m4v", "flv", "mp4", "3gp", "avi", "mpg",
-                    "mpeg", "asf", "divx", "rm", "moov", "wmv", "vob", "dat",
-                    "m1v", "m2v", "m4v", "mkv", "mpe", "yop", "vqa", "xmv",
-                    "mve", "wtv", "webm", "vivo", "vc1", "seq", "thp", "san",
-                    "mjpg", "smk", "vmd", "sol", "cpk", "sdp", "sbg", "rtsp",
-                    "rpl", "rl2", "r3d", "mlp", "mjpeg", "hevc", "h265", "265",
-                    "h264", "h263", "h261", "drc", "avs", "pva", "pmp", "ogg",
-                    "nut", "nuv", "nsv", "mxf", "mtv", "mvi", "mxg", "lxf",
-                    "lvf", "ivf", "mve", "cin", "hnm", "gxf", "fli", "flc",
-                    "flx", "ffm", "wve", "uv2", "dxa", "dv", "cdxl", "cdg",
-                    "bfi", "jv", "bik", "vid", "vb", "son", "avs", "paf", "mm",
+    private static final List<String> SUPPORTED_VIDEO_EXTENSIONS =
+            Arrays.asList("mov", "m4v", "flv", "mp4", "3gp", "avi", "mpg", //NON-NLS
+                    "mpeg", "asf", "divx", "rm", "moov", "wmv", "vob", "dat", //NON-NLS
+                    "m1v", "m2v", "m4v", "mkv", "mpe", "yop", "vqa", "xmv", //NON-NLS
+                    "mve", "wtv", "webm", "vivo", "vc1", "seq", "thp", "san", //NON-NLS
+                    "mjpg", "smk", "vmd", "sol", "cpk", "sdp", "sbg", "rtsp", //NON-NLS
+                    "rpl", "rl2", "r3d", "mlp", "mjpeg", "hevc", "h265", "265", //NON-NLS
+                    "h264", "h263", "h261", "drc", "avs", "pva", "pmp", "ogg", //NON-NLS
+                    "nut", "nuv", "nsv", "mxf", "mtv", "mvi", "mxg", "lxf", //NON-NLS
+                    "lvf", "ivf", "mve", "cin", "hnm", "gxf", "fli", "flc", //NON-NLS
+                    "flx", "ffm", "wve", "uv2", "dxa", "dv", "cdxl", "cdg", //NON-NLS
+                    "bfi", "jv", "bik", "vid", "vb", "son", "avs", "paf", "mm", //NON-NLS
                     "flm", "tmv", "4xm");  //NON-NLS
 
     private static final SortedSet<String> SUPPORTED_VIDEO_MIME_TYPES = new TreeSet<>(
-            Arrays.asList("application/x-shockwave-flash", "video/x-m4v", "video/quicktime", "video/avi", "video/msvideo", "video/x-msvideo",
-                    "video/mp4", "video/x-ms-wmv", "video/mpeg", "video/asf")); //NON-NLS
-
-    private static final List<String> CONDITIONAL_MIME_TYPES = Arrays.asList("application/octet-stream");
+            Arrays.asList("application/x-shockwave-flash",
+                    "video/x-m4v",
+                    "video/x-flv",
+                    "video/quicktime",
+                    "video/avi",
+                    "video/msvideo",
+                    "video/x-msvideo", //NON-NLS
+                    "video/mp4",
+                    "video/x-ms-wmv",
+                    "video/mpeg",
+                    "video/asf")); //NON-NLS
 
     public static List<String> getSupportedVideoExtensions() {
         return SUPPORTED_VIDEO_EXTENSIONS;
@@ -83,40 +92,40 @@ public class VideoUtils {
     }
 
     public static File getTempVideoFile(AbstractFile file) {
-        return Paths.get(Case.getCurrentCase().getTempDirectory(), "videos", file.getId() + "." + file.getNameExtension()).toFile();
+        return Paths.get(Case.getCurrentCase().getTempDirectory(), "videos", file.getId() + "." + file.getNameExtension()).toFile(); //NON-NLS
     }
 
     public static boolean isVideoThumbnailSupported(AbstractFile file) {
-        return isMediaThumbnailSupported(file, SUPPORTED_VIDEO_MIME_TYPES, SUPPORTED_VIDEO_EXTENSIONS, CONDITIONAL_MIME_TYPES);
+        return isMediaThumbnailSupported(file, "video/", SUPPORTED_VIDEO_MIME_TYPES, SUPPORTED_VIDEO_EXTENSIONS);
     }
 
+    @NbBundle.Messages({"# {0} - file name",
+        "VideoUtils.genVideoThumb.progress.text=extracting temporary file {0}"})
     static BufferedImage generateVideoThumbnail(AbstractFile file, int iconSize) {
         java.io.File tempFile = getTempVideoFile(file);
-
-        try {
-            if (tempFile.exists() == false || tempFile.length() < file.getSize()) {
-                com.google.common.io.Files.createParentDirs(tempFile);
-                ProgressHandle progress = ProgressHandleFactory.createHandle("extracting temporary file " + file.getName());
-                progress.start(100);
-                try {
-                    ContentUtils.writeToFile(file, tempFile, progress, null, true);
-                } catch (IOException ex) {
-                    LOGGER.log(Level.WARNING, "Error buffering file", ex); //NON-NLS
-                }
+        if (tempFile.exists() == false || tempFile.length() < file.getSize()) {
+            ProgressHandle progress = ProgressHandleFactory.createHandle(Bundle.VideoUtils_genVideoThumb_progress_text(file.getName()));
+            progress.start(100);
+            try {
+                Files.createParentDirs(tempFile);
+                ContentUtils.writeToFile(file, tempFile, progress, null, true);
+            } catch (IOException ex) {
+                LOGGER.log(Level.WARNING, "Error extracting temporary file for " + ImageUtils.getContentPathSafe(file), ex); //NON-NLS
+            } finally {
                 progress.finish();
             }
-        } catch (IOException ex) {
-            return null;
         }
 
         VideoCapture videoFile = new VideoCapture(); // will contain the video
 
         if (!videoFile.open(tempFile.toString())) {
+            LOGGER.log(Level.WARNING, "Error opening {0} for preview generation.", ImageUtils.getContentPathSafe(file)); //NON-NLS
             return null;
         }
         double fps = videoFile.get(CV_CAP_PROP_FPS); // gets frame per second
         double totalFrames = videoFile.get(CV_CAP_PROP_FRAME_COUNT); // gets total frames
         if (fps <= 0 || totalFrames <= 0) {
+            LOGGER.log(Level.WARNING, "Error getting fps or total frames for {0}", ImageUtils.getContentPathSafe(file)); //NON-NLS
             return null;
         }
         double milliseconds = 1000 * (totalFrames / fps); //total milliseconds
@@ -131,10 +140,12 @@ public class VideoUtils {
         for (int x = 0; x < THUMB_COLUMNS; x++) {
             for (int y = 0; y < THUMB_ROWS; y++) {
                 if (!videoFile.set(CV_CAP_PROP_POS_MSEC, timestamp + x * framkeskip + y * framkeskip * THUMB_COLUMNS)) {
+                    LOGGER.log(Level.WARNING, "Error seeking to " + timestamp + "ms in {0}", ImageUtils.getContentPathSafe(file)); //NON-NLS
                     break; // if we can't set the time, return black for that frame
                 }
                 //read the frame into the image/matrix
                 if (!videoFile.read(imageMatrix)) {
+                    LOGGER.log(Level.WARNING, "Error reading frames at " + timestamp + "ms from {0}", ImageUtils.getContentPathSafe(file)); //NON-NLS
                     break; //if the image for some reason is bad, return black for that frame
                 }
 
@@ -160,6 +171,6 @@ public class VideoUtils {
 
         videoFile.release(); // close the file
 
-        return bufferedImage == null ? bufferedImage : ScalrWrapper.resizeFast(bufferedImage, iconSize);
+        return bufferedImage == null ? null : ScalrWrapper.resizeFast(bufferedImage, iconSize);
     }
 }

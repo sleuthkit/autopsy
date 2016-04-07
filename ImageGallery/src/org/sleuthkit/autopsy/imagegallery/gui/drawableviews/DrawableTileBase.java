@@ -1,8 +1,7 @@
-
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,8 +24,8 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.logging.Level;
 import javafx.application.Platform;
-import javafx.beans.Observable;
-import javafx.event.ActionEvent;
+import javafx.beans.InvalidationListener;
+import javafx.beans.WeakInvalidationListener;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.ContextMenu;
@@ -47,29 +46,30 @@ import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
+import org.controlsfx.control.action.ActionUtils;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.ContextMenuActionsProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.FileNode;
-import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
-import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
-import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
+import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
-import org.sleuthkit.autopsy.imagegallery.actions.AddDrawableTagAction;
+import org.sleuthkit.autopsy.imagegallery.actions.AddTagAction;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
 import org.sleuthkit.autopsy.imagegallery.actions.DeleteFollowUpTagAction;
+import org.sleuthkit.autopsy.imagegallery.actions.OpenExternalViewerAction;
 import org.sleuthkit.autopsy.imagegallery.actions.SwingMenuItemAdapter;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
-import org.sleuthkit.autopsy.imagegallery.datamodel.VideoFile;
-import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewMode;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -79,7 +79,10 @@ import org.sleuthkit.datamodel.TskCoreException;
  * since they share a similar node tree and many behaviors, other implementors
  * of {@link DrawableView}s should implement the interface directly
  *
+ *
+ * TODO: refactor ExternalViewerAction to supply its own name
  */
+@NbBundle.Messages({"DrawableTileBase.externalViewerAction.text=Open in External Viewer"})
 public abstract class DrawableTileBase extends DrawableUIBase {
 
     private static final Logger LOGGER = Logger.getLogger(DrawableTileBase.class.getName());
@@ -88,23 +91,27 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     private static final Border SELECTED_BORDER = new Border(new BorderStroke(Color.BLUE, BorderStrokeStyle.SOLID, new CornerRadii(2), new BorderWidths(3)));
 
     //TODO: do this in CSS? -jm
-    protected static final Image followUpIcon = new Image("org/sleuthkit/autopsy/imagegallery/images/flag_red.png");
-    protected static final Image followUpGray = new Image("org/sleuthkit/autopsy/imagegallery/images/flag_gray.png");
+    protected static final Image followUpIcon = new Image("org/sleuthkit/autopsy/imagegallery/images/flag_red.png"); //NON-NLS
+    protected static final Image followUpGray = new Image("org/sleuthkit/autopsy/imagegallery/images/flag_gray.png"); //NON-NLS
 
-    protected static final FileIDSelectionModel globalSelectionModel = FileIDSelectionModel.getInstance();
+    protected final FileIDSelectionModel selectionModel;
     private static ContextMenu contextMenu;
 
-    /** displays the icon representing video files */
+    /**
+     * displays the icon representing video files
+     */
     @FXML
     private ImageView fileTypeImageView;
 
-    /** displays the icon representing hash hits */
+    /**
+     * displays the icon representing hash hits
+     */
     @FXML
     private ImageView hashHitImageView;
 
-    @FXML
-    protected ImageView undisplayableImageView;
-    /** displays the icon representing follow up tag */
+    /**
+     * displays the icon representing follow up tag
+     */
     @FXML
     private ImageView followUpImageView;
 
@@ -114,7 +121,9 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     @FXML
     BorderPane imageBorder;
 
-    /** the label that shows the name of the represented file */
+    /**
+     * the label that shows the name of the represented file
+     */
     @FXML
     Label nameLabel;
 
@@ -127,41 +136,31 @@ public abstract class DrawableTileBase extends DrawableUIBase {
 
     volatile private boolean registered = false;
 
-    protected DrawableTileBase(GroupPane groupPane) {
-        super(groupPane.getController());
-
+    /**
+     *
+     * @param groupPane  the value of groupPane
+     * @param controller the value of controller
+     */
+    @NbBundle.Messages({"DrawableTileBase.menuItem.extractFiles=Extract File(s)",
+        "DrawableTileBase.menuItem.showContentViewer=Show Content Viewer"})
+    protected DrawableTileBase(GroupPane groupPane, final ImageGalleryController controller) {
+        super(controller);
         this.groupPane = groupPane;
-        globalSelectionModel.getSelected().addListener((Observable observable) -> {
-            updateSelectionState();
-        });
+        selectionModel = controller.getSelectionModel();
+        selectionModel.getSelected().addListener(new WeakInvalidationListener(selectionListener));
 
         //set up mouse listener
-        //TODO: split this between DrawableTile and SingleDrawableViewBase
-        addEventFilter(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
+        addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
 
             @Override
             public void handle(MouseEvent t) {
                 getFile().ifPresent(file -> {
                     final long fileID = file.getId();
                     switch (t.getButton()) {
-                        case PRIMARY:
-                            if (t.getClickCount() == 1) {
-                                if (t.isControlDown()) {
-                                    globalSelectionModel.toggleSelection(fileID);
-                                } else {
-                                    groupPane.makeSelection(t.isShiftDown(), fileID);
-                                }
-                            } else if (t.getClickCount() > 1) {
-                                if (groupPane.getGroupViewMode() == GroupViewMode.TILE) {
-                                    groupPane.activateSlideShowViewer(fileID);
-                                } else {
-                                    groupPane.activateTileViewer();
-                                }
-                            }
-                            break;
+
                         case SECONDARY:
                             if (t.getClickCount() == 1) {
-                                if (globalSelectionModel.isSelected(fileID) == false) {
+                                if (selectionModel.isSelected(fileID) == false) {
                                     groupPane.makeSelection(false, fileID);
                                 }
                             }
@@ -177,19 +176,17 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                             break;
                     }
                 });
-
                 t.consume();
             }
 
-            private ContextMenu buildContextMenu(DrawableFile<?> file) {
+            private ContextMenu buildContextMenu(DrawableFile file) {
                 final ArrayList<MenuItem> menuItems = new ArrayList<>();
 
-                menuItems.add(new CategorizeAction(getController()).getPopupMenu());
+                menuItems.add(CategorizeAction.getCategoriesMenu(getController()));
+                menuItems.add(AddTagAction.getTagMenu(getController()));
 
-                menuItems.add(new AddDrawableTagAction(getController()).getPopupMenu());
-
-                final MenuItem extractMenuItem = new MenuItem("Extract File(s)");
-                extractMenuItem.setOnAction((ActionEvent t) -> {
+                final MenuItem extractMenuItem = new MenuItem(Bundle.DrawableTileBase_menuItem_extractFiles());
+                extractMenuItem.setOnAction(actionEvent -> {
                     SwingUtilities.invokeLater(() -> {
                         TopComponent etc = WindowManager.getDefault().findTopComponent(ImageGalleryTopComponent.PREFERRED_ID);
                         ExtractAction.getInstance().actionPerformed(new java.awt.event.ActionEvent(etc, 0, null));
@@ -197,23 +194,18 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                 });
                 menuItems.add(extractMenuItem);
 
-                MenuItem contentViewer = new MenuItem("Show Content Viewer");
-                contentViewer.setOnAction((ActionEvent t) -> {
+                MenuItem contentViewer = new MenuItem(Bundle.DrawableTileBase_menuItem_showContentViewer());
+                contentViewer.setOnAction(actionEvent -> {
                     SwingUtilities.invokeLater(() -> {
-                        new NewWindowViewAction("Show Content Viewer", new FileNode(file.getAbstractFile())).actionPerformed(null);
+                        new NewWindowViewAction(Bundle.DrawableTileBase_menuItem_showContentViewer(), new FileNode(file.getAbstractFile())).actionPerformed(null);
                     });
                 });
                 menuItems.add(contentViewer);
 
-                MenuItem externalViewer = new MenuItem("Open in External Viewer");
-                final ExternalViewerAction externalViewerAction = new ExternalViewerAction("Open in External Viewer", new FileNode(file.getAbstractFile()));
-
-                externalViewer.setDisable(externalViewerAction.isEnabled() == false);
-                externalViewer.setOnAction((ActionEvent t) -> {
-                    SwingUtilities.invokeLater(() -> {
-                        externalViewerAction.actionPerformed(null);
-                    });
-                });
+                OpenExternalViewerAction openExternalViewerAction = new OpenExternalViewerAction(file);
+                MenuItem externalViewer = ActionUtils.createMenuItem(openExternalViewerAction);
+                externalViewer.textProperty().unbind();
+                externalViewer.textProperty().bind(openExternalViewerAction.longTextProperty());
                 menuItems.add(externalViewer);
 
                 Collection<? extends ContextMenuActionsProvider> menuProviders = Lookup.getDefault().lookupAll(ContextMenuActionsProvider.class);
@@ -233,6 +225,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
             }
         });
     }
+    private final InvalidationListener selectionListener = observable -> updateSelectionState();
 
     GroupPane getGroupPane() {
         return groupPane;
@@ -241,17 +234,17 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     protected abstract String getTextForLabel();
 
     protected void initialize() {
-        followUpToggle.setOnAction((ActionEvent event) -> {
+        followUpToggle.setOnAction(actionEvent -> {
             getFile().ifPresent(file -> {
                 if (followUpToggle.isSelected() == true) {
                     try {
-                        globalSelectionModel.clearAndSelect(file.getId());
-                        new AddDrawableTagAction(getController()).addTag(getController().getTagsManager().getFollowUpTagName(), "");
+                        selectionModel.clearAndSelect(file.getId());
+                        new AddTagAction(getController(), getController().getTagsManager().getFollowUpTagName(), selectionModel.getSelected()).handle(actionEvent);
                     } catch (TskCoreException ex) {
-                        LOGGER.log(Level.SEVERE, "Failed to add Follow Up tag.  Could not load TagName.", ex);
+                        LOGGER.log(Level.SEVERE, "Failed to add Follow Up tag.  Could not load TagName.", ex); //NON-NLS
                     }
                 } else {
-                    new DeleteFollowUpTagAction(getController(), file).handle(event);
+                    new DeleteFollowUpTagAction(getController(), file).handle(actionEvent);
                 }
             });
         });
@@ -264,7 +257,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                 return DrawableAttribute.TAGS.getValue(getFile().get()).stream()
                         .anyMatch(followUpTagName::equals);
             } catch (TskCoreException ex) {
-                LOGGER.log(Level.WARNING, "failed to get follow up tag name ", ex);
+                LOGGER.log(Level.WARNING, "failed to get follow up tag name ", ex); //NON-NLS
                 return true;
             }
         } else {
@@ -295,16 +288,16 @@ public abstract class DrawableTileBase extends DrawableUIBase {
             updateSelectionState();
             updateCategory();
             updateFollowUpIcon();
-            updateUI();
             updateContent();
+            updateMetaData();
         }
     }
 
-    private void updateUI() {
+    private void updateMetaData() {
         getFile().ifPresent(file -> {
             final boolean isVideo = file.isVideo();
             final boolean hasHashSetHits = hasHashHit();
-            final boolean isUndisplayable = (isVideo ? ((VideoFile<?>) file).isDisplayableAsMedia() : file.isDisplayableAsImage()) == false;
+
             final String text = getTextForLabel();
 
             Platform.runLater(() -> {
@@ -312,8 +305,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                 fileTypeImageView.setVisible(isVideo);
                 hashHitImageView.setManaged(hasHashSetHits);
                 hashHitImageView.setVisible(hasHashSetHits);
-                undisplayableImageView.setManaged(isUndisplayable);
-                undisplayableImageView.setVisible(isUndisplayable);
+
                 nameLabel.setText(text);
                 nameLabel.setTooltip(new Tooltip(text));
             });
@@ -326,11 +318,9 @@ public abstract class DrawableTileBase extends DrawableUIBase {
      * DrawableView
      */
     protected void updateSelectionState() {
-        getFile().ifPresent(file -> {
-            final boolean selected = globalSelectionModel.isSelected(file.getId());
-            Platform.runLater(() -> {
-                setBorder(selected ? SELECTED_BORDER : UNSELECTED_BORDER);
-            });
+        getFileID().ifPresent(fileID -> {
+            final boolean selected = selectionModel.isSelected(fileID);
+            Platform.runLater(() -> setBorder(selected ? SELECTED_BORDER : UNSELECTED_BORDER));
         });
     }
 
@@ -342,7 +332,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     @Subscribe
     @Override
     public void handleTagAdded(ContentTagAddedEvent evt) {
-        getFileID().ifPresent((fileID) -> {
+        getFileID().ifPresent(fileID -> {
             try {
                 final TagName followUpTagName = getController().getTagsManager().getFollowUpTagName();
                 final ContentTag addedTag = evt.getAddedTag();
@@ -354,7 +344,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                     });
                 }
             } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Failed to get followup tag name.  Unable to update follow up status for file. ", ex);
+                LOGGER.log(Level.SEVERE, "Failed to get followup tag name.  Unable to update follow up status for file. ", ex); //NON-NLS
             }
         });
     }
@@ -362,7 +352,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     @Subscribe
     @Override
     public void handleTagDeleted(ContentTagDeletedEvent evt) {
-        getFileID().ifPresent((fileID) -> {
+        getFileID().ifPresent(fileID -> {
             try {
                 final TagName followUpTagName = getController().getTagsManager().getFollowUpTagName();
                 final ContentTagDeletedEvent.DeletedContentTagInfo deletedTagInfo = evt.getDeletedTagInfo();
@@ -371,7 +361,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                     updateFollowUpIcon();
                 }
             } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Failed to get followup tag name.  Unable to update follow up status for file. ", ex);
+                LOGGER.log(Level.SEVERE, "Failed to get followup tag name.  Unable to update follow up status for file. ", ex); //NON-NLS
             }
         });
     }
@@ -383,40 +373,4 @@ public abstract class DrawableTileBase extends DrawableUIBase {
             followUpToggle.setSelected(hasFollowUp);
         });
     }
-
-//    @Override
-//    Node getContentNode() {
-//        if (getFile().isPresent() == false) {
-//            imageCache = null;
-//            Platform.runLater(() -> {
-//                imageView.setImage(null);
-//            });
-//            return null;
-//        } else {
-//            Image thumbnail = isNull(imageCache) ? null : imageCache.get();
-//
-//            if (nonNull(thumbnail)) {
-//                Platform.runLater(() -> {
-//                    imageView.setImage(thumbnail);
-//                });
-//                return imageView;
-//            } else {
-//                DrawableFile<?> file = getFile().get();
-//
-//                if (isNull(imageTask) || imageTask.isDone()) {
-//                    imageTask = new ImageLoadTask(file) {
-//
-//                        @Override
-//                        void saveToCache(Image result) {
-//                            synchronized (DrawableTileBase.this) {
-//                                imageCache = new SoftReference<>(result);
-//                            }
-//                        }
-//                    };
-//                    new Thread(imageTask).start();
-//                }
-//                return getLoadingProgressIndicator();
-//            }
-//        }
-//    }
 }

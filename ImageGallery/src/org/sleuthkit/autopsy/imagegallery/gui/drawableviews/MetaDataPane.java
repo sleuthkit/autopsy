@@ -27,11 +27,11 @@ import java.util.Objects;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import java.util.Optional;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
@@ -39,6 +39,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TitledPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.Clipboard;
@@ -50,8 +51,10 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.text.Text;
 import javafx.util.Pair;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
@@ -63,11 +66,19 @@ import org.sleuthkit.datamodel.TagName;
 /**
  * Shows details of the selected file.
  */
+@NbBundle.Messages({"MetaDataPane.tableView.placeholder=Select a file to show its details here.",
+        "MetaDataPane.copyMenuItem.text=Copy",
+        "MetaDataPane.titledPane.displayName=Details",
+        "MetaDataPane.attributeColumn.headingName=Attribute",
+        "MetaDataPane.valueColumn.headingName=Value"})
 public class MetaDataPane extends DrawableUIBase {
 
     private static final Logger LOGGER = Logger.getLogger(MetaDataPane.class.getName());
 
     private static final KeyCodeCombination COPY_KEY_COMBINATION = new KeyCodeCombination(KeyCode.C, KeyCombination.CONTROL_DOWN);
+
+    @FXML
+    private TitledPane titledPane;
 
     @FXML
     private TableColumn<Pair<DrawableAttribute<?>, Collection<?>>, DrawableAttribute<?>> attributeColumn;
@@ -78,12 +89,12 @@ public class MetaDataPane extends DrawableUIBase {
     @FXML
     private TableColumn<Pair<DrawableAttribute<?>, Collection<?>>, String> valueColumn;
 
-    private final MenuItem copyMenuItem = new MenuItem("Copy");
+    private final MenuItem copyMenuItem = new MenuItem(Bundle.MetaDataPane_copyMenuItem_text());
     private final ContextMenu contextMenu = new ContextMenu(copyMenuItem);
 
     public MetaDataPane(ImageGalleryController controller) {
         super(controller);
-        FXMLConstructor.construct(this, "MetaDataPane.fxml");
+        FXMLConstructor.construct(this, "MetaDataPane.fxml"); //NON-NLS
     }
 
     @FXML
@@ -115,10 +126,11 @@ public class MetaDataPane extends DrawableUIBase {
         });
 
         tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        tableView.setPlaceholder(new Label("Select a file to show its details here."));
+        tableView.setPlaceholder(new Label(Bundle.MetaDataPane_tableView_placeholder()));
         tableView.getColumns().setAll(Arrays.asList(attributeColumn, valueColumn));
 
         attributeColumn.setPrefWidth(USE_COMPUTED_SIZE);
+        attributeColumn.setText(Bundle.MetaDataPane_attributeColumn_headingName());
         attributeColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getKey()));
         attributeColumn.setCellFactory(param -> new TableCell<Pair<DrawableAttribute<?>, Collection<?>>, DrawableAttribute<?>>() {
             @Override
@@ -135,6 +147,7 @@ public class MetaDataPane extends DrawableUIBase {
         });
 
         valueColumn.setPrefWidth(USE_COMPUTED_SIZE);
+        valueColumn.setText(Bundle.MetaDataPane_valueColumn_headingName());
         valueColumn.setCellValueFactory(p -> new SimpleStringProperty(getValueDisplayString(p.getValue())));
         valueColumn.setCellFactory(p -> new TableCell<Pair<DrawableAttribute<?>, Collection<?>>, String>() {
             @Override
@@ -149,6 +162,8 @@ public class MetaDataPane extends DrawableUIBase {
                 }
             }
         });
+
+        titledPane.setText(Bundle.MetaDataPane_titledPane_displayName());
     }
 
     @SuppressWarnings("unchecked")
@@ -166,36 +181,37 @@ public class MetaDataPane extends DrawableUIBase {
     }
 
     @Override
-    protected synchronized void setFileHelper(Long newFileID) {
+    synchronized protected void setFileHelper(Long newFileID) {
         setFileIDOpt(Optional.ofNullable(newFileID));
-        if (newFileID == null) {
-            Platform.runLater(() -> {
-                imageView.setImage(null);
-                imageBorder.setCenter(null);
-                tableView.getItems().clear();
-                getCategoryBorderRegion().setBorder(null);
-            });
-        } else {
-            disposeContent();
-            updateUI();
+        disposeContent();
+        if (nonNull(newFileID)) {
+            updateAttributesTable();
+            updateCategory();
             updateContent();
         }
     }
 
     @Override
-    CachedLoaderTask<Image, DrawableFile<?>> getNewImageLoadTask(DrawableFile<?> file) {
-        return new ThumbnailLoaderTask(file);
+    protected synchronized void disposeContent() {
+        super.disposeContent();
+        Platform.runLater(() -> {
+            tableView.getItems().clear();
+            getCategoryBorderRegion().setBorder(null);
+        });
     }
 
-    public void updateUI() {
+    @Override
+    Task<Image> newReadImageTask(DrawableFile file) {
+        return file.getThumbnailTask();
+    }
+
+    public void updateAttributesTable() {
         getFile().ifPresent(file -> {
             final List<Pair<DrawableAttribute<?>, Collection<?>>> attributesList = file.getAttributesList();
             Platform.runLater(() -> {
                 tableView.getItems().clear();
                 tableView.getItems().setAll(attributesList);
             });
-
-            updateCategory();
         });
     }
 
@@ -204,13 +220,16 @@ public class MetaDataPane extends DrawableUIBase {
         return imageBorder;
     }
 
-    /** {@inheritDoc } */
+    /**
+     * {@inheritDoc }
+     */
     @Subscribe
     @Override
     public void handleCategoryChanged(CategoryManager.CategoryChangeEvent evt) {
         getFileID().ifPresent(fileID -> {
             if (evt.getFileIDs().contains(fileID)) {
-                updateUI();
+                updateCategory();
+                updateAttributesTable();
             }
         });
     }
@@ -220,7 +239,7 @@ public class MetaDataPane extends DrawableUIBase {
     public void handleTagAdded(ContentTagAddedEvent evt) {
         getFileID().ifPresent((fileID) -> {
             if (Objects.equals(evt.getAddedTag().getContent().getId(), fileID)) {
-                updateUI();
+                updateAttributesTable();
             }
         });
     }
@@ -229,7 +248,7 @@ public class MetaDataPane extends DrawableUIBase {
     public void handleTagDeleted(ContentTagDeletedEvent evt) {
         getFileID().ifPresent((fileID) -> {
             if (Objects.equals(evt.getDeletedTagInfo().getContentID(), fileID)) {
-                updateUI();
+                updateAttributesTable();
             }
         });
     }
@@ -241,4 +260,5 @@ public class MetaDataPane extends DrawableUIBase {
                     getValueDisplayString(selectedItem)));
         }
     }
+
 }

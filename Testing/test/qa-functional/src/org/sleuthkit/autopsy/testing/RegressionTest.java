@@ -24,18 +24,12 @@ import java.awt.Robot;
 import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.nio.file.Files;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -61,9 +55,7 @@ import org.netbeans.jemmy.operators.JTableOperator;
 import org.netbeans.jemmy.operators.JTextFieldOperator;
 import org.netbeans.jemmy.operators.JListOperator;
 import org.netbeans.junit.NbModuleSuite;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.keywordsearch.*;
 
 /**
  * This test expects the following system properties to be set: img_path: The
@@ -174,10 +166,10 @@ public class RegressionTest extends TestCase {
     public void testNewCaseWizard() {
         logger.info("New Case Wizard");
         WizardOperator wo = new WizardOperator("New Case Information");
-        JTextFieldOperator jtfo1 = new JTextFieldOperator(wo, 2);
-        jtfo1.typeText("AutopsyTestCase"); // Name the case "AutopsyTestCase"
         JTextFieldOperator jtfo0 = new JTextFieldOperator(wo, 1);
-        jtfo0.typeText(getEscapedPath(System.getProperty("out_path")));
+        jtfo0.typeText("AutopsyTestCase"); // Name the case "AutopsyTestCase"
+        JTextFieldOperator jtfo1 = new JTextFieldOperator(wo, 2);
+        jtfo1.typeText(getEscapedPath(System.getProperty("out_path")));
         wo.btNext().clickMouse();
         JTextFieldOperator jtfo2 = new JTextFieldOperator(wo, 0);
         jtfo2.typeText("000"); // Set the case number
@@ -234,7 +226,7 @@ public class RegressionTest extends TestCase {
 
     public void testConfigureHash() {
         logger.info("Hash Configure");
-        JDialog hashMainDialog = JDialogOperator.waitJDialog("Hash Set Configuration", false, false);
+        JDialog hashMainDialog = JDialogOperator.waitJDialog("Global Hash Lookup Settings", false, false);
         JDialogOperator hashMainDialogOperator = new JDialogOperator(hashMainDialog);
         List<String> databases = new ArrayList<String>();
         databases.add(getEscapedPath(System.getProperty("nsrl_path")));
@@ -274,7 +266,7 @@ public class RegressionTest extends TestCase {
 
     public void testConfigureSearch() {
         logger.info("Search Configure");
-        JDialog jd = JDialogOperator.waitJDialog("Advanced Keyword Search Configuration", false, false);
+        JDialog jd = JDialogOperator.waitJDialog("Global Keyword Search Settings", false, false);
         JDialogOperator jdo = new JDialogOperator(jd);
         String words = getEscapedPath(System.getProperty("keyword_path"));
         JButtonOperator jbo0 = new JButtonOperator(jdo, "Import List", 0);

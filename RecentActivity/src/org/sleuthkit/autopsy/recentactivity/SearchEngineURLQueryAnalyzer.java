@@ -161,11 +161,11 @@ class SearchEngineURLQueryAnalyzer extends Extract {
             }
 
         } catch (IOException e) {
-            throw new IngestModuleException("Was not able to load SEUQAMappings.xml: " + e.getLocalizedMessage()); //NON-NLS
+            throw new IngestModuleException("Was not able to load SEUQAMappings.xml: " + e.getLocalizedMessage(), e); //NON-NLS
         } catch (ParserConfigurationException pce) {
-            throw new IngestModuleException("Unable to build XML parser: " + pce.getLocalizedMessage()); //NON-NLS
+            throw new IngestModuleException("Unable to build XML parser: " + pce.getLocalizedMessage(), pce); //NON-NLS
         } catch (SAXException sxe) {
-            throw new IngestModuleException("Unable to parse XML file: " + sxe.getLocalizedMessage()); //NON-NLS
+            throw new IngestModuleException("Unable to parse XML file: " + sxe.getLocalizedMessage(), sxe); //NON-NLS
         }
 
         NodeList nlist = xmlinput.getElementsByTagName("SearchEngine"); //NON-NLS
@@ -185,7 +185,6 @@ class SearchEngineURLQueryAnalyzer extends Extract {
             }
 
             SearchEngineURLQueryAnalyzer.SearchEngine Se = new SearchEngineURLQueryAnalyzer.SearchEngine(EngineName, EnginedomainSubstring, keys);
-            //System.out.println("Search Engine: " + Se.toString());
             listEngines[i] = Se;
         }
         engines = listEngines;
@@ -310,7 +309,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
                 Collection<BlackboardAttribute> listAttributes = currentCase.getSleuthkitCase().getMatchingAttributes("WHERE artifact_id = " + artifact.getArtifactID()); //NON-NLS
 
                 for (BlackboardAttribute attribute : listAttributes) {
-                    if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID()) {
+                    if (attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID()) {
                         final String urlString = attribute.getValueString();
                         se = getSearchEngineFromUrl(urlString);
                         if (se == null) {
@@ -323,11 +322,11 @@ class SearchEngineURLQueryAnalyzer extends Extract {
                             break;
                         }
 
-                    } else if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()) {
+                    } else if (attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()) {
                         browser = attribute.getValueString();
-                    } else if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID()) {
+                    } else if (attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID()) {
                         searchEngineDomain = attribute.getValueString();
-                    } else if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()) {
+                    } else if (attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()) {
                         last_accessed = attribute.getValueLong();
                     }
                 }
@@ -338,16 +337,16 @@ class SearchEngineURLQueryAnalyzer extends Extract {
                         last_accessed = 0;
                     }
                     Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
                             NbBundle.getMessage(this.getClass(),
                                     "SearchEngineURLQueryAnalyzer.parentModuleName"), searchEngineDomain));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(),
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEXT,
                             NbBundle.getMessage(this.getClass(),
                                     "SearchEngineURLQueryAnalyzer.parentModuleName"), query));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
                             NbBundle.getMessage(this.getClass(),
                                     "SearchEngineURLQueryAnalyzer.parentModuleName"), browser));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(),
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
                             NbBundle.getMessage(this.getClass(),
                                     "SearchEngineURLQueryAnalyzer.parentModuleName"), last_accessed));
                     this.addArtifact(ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY, file, bbattributes);
@@ -395,7 +394,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
             String message = NbBundle
                     .getMessage(this.getClass(), "SearchEngineURLQueryAnalyzer.init.exception.msg", XMLFILE);
             logger.log(Level.SEVERE, message, e);
-            throw new IngestModuleException(message);
+            throw new IngestModuleException(message, e);
         }
 
         loadConfigFile();
