@@ -19,37 +19,16 @@
 package org.sleuthkit.autopsy.timeline.datamodel;
 
 import java.util.Optional;
-import java.util.Set;
 import java.util.SortedSet;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 /**
  * A interface for groups of events that share some attributes in common.
  */
 public interface MultiEvent<ParentType extends MultiEvent<?>> extends TimeLineEvent {
 
-    String getDescription();
-
-    DescriptionLoD getDescriptionLoD();
-
-    Set<Long> getEventIDs();
-
-    Set<Long> getEventIDsWithHashHits();
-
-    Set<Long> getEventIDsWithTags();
-
-    EventType getEventType();
-
     long getEndMillis();
 
-    long getStartMillis();
-
     Optional<ParentType> getParent();
-
-    default int getSize() {
-        return getEventIDs().size();
-    }
 
     SortedSet<EventCluster> getClusters();
 }
