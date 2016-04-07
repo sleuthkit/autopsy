@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -36,14 +35,10 @@ import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import org.openide.util.NbBundle;
-import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -55,9 +50,403 @@ import org.xml.sax.SAXException;
  */
 public final class CaseMetadata {
 
+    private static final String FILE_EXTENSION = ".aut";
+    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss (z)");
+    private static final String SCHEMA_VERSION_ONE = "1.0";
+    private final static String CREATED_BY_VERSION_ELEMENT_NAME = "AutopsyCreatedVersion"; //NON-NLS
+    private final static String CASE_DATABASE_NAME_ELEMENT_NAME = "DatabaseName"; //NON-NLS
+    private static final String CURRENT_SCHEMA_VERSION = "2.0";
+    private final static String ROOT_ELEMENT_NAME = "AutopsyCase"; //NON-NLS
+    private final static String SCHEMA_VERSION_ELEMENT_NAME = "SchemaVersion"; //NON-NLS
+    private final static String CREATED_DATE_ELEMENT_NAME = "CreatedDate"; //NON-NLS
+    private final static String MODIFIED_DATE_ELEMENT_NAME = "ModifiedDate"; //NON-NLS
+    private final static String CREATED_BY_BUILD_ELEMENT_NAME = "CreatedByBuild"; //NON-NLS
+    private final static String SAVED_BY_BUILD_ELEMENT_NAME = "SavedByBuild"; //NON-NLS
+    private final static String CASE_ELEMENT_NAME = "Case"; //NON-NLS
+    private final static String CASE_NAME_ELEMENT_NAME = "Name"; //NON-NLS
+    private final static String CASE_NUMBER_ELEMENT_NAME = "Number"; //NON-NLS
+    private final static String EXAMINER_ELEMENT_NAME = "Examiner"; //NON-NLS
+    private final static String CASE_TYPE_ELEMENT_NAME = "CaseType"; //NON-NLS
+    private final static String CASE_DATABASE_ELEMENT_NAME = "Database"; //NON-NLS
+    private final static String TEXT_INDEX_NAME_ELEMENT = "TextIndexName"; //NON-NLS
+    private final Path metadataFilePath;
+    private Case.CaseType caseType;
+    private String caseName;
+    private String caseNumber;
+    private String examiner;
+    private String caseDatabase;
+    private String textIndexName;
+    private String createdDate;
+    private String createdByBuild;
+
+    /**
+     * Gets the file extension used for case metadata files.
+     *
+     * @return The file extension.
+     */
+    public static String getFileExtension() {
+        return FILE_EXTENSION;
+    }
+
+    /**
+     * Constructs an object that provides access to the case metadata stored in
+     * a new case metadata file.
+     *
+     * @param caseDirectory     The case directory.
+     * @param caseType          The type of case.
+     * @param caseName          The name of the case.
+     * @param caseNumber        The case number.
+     * @param examiner          The name of the case examiner.
+     * @param caseDatabase      For a single-user case, the full path to the
+     *                          case database file. For a multi-user case, the
+     *                          case database name.
+     * @param caseTextIndexName The text index name.
+     *
+     * @throws CaseMetadataException If the new case metadata file cannot be
+     *                               created.
+     */
+    CaseMetadata(String caseDirectory, Case.CaseType caseType, String caseName, String caseNumber, String examiner, String caseDatabase, String caseTextIndexName) throws CaseMetadataException {
+        metadataFilePath = Paths.get(caseDirectory, caseName + FILE_EXTENSION);
+        this.caseType = caseType;
+        this.caseName = caseName;
+        this.caseNumber = caseNumber;
+        this.examiner = examiner;
+        this.caseDatabase = caseDatabase;
+        this.textIndexName = caseTextIndexName;
+        createdByBuild = System.getProperty("netbeans.buildnumber");
+        createdDate = CaseMetadata.DATE_FORMAT.format(new Date());
+        writeToFile();
+    }
+
+    /**
+     * Constructs an object that provides access to the case metadata stored in
+     * an existing case metadata file.
+     *
+     * @param metadataFilePath The full path to the case metadata file.
+     *
+     * @throws CaseMetadataException If the new case metadata file cannot be
+     *                               read.
+     */
+    public CaseMetadata(Path metadataFilePath) throws CaseMetadataException {
+        this.metadataFilePath = metadataFilePath;
+        readFromFile();
+    }
+
+    /**
+     * Gets the full path to the case metadata file.
+     *
+     * @return The path to the metadata file
+     */
+    Path getFilePath() {
+        return metadataFilePath;
+    }
+
+    /**
+     * Gets the case directory.
+     *
+     * @return The case directory.
+     */
+    public String getCaseDirectory() {
+        return this.metadataFilePath.getParent().toString();
+    }
+
+    /**
+     * Gets the case type.
+     *
+     * @return The case type.
+     */
+    public Case.CaseType getCaseType() {
+        return this.caseType;
+    }
+
+    /**
+     * Gets the case display name.
+     *
+     * @return The case display name.
+     */
+    public String getCaseName() {
+        return caseName;
+    }
+
+    /**
+     * Sets the case display name. This does not change the name of the case
+     * directory, the case database, or the text index name.
+     *
+     * @param caseName A case display name.
+     */
+    void setCaseName(String caseName) throws CaseMetadataException {
+        String oldCaseName = this.caseName;
+        this.caseName = caseName;
+        try {
+            this.writeToFile();
+        } catch (CaseMetadataException ex) {
+            this.caseName = oldCaseName;
+            throw ex;
+        }
+    }
+
+    /**
+     * Gets the case number.
+     *
+     * @return The case number, may be empty.
+     */
+    public String getCaseNumber() {
+        return caseNumber;
+    }
+
+    /**
+     * Gets the examiner.
+     *
+     * @return The examiner, may be empty.
+     */
+    public String getExaminer() {
+        return examiner;
+    }
+
+    /**
+     * Gets a string identifying the case database.
+     *
+     * @return For a single-user case, the full path to the case database file.
+     *         For a multi-user case, the case database name.
+     */
+    public String getCaseDatabase() {
+        return caseDatabase;
+    }
+
+    /**
+     * Gets the text index name.
+     *
+     * @return The name of the text index for the case.
+     */
+    public String getTextIndexName() {
+        return textIndexName;
+    }
+
+    /**
+     * Gets the date the case was created.
+     *
+     * @return The date this case was created as a string
+     */
+    String getCreatedDate() {
+        return this.createdDate;
+    }
+
+    /**
+     * Sets the date the case was created. Used for preserving the case creation
+     * date during single-user to multi-user case conversion.
+     *
+     * @param createdDate The date the case was created as a string.
+     */
+    void setCreatedDate(String createdDate) throws CaseMetadataException {
+        String oldCreatedDate = this.createdDate;
+        this.createdDate = createdDate;
+        try {
+            this.writeToFile();
+        } catch (CaseMetadataException ex) {
+            this.createdDate = oldCreatedDate;
+            throw ex;
+        }
+    }
+
+    /**
+     * Gets the build that created the case.
+     *
+     * @return A build identifier.
+     */
+    String getCreatedByBuild() {
+        return createdByBuild;
+    }
+
+    /**
+     * Gets the build that created the case. Used for preserving the case
+     * creation build during single-user to multi-user case conversion.
+     *
+     * @param buildVersion An build version identifier.
+     */
+    void setCreatedByBuild(String buildVersion) throws CaseMetadataException {
+        String oldCreatedByVersion = this.createdByBuild;
+        this.createdByBuild = buildVersion;
+        try {
+            this.writeToFile();
+        } catch (CaseMetadataException ex) {
+            this.createdByBuild = oldCreatedByVersion;
+            throw ex;
+        }
+    }
+
+    /**
+     * Writes the case metadata to the metadata file.
+     *
+     * @throws CaseMetadataException If there is an error writing to the case
+     *                               metadata file.
+     */
+    private void writeToFile() throws CaseMetadataException {
+        try {
+            /*
+             * Create the XML DOM.
+             */
+            Document doc = XMLUtil.createDocument();
+            createXMLDOM(doc);
+            doc.normalize();
+
+            /*
+             * Prepare the DOM for pretty printing to the metadata file.
+             */
+            Source source = new DOMSource(doc);
+            StringWriter stringWriter = new StringWriter();
+            Result streamResult = new StreamResult(stringWriter);
+            Transformer transformer = TransformerFactory.newInstance().newTransformer();
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes"); //NON-NLS
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2"); //NON-NLS
+            transformer.transform(source, streamResult);
+
+            /*
+             * Write the DOM to the metadata file.
+             */
+            try (BufferedWriter fileWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(metadataFilePath.toFile())))) {
+                fileWriter.write(stringWriter.toString());
+                fileWriter.flush();
+            }
+
+        } catch (ParserConfigurationException | TransformerException | IOException ex) {
+            throw new CaseMetadataException(String.format("Error writing to case metadata file %s", metadataFilePath), ex);
+        }
+    }
+
+    /*
+     * Creates an XML DOM from the case metadata.
+     */
+    private void createXMLDOM(Document doc) {
+        /*
+         * Create the root element and its children.
+         */
+        Element rootElement = doc.createElement(ROOT_ELEMENT_NAME);
+        doc.appendChild(rootElement);
+        createChildElement(doc, rootElement, SCHEMA_VERSION_ELEMENT_NAME, CURRENT_SCHEMA_VERSION);
+        createChildElement(doc, rootElement, CREATED_DATE_ELEMENT_NAME, this.getCreatedDate());
+        createChildElement(doc, rootElement, MODIFIED_DATE_ELEMENT_NAME, DATE_FORMAT.format(new Date()));
+        createChildElement(doc, rootElement, CREATED_BY_BUILD_ELEMENT_NAME, this.getCreatedByBuild());
+        createChildElement(doc, rootElement, SAVED_BY_BUILD_ELEMENT_NAME, System.getProperty("netbeans.buildnumber"));
+        Element caseElement = doc.createElement(CASE_ELEMENT_NAME);
+        rootElement.appendChild(caseElement);
+
+        /*
+         * Create the children of the case element.
+         */
+        createChildElement(doc, caseElement, CASE_NAME_ELEMENT_NAME, this.getCaseName());
+        createChildElement(doc, caseElement, CASE_NUMBER_ELEMENT_NAME, this.getCaseNumber());
+        createChildElement(doc, caseElement, EXAMINER_ELEMENT_NAME, this.getExaminer());
+        createChildElement(doc, caseElement, CASE_TYPE_ELEMENT_NAME, this.getCaseType().toString());
+        createChildElement(doc, caseElement, CASE_DATABASE_ELEMENT_NAME, this.getCaseDatabaseName());
+        createChildElement(doc, caseElement, TEXT_INDEX_NAME_ELEMENT, this.getTextIndexName());
+    }
+
+    /**
+     * Creates an XML element for the case metadata XML DOM.
+     *
+     * @param doc            The document.
+     * @param parentElement  The parent element of the element to be created.
+     * @param elementName    The name of the element to be created.
+     * @param elementContent The text content of the element to be created, may
+     *                       be empty.
+     */
+    private void createChildElement(Document doc, Element parentElement, String elementName, String elementContent) {
+        Element element = doc.createElement(elementName);
+        element.appendChild(doc.createTextNode(elementContent));
+        parentElement.appendChild(element);
+    }
+
+    /**
+     * Reads the case metadata from the metadata file.
+     *
+     * @throws CaseMetadataException If there is an error reading from the case
+     *                               metadata file.
+     */
+    private void readFromFile() throws CaseMetadataException {
+        try {
+            /*
+             * Parse the file into an XML DOM and get the root element.
+             */
+            DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            Document doc = builder.parse(this.getFilePath().toFile());
+            doc.getDocumentElement().normalize();
+            Element rootElement = doc.getDocumentElement();
+            if (!rootElement.getNodeName().equals(ROOT_ELEMENT_NAME)) {
+                throw new CaseMetadataException("Case metadata file corrupted");
+            }
+
+            /*
+             * Get the content of the relevant children of the root element.
+             */
+            String schemaVersion = getElementTextContent(rootElement, SCHEMA_VERSION_ELEMENT_NAME, true);
+            this.createdDate = getElementTextContent(rootElement, CREATED_DATE_ELEMENT_NAME, true);
+            if (schemaVersion.equals(SCHEMA_VERSION_ONE)) {
+                this.createdByBuild = getElementTextContent(rootElement, CREATED_BY_VERSION_ELEMENT_NAME, true);
+            } else {
+                this.createdByBuild = getElementTextContent(rootElement, CREATED_BY_BUILD_ELEMENT_NAME, true);
+            }
+
+            /*
+             * Get the content of the children of the case element.
+             */
+            NodeList caseElements = doc.getElementsByTagName(CASE_ELEMENT_NAME);
+            if (caseElements.getLength() == 0) {
+                throw new CaseMetadataException("Case metadata file corrupted");
+            }
+            Element caseElement = (Element) caseElements.item(0);
+            this.caseName = getElementTextContent(caseElement, CASE_NAME_ELEMENT_NAME, true);
+            this.caseNumber = getElementTextContent(caseElement, CASE_NUMBER_ELEMENT_NAME, false);
+            this.examiner = getElementTextContent(caseElement, EXAMINER_ELEMENT_NAME, false);
+            this.caseType = Case.CaseType.fromString(getElementTextContent(caseElement, CASE_TYPE_ELEMENT_NAME, true));
+            if (null == this.caseType) {
+                throw new CaseMetadataException("Case metadata file corrupted");
+            }
+            if (schemaVersion.equals(SCHEMA_VERSION_ONE)) {
+                this.caseDatabase = getElementTextContent(caseElement, CASE_DATABASE_NAME_ELEMENT_NAME, true);
+            } else {
+                this.caseDatabase = getElementTextContent(caseElement, CASE_DATABASE_ELEMENT_NAME, true);
+            }
+            this.textIndexName = getElementTextContent(caseElement, TEXT_INDEX_NAME_ELEMENT, true);
+
+            /*
+             * Update the file to the current schema, if necessary.
+             */
+            if (!schemaVersion.equals(CURRENT_SCHEMA_VERSION)) {
+                writeToFile();
+            }
+            
+        } catch (ParserConfigurationException | SAXException | IOException ex) {
+            throw new CaseMetadataException(String.format("Error reading from case metadata file %s", metadataFilePath), ex);
+        }
+    }
+
+    /**
+     * Gets the text content of an XML element.
+     *
+     * @param parentElement     The parent element.
+     * @param elementName       The element name.
+     * @param contentIsRequired Whether or not the content is required.
+     *
+     * @return The text content, may be empty if not required.
+     *
+     * @throws CaseMetadataException If the element is missing or content is
+     *                               required and it is empty.
+     */
+    private String getElementTextContent(Element parentElement, String elementName, boolean contentIsRequired) throws CaseMetadataException {
+        NodeList elementsList = parentElement.getElementsByTagName(elementName);
+        if (elementsList.getLength() == 0) {
+            throw new CaseMetadataException(String.format("Missing %s element from case metadata file %s", elementName, metadataFilePath));
+        }
+        String textContent = elementsList.item(0).getTextContent();
+        if (textContent.isEmpty() && contentIsRequired) {
+            throw new CaseMetadataException(String.format("Empty %s element in case metadata file %s", elementName, metadataFilePath));
+        }
+        return textContent;
+    }
+
     /**
      * Exception thrown by the CaseMetadata class when there is a problem
-     * accessing the metadata for a case.
+     * accessing the metadata for a case. 
      */
     public final static class CaseMetadataException extends Exception {
 
@@ -72,463 +461,17 @@ public final class CaseMetadata {
         }
     }
 
-    private final static String TOP_ROOT_NAME = "AutopsyCase"; //NON-NLS
-    private final static String CASE_ROOT_NAME = "Case"; //NON-NLS
-    private final static String NAME = "Name"; //NON-NLS
-    private final static String NUMBER = "Number"; //NON-NLS
-    private final static String EXAMINER = "Examiner"; //NON-NLS
-    private final static String CREATED_DATE_NAME = "CreatedDate"; //NON-NLS
-    private final static String MODIFIED_DATE_NAME = "ModifiedDate"; //NON-NLS
-    private final static String SCHEMA_VERSION_NAME = "SchemaVersion"; //NON-NLS
-    private final static String AUTOPSY_CRVERSION_NAME = "AutopsyCreatedVersion"; //NON-NLS
-    private final static String AUTOPSY_MVERSION_NAME = "AutopsySavedVersion"; //NON-NLS
-    private final static String CASE_TEXT_INDEX_NAME = "TextIndexName"; //NON-NLS
-    private final static String CASE_TYPE = "CaseType"; //NON-NLS
-    private final static String DATABASE_NAME = "DatabaseName"; //NON-NLS
-    private static final String SCHEMA_VERSION = "2.0";
-    private static final String FILE_EXTENSION = ".aut";
-
-    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss (z)");
-    private Case.CaseType caseType;
-    private String caseName;
-    private String caseNumber;
-    private String examiner;
-    private String caseDatabaseName;
-    private String caseTextIndexName;
-    private String createdDate;
-    private String fileName;
-    private String createdVersion;
-    private final String configFilePath;
-
-    private CaseMetadata(String caseDirectory, Case.CaseType caseType, String caseName, String caseNumber, String examiner, String caseDatabaseName, String caseTextIndexName) throws CaseMetadataException {
-
-        this.caseType = caseType;
-        this.caseName = caseName;
-        this.caseNumber = caseNumber;
-        this.examiner = examiner;
-        this.createdDate = CaseMetadata.DATE_FORMAT.format(new Date());
-        this.caseDatabaseName = caseDatabaseName;
-        this.caseTextIndexName = caseTextIndexName;
-        this.fileName = caseName;
-        this.createdVersion = System.getProperty("netbeans.buildnumber");
-        configFilePath = Paths.get(caseDirectory, caseName + FILE_EXTENSION).toString();
-        this.write();
-
-    }
-
     /**
-     * Used to read a case at the given file path
+     * Gets a string identifying the case database.
      *
-     * @param metadataFilePath the string file path for the case
+     * @return For a single-user case, the full path to the case database file.
+     *         For a multi-user case, the case database name.
      *
-     * @throws
-     * org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException
-     */
-    private CaseMetadata(String metadataFilePath) throws CaseMetadataException {
-        this.configFilePath = metadataFilePath;
-        this.read(metadataFilePath);
-    }
-
-    /**
-     * Opens a case and gives the metadata object that corresponds
-     *
-     * @param metadataFilePath The file path of the metadata file
-     *
-     * @return The case metadata for the opened case
-     *
-     * @throws
-     * org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException
-     */
-    static CaseMetadata open(Path metadataFilePath) throws CaseMetadataException {
-        CaseMetadata metadata = new CaseMetadata(metadataFilePath.toString());
-        return metadata;
-    }
-
-    /**
-     * Creates a metadata object for a new case
-     *
-     * @param caseType          The type of case
-     * @param caseName          The name of the case
-     * @param caseNumber        The case number
-     * @param examiner          The name of the case examiner
-     * @param caseDirectory     The directory of the case
-     * @param caseDatabaseName  The name of the case db
-     * @param caseTextIndexName The case index name
-     *
-     * @return The metadata for the new case
-     *
-     * @throws
-     * org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException
-     */
-    static CaseMetadata create(String caseDirectory, Case.CaseType caseType, String caseName, String caseNumber, String examiner, String caseDatabaseName, String caseTextIndexName) throws CaseMetadataException {
-        CaseMetadata metadata = new CaseMetadata(caseDirectory, caseType, caseName, caseNumber, examiner, caseDatabaseName, caseTextIndexName);
-        return metadata;
-    }
-
-    /**
-     * Gets the case type.
-     *
-     * @return The case type.
-     */
-    public Case.CaseType getCaseType() {
-        return this.caseType;
-    }
-
-    /**
-     * Gets the case name.
-     *
-     * @return The case name.
-     */
-    public String getCaseName() {
-        return caseName;
-    }
-
-    /**
-     * Gets the case number.
-     *
-     * @return The case number, may be empty.
-     */
-    public String getCaseNumber() {
-        return caseNumber;
-    }
-
-    /**
-     * Gets the path to the metadata file file
-     *
-     * @return The path to the metadata file
-     */
-    public String getConfigFilePath() {
-        return configFilePath;
-    }
-
-    /**
-     * Gets the examiner.
-     *
-     * @return The examiner, may be empty.
-     */
-    public String getExaminer() {
-        return examiner;
-    }
-
-    /**
-     * Gets the case database name.
-     *
-     * @return The case database name, will be empty for a single-user case.
-     */
-    public String getCaseDatabaseName() {
-        return caseDatabaseName;
-    }
-
-    /**
-     * Gets the date this case was created
-     *
-     * @return The date this case was created as a string
-     */
-    String getCreatedDate() {
-        return this.createdDate;
-    }
-
-    /**
-     * @return the createdVersion
-     */
-    String getCreatedVersion() {
-        return createdVersion;
-    }
-
-    /**
-     * @return the FILE_EXTENSION
-     */
-    public static String getFileExtension() {
-        return FILE_EXTENSION;
-    }
-
-    /**
-     * Sets the created version of this case
-     *
-     * @param createdVersion the createdVersion to set
-     */
-    void setCreatedVersion(String createdVersion) throws CaseMetadataException {
-        String oldCreatedVersion = this.createdVersion;
-        this.createdVersion = createdVersion;
-        try {
-            this.write();
-        } catch (CaseMetadataException ex) {
-            this.createdDate = oldCreatedVersion;
-            throw ex;
-        }
-    }
-
-    /**
-     * @param createdDate the createdDate to set
-     */
-    void setCreatedDate(String createdDate) throws CaseMetadataException {
-        String oldCreatedDate = this.createdDate;
-        this.createdDate = createdDate;
-        try {
-            this.write();
-        } catch (CaseMetadataException ex) {
-            this.createdDate = oldCreatedDate;
-            throw ex;
-        }
-    }
-
-    /**
-     * @param caseName the caseName to set
-     */
-    void setCaseName(String caseName) throws CaseMetadataException {
-        String oldCaseName = this.caseName;
-        this.caseName = caseName;
-        try {
-            this.write();
-        } catch (CaseMetadataException ex) {
-            this.caseName = oldCaseName;
-            throw ex;
-        }
-    }
-
-    /**
-     * @return the caseTextIndexName
-     */
-    public String getTextIndexName() {
-        return caseTextIndexName;
-    }
-
-    private void write() throws CaseMetadataException {
-        Document doc;
-        try {
-            doc = XMLUtil.createDocument();
-        } catch (ParserConfigurationException ex) {
-            throw new CaseMetadataException(
-                    NbBundle.getMessage(this.getClass(), "XMLCaseManagement.create.exception.msg"), ex);
-        }
-        Element rootElement = doc.createElement(TOP_ROOT_NAME); // <AutopsyCase> ... </AutopsyCase>
-        doc.appendChild(rootElement);
-
-        Element crDateElement = doc.createElement(CREATED_DATE_NAME); // <CreatedDate> ... </CreatedDate>
-        crDateElement.appendChild(doc.createTextNode(this.getCreatedDate()));
-        rootElement.appendChild(crDateElement);
-
-        Element mDateElement = doc.createElement(MODIFIED_DATE_NAME); // <ModifedDate> ... </ModifedDate>
-        mDateElement.appendChild(doc.createTextNode(DATE_FORMAT.format(new Date())));
-        rootElement.appendChild(mDateElement);
-
-        Element autVerElement = doc.createElement(AUTOPSY_CRVERSION_NAME); // <AutopsyVersion> ... </AutopsyVersion>
-        autVerElement.appendChild(doc.createTextNode(this.getCreatedVersion()));
-        rootElement.appendChild(autVerElement);
-
-        Element autSavedVerElement = doc.createElement(AUTOPSY_MVERSION_NAME); // <AutopsySavedVersion> ... </AutopsySavedVersion>
-        autSavedVerElement.appendChild(doc.createTextNode(System.getProperty("netbeans.buildnumber")));
-        rootElement.appendChild(autSavedVerElement);
-
-        Element schVerElement = doc.createElement(SCHEMA_VERSION_NAME); // <SchemaVersion> ... </SchemaVersion>
-        schVerElement.appendChild(doc.createTextNode(SCHEMA_VERSION));
-        rootElement.appendChild(schVerElement);
-
-        Element caseElement = doc.createElement(CASE_ROOT_NAME); // <Case> ... </Case>
-        rootElement.appendChild(caseElement);
-
-        Element nameElement = doc.createElement(NAME); // <Name> ... </Name>
-        nameElement.appendChild(doc.createTextNode(getCaseName()));
-        caseElement.appendChild(nameElement);
-
-        Element numberElement = doc.createElement(NUMBER); // <Number> ... </Number>
-        numberElement.appendChild(doc.createTextNode(String.valueOf(getCaseNumber())));
-        caseElement.appendChild(numberElement);
-
-        Element examinerElement = doc.createElement(EXAMINER); // <Examiner> ... </Examiner>
-        examinerElement.appendChild(doc.createTextNode(getExaminer()));
-        caseElement.appendChild(examinerElement);
-
-        Element typeElement = doc.createElement(CASE_TYPE); // <CaseType> ... </CaseType>
-        typeElement.appendChild(doc.createTextNode(getCaseType().toString()));
-        caseElement.appendChild(typeElement);
-
-        Element dbNameElement = doc.createElement(DATABASE_NAME); // <DatabaseName> ... </DatabaseName>
-        dbNameElement.appendChild(doc.createTextNode(this.getCaseDatabaseName()));
-        caseElement.appendChild(dbNameElement);
-
-        Element indexNameElement = doc.createElement(CASE_TEXT_INDEX_NAME); // <TextIndexName> ... </TextIndexName>
-        indexNameElement.appendChild(doc.createTextNode(this.getTextIndexName()));
-        caseElement.appendChild(indexNameElement);
-        doc.normalize();
-        this.writeFile(doc);
-    }
-
-    private void writeFile(Document doc) throws CaseMetadataException {
-        if (doc == null || getCaseName().equals("")) {
-            throw new CaseMetadataException(
-                    "No set case to write management file for."
-            );
-        }
-
-        // Prepare the DOM document for writing
-        Source source = new DOMSource(doc);
-
-        // Prepare the data for the output file
-        StringWriter sw = new StringWriter();
-        Result result = new StreamResult(sw);
-
-        // Write the DOM document to the file
-        Transformer xformer;// = TransformerFactory.newInstance().newTransformer();
-        TransformerFactory tfactory = TransformerFactory.newInstance();
-
-        try {
-            xformer = tfactory.newTransformer();
-        } catch (TransformerConfigurationException ex) {
-            throw new CaseMetadataException(
-                    "Error writing to case file", ex);
-        }
-
-        //Setup indenting to "pretty print"
-        xformer.setOutputProperty(OutputKeys.INDENT, "yes"); //NON-NLS
-        xformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2"); //NON-NLS
-
-        try {
-            xformer.transform(source, result);
-        } catch (TransformerException ex) {
-            throw new CaseMetadataException(
-                    "Error writing to case file", ex);
-        }
-
-        // preparing the output file
-        String xmlString = sw.toString();
-        File file = new File(this.configFilePath);
-
-        // write the file
-        try {
-            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
-            bw.write(xmlString);
-            bw.flush();
-            bw.close();
-        } catch (IOException ex) {
-            throw new CaseMetadataException(
-                    "Error writing to case file", ex);
-        }
-    }
-
-    /**
-     * Opens the configuration file and load the document handler Note: this is
-     * for the schema version 1.0
-     *
-     * @param conFilePath the path of the XML case configuration file path
-     */
-    private void read(String conFilePath) throws CaseMetadataException {
-        File file = new File(conFilePath);
-        Document doc;
-
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        DocumentBuilder db;
-        try {
-            db = dbf.newDocumentBuilder();
-            doc = db.parse(file);
-        } catch (ParserConfigurationException | SAXException | IOException ex) {
-            throw new CaseMetadataException(
-                    "Error reading case XML file\\:" + conFilePath, ex);
-        }
-
-        doc.getDocumentElement().normalize();
-
-        Element rootEl = doc.getDocumentElement();
-        String rootName = rootEl.getNodeName();
-
-        if (!rootName.equals(TOP_ROOT_NAME)) {
-            // throw an error because the xml is malformed
-            if (RuntimeProperties.coreComponentsAreActive()) {
-                throw new CaseMetadataException("Root element not recognized as autopsy case tag");
-            }
-        } else {
-            /*
-             * Autopsy Created Version
-             */
-            Element rootElement = doc.getDocumentElement();
-
-            NodeList cversionList = rootElement.getElementsByTagName(AUTOPSY_CRVERSION_NAME);
-            if (cversionList.getLength() == 0) {
-                throw new CaseMetadataException("Could not find created version in metadata");
-            }
-            String createdVersion = cversionList.item(0).getTextContent(); // get the created version
-            // check if it has the same autopsy version as the current one
-            if (!createdVersion.equals(System.getProperty("netbeans.buildnumber"))) {
-                // if not the same version, update the saved version in the xml to the current version
-                rootElement.getElementsByTagName(AUTOPSY_MVERSION_NAME).item(0).setTextContent(System.getProperty("netbeans.buildnumber"));
-            }
-
-            String fullFileName = file.getName();
-            String fileName = fullFileName.substring(0, fullFileName.lastIndexOf(".")); // remove the extension
-            this.fileName = fileName;
-
-            NodeList rootNameList = doc.getElementsByTagName(CASE_ROOT_NAME);
-            if (rootNameList.getLength() == 0) {
-                throw new CaseMetadataException("Couldn't get case root");
-            }
-            Element caseElement = (Element) rootNameList.item(0);
-
-            NodeList caseTypeList = caseElement.getElementsByTagName(CASE_TYPE);
-            if (caseTypeList.getLength() == 0) {
-                throw new CaseMetadataException("Couldn't get case type");
-            }
-            String caseTypeString = caseTypeList.item(0).getTextContent();
-            this.caseType = Case.CaseType.fromString(caseTypeString);
-            if (this.caseType == null) {
-                throw new CaseMetadataException("Invalid case type");
-            }
-
-            NodeList caseNameList = caseElement.getElementsByTagName(NAME);
-            if (caseNameList.getLength() == 0) {
-                throw new CaseMetadataException("Couldn't get case name");
-            }
-            this.caseName = caseNameList.item(0).getTextContent();
-            if (this.caseName.isEmpty()) {
-                throw new CaseMetadataException("Invalid case name, cannot be empty");
-            }
-
-            Element numberElement = caseElement.getElementsByTagName(NUMBER).getLength() > 0 ? (Element) caseElement.getElementsByTagName(NUMBER).item(0) : null;
-            this.caseNumber = numberElement != null ? numberElement.getTextContent() : "";
-
-            Element examinerElement = caseElement.getElementsByTagName(EXAMINER).getLength() > 0 ? (Element) caseElement.getElementsByTagName(EXAMINER).item(0) : null;
-            this.examiner = examinerElement != null ? examinerElement.getTextContent() : "";
-
-            NodeList databaseNameList = caseElement.getElementsByTagName(DATABASE_NAME);
-            if (databaseNameList.getLength() == 0) {
-                throw new CaseMetadataException("Couldn't get database name");
-            }
-            Element databaseNameElement = (Element) databaseNameList.item(0);
-            this.caseDatabaseName = databaseNameElement.getTextContent();
-            if (Case.CaseType.MULTI_USER_CASE == caseType && caseDatabaseName.isEmpty()) {
-                throw new CaseMetadataException("Case database name cannot be empty in multi user case.");
-            }
-
-            NodeList textIndexList = caseElement.getElementsByTagName(CASE_TEXT_INDEX_NAME);
-            if (textIndexList.getLength() == 0) {
-                throw new CaseMetadataException("Couldn't get text index");
-            }
-            Element caseTextIndexNameElement = (Element) textIndexList.item(0);
-            this.caseTextIndexName = caseTextIndexNameElement.getTextContent();
-
-            NodeList createdDateList = rootElement.getElementsByTagName(CREATED_DATE_NAME);
-            if (createdDateList.getLength() == 0) {
-                throw new CaseMetadataException("Couldn't get created date");
-            }
-            this.createdDate = createdDateList.item(0).getTextContent();
-
-            NodeList createdVersionList = rootElement.getElementsByTagName(AUTOPSY_CRVERSION_NAME);
-            if (createdVersionList.getLength() == 0) {
-                throw new CaseMetadataException("Couldn't get created version");
-            }
-            this.createdVersion = createdVersionList.item(0).getTextContent();
-        }
-    }
-
-    /**
-     * Constructs an object that provides access to case metadata.
-     *
-     * @param metadataFilePath Path to the metadata (.aut) file for a case.
-     *
-     * @deprecated Use open instead
+     * @deprecated Use getCaseDatabase instead.
      */
     @Deprecated
-    public CaseMetadata(Path metadataFilePath) throws CaseMetadataException {
-        this(metadataFilePath.toString());
+    public String getCaseDatabaseName() {
+        return getCaseDatabase();
     }
 
 }

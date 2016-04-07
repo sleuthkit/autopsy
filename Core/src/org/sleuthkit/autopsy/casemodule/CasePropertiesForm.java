@@ -88,7 +88,7 @@ class CasePropertiesForm extends javax.swing.JPanel {
         current = currentCase;
 
         CaseMetadata caseMetadata = currentCase.getCaseMetadata();
-        tbDbName.setText(caseMetadata.getCaseDatabaseName());
+        tbDbName.setText(caseMetadata.getCaseDatabase());
         Case.CaseType caseType = caseMetadata.getCaseType();
         tbDbType.setText(caseType.getLocalizedDisplayName());
         if (caseType == Case.CaseType.SINGLE_USER_CASE) {
@@ -421,7 +421,7 @@ class CasePropertiesForm extends javax.swing.JPanel {
                     Object res = DialogDisplayer.getDefault().notify(d);
                     if (res != null && res == DialogDescriptor.YES_OPTION) {
                         // if user select "Yes"
-                        String oldPath = current.getConfigFilePath();
+                        String oldPath = current.getCaseMetadata().getFilePath().toString();
                         try {
                             current.updateCaseName(oldCaseName, oldPath, newCaseName, oldPath);
                         } catch (Exception ex) {

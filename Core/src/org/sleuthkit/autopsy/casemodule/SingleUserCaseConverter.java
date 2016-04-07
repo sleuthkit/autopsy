@@ -165,7 +165,7 @@ public class SingleUserCaseConverter {
         }
 
         // Read old xml config
-        CaseMetadata oldCaseMetadata = CaseMetadata.open(icd.getCaseInputFolder().resolve(icd.getAutFileName()));
+        CaseMetadata oldCaseMetadata = new CaseMetadata(icd.getCaseInputFolder().resolve(icd.getAutFileName()));
         if (oldCaseMetadata.getCaseType() == CaseType.MULTI_USER_CASE) {
             throw new Exception(NbBundle.getMessage(SingleUserCaseConverter.class, "SingleUserCaseConverter.AlreadyMultiUser")); //NON-NLS
         }
@@ -190,7 +190,7 @@ public class SingleUserCaseConverter {
         copyImages(icd);
 
         // Create new .aut file
-        CaseMetadata newCaseMetadata = CaseMetadata.create(icd.getCaseOutputFolder().toString(),
+        CaseMetadata newCaseMetadata = new CaseMetadata(icd.getCaseOutputFolder().toString(),
                 CaseType.MULTI_USER_CASE,
                 icd.getNewCaseName(),
                 oldCaseMetadata.getCaseNumber(),
@@ -198,7 +198,7 @@ public class SingleUserCaseConverter {
                 dbName, solrName);
         // Set created date. This calls writefile, no need to call it again
         newCaseMetadata.setCreatedDate(oldCaseMetadata.getCreatedDate());
-        newCaseMetadata.setCreatedVersion(oldCaseMetadata.getCreatedVersion());
+        newCaseMetadata.setCreatedByBuild(oldCaseMetadata.getCreatedByBuild());
 
         // At this point the import has been finished successfully so we can delete the original case
         // (if requested). This *should* be fairly safe - at this point we know there was an autopsy file
