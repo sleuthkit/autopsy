@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -167,19 +167,16 @@ public final class EventStripe implements MultiEvent<EventCluster> {
     }
 
     @Override
-    @SuppressWarnings("ReturnOfCollectionOrArrayField")
     public ImmutableSet<Long> getEventIDs() {
         return eventIDs;
     }
 
     @Override
-    @SuppressWarnings("ReturnOfCollectionOrArrayField")
     public ImmutableSet<Long> getEventIDsWithHashHits() {
         return hashHits;
     }
 
     @Override
-    @SuppressWarnings("ReturnOfCollectionOrArrayField")
     public ImmutableSet<Long> getEventIDsWithTags() {
         return tagged;
     }
@@ -195,7 +192,6 @@ public final class EventStripe implements MultiEvent<EventCluster> {
     }
 
     @Override
-    @SuppressWarnings("ReturnOfCollectionOrArrayField")
     public ImmutableSortedSet< EventCluster> getClusters() {
         return clusters;
     }
@@ -205,4 +201,44 @@ public final class EventStripe implements MultiEvent<EventCluster> {
         return "EventStripe{" + "description=" + description + ", eventIDs=" + (Objects.isNull(eventIDs) ? 0 : eventIDs.size()) + '}'; //NON-NLS
     }
 
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 79 * hash + Objects.hashCode(this.clusters);
+        hash = 79 * hash + Objects.hashCode(this.type);
+        hash = 79 * hash + Objects.hashCode(this.description);
+        hash = 79 * hash + Objects.hashCode(this.lod);
+        hash = 79 * hash + Objects.hashCode(this.eventIDs);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final EventStripe other = (EventStripe) obj;
+        if (!Objects.equals(this.description, other.description)) {
+            return false;
+        }
+        if (!Objects.equals(this.clusters, other.clusters)) {
+            return false;
+        }
+        if (!Objects.equals(this.type, other.type)) {
+            return false;
+        }
+        if (this.lod != other.lod) {
+            return false;
+        }
+        if (!Objects.equals(this.eventIDs, other.eventIDs)) {
+            return false;
+        }
+        return true;
+    }
 }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Sets;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
@@ -33,8 +34,8 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 /**
  * Represents a set of other events clustered together. All the sub events
- * should have the same type and matching descriptions at the designated 'zoom
- * level', and be 'close together' in time.
+ * should have the same type and matching descriptions at the designated "zoom
+ * level", and be "close together" in time.
  */
 @Immutable
 public class EventCluster implements MultiEvent<EventStripe> {
@@ -56,11 +57,16 @@ public class EventCluster implements MultiEvent<EventStripe> {
         if (!cluster1.getDescription().equals(cluster2.getDescription())) {
             throw new IllegalArgumentException("event clusters are not compatible: they have different descriptions");
         }
-        Sets.SetView<Long> idsUnion = Sets.union(cluster1.getEventIDs(), cluster2.getEventIDs());
-        Sets.SetView<Long> hashHitsUnion = Sets.union(cluster1.getEventIDsWithHashHits(), cluster2.getEventIDsWithHashHits());
-        Sets.SetView<Long> taggedUnion = Sets.union(cluster1.getEventIDsWithTags(), cluster2.getEventIDsWithTags());
+        Sets.SetView<Long> idsUnion =
+                Sets.union(cluster1.getEventIDs(), cluster2.getEventIDs());
+        Sets.SetView<Long> hashHitsUnion =
+                Sets.union(cluster1.getEventIDsWithHashHits(), cluster2.getEventIDsWithHashHits());
+        Sets.SetView<Long> taggedUnion =
+                Sets.union(cluster1.getEventIDsWithTags(), cluster2.getEventIDsWithTags());
 
-        return new EventCluster(IntervalUtils.span(cluster1.span, cluster2.span), cluster1.getEventType(), idsUnion, hashHitsUnion, taggedUnion, cluster1.getDescription(), cluster1.lod);
+        return new EventCluster(IntervalUtils.span(cluster1.span, cluster2.span),
+                cluster1.getEventType(), idsUnion, hashHitsUnion, taggedUnion,
+                cluster1.getDescription(), cluster1.lod);
     }
 
     final private EventStripe parent;
@@ -102,7 +108,9 @@ public class EventCluster implements MultiEvent<EventStripe> {
      */
     private final ImmutableSet<Long> hashHits;
 
-    private EventCluster(Interval spanningInterval, EventType type, Set<Long> eventIDs, Set<Long> hashHits, Set<Long> tagged, String description, DescriptionLoD lod, EventStripe parent) {
+    private EventCluster(Interval spanningInterval, EventType type, Set<Long> eventIDs,
+            Set<Long> hashHits, Set<Long> tagged, String description, DescriptionLoD lod,
+            EventStripe parent) {
 
         this.span = spanningInterval;
         this.type = type;
@@ -114,7 +122,8 @@ public class EventCluster implements MultiEvent<EventStripe> {
         this.parent = parent;
     }
 
-    public EventCluster(Interval spanningInterval, EventType type, Set<Long> eventIDs, Set<Long> hashHits, Set<Long> tagged, String description, DescriptionLoD lod) {
+    public EventCluster(Interval spanningInterval, EventType type, Set<Long> eventIDs,
+            Set<Long> hashHits, Set<Long> tagged, String description, DescriptionLoD lod) {
         this(spanningInterval, type, eventIDs, hashHits, tagged, description, lod, null);
     }
 
@@ -138,19 +147,16 @@ public class EventCluster implements MultiEvent<EventStripe> {
     }
 
     @Override
-    @SuppressWarnings("ReturnOfCollectionOrArrayField")
     public ImmutableSet<Long> getEventIDs() {
         return eventIDs;
     }
 
     @Override
-    @SuppressWarnings("ReturnOfCollectionOrArrayField")
     public ImmutableSet<Long> getEventIDsWithHashHits() {
         return hashHits;
     }
 
     @Override
-    @SuppressWarnings("ReturnOfCollectionOrArrayField")
     public ImmutableSet<Long> getEventIDsWithTags() {
         return tagged;
     }
@@ -184,12 +190,49 @@ public class EventCluster implements MultiEvent<EventStripe> {
     }
 
     @Override
-    public SortedSet< EventCluster> getClusters() {
+    public SortedSet<EventCluster> getClusters() {
         return ImmutableSortedSet.orderedBy(Comparator.comparing(EventCluster::getStartMillis)).add(this).build();
     }
 
     @Override
     public String toString() {
         return "EventCluster{" + "description=" + description + ", eventIDs=" + eventIDs.size() + '}';
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 23 * hash + Objects.hashCode(this.type);
+        hash = 23 * hash + Objects.hashCode(this.description);
+        hash = 23 * hash + Objects.hashCode(this.lod);
+        hash = 23 * hash + Objects.hashCode(this.eventIDs);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final EventCluster other = (EventCluster) obj;
+        if (!Objects.equals(this.description, other.description)) {
+            return false;
+        }
+        if (!Objects.equals(this.type, other.type)) {
+            return false;
+        }
+        if (this.lod != other.lod) {
+            return false;
+        }
+        if (!Objects.equals(this.eventIDs, other.eventIDs)) {
+            return false;
+        }
+        return true;
     }
 }

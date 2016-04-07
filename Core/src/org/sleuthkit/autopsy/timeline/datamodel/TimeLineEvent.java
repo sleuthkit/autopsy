@@ -48,6 +48,5 @@ public interface TimeLineEvent {
         return getEventIDs().size();
     }
 
-
     SortedSet<EventCluster> getClusters();
 }
