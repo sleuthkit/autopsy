@@ -23,7 +23,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import javafx.beans.Observable;
@@ -150,11 +149,7 @@ public final class FilteredEventsModel {
             final ZoomParams zoomParams = requestedZoomParamters.get();
 
             if (zoomParams != null) {
-                if (zoomParams.getTypeZoomLevel().equals(requestedTypeZoom.get()) == false
-                        || zoomParams.getDescriptionLOD().equals(requestedLOD.get()) == false
-                        || zoomParams.getFilter().equals(requestedFilter.get()) == false
-                        || Objects.equals(zoomParams.getTimeRange(), requestedTimeRange.get()) == false) {
-
+                synchronized (FilteredEventsModel.this) {
                     requestedTypeZoom.set(zoomParams.getTypeZoomLevel());
                     requestedFilter.set(zoomParams.getFilter());
                     requestedTimeRange.set(zoomParams.getTimeRange());
