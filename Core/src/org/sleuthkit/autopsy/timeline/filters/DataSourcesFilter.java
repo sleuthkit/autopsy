@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,6 +37,7 @@ public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
     public DataSourcesFilter copyOf() {
         final DataSourcesFilter filterCopy = new DataSourcesFilter();
         filterCopy.setSelected(isSelected());
+        filterCopy.setDisabled(isDisabled());
         //add a copy of each subfilter
         this.getSubFilters().forEach((DataSourceFilter t) -> {
             filterCopy.addSubFilter(t.copyOf());
@@ -87,7 +88,7 @@ public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
         }
         final DataSourcesFilter other = (DataSourcesFilter) obj;
 
-        if (isSelected() != other.isSelected()) {
+        if (isActive() != other.isActive()) {
             return false;
         }
 
