@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -288,7 +288,7 @@ final class DataSourceIngestJob {
     String getExecutionContext() {
         return this.settings.getExecutionContext();
     }
-    
+
     /**
      * Gets the data source to be ingested by this job.
      *
@@ -379,38 +379,45 @@ final class DataSourceIngestJob {
     private List<IngestModuleError> startUpIngestPipelines() {
         List<IngestModuleError> errors = new ArrayList<>();
 
-        // Start up the first stage data source ingest pipeline.
+        /*
+         * Start the data-source-level ingest module pipelines.
+         */
         errors.addAll(this.firstStageDataSourceIngestPipeline.startUp());
-
-        // Start up the second stage data source ingest pipeline.
         errors.addAll(this.secondStageDataSourceIngestPipeline.startUp());
 
-        // Start up the file ingest pipelines (one per file ingest thread). 
-        for (FileIngestPipeline pipeline : this.fileIngestPipelinesQueue) {
-            errors.addAll(pipeline.startUp());
-            if (!errors.isEmpty()) {
-                // If there are start up errors, the ingest job will not proceed 
-                // and the errors will ultimately be reported to the user for 
-                // possible remedy so shut down the pipelines now that an
-                // attempt has been made to start up the data source ingest  
-                // pipeline and at least one copy of the file ingest pipeline.
-                // pipeline. There is no need to complete starting up all of the 
-                // file ingest pipeline copies since any additional start up 
-                // errors are likely redundant.
-                while (!this.fileIngestPipelinesQueue.isEmpty()) {
-                    pipeline = this.fileIngestPipelinesQueue.poll();
-                    if (pipeline.isRunning()) {
-                        List<IngestModuleError> shutDownErrors = pipeline.shutDown();
-                        if (!shutDownErrors.isEmpty()) {
-                            logIngestModuleErrors(shutDownErrors);
+        /*
+         * If the data-source-level ingest pipelines were successfully started,
+         * start the Start the file-level ingest pipelines (one per file ingest
+         * thread).
+         */
+        if (errors.isEmpty()) {
+            for (FileIngestPipeline pipeline : this.fileIngestPipelinesQueue) {
+                errors.addAll(pipeline.startUp());
+                if (!errors.isEmpty()) {
+                    /*
+                     * If there are start up errors, the ingest job will not
+                     * proceed, so shut down any file ingest pipelines that did
+                     * start up.
+                     */
+                    while (!this.fileIngestPipelinesQueue.isEmpty()) {
+                        FileIngestPipeline startedPipeline = this.fileIngestPipelinesQueue.poll();
+                        if (startedPipeline.isRunning()) {
+                            List<IngestModuleError> shutDownErrors = startedPipeline.shutDown();
+                            if (!shutDownErrors.isEmpty()) {
+                                /*
+                                 * The start up errors will ultimately be
+                                 * reported to the user for possible remedy, but
+                                 * the shut down errors are logged here.
+                                 */
+                                logIngestModuleErrors(shutDownErrors);
+                            }
                         }
                     }
+                    break;
                 }
-                break;
             }
         }
 
-        logIngestModuleErrors(errors);
         return errors;
     }
 
