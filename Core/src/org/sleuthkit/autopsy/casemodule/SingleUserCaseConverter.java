@@ -46,7 +46,7 @@ import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 public class SingleUserCaseConverter {
 
     private static final String AUTOPSY_DB_FILE = "autopsy.db"; //NON-NLS
-    private static final String DOTAUT = ".aut"; //NON-NLS
+    private static final String DOTAUT = CaseMetadata.getFileExtension(); //NON-NLS
     private static final String TIMELINE_FOLDER = "Timeline"; //NON-NLS
     private static final String TIMELINE_FILE = "events.db"; //NON-NLS
     private static final String POSTGRES_DEFAULT_DB_NAME = "postgres"; //NON-NLS
@@ -165,9 +165,8 @@ public class SingleUserCaseConverter {
         }
 
         // Read old xml config
-        XMLCaseManagement oldXmlCaseManagement = new XMLCaseManagement();
-        oldXmlCaseManagement.open(icd.getCaseInputFolder().resolve(icd.getAutFileName()).toString());
-        if (oldXmlCaseManagement.getCaseType() == CaseType.MULTI_USER_CASE) {
+        CaseMetadata oldCaseMetadata = new CaseMetadata(icd.getCaseInputFolder().resolve(icd.getAutFileName()));
+        if (oldCaseMetadata.getCaseType() == CaseType.MULTI_USER_CASE) {
             throw new Exception(NbBundle.getMessage(SingleUserCaseConverter.class, "SingleUserCaseConverter.AlreadyMultiUser")); //NON-NLS
         }
 
@@ -191,15 +190,15 @@ public class SingleUserCaseConverter {
         copyImages(icd);
 
         // Create new .aut file
-        XMLCaseManagement newXmlCaseManagement = new XMLCaseManagement();
-        newXmlCaseManagement.create(icd.getCaseOutputFolder().toString(),
+        CaseMetadata newCaseMetadata = new CaseMetadata(icd.getCaseOutputFolder().toString(),
+                CaseType.MULTI_USER_CASE,
                 icd.getNewCaseName(),
-                oldXmlCaseManagement.getCaseExaminer(),
-                oldXmlCaseManagement.getCaseNumber(),
-                CaseType.MULTI_USER_CASE, dbName, solrName);
-
+                oldCaseMetadata.getCaseNumber(),
+                oldCaseMetadata.getExaminer(),
+                dbName, solrName);
         // Set created date. This calls writefile, no need to call it again
-        newXmlCaseManagement.setCreatedDate(oldXmlCaseManagement.getCreatedDate());
+        newCaseMetadata.setCreatedDate(oldCaseMetadata.getCreatedDate());
+        newCaseMetadata.setCreatedByBuild(oldCaseMetadata.getCreatedByBuild());
 
         // At this point the import has been finished successfully so we can delete the original case
         // (if requested). This *should* be fairly safe - at this point we know there was an autopsy file

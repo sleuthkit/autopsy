@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,12 +22,14 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.BlackboardResultWriter;
@@ -110,33 +112,60 @@ public class KeywordSearch {
     }
 
     /**
-     * Listener to swap cores when the case changes
+     * Listener to create/open and close Solr cores when cases are
+     * created/opened and closed.
      */
     static class CaseChangeListener implements PropertyChangeListener {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
+            /*
+             * TODO (AUT-2081): There is a Solr core unloading bug, fixed in
+             * Solr 5.4, that results in the co-existence of a core.properties
+             * file and a core.properties.unloaded file in the core instance
+             * directory when a core is closed/unloaded. When this happens,
+             * subsequent core open/load attempts will fail. The workaround for
+             * single-user cases is to close and reopen Autopsy so that a new
+             * server instance gets spun up.
+             */
             if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
                 if (null != evt.getOldValue()) {
+                    /*
+                     * A case is being closed.
+                     */
                     Case closedCase = (Case) evt.getOldValue();
                     try {
                         BlackboardResultWriter.stopAllWriters();
-                        Thread.sleep(2000); // TODO (RC): This is a fragile way to wait here.
+                        /*
+                         * TODO (AUT-2084): The following code
+                         * KeywordSearch.CaseChangeListener gambles that any
+                         * BlackboardResultWriters (SwingWorkers) will complete
+                         * in less than roughly two seconds
+                         */
+                        Thread.sleep(2000);
                         server.closeCore();
                     } catch (Exception ex) {
-                        String caseName = closedCase.getName();
-                        logger.log(Level.SEVERE, String.format("Failed to close core for %s", caseName), ex); //NON-NLS
-                        MessageNotifyUtil.Notify.error(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.closeCore.notification.msg"), ex.getMessage());
+                        String caseId = Paths.get(closedCase.getCaseDirectory(), closedCase.getName()).toString();
+                        logger.log(Level.SEVERE, String.format("Failed to close core for %s", caseId), ex); //NON-NLS
+                        if (RuntimeProperties.coreComponentsAreActive()) {
+                            MessageNotifyUtil.Notify.error(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.closeCore.notification.msg"), ex.getMessage());
+                        }
                     }
                 }
+
                 if (null != evt.getNewValue()) {
+                    /*
+                     * A case is being created/opened.
+                     */
                     Case openedCase = (Case) evt.getNewValue();
                     try {
                         server.openCoreForCase(openedCase);
                     } catch (Exception ex) {
-                        String caseName = openedCase.getName();
-                        logger.log(Level.SEVERE, String.format("Failed to open or create core for %s", caseName), ex); //NON-NLS
-                        MessageNotifyUtil.Notify.error(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.openCore.notification.msg"), ex.getMessage());
+                        String caseId = Paths.get(openedCase.getCaseDirectory(), openedCase.getName()).toString();
+                        logger.log(Level.SEVERE, String.format("Failed to open or create core for %s", caseId), ex); //NON-NLS
+                        if (RuntimeProperties.coreComponentsAreActive()) {
+                            MessageNotifyUtil.Notify.error(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.openCore.notification.msg"), ex.getMessage());
+                        }
                     }
                 }
             }
