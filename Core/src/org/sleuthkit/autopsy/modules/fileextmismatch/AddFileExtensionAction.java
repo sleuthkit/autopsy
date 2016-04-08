@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,41 +18,40 @@
  */
 package org.sleuthkit.autopsy.modules.fileextmismatch;
 
-import org.openide.util.NbBundle;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
+import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Do the context menu action for adding a new filename extension to the
- * mismatch list for the MIME type of the selected node.
+ * extension list for the MIME type.
  */
 class AddFileExtensionAction extends AbstractAction {
+    private static final long serialVersionUID = 1L;
 
-    private String extStr;
-    private String mimeTypeStr;
+    private final String extStr;
+    private final String mimeTypeStr;
+    private final FileExtMismatchSettings settings;
 
-    public AddFileExtensionAction(String menuItemStr, String extStr, String mimeTypeStr) {
+    AddFileExtensionAction(String menuItemStr, String extStr, String mimeTypeStr, FileExtMismatchSettings settings) {
         super(menuItemStr);
         this.mimeTypeStr = mimeTypeStr;
         this.extStr = extStr;
+        this.settings = settings;
     }
 
     @Override
+    @Messages({"AddFileExtensionAction.writeError.message=Could not write file extension settings."})
     public void actionPerformed(ActionEvent event) {
         HashMap<String, String[]> editableMap;
-        try {
-            editableMap = FileExtMismatchSettings.readSettings().getSigTypeToExtMap();
-        } catch (FileExtMismatchSettings.FileExtMismatchSettingsException ex) {
-            JOptionPane.showMessageDialog(null,
-                    NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.msg"),
-                    NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.title"),
-                    JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+        editableMap = settings.getMimeTypeToExtsMap();
         ArrayList<String> editedExtensions = new ArrayList<>(Arrays.asList(editableMap.get(mimeTypeStr)));
         editedExtensions.add(extStr);
 
@@ -63,15 +62,17 @@ class AddFileExtensionAction extends AbstractAction {
             if (!FileExtMismatchSettings.writeSettings(new FileExtMismatchSettings(editableMap))) {
                 //error
                 JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.msg"),
+                        Bundle.AddFileExtensionAction_writeError_message(),
                         NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.title"),
                         JOptionPane.ERROR_MESSAGE);
+                Logger.getLogger(this.getClass().getName()).log(Level.WARNING, Bundle.AddFileExtensionAction_writeError_message());
             } // else //in the future we might want to update the statusbar to give feedback to the user
         } catch (FileExtMismatchSettings.FileExtMismatchSettingsException ex) {
             JOptionPane.showMessageDialog(null,
-                    NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.msg"),
+                    Bundle.AddFileExtensionAction_writeError_message(),
                     NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.title"),
                     JOptionPane.ERROR_MESSAGE);
+            Logger.getLogger(this.getClass().getName()).log(Level.WARNING, Bundle.AddFileExtensionAction_writeError_message(), ex);
         }
     }
 }

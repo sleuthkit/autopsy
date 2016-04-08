@@ -564,7 +564,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         try {
             // Load the configuration into a buffer that the user can modify. They can choose
             // to save it back to the file after making changes.
-            editableMap = FileExtMismatchSettings.readSettings().getSigTypeToExtMap();
+            editableMap = FileExtMismatchSettings.readSettings().getMimeTypeToExtsMap();
 
         } catch (FileExtMismatchSettings.FileExtMismatchSettingsException ex) {
             //error

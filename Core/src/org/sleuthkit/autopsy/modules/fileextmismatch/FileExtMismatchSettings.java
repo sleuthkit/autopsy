@@ -44,7 +44,7 @@ import org.w3c.dom.NodeList;
 class FileExtMismatchSettings implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private HashMap<String, String[]> sigTypeToExtMap;
+    private HashMap<String, String[]> mimeTypeToExtsMap;
     private static final Logger logger = Logger.getLogger(FileExtMismatchSettings.class.getName());
     private static final String SIG_EL = "signature"; //NON-NLS
     private static final String EXT_EL = "ext";     //NON-NLS
@@ -64,32 +64,32 @@ class FileExtMismatchSettings implements Serializable {
     }
 
     /**
-     * Makes a settings object based on given sig type map
+     * Makes a settings object based on given mime type map
      *
-     * @param sigTypeToExtMap
+     * @param mimeTypeToExtsMap
      */
-    FileExtMismatchSettings(HashMap<String, String[]> sigTypeToExtMap) {
-        this.sigTypeToExtMap = sigTypeToExtMap;
+    FileExtMismatchSettings(HashMap<String, String[]> mimeTypeToExtsMap) {
+        this.mimeTypeToExtsMap = mimeTypeToExtsMap;
     }
 
     /**
-     * @return the sig type to extension map
+     * @return the mime type to extension map
      */
-    HashMap<String, String[]> getSigTypeToExtMap() {
-        return sigTypeToExtMap;
+    HashMap<String, String[]> getMimeTypeToExtsMap() {
+        return mimeTypeToExtsMap;
     }
 
     /**
      * Sets the signature to extension map for this settings.
      */
-    public void setSigTypeToExtMap(HashMap<String, String[]> sigTypeToExtMap) {
-        this.sigTypeToExtMap = sigTypeToExtMap;
+    public void setMimeTypeToExtsMap(HashMap<String, String[]> mimeTypeToExtsMap) {
+        this.mimeTypeToExtsMap = mimeTypeToExtsMap;
     }
 
     /**
-     * Load and parse the settings
+     * Reads the file extension mismatch settings.
      *
-     * @return Loaded hash map or null on error or null if data does not exist
+     * @return Loaded settings (empty if there are no settings to load).
      */
     public static synchronized FileExtMismatchSettings readSettings() throws FileExtMismatchSettingsException {
         HashMap<String, String[]> sigTypeToExtMap = new HashMap<>();
@@ -149,18 +149,17 @@ class FileExtMismatchSettings implements Serializable {
 
             } catch (Exception e) {
                 logger.log(Level.SEVERE, "Error loading config file.", e); //NON-NLS
-                return null;
+                throw new FileExtMismatchSettingsException("Error loading config file.", e); //NON-NLS
             }
         }
         return new FileExtMismatchSettings(sigTypeToExtMap);
     }
 
     /**
-     * Save XML to filePath, overwriting it if it already exists
+     * Save settings to disk.
      *
-     * @param sigTypeToExtMap String arrays of extensions mapped to each string
-     *                        mimetype.
-     *
+     * @param settings The settings to save to disk
+     * 
      * @return Loaded hash map or null on error or null if data does not exist
      */
     public static synchronized boolean writeSettings(FileExtMismatchSettings settings) throws FileExtMismatchSettingsException {

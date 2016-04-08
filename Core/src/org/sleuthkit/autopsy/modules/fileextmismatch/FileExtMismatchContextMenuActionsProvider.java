@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,22 +26,19 @@ import java.util.List;
 import java.util.logging.Level;
 import javax.swing.Action;
 import javax.swing.JOptionPane;
-import org.openide.util.Exceptions;
-import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.ContextMenuActionsProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * This creates a single context menu item for adding a new filename extension
- * to the mismatch list for the MIME type of the selected node.
+ * to the extension list for the MIME type of the selected node.
  */
 @ServiceProvider(service = ContextMenuActionsProvider.class)
 public class FileExtMismatchContextMenuActionsProvider implements ContextMenuActionsProvider {
@@ -53,24 +50,20 @@ public class FileExtMismatchContextMenuActionsProvider implements ContextMenuAct
         // Ignore if file ingest is in progress.
         if (!IngestManager.getInstance().isIngestRunning()) {
 
-            final Collection<? extends BlackboardArtifact> selectedArts = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class);
+            final Collection<? extends BlackboardArtifactNode> selectedArts = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifactNode.class);
 
             // Prevent multiselect
             if (selectedArts.size() == 1) {
 
-                for (BlackboardArtifact nodeArt : selectedArts) {
+                for (BlackboardArtifactNode artifactNode : selectedArts) {
 
+                    BlackboardArtifact nodeArt = artifactNode.getLookup().lookup(BlackboardArtifact.class);
                     // Only for mismatch results
                     if (nodeArt.getArtifactTypeName().equals("TSK_EXT_MISMATCH_DETECTED")) { //NON-NLS
                         String mimeTypeStr = "";
                         String extStr = "";
 
-                        AbstractFile af = null;
-                        try {
-                            af = nodeArt.getSleuthkitCase().getAbstractFileById(nodeArt.getObjectID());
-                        } catch (TskCoreException ex) {
-                            Logger.getLogger(FileExtMismatchContextMenuActionsProvider.class.getName()).log(Level.SEVERE, "Error getting file by id", ex); //NON-NLS
-                        }
+                        AbstractFile af = artifactNode.getLookup().lookup(AbstractFile.class);
 
                         if (af != null) {
                             int i = af.getName().lastIndexOf(".");
@@ -93,12 +86,13 @@ public class FileExtMismatchContextMenuActionsProvider implements ContextMenuAct
                                 String menuItemStr = NbBundle.getMessage(this.getClass(),
                                         "FileExtMismatchContextMenuActionsProvider.menuItemStr",
                                         extStr, mimeTypeStr);
-                                actions.add(new AddFileExtensionAction(menuItemStr, extStr, mimeTypeStr));
 
                                 // Check if already added
                                 HashMap<String, String[]> editableMap;
                                 try {
-                                    editableMap = FileExtMismatchSettings.readSettings().getSigTypeToExtMap();
+                                    FileExtMismatchSettings settings = FileExtMismatchSettings.readSettings();
+                                    editableMap = settings.getMimeTypeToExtsMap();
+                                    actions.add(new AddFileExtensionAction(menuItemStr, extStr, mimeTypeStr, settings));
                                     ArrayList<String> editedExtensions = new ArrayList<>(Arrays.asList(editableMap.get(mimeTypeStr)));
                                     if (editedExtensions.contains(extStr)) {
                                         // Informs the user that they have already added this extension to this MIME type
@@ -109,6 +103,7 @@ public class FileExtMismatchContextMenuActionsProvider implements ContextMenuAct
                                             NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.msg2"),
                                             NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.title"),
                                             JOptionPane.ERROR_MESSAGE);
+                                    Logger.getLogger(this.getClass().getName()).log(Level.WARNING, NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.msg2"), ex);
                                 }
                             }
                         }
