@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ * 
+ * Copyright 2011 - 2016 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.modules.hashdatabase;
 
@@ -11,9 +24,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -45,14 +56,12 @@ class HashLookupSettings implements Serializable {
     private static final String PATH_ELEMENT = "hash_set_path"; //NON-NLS
     private static final String LEGACY_PATH_NUMBER_ATTRIBUTE = "number"; //NON-NLS
     private static final String CONFIG_FILE_NAME = "hashsets.xml"; //NON-NLS
-    private static final String DB_SERIALIZATION_FILE_NAME = "hashDbs.settings";
-    private static final String HASH_DATABASE_FILE_EXTENSON = "kdb"; //NON-NLS
     private static final String configFilePath = PlatformUtil.getUserConfigDirectory() + File.separator + CONFIG_FILE_NAME;
 
     private static final long serialVersionUID = 1L;
     private final List<HashDbInfo> hashDbInfoList;
 
-    public HashLookupSettings(List<HashDbInfo> hashDbInfoList) {
+    HashLookupSettings(List<HashDbInfo> hashDbInfoList) {
         this.hashDbInfoList = hashDbInfoList;
     }
 
@@ -62,21 +71,29 @@ class HashLookupSettings implements Serializable {
      * @param knownHashSets
      * @param knownBadHashSets
      */
-    HashLookupSettings(List<HashDbManager.HashDb> knownHashSets, List<HashDbManager.HashDb> knownBadHashSets) throws TskCoreException {
+    HashLookupSettings(List<HashDbManager.HashDb> knownHashSets, List<HashDbManager.HashDb> knownBadHashSets) throws HashLookupSettingsException {
         hashDbInfoList = new ArrayList<>();
         for (HashDbManager.HashDb hashDb : knownHashSets) {
-            if (hashDb.hasIndexOnly()) {
-                hashDbInfoList.add(new HashDbInfo(hashDb.getHashSetName(), hashDb.getKnownFilesType(), hashDb.getSearchDuringIngest(), hashDb.getSendIngestMessages(), hashDb.getIndexPath()));
-            } else {
-                hashDbInfoList.add(new HashDbInfo(hashDb.getHashSetName(), hashDb.getKnownFilesType(), hashDb.getSearchDuringIngest(), hashDb.getSendIngestMessages(), hashDb.getDatabasePath()));
+            try {
+                if (hashDb.hasIndexOnly()) {
+                    hashDbInfoList.add(new HashDbInfo(hashDb.getHashSetName(), hashDb.getKnownFilesType(), hashDb.getSearchDuringIngest(), hashDb.getSendIngestMessages(), hashDb.getIndexPath()));
+                } else {
+                    hashDbInfoList.add(new HashDbInfo(hashDb.getHashSetName(), hashDb.getKnownFilesType(), hashDb.getSearchDuringIngest(), hashDb.getSendIngestMessages(), hashDb.getDatabasePath()));
+                }
+            } catch (TskCoreException ex) {
+                throw new HashLookupSettingsException("Couldn't add hash database named: " + hashDb.getHashSetName(), ex);
             }
         }
 
         for (HashDbManager.HashDb hashDb : knownBadHashSets) {
-            if (hashDb.hasIndexOnly()) {
-                hashDbInfoList.add(new HashDbInfo(hashDb.getHashSetName(), hashDb.getKnownFilesType(), hashDb.getSearchDuringIngest(), hashDb.getSendIngestMessages(), hashDb.getIndexPath()));
-            } else {
-                hashDbInfoList.add(new HashDbInfo(hashDb.getHashSetName(), hashDb.getKnownFilesType(), hashDb.getSearchDuringIngest(), hashDb.getSendIngestMessages(), hashDb.getDatabasePath()));
+            try {
+                if (hashDb.hasIndexOnly()) {
+                    hashDbInfoList.add(new HashDbInfo(hashDb.getHashSetName(), hashDb.getKnownFilesType(), hashDb.getSearchDuringIngest(), hashDb.getSendIngestMessages(), hashDb.getIndexPath()));
+                } else {
+                    hashDbInfoList.add(new HashDbInfo(hashDb.getHashSetName(), hashDb.getKnownFilesType(), hashDb.getSearchDuringIngest(), hashDb.getSendIngestMessages(), hashDb.getDatabasePath()));
+                }
+            } catch (TskCoreException ex) {
+                throw new HashLookupSettingsException("Couldn't add hash database named: " + hashDb.getHashSetName(), ex);
             }
         }
     }
@@ -84,57 +101,11 @@ class HashLookupSettings implements Serializable {
     /**
      * @return the hashDbInfoList
      */
-    public List<HashDbInfo> getHashDbInfoList() {
+    List<HashDbInfo> getHashDbInfo() {
         return hashDbInfoList;
     }
 
-    private static String getValidFilePath(String hashSetName, String configuredPath) {
-        // Check the configured path.
-        File database = new File(configuredPath);
-        if (database.exists()) {
-            return configuredPath;
-        }
-
-        // Give the user an opportunity to find the desired file.
-        String newPath = null;
-        if (JOptionPane.showConfirmDialog(null,
-                NbBundle.getMessage(HashLookupSettings.class, "HashDbManager.dlgMsg.dbNotFoundAtLoc",
-                        hashSetName, configuredPath),
-                NbBundle.getMessage(HashLookupSettings.class, "HashDbManager.dlgTitle.MissingDb"),
-                JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-            newPath = searchForFile();
-            if (null != newPath && !newPath.isEmpty()) {
-                database = new File(newPath);
-                if (!database.exists()) {
-                    newPath = null;
-                }
-            }
-        }
-        return newPath;
-    }
-
-    private static String searchForFile() {
-        String filePath = null;
-        JFileChooser fc = new JFileChooser();
-        fc.setDragEnabled(false);
-        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        String[] EXTENSION = new String[]{"txt", "idx", "hash", "Hash", "kdb"}; //NON-NLS
-        FileNameExtensionFilter filter = new FileNameExtensionFilter(
-                NbBundle.getMessage(HashLookupSettings.class, "HashDbManager.fileNameExtensionFilter.title"), EXTENSION);
-        fc.setFileFilter(filter);
-        fc.setMultiSelectionEnabled(false);
-        if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-            File f = fc.getSelectedFile();
-            try {
-                filePath = f.getCanonicalPath();
-            } catch (IOException ex) {
-                Logger.getLogger(HashDbManager.class.getName()).log(Level.WARNING, "Couldn't get selected file path", ex); //NON-NLS
-            }
-        }
-        return filePath;
-    }
-
-    public static HashLookupSettings readSettings() throws HashLookupSettingsException {
+    static HashLookupSettings readSettings() throws HashLookupSettingsException {
         File fileSetFile = new File(SERIALIZATION_FILE_PATH);
         File f = new File(configFilePath);
         if (fileSetFile.exists()) {
@@ -170,7 +141,7 @@ class HashLookupSettings implements Serializable {
                     Logger.getLogger(HashDbManager.class.getName()).log(Level.WARNING, "No element hash_set exists."); //NON-NLS
                 }
 
-            // Create HashDb objects for each hash set element. Skip to the next hash database if the definition of
+                // Create HashDb objects for each hash set element. Skip to the next hash database if the definition of
                 // a particular hash database is not well-formed.
                 String attributeErrorMessage = " attribute was not set for hash_set at index {0}, cannot make instance of HashDb class"; //NON-NLS
                 String elementErrorMessage = " element was not set for hash_set at index {0}, cannot make instance of HashDb class"; //NON-NLS
@@ -248,15 +219,9 @@ class HashLookupSettings implements Serializable {
                         Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, PATH_ELEMENT + elementErrorMessage, i);
                         continue;
                     }
-                    dbPath = getValidFilePath(hashSetName, dbPath);
-
-                    if (null != dbPath) {
-                        hashDbInfoList.add(new HashDbInfo(hashSetName, HashDbManager.HashDb.KnownFilesType.valueOf(knownFilesType),
-                                searchDuringIngestFlag, sendIngestMessagesFlag, dbPath));
-                        hashSetNames.add(hashSetName);
-                    } else {
-                        Logger.getLogger(HashDbManager.class.getName()).log(Level.WARNING, "No valid path for hash_set at index {0}, cannot make instance of HashDb class", i); //NON-NLS
-                    }
+                    hashDbInfoList.add(new HashDbInfo(hashSetName, HashDbManager.HashDb.KnownFilesType.valueOf(knownFilesType),
+                            searchDuringIngestFlag, sendIngestMessagesFlag, dbPath));
+                    hashSetNames.add(hashSetName);
                 }
 
                 if (updatedSchema) {
@@ -282,8 +247,7 @@ class HashLookupSettings implements Serializable {
                     HashLookupSettings.writeSettings(settings);
                 }
                 return new HashLookupSettings(hashDbInfoList);
-            }
-            else {
+            } else {
                 return null;
             }
         }
@@ -302,13 +266,13 @@ class HashLookupSettings implements Serializable {
     static final class HashDbInfo implements Serializable {
 
         private static final long serialVersionUID = 1L;
-        private String hashSetName;
-        private HashDbManager.HashDb.KnownFilesType knownFilesType;
-        private boolean searchDuringIngest;
-        private boolean sendIngestMessages;
-        private String path;
+        private final String hashSetName;
+        private final HashDbManager.HashDb.KnownFilesType knownFilesType;
+        private final boolean searchDuringIngest;
+        private final boolean sendIngestMessages;
+        private final String path;
 
-        public HashDbInfo(String hashSetName, HashDbManager.HashDb.KnownFilesType knownFilesType, boolean searchDuringIngest, boolean sendIngestMessages, String path) {
+        HashDbInfo(String hashSetName, HashDbManager.HashDb.KnownFilesType knownFilesType, boolean searchDuringIngest, boolean sendIngestMessages, String path) {
             this.hashSetName = hashSetName;
             this.knownFilesType = knownFilesType;
             this.searchDuringIngest = searchDuringIngest;
@@ -319,35 +283,35 @@ class HashLookupSettings implements Serializable {
         /**
          * @return the hashSetName
          */
-        public String getHashSetName() {
+        String getHashSetName() {
             return hashSetName;
         }
 
         /**
          * @return the knownFilesType
          */
-        public HashDbManager.HashDb.KnownFilesType getKnownFilesType() {
+        HashDbManager.HashDb.KnownFilesType getKnownFilesType() {
             return knownFilesType;
         }
 
         /**
          * @return the searchDuringIngest
          */
-        public boolean getSearchDuringIngest() {
+        boolean getSearchDuringIngest() {
             return searchDuringIngest;
         }
 
         /**
          * @return the sendIngestMessages
          */
-        public boolean getSendIngestMessages() {
+        boolean getSendIngestMessages() {
             return sendIngestMessages;
         }
 
         /**
          * @return the path
          */
-        public String getPath() {
+        String getPath() {
             return path;
         }
     }

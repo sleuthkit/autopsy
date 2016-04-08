@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 - 2014 Basis Technology Corp.
+ * Copyright 2011 - 2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,23 +28,18 @@ import java.util.Set;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.coreutils.XMLUtil;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.io.Serializable;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.FileUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.openide.util.Exceptions;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -63,19 +58,8 @@ import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupSettings.HashDbInfo;
  */
 public class HashDbManager implements PropertyChangeListener {
 
-    private static final String SET_ELEMENT = "hash_set"; //NON-NLS
-    private static final String SET_NAME_ATTRIBUTE = "name"; //NON-NLS
-    private static final String SET_TYPE_ATTRIBUTE = "type"; //NON-NLS
-    private static final String SEARCH_DURING_INGEST_ATTRIBUTE = "use_for_ingest"; //NON-NLS
-    private static final String SEND_INGEST_MESSAGES_ATTRIBUTE = "show_inbox_messages"; //NON-NLS
-    private static final String PATH_ELEMENT = "hash_set_path"; //NON-NLS
-    private static final String LEGACY_PATH_NUMBER_ATTRIBUTE = "number"; //NON-NLS
-    private static final String CONFIG_FILE_NAME = "hashsets.xml"; //NON-NLS
-    private static final String DB_SERIALIZATION_FILE_NAME = "hashDbs.settings";
     private static final String HASH_DATABASE_FILE_EXTENSON = "kdb"; //NON-NLS
     private static HashDbManager instance = null;
-    private final String configFilePath = PlatformUtil.getUserConfigDirectory() + File.separator + CONFIG_FILE_NAME;
-    private final String DB_SERIALIZATION_FILE_PATH = PlatformUtil.getUserConfigDirectory() + File.separator + DB_SERIALIZATION_FILE_NAME;
     private List<HashDb> knownHashSets = new ArrayList<>();
     private List<HashDb> knownBadHashSets = new ArrayList<>();
     private Set<String> hashSetNames = new HashSet<>();
@@ -107,8 +91,12 @@ public class HashDbManager implements PropertyChangeListener {
         changeSupport.addPropertyChangeListener(listener);
     }
 
+    public synchronized void removePropertyChangeListener(PropertyChangeListener listener) {
+        changeSupport.removePropertyChangeListener(listener);
+    }
+
     private HashDbManager() {
-        readHashSetsConfigurationFromDisk();
+        loadHashsetsConfiguration();
     }
 
     /**
@@ -121,6 +109,8 @@ public class HashDbManager implements PropertyChangeListener {
     }
 
     public class HashDbManagerException extends Exception {
+
+        private static final long serialVersionUID = 1L;
 
         private HashDbManagerException(String message) {
             super(message);
@@ -480,7 +470,7 @@ public class HashDbManager implements PropertyChangeListener {
     synchronized boolean save() {
         try {
             return HashLookupSettings.writeSettings(new HashLookupSettings(this.knownHashSets, this.knownBadHashSets));
-        } catch (TskCoreException ex) {
+        } catch (HashLookupSettings.HashLookupSettingsException ex) {
             return false;
         }
     }
@@ -495,7 +485,7 @@ public class HashDbManager implements PropertyChangeListener {
         hashSetNames.clear();
         hashSetPaths.clear();
 
-        readHashSetsConfigurationFromDisk();
+        loadHashsetsConfiguration();
     }
 
     private void closeHashDatabases(List<HashDb> hashDatabases) {
@@ -509,13 +499,11 @@ public class HashDbManager implements PropertyChangeListener {
         hashDatabases.clear();
     }
 
-    private boolean readHashSetsConfigurationFromDisk() {
-
-        File f = new File(configFilePath);
+    private boolean loadHashsetsConfiguration() {
         try {
             HashLookupSettings settings = HashLookupSettings.readSettings();
             if (settings != null) {
-                this.setFields(settings);
+                this.configureSettings(settings);
             }
             return true;
         } catch (HashLookupSettings.HashLookupSettingsException ex) {
@@ -524,11 +512,18 @@ public class HashDbManager implements PropertyChangeListener {
         }
     }
 
-    private void setFields(HashLookupSettings settings) {
-        List<HashDbInfo> hashDbInfoList = settings.getHashDbInfoList();
+    @Messages({"# {0} - database name", "HashDbManager.noDbPath.message=Couldn't get valid database path for: {0}"})
+    private void configureSettings(HashLookupSettings settings) {
+        List<HashDbInfo> hashDbInfoList = settings.getHashDbInfo();
         for (HashDbInfo hashDb : hashDbInfoList) {
             try {
-                addExistingHashDatabaseInternal(hashDb.getHashSetName(), getValidFilePath(hashDb.getHashSetName(), hashDb.getPath()) , hashDb.getSearchDuringIngest(), hashDb.getSendIngestMessages(), hashDb.getKnownFilesType());
+                String dbPath = this.getValidFilePath(hashDb.getHashSetName(), hashDb.getPath());
+                if (dbPath != null) {
+                    addExistingHashDatabaseInternal(hashDb.getHashSetName(), getValidFilePath(hashDb.getHashSetName(), hashDb.getPath()), hashDb.getSearchDuringIngest(), hashDb.getSendIngestMessages(), hashDb.getKnownFilesType());
+                }
+                else {
+                    logger.log(Level.WARNING, Bundle.HashDbManager_noDbPath_message(hashDb.getHashSetName()));
+                }
             } catch (HashDbManagerException | TskCoreException ex) {
                 Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash database", ex); //NON-NLS
                 JOptionPane.showMessageDialog(null,
@@ -590,7 +585,7 @@ public class HashDbManager implements PropertyChangeListener {
      * Instances of this class represent hash databases used to classify files
      * as known or know bad.
      */
-    public static class HashDb implements Serializable {
+    public static class HashDb {
 
         /**
          * Indicates how files with hashes stored in a particular hash database
@@ -806,6 +801,30 @@ public class HashDbManager implements PropertyChangeListener {
             code = 47 * code + Objects.hashCode(this.propertyChangeSupport);
             code = 47 * code + Objects.hashCode(this.knownFilesType);
             return code;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final HashDb other = (HashDb) obj;
+            if (!Objects.equals(this.hashSetName, other.hashSetName)) {
+                return false;
+            }
+            if (this.searchDuringIngest != other.searchDuringIngest) {
+                return false;
+            }
+            if (this.sendIngestMessages != other.sendIngestMessages) {
+                return false;
+            }
+            if (this.knownFilesType != other.knownFilesType) {
+                return false;
+            }
+            return true;
         }
     }
 
