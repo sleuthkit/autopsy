@@ -556,9 +556,9 @@ public class IngestManager {
                     this.jobsById.remove(job.getId());
                 }
                 for (IngestModuleError error : errors) {
-                    logger.log(Level.SEVERE, String.format("Error starting %s ingest module", error.getModuleDisplayName()), error.getModuleError()); //NON-NLS
+                    logger.log(Level.SEVERE, String.format("Error starting %s ingest module for job %d", error.getModuleDisplayName(), job.getId()), error.getModuleError()); //NON-NLS
                 }
-                IngestManager.logger.log(Level.INFO, "Ingest job {0} could not be started", job.getId()); //NON-NLS
+                IngestManager.logger.log(Level.SEVERE, "Ingest job {0} could not be started", job.getId()); //NON-NLS
                 if (RuntimeProperties.coreComponentsAreActive()) {
                     EventQueue.invokeLater(new Runnable() {
 

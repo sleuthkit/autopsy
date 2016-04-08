@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -66,14 +66,16 @@ import org.apache.solr.common.SolrException;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
 import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
- * Handles for keeping track of a Solr server and its cores
+ * Handles management of a either a local or centralized Solr server and its
+ * cores.
  */
 public class Server {
 
-    // field names that are used in SOLR schema
+    /**
+     * Solr document field names.
+     */
     public static enum Schema {
 
         ID {
@@ -148,6 +150,7 @@ public class Server {
                     }
                 },
     };
+
     public static final String HL_ANALYZE_CHARS_UNLIMITED = "500000"; //max 1MB in a chunk. use -1 for unlimited, but -1 option may not be supported (not documented)
     //max content size we can send to Solr
     public static final long MAX_CONTENT_SIZE = 1L * 1024 * 1024 * 1024;
@@ -196,7 +199,7 @@ public class Server {
      */
     Server() {
         initSettings();
-        
+
         this.localSolrServer = new HttpSolrServer("http://localhost:" + currentSolrServerPort + "/solr"); //NON-NLS
         serverAction = new ServerAction();
         solrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
@@ -204,7 +207,7 @@ public class Server {
 
         currentCoreLock = new ReentrantReadWriteLock(true);
         uncPathUtilities = new UNCPathUtilities();
-        
+
         logger.log(Level.INFO, "Created Server instance"); //NON-NLS
     }
 
@@ -596,11 +599,13 @@ public class Server {
      * ** Convenience methods for use while we only open one case at a time ***
      */
     /**
-     * Opens or creates a core (index) for a case.
+     * Creates/opens a Solr core (index) for a case.
      *
-     * @param theCase the case for which the core is to be opened or created.
+     * @param theCase The case for which the core is to be created/opened.
      *
-     * @throws KeywordSearchModuleException
+     *
+     * @throws KeywordSearchModuleException If an error occurs while
+     *                                      creating/opening the core.
      */
     void openCoreForCase(Case theCase) throws KeywordSearchModuleException {
         currentCoreLock.writeLock().lock();
@@ -630,6 +635,15 @@ public class Server {
         currentCoreLock.writeLock().lock();
         try {
             if (null != currentCore) {
+                /*
+                 * TODO (AUT-2081): There is a Solr core unloading bug, fixed in
+                 * Solr 5.4, that will result in the co-existence of a
+                 * core.properties file and a core.properties.unloaded file in
+                 * the core instance directory when the following code executes.
+                 * When this happens, subsequent open/load attempts will fail.
+                 * The workaround for single-user cases is to close and reopen
+                 * Autopsy so that a new server instance gets spun up.
+                 */
                 currentCore.close();
                 currentCore = null;
                 serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STOPPED);
@@ -655,7 +669,7 @@ public class Server {
      *
      * @return absolute path to index dir
      */
-    String getIndexDirPath(Case theCase) {
+    String geCoreDataDirPath(Case theCase) {
         String indexDir = theCase.getModuleDirectory() + File.separator + "keywordsearch" + File.separator + "data"; //NON-NLS
         if (uncPathUtilities != null) {
             // if we can check for UNC paths, do so, otherwise just return the indexDir
@@ -676,11 +690,14 @@ public class Server {
      * ** end single-case specific methods ***
      */
     /**
-     * Open a core for the given case
+     * Creates/opens a Solr core (index) for a case.
      *
-     * @param theCase the case to open core for
+     * @param theCase The case for which the core is to be created/opened.
      *
-     * @return
+     * @return An object representing the created/opened core.
+     *
+     * @throws KeywordSearchModuleException If an error occurs while
+     *                                      creating/opening the core.
      */
     private Core openCore(Case theCase) throws KeywordSearchModuleException {
         try {
@@ -692,11 +709,12 @@ public class Server {
                 currentSolrServer = new HttpSolrServer("http://" + host + ":" + port + "/solr"); //NON-NLS
             }
             connectToSolrServer(currentSolrServer);
+
         } catch (SolrServerException | IOException ex) {
             throw new KeywordSearchModuleException(NbBundle.getMessage(Server.class, "Server.connect.exception.msg"), ex);
         }
 
-        String dataDir = getIndexDirPath(theCase);
+        String dataDir = geCoreDataDirPath(theCase);
         String coreName = theCase.getTextIndexName();
         return this.openCore(coreName.isEmpty() ? DEFAULT_CORE_NAME : coreName, new File(dataDir), theCase.getCaseType());
     }
@@ -1050,12 +1068,17 @@ public class Server {
     }
 
     /**
-     * Open a new core
+     * Creates/opens a Solr core (index) for a case.
      *
-     * @param coreName name to refer to the core by in Solr
-     * @param dataDir  directory to load/store the core data from/to
+     * @param coreName The core name.
+     * @param dataDir  The data directory for the core.
+     * @param caseType The type of the case (single-user or multi-user) for
+     *                 which the core is being created/opened.
      *
-     * @return new core
+     * @return An object representing the created/opened core.
+     *
+     * @throws KeywordSearchModuleException If an error occurs while
+     *                                      creating/opening the core.
      */
     private Core openCore(String coreName, File dataDir, CaseType caseType) throws KeywordSearchModuleException {
 
@@ -1064,14 +1087,25 @@ public class Server {
                 dataDir.mkdirs();
             }
 
-            //handle a possible scenario when server process might not be fully started
             if (!this.isRunning()) {
-                logger.log(Level.WARNING, "Core open requested, but server not yet running"); //NON-NLS
-                throw new KeywordSearchModuleException(
-                        NbBundle.getMessage(this.getClass(), "Server.openCore.exception.msg"));
+                logger.log(Level.SEVERE, "Core create/open requested, but server not yet running"); //NON-NLS
+                throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.msg"));
             }
 
-            if (!coreExistsOnServer(coreName)) {
+            if (!coreIsLoaded(coreName)) {
+                /*
+                 * The core either does not exist or it is not loaded. Make a
+                 * request that will cause the core to be created if it does not
+                 * exist or loaded if it already exists.
+                 *
+                 * TODO (AUT-2081): There is a Solr core unloading bug, fixed in
+                 * Solr 5.4, that results in the co-existence of a
+                 * core.properties file and a core.properties.unloaded file in
+                 * the core instance directory when a core is unloaded. When
+                 * this happens, this code will fail. The workaround for
+                 * single-user cases is to close and reopen Autopsy so that a
+                 * new server instance gets spun up.
+                 */
                 CoreAdminRequest.Create createCoreRequest = new CoreAdminRequest.Create();
                 createCoreRequest.setDataDir(dataDir.getAbsolutePath());
                 createCoreRequest.setCoreName(coreName);
@@ -1088,8 +1122,7 @@ public class Server {
             return new Core(coreName, caseType);
 
         } catch (SolrServerException | SolrException | IOException ex) {
-            throw new KeywordSearchModuleException(
-                    NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
+            throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
         }
     }
 
@@ -1106,17 +1139,19 @@ public class Server {
     }
 
     /**
-     * Determines whether or not a Solr core instance exists on the current Solr
-     * server.
+     * Determines whether or not a particular Solr core exists and is loaded.
      *
-     * @param coreName the name of the core.
+     * @param coreName The name of the core.
      *
-     * @return true or false.
+     * @return True if the core exists and is loaded, false if the core does not
+     *         exist or is not loaded
      *
-     * @throws SolrServerException
-     * @throws IOException
+     * @throws SolrServerException If there is a problem communicating with the
+     *                             Solr server.
+     * @throws IOException         If there is a problem communicating with the
+     *                             Solr server.
      */
-    private boolean coreExistsOnServer(String coreName) throws SolrServerException, IOException {
+    private boolean coreIsLoaded(String coreName) throws SolrServerException, IOException {
         CoreAdminResponse response = CoreAdminRequest.getStatus(coreName, currentSolrServer);
         return response.getCoreStatus(coreName).get("instanceDir") != null; //NON-NLS
     }
