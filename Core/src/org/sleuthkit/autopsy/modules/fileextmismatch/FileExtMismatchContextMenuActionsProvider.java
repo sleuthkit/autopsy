@@ -31,7 +31,6 @@ import org.openide.util.Utilities;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.ContextMenuActionsProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -50,21 +49,20 @@ public class FileExtMismatchContextMenuActionsProvider implements ContextMenuAct
         // Ignore if file ingest is in progress.
         if (!IngestManager.getInstance().isIngestRunning()) {
 
-            final Collection<? extends BlackboardArtifactNode> selectedArts = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifactNode.class);
+            final Collection<? extends BlackboardArtifact> selectedArts = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class);
 
             // Prevent multiselect
             if (selectedArts.size() == 1) {
 
-                for (BlackboardArtifactNode artifactNode : selectedArts) {
+                for (BlackboardArtifact nodeArt : selectedArts) {
 
-                    BlackboardArtifact nodeArt = artifactNode.getLookup().lookup(BlackboardArtifact.class);
                     // Only for mismatch results
                     if (nodeArt.getArtifactTypeName().equals("TSK_EXT_MISMATCH_DETECTED")) { //NON-NLS
                         String mimeTypeStr = "";
                         String extStr = "";
 
-                        AbstractFile af = artifactNode.getLookup().lookup(AbstractFile.class);
-
+                        AbstractFile af = Utilities.actionsGlobalContext().lookup(AbstractFile.class);
+                        
                         if (af != null) {
                             int i = af.getName().lastIndexOf(".");
                             if ((i > -1) && ((i + 1) < af.getName().length())) {
