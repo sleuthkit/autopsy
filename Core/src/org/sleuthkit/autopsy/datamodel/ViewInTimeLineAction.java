@@ -70,7 +70,7 @@ public class ViewInTimeLineAction extends AbstractAction {
             }
         }
 
-        Interval interval = new Interval(timestamps.first() * 1000, 1 + timestamps.last() * 1000);
+        Interval interval = new Interval(timestamps.first() * 1000, (1 + timestamps.last()) * 1000);
 
         SystemAction.get(OpenTimelineAction.class).showTimeline(interval);
     }
