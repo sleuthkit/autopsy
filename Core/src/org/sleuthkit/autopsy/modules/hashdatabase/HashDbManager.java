@@ -499,30 +499,30 @@ public class HashDbManager implements PropertyChangeListener {
         hashDatabases.clear();
     }
 
-    private boolean loadHashsetsConfiguration() {
+    private void loadHashsetsConfiguration() {
         try {
             HashLookupSettings settings = HashLookupSettings.readSettings();
             if (settings != null) {
                 this.configureSettings(settings);
             }
-            return true;
         } catch (HashLookupSettings.HashLookupSettingsException ex) {
             Logger.getLogger(HashDbManager.class.getName()).log(Level.WARNING, "Could not read Hash lookup settings from disk.", ex);
-            return false;
         }
     }
 
-    @Messages({"# {0} - database name", "HashDbManager.noDbPath.message=Couldn't get valid database path for: {0}"})
+    @Messages({"# {0} - database name", "HashDbManager.noDbPath.message=Couldn't get valid database path for: {0}",
+        "HashDbManager.noOverwrite.message=Could not overwrite hash database settings."})
     private void configureSettings(HashLookupSettings settings) {
+        boolean missedPath = false;
         List<HashDbInfo> hashDbInfoList = settings.getHashDbInfo();
         for (HashDbInfo hashDb : hashDbInfoList) {
             try {
                 String dbPath = this.getValidFilePath(hashDb.getHashSetName(), hashDb.getPath());
                 if (dbPath != null) {
                     addExistingHashDatabaseInternal(hashDb.getHashSetName(), getValidFilePath(hashDb.getHashSetName(), hashDb.getPath()), hashDb.getSearchDuringIngest(), hashDb.getSendIngestMessages(), hashDb.getKnownFilesType());
-                }
-                else {
+                } else {
                     logger.log(Level.WARNING, Bundle.HashDbManager_noDbPath_message(hashDb.getHashSetName()));
+                    missedPath = true;
                 }
             } catch (HashDbManagerException | TskCoreException ex) {
                 Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash database", ex); //NON-NLS
@@ -531,6 +531,14 @@ public class HashDbManager implements PropertyChangeListener {
                                 "HashDbManager.unableToOpenHashDbMsg", hashDb.getHashSetName()),
                         NbBundle.getMessage(this.getClass(), "HashDbManager.openHashDbErr"),
                         JOptionPane.ERROR_MESSAGE);
+                missedPath = true;
+            }
+        }
+        if (missedPath) {
+            try {
+                HashLookupSettings.writeSettings(new HashLookupSettings(this.knownHashSets, this.knownBadHashSets));
+            } catch (HashLookupSettings.HashLookupSettingsException ex) {
+                logger.log(Level.WARNING, Bundle.HashDbManager_noOverwrite_message());
             }
         }
     }
@@ -614,11 +622,11 @@ public class HashDbManager implements PropertyChangeListener {
             INDEXING_DONE
         }
         private static final long serialVersionUID = 1L;
-        private int handle;
-        private String hashSetName;
+        private final int handle;
+        private final String hashSetName;
         private boolean searchDuringIngest;
         private boolean sendIngestMessages;
-        private KnownFilesType knownFilesType;
+        private final KnownFilesType knownFilesType;
         private boolean indexing;
         private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
@@ -633,6 +641,8 @@ public class HashDbManager implements PropertyChangeListener {
 
         /**
          * Adds a listener for the events defined in HashDb.Event.
+         *
+         * @param pcl
          */
         public void addPropertyChangeListener(PropertyChangeListener pcl) {
             propertyChangeSupport.addPropertyChangeListener(pcl);
@@ -640,6 +650,8 @@ public class HashDbManager implements PropertyChangeListener {
 
         /**
          * Removes a listener for the events defined in HashDb.Event.
+         *
+         * @param pcl
          */
         public void removePropertyChangeListener(PropertyChangeListener pcl) {
             propertyChangeSupport.removePropertyChangeListener(pcl);
@@ -681,6 +693,8 @@ public class HashDbManager implements PropertyChangeListener {
          * Indicates whether the hash database accepts updates.
          *
          * @return True if the database accepts updates, false otherwise.
+         *
+         * @throws org.sleuthkit.datamodel.TskCoreException
          */
         public boolean isUpdateable() throws TskCoreException {
             return SleuthkitJNI.isUpdateableHashDatabase(this.handle);
