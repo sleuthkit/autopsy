@@ -377,6 +377,14 @@ class ExtractIE extends Extract {
             ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
             processBuilder.redirectOutput(new File(outputFileFullPath));
             processBuilder.redirectError(new File(errFileFullPath));
+            /*
+             NOTE on Pasco return codes: There is no documentation for Pasco. 
+             Looking at the Pasco source code I see that when something goes wrong Pasco
+             returns a negative number as a return code. However, we should still 
+             attempt to parse the Pasco output even if that happens. I have seen 
+             many situations where Pasco output file contains a lot of useful data 
+             and only the last entry is corrupted. 
+             */
             ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context));
             // @@@ Investigate use of history versus cache as type.
         } catch (IOException ex) {
@@ -483,7 +491,7 @@ class ExtractIE extends Extract {
                     this.addErrorMessage(
                             NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.errParsingEntry",
                                     this.getName()));
-                    logger.log(Level.SEVERE, "Error parsing Pasco results.", e); //NON-NLS
+                    logger.log(Level.WARNING, "Error parsing Pasco results.", e); //NON-NLS
                 }
             }
 
