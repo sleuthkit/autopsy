@@ -19,7 +19,9 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
 import java.util.Comparator;
+import java.util.Deque;
 import javafx.scene.control.TreeItem;
+import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 
@@ -31,6 +33,23 @@ import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
  */
 abstract class EventsTreeItem extends TreeItem<TimeLineEvent> {
 
+    /**
+     * the comparator if any used to sort the children of this item
+     */
+    private Comparator<TreeItem<TimeLineEvent>> comparator;
+
+    EventsTreeItem(Comparator<TreeItem<TimeLineEvent>> comparator) {
+        this.comparator = comparator;
+    }
+
+    public Comparator<TreeItem<TimeLineEvent>> getComparator() {
+        return comparator;
+    }
+
+    final protected void setComparator(Comparator<TreeItem<TimeLineEvent>> comparator) {
+        this.comparator = comparator;
+    }
+
     abstract void resort(Comparator<TreeItem<TimeLineEvent>> comp, Boolean recursive);
 
     abstract EventsTreeItem findTreeItemForEvent(TimeLineEvent event);
@@ -39,4 +58,14 @@ abstract class EventsTreeItem extends TreeItem<TimeLineEvent> {
 
     abstract EventType getEventType();
 
+    abstract void remove(Deque<EventStripe> path);
+
+    abstract void insert(Deque<EventStripe> path);
+
+    <T extends EventsTreeItem> T configureNewTreeItem(T newTreeItem) {
+        newTreeItem.setExpanded(true);
+        getChildren().add(newTreeItem);
+        resort(getComparator(), false);
+        return newTreeItem;
+    }
 }

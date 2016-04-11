@@ -39,10 +39,9 @@ class EventDescriptionTreeItem extends EventsTreeItem {
      * maps a description to the child item of this item with that description
      */
     private final Map<String, EventDescriptionTreeItem> childMap = new HashMap<>();
-    private Comparator<TreeItem<TimeLineEvent>> comparator = TreeComparator.Description;
 
     EventDescriptionTreeItem(EventStripe stripe, Comparator<TreeItem<TimeLineEvent>> comp) {
-        comparator = comp;
+        super(comp);
         setValue(stripe);
     }
 
@@ -51,19 +50,15 @@ class EventDescriptionTreeItem extends EventsTreeItem {
         EventStripe head = path.removeFirst();
         String substringAfter = StringUtils.substringAfter(head.getDescription(), head.getParentStripe().map(EventStripe::getDescription).orElse(""));
         EventDescriptionTreeItem treeItem = childMap.computeIfAbsent(substringAfter,
-                description -> {
-                    EventDescriptionTreeItem newTreeItem = new EventDescriptionTreeItem(head, comparator);
-                    newTreeItem.setExpanded(true);
-                    getChildren().add(newTreeItem);
-                    resort(comparator, false);
-                    return newTreeItem;
-                });
+                description -> configureNewTreeItem(new EventDescriptionTreeItem(head, getComparator()))
+        );
 
         if (path.isEmpty() == false) {
             treeItem.insert(path);
         }
     }
 
+    @Override
     void remove(Deque<EventStripe> path) {
         EventStripe head = path.removeFirst();
         String substringAfter = StringUtils.substringAfter(head.getDescription(), head.getParentStripe().map(EventStripe::getDescription).orElse(""));
@@ -79,7 +74,7 @@ class EventDescriptionTreeItem extends EventsTreeItem {
 
     @Override
     void resort(Comparator<TreeItem<TimeLineEvent>> comp, Boolean recursive) {
-        this.comparator = comp;
+        setComparator(comp);
         FXCollections.sort(getChildren(), comp);
         if (recursive) {
             childMap.values().forEach(ti -> ti.resort(comp, true));
@@ -118,5 +113,4 @@ class EventDescriptionTreeItem extends EventsTreeItem {
     EventType getEventType() {
         return getValue().getEventType();
     }
-
 }

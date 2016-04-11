@@ -38,15 +38,10 @@ class RootItem extends EventsTreeItem {
     /**
      * maps a description to the child item of this item with that description
      */
-    private final Map<EventType, EventTypeTreeItem> childMap = new HashMap<>();
-
-    /**
-     * the comparator if any used to sort the children of this item
-     */
-    private Comparator<TreeItem<TimeLineEvent>> comparator = TreeComparator.Type.reversed();
+    private final Map<EventType, BaseTypeTreeItem> childMap = new HashMap<>();
 
     RootItem(Comparator<TreeItem<TimeLineEvent>> comp) {
-        this.comparator = comp;
+        super(comp);
     }
 
     /**
@@ -57,18 +52,14 @@ class RootItem extends EventsTreeItem {
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     public void insert(EventStripe stripe) {
 
-        EventTypeTreeItem treeItem = childMap.computeIfAbsent(stripe.getEventType().getBaseType(),
-                baseType -> {
-                    EventTypeTreeItem newTreeItem = new EventTypeTreeItem(stripe, comparator);
-                    newTreeItem.setExpanded(true);
-                    getChildren().add(newTreeItem);
-                    return newTreeItem;
-                });
+        BaseTypeTreeItem treeItem = childMap.computeIfAbsent(stripe.getEventType().getBaseType(),
+                baseType -> configureNewTreeItem(new BaseTypeTreeItem(stripe, getComparator()))
+        );
         treeItem.insert(getTreePath(stripe));
     }
 
     void remove(EventStripe stripe) {
-        EventTypeTreeItem typeTreeItem = childMap.get(stripe.getEventType().getBaseType());
+        BaseTypeTreeItem typeTreeItem = childMap.get(stripe.getEventType().getBaseType());
         if (typeTreeItem != null) {
             typeTreeItem.remove(getTreePath(stripe));
 
@@ -93,13 +84,13 @@ class RootItem extends EventsTreeItem {
 
     @Override
     void resort(Comparator<TreeItem<TimeLineEvent>> comp, Boolean recursive) {
-        comparator = comp;
+        setComparator(comp);
         childMap.values().forEach(ti -> ti.resort(comp, true));
     }
 
     @Override
     public EventsTreeItem findTreeItemForEvent(TimeLineEvent t) {
-        for (EventTypeTreeItem child : childMap.values()) {
+        for (BaseTypeTreeItem child : childMap.values()) {
             final EventsTreeItem findTreeItemForEvent = child.findTreeItemForEvent(t);
             if (findTreeItemForEvent != null) {
                 return findTreeItemForEvent;
@@ -116,6 +107,16 @@ class RootItem extends EventsTreeItem {
     @Override
     EventType getEventType() {
         return null;
+    }
+
+    @Override
+    void remove(Deque<EventStripe> path) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    void insert(Deque<EventStripe> path) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
 }
