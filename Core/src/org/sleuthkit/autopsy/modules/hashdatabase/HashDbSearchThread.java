@@ -23,14 +23,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
-
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 
 class HashDbSearchThread extends SwingWorker<Object, Void> {
@@ -56,7 +54,7 @@ class HashDbSearchThread extends SwingWorker<Object, Void> {
 
         // Setup progress bar
         final String displayName = NbBundle.getMessage(this.getClass(), "HashDbSearchThread.name.searching");
-        progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
+        progress = ProgressHandle.createHandle(displayName, new Cancellable() {
             @Override
             public boolean cancel() {
                 if (progress != null) {

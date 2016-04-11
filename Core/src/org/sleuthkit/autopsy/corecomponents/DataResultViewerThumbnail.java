@@ -30,7 +30,6 @@ import javax.swing.JOptionPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.explorer.ExplorerManager;
@@ -412,7 +411,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                 pagePrevButton.setEnabled(false);
                 pageNextButton.setEnabled(false);
                 goToPageField.setEnabled(false);
-                progress = ProgressHandleFactory.createHandle(
+                progress = ProgressHandle.createHandle(
                         NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.genThumbs"));
                 progress.start();
                 progress.switchToIndeterminate();

@@ -19,43 +19,41 @@
 package org.sleuthkit.autopsy.modules.hashdatabase;
 
 import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
+import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.HashEntry;
+import org.sleuthkit.datamodel.HashHitInfo;
+import org.sleuthkit.datamodel.SleuthkitJNI;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
-import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
-import javax.swing.JOptionPane;
-import javax.swing.SwingWorker;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.FileUtils;
-import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.HashHitInfo;
-import org.sleuthkit.datamodel.HashEntry;
-import org.sleuthkit.datamodel.SleuthkitJNI;
-import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-
-import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
  * This class implements a singleton that manages the set of hash databases used
@@ -975,7 +973,7 @@ public class HashDbManager implements PropertyChangeListener {
         @Override
         protected Object doInBackground() {
             hashDb.indexing = true;
-            progress = ProgressHandleFactory.createHandle(
+            progress = ProgressHandle.createHandle(
                     NbBundle.getMessage(this.getClass(), "HashDbManager.progress.indexingHashSet", hashDb.hashSetName));
             progress.start();
             progress.switchToIndeterminate();

@@ -36,7 +36,6 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -227,7 +226,7 @@ final class ExtractUnallocAction extends AbstractAction {
         @Override
         protected Integer doInBackground() {
             try {
-                progress = ProgressHandleFactory.createHandle(
+                progress = ProgressHandle.createHandle(
                         NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.progress.extractUnalloc.title"), new Cancellable() {
                             @Override
                             public boolean cancel() {
