@@ -121,7 +121,6 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
     @Override
     synchronized protected void layoutPlotChildren() {
         setCursor(Cursor.WAIT);
-        maxY.set(0);
         if (useQuickHideFilters) {
             //These don't change during a layout pass and are expensive to compute per node.  So we do it once at the start
             activeQuickHidefilters = getController().getQuickHideFilters().stream()
@@ -133,11 +132,12 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
         descriptionWidth = layoutSettings.getTruncateAll() ? layoutSettings.getTruncateWidth() : USE_PREF_SIZE;
 
         if (layoutSettings.getBandByType()) {
+            maxY.set(0);
             sortedNodes.stream()
                     .collect(Collectors.groupingBy(EventNodeBase<?>::getEventType)).values()
                     .forEach(inputNodes -> maxY.set(layoutEventBundleNodes(inputNodes, maxY.get())));
         } else {
-            maxY.set(layoutEventBundleNodes(sortedNodes.sorted(Comparator.comparing(EventNodeBase<?>::getStartMillis)), 0));
+            maxY.set(layoutEventBundleNodes(sortedNodes, 0));
         }
         doAdditionalLayout();
         setCursor(null);
@@ -241,7 +241,6 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
 
         //for each node do a recursive layout to size it and then position it in first available slot
         for (EventNodeBase<?> bundleNode : nodes) {
-
             if (useQuickHideFilters && activeQuickHidefilters.contains(bundleNode.getDescription())) {
                 //if the node hiden is hidden by  quick hide filter, hide it and skip layout
                 bundleNode.setVisible(false);
@@ -262,10 +261,8 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
 
                 localMax = Math.max(yTop + h, localMax);
 
-                if ((xLeft != bundleNode.getLayoutX()) || (yTop != bundleNode.getLayoutY())) {
-                    //animate node to new position
-                    bundleNode.animateTo(xLeft, yTop);
-                }
+                //animate node to new position
+                bundleNode.animateTo(xLeft, yTop);
             }
         }
         return localMax; //return new max
