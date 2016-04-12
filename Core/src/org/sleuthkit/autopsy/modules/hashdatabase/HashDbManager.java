@@ -19,37 +19,36 @@
 package org.sleuthkit.autopsy.modules.hashdatabase;
 
 import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import javax.swing.JFileChooser;
-import javax.swing.filechooser.FileNameExtensionFilter;
-import org.openide.util.NbBundle;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import org.apache.commons.io.FilenameUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.HashHitInfo;
-import org.sleuthkit.datamodel.HashEntry;
-import org.sleuthkit.datamodel.SleuthkitJNI;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupSettings.HashDbInfo;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.HashEntry;
+import org.sleuthkit.datamodel.HashHitInfo;
+import org.sleuthkit.datamodel.SleuthkitJNI;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * This class implements a singleton that manages the set of hash databases used
@@ -505,14 +504,14 @@ public class HashDbManager implements PropertyChangeListener {
                 this.configureSettings(settings);
             }
         } catch (HashLookupSettings.HashLookupSettingsException ex) {
-            Logger.getLogger(HashDbManager.class.getName()).log(Level.WARNING, "Could not read Hash lookup settings from disk.", ex);
+            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Could not read Hash lookup settings from disk.", ex);
         }
     }
 
     @Messages({"# {0} - database name", "HashDbManager.noDbPath.message=Couldn't get valid database path for: {0}",
         "HashDbManager.noOverwrite.message=Could not overwrite hash database settings."})
     private void configureSettings(HashLookupSettings settings) {
-        boolean missedPath = false;
+        boolean dbInfoRemoved = false;
         List<HashDbInfo> hashDbInfoList = settings.getHashDbInfo();
         for (HashDbInfo hashDb : hashDbInfoList) {
             try {
@@ -521,7 +520,7 @@ public class HashDbManager implements PropertyChangeListener {
                     addExistingHashDatabaseInternal(hashDb.getHashSetName(), getValidFilePath(hashDb.getHashSetName(), hashDb.getPath()), hashDb.getSearchDuringIngest(), hashDb.getSendIngestMessages(), hashDb.getKnownFilesType());
                 } else {
                     logger.log(Level.WARNING, Bundle.HashDbManager_noDbPath_message(hashDb.getHashSetName()));
-                    missedPath = true;
+                    dbInfoRemoved = true;
                 }
             } catch (HashDbManagerException | TskCoreException ex) {
                 Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash database", ex); //NON-NLS
@@ -530,14 +529,14 @@ public class HashDbManager implements PropertyChangeListener {
                                 "HashDbManager.unableToOpenHashDbMsg", hashDb.getHashSetName()),
                         NbBundle.getMessage(this.getClass(), "HashDbManager.openHashDbErr"),
                         JOptionPane.ERROR_MESSAGE);
-                missedPath = true;
+                dbInfoRemoved = true;
             }
         }
-        if (missedPath) {
+        if (dbInfoRemoved) {
             try {
                 HashLookupSettings.writeSettings(new HashLookupSettings(this.knownHashSets, this.knownBadHashSets));
             } catch (HashLookupSettings.HashLookupSettingsException ex) {
-                logger.log(Level.WARNING, Bundle.HashDbManager_noOverwrite_message());
+                logger.log(Level.SEVERE, "Could not overwrite hash database settings.");
             }
         }
     }
@@ -602,7 +601,7 @@ public class HashDbManager implements PropertyChangeListener {
 
             KNOWN(NbBundle.getMessage(HashDbManager.class, "HashDbManager.known.text")),
             KNOWN_BAD(NbBundle.getMessage(HashDbManager.class, "HashDbManager.knownBad.text"));
-            private String displayName;
+            private final String displayName;
 
             private KnownFilesType(String displayName) {
                 this.displayName = displayName;
