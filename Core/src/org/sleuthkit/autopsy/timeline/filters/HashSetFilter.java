@@ -84,5 +84,4 @@ public class HashSetFilter extends AbstractFilter {
         }
         return isSelected() == other.isSelected();
     }
-
 }
