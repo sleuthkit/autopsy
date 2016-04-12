@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -31,9 +32,9 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
+import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -51,7 +52,7 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
     private static final Logger logger = Logger.getLogger(FileExtMismatchIngestModule.class.getName());
     private final IngestServices services = IngestServices.getInstance();
     private final FileExtMismatchDetectorModuleSettings settings;
-    private HashMap<String, String[]> SigTypeToExtMap = new HashMap<>();
+    private HashMap<String, String[]> mimeTypeToExtsMap = new HashMap<>();
     private long jobId;
     private static final HashMap<Long, IngestJobTotals> totalsForIngestJobs = new HashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
@@ -87,12 +88,16 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
     }
 
     @Override
+    @Messages({"FileExtMismatchIngestModule.readError.message=Could not read settings."})
     public void startUp(IngestJobContext context) throws IngestModuleException {
         jobId = context.getJobId();
         refCounter.incrementAndGet(jobId);
 
-        FileExtMismatchXML xmlLoader = FileExtMismatchXML.getDefault();
-        SigTypeToExtMap = xmlLoader.load();
+        try {
+            mimeTypeToExtsMap = FileExtMismatchSettings.readSettings().getMimeTypeToExtsMap();
+        } catch (FileExtMismatchSettings.FileExtMismatchSettingsException ex) {
+            throw new IngestModuleException(Bundle.FileExtMismatchIngestModule_readError_message(), ex);
+        }
         try {
             this.detector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
@@ -175,7 +180,7 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
         }
 
         //get known allowed values from the map for this type
-        String[] allowedExtArray = SigTypeToExtMap.get(currActualSigType);
+        String[] allowedExtArray = mimeTypeToExtsMap.get(currActualSigType);
         if (allowedExtArray != null) {
             List<String> allowedExtList = Arrays.asList(allowedExtArray);
 

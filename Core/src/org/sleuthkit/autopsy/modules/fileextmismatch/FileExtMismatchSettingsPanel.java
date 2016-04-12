@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +29,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -530,14 +531,24 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
 
     @Override
     public void saveSettings() {
-        if (FileExtMismatchXML.getDefault().save(editableMap)) {
-            mimeErrLabel.setText(" ");
-            mimeRemoveErrLabel.setText(" ");
-            extRemoveErrLabel.setText(" ");
-            extErrorLabel.setText(" ");
+        try {
+            if (FileExtMismatchSettings.writeSettings(new FileExtMismatchSettings(editableMap))) {
+                mimeErrLabel.setText(" ");
+                mimeRemoveErrLabel.setText(" ");
+                extRemoveErrLabel.setText(" ");
+                extErrorLabel.setText(" ");
 
-            saveMsgLabel.setText(NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.store.msg"));
-        } else {
+                saveMsgLabel.setText(NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.store.msg"));
+            } else {
+                //error
+                JOptionPane.showMessageDialog(this,
+                        NbBundle.getMessage(this.getClass(),
+                                "FileExtMismatchConfigPanel.store.msgDlg.msg"),
+                        NbBundle.getMessage(this.getClass(),
+                                "FileExtMismatchConfigPanel.save.msgDlg.title"),
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (FileExtMismatchSettings.FileExtMismatchSettingsException ex) {
             //error
             JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(this.getClass(),
@@ -550,9 +561,20 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
 
     @Override
     public void load() {
-        // Load the XML into a buffer that the user can modify. They can choose
-        // to save it back to the file after making changes.
-        editableMap = FileExtMismatchXML.getDefault().load();
+        try {
+            // Load the configuration into a buffer that the user can modify. They can choose
+            // to save it back to the file after making changes.
+            editableMap = FileExtMismatchSettings.readSettings().getMimeTypeToExtsMap();
+
+        } catch (FileExtMismatchSettings.FileExtMismatchSettingsException ex) {
+            //error
+            JOptionPane.showMessageDialog(this,
+                    NbBundle.getMessage(this.getClass(),
+                            "AddFileExtensionAction.msgDlg.msg2"),
+                    NbBundle.getMessage(this.getClass(),
+                            "FileExtMismatchConfigPanel.save.msgDlg.title"),
+                    JOptionPane.ERROR_MESSAGE);
+        }
         updateMimeList();
         updateExtList();
     }
