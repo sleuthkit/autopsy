@@ -500,16 +500,13 @@ public class HashDbManager implements PropertyChangeListener {
     private void loadHashsetsConfiguration() {
         try {
             HashLookupSettings settings = HashLookupSettings.readSettings();
-            if (settings != null) {
-                this.configureSettings(settings);
-            }
+            this.configureSettings(settings);
         } catch (HashLookupSettings.HashLookupSettingsException ex) {
             Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Could not read Hash lookup settings from disk.", ex);
         }
     }
 
-    @Messages({"# {0} - database name", "HashDbManager.noDbPath.message=Couldn't get valid database path for: {0}",
-        "HashDbManager.noOverwrite.message=Could not overwrite hash database settings."})
+    @Messages({"# {0} - database name", "HashDbManager.noDbPath.message=Couldn't get valid database path for: {0}"})
     private void configureSettings(HashLookupSettings settings) {
         boolean dbInfoRemoved = false;
         List<HashDbInfo> hashDbInfoList = settings.getHashDbInfo();
@@ -536,7 +533,7 @@ public class HashDbManager implements PropertyChangeListener {
             try {
                 HashLookupSettings.writeSettings(new HashLookupSettings(this.knownHashSets, this.knownBadHashSets));
             } catch (HashLookupSettings.HashLookupSettingsException ex) {
-                logger.log(Level.SEVERE, "Could not overwrite hash database settings.");
+                logger.log(Level.SEVERE, "Could not overwrite hash database settings.", ex);
             }
         }
     }

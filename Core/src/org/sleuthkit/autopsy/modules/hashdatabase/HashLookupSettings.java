@@ -44,7 +44,7 @@ import org.w3c.dom.NodeList;
  * Class to represent the settings to be serialized for hash lookup.
  */
 final class HashLookupSettings implements Serializable {
-    
+
     private static final String SERIALIZATION_FILE_NAME = "hashLookup.settings"; //NON-NLS
     private static final String SERIALIZATION_FILE_PATH = PlatformUtil.getUserConfigDirectory() + File.separator + SERIALIZATION_FILE_NAME; //NON-NLS
     private static final String SET_ELEMENT = "hash_set"; //NON-NLS
@@ -57,10 +57,15 @@ final class HashLookupSettings implements Serializable {
     private static final String CONFIG_FILE_NAME = "hashsets.xml"; //NON-NLS
     private static final String configFilePath = PlatformUtil.getUserConfigDirectory() + File.separator + CONFIG_FILE_NAME;
     private static final Logger logger = Logger.getLogger(HashDbManager.class.getName());
-    
+
     private static final long serialVersionUID = 1L;
     private final List<HashDbInfo> hashDbInfoList;
-    
+
+    /**
+     * Constructs a settings object to be serialized for hash lookups
+     *
+     * @param hashDbInfoList The list of hash db info.
+     */
     HashLookupSettings(List<HashDbInfo> hashDbInfoList) {
         this.hashDbInfoList = hashDbInfoList;
     }
@@ -68,15 +73,22 @@ final class HashLookupSettings implements Serializable {
     /**
      * Constructs a settings object to be serialized for hash lookups
      *
-     * @param knownHashSets
-     * @param knownBadHashSets
+     * @param knownHashSets    The list known hash sets for the settings.
+     * @param knownBadHashSets The list of known bad hash sets for the settings.
      */
     HashLookupSettings(List<HashDbManager.HashDb> knownHashSets, List<HashDbManager.HashDb> knownBadHashSets) throws HashLookupSettingsException {
         hashDbInfoList = new ArrayList<>();
         this.addHashesToList(knownHashSets);
         this.addHashesToList(knownBadHashSets);
     }
-    
+
+    /**
+     * Adds each HashDb to the settings.
+     *
+     * @param hashSetList The list of HashDb to add to the settings
+     *
+     * @throws * pacannot be obtained
+     */
     private void addHashesToList(List<HashDbManager.HashDb> hashSetList) throws HashLookupSettingsException {
         for (HashDbManager.HashDb hashDb : hashSetList) {
             try {
@@ -96,21 +108,38 @@ final class HashLookupSettings implements Serializable {
     /**
      * Gets the list of hash db info that this settings contains
      *
-     * @return the hashDbInfoList
+     * @return The list of hash databse info
      */
     List<HashDbInfo> getHashDbInfo() {
         return hashDbInfoList;
     }
-    
+
+    /**
+     * Reads the settings from the disk.
+     *
+     * @return The settings object representing what was read.
+     *
+     * @throws HashLookupSettingsException When there is a problem reading the
+     *                                     settings.
+     */
     static HashLookupSettings readSettings() throws HashLookupSettingsException {
         File fileSetFile = new File(SERIALIZATION_FILE_PATH);
         if (fileSetFile.exists()) {
             return readSerializedSettings();
         }
         return readXmlSettings();
-        
+
     }
-    
+
+    /**
+     * Reads the serialization settings from the disk
+     *
+     * @return Settings object representing what is saved in the serialization
+     *         file.
+     *
+     * @throws HashLookupSettingsException If there's a problem importing the
+     *                                     settings
+     */
     private static HashLookupSettings readSerializedSettings() throws HashLookupSettingsException {
         try {
             try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(SERIALIZATION_FILE_PATH))) {
@@ -121,7 +150,16 @@ final class HashLookupSettings implements Serializable {
             throw new HashLookupSettingsException("Could not read hash database settings.", ex);
         }
     }
-    
+
+    /**
+     * Reads the xml settings from the disk
+     *
+     * @return Settings object representing what is saved in the xml file, or an
+     *         empty settings if there is no xml file.
+     *
+     * @throws HashLookupSettingsException If there's a problem importing the
+     *                                     settings
+     */
     private static HashLookupSettings readXmlSettings() throws HashLookupSettingsException {
         File xmlFile = new File(configFilePath);
         if (xmlFile.exists()) {
@@ -130,34 +168,30 @@ final class HashLookupSettings implements Serializable {
             // Open the XML document that implements the configuration file.
             final Document doc = XMLUtil.loadDoc(HashDbManager.class, configFilePath);
             if (doc == null) {
-                return null;
+                throw new HashLookupSettingsException("Could not open xml document.");
             }
 
             // Get the root element.
             Element root = doc.getDocumentElement();
             if (root == null) {
-                logger.log(Level.SEVERE, "Error loading hash sets: invalid file format."); //NON-NLS
-                return null;
+                throw new HashLookupSettingsException("Error loading hash sets: invalid file format.");
             }
 
             // Get the hash set elements.
             NodeList setsNList = root.getElementsByTagName(SET_ELEMENT);
             int numSets = setsNList.getLength();
-            if (numSets == 0) {
-                logger.log(Level.WARNING, "No element hash_set exists."); //NON-NLS
-            }
 
             // Create HashDbInfo objects for each hash set element. Throws on malformed xml.
-            String attributeErrorMessage = " attribute was not set for hash_set at index {0}, cannot make instance of HashDb class"; //NON-NLS
-            String elementErrorMessage = " element was not set for hash_set at index {0}, cannot make instance of HashDb class"; //NON-NLS
+            String attributeErrorMessage = "Missing %s attribute"; //NON-NLS
+            String elementErrorMessage = "Empty %s element"; //NON-NLS
             List<String> hashSetNames = new ArrayList<>();
             List<HashDbInfo> hashDbInfoList = new ArrayList<>();
             for (int i = 0; i < numSets; ++i) {
                 Element setEl = (Element) setsNList.item(i);
-                
+
                 String hashSetName = setEl.getAttribute(SET_NAME_ATTRIBUTE);
                 if (hashSetName.isEmpty()) {
-                    throw new HashLookupSettingsException(SEND_INGEST_MESSAGES_ATTRIBUTE + attributeErrorMessage);
+                    throw new HashLookupSettingsException(String.format(attributeErrorMessage, SET_NAME_ATTRIBUTE));
                 }
 
                 // Handle configurations saved before duplicate hash set names were not permitted.
@@ -168,9 +202,7 @@ final class HashLookupSettings implements Serializable {
                         ++suffix;
                         newHashSetName = hashSetName + suffix;
                     } while (hashSetNames.contains(newHashSetName));
-                    logger.log(Level.INFO, NbBundle.getMessage(HashLookupSettings.class,
-                                        "HashDbManager.replacingDuplicateHashsetNameMsg",
-                                        hashSetName, newHashSetName));
+                    logger.log(Level.INFO, "Duplicate hash set name " + hashSetName + " found.\nReplacing with " + newHashSetName + ".");
                     if (RuntimeProperties.coreComponentsAreActive()) {
                         JOptionPane.showMessageDialog(null,
                                 NbBundle.getMessage(HashLookupSettings.class,
@@ -181,10 +213,10 @@ final class HashLookupSettings implements Serializable {
                         hashSetName = newHashSetName;
                     }
                 }
-                
+
                 String knownFilesType = setEl.getAttribute(SET_TYPE_ATTRIBUTE);
                 if (knownFilesType.isEmpty()) {
-                    throw new HashLookupSettingsException(SEND_INGEST_MESSAGES_ATTRIBUTE + attributeErrorMessage);
+                    throw new HashLookupSettingsException(String.format(attributeErrorMessage, SET_TYPE_ATTRIBUTE));
                 }
 
                 // Handle legacy known files types.
@@ -192,19 +224,19 @@ final class HashLookupSettings implements Serializable {
                     knownFilesType = HashDbManager.HashDb.KnownFilesType.KNOWN.toString();
                     updatedSchema = true;
                 }
-                
+
                 final String searchDuringIngest = setEl.getAttribute(SEARCH_DURING_INGEST_ATTRIBUTE);
                 if (searchDuringIngest.isEmpty()) {
-                    throw new HashLookupSettingsException(SEND_INGEST_MESSAGES_ATTRIBUTE + attributeErrorMessage);
+                    throw new HashLookupSettingsException(String.format(attributeErrorMessage, SEND_INGEST_MESSAGES_ATTRIBUTE));
                 }
                 Boolean searchDuringIngestFlag = Boolean.parseBoolean(searchDuringIngest);
-                
+
                 final String sendIngestMessages = setEl.getAttribute(SEND_INGEST_MESSAGES_ATTRIBUTE);
                 if (searchDuringIngest.isEmpty()) {
-                    throw new HashLookupSettingsException(SEND_INGEST_MESSAGES_ATTRIBUTE + attributeErrorMessage);
+                    throw new HashLookupSettingsException(String.format(attributeErrorMessage, SEND_INGEST_MESSAGES_ATTRIBUTE));
                 }
                 Boolean sendIngestMessagesFlag = Boolean.parseBoolean(sendIngestMessages);
-                
+
                 String dbPath;
                 NodeList pathsNList = setEl.getElementsByTagName(PATH_ELEMENT);
                 if (pathsNList.getLength() > 0) {
@@ -215,19 +247,19 @@ final class HashLookupSettings implements Serializable {
                     if (null != legacyPathNumber && !legacyPathNumber.isEmpty()) {
                         updatedSchema = true;
                     }
-                    
+
                     dbPath = pathEl.getTextContent();
                     if (dbPath.isEmpty()) {
-                        throw new HashLookupSettingsException(SEND_INGEST_MESSAGES_ATTRIBUTE + attributeErrorMessage);
+                        throw new HashLookupSettingsException(String.format(elementErrorMessage, PATH_ELEMENT));
                     }
                 } else {
-                    throw new HashLookupSettingsException(SEND_INGEST_MESSAGES_ATTRIBUTE + attributeErrorMessage);
+                    throw new HashLookupSettingsException(String.format(elementErrorMessage, PATH_ELEMENT));
                 }
                 hashDbInfoList.add(new HashDbInfo(hashSetName, HashDbManager.HashDb.KnownFilesType.valueOf(knownFilesType),
                         searchDuringIngestFlag, sendIngestMessagesFlag, dbPath));
                 hashSetNames.add(hashSetName);
             }
-            
+
             if (updatedSchema) {
                 String backupFilePath = configFilePath + ".v1_backup"; //NON-NLS
                 String messageBoxTitle = NbBundle.getMessage(HashLookupSettings.class,
@@ -236,9 +268,7 @@ final class HashLookupSettings implements Serializable {
                         "HashDbManager.baseMessage.updatedFormatHashDbConfig");
                 try {
                     FileUtils.copyFile(new File(configFilePath), new File(backupFilePath));
-                    logger.log(Level.INFO, NbBundle.getMessage(HashLookupSettings.class,
-                            "HashDbManager.savedBackupOfOldConfigMsg",
-                            baseMessage, backupFilePath));
+                    logger.log(Level.INFO, baseMessage + "\nA backup copy of the old configuration has been saved as\n" + backupFilePath);
                     if (RuntimeProperties.coreComponentsAreActive()) {
                         JOptionPane.showMessageDialog(null,
                                 NbBundle.getMessage(HashLookupSettings.class,
@@ -284,14 +314,24 @@ final class HashLookupSettings implements Serializable {
      * hash lookups.
      */
     static final class HashDbInfo implements Serializable {
-        
+
         private static final long serialVersionUID = 1L;
         private final String hashSetName;
         private final HashDbManager.HashDb.KnownFilesType knownFilesType;
         private final boolean searchDuringIngest;
         private final boolean sendIngestMessages;
         private final String path;
-        
+
+        /**
+         * Constructs a HashDbInfo object
+         *
+         * @param hashSetName        The name of the hash set
+         * @param knownFilesType     The known files type
+         * @param searchDuringIngest Whether or not the db is searched during
+         *                           ingest
+         * @param sendIngestMessages Whether or not ingest messages are sent
+         * @param path               The path to the db
+         */
         HashDbInfo(String hashSetName, HashDbManager.HashDb.KnownFilesType knownFilesType, boolean searchDuringIngest, boolean sendIngestMessages, String path) {
             this.hashSetName = hashSetName;
             this.knownFilesType = knownFilesType;
@@ -352,13 +392,13 @@ final class HashLookupSettings implements Serializable {
      * clients of the user-defined file types manager.
      */
     static class HashLookupSettingsException extends Exception {
-        
+
         private static final long serialVersionUID = 1L;
-        
+
         HashLookupSettingsException(String message) {
             super(message);
         }
-        
+
         HashLookupSettingsException(String message, Throwable throwable) {
             super(message, throwable);
         }
