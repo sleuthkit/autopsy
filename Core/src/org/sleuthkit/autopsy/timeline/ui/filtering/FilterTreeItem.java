@@ -1,6 +1,23 @@
+/*
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2014-16 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.sleuthkit.autopsy.timeline.ui.filtering;
 
-import javafx.beans.Observable;
 import javafx.collections.ListChangeListener;
 import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableMap;
@@ -22,22 +39,20 @@ final public class FilterTreeItem extends TreeItem<Filter> {
      *          be made for them added added to the children of this
      *          FilterTreeItem
      */
-    public FilterTreeItem(Filter f, ObservableMap<String, Boolean> expansionMap) {
+    public FilterTreeItem(Filter f, ObservableMap<Filter, Boolean> expansionMap) {
         super(f);
 
-        expansionMap.addListener((MapChangeListener.Change<? extends String, ? extends Boolean> change) -> {
-            if (change.getKey() == f.getDisplayName()) {
+        expansionMap.addListener((MapChangeListener.Change<? extends Filter, ? extends Boolean> change) -> {
+            if (change.getKey().equals(f)) {
                 setExpanded(expansionMap.get(change.getKey()));
             }
         });
 
-        if (expansionMap.get(f.getDisplayName()) != null) {
-            setExpanded(expansionMap.get(f.getDisplayName()));
+        if (expansionMap.containsKey(f)) {
+            setExpanded(expansionMap.get(f));
         }
 
-        expandedProperty().addListener((Observable observable) -> {
-            expansionMap.put(f.getDisplayName(), isExpanded());
-        });
+        expandedProperty().addListener(expandedProperty -> expansionMap.put(f, isExpanded()));
 
         if (f instanceof CompoundFilter<?>) {
             CompoundFilter<?> compoundFilter = (CompoundFilter<?>) f;

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,12 +44,10 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.VisualizationMode;
 import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
 import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
 import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
-import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 
 /**
  * The FXML controller for the filter ui.
@@ -86,7 +84,7 @@ final public class FilterSetPanel extends BorderPane {
     private final FilteredEventsModel filteredEvents;
     private final TimeLineController controller;
 
-    private final ObservableMap<String, Boolean> expansionMap = FXCollections.observableHashMap();
+    private final ObservableMap<Filter, Boolean> expansionMap = FXCollections.observableHashMap();
     private double dividerPosition;
 
     @NbBundle.Messages({
@@ -114,7 +112,7 @@ final public class FilterSetPanel extends BorderPane {
         legendColumn.setCellValueFactory(cellDataFeatures -> cellDataFeatures.getValue().valueProperty());
         legendColumn.setCellFactory(col -> new LegendCell(this.controller));
 
-        expansionMap.put(new TypeFilter(RootEventType.getInstance()).getDisplayName(), true);
+        expansionMap.put(controller.getEventsModel().getFilter().getTypeFilter(), true);
 
         this.filteredEvents.eventTypeZoomProperty().addListener((Observable observable) -> applyFilters());
         this.filteredEvents.descriptionLODProperty().addListener((Observable observable1) -> applyFilters());

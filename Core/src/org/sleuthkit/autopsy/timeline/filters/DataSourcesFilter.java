@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.timeline.filters;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
 import javafx.beans.value.ObservableBooleanValue;
 import org.openide.util.NbBundle;
 
@@ -30,18 +31,17 @@ import org.openide.util.NbBundle;
 public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
 
     public DataSourcesFilter() {
-        setSelected(false);
     }
 
     @Override
     public DataSourcesFilter copyOf() {
         final DataSourcesFilter filterCopy = new DataSourcesFilter();
-        filterCopy.setSelected(isSelected());
-        filterCopy.setDisabled(isDisabled());
         //add a copy of each subfilter
         getSubFilters().forEach(dataSourceFilter ->
                 filterCopy.addSubFilter(dataSourceFilter.copyOf())
         );
+        filterCopy.setSelected(isSelected());
+        filterCopy.setDisabled(isDisabled());
 
         return filterCopy;
     }
@@ -63,13 +63,6 @@ public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
                     .collect(Collectors.joining("</li><li>", "<ul><li>", "</li></ul>")); // NON-NLS
         }
         return string;
-    }
-
-    public void addSubFilter(DataSourceFilter dataSourceFilter) {
-        super.addSubFilter(dataSourceFilter);
-        if (getSubFilters().size() > 1) {
-            setSelected(Boolean.TRUE);
-        }
     }
 
     @Override
@@ -98,6 +91,16 @@ public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
     @Override
     public ObservableBooleanValue disabledProperty() {
         return Bindings.or(super.disabledProperty(), Bindings.size(getSubFilters()).lessThanOrEqualTo(1));
+    }
+
+    @Override
+    public BooleanBinding activeProperty() {
+        return super.activeProperty().and(Bindings.not(disabledProperty()));
+    }
+
+    @Override
+    public boolean isActive() {
+        return activeProperty().get();
     }
 
     @Override

@@ -62,15 +62,18 @@ public abstract class CompoundFilter<SubFilterType extends Filter> extends Abstr
             while (c.next()) {
                 addSubFilterListeners(c.getAddedSubList());
             }
+            setSelected(getSubFilters().parallelStream().anyMatch(Filter::isSelected));
         });
-        this.subFilters.setAll(subFilters);
-        
-	this.selectedProperty().addListener(activeProperty -> {
+
+        this.selectedProperty().addListener(activeProperty -> {
             getSubFilters().forEach(subFilter -> subFilter.setDisabled(isActive() == false));
         });
         this.disabledProperty().addListener(activeProperty -> {
             getSubFilters().forEach(subFilter -> subFilter.setDisabled(isActive() == false));
         });
+
+        this.subFilters.setAll(subFilters);
+        getSubFilters().forEach(subFilter -> subFilter.setDisabled(isActive() == false));
     }
 
     private void addSubFilterListeners(List<? extends SubFilterType> newSubfilters) {

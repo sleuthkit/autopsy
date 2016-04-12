@@ -42,12 +42,13 @@ public class HashHitsFilter extends UnionFilter<HashSetFilter> {
     @Override
     public HashHitsFilter copyOf() {
         HashHitsFilter filterCopy = new HashHitsFilter();
-        filterCopy.setSelected(isSelected());
-        filterCopy.setDisabled(isDisabled());
         //add a copy of each subfilter
         this.getSubFilters().forEach(hashSetFilter ->
                 filterCopy.addSubFilter(hashSetFilter.copyOf())
         );
+        filterCopy.setSelected(isSelected());
+        filterCopy.setDisabled(isDisabled());
+
         return filterCopy;
     }
 

@@ -44,12 +44,13 @@ public class TagsFilter extends UnionFilter<TagNameFilter> {
     @Override
     public TagsFilter copyOf() {
         TagsFilter filterCopy = new TagsFilter();
-        filterCopy.setSelected(isSelected());
-        filterCopy.setDisabled(isDisabled());
         //add a copy of each subfilter
         getSubFilters().forEach(tagNameFilter ->
                 filterCopy.addSubFilter(tagNameFilter.copyOf())
         );
+        filterCopy.setSelected(isSelected());
+        filterCopy.setDisabled(isDisabled());
+
         return filterCopy;
     }
 
