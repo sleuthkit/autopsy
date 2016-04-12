@@ -810,6 +810,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         indexDialog.setModal(true);
     }//GEN-LAST:event_indexButtonActionPerformed
 
+    @Messages({})
     private void deleteDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteDatabaseButtonActionPerformed
         if (JOptionPane.showConfirmDialog(null,
                 NbBundle.getMessage(this.getClass(),
@@ -819,7 +820,11 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                 JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
             HashDb hashDb = ((HashSetTable) hashSetTable).getSelection();
             if (hashDb != null) {
-                hashSetManager.removeHashDatabaseInternal(hashDb);
+                try {
+                    hashSetManager.removeHashDatabase(hashDb);
+                } catch (HashDbManager.HashDbManagerException ex) {
+                    JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_removeDatabaseFailure_message(hashDb.getHashSetName()));
+                }
                 hashSetTableModel.refreshModel();
             }
         }
@@ -829,7 +834,11 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         if (evt.getKeyCode() == KeyEvent.VK_DELETE) {
             HashDb hashDb = ((HashSetTable) hashSetTable).getSelection();
             if (hashDb != null) {
-                hashSetManager.removeHashDatabaseInternal(hashDb);
+                try {
+                    hashSetManager.removeHashDatabase(hashDb);
+                } catch (HashDbManager.HashDbManagerException ex) {
+                    JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_removeDatabaseFailure_message(hashDb.getHashSetName()));
+                }
                 hashSetTableModel.refreshModel();
             }
         }

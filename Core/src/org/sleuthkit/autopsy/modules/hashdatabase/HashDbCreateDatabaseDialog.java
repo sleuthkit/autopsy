@@ -33,7 +33,6 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDbManagerException;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Instances of this class allow a user to create a new hash database and add it
@@ -345,15 +344,6 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
             Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
             JOptionPane.showMessageDialog(this,
                     ex.getMessage(),
-                    NbBundle.getMessage(this.getClass(),
-                            "HashDbCreateDatabaseDialog.createHashDbErr"),
-                    JOptionPane.ERROR_MESSAGE);
-            return;
-        } catch (TskCoreException ex) {
-            Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.SEVERE, errorMessage, ex);
-            JOptionPane.showMessageDialog(this,
-                    NbBundle.getMessage(this.getClass(),
-                            "HashDbCreateDatabaseDialog.failedToCreateHashDbMsg"),
                     NbBundle.getMessage(this.getClass(),
                             "HashDbCreateDatabaseDialog.createHashDbErr"),
                     JOptionPane.ERROR_MESSAGE);
