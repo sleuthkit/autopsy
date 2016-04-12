@@ -34,16 +34,16 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
-
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
-import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Instances of this class provide a comprehensive UI for managing the hash sets
@@ -270,8 +270,6 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         } else if (unindexed.size() > 1) {
             showInvalidIndex(true, unindexed);
         }
-
-        hashSetManager.save();
     }
 
     @Override
@@ -296,9 +294,14 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         }
     }
 
+    @Messages({"# {0} - hash lookup name", "HashLookupSettingsPanel.removeDatabaseFailure.message=Failed to remove hash lookup: {0}"})
     void removeThese(List<HashDb> toRemove) {
         for (HashDb hashDb : toRemove) {
-            hashSetManager.removeHashDatabaseInternal(hashDb);
+            try {
+                hashSetManager.removeHashDatabase(hashDb);
+            } catch (HashDbManager.HashDbManagerException ex) {
+                JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_removeDatabaseFailure_message(hashDb.getHashSetName()));
+            }
         }
         hashSetTableModel.refreshModel();
     }
