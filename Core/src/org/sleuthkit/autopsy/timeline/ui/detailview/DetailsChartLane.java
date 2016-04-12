@@ -62,9 +62,11 @@ import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
 import org.sleuthkit.autopsy.timeline.ui.ContextMenuProvider;
 
 /**
+ * One "lane" of a the details visualization, contains all the core logic and
+ * layout code.
  *
  * NOTE: It was too hard to control the threading of this chart via the
- * complicated default listeners. Instead clients should use null {@link #addDataItem(javafx.scene.chart.XYChart.Data)
+ * complicated default listeners. Instead clients should use {@link #addDataItem(javafx.scene.chart.XYChart.Data)
  * } and {@link #removeDataItem(javafx.scene.chart.XYChart.Data) } to add and
  * remove data.
  */
@@ -268,6 +270,7 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
         return localMax; //return new max
     }
 
+    @Override
     final public void requestChartLayout() {
         super.requestChartLayout();
     }
@@ -433,5 +436,4 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
     DetailsChart getParentChart() {
         return parentChart;
     }
-
 }

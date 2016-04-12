@@ -87,11 +87,11 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
     @NbBundle.Messages("DetailViewPane.primaryLaneLabel.text=All Events (Filtered)")
     private final Axis<EventStripe> verticalAxis = new EventAxis<>(Bundle.DetailViewPane_primaryLaneLabel_text());
 
-    private final MappedList<TimeLineEvent, EventNodeBase> selectedEvents;
+    private final MappedList<TimeLineEvent, EventNodeBase<?>> selectedEvents;
 
     public DetailViewPane(TimeLineController controller, Pane partPane, Pane contextPane, Region bottomLeftSpacer) {
         super(controller, partPane, contextPane, bottomLeftSpacer);
-        this.selectedEvents = new MappedList<>(getSelectedNodes(), EventNodeBase::getEvent);
+        this.selectedEvents = new MappedList<>(getSelectedNodes(), EventNodeBase<?>::getEvent);
 
         //initialize chart;
         chart = new DetailsChart(controller, detailsChartDateAxis, pinnedDateAxis, verticalAxis, getSelectedNodes());

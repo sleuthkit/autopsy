@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-15 Basis Technology Corp.
+ * Copyright 2014-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,6 +32,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
@@ -196,7 +197,9 @@ public abstract class IntervalSelector<X> extends BorderPane {
         });
 
         setOnMouseClicked(mouseClick -> {
-            if (mouseClick.getClickCount() >= 2) {
+            if (mouseClick.getButton() == MouseButton.SECONDARY) {
+                chart.clearIntervalSelector();
+            } else if (mouseClick.getClickCount() >= 2) {
                 zoomToSelectedInterval();
                 mouseClick.consume();
             }
@@ -248,7 +251,7 @@ public abstract class IntervalSelector<X> extends BorderPane {
 
     @NbBundle.Messages(value = {"# {0} - start timestamp",
         "# {1} - end timestamp",
-        "Timeline.ui.TimeLineChart.tooltip.text=Double-click to zoom into range:\n{0} to {1}."})
+        "Timeline.ui.TimeLineChart.tooltip.text=Double-click to zoom into range:\n{0} to {1}.\n\nRight-click to close."})
     private void updateStartAndEnd() {
         String startString = formatSpan(getSpanStart());
         String endString = formatSpan(getSpanEnd());
