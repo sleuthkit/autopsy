@@ -26,9 +26,7 @@ import java.util.Collections;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
-import javax.swing.JList;
 import javax.swing.JOptionPane;
-import javax.swing.ListCellRenderer;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
@@ -616,7 +614,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     private void addSigButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addSigButtonActionPerformed
         if (evt.getSource().equals(this.addSigButton)) {
             this.addSigDialog = new AddFileTypeSignatureDialog();
-            if (addSigDialog.getResult() == BUTTON_PRESSED.ADD) {
+            if (addSigDialog.getResult() == BUTTON_PRESSED.OK) {
                 signaturesListModel.addElement(this.addSigDialog.getSignature());
             }
         }
@@ -634,7 +632,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     private void editSigButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editSigButtonActionPerformed
         if (evt.getSource().equals(this.editSigButton) && this.signatureList.getSelectedValue() != null) {
             this.addSigDialog = new AddFileTypeSignatureDialog(this.signatureList.getSelectedValue());
-            if (addSigDialog.getResult() == BUTTON_PRESSED.ADD) {
+            if (addSigDialog.getResult() == BUTTON_PRESSED.OK) {
                 signaturesListModel.removeElementAt(this.signatureList.getSelectedIndex());
                 this.signaturesListModel.addElement(this.addSigDialog.getSignature());
             }

@@ -1,29 +1,34 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ * 
+ * Copyright 2011-2016 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.modules.filetypeid;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import javax.swing.DefaultComboBoxModel;
-import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.xml.bind.DatatypeConverter;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
 
 /**
- *
- * @author oliver
+ * Panel for creating a file type signature to be added to a file type.
  */
 class AddFileTypeSignaturePanel extends javax.swing.JPanel {
 
@@ -33,21 +38,25 @@ class AddFileTypeSignaturePanel extends javax.swing.JPanel {
     private static final String ASCII_SIGNATURE_TYPE_COMBO_BOX_ITEM = NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.signatureComboBox.asciiItem");
 
     /**
-     * Creates new form AddFileTypeSignaturePanel
+     * Creates a panel for a new signature.
      */
     AddFileTypeSignaturePanel() {
         initComponents();
         customizeComponents();
     }
 
+    /**
+     * Creates a panel for a signature being edited.
+     *
+     * @param toEdit The signature to edit.
+     */
     AddFileTypeSignaturePanel(Signature toEdit) {
         this();
         this.setComponentValues(toEdit);
     }
 
     /**
-     * Does child component initialization in addition to that done by the
-     * Matisse generated code.
+     * Configures the components of the panel correctly.
      */
     private void customizeComponents() {
         setSignatureTypeComboBoxModel();
@@ -76,6 +85,11 @@ class AddFileTypeSignaturePanel extends javax.swing.JPanel {
         offsetRelativeToComboBox.setSelectedItem(START_OFFSET_RELATIVE_COMBO_BOX_ITEM);
     }
 
+    /**
+     * Sets the values for the components based on the signature being edited.
+     *
+     * @param toEdit The signature information to implement.
+     */
     @Messages({"AddFileTypeSignaturePanel.signatureStringFail.text=Couldn't get signatures string"})
     private void setComponentValues(Signature toEdit) {
         if (toEdit.isRelativeToStart()) {
@@ -100,6 +114,13 @@ class AddFileTypeSignaturePanel extends javax.swing.JPanel {
         }
     }
 
+    /**
+     * Gets the file type signature for this panel, pops up error windows if the
+     * signature is incomplete.
+     *
+     * @return The signature of this panel, or null if it is an invalid
+     *         signature.
+     */
     public Signature getSignature() {
 
         /**

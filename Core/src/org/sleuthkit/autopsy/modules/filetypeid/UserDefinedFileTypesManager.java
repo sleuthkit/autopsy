@@ -27,10 +27,8 @@ import java.io.UnsupportedEncodingException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
-import javax.persistence.PersistenceException;
 import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -44,7 +42,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
@@ -192,118 +189,118 @@ final class UserDefinedFileTypesManager {
             List<Signature> signatureList;
             signatureList = new ArrayList<>();
             signatureList.add(new Signature("<?xml", 0L));
-            fileType = new FileType("text/xml", new ArrayList<>(signatureList), "", false); //NON-NLS
+            fileType = new FileType("text/xml", signatureList, "", false); //NON-NLS
             fileTypes.add(fileType);
 
             // Add rule for gzip
             byteArray = DatatypeConverter.parseHexBinary("1F8B");  //NON-NLS  
             signatureList = new ArrayList<>();
             signatureList.add(new Signature(byteArray, 0L));
-            fileType = new FileType("application/x-gzip", new ArrayList<>(signatureList), "", false); //NON-NLS
+            fileType = new FileType("application/x-gzip", signatureList, "", false); //NON-NLS
             fileTypes.add(fileType);
 
             // Add rule for .wk1
             byteArray = DatatypeConverter.parseHexBinary("0000020006040600080000000000"); //NON-NLS
-            signatureList = new ArrayList<>();
+            signatureList.clear();
             signatureList.add(new Signature(byteArray, 0L));
-            fileType = new FileType("application/x-123", new ArrayList<>(signatureList), "", false); //NON-NLS
+            fileType = new FileType("application/x-123", signatureList, "", false); //NON-NLS
             fileTypes.add(fileType);
 
             // Add rule for Radiance image
             byteArray = DatatypeConverter.parseHexBinary("233F52414449414E43450A");//NON-NLS
-            signatureList = new ArrayList<>();
+            signatureList.clear();
             signatureList.add(new Signature(byteArray, 0L));
-            fileType = new FileType("image/vnd.radiance", new ArrayList<>(signatureList), "", false); //NON-NLS
+            fileType = new FileType("image/vnd.radiance", signatureList, "", false); //NON-NLS
             fileTypes.add(fileType);
 
             // Add rule for .dcx image
             byteArray = DatatypeConverter.parseHexBinary("B168DE3A"); //NON-NLS
-            signatureList = new ArrayList<>();
+            signatureList.clear();
             signatureList.add(new Signature(byteArray, 0L));
-            fileType = new FileType("image/x-dcx", new ArrayList<>(signatureList), "", false); //NON-NLS
+            fileType = new FileType("image/x-dcx", signatureList, "", false); //NON-NLS
             fileTypes.add(fileType);
 
             // Add rule for .ics image
-            signatureList = new ArrayList<>();
+            signatureList.clear();
             signatureList.add(new Signature("icns", 0L));
-            fileType = new FileType("image/x-icns", new ArrayList<>(signatureList), "", false); //NON-NLS
+            fileType = new FileType("image/x-icns", signatureList, "", false); //NON-NLS
             fileTypes.add(fileType);
 
             // Add rule for .pict image
             byteArray = DatatypeConverter.parseHexBinary("001102FF"); //NON-NLS
-            signatureList = new ArrayList<>();
+            signatureList.clear();
             signatureList.add(new Signature(byteArray, 522L));
-            fileType = new FileType("image/x-pict", new ArrayList<>(signatureList), "", false); //NON-NLS
+            fileType = new FileType("image/x-pict", signatureList, "", false); //NON-NLS
             fileTypes.add(fileType);
             byteArray = DatatypeConverter.parseHexBinary("1100"); //NON-NLS
-            signatureList = new ArrayList<>();
+            signatureList.clear();
             signatureList.add(new Signature(byteArray, 522L));
-            fileType = new FileType("image/x-pict", new ArrayList<>(signatureList), "", false); //NON-NLS
+            fileType = new FileType("image/x-pict", signatureList, "", false); //NON-NLS
             fileTypes.add(fileType);
 
             // Add rule for .pam
-            signatureList = new ArrayList<>();
+            signatureList.clear();
             signatureList.add(new Signature("P7", 0L));
-            fileType = new FileType("image/x-portable-arbitrarymap", new ArrayList<>(signatureList), "", false); //NON-NLS
+            fileType = new FileType("image/x-portable-arbitrarymap", signatureList, "", false); //NON-NLS
             fileTypes.add(fileType);
 
             // Add rule for .pfm
-            signatureList = new ArrayList<>();
+            signatureList.clear();
             signatureList.add(new Signature("PF", 0L));
-            fileType = new FileType("image/x-portable-floatmap", new ArrayList<>(signatureList), "", false); //NON-NLS
+            fileType = new FileType("image/x-portable-floatmap", signatureList, "", false); //NON-NLS
             fileTypes.add(fileType);
-            signatureList = new ArrayList<>();
+            signatureList.clear();
             signatureList.add(new Signature("Pf", 0L));
-            fileType = new FileType("image/x-portable-floatmap", new ArrayList<>(signatureList), "", false); //NON-NLS
+            fileType = new FileType("image/x-portable-floatmap", signatureList, "", false); //NON-NLS
             fileTypes.add(fileType);
 
             // Add rule for .tga
             byteArray = DatatypeConverter.parseHexBinary("54525545564953494F4E2D5846494C452E00"); //NON-NLS
-            signatureList = new ArrayList<>();
+            signatureList.clear();
             signatureList.add(new Signature(byteArray, 17, false));
-            fileType = new FileType("image/x-tga", new ArrayList<>(signatureList), "", false); //NON-NLS
+            fileType = new FileType("image/x-tga", signatureList, "", false); //NON-NLS
             fileTypes.add(fileType);
 
             // Add rule for .ilbm
-            signatureList = new ArrayList<>();
+            signatureList.clear();
             signatureList.add(new Signature("FORM", 0L));
             signatureList.add(new Signature("ILBM", 8L));
-            fileType = new FileType("image/x-ilbm", new ArrayList<>(signatureList), "", false);
+            fileType = new FileType("image/x-ilbm", signatureList, "", false);
             fileTypes.add(fileType);
-            signatureList = new ArrayList<>();
+            signatureList.clear();
             signatureList.add(new Signature("FORM", 0L));
             signatureList.add(new Signature("PBM", 8L));
-            fileType = new FileType("image/x-ilbm", new ArrayList<>(signatureList), "", false);
+            fileType = new FileType("image/x-ilbm", signatureList, "", false);
             fileTypes.add(fileType);
 
             // Add rule for .webp
-            signatureList = new ArrayList<>();
+            signatureList.clear();
             signatureList.add(new Signature("RIFF", 0L));
             signatureList.add(new Signature("WEBP", 8L));
-            fileType = new FileType("image/webp", new ArrayList<>(signatureList), "", false);
+            fileType = new FileType("image/webp", signatureList, "", false);
             fileTypes.add(fileType);
 
             // Add rule for .aiff
-            signatureList = new ArrayList<>();
+            signatureList.clear();
             signatureList.add(new Signature("FORM", 0L));
             signatureList.add(new Signature("AIFF", 8L));
-            fileType = new FileType("audio/aiff", new ArrayList<>(signatureList), "", false);
+            fileType = new FileType("audio/aiff", signatureList, "", false);
             fileTypes.add(fileType);
-            signatureList = new ArrayList<>();
+            signatureList.clear();
             signatureList.add(new Signature("FORM", 0L));
             signatureList.add(new Signature("AIFC", 8L));
-            fileType = new FileType("audio/aiff", new ArrayList<>(signatureList), "", false);
+            fileType = new FileType("audio/aiff", signatureList, "", false);
             fileTypes.add(fileType);
-            signatureList = new ArrayList<>();
+            signatureList.clear();
             signatureList.add(new Signature("FORM", 0L));
             signatureList.add(new Signature("8SVX", 8L));
-            fileType = new FileType("audio/aiff", new ArrayList<>(signatureList), "", false);
+            fileType = new FileType("audio/aiff", signatureList, "", false);
             fileTypes.add(fileType);
             
             // Add .iff
-            signatureList = new ArrayList<>();
+            signatureList.clear();
             signatureList.add(new Signature("FORM", 0L));
-            fileType = new FileType("application/x-iff", new ArrayList<>(signatureList), "", false);
+            fileType = new FileType("application/x-iff", signatureList, "", false);
             fileTypes.add(fileType);
 
         } // parseHexBinary() throws this if the argument passed in is not Hex
@@ -477,6 +474,8 @@ final class UserDefinedFileTypesManager {
             Signature signature = XMLDefinitionsReader.parseSignature(fileTypeElem);
             String filesSetName = XMLDefinitionsReader.parseInterestingFilesSet(fileTypeElem);
             boolean alert = XMLDefinitionsReader.parseAlert(fileTypeElem);
+            // File type definitions in the XML file were written prior to the 
+            // implementation of multiple signatures per type. 
             List<Signature> sigList = new ArrayList<>();
             sigList.add(signature);
             return new FileType(mimeType, sigList, filesSetName, alert);

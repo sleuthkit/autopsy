@@ -23,18 +23,18 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.xml.bind.DatatypeConverter;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Represents a file type characterized by a file signatures.
+ * Represents a file type characterized by file signatures.
  * <p>
  * Thread-safe (immutable).
  */
@@ -47,11 +47,11 @@ class FileType implements Serializable {
     private final boolean alert;
 
     /**
-     * Creates a representation of a file type characterized by a file
+     * Creates a representation of a file type characterized by file
      * signatures.
      *
      * @param mimeType     The mime type to associate with this file type.
-     * @param signature    The signatures that characterizes this file type.
+     * @param signatures    The signatures that characterize this file type.
      * @param filesSetName The name of an interesting files set that includes
      *                     files of this type, may be the empty string.
      * @param alert        Whether the user wishes to be alerted when a file
@@ -79,7 +79,7 @@ class FileType implements Serializable {
      * @return The signatures.
      */
     List<Signature> getSignatures() {
-        return this.signatures;
+        return Collections.unmodifiableList(this.signatures);
     }
 
     void addSignature(Signature sig) {
@@ -147,7 +147,7 @@ class FileType implements Serializable {
     }
 
     /**
-     * A file signatures consisting of a sequence of bytes at a specific offset
+     * A file signature consisting of a sequence of bytes at a specific offset
      * within a file.
      * <p>
      * Thread-safe (immutable).
@@ -158,7 +158,7 @@ class FileType implements Serializable {
         private static final Logger logger = Logger.getLogger(Signature.class.getName());
 
         /**
-         * The way the signatures byte sequence should be interpreted.
+         * The way the signature byte sequence should be interpreted.
          */
         enum Type {
 
@@ -171,7 +171,7 @@ class FileType implements Serializable {
         private final boolean isRelativeToStart;
 
         /**
-         * Creates a file signatures consisting of a sequence of bytes at a
+         * Creates a file signature consisting of a sequence of bytes at a
          * specific offset within a file.
          *
          * @param signatureBytes The signature bytes.
@@ -217,7 +217,7 @@ class FileType implements Serializable {
         }
 
         /**
-         * Creates a file signatures consisting of a sequence of bytes at a
+         * Creates a file signature consisting of a sequence of bytes at a
          * specific offset within a file.
          *
          * @param signatureBytes    The signature bytes.
@@ -269,7 +269,7 @@ class FileType implements Serializable {
         }
 
         /**
-         * Gets the byte sequence of the signatures.
+         * Gets the byte sequence of the signature.
          *
          * @return The byte sequence as an array of bytes.
          */
@@ -278,7 +278,7 @@ class FileType implements Serializable {
         }
 
         /**
-         * Gets the offset of the signatures.
+         * Gets the offset of the signature.
          *
          * @return The offset.
          */
@@ -287,9 +287,9 @@ class FileType implements Serializable {
         }
 
         /**
-         * Gets the interpretation of the byte sequence for the signatures.
+         * Gets the interpretation of the byte sequence for the signature.
          *
-         * @return The signatures type.
+         * @return The signature type.
          */
         Type getType() {
             return type;
@@ -300,7 +300,7 @@ class FileType implements Serializable {
         }
 
         /**
-         * Determines whether or not the signatures is contained within a given
+         * Determines whether or not the signature is contained within a given
          * file.
          *
          * @param file The file to test
@@ -316,7 +316,7 @@ class FileType implements Serializable {
                 actualOffset = file.getSize() - 1 - offset;
             }
             if (file.getSize() < (actualOffset + signatureBytes.length)) {
-                return false; /// too small, can't contain this signatures
+                return false; /// too small, can't contain this signature
             }
             try {
                 byte[] buffer = new byte[signatureBytes.length];

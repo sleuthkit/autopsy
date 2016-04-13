@@ -25,10 +25,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
-import java.util.ArrayList;
-import java.util.List;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -40,10 +36,8 @@ import org.sleuthkit.autopsy.ingest.RunIngestModulesDialog;
 import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
 
 /**
- *
- * A dialog box that allows a user to configure and execute analysis of one or
- * more data sources with ingest modules or analysis of the contents of a
- * directory with file-level ingest modules.
+ * A dialog box that allows a user to create a file type signature, to be added
+ * to a selected file type.
  */
 final class AddFileTypeSignatureDialog extends JDialog {
 
@@ -54,21 +48,16 @@ final class AddFileTypeSignatureDialog extends JDialog {
     private BUTTON_PRESSED result;
 
     /**
-     * @return the signature
+     * Enum used for letting creator of this dialog know whether or not OK was
+     * pressed.
      */
-    public Signature getSignature() {
-        return signature;
-    }
-
     enum BUTTON_PRESSED {
 
-        ADD, CANCEL;
+        OK, CANCEL;
     }
 
     /**
-     * Constructs a dialog box that allows a user to configure and execute
-     * analysis of the contents of a directory with file-level ingest modules.
-     *
+     * Creates a file type signature dialog for a new signature.
      */
     AddFileTypeSignatureDialog() {
         super(new JFrame(TITLE), TITLE, true);
@@ -76,6 +65,11 @@ final class AddFileTypeSignatureDialog extends JDialog {
         this.display(true);
     }
 
+    /**
+     * Creates a file type signature dialog for a signature being edited.
+     *
+     * @param toEdit The signature to edit.
+     */
     AddFileTypeSignatureDialog(Signature toEdit) {
         super(new JFrame(TITLE), TITLE, true);
         this.addFileTypeSigPanel = new AddFileTypeSignaturePanel(toEdit);
@@ -83,14 +77,27 @@ final class AddFileTypeSignatureDialog extends JDialog {
     }
 
     /**
-     * @return the result
+     * Gets the signature that was created by this dialog.
+     *
+     * @return the signature.
+     */
+    public Signature getSignature() {
+        return signature;
+    }
+
+    /**
+     * Gets which button was pressed (OK or Cancel).
+     *
+     * @return The result.
      */
     public BUTTON_PRESSED getResult() {
         return result;
     }
 
     /**
-     * Displays this dialog.
+     * Displays the add signature dialog.
+     *
+     * @param add Whether or not this is an edit or a new window.
      */
     @Messages({
         "AddFileTypeSignatureDialog.addButton.title=Add",
@@ -117,8 +124,7 @@ final class AddFileTypeSignatureDialog extends JDialog {
         JButton addButton;
         if (add) {
             addButton = new JButton(Bundle.AddFileTypeSignatureDialog_addButton_title());
-        }
-        else {
+        } else {
             addButton = new JButton(Bundle.AddFileTypeSignatureDialog_addButton_title2());
         }
         addButton.addActionListener(new ActionListener() {
@@ -166,11 +172,10 @@ final class AddFileTypeSignatureDialog extends JDialog {
     }
 
     /**
-     * Saves the ingest job settings, optionally starts an ingest job for each
-     * data source, then closes the dialog
+     * Performs actions on the fields based on whether the ok button was pressed
+     * or not.
      *
-     * @param okPressed True if ingest job(s) should be started, false
-     *                  otherwise.
+     * @param okPressed Whether ok was pressed.
      */
     @Messages({"AddFileTypeSignatureDialog.invalidSignature.message=Invalid signature"})
     private void doButtonAction(boolean okPressed) {
@@ -178,7 +183,7 @@ final class AddFileTypeSignatureDialog extends JDialog {
             Signature sig = addFileTypeSigPanel.getSignature();
             if (sig != null) {
                 this.signature = sig;
-                this.result = BUTTON_PRESSED.ADD;
+                this.result = BUTTON_PRESSED.OK;
                 setVisible(false);
             }
         } else {
