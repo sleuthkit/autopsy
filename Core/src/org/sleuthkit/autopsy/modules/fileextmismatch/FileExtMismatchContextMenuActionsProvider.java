@@ -41,6 +41,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  */
 @ServiceProvider(service = ContextMenuActionsProvider.class)
 public class FileExtMismatchContextMenuActionsProvider implements ContextMenuActionsProvider {
+    private static final Logger logger = Logger.getLogger(FileExtMismatchContextMenuActionsProvider.class.getName());
 
     @Override
     public List<Action> getActions() {
@@ -101,7 +102,7 @@ public class FileExtMismatchContextMenuActionsProvider implements ContextMenuAct
                                             NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.msg2"),
                                             NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.title"),
                                             JOptionPane.ERROR_MESSAGE);
-                                    Logger.getLogger(this.getClass().getName()).log(Level.WARNING, NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.msg2"), ex);
+                                    logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.msg2"), ex);
                                 }
                             }
                         }

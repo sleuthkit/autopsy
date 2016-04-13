@@ -34,8 +34,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * extension list for the MIME type.
  */
 class AddFileExtensionAction extends AbstractAction {
-    private static final long serialVersionUID = 1L;
 
+    private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(AddFileExtensionAction.class.getName());
     private final String extStr;
     private final String mimeTypeStr;
     private final FileExtMismatchSettings settings;
@@ -65,14 +66,14 @@ class AddFileExtensionAction extends AbstractAction {
                         Bundle.AddFileExtensionAction_writeError_message(),
                         NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.title"),
                         JOptionPane.ERROR_MESSAGE);
-                Logger.getLogger(this.getClass().getName()).log(Level.WARNING, Bundle.AddFileExtensionAction_writeError_message());
+                logger.log(Level.SEVERE, Bundle.AddFileExtensionAction_writeError_message());
             } // else //in the future we might want to update the statusbar to give feedback to the user
         } catch (FileExtMismatchSettings.FileExtMismatchSettingsException ex) {
             JOptionPane.showMessageDialog(null,
                     Bundle.AddFileExtensionAction_writeError_message(),
                     NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.title"),
                     JOptionPane.ERROR_MESSAGE);
-            Logger.getLogger(this.getClass().getName()).log(Level.WARNING, Bundle.AddFileExtensionAction_writeError_message(), ex);
+            logger.log(Level.SEVERE, Bundle.AddFileExtensionAction_writeError_message(), ex);
         }
     }
 }
