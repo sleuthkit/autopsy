@@ -29,11 +29,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-import javax.xml.parsers.ParserConfigurationException;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 import javax.xml.bind.DatatypeConverter;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import org.openide.util.NbBundle;
 import org.openide.util.io.NbObjectInputStream;
@@ -42,7 +39,10 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 /**
@@ -194,7 +194,7 @@ final class UserDefinedFileTypesManager {
 
             // Add rule for gzip
             byteArray = DatatypeConverter.parseHexBinary("1F8B");  //NON-NLS  
-            signatureList = new ArrayList<>();
+            signatureList.clear();
             signatureList.add(new Signature(byteArray, 0L));
             fileType = new FileType("application/x-gzip", signatureList, "", false); //NON-NLS
             fileTypes.add(fileType);
@@ -296,7 +296,7 @@ final class UserDefinedFileTypesManager {
             signatureList.add(new Signature("8SVX", 8L));
             fileType = new FileType("audio/aiff", signatureList, "", false);
             fileTypes.add(fileType);
-            
+
             // Add .iff
             signatureList.clear();
             signatureList.add(new Signature("FORM", 0L));
