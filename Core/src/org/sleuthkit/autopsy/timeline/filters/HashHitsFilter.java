@@ -1,11 +1,24 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2015-16 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.timeline.filters;
 
-import java.util.Comparator;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ObservableBooleanValue;
@@ -30,10 +43,11 @@ public class HashHitsFilter extends UnionFilter<HashSetFilter> {
     public HashHitsFilter copyOf() {
         HashHitsFilter filterCopy = new HashHitsFilter();
         filterCopy.setSelected(isSelected());
+        filterCopy.setDisabled(isDisabled());
         //add a copy of each subfilter
-        this.getSubFilters().forEach((HashSetFilter t) -> {
-            filterCopy.addSubFilter(t.copyOf());
-        });
+        this.getSubFilters().forEach(hashSetFilter ->
+                filterCopy.addSubFilter(hashSetFilter.copyOf())
+        );
         return filterCopy;
     }
 
@@ -65,25 +79,20 @@ public class HashHitsFilter extends UnionFilter<HashSetFilter> {
         }
         final HashHitsFilter other = (HashHitsFilter) obj;
 
-        if (isSelected() != other.isSelected()) {
+        if (isActive() != other.isActive()) {
             return false;
         }
 
         return areSubFiltersEqual(this, other);
     }
 
-    public void addSubFilter(HashSetFilter hashSetFilter) {
-        if (getSubFilters().stream()
-                .map(HashSetFilter::getHashSetID)
-                .filter(t -> t == hashSetFilter.getHashSetID())
-                .findAny().isPresent() == false) {
-            getSubFilters().add(hashSetFilter);
-            getSubFilters().sort(Comparator.comparing(HashSetFilter::getDisplayName));
-        }
-    }
-
     @Override
     public ObservableBooleanValue disabledProperty() {
         return Bindings.or(super.disabledProperty(), Bindings.isEmpty(getSubFilters()));
+    }
+
+    @Override
+    Predicate<HashSetFilter> getDuplicatePredicate(HashSetFilter subfilter) {
+        return hashSetFilter -> subfilter.getHashSetID() == hashSetFilter.getHashSetID();
     }
 }
