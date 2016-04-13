@@ -506,6 +506,12 @@ public class HashDbManager implements PropertyChangeListener {
         }
     }
 
+    /**
+     * Configures the given settings object by adding all contained hash db to
+     * the system.
+     *
+     * @param settings The settings to configure.
+     */
     @Messages({"# {0} - database name", "HashDbManager.noDbPath.message=Couldn't get valid database path for: {0}"})
     private void configureSettings(HashLookupSettings settings) {
         boolean dbInfoRemoved = false;

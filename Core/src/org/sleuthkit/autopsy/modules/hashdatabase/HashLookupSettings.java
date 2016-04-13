@@ -202,7 +202,7 @@ final class HashLookupSettings implements Serializable {
                         ++suffix;
                         newHashSetName = hashSetName + suffix;
                     } while (hashSetNames.contains(newHashSetName));
-                    logger.log(Level.INFO, "Duplicate hash set name " + hashSetName + " found.\nReplacing with " + newHashSetName + ".");
+                    logger.log(Level.INFO, "Duplicate hash set name " + hashSetName + " found. Replacing with " + newHashSetName + ".");
                     if (RuntimeProperties.coreComponentsAreActive()) {
                         JOptionPane.showMessageDialog(null,
                                 NbBundle.getMessage(HashLookupSettings.class,
@@ -268,7 +268,7 @@ final class HashLookupSettings implements Serializable {
                         "HashDbManager.baseMessage.updatedFormatHashDbConfig");
                 try {
                     FileUtils.copyFile(new File(configFilePath), new File(backupFilePath));
-                    logger.log(Level.INFO, baseMessage + "\nA backup copy of the old configuration has been saved as\n" + backupFilePath);
+                    logger.log(Level.INFO, "Updated the schema, backup saved at: " + backupFilePath);
                     if (RuntimeProperties.coreComponentsAreActive()) {
                         JOptionPane.showMessageDialog(null,
                                 NbBundle.getMessage(HashLookupSettings.class,
