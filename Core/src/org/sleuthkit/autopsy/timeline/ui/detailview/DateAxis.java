@@ -20,9 +20,9 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
- * 
- * 
- * 
+ *
+ *
+ *
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
@@ -51,7 +51,7 @@ import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
  */
 final class DateAxis extends Axis<DateTime> {
 
-    private ObjectProperty<DateTime> lowerBound = new ObjectPropertyBase<DateTime>() {
+    private ObjectProperty<DateTime> lowerBound = new ObjectPropertyBase<DateTime>(new DateTime(0)) {
         @Override
         protected void invalidated() {
             if (!isAutoRanging()) {
@@ -89,7 +89,7 @@ final class DateAxis extends Axis<DateTime> {
 
     private final ReadOnlyDoubleWrapper tickSpacing = new ReadOnlyDoubleWrapper();
 
-    private final ObjectProperty<DateTime> upperBound = new ObjectPropertyBase<DateTime>() {
+    private final ObjectProperty<DateTime> upperBound = new ObjectPropertyBase<DateTime>(new DateTime(1)) {
         @Override
         protected void invalidated() {
             if (!isAutoRanging()) {
@@ -114,7 +114,11 @@ final class DateAxis extends Axis<DateTime> {
      * by the data.
      */
     DateAxis() {
+        setTickLabelGap(0);
         setAutoRanging(false);
+        setTickLabelsVisible(false);
+        setTickLength(0);
+        setTickMarkVisible(false);
     }
 
     @Override
@@ -147,7 +151,7 @@ final class DateAxis extends Axis<DateTime> {
      *
      * @see #lowerBoundProperty()
      */
-    public final DateTime getLowerBound() {
+    public DateTime getLowerBound() {
         return lowerBound.get();
     }
 
@@ -158,7 +162,7 @@ final class DateAxis extends Axis<DateTime> {
      *
      * @see #lowerBoundProperty()
      */
-    public final void setLowerBound(DateTime date) {
+    public void setLowerBound(DateTime date) {
         lowerBound.set(date);
     }
 
@@ -169,7 +173,7 @@ final class DateAxis extends Axis<DateTime> {
      *
      * @see #upperBoundProperty()
      */
-    public final DateTime getUpperBound() {
+    public DateTime getUpperBound() {
         return upperBound.get();
     }
 
@@ -180,7 +184,7 @@ final class DateAxis extends Axis<DateTime> {
      *
      * @see #upperBoundProperty() ()
      */
-    public final void setUpperBound(DateTime date) {
+    public void setUpperBound(DateTime date) {
         upperBound.set(date);
     }
 

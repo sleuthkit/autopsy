@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012-2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -63,10 +63,10 @@ import org.sleuthkit.datamodel.*;
 class ExtractIE extends Extract {
 
     private static final Logger logger = Logger.getLogger(ExtractIE.class.getName());
-    private IngestServices services = IngestServices.getInstance();
-    private String moduleTempResultsDir;
+    private final IngestServices services = IngestServices.getInstance();
+    private final String moduleTempResultsDir;
     private String PASCO_LIB_PATH;
-    private String JAVA_PATH;
+    private final String JAVA_PATH;
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     private Content dataSource;
     private IngestJobContext context;
@@ -126,7 +126,7 @@ class ExtractIE extends Extract {
             datetime = Long.valueOf(Tempdate);
             String domain = Util.extractDomain(url);
 
-            Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+            Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
                     NbBundle.getMessage(this.getClass(),
                             "ExtractIE.parentModuleName.noSpace"), url));
@@ -153,13 +153,15 @@ class ExtractIE extends Extract {
         BufferedReader reader = new BufferedReader(new InputStreamReader(new ReadContentInputStream(fav)));
         String line, url = "";
         try {
-            while ((line = reader.readLine()) != null) {
+            line = reader.readLine();
+            while (null != line) {
                 // The actual shortcut line we are interested in is of the
                 // form URL=http://path/to/website
                 if (line.startsWith("URL")) { //NON-NLS
                     url = line.substring(line.indexOf("=") + 1);
                     break;
                 }
+                line = reader.readLine();
             }
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Failed to read from content: " + fav.getName(), ex); //NON-NLS
@@ -231,7 +233,7 @@ class ExtractIE extends Extract {
             datetime = Long.valueOf(tempDate);
             String domain = Util.extractDomain(url);
 
-            Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+            Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
                     NbBundle.getMessage(this.getClass(),
                             "ExtractIE.parentModuleName.noSpace"), url));
@@ -377,6 +379,15 @@ class ExtractIE extends Extract {
             ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
             processBuilder.redirectOutput(new File(outputFileFullPath));
             processBuilder.redirectError(new File(errFileFullPath));
+            /*
+             * NOTE on Pasco return codes: There is no documentation for Pasco.
+             * Looking at the Pasco source code I see that when something goes
+             * wrong Pasco returns a negative number as a return code. However,
+             * we should still attempt to parse the Pasco output even if that
+             * happens. I have seen many situations where Pasco output file
+             * contains a lot of useful data and only the last entry is
+             * corrupted.
+             */
             ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context));
             // @@@ Investigate use of history versus cache as type.
         } catch (IOException ex) {
@@ -424,7 +435,7 @@ class ExtractIE extends Extract {
         }
 
         // Keep a list of reported user accounts to avoid repeats
-        Set<String> reportedUserAccounts = new HashSet<String>();
+        Set<String> reportedUserAccounts = new HashSet<>();
 
         while (fileScanner.hasNext()) {
             String line = fileScanner.nextLine();
@@ -439,12 +450,11 @@ class ExtractIE extends Extract {
                 continue;
             }
 
-            String ddtime = lineBuff[2];
             String actime = lineBuff[3];
             Long ftime = (long) 0;
-            String user = "";
-            String realurl = "";
-            String domain = "";
+            String user;
+            String realurl;
+            String domain;
 
             /*
              * We've seen two types of lines: URL http://XYZ.com .... URL
@@ -469,21 +479,15 @@ class ExtractIE extends Extract {
 
             domain = Util.extractDomain(realurl);
 
-            if (!ddtime.isEmpty()) {
-                ddtime = ddtime.replace("T", " "); //NON-NLS
-                ddtime = ddtime.substring(ddtime.length() - 5);
-            }
-
             if (!actime.isEmpty()) {
                 try {
                     Long epochtime = dateFormatter.parse(actime).getTime();
-                    ftime = epochtime.longValue();
-                    ftime = ftime / 1000;
+                    ftime = epochtime / 1000;
                 } catch (ParseException e) {
                     this.addErrorMessage(
                             NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.errParsingEntry",
                                     this.getName()));
-                    logger.log(Level.SEVERE, "Error parsing Pasco results.", e); //NON-NLS
+                    logger.log(Level.WARNING, String.format("Error parsing Pasco results, may have partial processing of corrupt file (id=%d)", origFile.getId()), e); //NON-NLS
                 }
             }
 

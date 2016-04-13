@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,21 +22,25 @@ import java.util.Collections;
 import java.util.List;
 import javafx.scene.chart.Axis;
 import javafx.scene.chart.XYChart;
-import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
+import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 
 /**
  * No-Op axis that doesn't do anything usefull but is necessary to pass
  * AggregateEvent as the second member of {@link XYChart.Data} objects
  */
-class EventAxis extends Axis<EventStripe> {
+class EventAxis<Type extends TimeLineEvent> extends Axis<Type> {
+
+     EventAxis(String label) {
+        setLabel(label);
+    }
 
     @Override
-    public double getDisplayPosition(EventStripe value) {
+    public double getDisplayPosition(Type value) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public EventStripe getValueForDisplay(double displayPosition) {
+    public Type getValueForDisplay(double displayPosition) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
@@ -46,17 +50,17 @@ class EventAxis extends Axis<EventStripe> {
     }
 
     @Override
-    public boolean isValueOnAxis(EventStripe value) {
+    public boolean isValueOnAxis(Type value) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public double toNumericValue(EventStripe value) {
+    public double toNumericValue(Type value) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public EventStripe toRealValue(double value) {
+    public Type toRealValue(double value) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
@@ -66,7 +70,7 @@ class EventAxis extends Axis<EventStripe> {
     }
 
     @Override
-    protected List<EventStripe> calculateTickValues(double length, Object range) {
+    protected List<Type> calculateTickValues(double length, Object range) {
         return Collections.emptyList();
     }
 
@@ -76,7 +80,7 @@ class EventAxis extends Axis<EventStripe> {
     }
 
     @Override
-    protected String getTickMarkLabel(EventStripe value) {
+    protected String getTickMarkLabel(Type value) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
