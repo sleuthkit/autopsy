@@ -29,7 +29,6 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -532,22 +531,13 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
     @Override
     public void saveSettings() {
         try {
-            if (FileExtMismatchSettings.writeSettings(new FileExtMismatchSettings(editableMap))) {
-                mimeErrLabel.setText(" ");
-                mimeRemoveErrLabel.setText(" ");
-                extRemoveErrLabel.setText(" ");
-                extErrorLabel.setText(" ");
+            FileExtMismatchSettings.writeSettings(new FileExtMismatchSettings(editableMap));
+            mimeErrLabel.setText(" ");
+            mimeRemoveErrLabel.setText(" ");
+            extRemoveErrLabel.setText(" ");
+            extErrorLabel.setText(" ");
 
-                saveMsgLabel.setText(NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.store.msg"));
-            } else {
-                //error
-                JOptionPane.showMessageDialog(this,
-                        NbBundle.getMessage(this.getClass(),
-                                "FileExtMismatchConfigPanel.store.msgDlg.msg"),
-                        NbBundle.getMessage(this.getClass(),
-                                "FileExtMismatchConfigPanel.save.msgDlg.title"),
-                        JOptionPane.ERROR_MESSAGE);
-            }
+            saveMsgLabel.setText(NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.store.msg"));
         } catch (FileExtMismatchSettings.FileExtMismatchSettingsException ex) {
             //error
             JOptionPane.showMessageDialog(this,

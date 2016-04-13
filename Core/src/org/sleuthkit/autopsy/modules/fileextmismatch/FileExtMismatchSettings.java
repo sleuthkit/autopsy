@@ -92,27 +92,35 @@ class FileExtMismatchSettings implements Serializable {
      * @return Loaded settings (empty if there are no settings to load).
      */
     public static synchronized FileExtMismatchSettings readSettings() throws FileExtMismatchSettingsException {
-        HashMap<String, String[]> sigTypeToExtMap = new HashMap<>();
         File serializedFile = new File(DEFAULT_SERIALIZED_FILE_PATH);
         //Tries reading the serialized file first, as this is the prioritized settings.
         if (serializedFile.exists()) {
-            try {
-                try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(serializedFile))) {
-                    FileExtMismatchSettings fileExtMismatchSettings = (FileExtMismatchSettings) in.readObject();
-                    return fileExtMismatchSettings;
-                }
-            } catch (IOException | ClassNotFoundException ex) {
-                throw new FileExtMismatchSettingsException("Couldn't read serialized settings.", ex);
-            }
+            return readSerializedSettings();
         }
+        return readXmlSettings();
+    }
 
+    private static FileExtMismatchSettings readSerializedSettings() throws FileExtMismatchSettingsException {
+        File serializedFile = new File(DEFAULT_SERIALIZED_FILE_PATH);
+        try {
+            try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(serializedFile))) {
+                FileExtMismatchSettings fileExtMismatchSettings = (FileExtMismatchSettings) in.readObject();
+                return fileExtMismatchSettings;
+            }
+        } catch (IOException | ClassNotFoundException ex) {
+            throw new FileExtMismatchSettingsException("Couldn't read serialized settings.", ex);
+        }
+    }
+
+    private static FileExtMismatchSettings readXmlSettings() throws FileExtMismatchSettingsException {
+        HashMap<String, String[]> sigTypeToExtMap = new HashMap<>();
         //Next tries to read the xml file if the serialized file did not exist
         File xmlFile = new File(FILTER_CONFIG_FILE);
         if (xmlFile.exists()) {
             try {
                 final Document doc = XMLUtil.loadDoc(FileExtMismatchSettings.class, FILTER_CONFIG_FILE);
                 if (doc == null) {
-                    return new FileExtMismatchSettings(sigTypeToExtMap);
+                    throw new FileExtMismatchSettingsException("Error loading config file: invalid file format (could not load doc).");
                 }
 
                 Element root = doc.getDocumentElement();
@@ -124,7 +132,7 @@ class FileExtMismatchSettings implements Serializable {
                 final int numSigs = sigNList.getLength();
 
                 if (numSigs == 0) {
-                    throw new FileExtMismatchSettingsException("Error loading config file: invalid file format (bad signature)."); //NON-NLS
+                    throw new FileExtMismatchSettingsException("Error loading config file: invalid file format (no signature)."); //NON-NLS
                 }
 
                 for (int sigIndex = 0; sigIndex < numSigs; ++sigIndex) {
@@ -148,7 +156,6 @@ class FileExtMismatchSettings implements Serializable {
                 }
 
             } catch (Exception e) {
-                logger.log(Level.SEVERE, "Error loading config file.", e); //NON-NLS
                 throw new FileExtMismatchSettingsException("Error loading config file.", e); //NON-NLS
             }
         }
@@ -159,13 +166,12 @@ class FileExtMismatchSettings implements Serializable {
      * Save settings to disk.
      *
      * @param settings The settings to save to disk
-     * 
+     *
      * @return Loaded hash map or null on error or null if data does not exist
      */
-    public static synchronized boolean writeSettings(FileExtMismatchSettings settings) throws FileExtMismatchSettingsException {
+    public static synchronized void writeSettings(FileExtMismatchSettings settings) throws FileExtMismatchSettingsException {
         try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(DEFAULT_SERIALIZED_FILE_PATH))) {
             out.writeObject(settings);
-            return true;
         } catch (IOException ex) {
             throw new FileExtMismatchSettingsException(String.format("Failed to write settings to %s", DEFAULT_SERIALIZED_FILE_PATH), ex);
         }

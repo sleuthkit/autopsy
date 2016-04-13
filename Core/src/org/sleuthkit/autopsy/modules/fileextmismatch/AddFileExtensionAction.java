@@ -60,20 +60,14 @@ class AddFileExtensionAction extends AbstractAction {
         editableMap.put(mimeTypeStr, editedExtensions.toArray(new String[0]));
 
         try {
-            if (!FileExtMismatchSettings.writeSettings(new FileExtMismatchSettings(editableMap))) {
-                //error
-                JOptionPane.showMessageDialog(null,
-                        Bundle.AddFileExtensionAction_writeError_message(),
-                        NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.title"),
-                        JOptionPane.ERROR_MESSAGE);
-                logger.log(Level.SEVERE, Bundle.AddFileExtensionAction_writeError_message());
-            } // else //in the future we might want to update the statusbar to give feedback to the user
+            FileExtMismatchSettings.writeSettings(new FileExtMismatchSettings(editableMap));
         } catch (FileExtMismatchSettings.FileExtMismatchSettingsException ex) {
+            //error
             JOptionPane.showMessageDialog(null,
                     Bundle.AddFileExtensionAction_writeError_message(),
                     NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.title"),
                     JOptionPane.ERROR_MESSAGE);
-            logger.log(Level.SEVERE, Bundle.AddFileExtensionAction_writeError_message(), ex);
+            logger.log(Level.SEVERE, Bundle.AddFileExtensionAction_writeError_message());
         }
     }
 }
