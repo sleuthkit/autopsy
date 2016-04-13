@@ -604,7 +604,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             SleuthkitCase db;
             String caseDir;
             if (caseType == CaseType.SINGLE_USER_CASE) {
-                String dbPath = metadata.getCaseDatabase(); //NON-NLS
+                String dbPath = metadata.getCaseDatabasePath(); //NON-NLS
                 db = SleuthkitCase.openCase(dbPath);
                 caseDir = new File(dbPath).getParent();
             } else {
@@ -612,7 +612,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.multiUserCaseNotEnabled"));
                 }
                 try {
-                    db = SleuthkitCase.openCase(metadata.getCaseDatabase(), UserPreferences.getDatabaseConnectionInfo(), metadata.getCaseDirectory());
+                    db = SleuthkitCase.openCase(metadata.getCaseDatabaseName(), UserPreferences.getDatabaseConnectionInfo(), metadata.getCaseDirectory());
                 } catch (UserPreferencesException ex) {
                     throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.databaseConnectionInfo.error.msg"), ex);
                 }

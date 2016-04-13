@@ -47,6 +47,7 @@ import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.ObservableSet;
 import javafx.concurrent.Task;
 import javafx.concurrent.Worker;
 import javax.annotation.concurrent.GuardedBy;
@@ -73,6 +74,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.db.EventsRepository;
 import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
@@ -288,6 +290,21 @@ public class TimeLineController {
     public void zoomOutToActivity() {
         Interval boundingEventsInterval = filteredEvents.getBoundingEventsInterval();
         advance(filteredEvents.zoomParametersProperty().get().withTimeRange(boundingEventsInterval));
+    }
+
+    private final ObservableSet<TimeLineEvent> pinnedEvents = FXCollections.observableSet();
+    private final ObservableSet<TimeLineEvent> pinnedEventsUnmodifiable = FXCollections.unmodifiableObservableSet(pinnedEvents);
+
+    public void pinEvent(TimeLineEvent event) {
+        pinnedEvents.add(event);
+    }
+
+    public void unPinEvent(TimeLineEvent event) {
+        pinnedEvents.removeIf(event::equals);
+    }
+
+    public ObservableSet<TimeLineEvent> getPinnedEvents() {
+        return pinnedEventsUnmodifiable;
     }
 
     /**

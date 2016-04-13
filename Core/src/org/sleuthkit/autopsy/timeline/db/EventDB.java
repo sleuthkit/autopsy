@@ -58,7 +58,7 @@ import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.BaseTypes;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
@@ -323,8 +323,8 @@ public class EventDB {
         return null;
     }
 
-    TimeLineEvent getEventById(Long eventID) {
-        TimeLineEvent result = null;
+    SingleEvent getEventById(Long eventID) {
+        SingleEvent result = null;
         DBLock.lock();
         try {
             getEventByIDStmt.clearParameters();
@@ -939,8 +939,8 @@ public class EventDB {
         }
     }
 
-    private TimeLineEvent constructTimeLineEvent(ResultSet rs) throws SQLException {
-        return new TimeLineEvent(rs.getLong("event_id"), //NON-NLS
+    private SingleEvent constructTimeLineEvent(ResultSet rs) throws SQLException {
+        return new SingleEvent(rs.getLong("event_id"), //NON-NLS
                 rs.getLong("datasource_id"), //NON-NLS
                 rs.getLong("file_id"), //NON-NLS
                 rs.getLong("artifact_id"), //NON-NLS
@@ -1050,7 +1050,7 @@ public class EventDB {
 
         switch (Version.getBuildType()) {
             case DEVELOPMENT:
-                LOGGER.log(Level.INFO, "executing timeline query: {0}", query); //NON-NLS
+//                LOGGER.log(Level.INFO, "executing timeline query: {0}", query); //NON-NLS
                 break;
             case RELEASE:
             default:
@@ -1097,8 +1097,7 @@ public class EventDB {
         Set<Long> hashHits = SQLHelper.unGroupConcat(rs.getString("hash_hits"), Long::valueOf); //NON-NLS
         Set<Long> tagged = SQLHelper.unGroupConcat(rs.getString("taggeds"), Long::valueOf); //NON-NLS
 
-        return new EventCluster(interval, type, eventIDs, hashHits, tagged,
-                description, descriptionLOD);
+        return new EventCluster(interval, type, eventIDs, hashHits, tagged, description, descriptionLOD);
     }
 
     /**
@@ -1159,7 +1158,7 @@ public class EventDB {
 
         for (EventCluster eventCluster : aggEvents) {
             stripeDescMap.merge(ImmutablePair.of(eventCluster.getEventType(), eventCluster.getDescription()),
-                    new EventStripe(eventCluster, null), EventStripe::merge);
+                    new EventStripe(eventCluster), EventStripe::merge);
         }
 
         return stripeDescMap.values().stream().sorted(Comparator.comparing(EventStripe::getStartMillis)).collect(Collectors.toList());
