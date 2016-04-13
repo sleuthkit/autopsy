@@ -98,7 +98,7 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
     @Override
     EventNodeBase<?> createChildNode(EventCluster cluster) {
         if (cluster.getEventIDs().size() == 1) {
-            return new SingleEventNode(getChartLane(), getChartLane().getController().getEventsModel().getEventById(Iterables.getOnlyElement(cluster.getEventIDs())), this);
+            return new SingleEventNode(getChartLane(), getChartLane().getController().getEventsModel().getEventById(Iterables.getOnlyElement(cluster.getEventIDs())).withParent(cluster), this);
         } else {
             return new EventClusterNode(getChartLane(), cluster, this);
         }

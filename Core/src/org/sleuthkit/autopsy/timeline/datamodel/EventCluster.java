@@ -132,6 +132,11 @@ public class EventCluster implements MultiEvent<EventStripe> {
         return Optional.ofNullable(parent);
     }
 
+    @Override
+    public Optional<EventStripe> getParentStripe() {
+        return getParent();
+    }
+
     public Interval getSpan() {
         return span;
     }

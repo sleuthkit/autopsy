@@ -86,7 +86,7 @@ final public class EventsTree extends BorderPane {
     public void setDetailViewPane(DetailViewPane detailViewPane) {
         this.detailViewPane = detailViewPane;
 
-        detailViewPane.getAllEventStripes().addListener((ListChangeListener.Change<? extends EventStripe> c) -> {
+        detailViewPane.getAllNestedEvents().addListener((ListChangeListener.Change<? extends TimeLineEvent> c) -> {
             //on jfx thread
             while (c.next()) {
                 c.getRemoved().forEach(getRoot()::remove);
@@ -112,7 +112,7 @@ final public class EventsTree extends BorderPane {
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void setRoot() {
         RootItem root = new RootItem(TreeComparator.Type.reversed().thenComparing(sortByBox.getSelectionModel().getSelectedItem()));
-        detailViewPane.getAllEventStripes().forEach(root::insert);
+        detailViewPane.getAllNestedEvents().forEach(root::insert);
         eventsTree.setRoot(root);
     }
 

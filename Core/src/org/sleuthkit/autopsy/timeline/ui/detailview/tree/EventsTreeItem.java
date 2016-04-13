@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 import java.util.Comparator;
 import java.util.Deque;
 import javafx.scene.control.TreeItem;
-import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 
@@ -58,9 +57,9 @@ abstract class EventsTreeItem extends TreeItem<TimeLineEvent> {
 
     abstract EventType getEventType();
 
-    abstract void remove(Deque<EventStripe> path);
+    abstract void remove(Deque<TimeLineEvent> path);
 
-    abstract void insert(Deque<EventStripe> path);
+    abstract void insert(Deque<TimeLineEvent> path);
 
     <T extends EventsTreeItem> T configureNewTreeItem(T newTreeItem) {
         newTreeItem.setExpanded(true);

@@ -23,7 +23,6 @@ import java.util.Deque;
 import java.util.function.Supplier;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 
@@ -32,14 +31,14 @@ import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
  */
 class BaseTypeTreeItem extends EventTypeTreeItem<EventsTreeItem> {
 
-    BaseTypeTreeItem(EventStripe stripe, Comparator<TreeItem<TimeLineEvent>> comp) {
+    BaseTypeTreeItem(TimeLineEvent stripe, Comparator<TreeItem<TimeLineEvent>> comp) {
         super(stripe.getEventType().getBaseType(), comp);
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     @Override
-    public void insert(Deque<EventStripe> path) {
-        EventStripe peek = path.peek();
+    public void insert(Deque<TimeLineEvent> path) {
+        TimeLineEvent peek = path.peek();
         Supplier< EventsTreeItem> treeItemConstructor;
         String descriptionKey;
         /*
@@ -51,7 +50,7 @@ class BaseTypeTreeItem extends EventTypeTreeItem<EventsTreeItem> {
             treeItemConstructor = () -> configureNewTreeItem(new SubTypeTreeItem(peek, getComparator()));
         } else {
             descriptionKey = peek.getDescription();
-            EventStripe stripe = path.removeFirst();
+            TimeLineEvent stripe = path.removeFirst();
             treeItemConstructor = () -> configureNewTreeItem(new EventDescriptionTreeItem(stripe, getComparator()));
         }
 
@@ -64,9 +63,9 @@ class BaseTypeTreeItem extends EventTypeTreeItem<EventsTreeItem> {
     }
 
     @Override
-    void remove(Deque<EventStripe> path) {
+    void remove(Deque<TimeLineEvent> path) {
 
-        EventStripe head = path.peek();
+        TimeLineEvent head = path.peek();
 
         EventsTreeItem descTreeItem;
         if (head.getEventType().getZoomLevel() == EventTypeZoomLevel.SUB_TYPE) {
