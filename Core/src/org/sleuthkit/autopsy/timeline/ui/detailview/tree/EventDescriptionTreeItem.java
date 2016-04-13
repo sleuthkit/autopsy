@@ -40,14 +40,14 @@ class EventDescriptionTreeItem extends EventsTreeItem {
      */
     private final Map<String, EventDescriptionTreeItem> childMap = new HashMap<>();
 
-    EventDescriptionTreeItem(EventStripe stripe, Comparator<TreeItem<TimeLineEvent>> comp) {
+    EventDescriptionTreeItem(TimeLineEvent stripe, Comparator<TreeItem<TimeLineEvent>> comp) {
         super(comp);
         setValue(stripe);
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    public void insert(Deque<EventStripe> path) {
-        EventStripe head = path.removeFirst();
+    public void insert(Deque<TimeLineEvent> path) {
+        TimeLineEvent head = path.removeFirst();
         String substringAfter = StringUtils.substringAfter(head.getDescription(), head.getParentStripe().map(EventStripe::getDescription).orElse(""));
         EventDescriptionTreeItem treeItem = childMap.computeIfAbsent(substringAfter,
                 description -> configureNewTreeItem(new EventDescriptionTreeItem(head, getComparator()))
@@ -59,16 +59,19 @@ class EventDescriptionTreeItem extends EventsTreeItem {
     }
 
     @Override
-    void remove(Deque<EventStripe> path) {
-        EventStripe head = path.removeFirst();
+    void remove(Deque<TimeLineEvent> path) {
+        TimeLineEvent head = path.removeFirst();
         String substringAfter = StringUtils.substringAfter(head.getDescription(), head.getParentStripe().map(EventStripe::getDescription).orElse(""));
         EventDescriptionTreeItem descTreeItem = childMap.get(substringAfter);
-        if (path.isEmpty() == false) {
-            descTreeItem.remove(path);
-        }
-        if (descTreeItem.getChildren().isEmpty()) {
-            childMap.remove(head.getDescription());
-            getChildren().remove(descTreeItem);
+        
+        if (descTreeItem != null) {
+            if (path.isEmpty() == false) {
+                descTreeItem.remove(path);
+            }
+            if (descTreeItem.getChildren().isEmpty()) {
+                childMap.remove(substringAfter);
+                getChildren().remove(descTreeItem);
+            }
         }
     }
 

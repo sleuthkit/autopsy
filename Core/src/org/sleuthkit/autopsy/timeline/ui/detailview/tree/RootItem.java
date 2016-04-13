@@ -50,7 +50,7 @@ class RootItem extends EventsTreeItem {
      * @param stripe stripe to add
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    public void insert(EventStripe stripe) {
+    public void insert(TimeLineEvent stripe) {
 
         BaseTypeTreeItem treeItem = childMap.computeIfAbsent(stripe.getEventType().getBaseType(),
                 baseType -> configureNewTreeItem(new BaseTypeTreeItem(stripe, getComparator()))
@@ -58,7 +58,7 @@ class RootItem extends EventsTreeItem {
         treeItem.insert(getTreePath(stripe));
     }
 
-    void remove(EventStripe stripe) {
+    void remove(TimeLineEvent stripe) {
         BaseTypeTreeItem typeTreeItem = childMap.get(stripe.getEventType().getBaseType());
         if (typeTreeItem != null) {
             typeTreeItem.remove(getTreePath(stripe));
@@ -70,8 +70,8 @@ class RootItem extends EventsTreeItem {
         }
     }
 
-    static Deque< EventStripe> getTreePath(EventStripe event) {
-        Deque<EventStripe> path = new ArrayDeque<>();
+    static Deque< TimeLineEvent> getTreePath(TimeLineEvent event) {
+        Deque<TimeLineEvent> path = new ArrayDeque<>();
         path.addFirst(event);
         Optional<EventStripe> parentOptional = event.getParentStripe();
         while (parentOptional.isPresent()) {
@@ -110,12 +110,12 @@ class RootItem extends EventsTreeItem {
     }
 
     @Override
-    void remove(Deque<EventStripe> path) {
+    void remove(Deque<TimeLineEvent> path) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    void insert(Deque<EventStripe> path) {
+    void insert(Deque<TimeLineEvent> path) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

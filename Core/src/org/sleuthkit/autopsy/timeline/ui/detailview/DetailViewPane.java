@@ -114,8 +114,11 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
         });
     }
 
-    public ObservableList<EventStripe> getAllEventStripes() {
-        return chart.getAllNestedEventStripes();
+    /*
+     * gets the tree of event stripes flattened into a list
+     */
+    public ObservableList<TimeLineEvent> getAllNestedEvents() {
+        return chart.getAllNestedEvents();
     }
 
     public ObservableList<TimeLineEvent> getSelectedEvents() {
