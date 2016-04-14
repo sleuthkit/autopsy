@@ -19,8 +19,6 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
@@ -28,12 +26,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 /**
  * EventTreeItem for event types
  */
-abstract class EventTypeTreeItem<T extends EventsTreeItem> extends EventsTreeItem {
-
-    /**
-     * maps a description to the child item of this item with that description
-     */
-    final Map<String, T> childMap = new HashMap<>();
+abstract class EventTypeTreeItem<T, S extends EventsTreeItem<?, ?>> extends EventsTreeItem<T, S> {
 
     private final EventType eventType;
 
@@ -59,5 +52,4 @@ abstract class EventTypeTreeItem<T extends EventsTreeItem> extends EventsTreeIte
     EventType getEventType() {
         return eventType;
     }
-
 }

@@ -29,7 +29,7 @@ import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 /**
  * EventTreeItem for base event types
  */
-class BaseTypeTreeItem extends EventTypeTreeItem<EventsTreeItem> {
+class BaseTypeTreeItem extends EventTypeTreeItem<Object, EventsTreeItem<?, ?>> {
 
     BaseTypeTreeItem(TimeLineEvent stripe, Comparator<TreeItem<TimeLineEvent>> comp) {
         super(stripe.getEventType().getBaseType(), comp);
@@ -39,7 +39,7 @@ class BaseTypeTreeItem extends EventTypeTreeItem<EventsTreeItem> {
     @Override
     public void insert(Deque<TimeLineEvent> path) {
         TimeLineEvent peek = path.peek();
-        Supplier< EventsTreeItem> treeItemConstructor;
+        Supplier< EventsTreeItem<?, ?>> treeItemConstructor;
         String descriptionKey;
         /*
          * if the stripe and this tree item haveS the same type, create an
@@ -51,10 +51,10 @@ class BaseTypeTreeItem extends EventTypeTreeItem<EventsTreeItem> {
         } else {
             descriptionKey = peek.getDescription();
             TimeLineEvent stripe = path.removeFirst();
-            treeItemConstructor = () -> configureNewTreeItem(new EventDescriptionTreeItem(stripe, getComparator()));
+            treeItemConstructor = () -> configureNewTreeItem(new DescriptionTreeItem(stripe, getComparator()));
         }
 
-        EventsTreeItem treeItem = childMap.computeIfAbsent(descriptionKey, key -> treeItemConstructor.get());
+        EventsTreeItem<?, ?> treeItem = childMap.computeIfAbsent(descriptionKey, key -> treeItemConstructor.get());
 
         //insert (rest of) path in to new treeItem
         if (path.isEmpty() == false) {
@@ -67,7 +67,7 @@ class BaseTypeTreeItem extends EventTypeTreeItem<EventsTreeItem> {
 
         TimeLineEvent head = path.peek();
 
-        EventsTreeItem descTreeItem;
+        EventsTreeItem<?, ?> descTreeItem;
         if (head.getEventType().getZoomLevel() == EventTypeZoomLevel.SUB_TYPE) {
             descTreeItem = childMap.get(head.getEventType().getDisplayName());
         } else {
@@ -86,16 +86,4 @@ class BaseTypeTreeItem extends EventTypeTreeItem<EventsTreeItem> {
         }
     }
 
-    @Override
-    public EventsTreeItem findTreeItemForEvent(TimeLineEvent t) {
-
-        for (EventsTreeItem child : childMap.values()) {
-            final EventsTreeItem findTreeItemForEvent = child.findTreeItemForEvent(t);
-            if (findTreeItemForEvent != null) {
-                return findTreeItemForEvent;
-            }
-        }
-
-        return null;
-    }
 }
