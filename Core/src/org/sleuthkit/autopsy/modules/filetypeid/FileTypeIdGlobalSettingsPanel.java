@@ -344,7 +344,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     private void initComponents() {
 
         typesScrollPane = new javax.swing.JScrollPane();
-        typesList = new javax.swing.JList<FileType>();
+        typesList = new javax.swing.JList<>();
         separator = new javax.swing.JSeparator();
         mimeTypeLabel = new javax.swing.JLabel();
         mimeTypeTextField = new javax.swing.JTextField();
@@ -358,7 +358,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        signatureList = new javax.swing.JList<Signature>();
+        signatureList = new javax.swing.JList<>();
         addSigButton = new javax.swing.JButton();
         editSigButton = new javax.swing.JButton();
         deleteSigButton = new javax.swing.JButton();
