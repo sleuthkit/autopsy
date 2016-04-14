@@ -21,8 +21,6 @@ package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 import java.util.ArrayDeque;
 import java.util.Comparator;
 import java.util.Deque;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -31,14 +29,9 @@ import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 
 /**
- *
+ * TreeItem for the root of all the events in the EventsTree.
  */
-class RootItem extends EventsTreeItem {
-
-    /**
-     * maps a description to the child item of this item with that description
-     */
-    private final Map<EventType, BaseTypeTreeItem> childMap = new HashMap<>();
+class RootItem extends EventsTreeItem<EventType, BaseTypeTreeItem> {
 
     RootItem(Comparator<TreeItem<TimeLineEvent>> comp) {
         super(comp);
@@ -86,17 +79,6 @@ class RootItem extends EventsTreeItem {
     void resort(Comparator<TreeItem<TimeLineEvent>> comp, Boolean recursive) {
         setComparator(comp);
         childMap.values().forEach(ti -> ti.resort(comp, true));
-    }
-
-    @Override
-    public EventsTreeItem findTreeItemForEvent(TimeLineEvent t) {
-        for (BaseTypeTreeItem child : childMap.values()) {
-            final EventsTreeItem findTreeItemForEvent = child.findTreeItemForEvent(t);
-            if (findTreeItemForEvent != null) {
-                return findTreeItemForEvent;
-            }
-        }
-        return null;
     }
 
     @Override
