@@ -1,0 +1,324 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package org.sleuthkit.autopsy.modules.hashdatabase;
+
+import java.awt.GridLayout;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import javax.swing.SwingWorker;
+import org.openide.util.Lookup;
+
+/**
+ *
+ * @author root
+ */
+public class UpdateHashSetDialog extends javax.swing.JDialog {
+
+    List<Kurt> kurts = new LinkedList<>();
+
+    /**
+     * Creates new form UpdateHashSetDialog
+     */
+    public UpdateHashSetDialog(java.awt.Frame parent) {
+        super(parent, false);
+        initComponents();
+        initHashSetGrid();
+    }
+
+    private void initHashSetGrid() {
+        Collection<? extends HashSetPreparer> allPreparer = Lookup.getDefault().lookupAll(HashSetPreparer.class);
+        this.providerList.setLayout(new GridLayout(allPreparer.size() + 1, 5));
+        initGrid(this.providerList, allPreparer.size(), 5);
+        for (HashSetPreparer hashSetPreparer : allPreparer) {
+            Kurt k = new Kurt(hashSetPreparer);
+            this.providerList.add(k.getUpdate());
+            this.providerList.add(k.getForceUpdate());
+            this.providerList.add(k.getNameLabel());
+            this.providerList.add(k.getProgressbar());
+            this.providerList.add(k.getSatusLabel());
+            kurts.add(k);
+        }
+    }
+
+    private void initGrid(JPanel panel, int amoutLines, int amoutColumes) {
+        panel.setLayout(new GridLayout(amoutLines + 1, amoutColumes));
+
+        panel.add(createLabel("check for update"));
+        panel.add(createLabel("force Update"));
+        panel.add(createLabel("Provider"));
+        panel.add(createLabel("Progress"));
+        panel.add(createLabel("state"));
+
+    }
+    private static final int MAGIC_NUMBER_1 = 9999;
+    private static final int MAGIC_NUMBER_2 = 50;
+
+    public JLabel createLabel(String message) {
+        JLabel label = new JLabel(message);
+        label.setVisible(true);
+        label.setSize(MAGIC_NUMBER_1, MAGIC_NUMBER_2);
+        return label;
+    }
+
+    class Kurt {
+
+        private static final int MAGIC_NUMBER_1 = 9999;
+        private static final int MAGIC_NUMBER_2 = 50;
+
+        private JLabel nameLabel;
+        private JCheckBox update;
+        private JCheckBox forceUpdate;
+        private JProgressBar progressbar;
+        private JLabel satusLabel;
+        private HashSetPreparer hashSetPreparer;
+
+        public Kurt(HashSetPreparer hashSetPreparer) {
+            this.nameLabel = createLabel(hashSetPreparer.getName());
+            this.update = createCheckBox(true);
+            this.forceUpdate = createCheckBox(false);
+            this.satusLabel = createLabel("initialized");
+            this.progressbar = new JProgressBar(0, 100);
+            this.hashSetPreparer = hashSetPreparer;
+        }
+
+        public JLabel createLabel(String message) {
+            JLabel label = new JLabel(message);
+            label.setVisible(true);
+            label.setSize(MAGIC_NUMBER_1, MAGIC_NUMBER_2);
+            return label;
+        }
+
+        private JCheckBox createCheckBox(boolean marked) {
+            JCheckBox checkBox = new JCheckBox();
+            checkBox.setSelected(marked);
+            return checkBox;
+        }
+
+        /**
+         * @return the update
+         */
+        public JCheckBox getUpdate() {
+            return update;
+        }
+
+        /**
+         * @return the forceUpdate
+         */
+        public JCheckBox getForceUpdate() {
+            return forceUpdate;
+        }
+
+        /**
+         * @param forceUpdate the forceUpdate to set
+         */
+        public void setForceUpdate(JCheckBox forceUpdate) {
+            this.forceUpdate = forceUpdate;
+        }
+
+        /**
+         * @return the label
+         */
+        public JLabel getNameLabel() {
+            return nameLabel;
+        }
+
+        public boolean shouldUpdate() {
+            return update.isSelected();
+        }
+
+        public boolean forceUpdate() {
+            return forceUpdate.isSelected();
+        }
+
+        /**
+         * @return the progressbar
+         */
+        public JProgressBar getProgressbar() {
+            return progressbar;
+        }
+
+        /**
+         * @return the satusLabel
+         */
+        public JLabel getSatusLabel() {
+            return satusLabel;
+        }
+
+        /**
+         * @return the hashSetPreparer
+         */
+        public HashSetPreparer getHashSetPreparer() {
+            return hashSetPreparer;
+        }
+
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        instructionLabel = new javax.swing.JLabel();
+        providerList = new javax.swing.JPanel();
+        startButton = new javax.swing.JButton();
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+
+        org.openide.awt.Mnemonics.setLocalizedText(instructionLabel, org.openide.util.NbBundle.getMessage(UpdateHashSetDialog.class, "UpdateHashSetDialog.instructionLabel.text")); // NOI18N
+
+        javax.swing.GroupLayout providerListLayout = new javax.swing.GroupLayout(providerList);
+        providerList.setLayout(providerListLayout);
+        providerListLayout.setHorizontalGroup(
+            providerListLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
+        providerListLayout.setVerticalGroup(
+            providerListLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 163, Short.MAX_VALUE)
+        );
+
+        org.openide.awt.Mnemonics.setLocalizedText(startButton, org.openide.util.NbBundle.getMessage(UpdateHashSetDialog.class, "UpdateHashSetDialog.startButton.text")); // NOI18N
+        startButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                startButtonActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(20, 20, 20)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(startButton)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(instructionLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 466, Short.MAX_VALUE)
+                        .addComponent(providerList, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addContainerGap(153, Short.MAX_VALUE))
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(21, 21, 21)
+                .addComponent(instructionLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(providerList, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 26, Short.MAX_VALUE)
+                .addComponent(startButton)
+                .addGap(20, 20, 20))
+        );
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void startButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startButtonActionPerformed
+        kurts.stream().forEach((k) -> {
+            new Whatever(k, "/media/disk/hashsets").execute();
+        });
+    }//GEN-LAST:event_startButtonActionPerformed
+
+    class Whatever extends SwingWorker<Object, String> {
+
+        private final Kurt k;
+        private HashSetPreparer hashSetUpdater;
+
+        public Whatever(Kurt k, String Location) {
+            this.k = k;
+            this.hashSetUpdater = k.getHashSetPreparer().createInstance(k.getProgressbar(), Location);
+        }
+
+        @Override
+        protected Object doInBackground() throws Exception {
+            if (!k.forceUpdate()) {
+                if (!hashSetUpdater.newVersionAvailable()) {
+                    publish("No update available");
+                    return null;
+                }
+                updateHashSet();
+            }
+            return null;
+        }
+
+        @Override
+        protected void process(List<String> chunks) {
+            k.getSatusLabel().setText(chunks.get(chunks.size()-1));
+        }
+
+        private void updateHashSet() {
+            try {
+                publish("downloading");
+                hashSetUpdater.download();
+                publish("extracting");
+                hashSetUpdater.extract();
+                publish("indexing");
+                hashSetUpdater.index();
+                publish("finished");
+            } catch (HashSetUpdateException ex) {
+                publish("Error while updating");
+                System.out.println(ex);
+            }
+        }
+    }
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String args[]) {
+        /* Set the Nimbus look and feel */
+        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         */
+        try {
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (ClassNotFoundException ex) {
+            java.util.logging.Logger.getLogger(UpdateHashSetDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (InstantiationException ex) {
+            java.util.logging.Logger.getLogger(UpdateHashSetDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (IllegalAccessException ex) {
+            java.util.logging.Logger.getLogger(UpdateHashSetDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+            java.util.logging.Logger.getLogger(UpdateHashSetDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        }
+        //</editor-fold>
+
+        /* Create and display the dialog */
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                UpdateHashSetDialog dialog = new UpdateHashSetDialog(new javax.swing.JFrame());
+                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                    @Override
+                    public void windowClosing(java.awt.event.WindowEvent e) {
+                        System.exit(0);
+                    }
+                });
+                dialog.setVisible(true);
+            }
+        });
+    }
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel instructionLabel;
+    private javax.swing.JPanel providerList;
+    private javax.swing.JButton startButton;
+    // End of variables declaration//GEN-END:variables
+
+}
