@@ -316,18 +316,22 @@ public class TimeLineController {
      * @param repoBuilder
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private void rebuildRepoHelper(Function<Consumer<Worker.State>, CancellationProgressTask<?>> repoBuilder) {
-        SwingUtilities.invokeLater(this::closeTimelineWindow);
+    private void rebuildRepoHelper(Function<Consumer<Worker.State>, CancellationProgressTask<?>> repoBuilder, Boolean markDBNotStale, Boolean showTimeline) {
+//        SwingUtilities.invokeLater(this::closeTimelineWindow);
         boolean ingestRunning = IngestManager.getInstance().isIngestRunning();
         final CancellationProgressTask<?> rebuildRepository = repoBuilder.apply(newSate -> {
             setIngestRunning(ingestRunning);
             //this will be on JFX thread
             switch (newSate) {
                 case SUCCEEDED:
-                    setEventsDBStale(false);
-                    SwingUtilities.invokeLater(TimeLineController.this::showWindow);
-                    historyManager.reset(filteredEvents.zoomParametersProperty().get());
-                    TimeLineController.this.showFullRange();
+                    if (markDBNotStale) {
+                        setEventsDBStale(false);
+                    }
+                    if (showTimeline) {
+                        SwingUtilities.invokeLater(this::showWindow);
+//                        historyManager.reset(filteredEvents.zoomParametersProperty().get());
+//                        TimeLineController.this.showFullRange();
+                    }
                     break;
                 case FAILED:
                 case CANCELLED:
@@ -343,7 +347,7 @@ public class TimeLineController {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     void rebuildRepo() {
-        rebuildRepoHelper(eventsRepository::rebuildRepository);
+        rebuildRepoHelper(eventsRepository::rebuildRepository, true, true);
     }
 
     /**
@@ -353,7 +357,7 @@ public class TimeLineController {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     void rebuildTagsTable() {
-        rebuildRepoHelper(eventsRepository::rebuildTags);
+        rebuildRepoHelper(eventsRepository::rebuildTags, false, true);
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
@@ -399,22 +403,8 @@ public class TimeLineController {
                 if (promptDialogManager.bringCurrentDialogToFront()) {
                     return;
                 }
-                if (IngestManager.getInstance().isIngestRunning()) {
-                    //confirm timeline during ingest
-                    if (promptDialogManager.confirmDuringIngest() == false) {
-                        return;
-                    }
-                }
 
-                /*
-                 * if the repo was not rebuilt at minimum rebuild the tags which
-                 * may have been updated without our knowing it, since we
-                 * can't/aren't checking them. This should at least be quick.
-                 * //TODO: can we check the tags to see if we need to do this?
-                 */
-                if (checkAndPromptForRebuild() == false) {
-                    rebuildTagsTable();
-                }
+                checkAndPromptForRebuild();
 
             } catch (HeadlessException | MissingResourceException ex) {
                 LOGGER.log(Level.SEVERE, "Unexpected error when generating timeline, ", ex); // NON-NLS //NOI18N
@@ -423,21 +413,35 @@ public class TimeLineController {
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private boolean checkAndPromptForRebuild() {
+    public void checkAndPromptForRebuild() {
+        if (IngestManager.getInstance().isIngestRunning()) {
+            //confirm timeline during ingest
+            if (promptDialogManager.confirmDuringIngest() == false) {
+                return;
+            }
+        }
         //if the repo is empty just (r)ebuild it with out asking,  they can always cancel part way through;
         if (eventsRepository.countAllEvents() == 0) {
             rebuildRepo();
-            return true;
+            return;
         }
 
         ArrayList<String> rebuildReasons = getRebuildReasons();
         if (rebuildReasons.isEmpty() == false) {
             if (promptDialogManager.confirmRebuild(rebuildReasons)) {
                 rebuildRepo();
-                return true;
+            } else {
+                /*
+                 * if the repo was not rebuilt at minimum rebuild the tags which
+                 * may have been updated without our knowing it, since we
+                 * can't/aren't checking them. This should at least be quick.
+                 * //TODO: can we check the tags to see if we need to do this?
+                 */
+                rebuildTagsTable();
             }
+        }else{
+              SwingUtilities.invokeLater(this::showWindow); 
         }
-        return false;
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
@@ -729,7 +733,7 @@ public class TimeLineController {
      * @return true if they agree to rebuild
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private void confirmOutOfDateRebuildIfWindowOpen() throws MissingResourceException, HeadlessException {
+    public void confirmOutOfDateRebuildIfWindowOpen() throws MissingResourceException, HeadlessException {
         if (isWindowOpen()) {
             Platform.runLater(this::checkAndPromptForRebuild);
 
