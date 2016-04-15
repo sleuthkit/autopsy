@@ -1,8 +1,13 @@
 package org.sleuthkit.autopsy.modules.hashdatabase;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.LinkedList;
@@ -16,7 +21,11 @@ import org.openide.util.lookup.ServiceProvider;
 
 public class VirusShareHashSetPreparer extends HashSetPreparer {
 
-    public static String BASE_URL = "http://virusshare.com/hashes/";
+    public static final String BASE_URL = "http://virusshare.com/hashes/";
+    public static final String OUTPUT_FILE_NAME = "VirusShare_combined.md5";
+
+    List<String> downloadedFiles;
+
     private JProgressBar progressbar;
 
     public VirusShareHashSetPreparer() {
@@ -40,31 +49,19 @@ public class VirusShareHashSetPreparer extends HashSetPreparer {
     }
 
     @Override
-    public void download() {
-        URL url;
-        List<URL> urls = new LinkedList<>();
-        try {
-            url = new URL(BASE_URL);
-            InputStream x = url.openConnection().getInputStream();
-            StringBuilder y = new StringBuilder();
-            int f;
-            while ((f = x.read()) != -1) {
-                y.append((char) f);
-            }
-            urls = getLinks(y.toString());
-        } catch (MalformedURLException ex) {
-            Exceptions.printStackTrace(ex);
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-
+    public void download() throws HashSetUpdateException {
+        List<URL> urls = getAllPartUrls(BASE_URL);
         createTargetDircectoryIfNotExists(getDirectory());
+
+        downloadedFiles = new LinkedList<>();
         progressbar.setMaximum(urls.size());
         int counter = 0;
 
-        for (URL u : urls) {
+        for (URL url : urls) {
             try {
-                FileUtils.copyURLToFile(u, new File(getDirectory() + getFileNameFromURL(u.toString())));
+                String fileName = getDirectory() + getFileNameFromURL(url.toString());
+                FileUtils.copyURLToFile(url, new File(fileName));
+                downloadedFiles.add(fileName);
             } catch (IOException ex) {
                 Exceptions.printStackTrace(ex);
             }
@@ -73,9 +70,51 @@ public class VirusShareHashSetPreparer extends HashSetPreparer {
 
     }
 
+    private List<URL> getAllPartUrls(String baseURL) throws HashSetUpdateException {
+        URL url;
+        List<URL> urls = new LinkedList<>();
+        try {
+            url = new URL(baseURL);
+            InputStream inputstream = url.openConnection().getInputStream();
+            StringBuilder baseWebsiteContent = new StringBuilder();
+            int letter;
+            while ((letter = inputstream.read()) != -1) {
+                baseWebsiteContent.append((char) letter);
+            }
+            urls = getLinks(baseWebsiteContent.toString());
+        } catch (IOException ex) {
+            throw new HashSetUpdateException("Error while downloading Virusshare Parts");
+        }
+        return urls;
+    }
+
     @Override
-    public void extract() {
-        return;
+    public void extract() throws HashSetUpdateException {
+        progressbar.setMaximum(downloadedFiles.size());
+        int counter = 0;
+
+        try {
+            PrintWriter targetFile = new PrintWriter(new File(OUTPUT_FILE_NAME));
+
+            for (String fileName : downloadedFiles) {
+                writeValidMd5SumsToTargetFile(fileName, targetFile);
+                progressbar.setValue(counter++);
+            }
+
+        } catch (IOException ex) {
+            throw new HashSetUpdateException("Error while combining Virusshare parts");
+        }
+    }
+
+    private void writeValidMd5SumsToTargetFile(String fileName, PrintWriter targetFile) throws IOException, FileNotFoundException {
+        BufferedReader inputStream;
+        inputStream = new BufferedReader(new InputStreamReader(new FileInputStream(new File(fileName))));
+        String line;
+        while ((line = inputStream.readLine()) != null) {
+            if(line.matches("[a-f0-9]{32}")){
+                targetFile.println(line);
+            }
+        }
     }
 
     @Override
