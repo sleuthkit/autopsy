@@ -60,7 +60,7 @@ public abstract class AbstractFilter implements Filter {
 
     @Override
     public boolean isDisabled() {
-        return disabled.get();
+        return disabledProperty().get();
     }
 
     @Override

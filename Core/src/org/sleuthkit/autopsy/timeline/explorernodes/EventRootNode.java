@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.BaseTypes;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -111,11 +111,11 @@ public class EventRootNode extends DisplayableItemNode {
         @Override
         protected Node createNodeForKey(Long eventID) {
             if (eventID >= 0) {
-                final TimeLineEvent eventById = filteredEvents.getEventById(eventID);
+                final SingleEvent eventById = filteredEvents.getEventById(eventID);
                 try {
                     AbstractFile file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(eventById.getFileID());
                     if (file != null) {
-                        if (eventById.getType().getSuperType() == BaseTypes.FILE_SYSTEM) {
+                        if (eventById.getEventType().getSuperType() == BaseTypes.FILE_SYSTEM) {
                             return new EventNode(eventById, file);
                         } else {
                             BlackboardArtifact blackboardArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(eventById.getArtifactID());

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-15 Basis Technology Corp.
+ * Copyright 2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,101 +18,35 @@
  */
 package org.sleuthkit.autopsy.timeline.datamodel;
 
-import com.google.common.collect.ImmutableMap;
-import javax.annotation.Nullable;
-import javax.annotation.concurrent.Immutable;
+import java.util.Set;
+import java.util.SortedSet;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
-import org.sleuthkit.datamodel.TskData;
 
 /**
- * A single event.
+ *
  */
-@Immutable
-public class TimeLineEvent {
+public interface TimeLineEvent {
 
-    private final long eventID;
-    private final long fileID;
-    private final Long artifactID;
-    private final long dataSourceID;
+    public String getDescription();
 
-    private final long time;
-    private final EventType subType;
-    private final ImmutableMap<DescriptionLoD, String> descriptions;
+    public DescriptionLoD getDescriptionLoD();
 
-    private final TskData.FileKnown known;
-    private final boolean hashHit;
-    private final boolean tagged;
+    Set<Long> getEventIDs();
 
-    public TimeLineEvent(long eventID, long dataSourceID, long objID, @Nullable Long artifactID, long time, EventType type, String fullDescription, String medDescription, String shortDescription, TskData.FileKnown known, boolean hashHit, boolean tagged) {
-        this.eventID = eventID;
-        this.fileID = objID;
-        this.artifactID = artifactID == 0 ? null : artifactID;
-        this.time = time;
-        this.subType = type;
-        descriptions = ImmutableMap.<DescriptionLoD, String>of(DescriptionLoD.FULL, fullDescription,
-                DescriptionLoD.MEDIUM, medDescription,
-                DescriptionLoD.SHORT, shortDescription);
+    Set<Long> getEventIDsWithHashHits();
 
-        this.known = known;
-        this.hashHit = hashHit;
-        this.tagged = tagged;
-        this.dataSourceID = dataSourceID;
+    Set<Long> getEventIDsWithTags();
+
+    EventType getEventType();
+
+    long getEndMillis();
+
+    long getStartMillis();
+
+    default int getSize() {
+        return getEventIDs().size();
     }
 
-    public boolean isTagged() {
-        return tagged;
-    }
-
-    public boolean isHashHit() {
-        return hashHit;
-    }
-
-    @Nullable
-    public Long getArtifactID() {
-        return artifactID;
-    }
-
-    public long getEventID() {
-        return eventID;
-    }
-
-    public long getFileID() {
-        return fileID;
-    }
-
-    /**
-     * @return the time in seconds from unix epoch
-     */
-    public long getTime() {
-        return time;
-    }
-
-    public EventType getType() {
-        return subType;
-    }
-
-    public String getFullDescription() {
-        return getDescription(DescriptionLoD.FULL);
-    }
-
-    public String getMedDescription() {
-        return getDescription(DescriptionLoD.MEDIUM);
-    }
-
-    public String getShortDescription() {
-        return getDescription(DescriptionLoD.SHORT);
-    }
-
-    public TskData.FileKnown getKnown() {
-        return known;
-    }
-
-    public String getDescription(DescriptionLoD lod) {
-        return descriptions.get(lod);
-    }
-
-    public long getDataSourceID() {
-        return dataSourceID;
-    }
+    SortedSet<EventCluster> getClusters();
 }

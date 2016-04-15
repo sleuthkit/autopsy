@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.timeline.filters;
 
+import java.util.Comparator;
 import java.util.Objects;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javafx.collections.FXCollections;
 import javafx.scene.image.Image;
@@ -32,6 +34,8 @@ import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
  * the event type hierarchy with one filter/node for each event type.
  */
 public class TypeFilter extends UnionFilter<TypeFilter> {
+
+    static private final Comparator<TypeFilter> comparator = Comparator.comparing(TypeFilter::getEventType, EventType.getComparator());
 
     /**
      * the event type this filter passes
@@ -52,7 +56,7 @@ public class TypeFilter extends UnionFilter<TypeFilter> {
 
         if (recursive) { // add subfilters for each subtype
             for (EventType subType : et.getSubTypes()) {
-                this.getSubFilters().add(new TypeFilter(subType));
+                addSubFilter(new TypeFilter(subType), comparator);
             }
         }
     }
@@ -96,15 +100,15 @@ public class TypeFilter extends UnionFilter<TypeFilter> {
     @Override
     public TypeFilter copyOf() {
         //make a nonrecursive copy of this filter
-        final TypeFilter typeFilter = new TypeFilter(eventType, false);
-        typeFilter.setSelected(isSelected());
-        typeFilter.setDisabled(isDisabled());
+        final TypeFilter filterCopy = new TypeFilter(eventType, false);
+        filterCopy.setSelected(isSelected());
+        filterCopy.setDisabled(isDisabled());
         //add a copy of each subfilter
-        this.getSubFilters().forEach((TypeFilter t) -> {
-            typeFilter.getSubFilters().add(t.copyOf());
-        });
+        getSubFilters().forEach(typeFilter ->
+                filterCopy.addSubFilter(typeFilter.copyOf(), comparator)
+        );
 
-        return typeFilter;
+        return filterCopy;
     }
 
     @Override
@@ -141,5 +145,10 @@ public class TypeFilter extends UnionFilter<TypeFilter> {
         int hash = 7;
         hash = 67 * hash + Objects.hashCode(this.eventType);
         return hash;
+    }
+
+    @Override
+    Predicate<TypeFilter> getDuplicatePredicate(TypeFilter subfilter) {
+        return t -> subfilter.getEventType().equals(t.eventType);
     }
 }
