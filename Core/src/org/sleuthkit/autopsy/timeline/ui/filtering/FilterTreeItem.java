@@ -79,8 +79,20 @@ final public class FilterTreeItem extends TreeItem<Filter> {
              * disable the subfilters if the compound filter is not active.
              */
             compoundFilter.activeProperty().addListener(activeProperty -> {
-                compoundFilter.getSubFilters().forEach(subFilter -> subFilter.setDisabled(compoundFilter.isActive() == false));
+                disableSubFiltersIfNotActive(compoundFilter);
             });
+
+            disableSubFiltersIfNotActive(compoundFilter);
         }
+    }
+
+    /**
+     * disable the sub-filters of the given compound filter if it is not active
+     *
+     * @param compoundFilter the compound filter
+     */
+    static private void disableSubFiltersIfNotActive(CompoundFilter<?> compoundFilter) {
+        boolean inactive = compoundFilter.isActive() == false;
+        compoundFilter.getSubFilters().forEach(subFilter -> subFilter.setDisabled(inactive));
     }
 }
