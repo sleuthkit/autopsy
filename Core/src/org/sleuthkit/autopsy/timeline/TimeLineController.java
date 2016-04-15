@@ -73,6 +73,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
@@ -317,7 +318,12 @@ public class TimeLineController {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void rebuildRepoHelper(Function<Consumer<Worker.State>, CancellationProgressTask<?>> repoBuilder) {
-        SwingUtilities.invokeLater(this::closeTimelineWindow);
+        if (IngestManager.getInstance().isIngestRunning()) {
+            //confirm timeline during ingest
+            if (promptDialogManager.confirmDuringIngest() == false) {
+                return;
+            }
+        }
         boolean ingestRunning = IngestManager.getInstance().isIngestRunning();
         final CancellationProgressTask<?> rebuildRepository = repoBuilder.apply(newSate -> {
             setIngestRunning(ingestRunning);
@@ -326,8 +332,10 @@ public class TimeLineController {
                 case SUCCEEDED:
                     setEventsDBStale(false);
                     SwingUtilities.invokeLater(TimeLineController.this::showWindow);
-                    historyManager.reset(filteredEvents.zoomParametersProperty().get());
-                    TimeLineController.this.showFullRange();
+                    SwingUtilities.invokeLater(this::showWindow);
+//                        historyManager.reset(filteredEvents.zoomParametersProperty().get());
+//                        TimeLineController.this.showFullRange();
+                    }
                     break;
                 case FAILED:
                 case CANCELLED:
@@ -343,7 +351,7 @@ public class TimeLineController {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     void rebuildRepo() {
-        rebuildRepoHelper(eventsRepository::rebuildRepository);
+        rebuildRepoHelper(eventsRepository::rebuildRepository, true);
     }
 
     /**
@@ -353,7 +361,7 @@ public class TimeLineController {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     void rebuildTagsTable() {
-        rebuildRepoHelper(eventsRepository::rebuildTags);
+        rebuildRepoHelper(eventsRepository::rebuildTags, false);
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
@@ -424,7 +432,14 @@ public class TimeLineController {
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private boolean checkAndPromptForRebuild() {
+        checkAndPromptForRebuild(null);
+    }
+
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    public void checkAndPromptForRebuild(String dataSourceName) {
+
         //if the repo is empty just (r)ebuild it with out asking,  they can always cancel part way through;
+        //if the repo is empty just (re)build it with out asking, they can always cancel part way through
         if (eventsRepository.countAllEvents() == 0) {
             rebuildRepo();
             return true;
@@ -432,10 +447,12 @@ public class TimeLineController {
 
         ArrayList<String> rebuildReasons = getRebuildReasons();
         if (rebuildReasons.isEmpty() == false) {
-            if (promptDialogManager.confirmRebuild(rebuildReasons)) {
+            if (promptDialogManager.confirmRebuild(dataSourceName, rebuildReasons)) {
                 rebuildRepo();
                 return true;
             }
+        } else {
+            SwingUtilities.invokeLater(this::showWindow);
         }
         return false;
     }
@@ -730,8 +747,15 @@ public class TimeLineController {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void confirmOutOfDateRebuildIfWindowOpen() throws MissingResourceException, HeadlessException {
+        rebuildIfWindowOpen(null);
+    }
+
+    /**
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    public void rebuildIfWindowOpen() throws MissingResourceException, HeadlessException {
         if (isWindowOpen()) {
-            Platform.runLater(this::checkAndPromptForRebuild);
+            Platform.runLater(() -> this.checkAndPromptForRebuild(dataSourceName));
 
         }
     }
@@ -768,6 +792,7 @@ public class TimeLineController {
         }
     }
 
+    @Immutable
     private class AutopsyIngestModuleListener implements PropertyChangeListener {
 
         @Override
@@ -804,9 +829,11 @@ public class TimeLineController {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             switch (IngestManager.IngestJobEvent.valueOf(evt.getPropertyName())) {
-                case CANCELLED:
-                case COMPLETED:
-                    SwingUtilities.invokeLater(TimeLineController.this::confirmOutOfDateRebuildIfWindowOpen);
+                case DATA_SOURCE_ANALYSIS_COMPLETED:
+                    //   include data source name in rebuild prompt on ingest completed
+                    DataSourceAnalysisCompletedEvent devt = (DataSourceAnalysisCompletedEvent) evt;
+                    devt.getDataSource().getName();
+                    SwingUtilities.invokeLater(() -> TimeLineController.this.rebuildIfWindowOpen(devt.getDataSource().getName()));
             }
         }
     }

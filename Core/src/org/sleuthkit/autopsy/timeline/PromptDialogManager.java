@@ -33,6 +33,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.image.Image;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.dialog.ProgressDialog;
 import org.controlsfx.tools.Borders;
 import org.openide.util.NbBundle;
@@ -40,8 +41,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 
 /**
- * Manager for the various prompts Timeline shows the user related to rebuilding
- * the database.
+ * Manager for the various prompts and dialogs Timeline shows the user related
+ * to rebuilding the database.
  */
 public class PromptDialogManager {
 
@@ -139,30 +140,47 @@ public class PromptDialogManager {
     boolean confirmDuringIngest() {
         currentDialog = new Alert(Alert.AlertType.CONFIRMATION, Bundle.PromptDialogManager_confirmDuringIngest_contentText(), SHOW_TIMELINE, ButtonType.CANCEL);
         currentDialog.initModality(Modality.APPLICATION_MODAL);
-        currentDialog.setHeaderText(Bundle.PromptDialogManager_confirmDuringIngest_headerText());
-        setDialogIcons(currentDialog);
         currentDialog.setTitle(Bundle.Timeline_confirmation_dialogs_title());
+        setDialogIcons(currentDialog);
+        currentDialog.setHeaderText(Bundle.PromptDialogManager_confirmDuringIngest_headerText());
 
         return currentDialog.showAndWait().map(SHOW_TIMELINE::equals).orElse(false);
     }
 
-    @NbBundle.Messages({"PromptDialogManager.rebuildPrompt.headerText=The Timeline database is incomplete and/or out of date.\nSome events may be missing or inaccurate and some features may be unavailable.",
-        "PromptDialogManager.rebuildPrompt.details=Details:"})
+    @NbBundle.Messages({
+        "PromptDialogManager.rebuildPrompt.headerText=The Timeline database is incomplete and/or out of date.  Some events may be missing or inaccurate and some features may be unavailable.",
+        "# {0} - data source name",
+        "PromptDialogManager.rebuildPrompt.ingestDone=Ingest has finished for {0}.",
+        "PromptDialogManager.rebuildPrompt.details=Details"})
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    boolean confirmRebuild(ArrayList<String> rebuildReasons) {
+    boolean confirmRebuild(String finishedDataSourceName, ArrayList<String> rebuildReasons) {
         currentDialog = new Alert(Alert.AlertType.CONFIRMATION, Bundle.TimeLinecontroller_updateNowQuestion(), UPDATE, CONTINUE_NO_UPDATE);
         currentDialog.initModality(Modality.APPLICATION_MODAL);
-        currentDialog.setHeaderText(Bundle.PromptDialogManager_rebuildPrompt_headerText());
-        setDialogIcons(currentDialog);
         currentDialog.setTitle(Bundle.Timeline_confirmation_dialogs_title());
+        setDialogIcons(currentDialog);
+
+        String headerText = Bundle.PromptDialogManager_rebuildPrompt_headerText();
+        if (StringUtils.isNotBlank(finishedDataSourceName)) {
+            String datasourceMessage = Bundle.PromptDialogManager_rebuildPrompt_ingestDone(finishedDataSourceName);
+            rebuildReasons.add(0, datasourceMessage);
+            headerText = datasourceMessage + "\n\n" + headerText;
+        }
+        currentDialog.setHeaderText(headerText);
 
         DialogPane dialogPane = currentDialog.getDialogPane();
+
         ListView<String> listView = new ListView<>(FXCollections.observableArrayList(rebuildReasons));
         listView.setCellFactory(lstView -> new WrappingListCell());
+
         listView.setMaxHeight(75);
+
         Node wrappedListView = Borders.wrap(listView).lineBorder().title(Bundle.PromptDialogManager_rebuildPrompt_details()).buildAll();
         dialogPane.setExpandableContent(wrappedListView);
-
+        dialogPane.setMaxWidth(500);
         return currentDialog.showAndWait().map(UPDATE::equals).orElse(false);
+    }
+
+    boolean confirmRebuild(ArrayList<String> rebuildReasons) {
+        return confirmRebuild(null, rebuildReasons);
     }
 }
