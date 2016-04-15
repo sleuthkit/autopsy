@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -471,7 +471,8 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         AddFileTypeDialog dialog = new AddFileTypeDialog();
         AddFileTypeDialog.BUTTON_PRESSED result = dialog.getResult();
         if (result == AddFileTypeDialog.BUTTON_PRESSED.OK) {
-            this.typesListModel.addElement(dialog.getFileType());
+            fileTypes.add(dialog.getFileType());
+            updateFileTypesListModel();
         }
 
     }//GEN-LAST:event_newTypeButtonActionPerformed
@@ -490,9 +491,9 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         AddFileTypeDialog dialog = new AddFileTypeDialog(this.typesListModel.get(this.typesList.getSelectedIndex()));
         AddFileTypeDialog.BUTTON_PRESSED result = dialog.getResult();
         if (result == AddFileTypeDialog.BUTTON_PRESSED.OK) {
-            this.typesListModel.remove(selected);
-            this.typesListModel.add(selected, dialog.getFileType());
-            this.typesList.setSelectedIndex(selected);
+            this.fileTypes.remove(selected);
+            this.fileTypes.add(selected, dialog.getFileType());
+            updateFileTypesListModel();
         }
     }//GEN-LAST:event_editTypeButtonActionPerformed
 

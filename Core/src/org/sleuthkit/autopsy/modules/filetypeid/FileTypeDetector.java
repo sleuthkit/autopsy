@@ -203,7 +203,7 @@ public class FileTypeDetector {
          * If the file is a regular file, give precedence to user-defined types.
          */
         if (null == mimeType) {
-            mimeType = detectUserDefinedType(file, addToCaseDb);
+            mimeType = detectUserDefinedType(file);
         }
 
         /*
@@ -279,19 +279,15 @@ public class FileTypeDetector {
 
     /**
      * Determines whether or not the a file matches a user-defined or Autopsy
-     * predefined file type. If postToBlackBoard is true, and a match is found,
-     * and the file type definition calls for an alert on a match, an
-     * interesting file hit artifact is posted to the blackboard.
+     * predefined file type.
      *
      * @param file             The file to test.
-     * @param postToBlackBoard Whether an interesting file hit could be posted
-     *                         to the blackboard.
      *
      * @return The file type name string or null, if no match is detected.
      *
      * @throws TskCoreException
      */
-    private String detectUserDefinedType(AbstractFile file, boolean postToBlackBoard) throws TskCoreException {
+    private String detectUserDefinedType(AbstractFile file) throws TskCoreException {
         for (FileType fileType : userDefinedFileTypes) {
             if (fileType.matches(file)) {
                 return fileType.getMimeType();

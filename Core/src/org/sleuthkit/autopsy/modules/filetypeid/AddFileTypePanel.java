@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ * 
+ * Copyright 2011-2016 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.modules.filetypeid;
 
@@ -17,16 +30,17 @@ import org.sleuthkit.autopsy.modules.filetypeid.AddFileTypeSignatureDialog.BUTTO
 import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
 
 /**
- *
- * @author oliver
+ * Panel for adding or editing file types.
  */
 public class AddFileTypePanel extends javax.swing.JPanel {
+
+    private static final long serialVersionUID = 1L;
 
     private AddFileTypeSignatureDialog addSigDialog;
     private DefaultListModel<FileType.Signature> signaturesListModel;
 
     /**
-     * Creates AddMimeTypePanel for a new File Type
+     * Creates a panel for a new file type.
      */
     AddFileTypePanel() {
         initComponents();
@@ -36,11 +50,21 @@ public class AddFileTypePanel extends javax.swing.JPanel {
         this.enableButtons();
     }
 
+    /**
+     * Creates a panel for editing a file type.
+     *
+     * @param toEdit The file type to edit
+     */
     AddFileTypePanel(FileType toEdit) {
         this();
         this.setComponentValues(toEdit);
     }
 
+    /**
+     * Sets the values of the UI components according to the file type given.
+     *
+     * @param toEdit The file type used to set the components.
+     */
     private void setComponentValues(FileType toEdit) {
         this.mimeTypeTextField.setText(toEdit.getMimeType());
         for (Signature sig : toEdit.getSignatures()) {
@@ -48,6 +72,13 @@ public class AddFileTypePanel extends javax.swing.JPanel {
         }
     }
 
+    /**
+     * Gets the file type defined by this panel, and gives popups for invalid
+     * file types.
+     *
+     * @return The file type defined by this panel, or null if an invalid file
+     *         type is given.
+     */
     @Messages({"AddMimeTypePanel.emptySigList.message=Must have at least one signature.",
         "AddMimeTypePanel.emptySigList.title=Invalid Signature List"})
     FileType getFileType() {
@@ -76,6 +107,10 @@ public class AddFileTypePanel extends javax.swing.JPanel {
 
     }
 
+    /**
+     * Adds the selection listener to the list so that actions are taken based
+     * on whether or not an item in the list of signatures is selected.
+     */
     private void addTypeListSelectionListener() {
         this.signatureList.addListSelectionListener(new ListSelectionListener() {
             @Override
@@ -88,6 +123,10 @@ public class AddFileTypePanel extends javax.swing.JPanel {
         });
     }
 
+    /**
+     * Enables or disables buttons based on whether or not an item in the list
+     * of signatures is selected.
+     */
     private void enableButtons() {
         if (signatureList.getSelectedIndex() == -1) {
             editSigButton.setEnabled(false);
