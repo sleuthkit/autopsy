@@ -216,9 +216,9 @@ public class UpdateHashSetDialog extends javax.swing.JDialog {
                 .addComponent(instructionLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(providerList, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 26, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(startButton)
-                .addGap(20, 20, 20))
+                .addContainerGap(40, Short.MAX_VALUE))
         );
 
         pack();
@@ -263,9 +263,13 @@ public class UpdateHashSetDialog extends javax.swing.JDialog {
                 hashSetUpdater.download();
                 publish("extracting");
                 hashSetUpdater.extract();
+                publish("add HashSet to Autopsy DB");
+                hashSetUpdater.addHashSetToDatabase();
                 publish("indexing");
+                k.progressbar.setIndeterminate(true);
                 hashSetUpdater.index();
                 publish("finished");
+                k.progressbar.setVisible(false);
             } catch (HashSetUpdateException ex) {
                 publish("Error while updating");
                 System.out.println(ex);
