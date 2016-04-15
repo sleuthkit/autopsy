@@ -55,7 +55,7 @@ final public class FilterTreeItem extends TreeItem<Filter> {
         expandedProperty().addListener(expandedProperty -> expansionMap.put(f, isExpanded()));
 
         if (f instanceof CompoundFilter<?>) {
-            CompoundFilter<?> compoundFilter = (CompoundFilter<?>) f;
+            final CompoundFilter<?> compoundFilter = (CompoundFilter<?>) f;
 
             for (Filter subFilter : compoundFilter.getSubFilters()) {
                 getChildren().add(new FilterTreeItem(subFilter, expansionMap));
@@ -69,6 +69,12 @@ final public class FilterTreeItem extends TreeItem<Filter> {
                     }
                 }
             });
+
+            compoundFilter.activeProperty().addListener(activeProperty -> {
+                compoundFilter.getSubFilters().forEach(subFilter -> subFilter.setDisabled(compoundFilter.isActive() == false));
+            });
+
         }
+
     }
 }

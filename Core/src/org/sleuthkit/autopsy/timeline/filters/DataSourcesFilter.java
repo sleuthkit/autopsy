@@ -30,7 +30,12 @@ import org.openide.util.NbBundle;
  */
 public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
 
+    private final BooleanBinding activePropertyOverride;
+    private BooleanBinding disabledPropertyOverride;
+
     public DataSourcesFilter() {
+        disabledPropertyOverride = Bindings.or(super.disabledProperty(), Bindings.size(getSubFilters()).lessThanOrEqualTo(1));
+        activePropertyOverride = super.activeProperty().and(Bindings.not(disabledProperty()));
     }
 
     @Override
@@ -90,17 +95,12 @@ public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
 
     @Override
     public ObservableBooleanValue disabledProperty() {
-        return Bindings.or(super.disabledProperty(), Bindings.size(getSubFilters()).lessThanOrEqualTo(1));
+        return disabledPropertyOverride;
     }
 
     @Override
     public BooleanBinding activeProperty() {
-        return super.activeProperty().and(Bindings.not(disabledProperty()));
-    }
-
-    @Override
-    public boolean isActive() {
-        return activeProperty().get();
+        return activePropertyOverride;
     }
 
     @Override

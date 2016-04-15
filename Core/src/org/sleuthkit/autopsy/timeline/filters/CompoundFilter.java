@@ -33,9 +33,9 @@ import javafx.collections.ObservableList;
  * a {@link CompoundFilter} uses listeners to enforce the following
  * relationships between it and its sub-filters:
  * <ol>
- * <le>if a filter becomes inactive disable all of its subfilters</le>
- * <le>if a sub-filter changes active state set the parent filter active if any
- * of its sub-filters are active.</le>
+ * <le>if a compound filter becomes inactive disable all of its sub-filters</le>
+ * <le>if all of a compound filter's sub-filters become un-selected, un-select
+ * the compound filter.</le>
  * </ol>
  */
 public abstract class CompoundFilter<SubFilterType extends Filter> extends AbstractFilter {
@@ -57,30 +57,22 @@ public abstract class CompoundFilter<SubFilterType extends Filter> extends Abstr
     public CompoundFilter(List<SubFilterType> subFilters) {
         super();
 
-        //listen to changes in list of subfilters and add active state listener to newly added filters
+        //listen to changes in list of subfilters and 
         this.subFilters.addListener((ListChangeListener.Change<? extends SubFilterType> c) -> {
-            while (c.next()) {
+            while (c.next()) { //add active state listener to newly added filters
                 addSubFilterListeners(c.getAddedSubList());
             }
             setSelected(getSubFilters().parallelStream().anyMatch(Filter::isSelected));
         });
 
-        this.selectedProperty().addListener(activeProperty -> {
-            getSubFilters().forEach(subFilter -> subFilter.setDisabled(isActive() == false));
-        });
-        this.disabledProperty().addListener(activeProperty -> {
-            getSubFilters().forEach(subFilter -> subFilter.setDisabled(isActive() == false));
-        });
-
         this.subFilters.setAll(subFilters);
-        getSubFilters().forEach(subFilter -> subFilter.setDisabled(isActive() == false));
     }
 
     private void addSubFilterListeners(List<? extends SubFilterType> newSubfilters) {
         for (SubFilterType sf : newSubfilters) {
-            //if a subfilter changes active state
+            //if a subfilter changes selected state
             sf.selectedProperty().addListener((Observable observable) -> {
-                //set this filter acttive af any of the subfilters are active.
+                //set this filter selected af any of the subfilters are selected.
                 setSelected(getSubFilters().parallelStream().anyMatch(Filter::isSelected));
             });
         }

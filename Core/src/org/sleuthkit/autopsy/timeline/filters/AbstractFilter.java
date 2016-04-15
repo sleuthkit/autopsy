@@ -70,7 +70,7 @@ public abstract class AbstractFilter implements Filter {
 
     @Override
     public boolean isActive() {
-        return activeProperty.get();
+        return activeProperty().get();
     }
 
     @Override
