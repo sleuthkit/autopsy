@@ -15,6 +15,8 @@ import static org.sleuthkit.autopsy.modules.hashdatabase.NSRLHashSetPreparer.BUF
 public abstract class HashSetPreparer {
 
     protected String outputDirectory;
+    protected String extractedFile;
+    private HashDbManager.HashDb hashDatabase;
 
     protected HashSetPreparer(String outputDirectory) {
         this.outputDirectory = outputDirectory;
@@ -35,6 +37,16 @@ public abstract class HashSetPreparer {
     public abstract String getName();
 
     public abstract boolean newVersionAvailable();
+
+    public void addHashSetToDatabase() throws HashSetUpdateException {
+        try {
+            this.hashDatabase = HashDbManager.getInstance().addExistingHashDatabase(getName(), extractedFile, true, false, getHashSetType());
+        } catch (HashDbManager.HashDbManagerException ex) {
+
+            throw new HashSetUpdateException("Error while adding HashSet to Autopsy DB");
+        }
+
+    }
 
     protected static void createTargetDircectoryIfNotExists(String directory) {
         File directoryObject = new File(directory);
