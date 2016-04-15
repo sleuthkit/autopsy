@@ -28,7 +28,11 @@ public abstract class HashSetPreparer {
 
     public abstract void extract() throws HashSetUpdateException;
 
-    public abstract void index() throws HashSetUpdateException;
+    public void index() throws HashSetUpdateException { 
+        HashDbManager.getInstance().indexHashDatabase(this.hashDatabase);
+    }
+
+    public abstract HashDbManager.HashDb.KnownFilesType getHashSetType();
 
     /**
      *
