@@ -84,6 +84,10 @@ final public class FilterSetPanel extends BorderPane {
     private final FilteredEventsModel filteredEvents;
     private final TimeLineController controller;
 
+    /**
+     * map from filter to its expansion state in the ui, used to restore the
+     * expansion state as we navigate back and forward in the history
+     */
     private final ObservableMap<Filter, Boolean> expansionMap = FXCollections.observableHashMap();
     private double dividerPosition;
 
@@ -112,6 +116,7 @@ final public class FilterSetPanel extends BorderPane {
         legendColumn.setCellValueFactory(cellDataFeatures -> cellDataFeatures.getValue().valueProperty());
         legendColumn.setCellFactory(col -> new LegendCell(this.controller));
 
+        //type is the only filter expanded initialy
         expansionMap.put(controller.getEventsModel().getFilter().getTypeFilter(), true);
 
         this.filteredEvents.eventTypeZoomProperty().addListener((Observable observable) -> applyFilters());

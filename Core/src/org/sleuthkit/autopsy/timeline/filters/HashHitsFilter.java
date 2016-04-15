@@ -43,9 +43,8 @@ public class HashHitsFilter extends UnionFilter<HashSetFilter> {
     public HashHitsFilter copyOf() {
         HashHitsFilter filterCopy = new HashHitsFilter();
         //add a copy of each subfilter
-        this.getSubFilters().forEach(hashSetFilter ->
-                filterCopy.addSubFilter(hashSetFilter.copyOf())
-        );
+        this.getSubFilters().forEach(hashSetFilter -> filterCopy.addSubFilter(hashSetFilter.copyOf()));
+        //these need to happen after the listeners fired by adding the subfilters 
         filterCopy.setSelected(isSelected());
         filterCopy.setDisabled(isDisabled());
 

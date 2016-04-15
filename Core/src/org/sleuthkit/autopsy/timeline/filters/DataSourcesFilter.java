@@ -30,21 +30,21 @@ import org.openide.util.NbBundle;
  */
 public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
 
+    //keep references to the overridden properties so they don't get GC'd
     private final BooleanBinding activePropertyOverride;
-    private BooleanBinding disabledPropertyOverride;
+    private final BooleanBinding disabledPropertyOverride;
 
     public DataSourcesFilter() {
         disabledPropertyOverride = Bindings.or(super.disabledProperty(), Bindings.size(getSubFilters()).lessThanOrEqualTo(1));
-        activePropertyOverride = super.activeProperty().and(Bindings.not(disabledProperty()));
+        activePropertyOverride = super.activeProperty().and(Bindings.not(disabledPropertyOverride));
     }
 
     @Override
     public DataSourcesFilter copyOf() {
         final DataSourcesFilter filterCopy = new DataSourcesFilter();
         //add a copy of each subfilter
-        getSubFilters().forEach(dataSourceFilter ->
-                filterCopy.addSubFilter(dataSourceFilter.copyOf())
-        );
+        getSubFilters().forEach(dataSourceFilter -> filterCopy.addSubFilter(dataSourceFilter.copyOf()));
+        //these need to happen after the listeners fired by adding the subfilters 
         filterCopy.setSelected(isSelected());
         filterCopy.setDisabled(isDisabled());
 
