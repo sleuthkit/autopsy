@@ -51,6 +51,11 @@ public class SingleEvent implements TimeLineEvent {
     private final boolean hashHit;
     private final boolean tagged;
 
+    /**
+     * Single events may or may not have their parent set, since that is a
+     * transient property of the current (details ) view. The parent may be any
+     * kind of MultiEvent.
+     */
     private MultiEvent<?> parent = null;
 
     public SingleEvent(long eventID, long dataSourceID, long objID, @Nullable Long artifactID, long time, EventType type, String fullDescription, String medDescription, String shortDescription, TskData.FileKnown known, boolean hashHit, boolean tagged) {

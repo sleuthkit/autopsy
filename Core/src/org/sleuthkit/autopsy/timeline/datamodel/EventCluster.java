@@ -127,13 +127,26 @@ public class EventCluster implements MultiEvent<EventStripe> {
         this(spanningInterval, type, eventIDs, hashHits, tagged, description, lod, null);
     }
 
+    /**
+     * get the EventStripe (if any) that contains this cluster
+     *
+     * @return an Optional containg the parent stripe of this cluster, or is
+     *         empty if the cluster has no parent set.
+     */
     @Override
     public Optional<EventStripe> getParent() {
         return Optional.ofNullable(parent);
     }
 
+    /**
+     * get the EventStripe (if any) that contains this cluster
+     *
+     * @return an Optional containg the parent stripe of this cluster, or is
+     *         empty if the cluster has no parent set.
+     */
     @Override
     public Optional<EventStripe> getParentStripe() {
+        //since this clusters parent must be an event stripe just delegate to getParent();
         return getParent();
     }
 
