@@ -43,25 +43,21 @@ class FileType implements Serializable {
     private static final long serialVersionUID = 1L;
     private final String mimeType;
     private final List<Signature> signatures;
-    private final String interestingFilesSetName;
-    private final boolean alert;
 
     /**
-     * Creates a representation of a file type characterized by file
-     * signatures.
+     * Creates a representation of a file type characterized by file signatures.
      *
-     * @param mimeType     The mime type to associate with this file type.
-     * @param signatures    The signatures that characterize this file type.
-     * @param filesSetName The name of an interesting files set that includes
-     *                     files of this type, may be the empty string.
-     * @param alert        Whether the user wishes to be alerted when a file
-     *                     matching this type is encountered.
+     * @param mimeType   The mime type to associate with this file type.
+     * @param signatures The signatures that characterize this file type.
+     *
+     * @throws IllegalArgumentException If an empty list of signatures is given.
      */
-    FileType(String mimeType, List<Signature> signatures, String filesSetName, boolean alert) {
+    FileType(String mimeType, List<Signature> signatures) throws IllegalArgumentException {
+        if (signatures.isEmpty()) {
+            throw new IllegalArgumentException("Must have at least one signature.");
+        }
         this.mimeType = mimeType;
         this.signatures = new ArrayList<>(signatures);
-        this.interestingFilesSetName = filesSetName;
-        this.alert = alert;
     }
 
     /**
@@ -82,6 +78,11 @@ class FileType implements Serializable {
         return Collections.unmodifiableList(this.signatures);
     }
 
+    /**
+     * Adds a signature to the file type
+     *
+     * @param sig The signature to add
+     */
     void addSignature(Signature sig) {
         this.signatures.add(sig);
     }
@@ -100,26 +101,6 @@ class FileType implements Serializable {
             }
         }
         return true;
-    }
-
-    /**
-     * Indicates whether or not an alert is desired if a file of this type is
-     * encountered.
-     *
-     * @return True or false.
-     */
-    boolean alertOnMatch() {
-        return alert;
-    }
-
-    /**
-     * Gets the name of an interesting files set that includes files of this
-     * type.
-     *
-     * @return The interesting files set name, possibly empty.
-     */
-    String getFilesSetName() {
-        return interestingFilesSetName;
     }
 
     @Override
@@ -378,7 +359,7 @@ class FileType implements Serializable {
             } else {
                 startOrEnd = "end";
             }
-            return  signatureBytesString + ", " + offset + " bytes from " + startOrEnd;
+            return signatureBytesString + ", " + offset + " bytes from " + startOrEnd;
 
         }
     }
