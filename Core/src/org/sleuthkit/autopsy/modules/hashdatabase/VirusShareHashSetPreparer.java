@@ -94,7 +94,7 @@ public class VirusShareHashSetPreparer extends HashSetPreparer {
         int counter = 0;
 
         try {
-            PrintWriter targetFile = new PrintWriter(new File(OUTPUT_FILE_NAME));
+            PrintWriter targetFile = new PrintWriter(new File(getDirectory() + OUTPUT_FILE_NAME));
 
             for (String fileName : downloadedFiles) {
                 writeValidMd5SumsToTargetFile(fileName, targetFile);
@@ -104,6 +104,7 @@ public class VirusShareHashSetPreparer extends HashSetPreparer {
         } catch (IOException ex) {
             throw new HashSetUpdateException("Error while combining Virusshare parts");
         }
+        extractedFile = getDirectory() + OUTPUT_FILE_NAME;
     }
 
     private void writeValidMd5SumsToTargetFile(String fileName, PrintWriter targetFile) throws IOException, FileNotFoundException {
@@ -111,7 +112,7 @@ public class VirusShareHashSetPreparer extends HashSetPreparer {
         inputStream = new BufferedReader(new InputStreamReader(new FileInputStream(new File(fileName))));
         String line;
         while ((line = inputStream.readLine()) != null) {
-            if(line.matches("[a-f0-9]{32}")){
+            if (line.matches("[a-f0-9]{32}")) {
                 targetFile.println(line);
             }
         }
@@ -138,6 +139,11 @@ public class VirusShareHashSetPreparer extends HashSetPreparer {
             }
         }
         return result;
+    }
+
+    @Override
+    public HashDbManager.HashDb.KnownFilesType getHashSetType() {
+        return HashDbManager.HashDb.KnownFilesType.KNOWN_BAD;
     }
 
 }
