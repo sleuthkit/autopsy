@@ -51,6 +51,11 @@ public class SingleEvent implements TimeLineEvent {
     private final boolean hashHit;
     private final boolean tagged;
 
+    /**
+     * Single events may or may not have their parent set, since that is a
+     * transient property of the current (details ) view. The parent may be any
+     * kind of MultiEvent.
+     */
     private MultiEvent<?> parent = null;
 
     public SingleEvent(long eventID, long dataSourceID, long objID, @Nullable Long artifactID, long time, EventType type, String fullDescription, String medDescription, String shortDescription, TskData.FileKnown known, boolean hashHit, boolean tagged) {
@@ -195,6 +200,14 @@ public class SingleEvent implements TimeLineEvent {
         return DescriptionLoD.FULL;
     }
 
+    /**
+     * get the EventStripe (if any) that contains this event, skipping over any
+     * intervening event cluster
+     *
+     * @return an Optional containing the parent stripe of this cluster. is
+     *         empty if the cluster has no parent set or the parent has no
+     *         parent stripe.
+     */
     @Override
     public Optional<EventStripe> getParentStripe() {
         if (parent == null) {

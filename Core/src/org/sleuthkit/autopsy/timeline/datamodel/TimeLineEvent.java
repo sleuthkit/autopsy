@@ -33,6 +33,12 @@ public interface TimeLineEvent {
 
     public DescriptionLoD getDescriptionLoD();
 
+    /**
+     * get the EventStripe (if any) that contains this event
+     *
+     * @return an Optional containing the parent stripe of this event, or is
+     *         empty if the event has no parent stripe.
+     */
     public Optional<EventStripe> getParentStripe();
 
     Set<Long> getEventIDs();
