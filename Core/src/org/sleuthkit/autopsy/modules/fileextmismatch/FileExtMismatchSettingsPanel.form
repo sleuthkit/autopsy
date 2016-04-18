@@ -16,12 +16,15 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="jScrollPane1" alignment="0" pref="792" max="32767" attributes="0"/>
+          <Component id="jScrollPane1" alignment="0" pref="838" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="jScrollPane1" min="-2" pref="482" max="-2" attributes="0"/>
+          <Group type="102" attributes="0">
+              <Component id="jScrollPane1" min="-2" pref="482" max="-2" attributes="0"/>
+              <EmptySpace pref="18" max="32767" attributes="0"/>
+          </Group>
       </Group>
     </DimensionLayout>
   </Layout>
@@ -90,9 +93,7 @@
                           <Group type="102" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="jScrollPane2" pref="409" max="32767" attributes="0"/>
-                                  <Component id="mimeRemoveErrLabel" alignment="0" max="32767" attributes="0"/>
-                                  <Component id="mimeErrLabel" alignment="1" max="32767" attributes="0"/>
+                                  <Component id="jScrollPane2" pref="0" max="32767" attributes="0"/>
                                   <Group type="102" attributes="0">
                                       <Group type="103" groupAlignment="0" attributes="0">
                                           <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
@@ -106,6 +107,7 @@
                                       </Group>
                                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                                   </Group>
+                                  <Component id="mimeErrLabel" alignment="0" max="32767" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                           </Group>
@@ -117,17 +119,16 @@
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jScrollPane2" min="-2" pref="360" max="-2" attributes="0"/>
+                              <Component id="jScrollPane2" min="-2" pref="374" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="mimeRemoveErrLabel" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                              <Component id="mimeErrLabel" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="32767" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="userTypeTextField" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="addTypeButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="removeTypeButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="removeTypeButton" alignment="1" min="-2" pref="25" max="-2" attributes="0"/>
                               </Group>
+                              <EmptySpace max="32767" attributes="0"/>
+                              <Component id="mimeErrLabel" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -199,13 +200,6 @@
                         </Property>
                       </Properties>
                     </Component>
-                    <Component class="javax.swing.JLabel" name="mimeRemoveErrLabel">
-                      <Properties>
-                        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                          <ResourceString bundle="org/sleuthkit/autopsy/modules/fileextmismatch/Bundle.properties" key="FileExtMismatchSettingsPanel.mimeRemoveErrLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-                        </Property>
-                      </Properties>
-                    </Component>
                   </SubComponents>
                 </Container>
                 <Container class="javax.swing.JPanel" name="extensionPanel">
@@ -221,26 +215,20 @@
                           <Group type="102" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="jScrollPane3" pref="326" max="32767" attributes="0"/>
-                                  <Group type="102" alignment="0" attributes="0">
-                                      <Component id="extRemoveErrLabel" max="32767" attributes="0"/>
-                                      <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="extErrorLabel" max="32767" attributes="0"/>
-                                  </Group>
                                   <Group type="102" attributes="0">
                                       <Component id="extHeaderLabel" min="-2" pref="324" max="-2" attributes="0"/>
-                                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                                      <EmptySpace pref="37" max="32767" attributes="0"/>
                                   </Group>
+                                  <Component id="extErrorLabel" alignment="0" max="32767" attributes="0"/>
+                                  <Component id="jScrollPane3" alignment="0" pref="0" max="32767" attributes="0"/>
                                   <Group type="102" alignment="1" attributes="0">
-                                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                                      <Component id="userExtTextField" min="-2" pref="50" max="-2" attributes="0"/>
+                                      <Component id="userExtTextField" max="32767" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="addExtButton" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace max="-2" attributes="0"/>
+                                      <EmptySpace min="-2" pref="4" max="-2" attributes="0"/>
                                       <Component id="removeExtButton" min="-2" max="-2" attributes="0"/>
                                   </Group>
                               </Group>
-                              <EmptySpace max="-2" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -249,19 +237,17 @@
                           <Group type="102" alignment="1" attributes="0">
                               <EmptySpace min="-2" max="-2" attributes="0"/>
                               <Component id="extHeaderLabel" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace min="-2" max="-2" attributes="0"/>
-                              <Component id="jScrollPane3" pref="373" max="32767" attributes="0"/>
-                              <EmptySpace min="-2" pref="15" max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="3" attributes="0">
-                                  <Component id="extErrorLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="extRemoveErrLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                              </Group>
-                              <EmptySpace min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="jScrollPane3" pref="367" max="32767" attributes="0"/>
+                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="userExtTextField" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="addExtButton" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="removeExtButton" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
+                              <EmptySpace min="-2" pref="5" max="-2" attributes="0"/>
+                              <Component id="extErrorLabel" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -330,13 +316,6 @@
                         </Property>
                         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                           <ResourceString bundle="org/sleuthkit/autopsy/modules/fileextmismatch/Bundle.properties" key="FileExtMismatchSettingsPanel.extErrorLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-                        </Property>
-                      </Properties>
-                    </Component>
-                    <Component class="javax.swing.JLabel" name="extRemoveErrLabel">
-                      <Properties>
-                        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                          <ResourceString bundle="org/sleuthkit/autopsy/modules/fileextmismatch/Bundle.properties" key="FileExtMismatchSettingsPanel.extRemoveErrLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                         </Property>
                       </Properties>
                     </Component>

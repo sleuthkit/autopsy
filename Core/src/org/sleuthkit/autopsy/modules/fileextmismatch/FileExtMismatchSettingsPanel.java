@@ -92,10 +92,14 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
                     updateExtList();
 
                     extTableModel.resync();
+                    removeTypeButton.setEnabled(true);
+                    addExtButton.setEnabled(true);
                     //initButtons();
                 } else {
                     selectedMime = "";
                     currentExtensions = null;
+                    removeTypeButton.setEnabled(false);
+                    addExtButton.setEnabled(false);
                     extTableModel.resync();
                 }
 
@@ -114,21 +118,21 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
                     listSelectionModel.setSelectionInterval(index, index);
 
                     selectedExt = currentExtensions.get(index);
+                    removeExtButton.setEnabled(true);
                 } else {
                     selectedExt = "";
+                    removeExtButton.setEnabled(false);
                 }
-
-                extRemoveErrLabel.setText(" ");
 
             }
         });
-
+        removeExtButton.setEnabled(false);
+        removeTypeButton.setEnabled(false);
+        addExtButton.setEnabled(false);
     }
 
     private void clearErrLabels() {
         mimeErrLabel.setText(" ");
-        mimeRemoveErrLabel.setText(" ");
-        extRemoveErrLabel.setText(" ");
         extErrorLabel.setText(" ");
         saveMsgLabel.setText(" ");
     }
@@ -152,7 +156,6 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         addTypeButton = new javax.swing.JButton();
         removeTypeButton = new javax.swing.JButton();
         mimeErrLabel = new javax.swing.JLabel();
-        mimeRemoveErrLabel = new javax.swing.JLabel();
         extensionPanel = new javax.swing.JPanel();
         userExtTextField = new javax.swing.JTextField();
         addExtButton = new javax.swing.JButton();
@@ -161,7 +164,6 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         removeExtButton = new javax.swing.JButton();
         extHeaderLabel = new javax.swing.JLabel();
         extErrorLabel = new javax.swing.JLabel();
-        extRemoveErrLabel = new javax.swing.JLabel();
         saveMsgLabel = new javax.swing.JLabel();
 
         jScrollPane1.setBorder(null);
@@ -201,8 +203,6 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         mimeErrLabel.setForeground(new java.awt.Color(255, 0, 0));
         mimeErrLabel.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.mimeErrLabel.text")); // NOI18N
 
-        mimeRemoveErrLabel.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.mimeRemoveErrLabel.text")); // NOI18N
-
         javax.swing.GroupLayout mimePanelLayout = new javax.swing.GroupLayout(mimePanel);
         mimePanel.setLayout(mimePanelLayout);
         mimePanelLayout.setHorizontalGroup(
@@ -210,9 +210,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
             .addGroup(mimePanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(mimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 409, Short.MAX_VALUE)
-                    .addComponent(mimeRemoveErrLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(mimeErrLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .addGroup(mimePanelLayout.createSequentialGroup()
                         .addGroup(mimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel1)
@@ -222,7 +220,8 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
                                 .addComponent(addTypeButton)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(removeTypeButton)))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(mimeErrLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         mimePanelLayout.setVerticalGroup(
@@ -231,16 +230,15 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
                 .addContainerGap()
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 360, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 374, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(mimeRemoveErrLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(mimeErrLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(mimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(userTypeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(addTypeButton)
-                    .addComponent(removeTypeButton)))
+                    .addComponent(removeTypeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(mimeErrLabel)
+                .addContainerGap())
         );
 
         jSplitPane1.setLeftComponent(mimePanel);
@@ -276,8 +274,6 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         extErrorLabel.setForeground(new java.awt.Color(255, 0, 0));
         extErrorLabel.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.extErrorLabel.text")); // NOI18N
 
-        extRemoveErrLabel.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.extRemoveErrLabel.text")); // NOI18N
-
         javax.swing.GroupLayout extensionPanelLayout = new javax.swing.GroupLayout(extensionPanel);
         extensionPanel.setLayout(extensionPanelLayout);
         extensionPanelLayout.setHorizontalGroup(
@@ -285,22 +281,17 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
             .addGroup(extensionPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(extensionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 326, Short.MAX_VALUE)
-                    .addGroup(extensionPanelLayout.createSequentialGroup()
-                        .addComponent(extRemoveErrLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(extErrorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(extensionPanelLayout.createSequentialGroup()
                         .addComponent(extHeaderLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 324, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE))
+                        .addContainerGap(37, Short.MAX_VALUE))
+                    .addComponent(extErrorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, extensionPanelLayout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(userExtTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(userExtTextField)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(addExtButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(removeExtButton)))
-                .addContainerGap())
+                        .addGap(4, 4, 4)
+                        .addComponent(removeExtButton))))
         );
         extensionPanelLayout.setVerticalGroup(
             extensionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -308,16 +299,15 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
                 .addContainerGap()
                 .addComponent(extHeaderLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 373, Short.MAX_VALUE)
-                .addGap(15, 15, 15)
-                .addGroup(extensionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(extErrorLabel)
-                    .addComponent(extRemoveErrLabel))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 367, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(extensionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(userExtTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(addExtButton)
-                    .addComponent(removeExtButton)))
+                    .addComponent(removeExtButton))
+                .addGap(5, 5, 5)
+                .addComponent(extErrorLabel)
+                .addContainerGap())
         );
 
         jSplitPane1.setRightComponent(extensionPanel);
@@ -353,11 +343,13 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 792, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 838, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 482, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 482, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(18, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -394,14 +386,6 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         // Refresh table
         updateExtList();
         extTableModel.resync();
-
-        // user feedback for successful add
-        extErrorLabel.setForeground(Color.blue);
-        extErrorLabel.setText(
-                NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.addExtButton.errLabel.extAdded",
-                        newExt));
-        extRemoveErrLabel.setText(" ");
-        userExtTextField.setText("");
         setIsModified();
     }//GEN-LAST:event_addExtButtonActionPerformed
 
@@ -438,13 +422,6 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         // Refresh table
         updateMimeList();
         mimeTableModel.resync();
-
-        // user feedback for successful add
-        //selectByMimeString(newMime);
-        mimeErrLabel.setForeground(Color.blue);
-        mimeErrLabel.setText(
-                NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.addTypeButton.mimeTypeAdded", newMime));
-        mimeRemoveErrLabel.setText(" ");
         userTypeTextField.setText("");
         setIsModified();
     }//GEN-LAST:event_addTypeButtonActionPerformed
@@ -459,8 +436,8 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
 
     private void removeTypeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeTypeButtonActionPerformed
         if (selectedMime.isEmpty()) {
-            mimeRemoveErrLabel.setForeground(Color.red);
-            mimeRemoveErrLabel.setText(
+            mimeErrLabel.setForeground(Color.red);
+            mimeErrLabel.setText(
                     NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.removeTypeButton.noneSelected"));
             return;
         }
@@ -471,18 +448,13 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         // Refresh table
         updateMimeList();
         mimeTableModel.resync();
-
-        // user feedback for successful add
-        mimeRemoveErrLabel.setForeground(Color.blue);
-        mimeRemoveErrLabel.setText(
-                NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.remoteTypeButton.deleted", deadMime));
         setIsModified();
     }//GEN-LAST:event_removeTypeButtonActionPerformed
 
     private void removeExtButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeExtButtonActionPerformed
         if (selectedExt.isEmpty()) {
-            extRemoveErrLabel.setForeground(Color.red);
-            extRemoveErrLabel.setText(
+            extErrorLabel.setForeground(Color.red);
+            extErrorLabel.setText(
                     NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.removeExtButton.noneSelected"));
             return;
         }
@@ -504,11 +476,6 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         // Refresh tables        
         updateExtList();
         extTableModel.resync();
-
-        // user feedback for successful add
-        extRemoveErrLabel.setForeground(Color.blue);
-        extRemoveErrLabel.setText(
-                NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.removeExtButton.deleted", deadExt));
         setIsModified();
     }//GEN-LAST:event_removeExtButtonActionPerformed
 
@@ -535,8 +502,6 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
     public void saveSettings() {
         if (FileExtMismatchXML.getDefault().save(editableMap)) {
             mimeErrLabel.setText(" ");
-            mimeRemoveErrLabel.setText(" ");
-            extRemoveErrLabel.setText(" ");
             extErrorLabel.setText(" ");
 
             saveMsgLabel.setText(NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.store.msg"));
@@ -588,7 +553,6 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
     private javax.swing.JButton addTypeButton;
     private javax.swing.JLabel extErrorLabel;
     private javax.swing.JLabel extHeaderLabel;
-    private javax.swing.JLabel extRemoveErrLabel;
     private javax.swing.JTable extTable;
     private javax.swing.JPanel extensionPanel;
     private javax.swing.JLabel jLabel1;
@@ -599,7 +563,6 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JLabel mimeErrLabel;
     private javax.swing.JPanel mimePanel;
-    private javax.swing.JLabel mimeRemoveErrLabel;
     private javax.swing.JTable mimeTable;
     private javax.swing.JButton removeExtButton;
     private javax.swing.JButton removeTypeButton;
