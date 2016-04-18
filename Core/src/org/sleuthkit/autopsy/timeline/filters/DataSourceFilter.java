@@ -43,7 +43,7 @@ public class DataSourceFilter extends AbstractFilter {
 
     @Override
     synchronized public DataSourceFilter copyOf() {
-        DataSourceFilter filterCopy = new DataSourceFilter(getDisplayName(), getDataSourceID());
+        DataSourceFilter filterCopy = new DataSourceFilter(getDataSourceName(), getDataSourceID());
         filterCopy.setSelected(isSelected());
         filterCopy.setDisabled(isDisabled());
         return filterCopy;
@@ -51,7 +51,7 @@ public class DataSourceFilter extends AbstractFilter {
 
     @Override
     public String getDisplayName() {
-        return dataSourceName;
+        return getDataSourceName();
     }
 
     @Override

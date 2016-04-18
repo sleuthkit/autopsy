@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -121,5 +121,9 @@ public class RootFilter extends IntersectionFilter<Filter> {
                 return true;
             }
         };
+    }
+
+    public TypeFilter getTypeFilter() {
+        return typeFilter;
     }
 }
