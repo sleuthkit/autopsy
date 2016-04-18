@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -530,14 +530,15 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
 
     @Override
     public void saveSettings() {
-        if (FileExtMismatchXML.getDefault().save(editableMap)) {
+        try {
+            FileExtMismatchSettings.writeSettings(new FileExtMismatchSettings(editableMap));
             mimeErrLabel.setText(" ");
             mimeRemoveErrLabel.setText(" ");
             extRemoveErrLabel.setText(" ");
             extErrorLabel.setText(" ");
 
             saveMsgLabel.setText(NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.store.msg"));
-        } else {
+        } catch (FileExtMismatchSettings.FileExtMismatchSettingsException ex) {
             //error
             JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(this.getClass(),
@@ -550,9 +551,20 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
 
     @Override
     public void load() {
-        // Load the XML into a buffer that the user can modify. They can choose
-        // to save it back to the file after making changes.
-        editableMap = FileExtMismatchXML.getDefault().load();
+        try {
+            // Load the configuration into a buffer that the user can modify. They can choose
+            // to save it back to the file after making changes.
+            editableMap = FileExtMismatchSettings.readSettings().getMimeTypeToExtsMap();
+
+        } catch (FileExtMismatchSettings.FileExtMismatchSettingsException ex) {
+            //error
+            JOptionPane.showMessageDialog(this,
+                    NbBundle.getMessage(this.getClass(),
+                            "AddFileExtensionAction.msgDlg.msg2"),
+                    NbBundle.getMessage(this.getClass(),
+                            "FileExtMismatchConfigPanel.save.msgDlg.title"),
+                    JOptionPane.ERROR_MESSAGE);
+        }
         updateMimeList();
         updateExtList();
     }

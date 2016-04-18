@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,44 +18,56 @@
  */
 package org.sleuthkit.autopsy.modules.fileextmismatch;
 
-import org.openide.util.NbBundle;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
+import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Do the context menu action for adding a new filename extension to the
- * mismatch list for the MIME type of the selected node.
+ * extension list for the MIME type.
  */
 class AddFileExtensionAction extends AbstractAction {
 
-    private String extStr;
-    private String mimeTypeStr;
+    private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(AddFileExtensionAction.class.getName());
+    private final String extStr;
+    private final String mimeTypeStr;
+    private final FileExtMismatchSettings settings;
 
-    public AddFileExtensionAction(String menuItemStr, String extStr, String mimeTypeStr) {
+    AddFileExtensionAction(String menuItemStr, String extStr, String mimeTypeStr, FileExtMismatchSettings settings) {
         super(menuItemStr);
         this.mimeTypeStr = mimeTypeStr;
         this.extStr = extStr;
+        this.settings = settings;
     }
 
     @Override
+    @Messages({"AddFileExtensionAction.writeError.message=Could not write file extension settings."})
     public void actionPerformed(ActionEvent event) {
-        HashMap<String, String[]> editableMap = FileExtMismatchXML.getDefault().load();
+        HashMap<String, String[]> editableMap;
+        editableMap = settings.getMimeTypeToExtsMap();
         ArrayList<String> editedExtensions = new ArrayList<>(Arrays.asList(editableMap.get(mimeTypeStr)));
         editedExtensions.add(extStr);
 
         // Old array will be replaced by new array for this key
         editableMap.put(mimeTypeStr, editedExtensions.toArray(new String[0]));
 
-        if (!FileExtMismatchXML.getDefault().save(editableMap)) {
+        try {
+            FileExtMismatchSettings.writeSettings(new FileExtMismatchSettings(editableMap));
+        } catch (FileExtMismatchSettings.FileExtMismatchSettingsException ex) {
             //error
             JOptionPane.showMessageDialog(null,
-                    NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.msg"),
+                    Bundle.AddFileExtensionAction_writeError_message(),
                     NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.title"),
                     JOptionPane.ERROR_MESSAGE);
-        } // else //in the future we might want to update the statusbar to give feedback to the user        
+            logger.log(Level.SEVERE, Bundle.AddFileExtensionAction_writeError_message());
+        }
     }
 }
