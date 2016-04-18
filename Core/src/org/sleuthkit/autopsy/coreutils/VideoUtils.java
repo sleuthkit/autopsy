@@ -30,7 +30,6 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
 import org.opencv.core.Mat;
 import org.opencv.highgui.VideoCapture;
 import org.openide.util.NbBundle;
@@ -104,7 +103,7 @@ public class VideoUtils {
     static BufferedImage generateVideoThumbnail(AbstractFile file, int iconSize) {
         java.io.File tempFile = getTempVideoFile(file);
         if (tempFile.exists() == false || tempFile.length() < file.getSize()) {
-            ProgressHandle progress = ProgressHandleFactory.createHandle(Bundle.VideoUtils_genVideoThumb_progress_text(file.getName()));
+            ProgressHandle progress = ProgressHandle.createHandle(Bundle.VideoUtils_genVideoThumb_progress_text(file.getName()));
             progress.start(100);
             try {
                 Files.createParentDirs(tempFile);
