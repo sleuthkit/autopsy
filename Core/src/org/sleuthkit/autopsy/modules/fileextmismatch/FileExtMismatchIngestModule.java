@@ -18,10 +18,9 @@
  */
 package org.sleuthkit.autopsy.modules.fileextmismatch;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -52,7 +51,7 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
     private static final Logger logger = Logger.getLogger(FileExtMismatchIngestModule.class.getName());
     private final IngestServices services = IngestServices.getInstance();
     private final FileExtMismatchDetectorModuleSettings settings;
-    private HashMap<String, String[]> mimeTypeToExtsMap = new HashMap<>();
+    private HashMap<String, Set<String>> mimeTypeToExtsMap = new HashMap<>();
     private long jobId;
     private static final HashMap<Long, IngestJobTotals> totalsForIngestJobs = new HashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
@@ -109,7 +108,7 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
     @Override
     public ProcessResult process(AbstractFile abstractFile) {
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
-        if(this.settings.skipKnownFiles() && (abstractFile.getKnown() == FileKnown.KNOWN)) {
+        if (this.settings.skipKnownFiles() && (abstractFile.getKnown() == FileKnown.KNOWN)) {
             return ProcessResult.OK;
         }
 
@@ -180,16 +179,12 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
         }
 
         //get known allowed values from the map for this type
-        String[] allowedExtArray = mimeTypeToExtsMap.get(currActualSigType);
-        if (allowedExtArray != null) {
-            List<String> allowedExtList = Arrays.asList(allowedExtArray);
-
+        Set<String> allowedExtSet = mimeTypeToExtsMap.get(currActualSigType);
+        if (allowedExtSet != null) {
             // see if the filename ext is in the allowed list
-            if (allowedExtList != null) {
-                for (String e : allowedExtList) {
-                    if (e.equals(currActualExt)) {
-                        return false;
-                    }
+            for (String e : allowedExtSet) {
+                if (e.equals(currActualExt)) {
+                    return false;
                 }
                 return true; //potential mismatch
             }

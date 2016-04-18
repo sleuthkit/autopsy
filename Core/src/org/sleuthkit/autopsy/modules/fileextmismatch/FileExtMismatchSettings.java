@@ -23,9 +23,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.Level;
 import org.openide.util.io.NbObjectInputStream;
 import org.openide.util.io.NbObjectOutputStream;
@@ -44,7 +44,7 @@ import org.w3c.dom.NodeList;
 class FileExtMismatchSettings implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private HashMap<String, String[]> mimeTypeToExtsMap;
+    private HashMap<String, Set<String>> mimeTypeToExtsMap;
     private static final Logger logger = Logger.getLogger(FileExtMismatchSettings.class.getName());
     private static final String SIG_EL = "signature"; //NON-NLS
     private static final String EXT_EL = "ext";     //NON-NLS
@@ -68,21 +68,21 @@ class FileExtMismatchSettings implements Serializable {
      *
      * @param mimeTypeToExtsMap
      */
-    FileExtMismatchSettings(HashMap<String, String[]> mimeTypeToExtsMap) {
+    FileExtMismatchSettings(HashMap<String, Set<String>> mimeTypeToExtsMap) {
         this.mimeTypeToExtsMap = mimeTypeToExtsMap;
     }
 
     /**
      * @return the mime type to extension map
      */
-    HashMap<String, String[]> getMimeTypeToExtsMap() {
+    HashMap<String, Set<String>> getMimeTypeToExtsMap() {
         return mimeTypeToExtsMap;
     }
 
     /**
      * Sets the signature to extension map for this settings.
      */
-    public void setMimeTypeToExtsMap(HashMap<String, String[]> mimeTypeToExtsMap) {
+    public void setMimeTypeToExtsMap(HashMap<String, Set<String>> mimeTypeToExtsMap) {
         this.mimeTypeToExtsMap = mimeTypeToExtsMap;
     }
 
@@ -113,7 +113,7 @@ class FileExtMismatchSettings implements Serializable {
     }
 
     private static FileExtMismatchSettings readXmlSettings() throws FileExtMismatchSettingsException {
-        HashMap<String, String[]> sigTypeToExtMap = new HashMap<>();
+        HashMap<String, Set<String>> sigTypeToExtMap = new HashMap<>();
         //Next tries to read the xml file if the serialized file did not exist
         File xmlFile = new File(FILTER_CONFIG_FILE);
         if (xmlFile.exists()) {
@@ -143,13 +143,12 @@ class FileExtMismatchSettings implements Serializable {
                     final int numExts = extNList.getLength();
 
                     if (numExts != 0) {
-                        List<String> extStrings = new ArrayList<>();
+                        Set<String> extStrings = new HashSet<>();
                         for (int extIndex = 0; extIndex < numExts; ++extIndex) {
                             Element extEl = (Element) extNList.item(extIndex);
                             extStrings.add(extEl.getTextContent());
                         }
-                        String[] sarray = extStrings.toArray(new String[0]);
-                        sigTypeToExtMap.put(mimetype, sarray);
+                        sigTypeToExtMap.put(mimetype, extStrings);
                     } else {
                         sigTypeToExtMap.put(mimetype, null); //ok to have an empty type (the ingest module will not use it)
                     }

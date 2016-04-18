@@ -19,10 +19,10 @@
 package org.sleuthkit.autopsy.modules.fileextmismatch;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.Action;
 import javax.swing.JOptionPane;
@@ -87,12 +87,12 @@ public class FileExtMismatchContextMenuActionsProvider implements ContextMenuAct
                                         extStr, mimeTypeStr);
 
                                 // Check if already added
-                                HashMap<String, String[]> editableMap;
+                                HashMap<String, Set<String>> editableMap;
                                 try {
                                     FileExtMismatchSettings settings = FileExtMismatchSettings.readSettings();
                                     editableMap = settings.getMimeTypeToExtsMap();
                                     actions.add(new AddFileExtensionAction(menuItemStr, extStr, mimeTypeStr, settings));
-                                    ArrayList<String> editedExtensions = new ArrayList<>(Arrays.asList(editableMap.get(mimeTypeStr)));
+                                    Set<String> editedExtensions = editableMap.get(mimeTypeStr);
                                     if (editedExtensions.contains(extStr)) {
                                         // Informs the user that they have already added this extension to this MIME type
                                         actions.get(0).setEnabled(false);

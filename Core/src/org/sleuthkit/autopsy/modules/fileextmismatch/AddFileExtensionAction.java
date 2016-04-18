@@ -19,9 +19,8 @@
 package org.sleuthkit.autopsy.modules.fileextmismatch;
 
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
@@ -51,13 +50,13 @@ class AddFileExtensionAction extends AbstractAction {
     @Override
     @Messages({"AddFileExtensionAction.writeError.message=Could not write file extension settings."})
     public void actionPerformed(ActionEvent event) {
-        HashMap<String, String[]> editableMap;
+        HashMap<String, Set<String>> editableMap;
         editableMap = settings.getMimeTypeToExtsMap();
-        ArrayList<String> editedExtensions = new ArrayList<>(Arrays.asList(editableMap.get(mimeTypeStr)));
+        Set<String> editedExtensions = editableMap.get(mimeTypeStr);
         editedExtensions.add(extStr);
 
         // Old array will be replaced by new array for this key
-        editableMap.put(mimeTypeStr, editedExtensions.toArray(new String[0]));
+        editableMap.put(mimeTypeStr, editedExtensions);
 
         try {
             FileExtMismatchSettings.writeSettings(new FileExtMismatchSettings(editableMap));
