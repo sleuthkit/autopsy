@@ -28,27 +28,27 @@ import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
 /**
- * A factory that creates file ingest modules that determine the types of files.
- * Inherits from @link IngestModuleFactoryAdapter.
+ * A factory that creates file ingest modules that determine the MIME type of
+ * files.
  */
 @ServiceProvider(service = IngestModuleFactory.class)
 public class FileTypeIdModuleFactory extends IngestModuleFactoryAdapter {
 
-    FileTypeIdGlobalSettingsPanel globalSettingsPanel;
-
-    @Override
-    public String getModuleDisplayName() {
-        return getModuleName();
-    }
+    private FileTypeIdGlobalSettingsPanel globalSettingsPanel;
 
     /**
      * Gets the module display name.
      *
-     * @return The name string.
+     * @return The module display name.
      */
     static String getModuleName() {
         return NbBundle.getMessage(FileTypeIdIngestModule.class,
                 "FileTypeIdIngestModule.moduleName.text");
+    }
+    
+    @Override
+    public String getModuleDisplayName() {
+        return getModuleName();
     }
 
     @Override
