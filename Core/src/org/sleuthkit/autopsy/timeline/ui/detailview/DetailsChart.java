@@ -66,7 +66,7 @@ public final class DetailsChart extends Control implements TimeLineChart<DateTim
     private final ObservableList<EventNodeBase<?>> selectedNodes;
     private final DetailsChartLayoutSettings layoutSettings = new DetailsChartLayoutSettings();
     private final TimeLineController controller;
-    private final ObservableList<EventStripe> nestedEventStripes = FXCollections.observableArrayList();
+    private final ObservableList<TimeLineEvent> nestedEvents = FXCollections.observableArrayList();
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private final ObservableList<EventStripe> eventStripes = FXCollections.observableArrayList();
@@ -103,7 +103,7 @@ public final class DetailsChart extends Control implements TimeLineChart<DateTim
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     void addStripe(EventStripe stripe) {
         eventStripes.add(stripe);
-        nestedEventStripes.add(stripe);
+        nestedEvents.add(stripe);
     }
 
     void clearGuideLines() {
@@ -129,11 +129,14 @@ public final class DetailsChart extends Control implements TimeLineChart<DateTim
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     void reset() {
         eventStripes.clear();
-        nestedEventStripes.clear();
+        nestedEvents.clear();
     }
 
-    public ObservableList<EventStripe> getAllNestedEventStripes() {
-        return nestedEventStripes;
+    /*
+     * gets the tree of event stripes flattened into a list
+     */
+    public ObservableList<TimeLineEvent> getAllNestedEvents() {
+        return nestedEvents;
     }
 
     private static class DetailIntervalSelector extends IntervalSelector<DateTime> {
@@ -279,7 +282,7 @@ public final class DetailsChart extends Control implements TimeLineChart<DateTim
                 DescriptionFilter descriptionFilter = chart.getController().getQuickHideFilters().stream()
                         .filter(testFilter::equals)
                         .findFirst().orElseGet(() -> {
-                    testFilter.selectedProperty().addListener(observable -> chart.requestLayout());
+                            testFilter.selectedProperty().addListener(observable -> chart.requestLayout());
                             chart.getController().getQuickHideFilters().add(testFilter);
                             return testFilter;
                         });

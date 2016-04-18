@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.datamodel;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
@@ -31,6 +32,8 @@ public interface TimeLineEvent {
     public String getDescription();
 
     public DescriptionLoD getDescriptionLoD();
+
+    public Optional<EventStripe> getParentStripe();
 
     Set<Long> getEventIDs();
 

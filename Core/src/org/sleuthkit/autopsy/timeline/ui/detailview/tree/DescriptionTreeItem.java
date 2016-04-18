@@ -20,66 +20,56 @@ package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
 import java.util.Comparator;
 import java.util.Deque;
-import java.util.HashMap;
-import java.util.Map;
 import javafx.collections.FXCollections;
 import javafx.scene.control.TreeItem;
 import org.apache.commons.lang3.StringUtils;
-import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 
 /**
- *
+ * EventsTreeItem for specific event descriptions
  */
-class EventDescriptionTreeItem extends EventsTreeItem {
+class DescriptionTreeItem extends EventsTreeItem<String, DescriptionTreeItem> {
 
-    /**
-     * maps a description to the child item of this item with that description
-     */
-    private final Map<String, EventDescriptionTreeItem> childMap = new HashMap<>();
-    private Comparator<TreeItem<TimeLineEvent>> comparator = TreeComparator.Description;
-
-    EventDescriptionTreeItem(EventStripe stripe, Comparator<TreeItem<TimeLineEvent>> comp) {
-        comparator = comp;
+    DescriptionTreeItem(TimeLineEvent stripe, Comparator<TreeItem<TimeLineEvent>> comp) {
+        super(comp);
         setValue(stripe);
     }
 
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    public void insert(Deque<EventStripe> path) {
-        EventStripe head = path.removeFirst();
+    @Override
+    public void insert(Deque<TimeLineEvent> path) {
+        TimeLineEvent head = path.removeFirst();
         String substringAfter = StringUtils.substringAfter(head.getDescription(), head.getParentStripe().map(EventStripe::getDescription).orElse(""));
-        EventDescriptionTreeItem treeItem = childMap.computeIfAbsent(substringAfter,
-                description -> {
-                    EventDescriptionTreeItem newTreeItem = new EventDescriptionTreeItem(head, comparator);
-                    newTreeItem.setExpanded(true);
-                    getChildren().add(newTreeItem);
-                    resort(comparator, false);
-                    return newTreeItem;
-                });
+        DescriptionTreeItem treeItem = childMap.computeIfAbsent(substringAfter,
+                description -> configureNewTreeItem(new DescriptionTreeItem(head, getComparator()))
+        );
 
         if (path.isEmpty() == false) {
             treeItem.insert(path);
         }
     }
 
-    void remove(Deque<EventStripe> path) {
-        EventStripe head = path.removeFirst();
+    @Override
+    void remove(Deque<TimeLineEvent> path) {
+        TimeLineEvent head = path.removeFirst();
         String substringAfter = StringUtils.substringAfter(head.getDescription(), head.getParentStripe().map(EventStripe::getDescription).orElse(""));
-        EventDescriptionTreeItem descTreeItem = childMap.get(substringAfter);
-        if (path.isEmpty() == false) {
-            descTreeItem.remove(path);
-        }
-        if (descTreeItem.getChildren().isEmpty()) {
-            childMap.remove(head.getDescription());
-            getChildren().remove(descTreeItem);
+        DescriptionTreeItem descTreeItem = childMap.get(substringAfter);
+
+        if (descTreeItem != null) {
+            if (path.isEmpty() == false) {
+                descTreeItem.remove(path);
+            }
+            if (descTreeItem.getChildren().isEmpty()) {
+                childMap.remove(substringAfter);
+                getChildren().remove(descTreeItem);
+            }
         }
     }
 
     @Override
     void resort(Comparator<TreeItem<TimeLineEvent>> comp, Boolean recursive) {
-        this.comparator = comp;
+        setComparator(comp);
         FXCollections.sort(getChildren(), comp);
         if (recursive) {
             childMap.values().forEach(ti -> ti.resort(comp, true));
@@ -87,20 +77,13 @@ class EventDescriptionTreeItem extends EventsTreeItem {
     }
 
     @Override
-    public EventsTreeItem findTreeItemForEvent(TimeLineEvent event) {
-
+    public EventsTreeItem<?, ?> findTreeItemForEvent(TimeLineEvent event) {
         if (getValue().getEventType() == event.getEventType()
                 && getValue().getDescription().equals(event.getDescription())) {
             return this;
         } else {
-            for (EventDescriptionTreeItem child : childMap.values()) {
-                final EventsTreeItem findTreeItemForEvent = child.findTreeItemForEvent(event);
-                if (findTreeItemForEvent != null) {
-                    return findTreeItemForEvent;
-                }
-            }
+            return super.findTreeItemForEvent(event);
         }
-        return null;
     }
 
     @Override
@@ -108,7 +91,7 @@ class EventDescriptionTreeItem extends EventsTreeItem {
         String text = getValue().getDescription() + " (" + getValue().getSize() + ")"; // NON-NLS
 
         TreeItem<TimeLineEvent> parent = getParent();
-        if (parent != null && parent.getValue() != null && (parent instanceof EventDescriptionTreeItem)) {
+        if (parent != null && parent.getValue() != null && (parent instanceof DescriptionTreeItem)) {
             text = StringUtils.substringAfter(text, parent.getValue().getDescription());
         }
         return text;
@@ -118,5 +101,4 @@ class EventDescriptionTreeItem extends EventsTreeItem {
     EventType getEventType() {
         return getValue().getEventType();
     }
-
 }

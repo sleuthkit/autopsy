@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedSet;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import javax.annotation.Nullable;
@@ -50,10 +51,17 @@ public class SingleEvent implements TimeLineEvent {
     private final boolean hashHit;
     private final boolean tagged;
 
+    /**
+     * Single events may or may not have their parent set, since that is a
+     * transient property of the current (details ) view. The parent may be any
+     * kind of MultiEvent.
+     */
+    private MultiEvent<?> parent = null;
+
     public SingleEvent(long eventID, long dataSourceID, long objID, @Nullable Long artifactID, long time, EventType type, String fullDescription, String medDescription, String shortDescription, TskData.FileKnown known, boolean hashHit, boolean tagged) {
         this.eventID = eventID;
         this.fileID = objID;
-        this.artifactID = artifactID == 0 ? null : artifactID;
+        this.artifactID = (artifactID == null || artifactID == 0) ? null : artifactID;
         this.time = time;
         this.subType = type;
         descriptions = ImmutableMap.<DescriptionLoD, String>of(DescriptionLoD.FULL, fullDescription,
@@ -64,6 +72,12 @@ public class SingleEvent implements TimeLineEvent {
         this.hashHit = hashHit;
         this.tagged = tagged;
         this.dataSourceID = dataSourceID;
+    }
+
+    public SingleEvent withParent(MultiEvent<?> newParent) {
+        SingleEvent singleEvent = new SingleEvent(eventID, dataSourceID, fileID, artifactID, time, subType, descriptions.get(DescriptionLoD.FULL), descriptions.get(DescriptionLoD.MEDIUM), descriptions.get(DescriptionLoD.SHORT), known, hashHit, tagged);
+        singleEvent.parent = newParent;
+        return singleEvent;
     }
 
     public boolean isTagged() {
@@ -94,6 +108,7 @@ public class SingleEvent implements TimeLineEvent {
         return time;
     }
 
+    @Override
     public EventType getEventType() {
         return subType;
     }
@@ -183,5 +198,16 @@ public class SingleEvent implements TimeLineEvent {
     @Override
     public DescriptionLoD getDescriptionLoD() {
         return DescriptionLoD.FULL;
+    }
+
+    @Override
+    public Optional<EventStripe> getParentStripe() {
+        if (parent == null) {
+            return Optional.empty();
+        } else if (parent instanceof EventStripe) {
+            return Optional.of((EventStripe) parent);
+        } else {
+            return parent.getParentStripe();
+        }
     }
 }

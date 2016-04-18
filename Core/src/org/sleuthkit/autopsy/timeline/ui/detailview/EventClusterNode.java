@@ -166,15 +166,16 @@ final public class EventClusterNode extends MultiEventNodeBase<EventCluster, Eve
                     List<EventStripe> newSubStripes = get();
 
                     //clear the existing subnodes
-                    List<TimeLineEvent> oldSubStripes = subNodes.stream().flatMap(new StripeFlattener()).collect(Collectors.toList());
-                    getChartLane().getParentChart().getAllNestedEventStripes().removeAll(oldSubStripes);
+                    List<TimeLineEvent> oldSubEvents = subNodes.stream().flatMap(new StripeFlattener()).collect(Collectors.toList());
+                    getChartLane().getParentChart().getAllNestedEvents().removeAll(oldSubEvents);
                     subNodes.clear();
                     if (newSubStripes.isEmpty()) {
                         getChildren().setAll(subNodePane, infoHBox);
                         setDescriptionLOD(getEvent().getDescriptionLoD());
                     } else {
-                        getChartLane().getParentChart().getAllNestedEventStripes().addAll(newSubStripes);
                         subNodes.addAll(Lists.transform(newSubStripes, EventClusterNode.this::createChildNode));
+                        List<TimeLineEvent> newSubEvents = subNodes.stream().flatMap(new StripeFlattener()).collect(Collectors.toList());
+                        getChartLane().getParentChart().getAllNestedEvents().addAll(newSubEvents);
                         getChildren().setAll(new VBox(infoHBox, subNodePane));
                         setDescriptionLOD(loadedDescriptionLoD);
                     }
@@ -195,7 +196,7 @@ final public class EventClusterNode extends MultiEventNodeBase<EventCluster, Eve
     @Override
     EventNodeBase<?> createChildNode(EventStripe stripe) {
         if (stripe.getEventIDs().size() == 1) {
-            return new SingleEventNode(getChartLane(), getChartLane().getController().getEventsModel().getEventById(Iterables.getOnlyElement(stripe.getEventIDs())), this);
+            return new SingleEventNode(getChartLane(), getChartLane().getController().getEventsModel().getEventById(Iterables.getOnlyElement(stripe.getEventIDs())).withParent(stripe), this);
         } else {
             return new EventStripeNode(getChartLane(), stripe, this);
         }
