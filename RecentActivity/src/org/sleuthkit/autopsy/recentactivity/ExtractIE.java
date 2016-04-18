@@ -217,7 +217,7 @@ class ExtractIE extends Extract {
             try {
                 final int bytesRead = cookiesFile.read(t, 0, cookiesFile.getSize());
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error reading bytes of Internet Explorer cookie.", ex); //NON-NLS
+                logger.log(Level.WARNING, "Error reading bytes of Internet Explorer cookie.", ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "ExtractIE.getCookie.errMsg.errReadingIECookie",
                                 this.getName(), cookiesFile.getName()));
@@ -320,7 +320,7 @@ class ExtractIE extends Extract {
             try {
                 ContentUtils.writeToFile(indexFile, datFile);
             } catch (IOException e) {
-                logger.log(Level.SEVERE, "Error while trying to write index.dat file " + datFile.getAbsolutePath(), e); //NON-NLS
+                logger.log(Level.WARNING, "Error while trying to write index.dat file " + datFile.getAbsolutePath(), e); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errWriteFile", this.getName(),
                                 datFile.getAbsolutePath()));
