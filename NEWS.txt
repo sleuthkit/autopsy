@@ -3,7 +3,7 @@ Improvements:
 - VMWare virtual machine files (vmdk) and Microsoft Virtual Hard Drives (vhd) can be added as data sources.
 - New core ingest module detects vmdk and vhd files embedded in other data sources and adds them as data sources.  
 - Text associated with artifacts posted to the blackboard is indexed and searched for keywords.
-- Custom (user-defined) blackboard artifact and attribute types displayed in UI and included reports.
+- Custom (user-defined) blackboard artifact and attribute types displayed in UI and included in reports.
 - File size and MIME type conditions can be specified for interesting files rules.
 - File size and MIME type conditions can be specified for file search by attributes. 
 - Local/GMT time preference is used in reports. 

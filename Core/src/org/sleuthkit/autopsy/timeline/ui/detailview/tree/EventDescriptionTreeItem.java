@@ -24,56 +24,50 @@ import java.util.HashMap;
 import java.util.Map;
 import javafx.collections.FXCollections;
 import javafx.scene.control.TreeItem;
+import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
+import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
+import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 
 /**
  *
  */
-class EventDescriptionTreeItem extends NavTreeItem {
+class EventDescriptionTreeItem extends EventsTreeItem {
 
     /**
      * maps a description to the child item of this item with that description
      */
     private final Map<String, EventDescriptionTreeItem> childMap = new HashMap<>();
-    private final EventBundle<?> bundle;
-    private Comparator<TreeItem<EventBundle<?>>> comparator = TreeComparator.Description;
+    private Comparator<TreeItem<TimeLineEvent>> comparator = TreeComparator.Description;
 
-    public EventBundle<?> getEventBundle() {
-        return bundle;
-    }
-
-    EventDescriptionTreeItem(EventBundle<?> g, Comparator<TreeItem<EventBundle<?>>> comp) {
-        bundle = g;
+    EventDescriptionTreeItem(EventStripe stripe, Comparator<TreeItem<TimeLineEvent>> comp) {
         comparator = comp;
-        setValue(g);
-    }
-
-    @Override
-    public long getCount() {
-        return getValue().getCount();
+        setValue(stripe);
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    public void insert(Deque<EventBundle<?>> path) {
-        EventBundle<?> head = path.removeFirst();
-        EventDescriptionTreeItem treeItem = childMap.computeIfAbsent(head.getDescription(), description -> {
-            EventDescriptionTreeItem newTreeItem = new EventDescriptionTreeItem(head, comparator);
-            newTreeItem.setExpanded(true);
-            childMap.put(description, newTreeItem);
-            getChildren().add(newTreeItem);
-            resort(comparator, false);
-            return newTreeItem;
-        });
+    public void insert(Deque<EventStripe> path) {
+        EventStripe head = path.removeFirst();
+        String substringAfter = StringUtils.substringAfter(head.getDescription(), head.getParentStripe().map(EventStripe::getDescription).orElse(""));
+        EventDescriptionTreeItem treeItem = childMap.computeIfAbsent(substringAfter,
+                description -> {
+                    EventDescriptionTreeItem newTreeItem = new EventDescriptionTreeItem(head, comparator);
+                    newTreeItem.setExpanded(true);
+                    getChildren().add(newTreeItem);
+                    resort(comparator, false);
+                    return newTreeItem;
+                });
 
         if (path.isEmpty() == false) {
             treeItem.insert(path);
         }
     }
 
-    void remove(Deque<EventBundle<?>> path) {
-        EventBundle<?> head = path.removeFirst();
-        EventDescriptionTreeItem descTreeItem = childMap.get(head.getDescription());
+    void remove(Deque<EventStripe> path) {
+        EventStripe head = path.removeFirst();
+        String substringAfter = StringUtils.substringAfter(head.getDescription(), head.getParentStripe().map(EventStripe::getDescription).orElse(""));
+        EventDescriptionTreeItem descTreeItem = childMap.get(substringAfter);
         if (path.isEmpty() == false) {
             descTreeItem.remove(path);
         }
@@ -84,7 +78,7 @@ class EventDescriptionTreeItem extends NavTreeItem {
     }
 
     @Override
-    void resort(Comparator<TreeItem<EventBundle<?>>> comp, Boolean recursive) {
+    void resort(Comparator<TreeItem<TimeLineEvent>> comp, Boolean recursive) {
         this.comparator = comp;
         FXCollections.sort(getChildren(), comp);
         if (recursive) {
@@ -93,20 +87,36 @@ class EventDescriptionTreeItem extends NavTreeItem {
     }
 
     @Override
-    public NavTreeItem findTreeItemForEvent(EventBundle<?> t) {
+    public EventsTreeItem findTreeItemForEvent(TimeLineEvent event) {
 
-        if (getValue().getEventType() == t.getEventType()
-                && getValue().getDescription().equals(t.getDescription())) {
+        if (getValue().getEventType() == event.getEventType()
+                && getValue().getDescription().equals(event.getDescription())) {
             return this;
         } else {
             for (EventDescriptionTreeItem child : childMap.values()) {
-                final NavTreeItem findTreeItemForEvent = child.findTreeItemForEvent(t);
+                final EventsTreeItem findTreeItemForEvent = child.findTreeItemForEvent(event);
                 if (findTreeItemForEvent != null) {
                     return findTreeItemForEvent;
                 }
             }
         }
         return null;
+    }
+
+    @Override
+    String getDisplayText() {
+        String text = getValue().getDescription() + " (" + getValue().getSize() + ")"; // NON-NLS
+
+        TreeItem<TimeLineEvent> parent = getParent();
+        if (parent != null && parent.getValue() != null && (parent instanceof EventDescriptionTreeItem)) {
+            text = StringUtils.substringAfter(text, parent.getValue().getDescription());
+        }
+        return text;
+    }
+
+    @Override
+    EventType getEventType() {
+        return getValue().getEventType();
     }
 
 }

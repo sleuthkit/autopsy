@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-15 Basis Technology Corp.
+ * Copyright 2014-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,7 +38,7 @@ class GuideLine extends Line {
     private static final Tooltip CHART_DEFAULT_TOOLTIP = AbstractVisualizationPane.getDefaultTooltip();
 
     private final Tooltip tooltip = new Tooltip();
-    private final EventDetailsChart chart;
+    private final DetailsChart chart;
 
     //used across invocations of mouse event handlers to maintain state
     private double startLayoutX;
@@ -47,7 +47,7 @@ class GuideLine extends Line {
     /**
      * @param chart the chart this GuideLine belongs to.
      */
-    GuideLine(EventDetailsChart chart) {
+    GuideLine(DetailsChart chart) {
         super(0, 0, 0, 0);
         this.chart = chart;
         Axis<DateTime> xAxis = chart.getXAxis();
@@ -64,8 +64,8 @@ class GuideLine extends Line {
 
         setOnMouseClicked(clickedEvent -> {
             if (clickedEvent.getButton() == MouseButton.SECONDARY
-                    && clickedEvent.isStillSincePress() == false) {
-                chart.clearGuideLine();
+                    && clickedEvent.isStillSincePress()) {
+                chart.clearGuideLine(this);
                 clickedEvent.consume();
             }
         });

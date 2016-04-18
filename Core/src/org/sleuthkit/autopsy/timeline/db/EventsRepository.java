@@ -58,7 +58,7 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.CancellationProgressTask;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.ArtifactEventType;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.FileSystemTypes;
@@ -104,7 +104,7 @@ public class EventsRepository {
 
     private final LoadingCache<Object, Long> maxCache;
     private final LoadingCache<Object, Long> minCache;
-    private final LoadingCache<Long, TimeLineEvent> idToEventCache;
+    private final LoadingCache<Long, SingleEvent> idToEventCache;
     private final LoadingCache<ZoomParams, Map<EventType, Long>> eventCountsCache;
     private final LoadingCache<ZoomParams, List<EventStripe>> eventStripeCache;
 
@@ -178,11 +178,11 @@ public class EventsRepository {
 
     }
 
-    public TimeLineEvent getEventById(Long eventID) {
+    public SingleEvent getEventById(Long eventID) {
         return idToEventCache.getUnchecked(eventID);
     }
 
-    synchronized public Set<TimeLineEvent> getEventsById(Collection<Long> eventIDs) {
+    synchronized public Set<SingleEvent> getEventsById(Collection<Long> eventIDs) {
         return eventIDs.stream()
                 .map(idToEventCache::getUnchecked)
                 .collect(Collectors.toSet());

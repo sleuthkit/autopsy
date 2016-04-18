@@ -38,13 +38,14 @@ class FilterCheckBoxCellFactory<X extends AbstractFilter> extends AbstractFXCell
             checkBox.selectedProperty().unbindBidirectional(selectedProperty);
         }
         if (disabledProperty != null) {
-            checkBox.disableProperty().unbind();//disabledProperty);
+            checkBox.disableProperty().unbind();
         }
 
         if (item == null) {
             cell.setGraphic(null);
         } else {
             checkBox.setText(item.getDisplayName());
+//            cell.setText(item.getDisplayName());
             selectedProperty = item.selectedProperty();
             checkBox.selectedProperty().bindBidirectional(selectedProperty);
             disabledProperty = item.disabledProperty();

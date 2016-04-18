@@ -25,46 +25,46 @@ import java.util.Map;
 import javafx.collections.FXCollections;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
+import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
+import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 
-class EventTypeTreeItem extends NavTreeItem {
+class EventTypeTreeItem extends EventsTreeItem {
 
     /**
      * maps a description to the child item of this item with that description
      */
     private final Map<String, EventDescriptionTreeItem> childMap = new HashMap<>();
 
-    private Comparator<TreeItem<EventBundle<?>>> comparator = TreeComparator.Description;
+    private Comparator<TreeItem<TimeLineEvent>> comparator = TreeComparator.Description;
+    private final EventType eventType;
 
-    EventTypeTreeItem(EventBundle<?> g, Comparator<TreeItem<EventBundle<?>>> comp) {
-        setValue(g);
+    EventTypeTreeItem(EventStripe stripe, Comparator<TreeItem<TimeLineEvent>> comp) {
+        setValue(null);
+        eventType = stripe.getEventType();
         comparator = comp;
     }
 
-    @Override
-    public long getCount() {
-        return getValue().getCount();
-    }
-
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    public void insert(Deque<EventBundle<?>> path) {
-        EventBundle<?> head = path.removeFirst();
-        EventDescriptionTreeItem treeItem = childMap.computeIfAbsent(head.getDescription(), description -> {
-            EventDescriptionTreeItem newTreeItem = new EventDescriptionTreeItem(head, comparator);
-            newTreeItem.setExpanded(true);
-            childMap.put(head.getDescription(), newTreeItem);
-            getChildren().add(newTreeItem);
-            resort(comparator, false);
-            return newTreeItem;
-        });
+    public void insert(Deque<EventStripe> path) {
+        EventStripe head = path.removeFirst();
+
+        EventDescriptionTreeItem treeItem = childMap.computeIfAbsent(head.getDescription(),
+                description -> {
+                    EventDescriptionTreeItem newTreeItem = new EventDescriptionTreeItem(head, comparator);
+                    newTreeItem.setExpanded(true);
+                    getChildren().add(newTreeItem);
+                    resort(comparator, false);
+                    return newTreeItem;
+                });
 
         if (path.isEmpty() == false) {
             treeItem.insert(path);
         }
     }
 
-    void remove(Deque<EventBundle<?>> path) {
-        EventBundle<?> head = path.removeFirst();
+    void remove(Deque<EventStripe> path) {
+        EventStripe head = path.removeFirst();
         EventDescriptionTreeItem descTreeItem = childMap.get(head.getDescription());
         if (descTreeItem != null) {
             if (path.isEmpty() == false) {
@@ -78,11 +78,11 @@ class EventTypeTreeItem extends NavTreeItem {
     }
 
     @Override
-    public NavTreeItem findTreeItemForEvent(EventBundle<?> t) {
-        if (t.getEventType().getBaseType() == getValue().getEventType().getBaseType()) {
+    public EventsTreeItem findTreeItemForEvent(TimeLineEvent t) {
+        if (t.getEventType().getBaseType() == eventType.getBaseType()) {
 
             for (EventDescriptionTreeItem child : childMap.values()) {
-                final NavTreeItem findTreeItemForEvent = child.findTreeItemForEvent(t);
+                final EventsTreeItem findTreeItemForEvent = child.findTreeItemForEvent(t);
                 if (findTreeItemForEvent != null) {
                     return findTreeItemForEvent;
                 }
@@ -92,11 +92,22 @@ class EventTypeTreeItem extends NavTreeItem {
     }
 
     @Override
-    void resort(Comparator<TreeItem<EventBundle<?>>> comp, Boolean recursive) {
+    void resort(Comparator<TreeItem<TimeLineEvent>> comp, Boolean recursive) {
         this.comparator = comp;
         FXCollections.sort(getChildren(), comp);
         if (recursive) {
             childMap.values().forEach(ti -> ti.resort(comp, true));
         }
     }
+
+    @Override
+    String getDisplayText() {
+        return eventType.getDisplayName();
+    }
+
+    @Override
+    EventType getEventType() {
+        return eventType;
+    }
+   
 }

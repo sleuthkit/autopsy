@@ -88,7 +88,11 @@ class CasePropertiesForm extends javax.swing.JPanel {
         current = currentCase;
 
         CaseMetadata caseMetadata = currentCase.getCaseMetadata();
-        tbDbName.setText(caseMetadata.getCaseDatabase());
+        if (caseMetadata.getCaseType() == Case.CaseType.SINGLE_USER_CASE) {
+            tbDbName.setText(caseMetadata.getCaseDatabasePath());
+        } else {
+            tbDbName.setText(caseMetadata.getCaseDatabaseName());
+        }
         Case.CaseType caseType = caseMetadata.getCaseType();
         tbDbType.setText(caseType.getLocalizedDisplayName());
         if (caseType == Case.CaseType.SINGLE_USER_CASE) {

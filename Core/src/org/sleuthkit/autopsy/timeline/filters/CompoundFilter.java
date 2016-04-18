@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.timeline.filters;
 
 import java.util.List;
 import java.util.Objects;
-import javafx.beans.Observable;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -31,12 +30,8 @@ import javafx.collections.ObservableList;
  * implementations can decide how to combine the sub-filters.
  *
  * a {@link CompoundFilter} uses listeners to enforce the following
- * relationships between it and its sub-filters:
- * <ol>
- * <le>if a filter becomes inactive disable all of its subfilters</le>
- * <le>if a sub-filter changes active state set the parent filter active if any
- * of its sub-filters are active.</le>
- * </ol>
+ * relationships between it and its sub-filters: if all of a compound filter's
+ * sub-filters become un-selected, un-select the compound filter.
  */
 public abstract class CompoundFilter<SubFilterType extends Filter> extends AbstractFilter {
 
@@ -57,30 +52,21 @@ public abstract class CompoundFilter<SubFilterType extends Filter> extends Abstr
     public CompoundFilter(List<SubFilterType> subFilters) {
         super();
 
-        //listen to changes in list of subfilters and add active state listener to newly added filters
-        this.subFilters.addListener((ListChangeListener.Change<? extends SubFilterType> c) -> {
-            while (c.next()) {
-                addSubFilterListeners(c.getAddedSubList());
+        //listen to changes in list of subfilters 
+        this.subFilters.addListener((ListChangeListener.Change<? extends SubFilterType> change) -> {
+            while (change.next()) {
+                //add a listener to the selected property of each added subfilter
+                change.getAddedSubList().forEach(addedSubFilter -> {
+                    //if a subfilter's selected property changes...
+                    addedSubFilter.selectedProperty().addListener(selectedProperty -> {
+                        //set this compound filter selected af any of the subfilters are selected.
+                        setSelected(getSubFilters().parallelStream().anyMatch(Filter::isSelected));
+                    });
+                });
             }
         });
+
         this.subFilters.setAll(subFilters);
-
-        this.selectedProperty().addListener(activeProperty -> {
-            getSubFilters().forEach(subFilter -> subFilter.setDisabled(isActive() == false));
-        });
-        this.disabledProperty().addListener(activeProperty -> {
-            getSubFilters().forEach(subFilter -> subFilter.setDisabled(isActive() == false));
-        });
-    }
-
-    private void addSubFilterListeners(List<? extends SubFilterType> newSubfilters) {
-        for (SubFilterType sf : newSubfilters) {
-            //if a subfilter changes active state
-            sf.selectedProperty().addListener((Observable observable) -> {
-                //set this filter acttive af any of the subfilters are active.
-                setSelected(getSubFilters().parallelStream().anyMatch(Filter::isSelected));
-            });
-        }
     }
 
     static <SubFilterType extends Filter> boolean areSubFiltersEqual(final CompoundFilter<SubFilterType> oneFilter, final CompoundFilter<SubFilterType> otherFilter) {
