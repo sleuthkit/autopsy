@@ -174,7 +174,7 @@ final public class EventsTree extends BorderPane {
                 setGraphic(null);
                 deRegisterListeners(controller.getQuickHideFilters());
             } else {
-                EventsTreeItem<?, ?> treeItem = (EventsTreeItem) getTreeItem();
+                EventsTreeItem treeItem = (EventsTreeItem) getTreeItem();
                 String text = treeItem.getDisplayText();
                 setText(text);
                 setTooltip(new Tooltip(text));
@@ -226,7 +226,7 @@ final public class EventsTree extends BorderPane {
             }
         }
 
-        private void updateHiddenState(EventsTreeItem<?, ?> treeItem) {
+        private void updateHiddenState(EventsTreeItem treeItem) {
             TimeLineEvent event = treeItem.getValue();
             hidden.set(event != null && controller.getQuickHideFilters().stream().
                     filter(DescriptionFilter::isActive)

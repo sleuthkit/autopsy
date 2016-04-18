@@ -20,8 +20,6 @@ package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
 import java.util.Comparator;
 import java.util.Deque;
-import java.util.HashMap;
-import java.util.Map;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
@@ -33,12 +31,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
  * {@link EventTreeCell}. Each NavTreeItem has a EventBundle which has a type,
  * description , count, etc.
  */
-abstract class EventsTreeItem<T, S extends EventsTreeItem<?, ?>> extends TreeItem<TimeLineEvent> {
-
-    /**
-     * maps a description to the child item of this item with that description
-     */
-    final Map<T, S> childMap = new HashMap<>();
+abstract class EventsTreeItem extends TreeItem<TimeLineEvent> {
 
     /**
      * the comparator if any used to sort the children of this item
@@ -59,9 +52,10 @@ abstract class EventsTreeItem<T, S extends EventsTreeItem<?, ?>> extends TreeIte
 
     abstract void resort(Comparator<TreeItem<TimeLineEvent>> comp, Boolean recursive);
 
-    public EventsTreeItem<?, ?> findTreeItemForEvent(TimeLineEvent t) {
-        for (S child : childMap.values()) {
-            final EventsTreeItem<?, ?> findTreeItemForEvent = child.findTreeItemForEvent(t);
+    public EventsTreeItem findTreeItemForEvent(TimeLineEvent t) {
+        for (TreeItem<TimeLineEvent> child : getChildren()) {
+
+            final EventsTreeItem findTreeItemForEvent = ((EventsTreeItem) child).findTreeItemForEvent(t);
             if (findTreeItemForEvent != null) {
                 return findTreeItemForEvent;
             }
@@ -79,7 +73,7 @@ abstract class EventsTreeItem<T, S extends EventsTreeItem<?, ?>> extends TreeIte
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     abstract void insert(Deque<TimeLineEvent> path);
 
-    S configureNewTreeItem(S newTreeItem) {
+    <T extends EventsTreeItem> T configureNewTreeItem(T newTreeItem) {
         newTreeItem.setExpanded(true);
         getChildren().add(newTreeItem);
         resort(getComparator(), false);

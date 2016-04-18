@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
 import java.util.Comparator;
 import java.util.Deque;
+import java.util.HashMap;
+import java.util.Map;
 import javafx.collections.FXCollections;
 import javafx.scene.control.TreeItem;
 import org.apache.commons.lang3.StringUtils;
@@ -30,7 +32,12 @@ import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 /**
  * EventsTreeItem for specific event descriptions
  */
-class DescriptionTreeItem extends EventsTreeItem<String, DescriptionTreeItem> {
+class DescriptionTreeItem extends EventsTreeItem {
+
+    /**
+     * A map of the children DescriptionTreeItem, keyed by description.
+     */
+    private final Map<String, DescriptionTreeItem> childMap = new HashMap<>();
 
     DescriptionTreeItem(TimeLineEvent stripe, Comparator<TreeItem<TimeLineEvent>> comp) {
         super(comp);
@@ -77,7 +84,7 @@ class DescriptionTreeItem extends EventsTreeItem<String, DescriptionTreeItem> {
     }
 
     @Override
-    public EventsTreeItem<?, ?> findTreeItemForEvent(TimeLineEvent event) {
+    public EventsTreeItem findTreeItemForEvent(TimeLineEvent event) {
         if (getValue().getEventType() == event.getEventType()
                 && getValue().getDescription().equals(event.getDescription())) {
             return this;

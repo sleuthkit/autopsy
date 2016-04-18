@@ -26,7 +26,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 /**
  * EventTreeItem for event types
  */
-abstract class EventTypeTreeItem<T, S extends EventsTreeItem<?, ?>> extends EventsTreeItem<T, S> {
+abstract class EventTypeTreeItem extends EventsTreeItem {
 
     private final EventType eventType;
 
@@ -39,7 +39,9 @@ abstract class EventTypeTreeItem<T, S extends EventsTreeItem<?, ?>> extends Even
     void resort(Comparator<TreeItem<TimeLineEvent>> comp, Boolean recursive) {
         setComparator(comp);
         if (recursive) {
-            childMap.values().forEach(ti -> ti.resort(comp, true));
+            getChildren().stream()
+                    .map(EventsTreeItem.class::cast)
+                    .forEach(ti -> ti.resort(comp, true));
         }
     }
 

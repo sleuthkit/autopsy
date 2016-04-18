@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 import java.util.ArrayDeque;
 import java.util.Comparator;
 import java.util.Deque;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -31,7 +33,12 @@ import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 /**
  * TreeItem for the root of all the events in the EventsTree.
  */
-class RootItem extends EventsTreeItem<EventType, BaseTypeTreeItem> {
+class RootItem extends EventsTreeItem {
+
+    /**
+     * A map of the children BaseTypeTreeItems, keyed by EventType.
+     */
+    private final Map<EventType, BaseTypeTreeItem> childMap = new HashMap<>();
 
     RootItem(Comparator<TreeItem<TimeLineEvent>> comp) {
         super(comp);
@@ -40,30 +47,18 @@ class RootItem extends EventsTreeItem<EventType, BaseTypeTreeItem> {
     /**
      * Recursive method to add a grouping at a given path.
      *
-     * @param stripe stripe to add
+     * @param event stripe to add
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    public void insert(TimeLineEvent stripe) {
-
-        BaseTypeTreeItem treeItem = childMap.computeIfAbsent(stripe.getEventType().getBaseType(),
-                baseType -> configureNewTreeItem(new BaseTypeTreeItem(stripe, getComparator()))
-        );
-        treeItem.insert(getTreePath(stripe));
+    public void insert(TimeLineEvent event) {
+        insert(getTreePath(event));
     }
 
-    void remove(TimeLineEvent stripe) {
-        BaseTypeTreeItem typeTreeItem = childMap.get(stripe.getEventType().getBaseType());
-        if (typeTreeItem != null) {
-            typeTreeItem.remove(getTreePath(stripe));
-
-            if (typeTreeItem.getChildren().isEmpty()) {
-                childMap.remove(stripe.getEventType().getBaseType());
-                getChildren().remove(typeTreeItem);
-            }
-        }
+    void remove(TimeLineEvent event) {
+        remove(getTreePath(event));
     }
 
-    static Deque< TimeLineEvent> getTreePath(TimeLineEvent event) {
+    private static Deque<TimeLineEvent> getTreePath(TimeLineEvent event) {
         Deque<TimeLineEvent> path = new ArrayDeque<>();
         path.addFirst(event);
         Optional<EventStripe> parentOptional = event.getParentStripe();
@@ -93,12 +88,24 @@ class RootItem extends EventsTreeItem<EventType, BaseTypeTreeItem> {
 
     @Override
     void remove(Deque<TimeLineEvent> path) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        TimeLineEvent event = path.getLast();
+        BaseTypeTreeItem typeTreeItem = childMap.get(event.getEventType().getBaseType());
+        if (typeTreeItem != null) {
+            typeTreeItem.remove(getTreePath(event));
+
+            if (typeTreeItem.getChildren().isEmpty()) {
+                childMap.remove(event.getEventType().getBaseType());
+                getChildren().remove(typeTreeItem);
+            }
+        }
     }
 
     @Override
     void insert(Deque<TimeLineEvent> path) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        TimeLineEvent event = path.getLast();
+        BaseTypeTreeItem treeItem = childMap.computeIfAbsent(event.getEventType().getBaseType(),
+                baseType -> configureNewTreeItem(new BaseTypeTreeItem(event, getComparator()))
+        );
+        treeItem.insert(path);
     }
-
 }

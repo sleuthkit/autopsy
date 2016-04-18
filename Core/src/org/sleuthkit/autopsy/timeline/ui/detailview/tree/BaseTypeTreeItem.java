@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
 import java.util.Comparator;
 import java.util.Deque;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Supplier;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -27,9 +29,15 @@ import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 
 /**
- * EventTreeItem for base event types
+ * EventTreeItem for base event types (file system, misc, web, ...)
  */
-class BaseTypeTreeItem extends EventTypeTreeItem<Object, EventsTreeItem<?, ?>> {
+class BaseTypeTreeItem extends EventTypeTreeItem {
+
+    /**
+     * A map of the children TreeItems, keyed by EventTypes if the children are
+     * SubTypeTreeItems or by String if the children are DescriptionTreeItems.
+     */
+    private final Map<Object, EventsTreeItem> childMap = new HashMap<>();
 
     BaseTypeTreeItem(TimeLineEvent stripe, Comparator<TreeItem<TimeLineEvent>> comp) {
         super(stripe.getEventType().getBaseType(), comp);
@@ -39,7 +47,7 @@ class BaseTypeTreeItem extends EventTypeTreeItem<Object, EventsTreeItem<?, ?>> {
     @Override
     public void insert(Deque<TimeLineEvent> path) {
         TimeLineEvent peek = path.peek();
-        Supplier< EventsTreeItem<?, ?>> treeItemConstructor;
+        Supplier< EventsTreeItem> treeItemConstructor;
         String descriptionKey;
         /*
          * if the stripe and this tree item haveS the same type, create an
@@ -54,7 +62,7 @@ class BaseTypeTreeItem extends EventTypeTreeItem<Object, EventsTreeItem<?, ?>> {
             treeItemConstructor = () -> configureNewTreeItem(new DescriptionTreeItem(stripe, getComparator()));
         }
 
-        EventsTreeItem<?, ?> treeItem = childMap.computeIfAbsent(descriptionKey, key -> treeItemConstructor.get());
+        EventsTreeItem treeItem = childMap.computeIfAbsent(descriptionKey, key -> treeItemConstructor.get());
 
         //insert (rest of) path in to new treeItem
         if (path.isEmpty() == false) {
@@ -67,7 +75,7 @@ class BaseTypeTreeItem extends EventTypeTreeItem<Object, EventsTreeItem<?, ?>> {
 
         TimeLineEvent head = path.peek();
 
-        EventsTreeItem<?, ?> descTreeItem;
+        EventsTreeItem descTreeItem;
         if (head.getEventType().getZoomLevel() == EventTypeZoomLevel.SUB_TYPE) {
             descTreeItem = childMap.get(head.getEventType().getDisplayName());
         } else {
@@ -85,5 +93,4 @@ class BaseTypeTreeItem extends EventTypeTreeItem<Object, EventsTreeItem<?, ?>> {
             }
         }
     }
-
 }
