@@ -101,13 +101,11 @@ public class TypeFilter extends UnionFilter<TypeFilter> {
     public TypeFilter copyOf() {
         //make a nonrecursive copy of this filter
         final TypeFilter filterCopy = new TypeFilter(eventType, false);
+        //add a copy of each subfilter
+        getSubFilters().forEach(typeFilter -> filterCopy.addSubFilter(typeFilter.copyOf(), comparator));
+        //these need to happen after the listeners fired by adding the subfilters 
         filterCopy.setSelected(isSelected());
         filterCopy.setDisabled(isDisabled());
-        //add a copy of each subfilter
-        getSubFilters().forEach(typeFilter ->
-                filterCopy.addSubFilter(typeFilter.copyOf(), comparator)
-        );
-
         return filterCopy;
     }
 

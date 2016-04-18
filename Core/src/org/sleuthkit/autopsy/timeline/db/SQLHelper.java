@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -55,7 +55,7 @@ import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.YEARS;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * Static helper methods for converting between java data model objects and
+ * Static helper methods for converting between java "data model" objects and
  * sqlite queries.
  */
 class SQLHelper {
@@ -89,30 +89,55 @@ class SQLHelper {
                 .collect(Collectors.toSet());
     }
 
+    /**
+     * get the SQL where clause corresponding to an intersection filter ie
+     * (sub-clause1 and sub-clause2 and ... and sub-clauseN)
+     *
+     * @param filter the filter get the where clause for
+     *
+     * @return an SQL where clause (without the "where") corresponding to the
+     *         filter
+     */
     private static String getSQLWhere(IntersectionFilter<?> filter) {
-        return filter.getSubFilters().stream()
-                .filter(Filter::isSelected)
+        String join = String.join(" and ", filter.getSubFilters().stream()
+                .filter(Filter::isActive)
                 .map(SQLHelper::getSQLWhere)
-                .collect(Collectors.joining(" and ", "( ", ")")); //NON-NLS
-    }
-
-    private static String getSQLWhere(UnionFilter<?> filter) {
-        return filter.getSubFilters().stream()
-                .filter(Filter::isSelected).map(SQLHelper::getSQLWhere)
-                .collect(Collectors.joining(" or ", "( ", ")")); //NON-NLS
-    }
-
-    static String getSQLWhere(RootFilter filter) {
-        return getSQLWhere((IntersectionFilter) filter);
+                .collect(Collectors.toList()));
+        return "(" + StringUtils.defaultIfBlank(join, "1") + ")";
     }
 
     /**
+     * get the SQL where clause corresponding to a union filter ie (sub-clause1
+     * or sub-clause2 or ... or sub-clauseN)
+     *
+     * @param filter the filter get the where clause for
+     *
+     * @return an SQL where clause (without the "where") corresponding to the
+     *         filter
+     */
+    private static String getSQLWhere(UnionFilter<?> filter) {
+        String join = String.join(" or ", filter.getSubFilters().stream()
+                .filter(Filter::isActive)
+                .map(SQLHelper::getSQLWhere)
+                .collect(Collectors.toList()));
+        return "(" + StringUtils.defaultIfBlank(join, "1") + ")";
+    }
+
+    static String getSQLWhere(RootFilter filter) {
+        return getSQLWhere((Filter) filter);
+    }
+
+    /**
+     * get the SQL where clause corresponding to the given filter
+     *
+     * uses instance of to dispatch to the correct method for each filter type.
      * NOTE: I don't like this if-else instance of chain, but I can't decide
      * what to do instead -jm
      *
-     * @param filter
+     * @param filter a filter to generate the SQL where clause for
      *
-     * @return
+     * @return an SQL where clause (without the "where") corresponding to the
+     *         filter
      */
     private static String getSQLWhere(Filter filter) {
         String result = "";
@@ -257,7 +282,7 @@ class SQLHelper {
 
     /**
      * get a sqlite strftime format string that will allow us to group by the
-     * requested period size. That is, with all info more granular that that
+     * requested period size. That is, with all info more granular than that
      * requested dropped (replaced with zeros).
      *
      * @param timeUnit the {@link TimeUnits} instance describing what

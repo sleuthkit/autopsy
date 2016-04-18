@@ -101,7 +101,7 @@ import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
  * </li>
  * <ul>
  */
-@NbBundle.Messages({"Timeline.confirmation.dialogs.title=Update Timeline database?",
+@NbBundle.Messages({"Timeline.confirmation.dialogs.title= Timeline",
     "TimeLinecontroller.updateNowQuestion=Do you want to update the events database now?"})
 public class TimeLineController {
 
