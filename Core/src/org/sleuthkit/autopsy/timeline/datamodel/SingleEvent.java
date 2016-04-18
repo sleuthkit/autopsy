@@ -61,7 +61,7 @@ public class SingleEvent implements TimeLineEvent {
     public SingleEvent(long eventID, long dataSourceID, long objID, @Nullable Long artifactID, long time, EventType type, String fullDescription, String medDescription, String shortDescription, TskData.FileKnown known, boolean hashHit, boolean tagged) {
         this.eventID = eventID;
         this.fileID = objID;
-        this.artifactID = (artifactID == null || artifactID == 0) ? null : artifactID;
+        this.artifactID = Long.valueOf(0).equals(artifactID) ? null : artifactID;
         this.time = time;
         this.subType = type;
         descriptions = ImmutableMap.<DescriptionLoD, String>of(DescriptionLoD.FULL, fullDescription,
@@ -88,9 +88,8 @@ public class SingleEvent implements TimeLineEvent {
         return hashHit;
     }
 
-    @Nullable
-    public Long getArtifactID() {
-        return artifactID;
+    public Optional<Long> getArtifactID() {
+        return Optional.ofNullable(artifactID);
     }
 
     public long getEventID() {

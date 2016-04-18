@@ -33,9 +33,9 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.BaseTypes;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -79,7 +79,6 @@ public class EventRootNode extends DisplayableItemNode {
 //    public String getItemType() {
 //        return "EventRoot";
 //    }
-
     /**
      * The node factories used to make lists of files to send to the result
      * viewer using the lazy loading (rather than background) loading option to
@@ -113,22 +112,22 @@ public class EventRootNode extends DisplayableItemNode {
             if (eventID >= 0) {
                 final SingleEvent eventById = filteredEvents.getEventById(eventID);
                 try {
-                    AbstractFile file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(eventById.getFileID());
+                    SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
+                    AbstractFile file = sleuthkitCase.getAbstractFileById(eventById.getFileID());
                     if (file != null) {
-                        if (eventById.getEventType().getSuperType() == BaseTypes.FILE_SYSTEM) {
-                            return new EventNode(eventById, file);
-                        } else {
-                            BlackboardArtifact blackboardArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(eventById.getArtifactID());
-
+                        if (eventById.getArtifactID().isPresent()) {
+                            BlackboardArtifact blackboardArtifact = sleuthkitCase.getBlackboardArtifact(eventById.getArtifactID().get());
                             return new EventNode(eventById, file, blackboardArtifact);
+                        } else {
+                            return new EventNode(eventById, file);
                         }
                     } else {
                         LOGGER.log(Level.WARNING, "Failed to lookup sleuthkit object backing TimeLineEvent."); // NON-NLS
                         return null;
                     }
 
-                } catch (TskCoreException tskCoreException) {
-                    LOGGER.log(Level.WARNING, "Failed to lookup sleuthkit object backing TimeLineEvent.", tskCoreException); // NON-NLS
+                } catch (IllegalStateException | TskCoreException ex) {
+                    LOGGER.log(Level.WARNING, "Failed to lookup sleuthkit object backing TimeLineEvent.", ex); // NON-NLS
                     return null;
                 }
             } else {
