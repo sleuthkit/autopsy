@@ -32,7 +32,6 @@ import org.openide.util.Utilities;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import static org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.HashUtility;
@@ -137,7 +136,6 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
                 public void actionPerformed(ActionEvent e) {
                     HashDb hashDb = new HashDbCreateDatabaseDialog().getHashDatabase();
                     if (null != hashDb) {
-                        HashDbManager.getInstance().save();
                         addFilesToHashSet(selectedFiles, hashDb);
                     }
                 }
