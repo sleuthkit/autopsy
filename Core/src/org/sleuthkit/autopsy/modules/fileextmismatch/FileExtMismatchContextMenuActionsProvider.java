@@ -102,7 +102,7 @@ public class FileExtMismatchContextMenuActionsProvider implements ContextMenuAct
                                             NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.msg2"),
                                             NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.title"),
                                             JOptionPane.ERROR_MESSAGE);
-                                    logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.msg2"), ex);
+                                    logger.log(Level.WARNING, "File extension mismatch settings could not be read, extensions update not available.", ex);
                                 }
                             }
                         }

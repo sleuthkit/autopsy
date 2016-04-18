@@ -57,7 +57,7 @@ class FileExtMismatchSettings implements Serializable {
 
     static {
         try {
-            boolean extracted = PlatformUtil.extractResourceToUserConfigDir(FileExtMismatchSettings.class, DEFAULT_CONFIG_FILE_NAME, false);
+            PlatformUtil.extractResourceToUserConfigDir(FileExtMismatchSettings.class, DEFAULT_CONFIG_FILE_NAME, false);
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Error copying default mismatch configuration to user dir ", ex); //NON-NLS
         }
@@ -82,7 +82,7 @@ class FileExtMismatchSettings implements Serializable {
     /**
      * Sets the signature to extension map for this settings.
      */
-    public void setMimeTypeToExtsMap(HashMap<String, Set<String>> mimeTypeToExtsMap) {
+    void setMimeTypeToExtsMap(HashMap<String, Set<String>> mimeTypeToExtsMap) {
         this.mimeTypeToExtsMap = mimeTypeToExtsMap;
     }
 
@@ -91,7 +91,7 @@ class FileExtMismatchSettings implements Serializable {
      *
      * @return Loaded settings (empty if there are no settings to load).
      */
-    public static synchronized FileExtMismatchSettings readSettings() throws FileExtMismatchSettingsException {
+    static synchronized FileExtMismatchSettings readSettings() throws FileExtMismatchSettingsException {
         File serializedFile = new File(DEFAULT_SERIALIZED_FILE_PATH);
         //Tries reading the serialized file first, as this is the prioritized settings.
         if (serializedFile.exists()) {
@@ -168,7 +168,7 @@ class FileExtMismatchSettings implements Serializable {
      *
      * @return Loaded hash map or null on error or null if data does not exist
      */
-    public static synchronized void writeSettings(FileExtMismatchSettings settings) throws FileExtMismatchSettingsException {
+    static synchronized void writeSettings(FileExtMismatchSettings settings) throws FileExtMismatchSettingsException {
         try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(DEFAULT_SERIALIZED_FILE_PATH))) {
             out.writeObject(settings);
         } catch (IOException ex) {

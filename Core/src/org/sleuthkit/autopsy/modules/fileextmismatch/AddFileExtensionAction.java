@@ -66,7 +66,7 @@ class AddFileExtensionAction extends AbstractAction {
                     Bundle.AddFileExtensionAction_writeError_message(),
                     NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.title"),
                     JOptionPane.ERROR_MESSAGE);
-            logger.log(Level.SEVERE, Bundle.AddFileExtensionAction_writeError_message());
+            logger.log(Level.SEVERE, "Could not write file extension settings.", ex);
         }
     }
 }
