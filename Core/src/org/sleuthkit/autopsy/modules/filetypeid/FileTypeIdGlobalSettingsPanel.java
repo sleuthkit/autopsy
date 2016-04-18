@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,22 +21,17 @@ package org.sleuthkit.autopsy.modules.filetypeid;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle;
-import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
-import org.sleuthkit.autopsy.modules.filetypeid.AddFileTypeSignatureDialog.BUTTON_PRESSED;
 import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
 import org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException;
 
@@ -60,7 +55,6 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
      */
     private DefaultListModel<FileType> typesListModel;
     private java.util.List<FileType> fileTypes;
-    private AddFileTypeSignatureDialog addSigDialog;
     private DefaultListModel<Signature> signaturesListModel;
 
     /**
@@ -94,9 +88,8 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         setSignaturesListModel();
         setSignatureTypeComboBoxModel();
         setOffsetRealtiveToComboBoxModel();
-        clearTypeDetailsComponents();
         addTypeListSelectionListener();
-        addTextFieldListeners();
+        populateTypeDetailsComponents();
     }
 
     /**
@@ -151,32 +144,6 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     }
 
     /**
-     * Adds listeners to the text fields that enable and disable the buttons on
-     * the panel.
-     */
-    private void addTextFieldListeners() {
-        DocumentListener listener = new DocumentListener() {
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                enableButtons();
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                enableButtons();
-            }
-
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                enableButtons();
-            }
-        };
-
-        mimeTypeTextField.getDocument().addDocumentListener(listener);
-        filesSetNameTextField.getDocument().addDocumentListener(listener);
-    }
-
-    /**
      * Add a property change listener that listens to ingest job events to
      * disable the buttons on the panel if ingest is running. This is done to
      * prevent changes to user-defined types while the type definitions are in
@@ -216,11 +183,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
 
         boolean fileTypeIsSelected = typesList.getSelectedIndex() != -1;
         deleteTypeButton.setEnabled(!ingestIsRunning && fileTypeIsSelected);
-
-        boolean requiredFieldsPopulated
-                = !mimeTypeTextField.getText().isEmpty()
-                && (postHitCheckBox.isSelected() ? !filesSetNameTextField.getText().isEmpty() : true);
-        saveTypeButton.setEnabled(!ingestIsRunning && requiredFieldsPopulated);
+        editTypeButton.setEnabled(!ingestIsRunning && fileTypeIsSelected);
 
         ingestRunningWarningLabel.setVisible(ingestIsRunning);
     }
@@ -263,21 +226,14 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
      */
     private void populateTypeDetailsComponents() {
         FileType fileType = typesList.getSelectedValue();
+        this.signatureList.setEnabled(false);
         if (null != fileType) {
-            mimeTypeTextField.setText(fileType.getMimeType());
-            mimeTypeTextField.setEditable(false);
+            mimeTypeNameLabel.setText(fileType.getMimeType());
             List<Signature> signatures = fileType.getSignatures();
             this.signaturesListModel.clear();
             for (Signature sig : signatures) {
                 signaturesListModel.addElement(sig);
             }
-            postHitCheckBox.setSelected(fileType.alertOnMatch());
-            filesSetNameTextField.setEnabled(postHitCheckBox.isSelected());
-            filesSetNameTextField.setText(fileType.getFilesSetName());
-            this.signatureList.setEnabled(false);
-            this.addSigButton.setEnabled(false);
-            this.deleteSigButton.setEnabled(false);
-            this.editSigButton.setEnabled(false);
         }
         enableButtons();
     }
@@ -288,15 +244,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
      */
     private void clearTypeDetailsComponents() {
         typesList.clearSelection();
-        mimeTypeTextField.setText(""); //NON-NLS
-        mimeTypeTextField.setEditable(true);
-        this.signatureList.setEnabled(true);
-        this.addSigButton.setEnabled(true);
-        this.deleteSigButton.setEnabled(true);
-        this.editSigButton.setEnabled(true);
-        postHitCheckBox.setSelected(false);
-        filesSetNameTextField.setText(""); //NON-NLS
-        filesSetNameTextField.setEnabled(false);
+        mimeTypeNameLabel.setText(""); //NON-NLS
         this.signaturesListModel.clear();
         enableButtons();
     }
@@ -343,51 +291,43 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        ingestRunningWarningLabel = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        jSplitPane1 = new javax.swing.JSplitPane();
+        jPanel1 = new javax.swing.JPanel();
+        jLabel2 = new javax.swing.JLabel();
         typesScrollPane = new javax.swing.JScrollPane();
         typesList = new javax.swing.JList<>();
-        separator = new javax.swing.JSeparator();
-        mimeTypeLabel = new javax.swing.JLabel();
-        mimeTypeTextField = new javax.swing.JTextField();
-        newTypeButton = new javax.swing.JButton();
         deleteTypeButton = new javax.swing.JButton();
-        saveTypeButton = new javax.swing.JButton();
-        postHitCheckBox = new javax.swing.JCheckBox();
-        filesSetNameLabel = new javax.swing.JLabel();
-        filesSetNameTextField = new javax.swing.JTextField();
-        ingestRunningWarningLabel = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
-        jLabel3 = new javax.swing.JLabel();
+        newTypeButton = new javax.swing.JButton();
+        editTypeButton = new javax.swing.JButton();
+        jPanel2 = new javax.swing.JPanel();
+        mimeTypeLabel = new javax.swing.JLabel();
+        jLabel1 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         signatureList = new javax.swing.JList<>();
-        addSigButton = new javax.swing.JButton();
-        editSigButton = new javax.swing.JButton();
-        deleteSigButton = new javax.swing.JButton();
+        mimeTypeNameLabel = new javax.swing.JLabel();
 
         setMaximumSize(new java.awt.Dimension(552, 297));
         setPreferredSize(new java.awt.Dimension(552, 297));
+
+        ingestRunningWarningLabel.setFont(ingestRunningWarningLabel.getFont().deriveFont(ingestRunningWarningLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        ingestRunningWarningLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/filetypeid/warning16.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(ingestRunningWarningLabel, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.ingestRunningWarningLabel.text")); // NOI18N
+
+        jLabel3.setFont(jLabel3.getFont().deriveFont(jLabel3.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.jLabel3.text")); // NOI18N
+
+        jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.jLabel2.text")); // NOI18N
 
         typesList.setFont(typesList.getFont().deriveFont(typesList.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         typesList.setMaximumSize(new java.awt.Dimension(150, 0));
         typesList.setMinimumSize(new java.awt.Dimension(150, 0));
         typesScrollPane.setViewportView(typesList);
 
-        separator.setOrientation(javax.swing.SwingConstants.VERTICAL);
-
-        mimeTypeLabel.setFont(mimeTypeLabel.getFont().deriveFont(mimeTypeLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        org.openide.awt.Mnemonics.setLocalizedText(mimeTypeLabel, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.mimeTypeLabel.text")); // NOI18N
-
-        mimeTypeTextField.setFont(mimeTypeTextField.getFont().deriveFont(mimeTypeTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        mimeTypeTextField.setText(org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.mimeTypeTextField.text")); // NOI18N
-
-        newTypeButton.setFont(newTypeButton.getFont().deriveFont(newTypeButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        org.openide.awt.Mnemonics.setLocalizedText(newTypeButton, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.newTypeButton.text")); // NOI18N
-        newTypeButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                newTypeButtonActionPerformed(evt);
-            }
-        });
-
         deleteTypeButton.setFont(deleteTypeButton.getFont().deriveFont(deleteTypeButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        deleteTypeButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/delete16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(deleteTypeButton, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.deleteTypeButton.text")); // NOI18N
         deleteTypeButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -395,37 +335,62 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
             }
         });
 
-        saveTypeButton.setFont(saveTypeButton.getFont().deriveFont(saveTypeButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        org.openide.awt.Mnemonics.setLocalizedText(saveTypeButton, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.saveTypeButton.text")); // NOI18N
-        saveTypeButton.addActionListener(new java.awt.event.ActionListener() {
+        newTypeButton.setFont(newTypeButton.getFont().deriveFont(newTypeButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        newTypeButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add16.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(newTypeButton, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.newTypeButton.text")); // NOI18N
+        newTypeButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                saveTypeButtonActionPerformed(evt);
+                newTypeButtonActionPerformed(evt);
             }
         });
 
-        postHitCheckBox.setFont(postHitCheckBox.getFont().deriveFont(postHitCheckBox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        org.openide.awt.Mnemonics.setLocalizedText(postHitCheckBox, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.postHitCheckBox.text")); // NOI18N
-        postHitCheckBox.addActionListener(new java.awt.event.ActionListener() {
+        editTypeButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/edit16.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(editTypeButton, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.editTypeButton.text")); // NOI18N
+        editTypeButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                postHitCheckBoxActionPerformed(evt);
+                editTypeButtonActionPerformed(evt);
             }
         });
 
-        filesSetNameLabel.setFont(filesSetNameLabel.getFont().deriveFont(filesSetNameLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        org.openide.awt.Mnemonics.setLocalizedText(filesSetNameLabel, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.filesSetNameLabel.text")); // NOI18N
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(newTypeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 101, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(editTypeButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(deleteTypeButton))
+                    .addComponent(jLabel2)
+                    .addComponent(typesScrollPane))
+                .addGap(31, 31, 31))
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addComponent(jLabel2)
+                .addGap(1, 1, 1)
+                .addComponent(typesScrollPane)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(newTypeButton)
+                    .addComponent(editTypeButton)
+                    .addComponent(deleteTypeButton))
+                .addContainerGap())
+        );
 
-        filesSetNameTextField.setFont(filesSetNameTextField.getFont().deriveFont(filesSetNameTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        filesSetNameTextField.setText(org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.filesSetNameTextField.text")); // NOI18N
+        jPanel1Layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {deleteTypeButton, newTypeButton});
 
-        ingestRunningWarningLabel.setFont(ingestRunningWarningLabel.getFont().deriveFont(ingestRunningWarningLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        ingestRunningWarningLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/filetypeid/warning16.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(ingestRunningWarningLabel, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.ingestRunningWarningLabel.text")); // NOI18N
+        jSplitPane1.setLeftComponent(jPanel1);
 
-        jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.jLabel2.text")); // NOI18N
+        mimeTypeLabel.setFont(mimeTypeLabel.getFont().deriveFont(mimeTypeLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        org.openide.awt.Mnemonics.setLocalizedText(mimeTypeLabel, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.mimeTypeLabel.text")); // NOI18N
 
-        jLabel3.setFont(jLabel3.getFont().deriveFont(jLabel3.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.jLabel3.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.jLabel1.text")); // NOI18N
 
         signatureList.setModel(new javax.swing.AbstractListModel<Signature>() {
             Signature[] signatures = {};
@@ -434,26 +399,40 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         });
         jScrollPane1.setViewportView(signatureList);
 
-        org.openide.awt.Mnemonics.setLocalizedText(addSigButton, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.addSigButton.text")); // NOI18N
-        addSigButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                addSigButtonActionPerformed(evt);
-            }
-        });
+        org.openide.awt.Mnemonics.setLocalizedText(mimeTypeNameLabel, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.mimeTypeNameLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(editSigButton, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.editSigButton.text")); // NOI18N
-        editSigButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                editSigButtonActionPerformed(evt);
-            }
-        });
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+                .addGap(18, 18, 18)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(mimeTypeLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(mimeTypeNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 387, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addGap(6, 6, 6)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(mimeTypeLabel)
+                    .addComponent(mimeTypeNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 328, Short.MAX_VALUE)
+                .addGap(20, 20, 20))
+        );
 
-        org.openide.awt.Mnemonics.setLocalizedText(deleteSigButton, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.deleteSigButton.text")); // NOI18N
-        deleteSigButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                deleteSigButtonActionPerformed(evt);
-            }
-        });
+        jSplitPane1.setRightComponent(jPanel2);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -462,93 +441,34 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(ingestRunningWarningLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGap(30, 30, 30))
-                    .addGroup(layout.createSequentialGroup()
+                    .addComponent(ingestRunningWarningLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel3)
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                .addComponent(saveTypeButton)
-                                .addGroup(layout.createSequentialGroup()
-                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(jLabel2)
-                                        .addGroup(layout.createSequentialGroup()
-                                            .addGap(10, 10, 10)
-                                            .addComponent(deleteTypeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addGap(18, 18, 18)
-                                            .addComponent(newTypeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                        .addComponent(typesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(separator, javax.swing.GroupLayout.PREFERRED_SIZE, 7, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addGroup(layout.createSequentialGroup()
-                                            .addComponent(filesSetNameLabel)
-                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                            .addComponent(filesSetNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 277, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 333, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(postHitCheckBox)
-                                        .addGroup(layout.createSequentialGroup()
-                                            .addComponent(addSigButton)
-                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                            .addComponent(editSigButton)
-                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                            .addComponent(deleteSigButton))
-                                        .addGroup(layout.createSequentialGroup()
-                                            .addComponent(mimeTypeLabel)
-                                            .addGap(18, 18, 18)
-                                            .addComponent(mimeTypeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 262, javax.swing.GroupLayout.PREFERRED_SIZE))))))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                            .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jSplitPane1, javax.swing.GroupLayout.Alignment.TRAILING))
+                        .addContainerGap())))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(6, 6, 6)
                 .addComponent(jLabel3)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel2)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(typesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 183, Short.MAX_VALUE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(deleteTypeButton)
-                                    .addComponent(newTypeButton)))
-                            .addComponent(separator))
-                        .addGap(18, 18, 18)
-                        .addComponent(ingestRunningWarningLabel))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(24, 24, 24)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(mimeTypeLabel)
-                            .addComponent(mimeTypeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(addSigButton)
-                            .addComponent(editSigButton)
-                            .addComponent(deleteSigButton))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(postHitCheckBox)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(filesSetNameLabel)
-                            .addComponent(filesSetNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(saveTypeButton))))
+                .addComponent(jSplitPane1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(ingestRunningWarningLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
-
-        layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {deleteTypeButton, newTypeButton, saveTypeButton});
-
     }// </editor-fold>//GEN-END:initComponents
 
     private void newTypeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newTypeButtonActionPerformed
-        clearTypeDetailsComponents();
+        AddFileTypeDialog dialog = new AddFileTypeDialog();
+        AddFileTypeDialog.BUTTON_PRESSED result = dialog.getResult();
+        if (result == AddFileTypeDialog.BUTTON_PRESSED.OK) {
+            fileTypes.add(dialog.getFileType());
+            updateFileTypesListModel();
+        }
+
     }//GEN-LAST:event_newTypeButtonActionPerformed
 
     private void deleteTypeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteTypeButtonActionPerformed
@@ -559,103 +479,32 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
             typesList.setSelectedIndex(0);
         }
     }//GEN-LAST:event_deleteTypeButtonActionPerformed
-    @Messages({
-        "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidSigList.message=Must have at least one signature.",
-        "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidSigList.title=Invalid Signature List"})
-    private void saveTypeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveTypeButtonActionPerformed
-        String typeName = mimeTypeTextField.getText();
-        if (typeName.isEmpty()) {
-            JOptionPane.showMessageDialog(null,
-                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidMIMEType.message"),
-                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidMIMEType.title"),
-                    JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        List<Signature> sigList = new ArrayList<>();
-        for (int i = 0; i < this.signaturesListModel.getSize(); i++) {
-            sigList.add(this.signaturesListModel.elementAt(i));
-        }
-        if (sigList.isEmpty()) {
-            JOptionPane.showMessageDialog(null,
-                    Bundle.AddFileTypeSignatureDialog_invalidSignature_message(),
-                    Bundle.FileTypeIdGlobalSettingsPanel_JOptionPane_invalidSigList_title(),
-                    JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        /**
-         * Get the interesting files set details.
-         */
-        String filesSetName = "";
-        if (postHitCheckBox.isSelected()) {
-            filesSetName = filesSetNameTextField.getText();
-        }
-        if (postHitCheckBox.isSelected() && filesSetName.isEmpty()) {
-            JOptionPane.showMessageDialog(null,
-                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidInterestingFilesSetName.message"),
-                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidInterestingFilesSetName.title"),
-                    JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        FileType fileType = new FileType(typeName, sigList, filesSetName, postHitCheckBox.isSelected());
-        FileType selected = typesList.getSelectedValue();
-        if (selected != null) {
-            fileTypes.remove(selected);
-        }
-        fileTypes.add(fileType);
-        updateFileTypesListModel();
-        typesList.setSelectedValue(fileType, true);
-    }//GEN-LAST:event_saveTypeButtonActionPerformed
 
-    private void postHitCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_postHitCheckBoxActionPerformed
-        filesSetNameTextField.setEnabled(postHitCheckBox.isSelected());
-        enableButtons();
-    }//GEN-LAST:event_postHitCheckBoxActionPerformed
-
-    private void addSigButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addSigButtonActionPerformed
-        if (evt.getSource().equals(this.addSigButton)) {
-            this.addSigDialog = new AddFileTypeSignatureDialog();
-            if (addSigDialog.getResult() == BUTTON_PRESSED.OK) {
-                signaturesListModel.addElement(this.addSigDialog.getSignature());
-            }
+    private void editTypeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editTypeButtonActionPerformed
+        int selected = this.typesList.getSelectedIndex();
+        AddFileTypeDialog dialog = new AddFileTypeDialog(this.typesListModel.get(this.typesList.getSelectedIndex()));
+        AddFileTypeDialog.BUTTON_PRESSED result = dialog.getResult();
+        if (result == AddFileTypeDialog.BUTTON_PRESSED.OK) {
+            this.fileTypes.remove(selected);
+            this.fileTypes.add(selected, dialog.getFileType());
+            updateFileTypesListModel();
         }
-    }//GEN-LAST:event_addSigButtonActionPerformed
-
-    private void deleteSigButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteSigButtonActionPerformed
-        if (this.signatureList.getSelectedIndex() != -1) {
-            signaturesListModel.removeElementAt(this.signatureList.getSelectedIndex());
-            if (!this.signaturesListModel.isEmpty()) {
-                signatureList.setSelectedIndex(0);
-            }
-        }
-    }//GEN-LAST:event_deleteSigButtonActionPerformed
-
-    private void editSigButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editSigButtonActionPerformed
-        if (evt.getSource().equals(this.editSigButton) && this.signatureList.getSelectedValue() != null) {
-            this.addSigDialog = new AddFileTypeSignatureDialog(this.signatureList.getSelectedValue());
-            if (addSigDialog.getResult() == BUTTON_PRESSED.OK) {
-                signaturesListModel.removeElementAt(this.signatureList.getSelectedIndex());
-                this.signaturesListModel.addElement(this.addSigDialog.getSignature());
-            }
-        }
-    }//GEN-LAST:event_editSigButtonActionPerformed
+    }//GEN-LAST:event_editTypeButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton addSigButton;
-    private javax.swing.JButton deleteSigButton;
     private javax.swing.JButton deleteTypeButton;
-    private javax.swing.JButton editSigButton;
-    private javax.swing.JLabel filesSetNameLabel;
-    private javax.swing.JTextField filesSetNameTextField;
+    private javax.swing.JButton editTypeButton;
     private javax.swing.JLabel ingestRunningWarningLabel;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JLabel mimeTypeLabel;
-    private javax.swing.JTextField mimeTypeTextField;
+    private javax.swing.JLabel mimeTypeNameLabel;
     private javax.swing.JButton newTypeButton;
-    private javax.swing.JCheckBox postHitCheckBox;
-    private javax.swing.JButton saveTypeButton;
-    private javax.swing.JSeparator separator;
     private javax.swing.JList<Signature> signatureList;
     private javax.swing.JList<FileType> typesList;
     private javax.swing.JScrollPane typesScrollPane;

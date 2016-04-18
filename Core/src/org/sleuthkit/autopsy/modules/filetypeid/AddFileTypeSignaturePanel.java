@@ -121,7 +121,7 @@ class AddFileTypeSignaturePanel extends javax.swing.JPanel {
      * @return The signature of this panel, or null if it is an invalid
      *         signature.
      */
-    public Signature getSignature() {
+    Signature getSignature() {
 
         /**
          * Get the signature type.
