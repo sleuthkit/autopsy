@@ -34,31 +34,43 @@ public class SubTypeTreeItem extends EventTypeTreeItem {
      * A map of the children DescriptionTreeItem, keyed by description string.
      */
     private final Map<String, DescriptionTreeItem> childMap = new HashMap<>();
-    
-    SubTypeTreeItem(TimeLineEvent stripe, Comparator<TreeItem<TimeLineEvent>> comp) {
-        super(stripe.getEventType(), comp);
+
+    /**
+     * Constructor
+     *
+     * @param event      the event that backs this tree item
+     * @param comparator the initial comparator used to sort the children of
+     *                   this tree item
+     */
+    SubTypeTreeItem(TimeLineEvent event, Comparator<TreeItem<TimeLineEvent>> comparator) {
+        super(event.getEventType(), comparator);
     }
-    
+
     @Override
     public void insert(List<TimeLineEvent> path) {
         TimeLineEvent head = path.remove(0);
         DescriptionTreeItem treeItem = childMap.computeIfAbsent(head.getDescription(),
                 description -> configureNewTreeItem(new DescriptionTreeItem(head, getComparator()))
         );
-        
+
+        //insert path into  tree item
         if (path.isEmpty() == false) {
             treeItem.insert(path);
         }
     }
-    
+
     @Override
     void remove(List<TimeLineEvent> path) {
         TimeLineEvent head = path.remove(0);
         DescriptionTreeItem descTreeItem = childMap.get(head.getDescription());
+
+        //remove path from child item
         if (descTreeItem != null) {
             if (path.isEmpty() == false) {
                 descTreeItem.remove(path);
             }
+
+            //if child item has no children, remove it also.
             if (descTreeItem.getChildren().isEmpty()) {
                 childMap.remove(head.getDescription());
                 getChildren().remove(descTreeItem);

@@ -18,10 +18,13 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 
@@ -107,8 +110,8 @@ abstract class EventsTreeItem extends TreeItem<TimeLineEvent> {
      * all of this tree item's children.
      *
      * @param path A representation of an event as a path from its root
-     *             EventStripe though the tree. The root is the first item and
-     *             the event it self is the last item in the list.
+     *             EventStripe though the tree, as returned by
+     *             getTreePath(event)
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     abstract void remove(List<TimeLineEvent> path);
@@ -118,11 +121,33 @@ abstract class EventsTreeItem extends TreeItem<TimeLineEvent> {
      * all of this tree item's children.
      *
      * @param path A representation of an event as a path from its root
-     *             EventStripe though the tree. The root is the first item and
-     *             the event it self is the last item in the list.
+     *             EventStripe though the tree, as returned by
+     *             getTreePath(event)
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     abstract void insert(List<TimeLineEvent> path);
+
+    /**
+     * Get the tree path from the root event stripe of the given event to the
+     * given event itself
+     *
+     * @param event the event to get a tree path for
+     *
+     * @return A representation of an event as a path from its root EventStripe
+     *         though the tree. The root is the first item and the event itself
+     *         is the last item in the list.
+     */
+    static List<TimeLineEvent> getTreePath(TimeLineEvent event) {
+        List<TimeLineEvent> path = new ArrayList<>();
+        path.add(0, event);
+        Optional<EventStripe> parentOptional = event.getParentStripe();
+        while (parentOptional.isPresent()) {
+            EventStripe parent = parentOptional.get();
+            path.add(0, parent);
+            parentOptional = parent.getParentStripe();
+        }
+        return path;
+    }
 
     /**
      * Configure initial properties that all EventsTreeItems share.

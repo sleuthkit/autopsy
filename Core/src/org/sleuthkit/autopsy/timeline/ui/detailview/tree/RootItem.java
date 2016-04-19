@@ -18,15 +18,12 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 
@@ -40,34 +37,33 @@ class RootItem extends EventsTreeItem {
      */
     private final Map<EventType, BaseTypeTreeItem> childMap = new HashMap<>();
 
-    RootItem(Comparator<TreeItem<TimeLineEvent>> comp) {
-        super(comp);
+    /**
+     * Constructor
+     *
+     * @param comparator the initial comparator used to sort the children of
+     *                   this tree item
+     */
+    RootItem(Comparator<TreeItem<TimeLineEvent>> comparator) {
+        super(comparator);
     }
 
     /**
-     * Recursive method to add a grouping at a given path.
+     * Insert the given event into the tree
      *
-     * @param event stripe to add
+     * @param event event to add
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     public void insert(TimeLineEvent event) {
         insert(getTreePath(event));
     }
 
+    /**
+     * Remove the given event from the tree
+     *
+     * @param event the event to remove
+     */
     void remove(TimeLineEvent event) {
         remove(getTreePath(event));
-    }
-
-    private static List<TimeLineEvent> getTreePath(TimeLineEvent event) {
-        List<TimeLineEvent> path = new ArrayList<>();
-        path.add(0, event);
-        Optional<EventStripe> parentOptional = event.getParentStripe();
-        while (parentOptional.isPresent()) {
-            EventStripe parent = parentOptional.get();
-            path.add(0, parent);
-            parentOptional = parent.getParentStripe();
-        }
-        return path;
     }
 
     @Override
@@ -90,9 +86,12 @@ class RootItem extends EventsTreeItem {
     void remove(List<TimeLineEvent> path) {
         TimeLineEvent event = path.get(0);
         BaseTypeTreeItem typeTreeItem = childMap.get(event.getEventType().getBaseType());
+
+        //remove the path from the child
         if (typeTreeItem != null) {
             typeTreeItem.remove(path);
 
+            //if the child has no children remove it also
             if (typeTreeItem.getChildren().isEmpty()) {
                 childMap.remove(event.getEventType().getBaseType());
                 getChildren().remove(typeTreeItem);
