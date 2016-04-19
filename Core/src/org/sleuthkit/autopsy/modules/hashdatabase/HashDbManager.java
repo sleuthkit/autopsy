@@ -36,7 +36,6 @@ import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.apache.commons.io.FilenameUtils;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -798,7 +797,7 @@ public class HashDbManager implements PropertyChangeListener {
         @Override
         protected Object doInBackground() {
             hashDb.indexing = true;
-            progress = ProgressHandleFactory.createHandle(
+            progress = ProgressHandle.createHandle(
                     NbBundle.getMessage(this.getClass(), "HashDbManager.progress.indexingHashSet", hashDb.hashSetName));
             progress.start();
             progress.switchToIndeterminate();

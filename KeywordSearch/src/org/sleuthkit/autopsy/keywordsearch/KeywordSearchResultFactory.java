@@ -22,25 +22,22 @@ import java.awt.EventQueue;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.Cancellable;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.KeyValue;
@@ -410,7 +407,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
             //writerLock.lock();
 
             try {
-                progress = ProgressHandleFactory.createHandle(
+                progress = ProgressHandle.createHandle(
                         NbBundle.getMessage(this.getClass(), "KeywordSearchResultFactory.progress.saving", queryDisp), new Cancellable() {
                             @Override
                             public boolean cancel() {
