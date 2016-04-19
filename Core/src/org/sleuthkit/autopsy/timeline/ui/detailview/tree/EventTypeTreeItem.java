@@ -24,14 +24,24 @@ import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 
 /**
- * EventTreeItem for event types
+ * abstract EventTreeItem for event types
  */
 abstract class EventTypeTreeItem extends EventsTreeItem {
 
+    /**
+     * The event type for this tree item.
+     */
     private final EventType eventType;
 
-    EventTypeTreeItem(EventType eventType, Comparator<TreeItem<TimeLineEvent>> comp) {
-        super(comp);
+    /**
+     * Constructor
+     *
+     * @param eventType  the event type for this tree item
+     * @param comparator the initial comparator used to sort the children of
+     *                   this tree item
+     */
+    EventTypeTreeItem(EventType eventType, Comparator<TreeItem<TimeLineEvent>> comparator) {
+        super(comparator);
         this.eventType = eventType;
     }
 
@@ -39,6 +49,7 @@ abstract class EventTypeTreeItem extends EventsTreeItem {
     void resort(Comparator<TreeItem<TimeLineEvent>> comp, Boolean recursive) {
         setComparator(comp);
         if (recursive) {
+            //sort childrens children
             getChildren().stream()
                     .map(EventsTreeItem.class::cast)
                     .forEach(ti -> ti.resort(comp, true));
