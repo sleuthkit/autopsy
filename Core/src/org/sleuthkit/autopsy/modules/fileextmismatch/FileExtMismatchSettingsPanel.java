@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.modules.fileextmismatch;
 
 import java.awt.Color;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -29,10 +31,11 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
-import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
+import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 
 /**
@@ -53,6 +56,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
     private String selectedExt = "";
     ListSelectionModel lsm = null;
     private FileTypeDetector fileTypeDetector;
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     public FileExtMismatchSettingsPanel() {
         mimeTableModel = new MimeTableModel();
@@ -123,6 +127,16 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
             }
         });
 
+    }
+
+    @Override
+    public void addPropertyChangeListener(PropertyChangeListener l) {
+        pcs.addPropertyChangeListener(l);
+    }
+
+    @Override
+    public void removePropertyChangeListener(PropertyChangeListener l) {
+        pcs.removePropertyChangeListener(l);
     }
 
     private void clearErrLabels() {
@@ -400,6 +414,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         extRemoveErrLabel.setText(" ");
         userExtTextField.setText("");
         setIsModified();
+        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_addExtButtonActionPerformed
 
     private void addTypeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addTypeButtonActionPerformed
@@ -444,6 +459,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         mimeRemoveErrLabel.setText(" ");
         userTypeTextField.setText("");
         setIsModified();
+        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_addTypeButtonActionPerformed
 
     private void userExtTextFieldFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_userExtTextFieldFocusGained
@@ -474,6 +490,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         mimeRemoveErrLabel.setText(
                 NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.remoteTypeButton.deleted", deadMime));
         setIsModified();
+        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_removeTypeButtonActionPerformed
 
     private void removeExtButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeExtButtonActionPerformed
@@ -507,6 +524,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         extRemoveErrLabel.setText(
                 NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.removeExtButton.deleted", deadExt));
         setIsModified();
+        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_removeExtButtonActionPerformed
 
     private void updateMimeList() {

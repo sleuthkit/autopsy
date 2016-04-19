@@ -4,16 +4,17 @@
  */
 package org.sleuthkit.autopsy.modules.fileextmismatch;
 
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.logging.Level;
 import javax.swing.JComponent;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 @OptionsPanelController.TopLevelRegistration(
         categoryName = "#OptionsCategory_Name_FileExtMismatchOptions",
@@ -79,6 +80,14 @@ public final class FileExtMismatchOptionsPanelController extends OptionsPanelCon
     private FileExtMismatchSettingsPanel getPanel() {
         if (panel == null) {
             panel = new FileExtMismatchSettingsPanel();
+            panel.addPropertyChangeListener(new PropertyChangeListener() {
+                @Override
+                public void propertyChange(PropertyChangeEvent evt) {
+                    if (evt.getPropertyName().equals(OptionsPanelController.PROP_CHANGED)) {
+                        changed = true;
+                    }
+                }
+            });
         }
         return panel;
     }
