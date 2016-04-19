@@ -31,7 +31,7 @@ import org.controlsfx.control.action.ActionUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
-import org.sleuthkit.autopsy.timeline.ui.detailview.DetailsChart.HideDescriptionAction;
+import org.sleuthkit.autopsy.timeline.ui.detailview.HideDescriptionAction;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.configureActionButton;
 
 /**

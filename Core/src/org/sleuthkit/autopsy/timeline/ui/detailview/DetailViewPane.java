@@ -57,8 +57,8 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
-import org.sleuthkit.autopsy.timeline.ui.detailview.DetailsChart.HideDescriptionAction;
-import org.sleuthkit.autopsy.timeline.ui.detailview.DetailsChart.UnhideDescriptionAction;
+import org.sleuthkit.autopsy.timeline.ui.detailview.HideDescriptionAction;
+import org.sleuthkit.autopsy.timeline.ui.detailview.UnhideDescriptionAction;
 import org.sleuthkit.autopsy.timeline.utils.MappedList;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 

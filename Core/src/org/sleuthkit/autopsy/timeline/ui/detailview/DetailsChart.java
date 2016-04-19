@@ -27,7 +27,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
 import javafx.collections.SetChangeListener;
-import javafx.event.ActionEvent;
 import javafx.geometry.Side;
 import javafx.scene.chart.Axis;
 import javafx.scene.control.ContextMenu;
@@ -44,16 +43,13 @@ import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
-import org.python.google.common.collect.Iterables;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
-import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 /**
  * A TimeLineChart that implements the visual aspects of the DetailView
@@ -344,99 +340,93 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
         }
     }
 
-    @NbBundle.Messages({"HideDescriptionAction.displayName=Hide",
-        "HideDescriptionAction.displayMsg=Hide this group from the details view."})
-    static class HideDescriptionAction extends Action {
-
-        static final Image HIDE = new Image("/org/sleuthkit/autopsy/timeline/images/eye--minus.png"); // NON-NLS
-
-        HideDescriptionAction(String description, DescriptionLoD descriptionLoD, DetailsChart chart) {
-            super(Bundle.HideDescriptionAction_displayName());
-            setLongText(Bundle.HideDescriptionAction_displayMsg());
-            setGraphic(new ImageView(HIDE));
-            setEventHandler((ActionEvent t) -> {
-                final DescriptionFilter testFilter = new DescriptionFilter(
-                        descriptionLoD,
-                        description,
-                        DescriptionFilter.FilterMode.EXCLUDE);
-
-                DescriptionFilter descriptionFilter = chart.getController().getQuickHideFilters().stream()
-                        .filter(testFilter::equals)
-                        .findFirst().orElseGet(() -> {
-                            testFilter.selectedProperty().addListener(observable -> chart.requestLayout());
-                            chart.getController().getQuickHideFilters().add(testFilter);
-                            return testFilter;
-                        });
-                descriptionFilter.setSelected(true);
-            });
-        }
-    }
-
-    @NbBundle.Messages({"UnhideDescriptionAction.displayName=Unhide"})
-    static class UnhideDescriptionAction extends Action {
-
-        static final Image SHOW = new Image("/org/sleuthkit/autopsy/timeline/images/eye--plus.png"); // NON-NLS
-
-        UnhideDescriptionAction(String description, DescriptionLoD descriptionLoD, DetailsChart chart) {
-            super(Bundle.UnhideDescriptionAction_displayName());
-            setGraphic(new ImageView(SHOW));
-            setEventHandler((ActionEvent t) ->
-                    chart.getController().getQuickHideFilters().stream()
-                    .filter(descriptionFilter -> descriptionFilter.getDescriptionLoD().equals(descriptionLoD)
-                            && descriptionFilter.getDescription().equals(description))
-                    .forEach(descriptionfilter -> descriptionfilter.setSelected(false))
-            );
-        }
-    }
-
+    /**
+     * The Skin for DetailsChart that implements the visual display of the
+     * chart.
+     */
     static private class DetailsChartSkin extends SkinBase<DetailsChart> {
 
+        /**
+         * If the pinned lane is visible this is the minimum height.
+         */
         private static final int MIN_PINNED_LANE_HEIGHT = 50;
 
+        /*
+         * The ChartLane for the main area of this chart. It is affected by all
+         * the view settings.
+         */
         private final PrimaryDetailsChartLane primaryLane;
-        private final ScrollingLaneWrapper mainView;
+
+        /**
+         * Container for the primary Lane that adds a vertical ScrollBar
+         */
+        private final ScrollingLaneWrapper primaryView;
+
+        /*
+         * The ChartLane for the area of this chart that shows pinned eventsd.
+         * It is not affected any filters.
+         */
         private final PinnedEventsChartLane pinnedLane;
+
+        /**
+         * Container for the pinned Lane that adds a vertical ScrollBar
+         */
         private final ScrollingLaneWrapper pinnedView;
+
+        /**
+         * Shows the two lanes with the primary lane as the master, and the
+         * pinned lane as the details view above the primary lane. Used to show
+         * and hide the pinned lane with a slide in/out animation.
+         */
         private final MasterDetailPane masterDetailPane;
+
+        /**
+         * Root Pane of this skin,
+         */
         private final Pane rootPane;
 
+        /**
+         * The divder position of masterDetailPane is saved when the pinned lane
+         * is hidden so it can be restored when the pinned lane is shown again.
+         */
         private double dividerPosition = .1;
-
-        private IntervalSelector<? extends DateTime> intervalSelector;
 
         @NbBundle.Messages("DetailViewPane.pinnedLaneLabel.text=Pinned Events")
         DetailsChartSkin(DetailsChart chart) {
             super(chart);
-            //initialize chart;
+            //initialize chart lanes;
             primaryLane = new PrimaryDetailsChartLane(chart, getSkinnable().detailsChartDateAxis, getSkinnable().verticalAxis);
-
-            mainView = new ScrollingLaneWrapper(primaryLane);
-
+            primaryView = new ScrollingLaneWrapper(primaryLane);
             pinnedLane = new PinnedEventsChartLane(chart, getSkinnable().pinnedDateAxis, new EventAxis<>(Bundle.DetailViewPane_pinnedLaneLabel_text()));
             pinnedView = new ScrollingLaneWrapper(pinnedLane);
+
             pinnedLane.setMinHeight(MIN_PINNED_LANE_HEIGHT);
             pinnedLane.maxVScrollProperty().addListener((Observable observable) -> syncPinnedHeight());
             syncPinnedHeight();
 
-            masterDetailPane = new MasterDetailPane(Side.TOP, mainView, pinnedView, false);
+            //assemble scene graph
+            masterDetailPane = new MasterDetailPane(Side.TOP, primaryView, pinnedView, false);
             masterDetailPane.setDividerPosition(dividerPosition);
             masterDetailPane.prefHeightProperty().bind(getSkinnable().heightProperty());
             masterDetailPane.prefWidthProperty().bind(getSkinnable().widthProperty());
-
             rootPane = new Pane(masterDetailPane);
             getChildren().add(rootPane);
 
             //maintain highlighted effect on correct nodes
             getSkinnable().highlightPredicate.addListener((observable, oldPredicate, newPredicate) -> {
-                getAllEventNodes().forEach(eNode ->
+                primaryLane.getAllNodes().forEach(eNode ->
+                        eNode.applyHighlightEffect(newPredicate.test(eNode)));
+                pinnedLane.getAllNodes().forEach(eNode ->
                         eNode.applyHighlightEffect(newPredicate.test(eNode)));
             });
 
+            //configure mouse listeners
             TimeLineChart.MouseClickedHandler<DateTime, DetailsChart> mouseClickedHandler = new TimeLineChart.MouseClickedHandler<>(getSkinnable());
             TimeLineChart.ChartDragHandler<DateTime, DetailsChart> chartDragHandler = new TimeLineChart.ChartDragHandler<>(getSkinnable());
             configureMouseListeners(primaryLane, mouseClickedHandler, chartDragHandler);
             configureMouseListeners(pinnedLane, mouseClickedHandler, chartDragHandler);
 
+            //show and hide pinned lane in response to settings property change
             getSkinnable().getLayoutSettings().pinnedLaneShowing().addListener(observable -> {
                 boolean selected = getSkinnable().getLayoutSettings().isPinnedLaneShowing();
                 if (selected == false) {
@@ -449,16 +439,15 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
                 }
             });
 
-            getSkinnable().intervalSelector().addListener(observable -> {
-                if (getSkinnable().getIntervalSelector() == null) {
-                    rootPane.getChildren().remove(intervalSelector);
-                    intervalSelector = null;
-                } else {
-                    rootPane.getChildren().add(getSkinnable().getIntervalSelector());
-                    intervalSelector = getSkinnable().getIntervalSelector();
+            //show and remove interval selector in sync with control state change
+            getSkinnable().intervalSelector().addListener((observable, oldIntervalSelector, newIntervalSelector) -> {
+                rootPane.getChildren().remove(oldIntervalSelector);
+                if (null != newIntervalSelector) {
+                    rootPane.getChildren().add(newIntervalSelector);
                 }
             });
 
+            //show and remove guidelines in sync with control state change
             getSkinnable().guideLines.addListener((SetChangeListener.Change<? extends GuideLine> change) -> {
                 if (change.wasRemoved()) {
                     rootPane.getChildren().remove(change.getElementRemoved());
@@ -469,20 +458,23 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
             });
         }
 
-        private Iterable<EventNodeBase<?>> getAllEventNodes() {
-            return Iterables.concat(primaryLane.getAllNodes(), pinnedLane.getAllNodes());
-        }
-
+        /**
+         * Sync the allowed height of the pinned lane's scroll pane to the lanes
+         * actual height.
+         */
         private void syncPinnedHeight() {
             pinnedView.setMinHeight(MIN_PINNED_LANE_HEIGHT);
             pinnedView.setMaxHeight(pinnedLane.maxVScrollProperty().get() + 30);
         }
 
         /**
+         * Add the given listeners to the given chart lane
          *
-         * @param chartLane           the value of chartLane
-         * @param mouseClickedHandler the value of mouseClickedHandler
-         * @param chartDragHandler1   the value of chartDragHandler1
+         * @param chartLane           the Chart lane to add the listeners to
+         * @param mouseClickedHandler the mouseClickedHandler to add to chart
+         * @param chartDragHandler1   the ChartDragHandler to add to the chart
+         *                            as pressed, released, dragged, and clicked
+         *                            handler
          */
         static private void configureMouseListeners(final DetailsChartLane<?> chartLane, final TimeLineChart.MouseClickedHandler<DateTime, DetailsChart> mouseClickedHandler, final TimeLineChart.ChartDragHandler<DateTime, DetailsChart> chartDragHandler) {
             chartLane.setOnMousePressed(chartDragHandler);
