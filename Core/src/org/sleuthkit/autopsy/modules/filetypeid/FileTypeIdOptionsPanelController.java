@@ -28,8 +28,10 @@ public final class FileTypeIdOptionsPanelController extends OptionsPanelControll
 
     @Override
     public void update() {
-        getPanel().load();
-        changed = false;
+        if (changed) {
+            getPanel().load();
+            changed = false;
+        }
     }
 
     /**
@@ -44,9 +46,9 @@ public final class FileTypeIdOptionsPanelController extends OptionsPanelControll
     }
 
     /**
-     * This method is called when the Cancel button is pressed. It applies to any
-     * of the panels that have been opened in the process of using the options
-     * pane.
+     * This method is called when the Cancel button is pressed. It applies to
+     * any of the panels that have been opened in the process of using the
+     * options pane.
      */
     @Override
     public void cancel() {
@@ -57,6 +59,12 @@ public final class FileTypeIdOptionsPanelController extends OptionsPanelControll
         return true;
     }
 
+    /**
+     * Used to determine whether any changes have been made to this controller's
+     * panel.
+     *
+     * @return Whether or not a change has been made.
+     */
     @Override
     public boolean isChanged() {
         return changed;

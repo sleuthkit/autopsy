@@ -42,15 +42,16 @@ public final class FileExtMismatchOptionsPanelController extends OptionsPanelCon
      */
     @Override
     public void applyChanges() {
-        //getPanel().store();
-        getPanel().ok();
-        changed = false;
+        if (changed) {
+            getPanel().ok();
+            changed = false;
+        }
     }
 
     /**
-     * This method is called when the Cancel button is pressed. It applies to any
-     * of the panels that have been opened in the process of using the options
-     * pane.
+     * This method is called when the Cancel button is pressed. It applies to
+     * any of the panels that have been opened in the process of using the
+     * options pane.
      */
     @Override
     public void cancel() {
@@ -62,6 +63,12 @@ public final class FileExtMismatchOptionsPanelController extends OptionsPanelCon
         return getPanel().valid();
     }
 
+    /**
+     * Used to determine whether any changes have been made to this controller's
+     * panel.
+     *
+     * @return Whether or not a change has been made.
+     */
     @Override
     public boolean isChanged() {
         return changed;
