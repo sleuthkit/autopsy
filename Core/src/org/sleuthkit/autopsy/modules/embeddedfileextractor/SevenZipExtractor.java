@@ -65,6 +65,11 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
+@NbBundle.Messages({
+    "EmbeddedFileExtractorIngestModule.ArchiveExtractor.init.errCantInitLib=Could not initialize 7-ZIP library: {0}",
+    "EmbeddedFileExtractorIngestModule.ArchiveExtractor.init.errInitModule.msg=Error initializing {0}",
+    
+})
 class SevenZipExtractor {
 
     private static final Logger logger = Logger.getLogger(SevenZipExtractor.class.getName());
@@ -128,12 +133,10 @@ class SevenZipExtractor {
                 logger.log(Level.INFO, "7-Zip-JBinding library was initialized on supported platform: {0}", platform); //NON-NLS
             } catch (SevenZipNativeInitializationException e) {
                 logger.log(Level.SEVERE, "Error initializing 7-Zip-JBinding library", e); //NON-NLS
-                String msg = NbBundle.getMessage(SevenZipExtractor.class, "EmbeddedFileExtractorIngestModule.ArchiveExtractor.init.errInitModule.msg",
-                        EmbeddedFileExtractorModuleFactory.getModuleName());
-                String details = NbBundle.getMessage(SevenZipExtractor.class, "EmbeddedFileExtractorIngestModule.ArchiveExtractor.init.errCantInitLib",
-                        e.getMessage());
+                String msg = Bundle.EmbeddedFileExtractorIngestModule_ArchiveExtractor_init_errInitModule_msg(EmbeddedFileExtractorModuleFactory.getModuleName());
+                String details = Bundle.EmbeddedFileExtractorIngestModule_ArchiveExtractor_init_errCantInitLib(e.getMessage());
                 services.postMessage(IngestMessage.createErrorMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), msg, details));
-                throw new IngestModuleException(e.getMessage(), e);
+                throw new IngestModuleException(msg, e);
             }
         }
         this.context = context;
@@ -151,7 +154,7 @@ class SevenZipExtractor {
      * @param abstractFile The AbstractFilw whose mimetype is to be determined.
      *
      * @return This method returns true if the file format is currently
-     * supported. Else it returns false.
+     *         supported. Else it returns false.
      */
     boolean isSevenZipExtractionSupported(AbstractFile abstractFile) {
         try {
@@ -185,7 +188,7 @@ class SevenZipExtractor {
      *
      * More heuristics to be added here
      *
-     * @param archiveName the parent archive
+     * @param archiveName     the parent archive
      * @param archiveFileItem the archive item
      *
      * @return true if potential zip bomb, false otherwise
@@ -276,7 +279,7 @@ class SevenZipExtractor {
      * Unpack the file to local folder and return a list of derived files
      *
      * @param pipelineContext current ingest context
-     * @param archiveFile file to unpack
+     * @param archiveFile     file to unpack
      *
      * @return list of unpacked derived files
      */
@@ -327,8 +330,7 @@ class SevenZipExtractor {
         ISevenZipInArchive inArchive = null;
         SevenZipContentReadStream stream = null;
 
-        final ProgressHandle progress = ProgressHandleFactory.createHandle(
-                NbBundle.getMessage(SevenZipExtractor.class, "EmbeddedFileExtractorIngestModule.ArchiveExtractor.moduleName"));
+        final ProgressHandle progress = ProgressHandleFactory.createHandle(Bundle.EmbeddedFileExtractorIngestModule_ArchiveExtractor_moduleName());
         int processedItems = 0;
 
         boolean progressStarted = false;
@@ -773,8 +775,8 @@ class SevenZipExtractor {
         /**
          *
          * @param localPathRoot Path in module output folder that files will be
-         * saved to
-         * @param archiveFile Archive file being extracted
+         *                      saved to
+         * @param archiveFile   Archive file being extracted
          * @param fileManager
          */
         UnpackedTree(String localPathRoot, AbstractFile archiveFile) {
@@ -1033,7 +1035,7 @@ class SevenZipExtractor {
         /**
          * Add a new archive to track of depth
          *
-         * @param parent parent archive or null
+         * @param parent   parent archive or null
          * @param objectId object id of the new archive
          *
          * @return the archive added

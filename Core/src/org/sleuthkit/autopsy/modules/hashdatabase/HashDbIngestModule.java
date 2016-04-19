@@ -48,6 +48,12 @@ import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.datamodel.HashHitInfo;
 
+@NbBundle.Messages({
+    "HashDbIngestModule.noKnownBadHashDbSetMsg=No known bad hash database set.",
+    "HashDbIngestModule.knownBadFileSearchWillNotExecuteWarn=Known bad file search will not be executed.",
+    "HashDbIngestModule.noKnownHashDbSetMsg=No known hash database set.",
+    "HashDbIngestModule.knownFileSearchWillNotExecuteWarn=Known file search will not be executed."
+})
 public class HashDbIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(HashDbIngestModule.class.getName());
@@ -94,23 +100,18 @@ public class HashDbIngestModule implements FileIngestModule {
             getTotalsForIngestJobs(jobId);
 
             // if first module for this job then post error msgs if needed
-            
             if (knownBadHashSets.isEmpty()) {
                 services.postMessage(IngestMessage.createWarningMessage(
                         HashLookupModuleFactory.getModuleName(),
-                        NbBundle.getMessage(this.getClass(),
-                                "HashDbIngestModule.noKnownBadHashDbSetMsg"),
-                        NbBundle.getMessage(this.getClass(),
-                                "HashDbIngestModule.knownBadFileSearchWillNotExecuteWarn")));
+                        Bundle.HashDbIngestModule_noKnownBadHashDbSetMsg(),
+                        Bundle.HashDbIngestModule_knownBadFileSearchWillNotExecuteWarn()));
             }
 
             if (knownHashSets.isEmpty()) {
                 services.postMessage(IngestMessage.createWarningMessage(
                         HashLookupModuleFactory.getModuleName(),
-                        NbBundle.getMessage(this.getClass(),
-                                "HashDbIngestModule.noKnownHashDbSetMsg"),
-                        NbBundle.getMessage(this.getClass(),
-                                "HashDbIngestModule.knownFileSearchWillNotExecuteWarn")));
+                        Bundle.HashDbIngestModule_noKnownHashDbSetMsg(),
+                        Bundle.HashDbIngestModule_knownFileSearchWillNotExecuteWarn()));
             }
         }
     }
@@ -139,7 +140,7 @@ public class HashDbIngestModule implements FileIngestModule {
     @Override
     public ProcessResult process(AbstractFile file) {
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
-        
+
         // Skip unallocated space files.
         if (file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
             return ProcessResult.OK;
@@ -297,7 +298,7 @@ public class HashDbIngestModule implements FileIngestModule {
             badFile.addAttribute(att3);
             BlackboardAttribute att4 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME, comment);
             badFile.addAttribute(att4);
-            
+
             try {
                 // index the artifact for keyword search
                 blackboard.indexArtifact(badFile);

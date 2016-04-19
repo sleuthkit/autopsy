@@ -64,6 +64,9 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
  * files. Ingests an image file and, if available, adds it's date, latitude,
  * longitude, altitude, device model, and device make to a blackboard artifact.
  */
+@NbBundle.Messages({
+    "ExifParserFileIngestModule.startUp.fileTypeDetectorInitializationException.msg=Error initializing the file type detector."
+})
 public final class ExifParserFileIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(ExifParserFileIngestModule.class.getName());
@@ -91,14 +94,14 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            throw new IngestModuleException(NbBundle.getMessage(this.getClass(), "ExifParserFileIngestModule.startUp.fileTypeDetectorInitializationException.msg"), ex);
+            throw new IngestModuleException(Bundle.ExifParserFileIngestModule_startUp_fileTypeDetectorInitializationException_msg(), ex);
         }
     }
 
     @Override
     public ProcessResult process(AbstractFile content) {
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
-        
+
         //skip unalloc
         if (content.getType().equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
             return ProcessResult.OK;
@@ -198,14 +201,14 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             if (!attributes.isEmpty()) {
                 BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF);
                 bba.addAttributes(attributes);
-                
+
                 try {
                     // index the artifact for keyword search
                     blackboard.indexArtifact(bba);
                 } catch (Blackboard.BlackboardException ex) {
                     logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", bba.getDisplayName()), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(
-                        NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), bba.getDisplayName());
+                            NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), bba.getDisplayName());
                 }
                 filesToFire = true;
             }

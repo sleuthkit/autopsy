@@ -46,6 +46,9 @@ import org.sleuthkit.datamodel.TskException;
 /**
  * Flags mismatched filename extensions based on file signature.
  */
+@NbBundle.Messages({
+    "CouldNotCreateFileTypeDetector=Could not create File Type Detector."
+})
 public class FileExtMismatchIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(FileExtMismatchIngestModule.class.getName());
@@ -96,7 +99,7 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
         try {
             this.detector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            throw new IngestModuleException("Could not create file type detector.", ex);
+            throw new IngestModuleException(Bundle.CouldNotCreateFileTypeDetector(), ex);
         }
 
     }
@@ -104,7 +107,7 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
     @Override
     public ProcessResult process(AbstractFile abstractFile) {
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
-        if(this.settings.skipKnownFiles() && (abstractFile.getKnown() == FileKnown.KNOWN)) {
+        if (this.settings.skipKnownFiles() && (abstractFile.getKnown() == FileKnown.KNOWN)) {
             return ProcessResult.OK;
         }
 

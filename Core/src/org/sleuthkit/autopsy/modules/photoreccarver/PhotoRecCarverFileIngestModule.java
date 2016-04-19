@@ -68,6 +68,16 @@ import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
  * A file ingest module that runs the Unallocated Carver executable with
  * unallocated space files as input.
  */
+@NbBundle.Messages({
+    "PhotoRecIngestModule.PermissionsNotSufficient=Insufficient permissions accessing",
+    "PhotoRecIngestModule.PermissionsNotSufficientSeeReference=See 'Shared Drive Authentication' in Autopsy help.",
+    "cannotCreateOutputDir.message=Unable to create output directory: {0}.",
+    "unallocatedSpaceProcessingSettingsError.message='Process Unallocated Space' is not checked. The PhotoRec module is designed to carve unallocated space. Either enable processing of unallocated space or disable this module.",
+    "unsupportedOS.message=PhotoRec module is supported on Windows platforms only.",
+    "missingExecutable.message=Unable to locate PhotoRec executable.",
+    "cannotRunExecutable.message=Unable to execute PhotoRec.",
+    "PhotoRecIngestModule.nonHostnameUNCPathUsed=PhotoRec cannot operate with a UNC path containing IP addresses."
+})
 final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
     private static final String PHOTOREC_DIRECTORY = "photorec_exec"; //NON-NLS
@@ -125,7 +135,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         // exception. Although the result would not be incorrect, it would be
         // unfortunate for the user to get an accidental no-op for this module. 
         if (!this.context.processingUnallocatedSpace()) {
-            throw new IngestModule.IngestModuleException(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "unallocatedSpaceProcessingSettingsError.message"));
+            throw new IngestModule.IngestModuleException(Bundle.unallocatedSpaceProcessingSettingsError_message());
         }
 
         this.rootOutputDirPath = createModuleOutputDirectoryForCase();
@@ -152,7 +162,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 // Initialize job totals
                 initTotalsForIngestJob(jobId);
             } catch (SecurityException | IOException | UnsupportedOperationException ex) {
-                throw new IngestModule.IngestModuleException(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "cannotCreateOutputDir.message", ex.getLocalizedMessage()), ex);
+                throw new IngestModule.IngestModuleException(Bundle.cannotCreateOutputDir_message(ex.getLocalizedMessage()), ex);
             }
         }
     }
@@ -175,7 +185,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             long id = getRootId(file);
             // make sure we have a valid systemID
             if (id == -1) {
-                return ProcessResult.ERROR;
+                return IngestModule.ProcessResult.ERROR;
             }
 
             // Verify initialization succeeded.
@@ -384,19 +394,19 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 // if the UNC path is using an IP address, convert to hostname
                 path = uncPathUtilities.ipToHostName(path);
                 if (path == null) {
-                    throw new IngestModule.IngestModuleException(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.nonHostnameUNCPathUsed"));
+                    throw new IngestModule.IngestModuleException(Bundle.PhotoRecIngestModule_nonHostnameUNCPathUsed());
                 }
                 if (false == FileUtil.hasReadWriteAccess(path)) {
                     throw new IngestModule.IngestModuleException(
-                            NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.PermissionsNotSufficient")
-                            + SEP + path.toString() + SEP // SEP is line breaks to make the dialog display nicely.
-                            + NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.PermissionsNotSufficientSeeReference"));
+                            Bundle.PhotoRecIngestModule_PermissionsNotSufficient() + SEP + path.toString() + SEP
+                            + Bundle.PhotoRecIngestModule_PermissionsNotSufficientSeeReference()
+                    );
                 }
             }
         } catch (FileAlreadyExistsException ex) {
             // No worries.
         } catch (IOException | SecurityException | UnsupportedOperationException ex) {
-            throw new IngestModule.IngestModuleException(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "cannotCreateOutputDir.message", ex.getLocalizedMessage()), ex);
+            throw new IngestModule.IngestModuleException(Bundle.cannotCreateOutputDir_message(ex.getLocalizedMessage()), ex);
         }
         return path;
     }
@@ -438,16 +448,16 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     public static File locateExecutable(String executableToFindName) throws IngestModule.IngestModuleException {
         // Must be running under a Windows operating system.
         if (!PlatformUtil.isWindowsOS()) {
-            throw new IngestModule.IngestModuleException(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "unsupportedOS.message"));
+            throw new IngestModule.IngestModuleException(Bundle.unsupportedOS_message());
         }
 
         File exeFile = InstalledFileLocator.getDefault().locate(executableToFindName, PhotoRecCarverFileIngestModule.class.getPackage().getName(), false);
         if (null == exeFile) {
-            throw new IngestModule.IngestModuleException(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "missingExecutable.message"));
+            throw new IngestModule.IngestModuleException(Bundle.missingExecutable_message());
         }
 
         if (!exeFile.canExecute()) {
-            throw new IngestModule.IngestModuleException(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "cannotRunExecutable.message"));
+            throw new IngestModule.IngestModuleException(Bundle.cannotRunExecutable_message());
         }
 
         return exeFile;

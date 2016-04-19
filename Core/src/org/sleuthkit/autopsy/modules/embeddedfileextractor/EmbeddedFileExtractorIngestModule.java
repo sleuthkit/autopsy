@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.modules.embeddedfileextractor;
 
 import java.io.File;
 import java.util.logging.Level;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -33,6 +34,9 @@ import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.ImageExtractor.SupportedImageExtractionFormats;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 
+@NbBundle.Messages({
+    "CannotCreateOutputFolder=Unable to create output folder."
+})
 /**
  * Embedded File Extractor ingest module extracts embedded files from supported
  * archives and documents, adds extracted embedded DerivedFiles, reschedules
@@ -79,7 +83,7 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
             } catch (SecurityException ex) {
                 logger.log(Level.SEVERE, "Error initializing output dir: " + moduleDirAbsolute, ex); //NON-NLS
                 services.postMessage(IngestMessage.createErrorMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), "Error initializing", "Error initializing output dir: " + moduleDirAbsolute)); //NON-NLS
-                throw new IngestModuleException(ex.getMessage(), ex);
+                throw new IngestModuleException(Bundle.CannotCreateOutputFolder(), ex);
             }
         }
 
