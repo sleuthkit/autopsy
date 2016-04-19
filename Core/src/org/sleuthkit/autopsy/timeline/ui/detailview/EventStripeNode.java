@@ -31,7 +31,6 @@ import org.controlsfx.control.action.ActionUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
-import org.sleuthkit.autopsy.timeline.ui.detailview.HideDescriptionAction;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.configureActionButton;
 
 /**
@@ -68,7 +67,7 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
             } else {
                 EventClusterNode eventClusterNode = (EventClusterNode) createChildNode(cluster);
                 eventClusterNode.installActionButtons();
-                controlsHBox.getChildren().addAll(eventClusterNode.minusButton, eventClusterNode.plusButton);
+                controlsHBox.getChildren().addAll(eventClusterNode.getNewCollapseButton(), eventClusterNode.getNewExpandButton());
                 eventClusterNode.infoHBox.getChildren().remove(eventClusterNode.countLabel);
                 childNode = eventClusterNode;
             }
