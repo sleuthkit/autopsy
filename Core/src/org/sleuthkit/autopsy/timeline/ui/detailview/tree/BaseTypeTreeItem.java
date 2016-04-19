@@ -39,26 +39,34 @@ class BaseTypeTreeItem extends EventTypeTreeItem {
      */
     private final Map<Object, EventsTreeItem> childMap = new HashMap<>();
 
-    BaseTypeTreeItem(TimeLineEvent stripe, Comparator<TreeItem<TimeLineEvent>> comp) {
-        super(stripe.getEventType().getBaseType(), comp);
+    /**
+     * Constructor
+     *
+     * @param event      the event that backs this tree item
+     * @param comparator the initial comparator used to sort the children of
+     *                   this tree item
+     */
+    BaseTypeTreeItem(TimeLineEvent event, Comparator<TreeItem<TimeLineEvent>> comparator) {
+        super(event.getEventType().getBaseType(), comparator);
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     @Override
     public void insert(Deque<TimeLineEvent> path) {
-        TimeLineEvent peek = path.peek();
+        TimeLineEvent head = path.getFirst();
+
         Supplier< EventsTreeItem> treeItemConstructor;
         String descriptionKey;
         /*
-         * if the stripe and this tree item haveS the same type, create an
-         * description treeitem, else create a sub-type tree item
+         * if the stripe and this tree item have the same type, create a
+         * description tree item, else create a sub-type tree item
          */
-        if (peek.getEventType().getZoomLevel() == EventTypeZoomLevel.SUB_TYPE) {
-            descriptionKey = peek.getEventType().getDisplayName();
-            treeItemConstructor = () -> configureNewTreeItem(new SubTypeTreeItem(peek, getComparator()));
+        if (head.getEventType().getZoomLevel() == EventTypeZoomLevel.SUB_TYPE) {
+            descriptionKey = head.getEventType().getDisplayName();
+            treeItemConstructor = () -> configureNewTreeItem(new SubTypeTreeItem(head, getComparator()));
         } else {
-            descriptionKey = peek.getDescription();
-            TimeLineEvent stripe = path.removeFirst();
+            descriptionKey = head.getDescription();
+            TimeLineEvent stripe = path.removeFirst(); //remove head of queue if we are going straight to description
             treeItemConstructor = () -> configureNewTreeItem(new DescriptionTreeItem(stripe, getComparator()));
         }
 
@@ -72,21 +80,26 @@ class BaseTypeTreeItem extends EventTypeTreeItem {
 
     @Override
     void remove(Deque<TimeLineEvent> path) {
-
-        TimeLineEvent head = path.peek();
+        TimeLineEvent head = path.getFirst();
 
         EventsTreeItem descTreeItem;
+        /*
+         * if the stripe and this tree item have the same type, get the child
+         * item keyed on event type, else keyed on description.
+         */
         if (head.getEventType().getZoomLevel() == EventTypeZoomLevel.SUB_TYPE) {
             descTreeItem = childMap.get(head.getEventType().getDisplayName());
         } else {
-            path.removeFirst();
+            path.removeFirst(); //remove head of queue if we are going straight to description
             descTreeItem = childMap.get(head.getDescription());
         }
 
+        //remove path from child too 
         if (descTreeItem != null) {
             if (path.isEmpty() == false) {
                 descTreeItem.remove(path);
             }
+            //if child item has no children, remove it also.
             if (descTreeItem.getChildren().isEmpty()) {
                 childMap.remove(head.getDescription());
                 getChildren().remove(descTreeItem);
