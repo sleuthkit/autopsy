@@ -19,8 +19,8 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
 import java.util.Comparator;
-import java.util.Deque;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 import javafx.scene.control.TreeItem;
@@ -49,12 +49,12 @@ class BaseTypeTreeItem extends EventTypeTreeItem {
     BaseTypeTreeItem(TimeLineEvent event, Comparator<TreeItem<TimeLineEvent>> comparator) {
         super(event.getEventType().getBaseType(), comparator);
     }
-
+    
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     @Override
-    public void insert(Deque<TimeLineEvent> path) {
-        TimeLineEvent head = path.getFirst();
-
+    public void insert(List<TimeLineEvent> path) {
+        TimeLineEvent head = path.get(0);
+        
         Supplier< EventsTreeItem> treeItemConstructor;
         String descriptionKey;
         /*
@@ -66,10 +66,10 @@ class BaseTypeTreeItem extends EventTypeTreeItem {
             treeItemConstructor = () -> configureNewTreeItem(new SubTypeTreeItem(head, getComparator()));
         } else {
             descriptionKey = head.getDescription();
-            TimeLineEvent stripe = path.removeFirst(); //remove head of queue if we are going straight to description
+            TimeLineEvent stripe = path.remove(0); //remove head of list if we are going straight to description
             treeItemConstructor = () -> configureNewTreeItem(new DescriptionTreeItem(stripe, getComparator()));
         }
-
+        
         EventsTreeItem treeItem = childMap.computeIfAbsent(descriptionKey, key -> treeItemConstructor.get());
 
         //insert (rest of) path in to new treeItem
@@ -77,11 +77,11 @@ class BaseTypeTreeItem extends EventTypeTreeItem {
             treeItem.insert(path);
         }
     }
-
+    
     @Override
-    void remove(Deque<TimeLineEvent> path) {
-        TimeLineEvent head = path.getFirst();
-
+    void remove(List<TimeLineEvent> path) {
+        TimeLineEvent head = path.get(0);
+        
         EventsTreeItem descTreeItem;
         /*
          * if the stripe and this tree item have the same type, get the child
@@ -90,7 +90,7 @@ class BaseTypeTreeItem extends EventTypeTreeItem {
         if (head.getEventType().getZoomLevel() == EventTypeZoomLevel.SUB_TYPE) {
             descTreeItem = childMap.get(head.getEventType().getDisplayName());
         } else {
-            path.removeFirst(); //remove head of queue if we are going straight to description
+            path.remove(0); //remove head of list if we are going straight to description
             descTreeItem = childMap.get(head.getDescription());
         }
 

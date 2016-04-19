@@ -18,10 +18,10 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
-import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Deque;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javafx.scene.control.TreeItem;
@@ -58,22 +58,22 @@ class RootItem extends EventsTreeItem {
         remove(getTreePath(event));
     }
 
-    private static Deque<TimeLineEvent> getTreePath(TimeLineEvent event) {
-        Deque<TimeLineEvent> path = new ArrayDeque<>();
-        path.addFirst(event);
+    private static List<TimeLineEvent> getTreePath(TimeLineEvent event) {
+        List<TimeLineEvent> path = new ArrayList<>();
+        path.add(0, event);
         Optional<EventStripe> parentOptional = event.getParentStripe();
         while (parentOptional.isPresent()) {
             EventStripe parent = parentOptional.get();
-            path.addFirst(parent);
+            path.add(0, parent);
             parentOptional = parent.getParentStripe();
         }
         return path;
     }
 
     @Override
-    void resort(Comparator<TreeItem<TimeLineEvent>> comp, Boolean recursive) {
+    void sort(Comparator<TreeItem<TimeLineEvent>> comp, Boolean recursive) {
         setComparator(comp);
-        childMap.values().forEach(ti -> ti.resort(comp, true));
+        childMap.values().forEach(ti -> ti.sort(comp, true));
     }
 
     @Override
@@ -87,11 +87,11 @@ class RootItem extends EventsTreeItem {
     }
 
     @Override
-    void remove(Deque<TimeLineEvent> path) {
-        TimeLineEvent event = path.getLast();
+    void remove(List<TimeLineEvent> path) {
+        TimeLineEvent event = path.get(0);
         BaseTypeTreeItem typeTreeItem = childMap.get(event.getEventType().getBaseType());
         if (typeTreeItem != null) {
-            typeTreeItem.remove(getTreePath(event));
+            typeTreeItem.remove(path);
 
             if (typeTreeItem.getChildren().isEmpty()) {
                 childMap.remove(event.getEventType().getBaseType());
@@ -101,8 +101,8 @@ class RootItem extends EventsTreeItem {
     }
 
     @Override
-    void insert(Deque<TimeLineEvent> path) {
-        TimeLineEvent event = path.getLast();
+    void insert(List<TimeLineEvent> path) {
+        TimeLineEvent event = path.get(0);
         BaseTypeTreeItem treeItem = childMap.computeIfAbsent(event.getEventType().getBaseType(),
                 baseType -> configureNewTreeItem(new BaseTypeTreeItem(event, getComparator()))
         );

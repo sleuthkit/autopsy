@@ -19,8 +19,8 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
 import java.util.Comparator;
-import java.util.Deque;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
@@ -34,26 +34,26 @@ public class SubTypeTreeItem extends EventTypeTreeItem {
      * A map of the children DescriptionTreeItem, keyed by description string.
      */
     private final Map<String, DescriptionTreeItem> childMap = new HashMap<>();
-
+    
     SubTypeTreeItem(TimeLineEvent stripe, Comparator<TreeItem<TimeLineEvent>> comp) {
         super(stripe.getEventType(), comp);
     }
-
+    
     @Override
-    public void insert(Deque<TimeLineEvent> path) {
-        TimeLineEvent head = path.removeFirst();
+    public void insert(List<TimeLineEvent> path) {
+        TimeLineEvent head = path.remove(0);
         DescriptionTreeItem treeItem = childMap.computeIfAbsent(head.getDescription(),
                 description -> configureNewTreeItem(new DescriptionTreeItem(head, getComparator()))
         );
-
+        
         if (path.isEmpty() == false) {
             treeItem.insert(path);
         }
     }
-
+    
     @Override
-    void remove(Deque<TimeLineEvent> path) {
-        TimeLineEvent head = path.removeFirst();
+    void remove(List<TimeLineEvent> path) {
+        TimeLineEvent head = path.remove(0);
         DescriptionTreeItem descTreeItem = childMap.get(head.getDescription());
         if (descTreeItem != null) {
             if (path.isEmpty() == false) {

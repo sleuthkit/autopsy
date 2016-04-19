@@ -51,7 +51,6 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
@@ -126,11 +125,11 @@ final public class EventsTree extends BorderPane {
         sortByBox.setCellFactory(listView -> new TreeComparatorCell());
         sortByBox.setButtonCell(new TreeComparatorCell());
         sortByBox.getSelectionModel().selectedItemProperty().addListener(selectedItemProperty -> {
-            getRoot().resort(TreeComparator.Type.reversed().thenComparing(sortByBox.getSelectionModel().getSelectedItem()), true);
+            getRoot().sort(TreeComparator.Type.reversed().thenComparing(sortByBox.getSelectionModel().getSelectedItem()), true);
         });
 
         eventsTree.setShowRoot(false);
-        eventsTree.setCellFactory(treeView -> new EventBundleTreeCell());
+        eventsTree.setCellFactory(treeView -> new EventTreeCell());
         eventsTree.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
         eventsTree.getSelectionModel().getSelectedItems().addListener((ListChangeListener.Change<? extends TreeItem<TimeLineEvent>> change) -> {
@@ -148,10 +147,10 @@ final public class EventsTree extends BorderPane {
     }
 
     /**
-     * A tree cell to display {@link EventStripe}s. Shows the description, and
-     * count, as well a a "legend icon" for the event type.
+     * A tree cell to display TimeLineEvents. Shows the description, and count,
+     * as well a a "legend icon" for the event type.
      */
-    private class EventBundleTreeCell extends TreeCell<TimeLineEvent> {
+    private class EventTreeCell extends TreeCell<TimeLineEvent> {
 
         private static final double HIDDEN_MULTIPLIER = .6;
         private final Rectangle rect = new Rectangle(24, 24);
@@ -159,7 +158,7 @@ final public class EventsTree extends BorderPane {
         private InvalidationListener filterStateChangeListener;
         private final SimpleBooleanProperty hidden = new SimpleBooleanProperty(false);
 
-        EventBundleTreeCell() {
+        EventTreeCell() {
             rect.setArcHeight(5);
             rect.setArcWidth(5);
             rect.setStrokeWidth(2);

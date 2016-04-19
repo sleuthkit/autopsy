@@ -46,13 +46,13 @@ abstract class EventTypeTreeItem extends EventsTreeItem {
     }
 
     @Override
-    void resort(Comparator<TreeItem<TimeLineEvent>> comp, Boolean recursive) {
+    void sort(Comparator<TreeItem<TimeLineEvent>> comp, Boolean recursive) {
         setComparator(comp);
         if (recursive) {
             //sort childrens children
             getChildren().stream()
                     .map(EventsTreeItem.class::cast)
-                    .forEach(ti -> ti.resort(comp, true));
+                    .forEach(ti -> ti.sort(comp, true));
         }
     }
 

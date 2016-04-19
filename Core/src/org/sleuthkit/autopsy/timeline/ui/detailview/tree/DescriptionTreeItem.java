@@ -19,8 +19,8 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
 import java.util.Comparator;
-import java.util.Deque;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javafx.collections.FXCollections;
 import javafx.scene.control.TreeItem;
@@ -50,10 +50,10 @@ class DescriptionTreeItem extends EventsTreeItem {
         super(comparator);
         setValue(event);
     }
-
+    
     @Override
-    public void insert(Deque<TimeLineEvent> path) {
-        TimeLineEvent head = path.removeFirst();
+    public void insert(List<TimeLineEvent> path) {
+        TimeLineEvent head = path.remove(0);
 
         //strip off parent description
         String substringAfter = StringUtils.substringAfter(head.getDescription(), head.getParentStripe().map(EventStripe::getDescription).orElse(""));
@@ -68,13 +68,13 @@ class DescriptionTreeItem extends EventsTreeItem {
             treeItem.insert(path);
         }
     }
-
+    
     @Override
-    void remove(Deque<TimeLineEvent> path) {
-        TimeLineEvent head = path.removeFirst();
+    void remove(List<TimeLineEvent> path) {
+        TimeLineEvent head = path.remove(0);
         //strip off parent description
         String substringAfter = StringUtils.substringAfter(head.getDescription(), head.getParentStripe().map(EventStripe::getDescription).orElse(""));
-
+        
         DescriptionTreeItem descTreeItem = childMap.get(substringAfter);
 
         //remove path from child too 
@@ -89,17 +89,17 @@ class DescriptionTreeItem extends EventsTreeItem {
             }
         }
     }
-
+    
     @Override
-    void resort(Comparator<TreeItem<TimeLineEvent>> comparator, Boolean recursive) {
+    void sort(Comparator<TreeItem<TimeLineEvent>> comparator, Boolean recursive) {
         setComparator(comparator);
         FXCollections.sort(getChildren(), comparator); //sort children with new comparator
         if (recursive) {
             //resort children's children
-            childMap.values().forEach(ti -> ti.resort(comparator, true));
+            childMap.values().forEach(ti -> ti.sort(comparator, true));
         }
     }
-
+    
     @Override
     public EventsTreeItem findTreeItemForEvent(TimeLineEvent event) {
         if (getValue().getEventType() == event.getEventType()
@@ -111,10 +111,10 @@ class DescriptionTreeItem extends EventsTreeItem {
             return super.findTreeItemForEvent(event);
         }
     }
-
+    
     @Override
     String getDisplayText() {
-
+        
         String text = getValue().getDescription() + " (" + getValue().getSize() + ")"; // NON-NLS
 
         TreeItem<TimeLineEvent> parent = getParent();
@@ -124,7 +124,7 @@ class DescriptionTreeItem extends EventsTreeItem {
         }
         return text;
     }
-
+    
     @Override
     EventType getEventType() {
         return getValue().getEventType();
