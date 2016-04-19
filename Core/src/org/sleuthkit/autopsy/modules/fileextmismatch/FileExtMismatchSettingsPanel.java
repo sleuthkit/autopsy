@@ -29,10 +29,10 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
-import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 
 /**
@@ -422,7 +422,17 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
             return;
         }
 
-        boolean mimeTypeDetectable = (null != fileTypeDetector) ? fileTypeDetector.isDetectable(newMime) : false;
+        FileTypeDetector detector;
+        try {
+            detector = new FileTypeDetector();
+        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+            mimeErrLabel.setForeground(Color.red);
+            mimeErrLabel.setText(NbBundle.getMessage(this.getClass(),
+                    "FileExtMismatchConfigPanel.addTypeButton.mimeTypeNotDetectable"));
+            logger.log(Level.WARNING, "Couldn't create file type detector for file ext mismatch settings.", ex);
+            return;
+        }
+        boolean mimeTypeDetectable = (null != detector) ? detector.isDetectable(newMime) : false;
         if (!mimeTypeDetectable) {
             mimeErrLabel.setForeground(Color.red);
             mimeErrLabel.setText(NbBundle.getMessage(this.getClass(),
