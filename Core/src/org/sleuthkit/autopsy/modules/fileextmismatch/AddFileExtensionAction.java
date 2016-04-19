@@ -55,9 +55,6 @@ class AddFileExtensionAction extends AbstractAction {
         Set<String> editedExtensions = editableMap.get(mimeTypeStr);
         editedExtensions.add(extStr);
 
-        // Old array will be replaced by new array for this key
-        editableMap.put(mimeTypeStr, editedExtensions);
-
         try {
             FileExtMismatchSettings.writeSettings(new FileExtMismatchSettings(editableMap));
         } catch (FileExtMismatchSettings.FileExtMismatchSettingsException ex) {
