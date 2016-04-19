@@ -21,11 +21,26 @@ package org.sleuthkit.autopsy.timeline.ui.detailview;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.SetChangeListener;
+import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 
 /**
  *
  */
-public class DetailsChartLayoutSettings {
+final class DetailsChartLayoutSettings {
+
+    DetailsChartLayoutSettings(TimeLineController controller) {
+        controller.getPinnedEvents().addListener((SetChangeListener.Change<? extends TimeLineEvent> change) -> {
+            //if the pinned events change and aren't empty, show them
+            setPinnedLaneShowing(change.getSet().isEmpty() == false);
+        });
+
+        //initialy show the pinned events if they are not empty
+        if (controller.getPinnedEvents().isEmpty() == false) {
+            setPinnedLaneShowing(true);
+        }
+    }
 
     /**
      * true == truncate all the labels to the greater of the size of their
@@ -33,12 +48,12 @@ public class DetailsChartLayoutSettings {
      * the labels, alow them to extend past the timespan indicator and off the
      * edge of the screen
      */
-    final SimpleBooleanProperty truncateAll = new SimpleBooleanProperty(false);
+    private final SimpleBooleanProperty truncateAll = new SimpleBooleanProperty(false);
     /**
      * the width to truncate all labels to if truncateAll is true. adjustable
      * via slider if truncateAll is true
      */
-    final SimpleDoubleProperty truncateWidth = new SimpleDoubleProperty(200.0);
+    private final SimpleDoubleProperty truncateWidth = new SimpleDoubleProperty(200.0);
     /**
      * true == layout each event type in its own band, false == mix all the
      * events together during layout
@@ -62,19 +77,19 @@ public class DetailsChartLayoutSettings {
      */
     private final SimpleBooleanProperty pinnedLaneShowing = new SimpleBooleanProperty(false);
 
-    public synchronized SimpleBooleanProperty bandByTypeProperty() {
+    SimpleBooleanProperty bandByTypeProperty() {
         return bandByType;
     }
 
-    public SimpleBooleanProperty pinnedLaneShowing() {
+    SimpleBooleanProperty pinnedLaneShowing() {
         return pinnedLaneShowing;
     }
 
-    public boolean isPinnedLaneShowing() {
+    boolean isPinnedLaneShowing() {
         return pinnedLaneShowing.get();
     }
 
-    public void setPinnedLaneShowing(boolean showing) {
+    void setPinnedLaneShowing(boolean showing) {
         pinnedLaneShowing.set(showing);
     }
 
@@ -94,7 +109,7 @@ public class DetailsChartLayoutSettings {
         return descrVisibility;
     }
 
-    synchronized void setBandByType(Boolean t1) {
+    void setBandByType(Boolean t1) {
         bandByType.set(t1);
     }
 
@@ -117,5 +132,4 @@ public class DetailsChartLayoutSettings {
     DescriptionVisibility getDescrVisibility() {
         return descrVisibility.get();
     }
-
 }

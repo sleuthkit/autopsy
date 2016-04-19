@@ -48,162 +48,177 @@ import org.python.google.common.collect.Iterables;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
+import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
-public final class DetailsChart extends Control implements TimeLineChart<DateTime> {
+/**
+ * A TimeLineChart that implements the visual aspects of the DetailView
+ */
+final class DetailsChart extends Control implements TimeLineChart<DateTime> {
 
+    ///chart axes
     private final DateAxis detailsChartDateAxis;
     private final DateAxis pinnedDateAxis;
-
     private final Axis<EventStripe> verticalAxis;
 
-    private final SimpleObjectProperty<  IntervalSelector<? extends DateTime>> intervalSelector = new SimpleObjectProperty<>();
+    /**
+     * property that holds the interval selector if one is active
+     */
+    private final SimpleObjectProperty<IntervalSelector<? extends DateTime>> intervalSelector = new SimpleObjectProperty<>();
+
+    /**
+     * Predicate used to determine if a EventNode should be highlighted. Can be
+     * a combination of conditions such as: be in the selectedNodes list OR have
+     * a particular description, but it must include be in the selectedNodes
+     * (selectedNodes::contains).
+     */
     private final SimpleObjectProperty<Predicate<EventNodeBase<?>>> highlightPredicate = new SimpleObjectProperty<>((x) -> false);
+
+    /**
+     * an ObservableList of the Nodes that are selected in this chart.
+     */
     private final ObservableList<EventNodeBase<?>> selectedNodes;
-    private final DetailsChartLayoutSettings layoutSettings = new DetailsChartLayoutSettings();
-    private final TimeLineController controller;
+
+    /**
+     * an ObservableList representing all the events in the tree as a flat list
+     * of events whose roots are in the eventStripes lists
+     *
+     */
     private final ObservableList<TimeLineEvent> nestedEvents = FXCollections.observableArrayList();
 
+    /**
+     * Aggregates all the settings related to the layout of this chart as one
+     * object.
+     */
+    private final DetailsChartLayoutSettings layoutSettings;
+
+    /**
+     * The main controller object for this instance of the Timeline UI.
+     */
+    private final TimeLineController controller;
+
+    /**
+     * an ObservableList of root event stripes to display in the chart. Must
+     * only be modified on the JFX Thread.
+     */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private final ObservableList<EventStripe> eventStripes = FXCollections.observableArrayList();
+    private final ObservableList<EventStripe> rootEventStripes = FXCollections.observableArrayList();
 
     DetailsChart(TimeLineController controller, DateAxis detailsChartDateAxis, DateAxis pinnedDateAxis, Axis<EventStripe> verticalAxis, ObservableList<EventNodeBase<?>> selectedNodes) {
         this.controller = controller;
+        this.layoutSettings = new DetailsChartLayoutSettings(controller);
         this.detailsChartDateAxis = detailsChartDateAxis;
         this.verticalAxis = verticalAxis;
         this.pinnedDateAxis = pinnedDateAxis;
         this.selectedNodes = selectedNodes;
 
-        getController().getPinnedEvents().addListener((SetChangeListener.Change<? extends TimeLineEvent> change) -> {
-            layoutSettings.setPinnedLaneShowing(change.getSet().isEmpty() == false);
-        });
+        FilteredEventsModel eventsModel = getController().getEventsModel();
+        /*
+         * if the time range is changed, clear the guide line and the interval
+         * selector, since they may not be in view any more.
+         */
+        eventsModel.timeRangeProperty().addListener(o -> clearTimeBasedUIElements());
 
-        if (getController().getPinnedEvents().isEmpty() == false) {
-            layoutSettings.setPinnedLaneShowing(true);
-        }
-
-        getController().getEventsModel().timeRangeProperty().addListener(o -> {
-            clearGuideLines();
-            clearIntervalSelector();
-        });
-
-        getController().getEventsModel().zoomParametersProperty().addListener(o -> {
-            getSelectedNodes().clear();
-        });
+        //if the view paramaters change, clear the selection
+        eventsModel.zoomParametersProperty().addListener(o -> getSelectedNodes().clear());
     }
 
-    DateTime getDateTimeForPosition(double layoutX) {
-        return ((DetailsChartSkin) getSkin()).getDateTimeForPosition(layoutX);
+    /**
+     * Get the DateTime represented by the given x-position in this chart.
+     *
+     *
+     * @param xPos the x-position to get the DataTime for
+     *
+     * @return the DateTime represented by the given x-position in this chart.
+     */
+    DateTime getDateTimeForPosition(double xPos) {
+        return getXAxis().getValueForDisplay(getXAxis().parentToLocal(xPos, 0).getX());
     }
 
+    /**
+     * Add an EventStripe to the list of root stripes.
+     *
+     * @param stripe the EventStripe to add.
+     */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     void addStripe(EventStripe stripe) {
-        eventStripes.add(stripe);
+        rootEventStripes.add(stripe);
         nestedEvents.add(stripe);
     }
 
-    void clearGuideLines() {
-        guideLines.clear();
-    }
-
+    /**
+     *
+     * Remove the given GuideLine from this chart.
+     *
+     * @param guideLine the GuideLine to remove
+     */
     void clearGuideLine(GuideLine guideLine) {
         guideLines.remove(guideLine);
     }
 
+    @Override
     public ObservableList<EventNodeBase<?>> getSelectedNodes() {
         return selectedNodes;
     }
 
+    /**
+     * Get the DetailsCharLayoutSettings for this chart.
+     *
+     * @return the DetailsCharLayoutSettings for this chart.
+     */
     DetailsChartLayoutSettings getLayoutSettings() {
         return layoutSettings;
     }
 
+    /**
+     *
+     * Set the Predicate used to determine if a EventNode should be highlighted.
+     * Can be a combination of conditions such as: be in the selectedNodes list
+     * OR have a particular description, but it must include be in the
+     * selectedNodes (selectedNodes::contains).
+     *
+     * @param highlightPredicate the Predicate used to determine which nodes to
+     *                           highlight
+     */
     void setHighlightPredicate(Predicate<EventNodeBase<?>> highlightPredicate) {
         this.highlightPredicate.set(highlightPredicate);
     }
 
+    /**
+     * Remove all the events from this chart.
+     */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     void reset() {
-        eventStripes.clear();
+        rootEventStripes.clear();
         nestedEvents.clear();
     }
 
-    /*
-     * gets the tree of event stripes flattened into a list
+    /**
+     * Get the tree of event stripes flattened into a list
      */
     public ObservableList<TimeLineEvent> getAllNestedEvents() {
         return nestedEvents;
     }
 
-    private static class DetailIntervalSelector extends IntervalSelector<DateTime> {
-
-        DetailIntervalSelector(IntervalSelectorProvider<DateTime> chart) {
-            super(chart);
-        }
-
-        @Override
-        protected String formatSpan(DateTime date) {
-            return date.toString(TimeLineController.getZonedFormatter());
-        }
-
-        @Override
-        protected Interval adjustInterval(Interval i) {
-            return i;
-        }
-
-        @Override
-        protected DateTime parseDateTime(DateTime date) {
-            return date;
-        }
-    }
-
-    private final ObservableSet<GuideLine> guideLines = FXCollections.observableSet();
-
-    private void addGuideLine(GuideLine guideLine) {
-        guideLines.add(guideLine);
-    }
-
-    static private class PlaceMarkerAction extends Action {
-
-        private static final Image MARKER = new Image("/org/sleuthkit/autopsy/timeline/images/marker.png", 16, 16, true, true, true); //NON-NLS
-        private GuideLine guideLine;
-
-        @NbBundle.Messages({"PlaceMArkerAction.name=Place Marker"})
-        PlaceMarkerAction(DetailsChart chart, MouseEvent clickEvent) {
-            super(Bundle.PlaceMArkerAction_name());
-
-            setGraphic(new ImageView(MARKER)); // NON-NLS
-            setEventHandler(actionEvent -> {
-                if (guideLine == null) {
-                    guideLine = new GuideLine(chart);
-                    guideLine.relocate(chart.sceneToLocal(clickEvent.getSceneX(), 0).getX(), 0);
-                    chart.addGuideLine(guideLine);
-
-                } else {
-                    guideLine.relocate(chart.sceneToLocal(clickEvent.getSceneX(), 0).getX(), 0);
-                }
-            });
-        }
+    /**
+     * Clear any time based UI elements (GuideLines, IntervalSelector,...) from
+     * this chart.
+     */
+    private void clearTimeBasedUIElements() {
+        guideLines.clear();
+        clearIntervalSelector();
     }
 
     /**
-     *
-     * @param chartLane           the value of chartLane
-     * @param mouseClickedHandler the value of mouseClickedHandler
-     * @param chartDragHandler1   the value of chartDragHandler1
+     * ObservableSet of GuieLines displayed in this chart
      */
-    static private void configureMouseListeners(final DetailsChartLane<?> chartLane, final TimeLineChart.MouseClickedHandler<DateTime, DetailsChart> mouseClickedHandler, final TimeLineChart.ChartDragHandler<DateTime, DetailsChart> chartDragHandler) {
-        chartLane.setOnMousePressed(chartDragHandler);
-        chartLane.setOnMouseReleased(chartDragHandler);
-        chartLane.setOnMouseDragged(chartDragHandler);
-        chartLane.setOnMouseClicked(chartDragHandler);
-        chartLane.addEventHandler(MouseEvent.MOUSE_CLICKED, mouseClickedHandler);
-    }
+    private final ObservableSet<GuideLine> guideLines = FXCollections.observableSet();
 
+    @Override
     public void clearIntervalSelector() {
         intervalSelector.set(null);
     }
@@ -218,7 +233,7 @@ public final class DetailsChart extends Control implements TimeLineChart<DateTim
         return intervalSelector.get();
     }
 
-    public SimpleObjectProperty<IntervalSelector<? extends DateTime>> intervalSelector() {
+    private SimpleObjectProperty<IntervalSelector<? extends DateTime>> intervalSelector() {
         return intervalSelector;
     }
 
@@ -242,15 +257,20 @@ public final class DetailsChart extends Control implements TimeLineChart<DateTim
         setContextMenu(null);
     }
 
+    @Override
     public ContextMenu getContextMenu(MouseEvent mouseEvent) throws MissingResourceException {
+        //get the current context menu and hide it if it is not null
         ContextMenu contextMenu = getContextMenu();
         if (contextMenu != null) {
             contextMenu.hide();
         }
-        setContextMenu(ActionUtils.createContextMenu(Arrays.asList(new PlaceMarkerAction(this, mouseEvent),
+
+        //make and assign a new context menu based on the given mouseEvent
+        setContextMenu(ActionUtils.createContextMenu(Arrays.asList(
+                new PlaceMarkerAction(this, mouseEvent),
                 ActionUtils.ACTION_SEPARATOR,
-                TimeLineChart.newZoomHistoyActionGroup(getController())))
-        );
+                TimeLineChart.newZoomHistoyActionGroup(getController())
+        )));
         return getContextMenu();
     }
 
@@ -259,8 +279,69 @@ public final class DetailsChart extends Control implements TimeLineChart<DateTim
         return new DetailsChartSkin(this);
     }
 
+    /**
+     * Get the ObservableList of root EventStripes.
+     *
+     * @return the ObservableList of root EventStripes.
+     */
     ObservableList<EventStripe> getRootEventStripes() {
-        return eventStripes;
+        return rootEventStripes;
+    }
+
+    /**
+     * Implementation of IntervalSelector for use with a DetailsChart
+     */
+    private static class DetailIntervalSelector extends IntervalSelector<DateTime> {
+
+        /**
+         * Constructor
+         *
+         * @param chart the chart this IntervalSelector belongs to.
+         */
+        DetailIntervalSelector(IntervalSelector.IntervalSelectorProvider<DateTime> chart) {
+            super(chart);
+        }
+
+        @Override
+        protected String formatSpan(DateTime date) {
+            return date.toString(TimeLineController.getZonedFormatter());
+        }
+
+        @Override
+        protected Interval adjustInterval(Interval i) {
+            return i;
+        }
+
+        @Override
+        protected DateTime parseDateTime(DateTime date) {
+            return date;
+        }
+    }
+
+    /**
+     * Action that places a GuideLine at the location clicked by the user.
+     */
+    static private class PlaceMarkerAction extends Action {
+
+        private static final Image MARKER = new Image("/org/sleuthkit/autopsy/timeline/images/marker.png", 16, 16, true, true, true); //NON-NLS
+        private GuideLine guideLine;
+
+        @NbBundle.Messages({"PlaceMArkerAction.name=Place Marker"})
+        PlaceMarkerAction(DetailsChart chart, MouseEvent clickEvent) {
+            super(Bundle.PlaceMArkerAction_name());
+
+            setGraphic(new ImageView(MARKER)); // NON-NLS
+            setEventHandler(actionEvent -> {
+                if (guideLine == null) {
+                    guideLine = new GuideLine(chart);
+                    guideLine.relocate(chart.sceneToLocal(clickEvent.getSceneX(), 0).getX(), 0);
+                    chart.guideLines.add(guideLine);
+
+                } else {
+                    guideLine.relocate(chart.sceneToLocal(clickEvent.getSceneX(), 0).getX(), 0);
+                }
+            });
+        }
     }
 
     @NbBundle.Messages({"HideDescriptionAction.displayName=Hide",
@@ -392,24 +473,23 @@ public final class DetailsChart extends Control implements TimeLineChart<DateTim
             return Iterables.concat(primaryLane.getAllNodes(), pinnedLane.getAllNodes());
         }
 
-        /**
-         * get the DateTime along the x-axis that corresponds to the given
-         * x-coordinate in the coordinate system of this
-         * {@link PrimaryDetailsChart}
-         *
-         * @param x a x-coordinate in the space of this
-         *          {@link PrimaryDetailsChart}
-         *
-         * @return the DateTime along the x-axis corresponding to the given x
-         *         value (in the space of this {@link PrimaryDetailsChart}
-         */
-        public DateTime getDateTimeForPosition(double x) {
-            return getSkinnable().getXAxis().getValueForDisplay(getSkinnable().getXAxis().parentToLocal(x, 0).getX());
-        }
-
         private void syncPinnedHeight() {
             pinnedView.setMinHeight(MIN_PINNED_LANE_HEIGHT);
             pinnedView.setMaxHeight(pinnedLane.maxVScrollProperty().get() + 30);
+        }
+
+        /**
+         *
+         * @param chartLane           the value of chartLane
+         * @param mouseClickedHandler the value of mouseClickedHandler
+         * @param chartDragHandler1   the value of chartDragHandler1
+         */
+        static private void configureMouseListeners(final DetailsChartLane<?> chartLane, final TimeLineChart.MouseClickedHandler<DateTime, DetailsChart> mouseClickedHandler, final TimeLineChart.ChartDragHandler<DateTime, DetailsChart> chartDragHandler) {
+            chartLane.setOnMousePressed(chartDragHandler);
+            chartLane.setOnMouseReleased(chartDragHandler);
+            chartLane.setOnMouseDragged(chartDragHandler);
+            chartLane.setOnMouseClicked(chartDragHandler);
+            chartLane.addEventHandler(MouseEvent.MOUSE_CLICKED, mouseClickedHandler);
         }
     }
 }
