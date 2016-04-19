@@ -41,7 +41,6 @@ import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
 import net.sf.sevenzipjbinding.simple.ISimpleInArchive;
 import net.sf.sevenzipjbinding.simple.ISimpleInArchiveItem;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
@@ -327,7 +326,7 @@ class SevenZipExtractor {
         ISevenZipInArchive inArchive = null;
         SevenZipContentReadStream stream = null;
 
-        final ProgressHandle progress = ProgressHandleFactory.createHandle(
+        final ProgressHandle progress = ProgressHandle.createHandle(
                 NbBundle.getMessage(SevenZipExtractor.class, "EmbeddedFileExtractorIngestModule.ArchiveExtractor.moduleName"));
         int processedItems = 0;
 

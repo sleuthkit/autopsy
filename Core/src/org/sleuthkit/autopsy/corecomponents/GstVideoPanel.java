@@ -52,7 +52,6 @@ import org.gstreamer.elements.PlayBin2;
 import org.gstreamer.elements.RGBDataSink;
 import org.gstreamer.swing.VideoComponent;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
@@ -677,7 +676,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
         @Override
         protected Long doInBackground() throws Exception {
             if (tempFile.exists() == false || tempFile.length() < sourceFile.getSize()) {
-                progress = ProgressHandleFactory.createHandle(NbBundle.getMessage(GstVideoPanel.class, "GstVideoPanel.ExtractMedia.progress.buffering", sourceFile.getName()), () -> ExtractMedia.this.cancel(true));
+                progress = ProgressHandle.createHandle(NbBundle.getMessage(GstVideoPanel.class, "GstVideoPanel.ExtractMedia.progress.buffering", sourceFile.getName()), () -> ExtractMedia.this.cancel(true));
                 progressLabel.setText(NbBundle.getMessage(this.getClass(), "GstVideoPanel.progress.buffering"));
                 progress.start(100);
                 try {
