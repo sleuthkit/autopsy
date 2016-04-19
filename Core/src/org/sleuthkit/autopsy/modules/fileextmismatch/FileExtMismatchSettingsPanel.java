@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,9 +20,10 @@ package org.sleuthkit.autopsy.modules.fileextmismatch;
 
 import java.awt.Color;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.ListSelectionModel;
@@ -42,7 +43,7 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
     private static final Logger logger = Logger.getLogger(FileExtMismatchSettingsPanel.class.getName());
-    private HashMap<String, String[]> editableMap = new HashMap<>();
+    private HashMap<String, Set<String>> editableMap = new HashMap<>();
     private ArrayList<String> mimeList = null;
     private ArrayList<String> currentExtensions = null;
     private MimeTableModel mimeTableModel;
@@ -230,10 +231,11 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 374, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(mimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(userTypeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(addTypeButton)
-                    .addComponent(removeTypeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(mimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(removeTypeButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(mimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(userTypeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(addTypeButton)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(mimeErrLabel)
                 .addContainerGap())
@@ -366,11 +368,11 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
             return;
         }
 
-        ArrayList<String> editedExtensions = new ArrayList<>(Arrays.asList(editableMap.get(selectedMime)));
+        Set<String> editedExtensions = editableMap.get(selectedMime);
         editedExtensions.add(newExt);
 
         // Old array will be replaced by new array for this key
-        editableMap.put(selectedMime, editedExtensions.toArray(new String[0]));
+        editableMap.put(selectedMime, editedExtensions);
 
         // Refresh table
         updateExtList();
@@ -406,7 +408,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
             return;
         }
 
-        editableMap.put(newMime, new String[0]);
+        editableMap.put(newMime, new HashSet<String>());
 
         // Refresh table
         updateMimeList();
@@ -453,12 +455,12 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
             return;
         }
 
-        ArrayList<String> editedExtensions = new ArrayList<>(Arrays.asList(editableMap.get(selectedMime)));
+        Set<String> editedExtensions = editableMap.get(selectedMime);
         editedExtensions.remove(selectedExt);
         String deadExt = selectedExt;
 
         // Old array will be replaced by new array for this key
-        editableMap.put(selectedMime, editedExtensions.toArray(new String[0]));
+        editableMap.put(selectedMime, editedExtensions);
 
         // Refresh tables        
         updateExtList();
@@ -473,10 +475,10 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
     }
 
     private void updateExtList() {
-        String[] temp = editableMap.get(selectedMime);
+        Set<String> temp = editableMap.get(selectedMime);
         if (temp != null) {
-            currentExtensions = new ArrayList<>(Arrays.asList(temp));
-            if (temp.length > 0) {
+            currentExtensions = new ArrayList<>(temp);
+            if (temp.size() > 0) {
                 Collections.sort(currentExtensions);
             }
         } else {
@@ -486,10 +488,11 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
 
     @Override
     public void saveSettings() {
-        if (FileExtMismatchXML.getDefault().save(editableMap)) {
+        try {
+            FileExtMismatchSettings.writeSettings(new FileExtMismatchSettings(editableMap));
             mimeErrLabel.setText(" ");
             extErrorLabel.setText(" ");
-        } else {
+        } catch (FileExtMismatchSettings.FileExtMismatchSettingsException ex) {
             //error
             JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(this.getClass(),
@@ -502,9 +505,20 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
 
     @Override
     public void load() {
-        // Load the XML into a buffer that the user can modify. They can choose
-        // to save it back to the file after making changes.
-        editableMap = FileExtMismatchXML.getDefault().load();
+        try {
+            // Load the configuration into a buffer that the user can modify. They can choose
+            // to save it back to the file after making changes.
+            editableMap = FileExtMismatchSettings.readSettings().getMimeTypeToExtsMap();
+
+        } catch (FileExtMismatchSettings.FileExtMismatchSettingsException ex) {
+            //error
+            JOptionPane.showMessageDialog(this,
+                    NbBundle.getMessage(this.getClass(),
+                            "AddFileExtensionAction.msgDlg.msg2"),
+                    NbBundle.getMessage(this.getClass(),
+                            "FileExtMismatchConfigPanel.save.msgDlg.title"),
+                    JOptionPane.ERROR_MESSAGE);
+        }
         updateMimeList();
         updateExtList();
     }

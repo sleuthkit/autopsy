@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,13 +19,13 @@
 package org.sleuthkit.autopsy.modules.fileextmismatch;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.Action;
-import org.openide.util.Lookup;
+import javax.swing.JOptionPane;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.openide.util.lookup.ServiceProvider;
@@ -34,15 +34,14 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * This creates a single context menu item for adding a new filename extension
- * to the mismatch list for the MIME type of the selected node.
+ * to the extension list for the MIME type of the selected node.
  */
 @ServiceProvider(service = ContextMenuActionsProvider.class)
 public class FileExtMismatchContextMenuActionsProvider implements ContextMenuActionsProvider {
+    private static final Logger logger = Logger.getLogger(FileExtMismatchContextMenuActionsProvider.class.getName());
 
     @Override
     public List<Action> getActions() {
@@ -63,22 +62,17 @@ public class FileExtMismatchContextMenuActionsProvider implements ContextMenuAct
                         String mimeTypeStr = "";
                         String extStr = "";
 
-                        AbstractFile af = null;
-                        try {
-                            af = nodeArt.getSleuthkitCase().getAbstractFileById(nodeArt.getObjectID());
-                        } catch (TskCoreException ex) {
-                            Logger.getLogger(FileExtMismatchContextMenuActionsProvider.class.getName()).log(Level.SEVERE, "Error getting file by id", ex); //NON-NLS
-                        }
-
+                        AbstractFile af = Utilities.actionsGlobalContext().lookup(AbstractFile.class);
+                        
                         if (af != null) {
-                                int i = af.getName().lastIndexOf(".");
-                                if ((i > -1) && ((i + 1) < af.getName().length())) {
-                                    extStr = af.getName().substring(i + 1).toLowerCase();
-                                }
-                                mimeTypeStr = af.getMIMEType();
-                                if(mimeTypeStr == null) {
-                                    mimeTypeStr = "";
-                                }
+                            int i = af.getName().lastIndexOf(".");
+                            if ((i > -1) && ((i + 1) < af.getName().length())) {
+                                extStr = af.getName().substring(i + 1).toLowerCase();
+                            }
+                            mimeTypeStr = af.getMIMEType();
+                            if (mimeTypeStr == null) {
+                                mimeTypeStr = "";
+                            }
 
                             if (!extStr.isEmpty() && !mimeTypeStr.isEmpty()) {
                                 // Limit max size so the context window doesn't get ridiculously wide
@@ -91,16 +85,25 @@ public class FileExtMismatchContextMenuActionsProvider implements ContextMenuAct
                                 String menuItemStr = NbBundle.getMessage(this.getClass(),
                                         "FileExtMismatchContextMenuActionsProvider.menuItemStr",
                                         extStr, mimeTypeStr);
-                                actions.add(new AddFileExtensionAction(menuItemStr, extStr, mimeTypeStr));
 
                                 // Check if already added
-                                HashMap<String, String[]> editableMap = FileExtMismatchXML.getDefault().load();
-                                ArrayList<String> editedExtensions = new ArrayList<>(Arrays.asList(editableMap.get(mimeTypeStr)));
-                                if (editedExtensions.contains(extStr)) {
-                                    // Informs the user that they have already added this extension to this MIME type
-                                    actions.get(0).setEnabled(false);
+                                HashMap<String, Set<String>> editableMap;
+                                try {
+                                    FileExtMismatchSettings settings = FileExtMismatchSettings.readSettings();
+                                    editableMap = settings.getMimeTypeToExtsMap();
+                                    actions.add(new AddFileExtensionAction(menuItemStr, extStr, mimeTypeStr, settings));
+                                    Set<String> editedExtensions = editableMap.get(mimeTypeStr);
+                                    if (editedExtensions.contains(extStr)) {
+                                        // Informs the user that they have already added this extension to this MIME type
+                                        actions.get(0).setEnabled(false);
+                                    }
+                                } catch (FileExtMismatchSettings.FileExtMismatchSettingsException ex) {
+                                    JOptionPane.showMessageDialog(null,
+                                            NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.msg2"),
+                                            NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.title"),
+                                            JOptionPane.ERROR_MESSAGE);
+                                    logger.log(Level.WARNING, "File extension mismatch settings could not be read, extensions update not available.", ex);
                                 }
-
                             }
                         }
                     }

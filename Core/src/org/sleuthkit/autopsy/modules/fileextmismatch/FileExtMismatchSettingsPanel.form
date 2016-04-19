@@ -113,10 +113,12 @@
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="jScrollPane2" min="-2" pref="374" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="3" attributes="0">
-                                  <Component id="userTypeTextField" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="addTypeButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="removeTypeButton" alignment="1" min="-2" pref="25" max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="3" attributes="0">
+                                      <Component id="userTypeTextField" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="addTypeButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  </Group>
                               </Group>
                               <EmptySpace max="32767" attributes="0"/>
                               <Component id="mimeErrLabel" min="-2" max="-2" attributes="0"/>
