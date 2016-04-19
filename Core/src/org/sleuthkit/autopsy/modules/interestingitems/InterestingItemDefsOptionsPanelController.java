@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.interestingitems;
 
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import javax.swing.JComponent;
@@ -94,6 +95,14 @@ public final class InterestingItemDefsOptionsPanelController extends OptionsPane
     private InterestingItemDefsPanel getPanel() {
         if (panel == null) {
             panel = new InterestingItemDefsPanel();
+            panel.addPropertyChangeListener(new PropertyChangeListener() {
+                @Override
+                public void propertyChange(PropertyChangeEvent evt) {
+                    if (evt.getPropertyName().equals(OptionsPanelController.PROP_CHANGED)) {
+                        changed = true;
+                    }
+                }
+            });
         }
         return panel;
     }
