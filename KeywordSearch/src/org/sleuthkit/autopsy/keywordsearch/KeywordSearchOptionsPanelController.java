@@ -49,12 +49,22 @@ public final class KeywordSearchOptionsPanelController extends OptionsPanelContr
         changed = false;
     }
 
+    /**
+     * This method is called when both the Ok and Apply buttons are pressed. It
+     * applies to any of the panels that have been opened in the process of
+     * using the options pane.
+     */
     @Override
     public void applyChanges() {
         getPanel().store();
         changed = false;
     }
 
+    /**
+     * This method is called when the Cancel button is pressed. It applies to any
+     * of the panels that have been opened in the process of using the options
+     * pane.
+     */
     @Override
     public void cancel() {
         getPanel().cancel();

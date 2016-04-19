@@ -20,8 +20,6 @@ import org.openide.util.Lookup;
         keywordsCategory = "FileTypeId",
         position = 6
 )
-// moved messages to Bundle.properties
-//@org.openide.util.NbBundle.Messages({"OptionsCategory_Name_FileTypeId=FileTypeId", "OptionsCategory_Keywords_FileTypeId=FileTypeId"})
 public final class FileTypeIdOptionsPanelController extends OptionsPanelController {
 
     private FileTypeIdGlobalSettingsPanel panel;
@@ -34,12 +32,22 @@ public final class FileTypeIdOptionsPanelController extends OptionsPanelControll
         changed = false;
     }
 
+    /**
+     * This method is called when both the Ok and Apply buttons are pressed. It
+     * applies to any of the panels that have been opened in the process of
+     * using the options pane.
+     */
     @Override
     public void applyChanges() {
         getPanel().store();
         changed = false;
     }
 
+    /**
+     * This method is called when the Cancel button is pressed. It applies to any
+     * of the panels that have been opened in the process of using the options
+     * pane.
+     */
     @Override
     public void cancel() {
     }
@@ -80,7 +88,7 @@ public final class FileTypeIdOptionsPanelController extends OptionsPanelControll
             panel.addPropertyChangeListener(new PropertyChangeListener() {
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {
-                    if(evt.getPropertyName().equals(OptionsPanelController.PROP_CHANGED)) {
+                    if (evt.getPropertyName().equals(OptionsPanelController.PROP_CHANGED)) {
                         changed = true;
                     }
                 }

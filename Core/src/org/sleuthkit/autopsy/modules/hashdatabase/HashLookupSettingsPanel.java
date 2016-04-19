@@ -22,7 +22,6 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +34,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
-import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
@@ -61,7 +59,6 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             .getMessage(HashLookupSettingsPanel.class, "HashDbConfigPanel.errorGettingIndexStatusText");
     private final HashDbManager hashSetManager = HashDbManager.getInstance();
     private final HashSetTableModel hashSetTableModel = new HashSetTableModel();
-    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     public HashLookupSettingsPanel() {
         initComponents();
@@ -101,16 +98,6 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                 }
             }
         });
-    }
-
-    @Override
-    public void addPropertyChangeListener(PropertyChangeListener l) {
-        pcs.addPropertyChangeListener(l);
-    }
-
-    @Override
-    public void removePropertyChangeListener(PropertyChangeListener l) {
-        pcs.removePropertyChangeListener(l);
     }
 
     private void updateComponents() {
@@ -839,7 +826,6 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                     JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_removeDatabaseFailure_message(hashDb.getHashSetName()));
                 }
                 hashSetTableModel.refreshModel();
-                pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             }
         }
     }//GEN-LAST:event_deleteDatabaseButtonActionPerformed
@@ -854,7 +840,6 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                     JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_removeDatabaseFailure_message(hashDb.getHashSetName()));
                 }
                 hashSetTableModel.refreshModel();
-                pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             }
         }
     }//GEN-LAST:event_hashSetTableKeyPressed
@@ -863,7 +848,6 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         HashDb hashDb = ((HashSetTable) hashSetTable).getSelection();
         if (hashDb != null) {
             hashDb.setSendIngestMessages(sendIngestMessagesCheckBox.isSelected());
-            pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
     }//GEN-LAST:event_sendIngestMessagesCheckBoxActionPerformed
 
@@ -872,7 +856,6 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         if (null != hashDb) {
             hashSetTableModel.refreshModel();
             ((HashSetTable) hashSetTable).selectRowByName(hashDb.getHashSetName());
-            pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
     }//GEN-LAST:event_importDatabaseButtonActionPerformed
 
@@ -881,7 +864,6 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         if (null != hashDb) {
             hashSetTableModel.refreshModel();
             ((HashSetTable) hashSetTable).selectRowByName(hashDb.getHashSetName());
-            pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
     }//GEN-LAST:event_createDatabaseButtonActionPerformed
 
@@ -889,7 +871,6 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
 
         HashDb hashDb = ((HashSetTable) hashSetTable).getSelection();
         new AddHashValuesToDatabaseDialog(hashDb);
-        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_addHashesToDatabaseButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
