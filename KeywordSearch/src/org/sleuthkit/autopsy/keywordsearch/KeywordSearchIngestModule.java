@@ -59,7 +59,7 @@ import org.sleuthkit.datamodel.TskData.FileKnown;
     "SolrConnectionCheck.Port=Invalid port number.",
     "KeywordSearchIngestModule.init.exception.errConnToSolr.msg=Error connecting to SOLR server: {0}.",
     "KeywordSearchIngestModule.startUp.noOpenCore.msg=The index could not be opened or does not exist.",
-    "KeywordSearchIngestModule.startUp.fileTypeDetectorInitializationException.msg=Error initializing the file type detector."
+    "CannotRunFileTypeDetection=Unable to run file type detection."
 })
 public final class KeywordSearchIngestModule implements FileIngestModule {
 
@@ -149,7 +149,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            throw new IngestModuleException(Bundle.KeywordSearchIngestModule_startUp_fileTypeDetectorInitializationException_msg(), ex);
+            throw new IngestModuleException(Bundle.CannotRunFileTypeDetection(), ex);
         }
         ingester = Server.getIngester();
         this.context = context;
