@@ -13,7 +13,8 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 
 /**
- *
+ * An action that rebuilds the events database to include any new results from
+ * ingest.
  */
 public class RebuildDataBase extends Action {
 
@@ -24,6 +25,6 @@ public class RebuildDataBase extends Action {
         super(Bundle.RebuildDataBase_text());
 
         setGraphic(new ImageView(DB_REFRESH));
-        setEventHandler(actionEvent -> SwingUtilities.invokeLater(controller::confirmOutOfDateRebuildIfWindowOpen));
+        setEventHandler(actionEvent -> SwingUtilities.invokeLater(controller::rebuildIfWindowOpen));
     }
 }

@@ -240,6 +240,30 @@ public class TimeLineController {
         return eventsDBStale.getReadOnlyProperty();
     }
 
+    /**
+     * Is the events db out of date (stale)?
+     *
+     * @return true if the events db is out of date , false otherwise
+     */
+    public boolean isEventsDBStale() {
+        return eventsDBStale.get();
+    }
+
+    /**
+     * Set the events database stale or not
+     *
+     * @param stale the new state of the events db: stale/not-stale
+     */
+    private void setEventsDBStale(final Boolean stale) {
+        eventsDBStale.set(stale);
+        try {
+            perCaseTimelineProperties.setDbStale(stale);
+        } catch (IOException ex) {
+            MessageNotifyUtil.Notify.error("Timeline", "Failed to mark the timeline db as " + (stale ? "" : "not ") + "stale. Some results may be out of date or missing.");
+            LOGGER.log(Level.SEVERE, "Error marking the timeline db as stale.", ex);
+        }
+    }
+
     synchronized public ReadOnlyBooleanProperty getCanAdvance() {
         return historyManager.getCanAdvance();
     }
@@ -256,6 +280,7 @@ public class TimeLineController {
         this.perCaseTimelineProperties = new PerCaseTimelineProperties(autoCase);
         eventsDBStale.set(perCaseTimelineProperties.isDBStale());
         eventsRepository = new EventsRepository(autoCase, currentParams.getReadOnlyProperty());
+
         /*
          * as the history manager's current state changes, modify the tags
          * filter to be in sync, and expose that as propery from
@@ -309,17 +334,30 @@ public class TimeLineController {
 
     /**
      * rebuild the repo using the given repo builder (expected to be a member
-     * reference to {@link EventsRepository#rebuildRepository(java.util.function.Consumer)
-     * } or {@link EventsRepository#rebuildTags(java.util.function.Consumer) })
-     * and display the ui when it is done.
+     * reference to EventsRepository.rebuildRepository() or
+     * EventsRepository.rebuildTags()) and display the ui when it is done.
      *
-     * @param repoBuilder
+     * @param repoBuilder    a Function from CConsumer<Worker.State> to
+     *                       CancellationProgressTask<?>. Ie a function that
+     *                       given a worker state listener, produces a task with
+     *                       that listener attached. Expected to be a method
+     *                       reference to either
+     *                       EventsRepository.rebuildRepository() or
+     *                       EventsRepository.rebuildTags()
+     * @param markDBNotStale when the repo is rebuilt should it be marked not
+     *                       stale not
+     *
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private void rebuildRepoHelper(Function<Consumer<Worker.State>, CancellationProgressTask<?>> repoBuilder, Boolean markDBNotStale, Boolean showTimeline) {
-//        SwingUtilities.invokeLater(this::closeTimelineWindow);
+    private void rebuildRepoHelper(Function<Consumer<Worker.State>, CancellationProgressTask<?>> repoBuilder, Boolean markDBNotStale) {
+        if (IngestManager.getInstance().isIngestRunning()) {
+            //confirm timeline during ingest
+            if (promptDialogManager.confirmDuringIngest() == false) {
+                return;
+            }
+        }
         boolean ingestRunning = IngestManager.getInstance().isIngestRunning();
-        final CancellationProgressTask<?> rebuildRepository = repoBuilder.apply(newSate -> {
+        final CancellationProgressTask<?> rebuildRepositoryTask = repoBuilder.apply(newSate -> {
             setIngestRunning(ingestRunning);
             //this will be on JFX thread
             switch (newSate) {
@@ -327,11 +365,7 @@ public class TimeLineController {
                     if (markDBNotStale) {
                         setEventsDBStale(false);
                     }
-                    if (showTimeline) {
-                        SwingUtilities.invokeLater(this::showWindow);
-//                        historyManager.reset(filteredEvents.zoomParametersProperty().get());
-//                        TimeLineController.this.showFullRange();
-                    }
+                    SwingUtilities.invokeLater(this::showWindow);
                     break;
                 case FAILED:
                 case CANCELLED:
@@ -339,7 +373,12 @@ public class TimeLineController {
                     break;
             }
         });
-        promptDialogManager.showProgressDialog(rebuildRepository);
+
+        /*
+         * since both of the expected repoBuilders start the back ground task,
+         * all we have to do is show progress dialog for the task
+         */
+        promptDialogManager.showProgressDialog(rebuildRepositoryTask);
     }
 
     /**
@@ -347,24 +386,16 @@ public class TimeLineController {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     void rebuildRepo() {
-        rebuildRepoHelper(eventsRepository::rebuildRepository, true, true);
+        rebuildRepoHelper(eventsRepository::rebuildRepository, true);
     }
 
     /**
-     * Since tags might have changed while TimeLine wasn't listening, drop the
-     * tags table and rebuild it by querying for all the tags and inserting them
-     * in to the TimeLine DB.
+     * Drop the tags table and rebuild it by querying for all the tags and
+     * inserting them in to the TimeLine DB.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     void rebuildTagsTable() {
-        rebuildRepoHelper(eventsRepository::rebuildTags, false, true);
-    }
-
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private void closeTimelineWindow() {
-        if (isWindowOpen()) {
-            mainFrame.close();
-        }
+        rebuildRepoHelper(eventsRepository::rebuildTags, false);
     }
 
     public void showFullRange() {
@@ -373,20 +404,25 @@ public class TimeLineController {
         }
     }
 
+    /**
+     * "Shut down" Timeline. Remove all the case and ingest listers. Close the
+     * timeline window.
+     */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void shutDownTimeLine() {
+        listeningToAutopsy = false;
+        IngestManager.getInstance().removeIngestModuleEventListener(ingestModuleListener);
+        IngestManager.getInstance().removeIngestJobEventListener(ingestJobListener);
+        Case.removePropertyChangeListener(caseListener);
         if (mainFrame != null) {
-            listeningToAutopsy = false;
-            IngestManager.getInstance().removeIngestModuleEventListener(ingestModuleListener);
-            IngestManager.getInstance().removeIngestJobEventListener(ingestJobListener);
-            Case.removePropertyChangeListener(caseListener);
             mainFrame.close();
             mainFrame = null;
         }
     }
 
     /**
-     * show the timeline window and prompt for rebuilding database if necessary.
+     * Add the case and ingest listeners, prompt for rebuilding database if
+     * necessary, and show the timeline window.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void openTimeLine() {
@@ -400,27 +436,26 @@ public class TimeLineController {
 
         Platform.runLater(() -> {
             try {
-                if (promptDialogManager.bringCurrentDialogToFront()) {
-                    return;
-                }
-
                 checkAndPromptForRebuild();
-
             } catch (HeadlessException | MissingResourceException ex) {
                 LOGGER.log(Level.SEVERE, "Unexpected error when generating timeline, ", ex); // NON-NLS //NOI18N
             }
         });
     }
 
+    /**
+     * Check if a database rebuild is necessary and prompt the user to confirm
+     * it. If the user confirms, rebuild the database. Shows the timeline window
+     * when the rebuild is done.
+     */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     public void checkAndPromptForRebuild() {
-        if (IngestManager.getInstance().isIngestRunning()) {
-            //confirm timeline during ingest
-            if (promptDialogManager.confirmDuringIngest() == false) {
-                return;
-            }
+
+        if (promptDialogManager.bringCurrentDialogToFront()) {
+            return;
         }
-        //if the repo is empty just (r)ebuild it with out asking,  they can always cancel part way through;
+
+        //if the repo is empty just (re)build it with out asking, they can always cancel part way through
         if (eventsRepository.countAllEvents() == 0) {
             rebuildRepo();
             return;
@@ -439,8 +474,8 @@ public class TimeLineController {
                  */
                 rebuildTagsTable();
             }
-        }else{
-              SwingUtilities.invokeLater(this::showWindow); 
+        } else {
+            SwingUtilities.invokeLater(this::showWindow);
         }
     }
 
@@ -726,40 +761,14 @@ public class TimeLineController {
     }
 
     /**
-     * prompt the user to rebuild the db because the db is out of date and
-     * doesn't include things from subsequent ingests ONLY IF THE TIMELINE
-     * WINDOW IS OPEN
-     *
-     * @return true if they agree to rebuild
+     * rebuild the db ONLY IF THE TIMELINE WINDOW IS OPEN. The user will be
+     * prompted with reasons why the database needs to be rebuilt and can still
+     * cancel the rebuild.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    public void confirmOutOfDateRebuildIfWindowOpen() throws MissingResourceException, HeadlessException {
+    public void rebuildIfWindowOpen() throws MissingResourceException, HeadlessException {
         if (isWindowOpen()) {
-            Platform.runLater(this::checkAndPromptForRebuild);
-
-        }
-    }
-
-    /**
-     * is the events db out of date
-     *
-     * @return true if the events db is out of date , false otherwise
-     */
-    public boolean isEventsDBStale() {
-        return eventsDBStale.get();
-    }
-
-    /**
-     *
-     * @param stale the value of stale
-     */
-    private void setEventsDBStale(final Boolean stale) {
-        eventsDBStale.set(stale);
-        try {
-            perCaseTimelineProperties.setDbStale(stale);
-        } catch (IOException ex) {
-            MessageNotifyUtil.Notify.error("Timeline", "Failed to mark the timeline db as " + (stale ? "" : "not ") + "stale. Some results may be out of date or missing.");
-            LOGGER.log(Level.SEVERE, "Error marking the timeline db as stale.", ex);
+            Platform.runLater(() -> this.checkAndPromptForRebuild());
         }
     }
 
@@ -772,6 +781,7 @@ public class TimeLineController {
         }
     }
 
+    @Immutable
     private class AutopsyIngestModuleListener implements PropertyChangeListener {
 
         @Override
@@ -796,6 +806,7 @@ public class TimeLineController {
                     break;
                 case DATA_ADDED:
                 case FILE_DONE:
+                    //since new derived files might have been added, the db is stale.
                     Platform.runLater(() -> setEventsDBStale(true));
                     break;
             }
@@ -810,7 +821,7 @@ public class TimeLineController {
             switch (IngestManager.IngestJobEvent.valueOf(evt.getPropertyName())) {
                 case CANCELLED:
                 case COMPLETED:
-                    SwingUtilities.invokeLater(TimeLineController.this::confirmOutOfDateRebuildIfWindowOpen);
+                    SwingUtilities.invokeLater(TimeLineController.this::rebuildIfWindowOpen);
             }
         }
     }
@@ -836,7 +847,7 @@ public class TimeLineController {
                 case DATA_SOURCE_ADDED:
                     Platform.runLater(() -> {
                         setEventsDBStale(true);
-                        SwingUtilities.invokeLater(TimeLineController.this::confirmOutOfDateRebuildIfWindowOpen);
+                        SwingUtilities.invokeLater(TimeLineController.this::rebuildIfWindowOpen);
                     });
                     break;
                 case CURRENT_CASE:
