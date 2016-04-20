@@ -240,6 +240,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         keywordTable.getTableHeader().setReorderingAllowed(false);
         jScrollPane1.setViewportView(keywordTable);
 
+        addWordButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/new16.png"))); // NOI18N
         addWordButton.setText(org.openide.util.NbBundle.getMessage(GlobalEditListPanel.class, "KeywordSearchEditListPanel.addWordButton.text")); // NOI18N
         addWordButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -256,6 +257,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
 
         chRegex.setText(org.openide.util.NbBundle.getMessage(GlobalEditListPanel.class, "KeywordSearchEditListPanel.chRegex.text")); // NOI18N
 
+        deleteWordButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/delete16.png"))); // NOI18N
         deleteWordButton.setText(org.openide.util.NbBundle.getMessage(GlobalEditListPanel.class, "KeywordSearchEditListPanel.deleteWordButton.text")); // NOI18N
         deleteWordButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -269,13 +271,13 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
             addKeywordPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(addKeywordPanelLayout.createSequentialGroup()
                 .addGroup(addKeywordPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(addKeywordPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(addKeywordPanelLayout.createSequentialGroup()
-                            .addComponent(addWordField, javax.swing.GroupLayout.PREFERRED_SIZE, 216, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                            .addComponent(addWordButton))
-                        .addComponent(deleteWordButton))
+                    .addGroup(addKeywordPanelLayout.createSequentialGroup()
+                        .addComponent(addWordField, javax.swing.GroupLayout.PREFERRED_SIZE, 216, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(addWordButton))
                     .addComponent(chRegex, javax.swing.GroupLayout.Alignment.LEADING))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(deleteWordButton)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         addKeywordPanelLayout.setVerticalGroup(
@@ -284,12 +286,11 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                 .addGap(0, 0, 0)
                 .addGroup(addKeywordPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(addWordField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(addWordButton))
-                .addGap(7, 7, 7)
+                    .addComponent(addWordButton)
+                    .addComponent(deleteWordButton))
+                .addGap(6, 6, 6)
                 .addComponent(chRegex)
-                .addGap(7, 7, 7)
-                .addComponent(deleteWordButton)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(43, Short.MAX_VALUE))
         );
 
         ingestMessagesCheckbox.setSelected(true);
