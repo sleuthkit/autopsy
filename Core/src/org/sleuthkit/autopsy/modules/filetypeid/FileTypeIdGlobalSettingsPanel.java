@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.filetypeid;
 
-import java.awt.*;
+import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collections;
@@ -228,7 +228,6 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         FileType fileType = typesList.getSelectedValue();
         this.signatureList.setEnabled(false);
         if (null != fileType) {
-            mimeTypeNameLabel.setText(fileType.getMimeType());
             List<Signature> signatures = fileType.getSignatures();
             this.signaturesListModel.clear();
             for (Signature sig : signatures) {
@@ -244,7 +243,6 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
      */
     private void clearTypeDetailsComponents() {
         typesList.clearSelection();
-        mimeTypeNameLabel.setText(""); //NON-NLS
         this.signaturesListModel.clear();
         enableButtons();
     }
@@ -297,16 +295,14 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         jPanel1 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         typesScrollPane = new javax.swing.JScrollPane();
-        typesList = new javax.swing.JList<>();
+        typesList = new javax.swing.JList<FileType>();
         deleteTypeButton = new javax.swing.JButton();
         newTypeButton = new javax.swing.JButton();
         editTypeButton = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
-        mimeTypeLabel = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        signatureList = new javax.swing.JList<>();
-        mimeTypeNameLabel = new javax.swing.JLabel();
+        signatureList = new javax.swing.JList<Signature>();
 
         setMaximumSize(new java.awt.Dimension(552, 297));
         setPreferredSize(new java.awt.Dimension(552, 297));
@@ -372,9 +368,10 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGap(12, 12, 12)
                 .addComponent(jLabel2)
-                .addGap(1, 1, 1)
-                .addComponent(typesScrollPane)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(typesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 367, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(newTypeButton)
@@ -387,9 +384,6 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
 
         jSplitPane1.setLeftComponent(jPanel1);
 
-        mimeTypeLabel.setFont(mimeTypeLabel.getFont().deriveFont(mimeTypeLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        org.openide.awt.Mnemonics.setLocalizedText(mimeTypeLabel, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.mimeTypeLabel.text")); // NOI18N
-
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.jLabel1.text")); // NOI18N
 
         signatureList.setModel(new javax.swing.AbstractListModel<Signature>() {
@@ -399,8 +393,6 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         });
         jScrollPane1.setViewportView(signatureList);
 
-        org.openide.awt.Mnemonics.setLocalizedText(mimeTypeNameLabel, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.mimeTypeNameLabel.text")); // NOI18N
-
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -409,27 +401,19 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
                 .addGap(18, 18, 18)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(mimeTypeLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(mimeTypeNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
                         .addComponent(jLabel1)
                         .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 387, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 385, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGap(6, 6, 6)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(mimeTypeLabel)
-                    .addComponent(mimeTypeNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addContainerGap()
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 328, Short.MAX_VALUE)
-                .addGap(20, 20, 20))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 370, Short.MAX_VALUE)
+                .addGap(40, 40, 40))
         );
 
         jSplitPane1.setRightComponent(jPanel2);
@@ -445,7 +429,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jSplitPane1, javax.swing.GroupLayout.Alignment.TRAILING))
+                            .addComponent(jSplitPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 782, Short.MAX_VALUE))
                         .addContainerGap())))
         );
         layout.setVerticalGroup(
@@ -454,7 +438,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
                 .addGap(6, 6, 6)
                 .addComponent(jLabel3)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSplitPane1)
+                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 443, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(ingestRunningWarningLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
@@ -502,8 +486,6 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSplitPane jSplitPane1;
-    private javax.swing.JLabel mimeTypeLabel;
-    private javax.swing.JLabel mimeTypeNameLabel;
     private javax.swing.JButton newTypeButton;
     private javax.swing.JList<Signature> signatureList;
     private javax.swing.JList<FileType> typesList;
