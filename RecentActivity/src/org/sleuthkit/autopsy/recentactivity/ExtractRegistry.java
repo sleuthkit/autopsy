@@ -73,7 +73,6 @@ class ExtractRegistry extends Extract {
         moduleName = NbBundle.getMessage(ExtractIE.class, "ExtractRegistry.moduleName.text");
         final File rrRoot = InstalledFileLocator.getDefault().locate("rr", ExtractRegistry.class.getPackage().getName(), false); //NON-NLS
         if (rrRoot == null) {
-            logger.log(Level.SEVERE, "RegRipper not found"); //NON-NLS
             rrFound = false;
             return;
         } else {
@@ -81,7 +80,6 @@ class ExtractRegistry extends Extract {
         }
 
         rrHome = rrRoot.getAbsolutePath();
-        logger.log(Level.INFO, "RegRipper home: {0}", rrHome); //NON-NLS
 
         if (PlatformUtil.isWindowsOS()) {
             RR_PATH = rrHome + File.separator + "rip.exe"; //NON-NLS
@@ -91,7 +89,6 @@ class ExtractRegistry extends Extract {
 
         final File rrFullRoot = InstalledFileLocator.getDefault().locate("rr-full", ExtractRegistry.class.getPackage().getName(), false); //NON-NLS
         if (rrFullRoot == null) {
-            logger.log(Level.SEVERE, "RegRipper Full not found"); //NON-NLS
             rrFullFound = false;
         } else {
             rrFullFound = true;
@@ -102,7 +99,6 @@ class ExtractRegistry extends Extract {
         } else {
             rrFullHome = "";
         }
-        logger.log(Level.INFO, "RegRipper Full home: {0}", rrFullHome); //NON-NLS
 
         if (PlatformUtil.isWindowsOS()) {
             RR_FULL_PATH = rrFullHome + File.separator + "rip.exe"; //NON-NLS
