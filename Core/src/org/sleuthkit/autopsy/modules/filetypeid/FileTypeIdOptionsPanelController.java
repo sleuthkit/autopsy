@@ -28,10 +28,10 @@ public final class FileTypeIdOptionsPanelController extends OptionsPanelControll
 
     @Override
     public void update() {
-        if (changed) {
-            getPanel().load();
-            changed = false;
-        }
+
+        getPanel().load();
+        changed = false;
+
     }
 
     /**
@@ -41,8 +41,10 @@ public final class FileTypeIdOptionsPanelController extends OptionsPanelControll
      */
     @Override
     public void applyChanges() {
-        getPanel().store();
-        changed = false;
+        if (changed) {
+            getPanel().store();
+            changed = false;
+        }
     }
 
     /**

@@ -42,10 +42,8 @@ public final class InterestingItemDefsOptionsPanelController extends OptionsPane
 
     @Override
     public void update() {
-        if (changed) {
-            getPanel().load();
-            changed = false;
-        }
+        getPanel().load();
+        changed = false;
     }
 
     /**
@@ -55,13 +53,15 @@ public final class InterestingItemDefsOptionsPanelController extends OptionsPane
      */
     @Override
     public void applyChanges() {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                getPanel().store();
-                changed = false;
-            }
-        });
+        if (changed) {
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    getPanel().store();
+                    changed = false;
+                }
+            });
+        }
     }
 
     /**
