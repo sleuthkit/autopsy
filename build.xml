@@ -11,7 +11,6 @@
       correct version of the platform.  These are used for other reasons.  We should merge the two. -->
     <property name="netbeans-plat-version" value="8.0.2" />
     <property name="nbplatform.active.dir" value="${basedir}/netbeans-plat/${netbeans-plat-version}" />
-    
     <!-- Supported java versions.-->
     <condition property="supported-java-versions">
         <or>
