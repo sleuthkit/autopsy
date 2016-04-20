@@ -48,6 +48,11 @@ public final class AutopsyOptionsPanelController extends OptionsPanelController 
         changed = false;
     }
 
+    /**
+     * This method is called when both the Ok and Apply buttons are pressed. It
+     * applies to any of the panels that have been opened in the process of
+     * using the options pane.
+     */
     @Override
     public void applyChanges() {
         if (changed) {
@@ -56,6 +61,11 @@ public final class AutopsyOptionsPanelController extends OptionsPanelController 
         }
     }
 
+    /**
+     * This method is called when the Cancel button is pressed. It applies to
+     * any of the panels that have been opened in the process of using the
+     * options pane.
+     */
     @Override
     public void cancel() {
     }
@@ -65,6 +75,12 @@ public final class AutopsyOptionsPanelController extends OptionsPanelController 
         return getPanel().valid();
     }
 
+    /**
+     * Used to determine whether any changes have been made to this controller's
+     * panel.
+     *
+     * @return Whether or not a change has been made.
+     */
     @Override
     public boolean isChanged() {
         return changed;
