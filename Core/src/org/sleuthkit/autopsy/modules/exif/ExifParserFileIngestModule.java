@@ -65,7 +65,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
  * longitude, altitude, device model, and device make to a blackboard artifact.
  */
 @NbBundle.Messages({
-    "ExifParserFileIngestModule.startUp.fileTypeDetectorInitializationException.msg=Error initializing the file type detector."
+    "CannotRunFileTypeDetection=Cannot run file type detection."
 })
 public final class ExifParserFileIngestModule implements FileIngestModule {
 
@@ -94,7 +94,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            throw new IngestModuleException(Bundle.ExifParserFileIngestModule_startUp_fileTypeDetectorInitializationException_msg(), ex);
+            throw new IngestModuleException(Bundle.CannotRunFileTypeDetection(), ex);
         }
     }
 

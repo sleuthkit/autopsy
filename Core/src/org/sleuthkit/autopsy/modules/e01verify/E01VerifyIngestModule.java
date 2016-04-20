@@ -43,7 +43,7 @@ import org.openide.util.NbBundle;
  * to the value stored in the image.
  */
 @NbBundle.Messages({
-    "EwfVerifyIngestModule.startUp.exception.failGetMd5=Unable to calculate MD5 hash."
+    "UnableToCalculateHashes=Unable to calculate MD5 hashes."
 })
 public class E01VerifyIngestModule implements DataSourceIngestModule {
 
@@ -70,8 +70,7 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
         try {
             messageDigest = MessageDigest.getInstance("MD5"); //NON-NLS
         } catch (NoSuchAlgorithmException ex) {
-            logger.log(Level.WARNING, "Error getting md5 algorithm", ex); //NON-NLS
-            throw new RuntimeException(Bundle.EwfVerifyIngestModule_startUp_exception_failGetMd5(), ex);
+            throw new IngestModuleException(Bundle.UnableToCalculateHashes(), ex);
         }
     }
 

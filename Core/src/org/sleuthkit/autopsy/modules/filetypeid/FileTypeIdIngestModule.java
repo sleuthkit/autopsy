@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
  * to the blackboard.
  */
 @NbBundle.Messages({
-    "FileTypeIdIngestModule.startUp.fileTypeDetectorInitializationException.msg=Error initializing the file type detector."
+        "CannotRunFileTypeDetection=Unable to run file type detection."
 })
 public class FileTypeIdIngestModule implements FileIngestModule {
 
@@ -81,7 +81,7 @@ public class FileTypeIdIngestModule implements FileIngestModule {
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            throw new IngestModuleException(Bundle.FileTypeIdIngestModule_startUp_fileTypeDetectorInitializationException_msg(), ex);
+            throw new IngestModuleException(Bundle.CannotRunFileTypeDetection(), ex);
         }
     }
 

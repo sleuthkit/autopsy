@@ -137,7 +137,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
      */
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
-        logger.log(Level.INFO, "Initializing instance {0}", instanceNum); //NON-NLS
         initialized = false;
         jobId = context.getJobId();
         dataSourceId = context.getDataSource().getId();
@@ -166,38 +165,22 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     port = Integer.parseInt(UserPreferences.getIndexingServerPort());
                 } catch (NumberFormatException ex) {
                     // if there is an error parsing the port number
-                    String msg = Bundle.KeywordSearchIngestModule_init_badInitMsg();
-                    String details = Bundle.SolrConnectionCheck_Port();
-                    logger.log(Level.SEVERE, "{0}: {1} {2}", new Object[]{msg, details, ex.toString()});
-                    services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), msg, details));
-                    throw new IngestModuleException(msg, ex);
+                    throw new IngestModuleException(Bundle.KeywordSearchIngestModule_init_badInitMsg() + " " + Bundle.SolrConnectionCheck_Port(), ex);
                 }
                 try {
                     kwsService.tryConnect(UserPreferences.getIndexingServerHost(), port);
                 } catch (KeywordSearchServiceException ex) {
-                    String msg = Bundle.KeywordSearchIngestModule_init_badInitMsg();
-                    String details = ex.getMessage();
-                    logger.log(Level.SEVERE, "{0}: {1} {2}", new Object[]{msg, details, ex.toString()});
-                    services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), msg, details));
-                    throw new IngestModuleException(msg, ex);
+                    throw new IngestModuleException(Bundle.KeywordSearchIngestModule_init_badInitMsg(), ex);
                 }
             } else {
                 // for single-user cases need to verify connection to local SOLR service
                 try {
                     if (!server.isRunning()) {
-                        String msg = Bundle.KeywordSearchIngestModule_init_badInitMsg();
-                        logger.log(Level.SEVERE, msg);
-                        String details = Bundle.KeywordSearchIngestModule_init_tryStopSolrMsg(msg);
-                        services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), msg, details));
-                        throw new IngestModuleException(msg);
+                        throw new IngestModuleException(Bundle.KeywordSearchIngestModule_init_tryStopSolrMsg(Bundle.KeywordSearchIngestModule_init_badInitMsg()));
                     }
                 } catch (KeywordSearchModuleException ex) {
-                    logger.log(Level.WARNING, "Error checking if Solr server is running while initializing ingest", ex); //NON-NLS
                     //this means Solr is not properly initialized
-                    String msg = Bundle.KeywordSearchIngestModule_init_badInitMsg();
-                    String details = Bundle.KeywordSearchIngestModule_init_tryStopSolrMsg(msg);
-                    services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), msg, details));
-                    throw new IngestModuleException(msg, ex);
+                    throw new IngestModuleException(Bundle.KeywordSearchIngestModule_init_tryStopSolrMsg(Bundle.KeywordSearchIngestModule_init_badInitMsg()), ex);
                 }
                 try {
                     // make an actual query to verify that server is responding
@@ -227,13 +210,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         stringExtractor = new StringsTextExtractor(this);
         stringExtractor.setScripts(KeywordSearchSettings.getStringExtractScripts());
         stringExtractor.setOptions(KeywordSearchSettings.getStringExtractOptions());
-
-        //log the scripts used for debugging
-        final StringBuilder sbScripts = new StringBuilder();
-        for (SCRIPT s : KeywordSearchSettings.getStringExtractScripts()) {
-            sbScripts.append(s.name()).append(" ");
-        }
-        logger.log(Level.INFO, "Using string extract scripts: {0}", sbScripts.toString()); //NON-NLS
 
         textExtractors = new ArrayList<>();
         //order matters, more specific extractors first
