@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import org.openide.util.NbBundle;
-
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -29,6 +27,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * @author dfickling EnCaseKeywordSearchList adds support for Encase
@@ -40,14 +40,11 @@ import java.util.logging.Level;
  * KeywordSearchLists
  *
  */
-class EnCaseKeywordSearchList extends KeywordSearchList {
+class EnCaseKeywordSearchList {
 
     ArrayList<EncaseFileEntry> entriesUnsorted;
     EncaseFileEntry rootEntry;
-
-    public EnCaseKeywordSearchList(String encasePath) {
-        super(encasePath);
-    }
+    private static final Logger logger = Logger.getLogger(EnCaseKeywordSearchList.class.getName());
 
     /**
      * Follow the EncaseFileEntry hierarchy starting with given entry Create
@@ -56,7 +53,7 @@ class EnCaseKeywordSearchList extends KeywordSearchList {
      * @param entry
      * @param parentPath
      */
-    private void doCreateListsFromEntries(EncaseFileEntry entry, String parentPath) {
+    private KeywordList doCreateListsFromEntries(EncaseFileEntry entry, String parentPath) {
         String name;
         if (parentPath.isEmpty()) {
             name = entry.name;
@@ -90,7 +87,10 @@ class EnCaseKeywordSearchList extends KeywordSearchList {
         if (!children.isEmpty()) {
             KeywordList newList = new KeywordList(name, new Date(), new Date(),
                     true, true, children);
-            theLists.put(name, newList);
+            return newList;
+        }
+        else {
+            return null;
         }
     }
 
@@ -116,20 +116,7 @@ class EnCaseKeywordSearchList extends KeywordSearchList {
         }
     }
 
-    @Override
-    public boolean save() {
-        throw new UnsupportedOperationException(
-                NbBundle.getMessage(this.getClass(), "KeywordSearchListsEncase.save.exception.msg"));
-    }
-
-    @Override
-    public boolean save(boolean isExport) {
-        throw new UnsupportedOperationException(
-                NbBundle.getMessage(this.getClass(), "KeywordSearchListsEncase.save2.exception.msg"));
-    }
-
-    @Override
-    public boolean load() {
+    KeywordList load(String filePath) {
         try {
             BufferedReader readBuffer = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), "utf-16")); //NON-NLS
             String structLine;
@@ -157,20 +144,20 @@ class EnCaseKeywordSearchList extends KeywordSearchList {
                 entriesUnsorted.add(new EncaseFileEntry(name, value, Integer.parseInt(childCount), false, null, type, flags));
             }
             if (entriesUnsorted.isEmpty()) {
-                return false;
+                return null;
             }
 
             this.rootEntry = entriesUnsorted.remove(0);
             doCreateEntryStructure(this.rootEntry);
-            doCreateListsFromEntries(this.rootEntry, "");
-            return true;
+            return doCreateListsFromEntries(this.rootEntry, "");
 
         } catch (FileNotFoundException ex) {
             logger.log(Level.INFO, "File at " + filePath + " does not exist!", ex); //NON-NLS
+            return null;
         } catch (IOException ex) {
             logger.log(Level.INFO, "Failed to read file at " + filePath, ex); //NON-NLS
+            return null;
         }
-        return false;
     }
 
     private enum EncaseMetaType {
