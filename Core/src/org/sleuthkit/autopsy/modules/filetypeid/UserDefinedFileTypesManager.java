@@ -64,7 +64,7 @@ final class UserDefinedFileTypesManager {
 
     private static final Logger logger = Logger.getLogger(UserDefinedFileTypesManager.class.getName());
     private static final String USER_DEFINED_TYPES_XML_FILE = "UserFileTypeDefinitions.xml"; //NON-NLS
-    private static final String USER_DEFINED_TYPES_SERIALIZATION_FILE = "UserFileTypeDefinitions.settings";
+    private static final String USER_DEFINED_TYPES_SERIALIZATION_FILE = "UserFileTypeDefinitions.settings"; //NON-NLS
     private static final String FILE_TYPES_TAG_NAME = "FileTypes"; //NON-NLS
     private static final String FILE_TYPE_TAG_NAME = "FileType"; //NON-NLS
     private static final String MIME_TYPE_TAG_NAME = "MimeType"; //NON-NLS
