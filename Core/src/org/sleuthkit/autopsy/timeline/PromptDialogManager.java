@@ -171,12 +171,13 @@ public class PromptDialogManager {
 
         ListView<String> listView = new ListView<>(FXCollections.observableArrayList(rebuildReasons));
         listView.setCellFactory(lstView -> new WrappingListCell());
-
         listView.setMaxHeight(75);
 
         Node wrappedListView = Borders.wrap(listView).lineBorder().title(Bundle.PromptDialogManager_rebuildPrompt_details()).buildAll();
+
         dialogPane.setExpandableContent(wrappedListView);
         dialogPane.setMaxWidth(500);
+
         return currentDialog.showAndWait().map(UPDATE::equals).orElse(false);
     }
 
