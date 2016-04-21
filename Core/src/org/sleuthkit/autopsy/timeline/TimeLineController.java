@@ -349,7 +349,7 @@ public class TimeLineController {
                     break;
             }
         });
-        promptDialogManager.showProgressDialog(rebuildRepository);
+        promptDialogManager.showDBPopulationProgressDialog(rebuildRepository);
     }
 
     /**
@@ -370,6 +370,9 @@ public class TimeLineController {
         rebuildRepoHelper(eventsRepository::rebuildTags, false);
     }
 
+    /**
+     * Show the entire range of the timeline.
+     */
     public void showFullRange() {
         synchronized (filteredEvents) {
             pushTimeRange(filteredEvents.getSpanningInterval());
@@ -781,7 +784,6 @@ public class TimeLineController {
         } catch (IOException ex) {
             MessageNotifyUtil.Notify.error("Timeline", "Failed to mark the timeline db as populated while ingest was" + (ingestRunning ? "" : "not ") + "running. Some results may be out of date or missing.");
             LOGGER.log(Level.SEVERE, "Error marking the ingest state while the timeline db was populated.", ex);
-
         }
     }
 
