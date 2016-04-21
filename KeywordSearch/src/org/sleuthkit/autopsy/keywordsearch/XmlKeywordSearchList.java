@@ -65,7 +65,6 @@ final class XmlKeywordSearchList {
     static synchronized XmlKeywordSearchList getCurrent() {
         if (currentInstance == null) {
             currentInstance = new XmlKeywordSearchList(CUR_LISTS_FILE);
-            currentInstance.reload();
         }
         return currentInstance;
     }
@@ -81,7 +80,7 @@ final class XmlKeywordSearchList {
         dateFormatter = new SimpleDateFormat(DATE_FORMAT);
     }
 
-    public boolean save(KeywordList list) {
+    public boolean save(List<KeywordList> keywordLists) {
         boolean success = false;
 
         DocumentBuilderFactory dbfac = DocumentBuilderFactory.newInstance();
@@ -90,34 +89,36 @@ final class XmlKeywordSearchList {
             DocumentBuilder docBuilder = dbfac.newDocumentBuilder();
             Document doc = docBuilder.newDocument();
 
-            Element rootEl = doc.createElement(ROOT_EL);
-            doc.appendChild(rootEl);
-            String listName = list.getName();
-            String created = dateFormatter.format(list.getDateCreated());
-            String modified = dateFormatter.format(list.getDateModified());
-            String useForIngest = list.getUseForIngest().toString();
-            String ingestMessages = list.getIngestMessages().toString();
-            List<Keyword> keywords = list.getKeywords();
+            for (KeywordList list : keywordLists) {
+                Element rootEl = doc.createElement(ROOT_EL);
+                doc.appendChild(rootEl);
+                String listName = list.getName();
+                String created = dateFormatter.format(list.getDateCreated());
+                String modified = dateFormatter.format(list.getDateModified());
+                String useForIngest = list.getUseForIngest().toString();
+                String ingestMessages = list.getIngestMessages().toString();
+                List<Keyword> keywords = list.getKeywords();
 
-            Element listEl = doc.createElement(LIST_EL);
-            listEl.setAttribute(LIST_NAME_ATTR, listName);
-            listEl.setAttribute(LIST_CREATE_ATTR, created);
-            listEl.setAttribute(LIST_MOD_ATTR, modified);
-            listEl.setAttribute(LIST_USE_FOR_INGEST, useForIngest);
-            listEl.setAttribute(LIST_INGEST_MSGS, ingestMessages);
+                Element listEl = doc.createElement(LIST_EL);
+                listEl.setAttribute(LIST_NAME_ATTR, listName);
+                listEl.setAttribute(LIST_CREATE_ATTR, created);
+                listEl.setAttribute(LIST_MOD_ATTR, modified);
+                listEl.setAttribute(LIST_USE_FOR_INGEST, useForIngest);
+                listEl.setAttribute(LIST_INGEST_MSGS, ingestMessages);
 
-            for (Keyword keyword : keywords) {
-                Element keywordEl = doc.createElement(KEYWORD_EL);
-                String literal = keyword.isLiteral() ? "true" : "false"; //NON-NLS
-                keywordEl.setAttribute(KEYWORD_LITERAL_ATTR, literal);
-                BlackboardAttribute.ATTRIBUTE_TYPE selectorType = keyword.getType();
-                if (selectorType != null) {
-                    keywordEl.setAttribute(KEYWORD_SELECTOR_ATTR, selectorType.getLabel());
+                for (Keyword keyword : keywords) {
+                    Element keywordEl = doc.createElement(KEYWORD_EL);
+                    String literal = keyword.isLiteral() ? "true" : "false"; //NON-NLS
+                    keywordEl.setAttribute(KEYWORD_LITERAL_ATTR, literal);
+                    BlackboardAttribute.ATTRIBUTE_TYPE selectorType = keyword.getType();
+                    if (selectorType != null) {
+                        keywordEl.setAttribute(KEYWORD_SELECTOR_ATTR, selectorType.getLabel());
+                    }
+                    keywordEl.setTextContent(keyword.getQuery());
+                    listEl.appendChild(keywordEl);
                 }
-                keywordEl.setTextContent(keyword.getQuery());
-                listEl.appendChild(keywordEl);
+                rootEl.appendChild(listEl);
             }
-            rootEl.appendChild(listEl);
 
             success = XMLUtil.saveDoc(XmlKeywordSearchList.class, filePath, ENCODING, doc);
         } catch (ParserConfigurationException e) {
@@ -129,7 +130,7 @@ final class XmlKeywordSearchList {
     /**
      * load and parse XML, then dispose
      */
-    public KeywordList load() {
+    public List<KeywordList> load() {
         final Document doc = XMLUtil.loadDoc(XmlKeywordSearchList.class, filePath);
         if (doc == null) {
             return null;
@@ -143,6 +144,7 @@ final class XmlKeywordSearchList {
         try {
             NodeList listsNList = root.getElementsByTagName(LIST_EL);
             int numLists = listsNList.getLength();
+            List<KeywordList> lists = new ArrayList<>();
             for (int i = 0; i < numLists; ++i) {
                 Element listEl = (Element) listsNList.item(i);
                 final String name = listEl.getAttribute(LIST_NAME_ATTR);
@@ -187,8 +189,9 @@ final class XmlKeywordSearchList {
                     words.add(keyword);
 
                 }
-                return list;
+                lists.add(list);
             }
+            return lists;
         } catch (ParseException e) {
             //error parsing dates
             xmlListslogger.log(Level.SEVERE, "Error loading keyword list: can't parse dates.", e); //NON-NLS

@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +46,7 @@ final class KeywordSearchSettings implements Serializable {
     private List<StringExtract.StringExtractUnicodeTable.SCRIPT> stringExtractScripts;
     private Map<String, String> stringExtractOptions;
     private static final long serialVersionUID = 1L;
+    private List<KeywordList> keywordLists;
 
     public KeywordSearchSettings() {
         showSnippets = true;
@@ -54,6 +56,7 @@ final class KeywordSearchSettings implements Serializable {
         stringExtractOptions = new HashMap<>();
         this.setStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString(), Boolean.TRUE.toString());
         this.setStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString(), Boolean.TRUE.toString());
+        keywordLists = new ArrayList<>();
     }
 
     /**
@@ -151,5 +154,27 @@ final class KeywordSearchSettings implements Serializable {
         Map<String, String> settings = new HashMap<>();
         settings.putAll(stringExtractOptions);
         return settings;
+    }
+
+    /**
+     * @return the keywordLists
+     */
+    List<KeywordList> getKeywordLists() {
+        return keywordLists;
+    }
+
+    /**
+     * @param keywordLists the keywordLists to set
+     */
+    void setKeywordLists(List<KeywordList> keywordLists) {
+        this.keywordLists = keywordLists;
+    }
+
+    void addList(String name, List<Keyword> newList, boolean useForIngest, boolean ingestMessages, boolean locked) {
+        final Date now = new Date();
+        KeywordList currList = this.getList(name);
+        if(currList == null) {
+            
+        }
     }
 }
