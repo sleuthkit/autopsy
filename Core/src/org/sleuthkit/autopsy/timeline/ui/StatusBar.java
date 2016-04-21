@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-15 Basis Technology Corp.
+ * Copyright 2014-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,8 +33,9 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.actions.RebuildDataBase;
 
 /**
- * simple status bar that a possible message determined by
- * {@link TimeLineController#eventsDBStaleProperty}
+ * Simple status bar that shows a possible message determined by
+ * TimeLineController.eventsDBStaleProperty() and the warning/button to update
+ * the db if it is stale
  */
 public class StatusBar extends ToolBar {
 
@@ -46,19 +47,14 @@ public class StatusBar extends ToolBar {
     private HBox refreshBox;
     @FXML
     private Button updateDBButton;
-
     @FXML
     private Label statusLabel;
-
     @FXML
     private ProgressBar progressBar;
-
     @FXML
     private Region spacer;
-
     @FXML
     private Label taskLabel;
-
     @FXML
     private Label messageLabel;
 
@@ -68,19 +64,20 @@ public class StatusBar extends ToolBar {
     }
 
     @FXML
-    @NbBundle.Messages({"StatusBar.refreshLabel.text=New events may be available."})
+    @NbBundle.Messages({"StatusBar.refreshLabel.text=The timeline may be out of date."})
     void initialize() {
         assert refreshLabel != null : "fx:id=\"refreshLabel\" was not injected: check your FXML file 'StatusBar.fxml'."; // NON-NLS
         assert progressBar != null : "fx:id=\"progressBar\" was not injected: check your FXML file 'StatusBar.fxml'."; // NON-NLS
         assert spacer != null : "fx:id=\"spacer\" was not injected: check your FXML file 'StatusBar.fxml'."; // NON-NLS
         assert taskLabel != null : "fx:id=\"taskLabel\" was not injected: check your FXML file 'StatusBar.fxml'."; // NON-NLS
         assert messageLabel != null : "fx:id=\"messageLabel\" was not injected: check your FXML file 'StatusBar.fxml'."; // NON-NLS
-        refreshLabel.setText(Bundle.StatusBar_refreshLabel_text());
-        taskLabel.setVisible(false);
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
+        refreshLabel.setText(Bundle.StatusBar_refreshLabel_text());
         refreshBox.visibleProperty().bind(this.controller.eventsDBStaleProperty());
         refreshBox.managedProperty().bind(this.controller.eventsDBStaleProperty());
+
+        taskLabel.setVisible(false);
         taskLabel.textProperty().bind(this.controller.taskTitleProperty());
         messageLabel.textProperty().bind(this.controller.taskMessageProperty());
         progressBar.progressProperty().bind(this.controller.taskProgressProperty());

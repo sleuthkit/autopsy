@@ -360,11 +360,9 @@ public class EventsRepository {
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private CancellationProgressTask<Void> rebuildRepository(final DBPopulationMode mode, Consumer<Worker.State> onStateChange) {
         LOGGER.log(Level.INFO, "(re)starting {0} db population task", mode); //NON-NLS
-
         if (dbWorker != null) {
             dbWorker.cancel();
         }
-
         dbWorker = new DBPopulationWorker(mode, onStateChange);
         workerExecutor.execute(dbWorker);
         return dbWorker;
