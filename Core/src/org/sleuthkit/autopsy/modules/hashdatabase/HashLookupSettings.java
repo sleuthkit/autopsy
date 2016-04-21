@@ -43,7 +43,7 @@ import org.w3c.dom.NodeList;
 /**
  * Class to represent the settings to be serialized for hash lookup.
  */
-final class HashLookupSettings implements Serializable {
+public final class HashLookupSettings implements Serializable {
 
     private static final String SERIALIZATION_FILE_NAME = "hashLookup.settings"; //NON-NLS
     private static final String SERIALIZATION_FILE_PATH = PlatformUtil.getUserConfigDirectory() + File.separator + SERIALIZATION_FILE_NAME; //NON-NLS
@@ -108,10 +108,28 @@ final class HashLookupSettings implements Serializable {
     /**
      * Gets the list of hash db info that this settings contains
      *
-     * @return The list of hash databse info
+     * @return The list of hash database info
      */
     List<HashDbInfo> getHashDbInfo() {
         return hashDbInfoList;
+    }
+
+    /**
+     * Get the paths to the Hash Databases from the serialized settings file.
+     *
+     * @return Return the paths to the Hash Databases, or empty if none.
+     */
+    public static List<String> getPathsFromSerializedSettings() {
+        List<String> paths = new ArrayList<>();
+        try {
+            HashLookupSettings hashLookupSettings = HashLookupSettings.readSerializedSettings();
+            for (HashDbInfo hashDbInfo : hashLookupSettings.getHashDbInfo()) {
+                paths.add(hashDbInfo.getPath());
+            }
+        } catch (HashLookupSettingsException ex) {
+            logger.log(Level.WARNING, "Could not read HashDB serialized settings.");
+        }
+        return paths;
     }
 
     /**
