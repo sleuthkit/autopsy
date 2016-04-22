@@ -43,7 +43,7 @@ import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
 @NbBundle.Messages({
     "CannotCreateOutputFolder=Unable to create output folder.",
     "CannotRunFileTypeDetection=Unable to run file type detection.",
-    "UnableToStartEmbeddedFileExtractor=Unable to start Embedded File Extractor."
+    "UnableToInitializeLibraries=Unable to initialize 7Zip libraries."
 })
 public final class EmbeddedFileExtractorIngestModule implements FileIngestModule {
 
@@ -99,7 +99,7 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
         try {
             this.archiveExtractor = new SevenZipExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
         } catch (SevenZipNativeInitializationException ex) {
-            throw new IngestModuleException(Bundle.UnableToStartEmbeddedFileExtractor(), ex);
+            throw new IngestModuleException(Bundle.UnableToInitializeLibraries(), ex);
         }
 
         this.imageExtractor = new ImageExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
