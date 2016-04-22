@@ -314,11 +314,6 @@ public class EventsRepository {
         return SQLHelper.getSQLWhere(f1).equals(SQLHelper.getSQLWhere(f2));
     }
 
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    public boolean isRebuilding() {
-        return dbWorker.isRunning();
-    }
-
     /**
      *
      * rebuild the entire repo.
