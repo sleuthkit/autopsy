@@ -24,14 +24,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
-import java.util.Timer;
-import java.util.TimerTask;
 import org.netbeans.api.progress.aggregate.AggregateProgressFactory;
 import org.netbeans.api.progress.aggregate.AggregateProgressHandle;
 import org.netbeans.api.progress.aggregate.ProgressContributor;
@@ -97,9 +97,14 @@ public final class SearchRunner {
 
         // start the timer, if needed
         if ((jobs.size() > 0) && (updateTimerRunning == false)) {
-            final long updateIntervalMs = ((long) KeywordSearchSettings.getUpdateFrequency().getTime()) * 60 * 1000;
-            updateTimer.scheduleAtFixedRate(new UpdateTimerTask(), updateIntervalMs, updateIntervalMs);
-            updateTimerRunning = true;
+            try {
+                final long updateIntervalMs = ((long) KeywordSearchSettingsManager.getInstance().getUpdateFrequency().getTime()) * 60 * 1000;
+                updateTimer.scheduleAtFixedRate(new UpdateTimerTask(), updateIntervalMs, updateIntervalMs);
+                updateTimerRunning = true;
+            } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+                logger.log(Level.SEVERE, "Could not load update frequency setting, using default.", ex);
+
+            }
         }
     }
 
@@ -535,9 +540,9 @@ public final class SearchRunner {
         /**
          * Sync-up the updated keywords from the currently used lists in the XML
          */
-        private void updateKeywords() {
-            XmlKeywordSearchList loader = XmlKeywordSearchList.getCurrent();
-
+        private void updateKeywords() throws KeywordSearchSettingsManager.KeywordSearchSettingsManagerException {
+            KeywordSearchSettingsManager loader;
+            loader = KeywordSearchSettingsManager.getInstance();
             keywords.clear();
             keywordToList.clear();
             keywordLists.clear();
@@ -549,7 +554,9 @@ public final class SearchRunner {
                     keywords.add(k);
                     keywordToList.put(k.getQuery(), list);
                 }
+
             }
+
         }
 
         /**

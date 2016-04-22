@@ -40,9 +40,10 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
     private final KeywordListsTableModel tableModel = new KeywordListsTableModel();
     private final List<String> keywordListNames = new ArrayList<>();
     private final Map<String, Boolean> keywordListStates = new HashMap<>();
-    private final XmlKeywordSearchList keywordListsManager = XmlKeywordSearchList.getCurrent();
+    private final KeywordSearchSettingsManager keywordListsManager;
 
     KeywordSearchJobSettingsPanel(KeywordSearchJobSettings initialSettings) {
+        keywordListsManager = KeywordSearchSettingsManager.getInstance();
         initializeKeywordListSettings(initialSettings);
         initComponents();
         customizeComponents();
@@ -51,7 +52,7 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
     private void initializeKeywordListSettings(KeywordSearchJobSettings settings) {
         keywordListNames.clear();
         keywordListStates.clear();
-        List<KeywordList> keywordLists = keywordListsManager.getListsL();
+        List<KeywordList> keywordLists = keywordListsManager.getKeywordLists();
         for (KeywordList list : keywordLists) {
             String listName = list.getName();
             keywordListNames.add(listName);
@@ -85,7 +86,7 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
     }
 
     private void displayLanguages() {
-        List<SCRIPT> scripts = KeywordSearchSettings.getStringExtractScripts();
+        List<SCRIPT> scripts = keywordListsManager.getStringExtractScripts();
         StringBuilder langs = new StringBuilder();
         langs.append("<html>"); //NON-NLS
         for (int i = 0; i < scripts.size(); i++) {
@@ -101,8 +102,8 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
     }
 
     private void displayEncodings() {
-        String utf8 = KeywordSearchSettings.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString());
-        String utf16 = KeywordSearchSettings.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString());
+        String utf8 = keywordListsManager.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString());
+        String utf16 = keywordListsManager.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString());
         ArrayList<String> encodingsList = new ArrayList<>();
         if (utf8 == null || Boolean.parseBoolean(utf8)) {
             encodingsList.add("UTF8");
@@ -117,10 +118,10 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
 
     @Override
     public void propertyChange(PropertyChangeEvent event) {
-        if (event.getPropertyName().equals(XmlKeywordSearchList.ListsEvt.LIST_ADDED.name())
-                || event.getPropertyName().equals(XmlKeywordSearchList.ListsEvt.LIST_DELETED.name())
-                || event.getPropertyName().equals(XmlKeywordSearchList.ListsEvt.LIST_UPDATED.name())
-                || event.getPropertyName().equals(XmlKeywordSearchList.LanguagesEvent.LANGUAGES_CHANGED.name())) {
+        if (event.getPropertyName().equals(KeywordSearchSettingsManager.ListsEvt.LIST_ADDED.name())
+                || event.getPropertyName().equals(KeywordSearchSettingsManager.ListsEvt.LIST_DELETED.name())
+                || event.getPropertyName().equals(KeywordSearchSettingsManager.ListsEvt.LIST_UPDATED.name())
+                || event.getPropertyName().equals(KeywordSearchSettingsManager.LanguagesEvent.LANGUAGES_CHANGED.name())) {
             update();
         }
     }
@@ -134,7 +135,7 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
 
     private void updateKeywordListSettings() {
         // Get the names of the current set of keyword lists.
-        List<KeywordList> keywordLists = keywordListsManager.getListsL();
+        List<KeywordList> keywordLists = keywordListsManager.getKeywordLists();
         List<String> currentListNames = new ArrayList<>();
         for (KeywordList list : keywordLists) {
             currentListNames.add(list.getName());

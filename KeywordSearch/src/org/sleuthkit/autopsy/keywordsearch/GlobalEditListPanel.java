@@ -477,12 +477,12 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                 return;
             }
 
-            XmlKeywordSearchList reader = XmlKeywordSearchList.getCurrent();
+            KeywordSearchSettingsManager manager = KeywordSearchSettingsManager.getInstance();
 
             List<KeywordList> toWrite = new ArrayList<>();
-            toWrite.add(reader.getList(currentKeywordList.getName()));
+            toWrite.add(manager.getList(currentKeywordList.getName()));
             final XmlKeywordSearchList exporter = new XmlKeywordSearchList(fileAbs);
-            boolean written = exporter.saveLists(toWrite);
+            boolean written = exporter.save(toWrite);
             if (written) {
                 KeywordSearchUtil.displayDialog(FEATURE_NAME,
                         NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.exportButtonActionPerformed.kwListExportedMsg"),

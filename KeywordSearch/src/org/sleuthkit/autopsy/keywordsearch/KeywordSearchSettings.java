@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -160,21 +160,13 @@ final class KeywordSearchSettings implements Serializable {
      * @return the keywordLists
      */
     List<KeywordList> getKeywordLists() {
-        return keywordLists;
+        return Collections.unmodifiableList(keywordLists);
     }
 
     /**
      * @param keywordLists the keywordLists to set
      */
     void setKeywordLists(List<KeywordList> keywordLists) {
-        this.keywordLists = keywordLists;
-    }
-
-    void addList(String name, List<Keyword> newList, boolean useForIngest, boolean ingestMessages, boolean locked) {
-        final Date now = new Date();
-        KeywordList currList = this.getList(name);
-        if(currList == null) {
-            
-        }
+       this.keywordLists = keywordLists;
     }
 }

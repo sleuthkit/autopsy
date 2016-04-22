@@ -67,7 +67,7 @@ public class KeywordListsManager extends Observable {
      */
     public List<String> getKeywordListNames() {
         List<String> names = new ArrayList<>();
-        for (KeywordList list : XmlKeywordSearchList.getCurrent().getListsL()) {
+        for (KeywordList list : XmlKeywordSearchList.getCurrent().` getListsL()) {
             names.add(list.getName());
         }
         return names;

@@ -75,14 +75,6 @@ class EnCaseKeywordSearchList {
                     break;
             }
         }
-        // Give each list a unique name
-        if (theLists.containsKey(name)) {
-            int i = 2;
-            while (theLists.containsKey(name + "(" + i + ")")) {
-                i += 1;
-            }
-            name = name + "(" + i + ")";
-        }
         // Don't create lists if there are no keywords
         if (!children.isEmpty()) {
             KeywordList newList = new KeywordList(name, new Date(), new Date(),
