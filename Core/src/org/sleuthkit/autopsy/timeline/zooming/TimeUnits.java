@@ -87,4 +87,8 @@ public enum TimeUnits {
         this.p = p;
         this.cu = cu;
     }
+
+    String getDisplayName() {
+        return toString();
+    }
 }

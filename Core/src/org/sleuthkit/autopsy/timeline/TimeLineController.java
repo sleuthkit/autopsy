@@ -265,11 +265,11 @@ public class TimeLineController {
         }
     }
 
-    synchronized public ReadOnlyBooleanProperty getCanAdvance() {
+    synchronized public ReadOnlyBooleanProperty canAdvanceProperty() {
         return historyManager.getCanAdvance();
     }
 
-    synchronized public ReadOnlyBooleanProperty getCanRetreat() {
+    synchronized public ReadOnlyBooleanProperty canRetreatProperty() {
         return historyManager.getCanRetreat();
     }
     private final ReadOnlyBooleanWrapper eventsDBStale = new ReadOnlyBooleanWrapper(true);
