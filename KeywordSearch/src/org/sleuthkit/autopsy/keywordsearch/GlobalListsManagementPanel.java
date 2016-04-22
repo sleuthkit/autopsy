@@ -22,12 +22,14 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -331,7 +333,11 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
 
     private class KeywordListTableModel extends AbstractTableModel {
 
-        private XmlKeywordSearchList listsHandle = XmlKeywordSearchList.getCurrent();
+        private KeywordSearchSettingsManager listsHandle;
+
+        private KeywordListTableModel() {
+            this.listsHandle = KeywordSearchSettingsManager.getInstance();
+        }
 
         @Override
         public int getColumnCount() {
@@ -340,7 +346,13 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
 
         @Override
         public int getRowCount() {
-            return listsHandle.getNumberLists(false);
+            int count = 0;
+            for (KeywordList list : listsHandle.getKeywordLists()) {
+                if (!list.isLocked()) {
+                    count++;
+                }
+            }
+            return count;
         }
 
         @Override
@@ -350,7 +362,15 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            return listsHandle.getListNames(false).get(rowIndex);
+            for (KeywordList list : listsHandle.getKeywordLists()) {
+                if (rowIndex == 0 && !list.isLocked()) {
+                    return list.getName();
+                }
+                if (!list.isLocked()) {
+                    rowIndex--;
+                }
+            }
+            return "";
         }
 
         @Override
@@ -370,13 +390,27 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         }
 
         //delete selected from handle, events are fired from the handle
+        @Messages({"GlobalListsManagementPanel.KeywordListTableModel.failedDelete.message=Couldn't delete selected list.",
+        "GlobalListsManagementPanel.KeywordListTableModel.failedDelete.title=Error Deleting List"})
         void deleteSelected(int[] selected) {
             List<String> toDel = new ArrayList<>();
             for (int i = 0; i < selected.length; i++) {
                 toDel.add((String) getValueAt(0, selected[i]));
             }
+            List<KeywordList> keywordLists = listsHandle.getKeywordLists();
             for (String del : toDel) {
-                listsHandle.deleteList(del);
+                for (KeywordList list : keywordLists) {
+                    if (list.getName().equals(del)) {
+                        try {
+                            listsHandle.removeList(list);
+
+                        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+                            JOptionPane.showMessageDialog(null, Bundle.KeywordSearchGlobalLanguageSettingsPanel_failedReadSettings_message(),
+                                    Bundle.KeywordSearchGlobalLanguageSettingsPanel_failedReadSettings_title(), JOptionPane.ERROR_MESSAGE);
+                            logger.log(Level.SEVERE, "Failed to write keyword search settings.", ex);
+                        }
+                    }
+                }
             }
         }
 

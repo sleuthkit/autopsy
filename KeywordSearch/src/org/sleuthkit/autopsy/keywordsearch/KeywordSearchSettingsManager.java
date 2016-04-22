@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import org.openide.util.io.NbObjectInputStream;
 import org.openide.util.io.NbObjectOutputStream;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -88,19 +89,19 @@ class KeywordSearchSettingsManager {
         if (serializedDefs.exists()) {
             try {
                 try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(serializedDefs))) {
-                    KeywordSearchSettings readSettings = (KeywordSearchSettings) in.readObject();
-                    List<KeywordList> keywordLists = new ArrayList<>();
-                    keywordLists.addAll(readSettings.getKeywordLists());
-                    keywordLists.addAll(settings.getKeywordLists());
-                    settings.setKeywordLists(keywordLists);
+                    settings = (KeywordSearchSettings) in.readObject();
                 }
             } catch (IOException | ClassNotFoundException ex) {
                 throw new KeywordSearchSettingsManagerException("Couldn't read keyword search settings.", ex);
             }
         } else {
             XmlKeywordSearchList xmlReader = XmlKeywordSearchList.getCurrent();
-            List<KeywordList> keywordLists = xmlReader.load();
-            settings.setKeywordLists(keywordLists);
+            List<KeywordList> keywordLists = this.prepopulateLists();
+            List<KeywordList> xmlLists = xmlReader.load();
+            if (xmlLists != null) {
+                keywordLists.addAll(xmlLists);
+            }
+            this.settings.setKeywordLists(keywordLists);
             //setting default NSRL
             if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_NSRL, "SkipKnown")) { //NON-NLS
                 settings.setSkipKnown(true);
@@ -125,7 +126,7 @@ class KeywordSearchSettingsManager {
         }
     }
 
-    private void prepopulateLists() throws KeywordSearchSettingsManagerException {
+    private List<KeywordList> prepopulateLists() throws KeywordSearchSettingsManagerException {
         List<KeywordList> keywordLists = new ArrayList<>();
         //phone number
         List<Keyword> phones = new ArrayList<>();
@@ -160,9 +161,8 @@ class KeywordSearchSettingsManager {
 
         name = "URLs"; //NON-NLS
         keywordLists.add(new KeywordList(name, new Date(), new Date(), false, false, urls, true));
-        
-        settings.setKeywordLists(keywordLists);
-        this.writeSettings();
+
+        return keywordLists;
     }
 
     public void addPropertyChangeListener(PropertyChangeListener listener) {
@@ -173,39 +173,40 @@ class KeywordSearchSettingsManager {
         changeSupport.removePropertyChangeListener(listener);
     }
 
-    synchronized void addList(String name, List<Keyword> newList, boolean useForIngest, boolean ingestMessages) throws KeywordSearchSettingsManagerException {
-        //make sure that the list is readded as a locked/built in list 
-        try {
-            this.settings.addList(name, newList, useForIngest, ingestMessages);
-            this.writeSettings();
-            changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.name(), null, settings.getList(name));
-
-        } catch (KeywordSearchSettingsManagerException ex) {
-            this.settings.removeList(name);
-            throw ex;
-        }
-    }
-
-    synchronized void addList(String name, List<Keyword> newList) throws KeywordSearchSettingsManagerException {
-        addList(name, newList, true, true);
-    }
-
     synchronized void addList(KeywordList list) throws KeywordSearchSettingsManagerException {
-        addList(list.getName(), list.getKeywords(), list.getUseForIngest(), list.getIngestMessages(), list.isLocked());
-    }
-
-    synchronized void addList(String name, List<Keyword> newList, boolean useForIngest, boolean ingestMessages, boolean locked) throws KeywordSearchSettingsManagerException {
-        KeywordList newList 
+        List<KeywordList> oldKeywordLists = settings.getKeywordLists();
+        List<KeywordList> newKeywordLists = new ArrayList<>();
+        newKeywordLists.addAll(oldKeywordLists);
+        newKeywordLists.add(list);
+        settings.setKeywordLists(newKeywordLists);
         try {
-            this.settings.addList(name, newList, useForIngest, ingestMessages, locked);
             this.writeSettings();
-            changeSupport.firePropertyChange(containsList ? ListsEvt.LIST_ADDED.name() : ListsEvt.LIST_UPDATED.name(), null, settings.getList(name));
+            changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.name(), null, settings.getKeywordLists());
         } catch (KeywordSearchSettingsManagerException ex) {
-            this.settings.removeList(name);
+            this.settings.setKeywordLists(oldKeywordLists);
             throw ex;
         }
     }
 
+    synchronized void removeList(KeywordList list) throws KeywordSearchSettingsManagerException {
+        List<KeywordList> oldKeywordLists = settings.getKeywordLists();
+        List<KeywordList> newKeywordLists = new ArrayList<>();
+        newKeywordLists.addAll(oldKeywordLists);
+        for (int i = 0; i < newKeywordLists.size(); i++) {
+            if (newKeywordLists.get(i).getName().equals(list.getName()))  {
+                newKeywordLists.remove(i);
+                i = newKeywordLists.size();
+            }
+        }
+        settings.setKeywordLists(newKeywordLists);
+        try {
+            this.writeSettings();
+            changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.name(), null, settings.getKeywordLists());
+        } catch (KeywordSearchSettingsManagerException ex) {
+            this.settings.setKeywordLists(oldKeywordLists);
+            throw ex;
+        }
+    }
 
     /**
      * Gets the update Frequency from KeywordSearch_Options.properties
@@ -338,9 +339,21 @@ class KeywordSearchSettingsManager {
     synchronized Map<String, String> getStringExtractOptions() {
         return this.settings.getStringExtractOptions();
     }
-    
+
     synchronized List<KeywordList> getKeywordLists() {
         return this.settings.getKeywordLists();
+    }
+
+    synchronized void setKeywordLists(List<KeywordList> keywordLists) {
+        List<KeywordList> oldKeywordList = new ArrayList<>();
+        try {
+            oldKeywordList = settings.getKeywordLists();
+            this.settings.setKeywordLists(keywordLists);
+            this.writeSettings();
+        } catch (KeywordSearchSettingsManagerException ex) {
+            logger.log(Level.SEVERE, "Could not set keyword lists.", ex);
+            this.settings.setKeywordLists(oldKeywordList);
+        }
     }
 
     /**

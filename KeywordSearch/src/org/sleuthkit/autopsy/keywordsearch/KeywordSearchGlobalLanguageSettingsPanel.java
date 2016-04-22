@@ -25,8 +25,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import javax.swing.JCheckBox;
+import javax.swing.JOptionPane;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -39,6 +43,7 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
     private final Map<String, StringExtract.StringExtractUnicodeTable.SCRIPT> scripts = new HashMap<>();
     private ActionListener updateLanguagesAction;
     private List<SCRIPT> toUpdate;
+    private static final Logger logger = Logger.getLogger(KeywordSearchGlobalLanguageSettingsPanel.class.getName());
 
     KeywordSearchGlobalLanguageSettingsPanel() {
         initComponents();
@@ -95,16 +100,25 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
     }
 
     private void reloadScriptsCheckBoxes() {
+        KeywordSearchSettingsManager manager;
+        try {
+            manager = KeywordSearchSettingsManager.getInstance();
+        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+            JOptionPane.showMessageDialog(null, Bundle.KeywordSearchGlobalLanguageSettingsPanel_failedReadSettings_message(),
+                    Bundle.KeywordSearchGlobalLanguageSettingsPanel_failedReadSettings_title(), JOptionPane.ERROR_MESSAGE);
+            logger.log(Level.SEVERE, "Failed to read keyword search settings.", ex);
+            return;
+        }
         boolean utf16
-                = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString()));
+                = Boolean.parseBoolean(manager.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString()));
 
         enableUTF16Checkbox.setSelected(utf16);
 
         boolean utf8
-                = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString()));
+                = Boolean.parseBoolean(manager.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString()));
         enableUTF8Checkbox.setSelected(utf8);
 
-        final List<SCRIPT> serviceScripts = KeywordSearchSettings.getStringExtractScripts();
+        final List<SCRIPT> serviceScripts = manager.getStringExtractScripts();
         final int components = checkPanel.getComponentCount();
 
         for (int i = 0; i < components; ++i) {
@@ -117,15 +131,24 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
     }
 
     private void activateWidgets() {
+        KeywordSearchSettingsManager manager;
+        try {
+            manager = KeywordSearchSettingsManager.getInstance();
+        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+            JOptionPane.showMessageDialog(null, Bundle.KeywordSearchGlobalLanguageSettingsPanel_failedReadSettings_message(),
+                    Bundle.KeywordSearchGlobalLanguageSettingsPanel_failedReadSettings_title(), JOptionPane.ERROR_MESSAGE);
+            logger.log(Level.SEVERE, "Failed to read keyword search settings.", ex);
+            return;
+        }
         reloadScriptsCheckBoxes();
 
         boolean utf16
-                = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString()));
+                = Boolean.parseBoolean(manager.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString()));
 
         enableUTF16Checkbox.setSelected(utf16);
 
         boolean utf8
-                = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString()));
+                = Boolean.parseBoolean(manager.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString()));
         enableUTF8Checkbox.setSelected(utf8);
         final boolean extractEnabled = utf16 || utf8;
 
@@ -247,18 +270,38 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
     // End of variables declaration//GEN-END:variables
 
     @Override
+    @Messages({"KeywordSearchGlobalLanguageSettingsPanel.failedReadSettings.message=Couldn't read keyword search settings",
+        "KeywordSearchGlobalLanguageSettingsPanel.failedReadSettings.title=Error Loading Settings",
+        "KeywordSearchGlobalLanguageSettingsPanel.failedWriteSettings.message=Couldn't write keyword search settings",
+        "KeywordSearchGlobalLanguageSettingsPanel.failedWriteSettings.title=Error Writing Settings"})
     public void store() {
-        KeywordSearchSettings.setStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString(),
-                Boolean.toString(enableUTF8Checkbox.isSelected()));
-        KeywordSearchSettings.setStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString(),
-                Boolean.toString(enableUTF16Checkbox.isSelected()));
+        KeywordSearchSettingsManager manager;
+        try {
+            manager = KeywordSearchSettingsManager.getInstance();
+        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+            JOptionPane.showMessageDialog(null, Bundle.KeywordSearchGlobalLanguageSettingsPanel_failedReadSettings_message(),
+                    Bundle.KeywordSearchGlobalLanguageSettingsPanel_failedReadSettings_title(), JOptionPane.ERROR_MESSAGE);
+            logger.log(Level.SEVERE, "Failed to read keyword search settings.", ex);
+            return;
+        }
+        try {
+            manager.setStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString(),
+                    Boolean.toString(enableUTF8Checkbox.isSelected()));
 
-        if (toUpdate != null) {
-            KeywordSearchSettings.setStringExtractScripts(toUpdate);
+            manager.setStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString(),
+                    Boolean.toString(enableUTF16Checkbox.isSelected()));
+
+            if (toUpdate != null) {
+                manager.setStringExtractScripts(toUpdate);
+            }
+        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+            JOptionPane.showMessageDialog(null, Bundle.KeywordSearchGlobalLanguageSettingsPanel_failedReadSettings_message(),
+                    Bundle.KeywordSearchGlobalLanguageSettingsPanel_failedReadSettings_title(), JOptionPane.ERROR_MESSAGE);
+            logger.log(Level.SEVERE, "Failed to write keyword search settings.", ex);
         }
 
         // This is a stop-gap way of notifying the job settings panel of potential changes.
-        XmlKeywordSearchList.getCurrent().fireLanguagesEvent(KeywordSearchList.LanguagesEvent.LANGUAGES_CHANGED);
+        manager.fireLanguagesEvent(KeywordSearchList.LanguagesEvent.LANGUAGES_CHANGED);
     }
 
     @Override

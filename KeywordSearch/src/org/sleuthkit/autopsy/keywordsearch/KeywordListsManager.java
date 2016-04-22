@@ -35,11 +35,17 @@ public class KeywordListsManager extends Observable {
 
     private static KeywordListsManager instance;
     private final PropertyChangeListener listsChangeListener;
+    private KeywordSearchSettingsManager manager;
 
     /**
      * Constructs a keyword lists manager.
      */
     private KeywordListsManager() {
+        try {
+            manager = KeywordSearchSettingsManager.getInstance();
+        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+            //OSTODO
+        }
         this.listsChangeListener = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
@@ -47,7 +53,7 @@ public class KeywordListsManager extends Observable {
                 KeywordListsManager.this.notifyObservers();
             }
         };
-        XmlKeywordSearchList.getCurrent().addPropertyChangeListener(this.listsChangeListener);
+        manager.addPropertyChangeListener(listsChangeListener);
     }
 
     /**
@@ -67,7 +73,7 @@ public class KeywordListsManager extends Observable {
      */
     public List<String> getKeywordListNames() {
         List<String> names = new ArrayList<>();
-        for (KeywordList list : XmlKeywordSearchList.getCurrent().` getListsL()) {
+        for (KeywordList list : manager.getKeywordLists()) {
             names.add(list.getName());
         }
         return names;

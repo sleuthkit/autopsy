@@ -546,13 +546,20 @@ public final class SearchRunner {
             keywords.clear();
             keywordToList.clear();
             keywordLists.clear();
+            List<KeywordList> loadedKeywordLists = loader.getKeywordLists();
+            Map<String, KeywordList> keywordListMap = new HashMap<>();
+            for (KeywordList keywordList : loadedKeywordLists) {
+                keywordListMap.put(keywordList.getName(), keywordList);
+            }
 
             for (String name : keywordListNames) {
-                KeywordList list = loader.getList(name);
-                keywordLists.add(list);
-                for (Keyword k : list.getKeywords()) {
-                    keywords.add(k);
-                    keywordToList.put(k.getQuery(), list);
+                KeywordList list = keywordListMap.get(name);
+                if (list != null) {
+                    keywordLists.add(list);
+                    for (Keyword k : list.getKeywords()) {
+                        keywords.add(k);
+                        keywordToList.put(k.getQuery(), list);
+                    }
                 }
 
             }

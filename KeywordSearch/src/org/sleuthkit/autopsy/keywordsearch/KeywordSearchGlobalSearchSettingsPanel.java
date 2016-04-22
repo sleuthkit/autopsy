@@ -21,8 +21,10 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import javax.swing.JOptionPane;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchIngestModule.UpdateFrequency;
 
@@ -42,13 +44,22 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
     }
 
     private void activateWidgets() {
-        skipNSRLCheckBox.setSelected(KeywordSearchSettings.getSkipKnown());
-        showSnippetsCB.setSelected(KeywordSearchSettings.getShowSnippets());
+        KeywordSearchSettingsManager manager;
+        try {
+            manager = KeywordSearchSettingsManager.getInstance();
+        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+            JOptionPane.showMessageDialog(null, Bundle.KeywordSearchGlobalSearchSettingsPanel_failedReadSettings_message(),
+                    Bundle.KeywordSearchGlobalSearchSettingsPanel_failedReadSettings_title(), JOptionPane.ERROR_MESSAGE);
+            logger.log(Level.SEVERE, "Failed to read keyword search settings.", ex);
+            return;
+        }
+        skipNSRLCheckBox.setSelected(manager.getSkipKnown());
+        showSnippetsCB.setSelected(manager.getShowSnippets());
         boolean enable = !IngestManager.getInstance().isIngestRunning();
         skipNSRLCheckBox.setEnabled(enable);
         setTimeSettingEnabled(enable);
 
-        final UpdateFrequency curFreq = KeywordSearchSettings.getUpdateFrequency();
+        final UpdateFrequency curFreq = manager.getUpdateFrequency();
         switch (curFreq) {
             case FAST:
                 timeRadioButton1.setSelected(true);
@@ -243,10 +254,21 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
     // End of variables declaration//GEN-END:variables
 
     @Override
+    @Messages({"KeywordSearchGlobalSearchSettingsPanel.failedWriteSettings.message=Couldn't write keyword search settings",
+        "KeywordSearchGlobalSearchSettingsPanel.failedWriteSettings.title=Error Writing Settings"})
     public void store() {
-        KeywordSearchSettings.setSkipKnown(skipNSRLCheckBox.isSelected());
-        KeywordSearchSettings.setUpdateFrequency(getSelectedTimeValue());
-        KeywordSearchSettings.setShowSnippets(showSnippetsCB.isSelected());
+        KeywordSearchSettingsManager manager;
+        try {
+            manager = KeywordSearchSettingsManager.getInstance();
+            manager.setSkipKnown(skipNSRLCheckBox.isSelected());
+            manager.setUpdateFrequency(getSelectedTimeValue());
+            manager.setShowSnippets(showSnippetsCB.isSelected());
+        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+            JOptionPane.showMessageDialog(null, Bundle.KeywordSearchGlobalSearchSettingsPanel_failedReadSettings_message(),
+                    Bundle.KeywordSearchGlobalSearchSettingsPanel_failedReadSettings_title(), JOptionPane.ERROR_MESSAGE);
+            logger.log(Level.SEVERE, "Failed to write keyword search settings.", ex);
+        }
+
     }
 
     @Override
@@ -278,7 +300,18 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
         return UpdateFrequency.DEFAULT;
     }
 
+    @Messages({"KeywordSearchGlobalSearchSettingsPanel.failedReadSettings.message=Couldn't read keyword search settings",
+        "KeywordSearchGlobalSearchSettingsPanel.failedReadSettings.title=Error Loading Settings"})
     private void customizeComponents() {
+        KeywordSearchSettingsManager manager;
+        try {
+            manager = KeywordSearchSettingsManager.getInstance();
+        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+            JOptionPane.showMessageDialog(null, Bundle.KeywordSearchGlobalSearchSettingsPanel_failedReadSettings_message(),
+                    Bundle.KeywordSearchGlobalSearchSettingsPanel_failedReadSettings_title(), JOptionPane.ERROR_MESSAGE);
+            logger.log(Level.SEVERE, "Failed to read keyword search settings.", ex);
+            return;
+        }
 
         timeGroup.add(timeRadioButton1);
         timeGroup.add(timeRadioButton2);
@@ -286,7 +319,7 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
         timeGroup.add(timeRadioButton4);
         timeGroup.add(timeRadioButton5);
 
-        this.skipNSRLCheckBox.setSelected(KeywordSearchSettings.getSkipKnown());
+        this.skipNSRLCheckBox.setSelected(manager.getSkipKnown());
 
         try {
             filesIndexedValue.setText(Integer.toString(KeywordSearch.getServer().queryNumIndexedFiles()));
@@ -297,22 +330,22 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
 
         KeywordSearch.addNumIndexedFilesChangeListener(
                 new PropertyChangeListener() {
-                    @Override
-                    public void propertyChange(PropertyChangeEvent evt) {
-                        String changed = evt.getPropertyName();
-                        Object newValue = evt.getNewValue();
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                String changed = evt.getPropertyName();
+                Object newValue = evt.getNewValue();
 
-                        if (changed.equals(KeywordSearch.NUM_FILES_CHANGE_EVT)) {
-                            int newFilesIndexed = ((Integer) newValue).intValue();
-                            filesIndexedValue.setText(Integer.toString(newFilesIndexed));
-                            try {
-                                chunksValLabel.setText(Integer.toString(KeywordSearch.getServer().queryNumIndexedChunks()));
-                            } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
-                                logger.log(Level.WARNING, "Could not get number of indexed chunks"); //NON-NLS
+                if (changed.equals(KeywordSearch.NUM_FILES_CHANGE_EVT)) {
+                    int newFilesIndexed = ((Integer) newValue).intValue();
+                    filesIndexedValue.setText(Integer.toString(newFilesIndexed));
+                    try {
+                        chunksValLabel.setText(Integer.toString(KeywordSearch.getServer().queryNumIndexedChunks()));
+                    } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
+                        logger.log(Level.WARNING, "Could not get number of indexed chunks"); //NON-NLS
 
-                            }
-                        }
                     }
-                });
+                }
+            }
+        });
     }
 }
