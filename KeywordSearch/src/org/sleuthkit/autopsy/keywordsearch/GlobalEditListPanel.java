@@ -52,12 +52,14 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
     private static final Logger logger = Logger.getLogger(GlobalEditListPanel.class.getName());
     private KeywordTableModel tableModel;
     private KeywordList currentKeywordList;
+    private KeywordSearchSettingsManager manager;
 
     /**
      * Creates new form GlobalEditListPanel
      */
     GlobalEditListPanel() {
         tableModel = new KeywordTableModel();
+        manager = KeywordSearchSettingsManager.getInstance();
         initComponents();
         customizeComponents();
     }
@@ -420,7 +422,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
 
         //add & reset checkbox
         tableModel.addKeyword(keyword);
-        XmlKeywordSearchList.getCurrent().addList(currentKeywordList);
+        manager.updateList(currentKeywordList);
         chRegex.setSelected(false);
         addWordField.setText("");
 
@@ -431,7 +433,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         if (KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.removeKwMsg"), NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.deleteWordButtonActionPerformed.delConfirmMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
 
             tableModel.deleteSelected(keywordTable.getSelectedRows());
-            XmlKeywordSearchList.getCurrent().addList(currentKeywordList);
+            manager.updateList(currentKeywordList);
             setButtonStates();
         }
     }//GEN-LAST:event_deleteWordButtonActionPerformed
@@ -477,10 +479,8 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                 return;
             }
 
-            KeywordSearchSettingsManager manager = KeywordSearchSettingsManager.getInstance();
-
             List<KeywordList> toWrite = new ArrayList<>();
-            toWrite.add(manager.getList(currentKeywordList.getName()));
+            toWrite.add(currentKeywordList);
             final XmlKeywordSearchList exporter = new XmlKeywordSearchList(fileAbs);
             boolean written = exporter.save(toWrite);
             if (written) {
@@ -494,7 +494,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
     private void ingestMessagesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ingestMessagesCheckboxActionPerformed
         currentKeywordList.setIngestMessages(ingestMessagesCheckbox.isSelected());
         XmlKeywordSearchList updater = XmlKeywordSearchList.getCurrent();
-        updater.addList(currentKeywordList);
+        manager.updateList(currentKeywordList);
     }//GEN-LAST:event_ingestMessagesCheckboxActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel addKeywordPanel;
@@ -531,9 +531,22 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
             listSelectionModel.setSelectionInterval(index, index);
             XmlKeywordSearchList loader = XmlKeywordSearchList.getCurrent();
 
-            currentKeywordList = loader.getListsL(false).get(index);
-            tableModel.resync();
-            setButtonStates();
+            List<KeywordList> keywordLists = manager.getKeywordLists();
+            KeywordList listAtIndex = null;
+            for (int i = 0; i < keywordLists.size(); i++) {
+                KeywordList currList = keywordLists.get(i);
+                if (index == 0 && !currList.isLocked()) {
+                    listAtIndex = currList;
+                    i = keywordLists.size();
+                } else if (!currList.isLocked()) {
+                    --index;
+                }
+            }
+            if (listAtIndex != null) {
+                currentKeywordList = listAtIndex;
+                tableModel.resync();
+                setButtonStates();
+            }
         } else {
             currentKeywordList = null;
             tableModel.resync();

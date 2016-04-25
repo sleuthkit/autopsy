@@ -173,6 +173,14 @@ class KeywordSearchSettingsManager {
         changeSupport.removePropertyChangeListener(listener);
     }
 
+    void fireLanguagesEvent(LanguagesEvent event) {
+        try {
+            changeSupport.firePropertyChange(event.toString(), null, null);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e); //NON-NLS
+        }
+    }
+
     synchronized void addList(KeywordList list) throws KeywordSearchSettingsManagerException {
         List<KeywordList> oldKeywordLists = settings.getKeywordLists();
         List<KeywordList> newKeywordLists = new ArrayList<>();
@@ -193,11 +201,35 @@ class KeywordSearchSettingsManager {
         List<KeywordList> newKeywordLists = new ArrayList<>();
         newKeywordLists.addAll(oldKeywordLists);
         for (int i = 0; i < newKeywordLists.size(); i++) {
-            if (newKeywordLists.get(i).getName().equals(list.getName()))  {
+            if (newKeywordLists.get(i).getName().equals(list.getName())) {
                 newKeywordLists.remove(i);
                 i = newKeywordLists.size();
             }
         }
+        settings.setKeywordLists(newKeywordLists);
+        try {
+            this.writeSettings();
+            changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.name(), null, settings.getKeywordLists());
+        } catch (KeywordSearchSettingsManagerException ex) {
+            this.settings.setKeywordLists(oldKeywordLists);
+            throw ex;
+        }
+    }
+
+    synchronized void updateList(KeywordList list) throws KeywordSearchSettingsManagerException {
+        List<KeywordList> oldKeywordLists = settings.getKeywordLists();
+        List<KeywordList> newKeywordLists = new ArrayList<>();
+        newKeywordLists.addAll(oldKeywordLists);
+        for (int i = 0; i < newKeywordLists.size(); i++) {
+            if (newKeywordLists.get(i).getName().equals(list.getName())) {
+                newKeywordLists.remove(i);
+                i = newKeywordLists.size();
+            }
+            if (i == newKeywordLists.size() - 1) {
+                throw new KeywordSearchSettingsManagerException("No keyword list with same name as given keyword list, couldn't update.");
+            }
+        }
+        newKeywordLists.add(list);
         settings.setKeywordLists(newKeywordLists);
         try {
             this.writeSettings();

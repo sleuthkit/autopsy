@@ -29,11 +29,14 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
 
     private final GlobalListsManagementPanel listsManagementPanel = new GlobalListsManagementPanel();
     private final GlobalEditListPanel editListPanel = new GlobalEditListPanel();
+    private KeywordSearchSettingsManager manager;
 
     GlobalListSettingsPanel() {
+        manager = KeywordSearchSettingsManager.getInstance();
         initComponents();
         customizeComponents();
         setName(org.openide.util.NbBundle.getMessage(DropdownToolbar.class, "ListBundleConfig"));
+
     }
 
     private void customizeComponents() {
@@ -42,11 +45,10 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.title"), NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.body"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
-                    String toDelete = editListPanel.getCurrentKeywordList().getName();
+                    KeywordList toDelete = editListPanel.getCurrentKeywordList();
                     editListPanel.setCurrentKeywordList(null);
                     editListPanel.setButtonStates();
-                    XmlKeywordSearchList deleter = XmlKeywordSearchList.getCurrent();
-                    deleter.deleteList(toDelete);
+                    manager.removeList(toDelete);
                     listsManagementPanel.resync();
                 }
             }
@@ -78,13 +80,21 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
                     return;
                 }
 
-                XmlKeywordSearchList writer = XmlKeywordSearchList.getCurrent();
-                if (writer.listExists(listName) && writer.getList(listName).isLocked()) {
+                KeywordList listWithSameName = null;
+                List<KeywordList> keywordLists = manager.getKeywordLists();
+                for (int i = 0; i < keywordLists.size(); i++) {
+                    KeywordList currList = keywordLists.get(i);
+                    if (currList.getName().equals(listName)) {
+                        listWithSameName = currList;
+                        i = keywordLists.size();
+                    }
+                }
+                if (listWithSameName != null && listWithSameName.isLocked()) {
                     KeywordSearchUtil.displayDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.noOwDefaultMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
                     return;
                 }
                 boolean shouldAdd = false;
-                if (writer.listExists(listName)) {
+                if (listWithSameName != null) {
                     boolean replace = KeywordSearchUtil.displayConfirmDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.kwListExistMsg", listName),
                             KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
                     if (replace) {
@@ -96,7 +106,7 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
                 }
 
                 if (shouldAdd) {
-                    writer.addList(listName, keywords);
+                    manager.addList(new KeywordList(listName, new Date(), new Date(), false, false, keywords));
                     KeywordSearchUtil.displayDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.kwListSavedMsg", listName), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
                 }
 

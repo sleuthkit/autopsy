@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -36,6 +35,7 @@ import org.apache.solr.common.SolrDocumentList;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -129,9 +129,10 @@ class LuceneQuery implements KeywordSearchQuery {
 
     @Override
     public QueryResults performQuery() throws NoOpenCoreException {
+        KeywordSearchSettingsManager manager = KeywordSearchSettingsManager.getInstance();
         QueryResults results = new QueryResults(this, keywordList);
         //in case of single term literal query there is only 1 term
-        boolean showSnippets = KeywordSearchSettings.getShowSnippets();
+        boolean showSnippets = manager.getShowSnippets();
         results.addResult(new Keyword(keywordString, true), performLuceneQuery(showSnippets));
 
         return results;
@@ -340,9 +341,10 @@ class LuceneQuery implements KeywordSearchQuery {
          * Get the first snippet from the document if keyword search is
          * configured to use snippets.
          */
+        KeywordSearchSettingsManager manager = KeywordSearchSettingsManager.getInstance();
         final String docId = solrDoc.getFieldValue(Server.Schema.ID.toString()).toString();
         String snippet = "";
-        if (KeywordSearchSettings.getShowSnippets()) {
+        if (manager.getShowSnippets()) {
             List<String> snippetList = highlightResponse.get(docId).get(Server.Schema.TEXT.toString());
             // list is null if there wasn't a snippet
             if (snippetList != null) {

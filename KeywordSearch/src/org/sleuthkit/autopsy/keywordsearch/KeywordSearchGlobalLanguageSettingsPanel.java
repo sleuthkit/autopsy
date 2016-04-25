@@ -301,7 +301,7 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
         }
 
         // This is a stop-gap way of notifying the job settings panel of potential changes.
-        manager.fireLanguagesEvent(KeywordSearchList.LanguagesEvent.LANGUAGES_CHANGED);
+        manager.fireLanguagesEvent(KeywordSearchSettingsManager.LanguagesEvent.LANGUAGES_CHANGED);
     }
 
     @Override

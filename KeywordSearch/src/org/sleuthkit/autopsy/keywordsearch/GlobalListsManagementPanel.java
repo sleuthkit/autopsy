@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JFileChooser;
@@ -40,9 +41,11 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
 
     private Logger logger = Logger.getLogger(GlobalListsManagementPanel.class.getName());
     private KeywordListTableModel tableModel;
+    private KeywordSearchSettingsManager manager;
 
     GlobalListsManagementPanel() {
         tableModel = new KeywordListTableModel();
+        manager = KeywordSearchSettingsManager.getInstance();
         initComponents();
         customizeComponents();
     }
@@ -167,8 +170,17 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
             return;
         }
         boolean shouldAdd = false;
-        if (writer.listExists(listName)) {
-            if (writer.getList(listName).isLocked()) {
+        KeywordList listWithSameName = null;
+        List<KeywordList> keywordLists = manager.getKeywordLists();
+        for (int i = 0; i < keywordLists.size(); i++) {
+            KeywordList currList = keywordLists.get(i);
+            if (currList.getName().equals(listName)) {
+                listWithSameName = currList;
+                i = keywordLists.size();
+            }
+        }
+        if (listWithSameName != null) {
+            if (listWithSameName.isLocked()) {
                 boolean replace = KeywordSearchUtil.displayConfirmDialog(
                         NbBundle.getMessage(this.getClass(), "KeywordSearch.newKeywordListMsg"),
                         NbBundle.getMessage(this.getClass(), "KeywordSearchListsManagementPanel.newKeywordListDescription", listName),
@@ -189,7 +201,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
             shouldAdd = true;
         }
         if (shouldAdd) {
-            writer.addList(listName, new ArrayList<Keyword>());
+            manager.addList(new KeywordList(listName, new Date(), new Date(), false, false, new ArrayList<Keyword>()));
         }
         tableModel.resync();
 
@@ -248,7 +260,16 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
             for (KeywordList list : toImport) {
                 //check name collisions
                 listName = list.getName();
-                if (writer.listExists(listName)) {
+                List<KeywordList> keywordLists = manager.getKeywordLists();
+                boolean listExists = false;
+                for (int i = 0; i < keywordLists.size(); i++) {
+                    KeywordList currList = keywordLists.get(i);
+                    if (currList.getName().equals(listName)) {
+                        listExists = true;
+                        i = keywordLists.size();
+                    }
+                }
+                if (listExists) {
                     Object[] options = {NbBundle.getMessage(this.getClass(), "KeywordSearch.yesOwMsg"),
                         NbBundle.getMessage(this.getClass(), "KeywordSearch.noSkipMsg"),
                         NbBundle.getMessage(this.getClass(), "KeywordSearch.cancelImportMsg")};
@@ -301,7 +322,19 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
                 return;
             } else if (KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.title"), NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.body"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
                 String listName = (String) listsTable.getModel().getValueAt(selected[0], 0);
-                XmlKeywordSearchList.getCurrent().deleteList(listName);
+                KeywordList listWithSameName = null;
+                List<KeywordList> keywordLists = manager.getKeywordLists();
+                for (int i = 0; i < keywordLists.size(); i++) {
+                    KeywordList currList = keywordLists.get(i);
+                    if (currList.getName().equals(listName)) {
+                        listWithSameName = currList;
+                        i = keywordLists.size();
+                    }
+                }
+                if(listWithSameName != null) {
+                    manager.removeList(listWithSameName);
+                }
+                
             } else {
                 return;
             }
@@ -391,7 +424,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
 
         //delete selected from handle, events are fired from the handle
         @Messages({"GlobalListsManagementPanel.KeywordListTableModel.failedDelete.message=Couldn't delete selected list.",
-        "GlobalListsManagementPanel.KeywordListTableModel.failedDelete.title=Error Deleting List"})
+            "GlobalListsManagementPanel.KeywordListTableModel.failedDelete.title=Error Deleting List"})
         void deleteSelected(int[] selected) {
             List<String> toDel = new ArrayList<>();
             for (int i = 0; i < selected.length; i++) {

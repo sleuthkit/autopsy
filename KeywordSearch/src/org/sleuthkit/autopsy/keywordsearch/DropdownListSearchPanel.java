@@ -318,8 +318,12 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
     private class KeywordListsTableModel extends AbstractTableModel {
         //data
 
-        private XmlKeywordSearchList listsHandle = XmlKeywordSearchList.getCurrent();
+        private KeywordSearchSettingsManager listsHandle;
         private List<ListTableEntry> listData = new ArrayList<>();
+
+        private KeywordListsTableModel() {
+            listsHandle = KeywordSearchSettingsManager.getInstance();
+        }
 
         @Override
         public int getColumnCount() {
@@ -408,7 +412,16 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
         }
 
         KeywordList getListAt(int rowIndex) {
-            return listsHandle.getList((String) getValueAt(rowIndex, 1));
+            String listName = ((String) getValueAt(rowIndex, 1));
+            KeywordList listAtIndex = null;
+            List<KeywordList> keywordLists = listsHandle.getKeywordLists();
+            for (int i = 0; i < keywordLists.size(); i++) {
+                KeywordList currList = keywordLists.get(i);
+                if (currList.getName().equals(listName)) {
+                    return currList;
+                }
+            }
+            return null;
         }
 
         List<String> getSelectedLists() {
@@ -423,8 +436,16 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
 
         List<KeywordList> getSelectedListsL() {
             List<KeywordList> ret = new ArrayList<>();
-            for (String s : getSelectedLists()) {
-                ret.add(listsHandle.getList(s));
+            for (String listName : getSelectedLists()) {
+                KeywordList listAtIndex = null;
+                List<KeywordList> keywordLists = listsHandle.getKeywordLists();
+                for (int i = 0; i < keywordLists.size(); i++) {
+                    KeywordList currList = keywordLists.get(i);
+                    if (currList.getName().equals(listName)) {
+                        ret.add(currList);
+                        i = keywordLists.size();
+                    }
+                }
             }
             return ret;
         }
@@ -437,7 +458,7 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
         //resync model from handle, then update table
         void resync() {
             listData.clear();
-            addLists(listsHandle.getListsL());
+            addLists(listsHandle.getKeywordLists());
             fireTableDataChanged();
         }
 
