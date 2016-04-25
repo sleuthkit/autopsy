@@ -39,6 +39,10 @@ import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.S
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchIngestModule.UpdateFrequency;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 
+/**
+ * Class for managing the settings for keyword search, including both the
+ * keyword lists and the properties for keyword search.
+ */
 class KeywordSearchSettingsManager {
 
     private KeywordSearchSettings settings = new KeywordSearchSettings();
@@ -64,11 +68,25 @@ class KeywordSearchSettingsManager {
         LANGUAGES_CHANGED, ENCODINGS_CHANGED
     }
 
+    /**
+     * Constructs a KeywordSearchSettingsManager.
+     *
+     * @throws KeywordSearchSettingsManagerException When the settings cannot be
+     *                                               read from disk.
+     */
     private KeywordSearchSettingsManager() throws KeywordSearchSettingsManagerException {
         prepopulateLists();
         this.readSettings();
     }
 
+    /**
+     * Gets the singleton instance of the KeywordSearchSettingsManager.
+     *
+     * @return The singleton KeywordSearchSettingsManager.
+     *
+     * @throws KeywordSearchSettingsManagerException When the settings cannot be
+     *                                               read from disk.
+     */
     static synchronized KeywordSearchSettingsManager getInstance() throws KeywordSearchSettingsManagerException {
         if (instance == null) {
             instance = new KeywordSearchSettingsManager();
@@ -76,6 +94,12 @@ class KeywordSearchSettingsManager {
         return instance;
     }
 
+    /**
+     * Writes the settings to disk.
+     *
+     * @throwsKeywordSearchSettingsManagerException If the settings could not be
+     * written to disk.
+     */
     private void writeSettings() throws KeywordSearchSettingsManagerException {
         try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(CUR_LISTS_FILE))) {
             out.writeObject(settings);
@@ -84,6 +108,13 @@ class KeywordSearchSettingsManager {
         }
     }
 
+    /**
+     * Reads in the settings from disk, in the following order of priority:
+     * Serialized settings, XML/Props files, no settings (loads defaults).
+     *
+     * @throws KeywordSearchSettingsManagerException If the settings cannot be
+     *                                               read from disk.
+     */
     private void readSettings() throws KeywordSearchSettingsManagerException {
         File serializedDefs = new File(CUR_LISTS_FILE);
         if (serializedDefs.exists()) {
@@ -126,7 +157,12 @@ class KeywordSearchSettingsManager {
         }
     }
 
-    private List<KeywordList> prepopulateLists() throws KeywordSearchSettingsManagerException {
+    /**
+     * Creates the default lists to be loaded upon creating the settings.
+     *
+     * @return The default lists.
+     */
+    private List<KeywordList> prepopulateLists() {
         List<KeywordList> keywordLists = new ArrayList<>();
         //phone number
         List<Keyword> phones = new ArrayList<>();
@@ -165,14 +201,30 @@ class KeywordSearchSettingsManager {
         return keywordLists;
     }
 
-    public void addPropertyChangeListener(PropertyChangeListener listener) {
+    /**
+     * Adds the given property change listener
+     *
+     * @param listener The listener to add
+     */
+    void addPropertyChangeListener(PropertyChangeListener listener) {
         changeSupport.addPropertyChangeListener(listener);
     }
 
-    public void removePropertyChangeListener(PropertyChangeListener listener) {
+    /**
+     * Removes the given property change listener
+     *
+     * @param listener The listener to remove
+     */
+    void removePropertyChangeListener(PropertyChangeListener listener) {
         changeSupport.removePropertyChangeListener(listener);
     }
 
+    /**
+     * Fires the given language change event so all listeners know that there
+     * was a change to the language setting.
+     *
+     * @param event The event to fire.
+     */
     void fireLanguagesEvent(LanguagesEvent event) {
         try {
             changeSupport.firePropertyChange(event.toString(), null, null);
@@ -181,29 +233,24 @@ class KeywordSearchSettingsManager {
         }
     }
 
+    /**
+     * Adds the given keyword list to the settings and then saves it.
+     *
+     * @param list The list to add to the settings.
+     *
+     * @throws KeywordSearchSettingsManagerException If the settings could not
+     *                                               be written or there is
+     *                                               already a keyword list of
+     *                                               the given name.
+     */
     synchronized void addList(KeywordList list) throws KeywordSearchSettingsManagerException {
         List<KeywordList> oldKeywordLists = settings.getKeywordLists();
         List<KeywordList> newKeywordLists = new ArrayList<>();
         newKeywordLists.addAll(oldKeywordLists);
         newKeywordLists.add(list);
-        settings.setKeywordLists(newKeywordLists);
-        try {
-            this.writeSettings();
-            changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.name(), null, settings.getKeywordLists());
-        } catch (KeywordSearchSettingsManagerException ex) {
-            this.settings.setKeywordLists(oldKeywordLists);
-            throw ex;
-        }
-    }
-
-    synchronized void removeList(KeywordList list) throws KeywordSearchSettingsManagerException {
-        List<KeywordList> oldKeywordLists = settings.getKeywordLists();
-        List<KeywordList> newKeywordLists = new ArrayList<>();
-        newKeywordLists.addAll(oldKeywordLists);
         for (int i = 0; i < newKeywordLists.size(); i++) {
             if (newKeywordLists.get(i).getName().equals(list.getName())) {
-                newKeywordLists.remove(i);
-                i = newKeywordLists.size();
+                throw new KeywordSearchSettingsManagerException("There is already a keyword list with the same name as the given list.");
             }
         }
         settings.setKeywordLists(newKeywordLists);
@@ -216,6 +263,48 @@ class KeywordSearchSettingsManager {
         }
     }
 
+    /**
+     * Removes the given keyword list from the settings.
+     *
+     * @param list The keyword list to remove.
+     *
+     * @throws KeywordSearchSettingsManagerException If the settings could not
+     *                                               be written or there is no
+     *                                               keyword list that matches
+     *                                               the given list.
+     */
+    synchronized void removeList(KeywordList list) throws KeywordSearchSettingsManagerException {
+        List<KeywordList> oldKeywordLists = settings.getKeywordLists();
+        List<KeywordList> newKeywordLists = new ArrayList<>();
+        newKeywordLists.addAll(oldKeywordLists);
+        for (int i = 0; i < newKeywordLists.size(); i++) {
+            if (newKeywordLists.get(i).getName().equals(list.getName())) {
+                newKeywordLists.remove(i);
+                i = newKeywordLists.size();
+            } else if (i == newKeywordLists.size() - 1) {
+                throw new KeywordSearchSettingsManagerException("There is no keyword list that matches the given keyword list.");
+            }
+        }
+        settings.setKeywordLists(newKeywordLists);
+        try {
+            this.writeSettings();
+            changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.name(), null, settings.getKeywordLists());
+        } catch (KeywordSearchSettingsManagerException ex) {
+            this.settings.setKeywordLists(oldKeywordLists);
+            throw ex;
+        }
+    }
+
+    /**
+     * Updates the keyword list with the same name as the given list.
+     *
+     * @param list The list to update to.
+     *
+     * @throws KeywordSearchSettingsManagerException If there is no list with
+     *                                               the same name as the given
+     *                                               list or if the settings
+     *                                               could not be written.
+     */
     synchronized void updateList(KeywordList list) throws KeywordSearchSettingsManagerException {
         List<KeywordList> oldKeywordLists = settings.getKeywordLists();
         List<KeywordList> newKeywordLists = new ArrayList<>();
@@ -241,7 +330,7 @@ class KeywordSearchSettingsManager {
     }
 
     /**
-     * Gets the update Frequency from KeywordSearch_Options.properties
+     * Gets the update frequency
      *
      * @return KeywordSearchIngestModule's update frequency
      */
@@ -250,9 +339,12 @@ class KeywordSearchSettingsManager {
     }
 
     /**
-     * Sets the update frequency and writes to KeywordSearch_Options.properties
+     * Sets the update frequency and writes the settings
      *
      * @param freq Sets KeywordSearchIngestModule to this value.
+     *
+     * @throws KeywordSearchSettingsManagerException If the setting could not be
+     *                                               written.
      */
     synchronized void setUpdateFrequency(KeywordSearchIngestModule.UpdateFrequency freq) throws KeywordSearchSettingsManagerException {
 
@@ -271,7 +363,10 @@ class KeywordSearchSettingsManager {
      * Sets whether or not to skip adding known good files to the search during
      * index.
      *
-     * @param skip
+     * @param skip Whether or not to skip.
+     *
+     * @throws KeywordSearchSettingsManagerException If the setting could not be
+     *                                               written.
      */
     synchronized void setSkipKnown(boolean skip) throws KeywordSearchSettingsManagerException {
 
@@ -296,9 +391,15 @@ class KeywordSearchSettingsManager {
     }
 
     /**
+     *
+     */
+    /**
      * Sets what scripts to extract during ingest
      *
      * @param scripts List of scripts to extract
+     *
+     * @throws KeywordSearchSettingsManagerException If the setting could not be
+     *                                               written.
      */
     synchronized void setStringExtractScripts(List<SCRIPT> scripts) throws KeywordSearchSettingsManagerException {
         List<SCRIPT> oldScripts = settings.getStringExtractScripts();
@@ -312,10 +413,13 @@ class KeywordSearchSettingsManager {
     }
 
     /**
-     * Set / override string extract option
+     * Set / override string extract option.
      *
      * @param key option name to set
      * @param val option value to set
+     *
+     * @throws KeywordSearchSettingsManagerException If the setting could not be
+     *                                               written.
      */
     synchronized void setStringExtractOption(String key, String val) throws KeywordSearchSettingsManagerException {
         String oldVal = this.settings.getStringExtractOption(key);
@@ -328,6 +432,14 @@ class KeywordSearchSettingsManager {
         }
     }
 
+    /**
+     * Sets the show snippets setting and writes it.
+     *
+     * @param showSnippets The new show snippet setting.
+     *
+     * @throws KeywordSearchSettingsManagerException If the setting could not be
+     *                                               written.
+     */
     synchronized void setShowSnippets(boolean showSnippets) throws KeywordSearchSettingsManagerException {
         boolean oldShowSnippets = this.settings.getShowSnippets();
         try {
@@ -339,52 +451,71 @@ class KeywordSearchSettingsManager {
         }
     }
 
+    /**
+     * Gets the show snippets setting.
+     *
+     * @return The show snippets setting.
+     */
     synchronized boolean getShowSnippets() {
         return settings.getShowSnippets();
     }
 
     /**
-     * gets the currently set scripts to use
+     * Gets the currently set scripts to use.
      *
-     * @return the list of currently used script
+     * @return The list of currently used script.
      */
     synchronized List<StringExtract.StringExtractUnicodeTable.SCRIPT> getStringExtractScripts() {
         return this.settings.getStringExtractScripts();
     }
 
     /**
-     * get string extract option for the key
+     * Get string extract option for the key.
      *
-     * @param key option name
+     * @param key The option name
      *
-     * @return option string value, or empty string if the option is not set
+     * @return The option string value, or empty string if the option is not
+     *         set.
      */
     synchronized String getStringExtractOption(String key) {
         return this.settings.getStringExtractOption(key);
     }
 
     /**
-     * get the map of string extract options.
+     * Gets the map of string extract options.
      *
-     * @return Map<String,String> of extract options.
+     * @return The map of string extract options.
      */
     synchronized Map<String, String> getStringExtractOptions() {
         return this.settings.getStringExtractOptions();
     }
 
+    /**
+     * Gets the list of keyword lists.
+     *
+     * @return The list of keyword lists.
+     */
     synchronized List<KeywordList> getKeywordLists() {
         return this.settings.getKeywordLists();
     }
 
-    synchronized void setKeywordLists(List<KeywordList> keywordLists) {
+    /**
+     * Sets the keyword lists and writes it.
+     *
+     * @param keywordLists The new keyword lists.
+     *
+     * @throws KeywordSearchSettingsManagerException If the setting could not be
+     *                                               written.
+     */
+    synchronized void setKeywordLists(List<KeywordList> keywordLists) throws KeywordSearchSettingsManagerException {
         List<KeywordList> oldKeywordList = new ArrayList<>();
         try {
             oldKeywordList = settings.getKeywordLists();
             this.settings.setKeywordLists(keywordLists);
             this.writeSettings();
         } catch (KeywordSearchSettingsManagerException ex) {
-            logger.log(Level.SEVERE, "Could not set keyword lists.", ex);
             this.settings.setKeywordLists(oldKeywordList);
+            throw ex;
         }
     }
 

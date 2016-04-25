@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +30,9 @@ import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchIngestModule.UpdateFrequency;
 
-//This file contains constants and settings for KeywordSearch
+/**
+ * Settings class used for writing and reading the keyword search settings.
+ */
 final class KeywordSearchSettings implements Serializable {
 
     public static final String MODULE_NAME = NbBundle.getMessage(KeywordSearchSettings.class, "KeywordSearchSettings.moduleName.text");
@@ -48,6 +50,9 @@ final class KeywordSearchSettings implements Serializable {
     private static final long serialVersionUID = 1L;
     private List<KeywordList> keywordLists;
 
+    /**
+     * Constructs a keyword search settings with default values
+     */
     public KeywordSearchSettings() {
         showSnippets = true;
         skipKnown = true;
@@ -60,7 +65,7 @@ final class KeywordSearchSettings implements Serializable {
     }
 
     /**
-     * Gets the update Frequency from KeywordSearch_Options.properties
+     * Gets the update Frequency.
      *
      * @return KeywordSearchIngestModule's update frequency
      */
@@ -69,7 +74,7 @@ final class KeywordSearchSettings implements Serializable {
     }
 
     /**
-     * Sets the update frequency and writes to KeywordSearch_Options.properties
+     * Sets the update frequency.
      *
      * @param freq Sets KeywordSearchIngestModule to this value.
      */
@@ -81,7 +86,7 @@ final class KeywordSearchSettings implements Serializable {
      * Sets whether or not to skip adding known good files to the search during
      * index.
      *
-     * @param skip
+     * @param skip Whether or not to skip known files.
      */
     void setSkipKnown(boolean skip) {
         skipKnown = skip;
@@ -117,16 +122,26 @@ final class KeywordSearchSettings implements Serializable {
         stringExtractOptions.put(key, val);
     }
 
+    /**
+     * Sets whether or not to show snippets.
+     *
+     * @param showSnippets Whether or not to show snippets.
+     */
     void setShowSnippets(boolean showSnippets) {
         this.showSnippets = showSnippets;
     }
 
+    /**
+     * Gets the show snippets setting.
+     *
+     * @return The show snippets setting.
+     */
     boolean getShowSnippets() {
         return showSnippets;
     }
 
     /**
-     * gets the currently set scripts to use
+     * Gets the currently set scripts to use.
      *
      * @return the list of currently used script
      */
@@ -135,7 +150,7 @@ final class KeywordSearchSettings implements Serializable {
     }
 
     /**
-     * get string extract option for the key
+     * Get string extract option for the key.
      *
      * @param key option name
      *
@@ -146,9 +161,9 @@ final class KeywordSearchSettings implements Serializable {
     }
 
     /**
-     * get the map of string extract options.
+     * Get the map of string extract options.
      *
-     * @return Map<String,String> of extract options.
+     * @return Map of extract options.
      */
     Map<String, String> getStringExtractOptions() {
         Map<String, String> settings = new HashMap<>();
@@ -157,16 +172,20 @@ final class KeywordSearchSettings implements Serializable {
     }
 
     /**
-     * @return the keywordLists
+     * Gets the keyword lists.
+     *
+     * @return The keyword lists
      */
     List<KeywordList> getKeywordLists() {
         return Collections.unmodifiableList(keywordLists);
     }
 
     /**
-     * @param keywordLists the keywordLists to set
+     * Sets the keyword lists.
+     *
+     * @param keywordLists The keyword lists.
      */
     void setKeywordLists(List<KeywordList> keywordLists) {
-       this.keywordLists = keywordLists;
+        this.keywordLists = keywordLists;
     }
 }
