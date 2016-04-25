@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.timeline;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import javafx.collections.FXCollections;
 import javafx.scene.Node;
@@ -33,6 +34,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.image.Image;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.dialog.ProgressDialog;
 import org.controlsfx.tools.Borders;
@@ -44,7 +46,7 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
  * Manager for the various prompts and dialogs Timeline shows the user related
  * to rebuilding the database. Methods must only be called on the JFX thread.
  */
-public class PromptDialogManager {
+class PromptDialogManager {
 
     private static final Logger LOGGER = Logger.getLogger(PromptDialogManager.class.getName());
 
@@ -80,16 +82,16 @@ public class PromptDialogManager {
     /**
      * Constructor
      *
-     * @param controller the TimeLineController this manager belongs to.
+     * @param controller The TimeLineController this manager belongs to.
      */
     PromptDialogManager(TimeLineController controller) {
         this.controller = controller;
     }
 
     /**
-     * bring the currently managed dialog (if there is one) to the front
+     * Bring the currently managed dialog (if there is one) to the front
      *
-     * @return true if a dialog was brought to the front, or false of there is
+     * @return True if a dialog was brought to the front, or false of there is
      *         no currently managed open dialog
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
@@ -104,7 +106,7 @@ public class PromptDialogManager {
     /**
      * Show a progress dialog for the given db population task
      *
-     * @param task the task to show progress for.
+     * @param task The task to show progress for.
      */
     @NbBundle.Messages({"PromptDialogManager.progressDialog.title=Populating Timeline Data"})
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
@@ -141,7 +143,7 @@ public class PromptDialogManager {
     /**
      * Set the title bar icon for the given dialog to be the autopsy logo icon.
      *
-     * @param dialog the dialog to set the title bar icon for.
+     * @param dialog The dialog to set the title bar icon for.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     static private void setDialogIcons(Dialog<?> dialog) {
@@ -152,7 +154,7 @@ public class PromptDialogManager {
      * Prompt the user that ingest is running and the db may not end up
      * complete.
      *
-     * @return true if they want to continue anyways
+     * @return True if they want to continue anyways
      */
     @NbBundle.Messages({
         "PromptDialogManager.confirmDuringIngest.headerText=You are trying to show a timeline before ingest has been completed.\nThe timeline may be incomplete.",
@@ -161,7 +163,7 @@ public class PromptDialogManager {
     boolean confirmDuringIngest() {
         currentDialog = new Alert(Alert.AlertType.CONFIRMATION, Bundle.PromptDialogManager_confirmDuringIngest_contentText(), SHOW_TIMELINE, ButtonType.CANCEL);
         currentDialog.initModality(Modality.APPLICATION_MODAL);
-        currentDialog.setTitle(Bundle.Timeline_confirmation_dialogs_title());
+        currentDialog.setTitle(Bundle.Timeline_dialogs_title());
         setDialogIcons(currentDialog);
         currentDialog.setHeaderText(Bundle.PromptDialogManager_confirmDuringIngest_headerText());
 
@@ -174,12 +176,13 @@ public class PromptDialogManager {
      * reasons, adding that "ingest has finished" for the datasource with the
      * given name, if not blank, as a reason and as extra header text.
      *
-     * @param finishedDataSourceName the name of the datasource that has
-     *                               finished be analyzed.
-     * @param rebuildReasons         a List of reasons why the database is out
+     * @param finishedDataSourceName The name of the datasource that has
+     *                               finished be analyzed. Will be ignored if it
+     *                               is null or empty.
+     * @param rebuildReasons         A List of reasons why the database is out
      *                               of date.
      *
-     * @return true if the user a confirms rebuilding the database.
+     * @return True if the user a confirms rebuilding the database.
      */
     @NbBundle.Messages({
         "PromptDialogManager.rebuildPrompt.headerText=The Timeline database is incomplete and/or out of date."
@@ -188,10 +191,10 @@ public class PromptDialogManager {
         "PromptDialogManager.rebuildPrompt.ingestDone=Ingest has finished for {0}.",
         "PromptDialogManager.rebuildPrompt.details=Details"})
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    boolean confirmRebuild(String finishedDataSourceName, ArrayList<String> rebuildReasons) {
+    boolean confirmRebuild(@Nullable String finishedDataSourceName, List<String> rebuildReasons) {
         currentDialog = new Alert(Alert.AlertType.CONFIRMATION, Bundle.TimeLinecontroller_updateNowQuestion(), UPDATE, CONTINUE_NO_UPDATE);
         currentDialog.initModality(Modality.APPLICATION_MODAL);
-        currentDialog.setTitle(Bundle.Timeline_confirmation_dialogs_title());
+        currentDialog.setTitle(Bundle.Timeline_dialogs_title());
         setDialogIcons(currentDialog);
 
         //configure header text depending on presence of finishedDataSourceName
@@ -226,9 +229,9 @@ public class PromptDialogManager {
      * Prompt the user to confirm rebuilding the database for the given list of
      * reasons.
      *
-     * @param rebuildReasons a List of reasons why the database is out of date.
+     * @param rebuildReasons S List of reasons why the database is out of date.
      *
-     * @return true if the user a confirms rebuilding the database.
+     * @return True if the user a confirms rebuilding the database.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     boolean confirmRebuild(ArrayList<String> rebuildReasons) {

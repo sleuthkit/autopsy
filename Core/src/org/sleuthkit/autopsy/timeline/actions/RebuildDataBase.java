@@ -38,6 +38,6 @@ public class RebuildDataBase extends Action {
         super(Bundle.RebuildDataBase_text());
 
         setGraphic(new ImageView(DB_REFRESH));
-        setEventHandler(actionEvent -> SwingUtilities.invokeLater(() -> controller.rebuildIfWindowOpen(null)));
+        setEventHandler(actionEvent -> SwingUtilities.invokeLater(controller::rebuildIfWindowOpen));
     }
 }
