@@ -189,6 +189,10 @@ public final class FilteredEventsModel {
         return requestedTypeZoom.getReadOnlyProperty();
     }
 
+    synchronized public Interval getTimeRange() {
+        return timeRangeProperty().get();
+    }
+
     synchronized public DescriptionLoD getDescriptionLOD() {
         return requestedLOD.get();
     }

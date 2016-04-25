@@ -67,4 +67,8 @@ public class IntervalUtils {
         final Interval newInterval = new Interval(middleOf.minus(halfRange), middleOf.plus(halfRange));
         return newInterval;
     }
+
+    static public Interval getIntervalAroundMiddle(Interval interval, ReadablePeriod period) {
+        return getIntervalAround(middleOf(interval), period);
+    }
 }

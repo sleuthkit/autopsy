@@ -24,7 +24,7 @@ import org.openide.util.NbBundle;
  *
  *
  */
-public enum EventTypeZoomLevel {
+public enum EventTypeZoomLevel implements DisplayNameProvider{
 
     ROOT_TYPE(NbBundle.getMessage(EventTypeZoomLevel.class, "EventTypeZoomLevel.rootType")), BASE_TYPE(
             NbBundle.getMessage(EventTypeZoomLevel.class, "EventTypeZoomLevel.baseType")), SUB_TYPE(

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,8 @@
  */
 package org.sleuthkit.autopsy.timeline.zooming;
 
-import java.time.temporal.ChronoUnit;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -32,7 +33,6 @@ import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.VisualizationMode;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 
 /**
@@ -84,126 +84,113 @@ public class ZoomSettingsPane extends TitledPane {
         "ZoomSettingsPane.timeUnitLabel.text=Time Units:",
         "ZoomSettingsPane.zoomLabel.text=Zoom"})
     public void initialize() {
-        timeUnitSlider.setMax(TimeUnits.values().length - 2);
-        timeUnitSlider.setLabelFormatter(new TimeUnitConverter());
-
-        typeZoomSlider.setMin(1);
-        typeZoomSlider.setMax(2);
-        typeZoomSlider.setLabelFormatter(new TypeZoomConverter());
-        descrLODSlider.setMax(DescriptionLoD.values().length - 1);
-        descrLODSlider.setLabelFormatter(new DescrLODConverter());
-        descrLODLabel.setText(Bundle.ZoomSettingsPane_descrLODLabel_text());
-        typeZoomLabel.setText(Bundle.ZoomSettingsPane_typeZoomLabel_text());
-        timeUnitLabel.setText(Bundle.ZoomSettingsPane_timeUnitLabel_text());
         zoomLabel.setText(Bundle.ZoomSettingsPane_zoomLabel_text());
 
-        initializeSlider(timeUnitSlider,
-                () -> {
-            TimeUnits requestedUnit = TimeUnits.values()[new Double(timeUnitSlider.getValue()).intValue()];
-            if (requestedUnit == TimeUnits.FOREVER) {
-                controller.showFullRange();
-            } else {
-                controller.pushTimeRange(IntervalUtils.getIntervalAround(IntervalUtils.middleOf(ZoomSettingsPane.this.filteredEvents.timeRangeProperty().get()), requestedUnit.getPeriod()));
-            }
-        },
-                this.filteredEvents.timeRangeProperty(),
-                () -> {
-            RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(this.filteredEvents.timeRangeProperty().get());
-            ChronoUnit chronoUnit = rangeInfo.getPeriodSize().getChronoUnit();
-            timeUnitSlider.setValue(TimeUnits.fromChronoUnit(chronoUnit).ordinal() - 1);
-        });
+        timeUnitSlider.setMax(TimeUnits.values().length - 1);
+        timeUnitLabel.setText(Bundle.ZoomSettingsPane_timeUnitLabel_text());
+        configureSliderListeners(timeUnitSlider,
+                controller::pushTimeUnit,
+                filteredEvents.timeRangeProperty(),
+                modelTimeRange -> RangeDivisionInfo.getRangeDivisionInfo(modelTimeRange).getPeriodSize().ordinal() - 1,
+                TimeUnits.class,
+                dbl -> Math.min(TimeUnits.values().length - 1, dbl.intValue() + 1)
+        );
 
-        initializeSlider(descrLODSlider,
-                () -> controller.pushDescrLOD(DescriptionLoD.values()[Math.round(descrLODSlider.valueProperty().floatValue())]),
-                this.filteredEvents.descriptionLODProperty(), () -> {
-            descrLODSlider.setValue(this.filteredEvents.descriptionLODProperty().get().ordinal());
-        });
+        typeZoomSlider.setMin(0);
+        typeZoomSlider.setMin(1);
+        typeZoomSlider.setMax(EventTypeZoomLevel.values().length - 1);
+        typeZoomLabel.setText(Bundle.ZoomSettingsPane_typeZoomLabel_text());
+        configureSliderListeners(typeZoomSlider,
+                controller::pushEventTypeZoom,
+                filteredEvents.eventTypeZoomProperty(),
+                EventTypeZoomLevel::ordinal,
+                EventTypeZoomLevel.class,
+                Double::intValue);
 
-        initializeSlider(typeZoomSlider,
-                () -> controller.pushEventTypeZoom(EventTypeZoomLevel.values()[Math.round(typeZoomSlider.valueProperty().floatValue())]),
-                this.filteredEvents.eventTypeZoomProperty(),
-                () -> typeZoomSlider.setValue(this.filteredEvents.eventTypeZoomProperty().get().ordinal()));
-
+        descrLODSlider.setMax(DescriptionLoD.values().length - 1);
+        descrLODLabel.setText(Bundle.ZoomSettingsPane_descrLODLabel_text());
+        configureSliderListeners(descrLODSlider,
+                controller::pushDescrLOD,
+                filteredEvents.descriptionLODProperty(),
+                DescriptionLoD::ordinal,
+                DescriptionLoD.class,
+                Double::intValue);
         descrLODSlider.disableProperty().bind(controller.viewModeProperty().isEqualTo(VisualizationMode.COUNTS));
     }
 
     /**
-     * setup a slider that with a listener that is added and removed to avoid
-     * circular updates.
+     * Configure the listeners that keep the sliders in sync with model changes,
+     * and react to user input on the sliders. The listener attached to the
+     * slider is added and removed to avoid circular updates.
      *
-     * @param <T>                 the type of the driving property
-     * @param slider              the slider that will have its change handlers
-     *                            setup
-     * @param sliderChangeHandler the runnable that will be executed whenever
-     *                            the slider value has changed and is not
-     *                            currently changing
-     * @param driver              the property that drives updates to this
-     *                            slider
-     * @param driverChangHandler  the code to update the slider bases on the
-     *                            value of the driving property. This will be
-     *                            wrapped in a remove/add-listener pair to
-     *                            prevent circular updates.
+     * @param <T>                 The type of the driving model property
+     * @param <EnumType>          The type of the enum that is represented along
+     *                            the slider.
+     * @param slider              The slider that we are configuring
+     * @param sliderValueConsumer The consumer that will get passed the newly
+     *                            selected slider value (mapped to EnumType
+     *                            automatically)
+     * @param modelProperty       The readonly model property that this slider
+     *                            should be synced to.
+     * @param driverValueMapper   A Function that maps from driver values of
+     *                            type T to Integers representing the ordinal
+     *                            index of the corresponding EnumType
+     * @param enumClass           A type token for EnumType, ie Class<EnumType>
+     * @param converterMapper     A Function that maps from Double (slider
+     *                            value) to Integers representing the ordinal
+     *                            index of the corresponding EnumType
      */
-    private <T> void initializeSlider(Slider slider, Runnable sliderChangeHandler, ReadOnlyObjectProperty<T> driver, Runnable driverChangHandler) {
+    private <T, EnumType extends Enum<EnumType> & DisplayNameProvider>
+            void configureSliderListeners(Slider slider,
+                    Consumer<EnumType> sliderValueConsumer,
+                    ReadOnlyObjectProperty<T> modelProperty,
+                    Function<T, Integer> driverValueMapper,
+                    final Class<EnumType> enumClass,
+                    final Function<Double, Integer> converterMapper) {
+
+        slider.setLabelFormatter(new EnumSliderConverter<>(enumClass, converterMapper));
+
         final InvalidationListener sliderListener = observable -> {
             if (slider.isValueChanging() == false) {
-                sliderChangeHandler.run();
+                sliderValueConsumer.accept(enumClass.getEnumConstants()[Math.round(slider.valueProperty().floatValue())]);
             }
         };
         slider.valueProperty().addListener(sliderListener);
         slider.valueChangingProperty().addListener(sliderListener);
 
-        Platform.runLater(driverChangHandler);
+        Platform.runLater(() -> slider.setValue(driverValueMapper.apply(modelProperty.get())));
 
-        driver.addListener(observable -> {
-            slider.valueProperty().removeListener(sliderListener);
-            slider.valueChangingProperty().removeListener(sliderListener);
-
+        modelProperty.addListener(observable -> {
             Platform.runLater(() -> {
-                driverChangHandler.run();
+                slider.valueProperty().removeListener(sliderListener);
+                slider.valueChangingProperty().removeListener(sliderListener);
+
+                slider.setValue(driverValueMapper.apply(modelProperty.get()));
+
                 slider.valueProperty().addListener(sliderListener);
                 slider.valueChangingProperty().addListener(sliderListener);
             });
         });
     }
 
-    //Can these be abstracted to a sort of Enum converter for use in a potential enumslider
-    private static class TimeUnitConverter extends StringConverter<Double> {
+    static private class EnumSliderConverter<EnumType extends Enum<EnumType> & DisplayNameProvider> extends StringConverter<Double> {
 
-        @Override
-        public String toString(Double object) {
-            return TimeUnits.values()[Math.min(TimeUnits.values().length - 1, object.intValue() + 1)].getDisplayName();
+        private final Class<EnumType> clazz;
+        private final Function<Double, Integer> indexAdjsuter;
+
+        EnumSliderConverter(Class<EnumType> clazz, Function<Double, Integer> indexMapper) {
+            this.clazz = clazz;
+            this.indexAdjsuter = indexMapper;
         }
 
         @Override
         public Double fromString(String string) {
-            return new Integer(TimeUnits.valueOf(string).ordinal()).doubleValue();
+            return new Double(EnumType.valueOf(clazz, string).ordinal());
         }
-    }
-
-    private static class TypeZoomConverter extends StringConverter<Double> {
 
         @Override
         public String toString(Double object) {
-            return EventTypeZoomLevel.values()[object.intValue()].getDisplayName();
-        }
-
-        @Override
-        public Double fromString(String string) {
-            return new Integer(EventTypeZoomLevel.valueOf(string).ordinal()).doubleValue();
-        }
-    }
-
-    private static class DescrLODConverter extends StringConverter<Double> {
-
-        @Override
-        public String toString(Double object) {
-            return DescriptionLoD.values()[object.intValue()].getDisplayName();
-        }
-
-        @Override
-        public Double fromString(String string) {
-            return new Integer(DescriptionLoD.valueOf(string).ordinal()).doubleValue();
+            return clazz.getEnumConstants()[indexAdjsuter.apply(object)].getDisplayName();
         }
     }
 }
