@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.timeline.actions;
 
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javax.swing.SwingUtilities;
 import org.controlsfx.control.action.Action;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
@@ -38,6 +37,6 @@ public class RebuildDataBase extends Action {
         super(Bundle.RebuildDataBase_text());
 
         setGraphic(new ImageView(DB_REFRESH));
-        setEventHandler(actionEvent -> SwingUtilities.invokeLater(controller::rebuildIfWindowOpen));
+        setEventHandler(actionEvent -> controller.rebuildRepo());
     }
 }

@@ -365,6 +365,11 @@ public class TimeLineController {
         "TimeLinecontroller.setIngestRunning.errMsgNotRunning=Failed to mark the timeline db as populated while ingest was not running. Some results may be out of date or missing."})
     private void rebuildRepoHelper(Function<Consumer<Worker.State>, CancellationProgressTask<?>> repoBuilder, Boolean markDBNotStale) {
         boolean ingestRunning = IngestManager.getInstance().isIngestRunning();
+        //if there is an existing prompt or progressdialog, just show that
+        if (promptDialogManager.bringCurrentDialogToFront()) {
+            return;
+        }
+
         //confirm timeline during ingest
         if (ingestRunning && promptDialogManager.confirmDuringIngest() == false) {
             return;  //if they cancel, do nothing.
@@ -412,7 +417,7 @@ public class TimeLineController {
      * done.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    void rebuildRepo() {
+    public void rebuildRepo() {
         rebuildRepoHelper(eventsRepository::rebuildRepository, true);
     }
 
