@@ -34,6 +34,9 @@ import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
  * Detects the type of a file based on signature (magic) values. Posts results
  * to the blackboard.
  */
+@NbBundle.Messages({
+        "CannotRunFileTypeDetection=Unable to run file type detection."
+})
 public class FileTypeIdIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(FileTypeIdIngestModule.class.getName());
@@ -78,7 +81,7 @@ public class FileTypeIdIngestModule implements FileIngestModule {
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            throw new IngestModuleException(NbBundle.getMessage(this.getClass(), "FileTypeIdIngestModule.startUp.fileTypeDetectorInitializationException.msg"), ex);
+            throw new IngestModuleException(Bundle.CannotRunFileTypeDetection(), ex);
         }
     }
 
@@ -141,7 +144,7 @@ public class FileTypeIdIngestModule implements FileIngestModule {
      * Update the match time total and increment number of files processed for
      * this ingest job.
      *
-     * @param jobId The ingest job identifier.
+     * @param jobId        The ingest job identifier.
      * @param matchTimeInc Amount of time to add.
      */
     private static synchronized void addToTotals(long jobId, long matchTimeInc) {

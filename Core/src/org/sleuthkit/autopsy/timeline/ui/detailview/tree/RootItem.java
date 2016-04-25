@@ -18,94 +18,58 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
-import java.util.ArrayDeque;
 import java.util.Comparator;
-import java.util.Deque;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 
 /**
- *
+ * TreeItem for the root of all the events in the EventsTree.
  */
 class RootItem extends EventsTreeItem {
 
     /**
-     * maps a description to the child item of this item with that description
+     * A map of the children BaseTypeTreeItems, keyed by EventType.
      */
-    private final Map<EventType, EventTypeTreeItem> childMap = new HashMap<>();
+    private final Map<EventType, BaseTypeTreeItem> childMap = new HashMap<>();
 
     /**
-     * the comparator if any used to sort the children of this item
+     * Constructor
+     *
+     * @param comparator the initial comparator used to sort the children of
+     *                   this tree item
      */
-    private Comparator<TreeItem<TimeLineEvent>> comparator = TreeComparator.Type.reversed();
-
-    RootItem(Comparator<TreeItem<TimeLineEvent>> comp) {
-        this.comparator = comp;
+    RootItem(Comparator<TreeItem<TimeLineEvent>> comparator) {
+        super(comparator);
     }
 
     /**
-     * Recursive method to add a grouping at a given path.
+     * Insert the given event into the tree
      *
-     * @param stripe stripe to add
+     * @param event event to add
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    public void insert(EventStripe stripe) {
-
-        EventTypeTreeItem treeItem = childMap.computeIfAbsent(stripe.getEventType().getBaseType(),
-                baseType -> {
-                    EventTypeTreeItem newTreeItem = new EventTypeTreeItem(stripe, comparator);
-                    newTreeItem.setExpanded(true);
-                    getChildren().add(newTreeItem);
-                    return newTreeItem;
-                });
-        treeItem.insert(getTreePath(stripe));
+    public void insert(TimeLineEvent event) {
+        insert(getTreePath(event));
     }
 
-    void remove(EventStripe stripe) {
-        EventTypeTreeItem typeTreeItem = childMap.get(stripe.getEventType().getBaseType());
-        if (typeTreeItem != null) {
-            typeTreeItem.remove(getTreePath(stripe));
-
-            if (typeTreeItem.getChildren().isEmpty()) {
-                childMap.remove(stripe.getEventType().getBaseType());
-                getChildren().remove(typeTreeItem);
-            }
-        }
-    }
-
-    static Deque< EventStripe> getTreePath(EventStripe event) {
-        Deque<EventStripe> path = new ArrayDeque<>();
-        path.addFirst(event);
-        Optional<EventStripe> parentOptional = event.getParentStripe();
-        while (parentOptional.isPresent()) {
-            EventStripe parent = parentOptional.get();
-            path.addFirst(parent);
-            parentOptional = parent.getParentStripe();
-        }
-        return path;
+    /**
+     * Remove the given event from the tree
+     *
+     * @param event the event to remove
+     */
+    void remove(TimeLineEvent event) {
+        remove(getTreePath(event));
     }
 
     @Override
-    void resort(Comparator<TreeItem<TimeLineEvent>> comp, Boolean recursive) {
-        comparator = comp;
-        childMap.values().forEach(ti -> ti.resort(comp, true));
-    }
-
-    @Override
-    public EventsTreeItem findTreeItemForEvent(TimeLineEvent t) {
-        for (EventTypeTreeItem child : childMap.values()) {
-            final EventsTreeItem findTreeItemForEvent = child.findTreeItemForEvent(t);
-            if (findTreeItemForEvent != null) {
-                return findTreeItemForEvent;
-            }
-        }
-        return null;
+    void sort(Comparator<TreeItem<TimeLineEvent>> comp, Boolean recursive) {
+        setComparator(comp);
+        childMap.values().forEach(ti -> ti.sort(comp, true));
     }
 
     @Override
@@ -118,4 +82,29 @@ class RootItem extends EventsTreeItem {
         return null;
     }
 
+    @Override
+    void remove(List<TimeLineEvent> path) {
+        TimeLineEvent event = path.get(0);
+        BaseTypeTreeItem typeTreeItem = childMap.get(event.getEventType().getBaseType());
+
+        //remove the path from the child
+        if (typeTreeItem != null) {
+            typeTreeItem.remove(path);
+
+            //if the child has no children remove it also
+            if (typeTreeItem.getChildren().isEmpty()) {
+                childMap.remove(event.getEventType().getBaseType());
+                getChildren().remove(typeTreeItem);
+            }
+        }
+    }
+
+    @Override
+    void insert(List<TimeLineEvent> path) {
+        TimeLineEvent event = path.get(0);
+        BaseTypeTreeItem treeItem = childMap.computeIfAbsent(event.getEventType().getBaseType(),
+                baseType -> configureNewTreeItem(new BaseTypeTreeItem(event, getComparator()))
+        );
+        treeItem.insert(path);
+    }
 }

@@ -483,6 +483,12 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
         return filteredEvents.timeRangeProperty().get();
     }
 
+    /**
+     * Base class for Tasks that update a visualization when the view settings
+     * change.
+     *
+     * @param <AxisValuesType> the type of data displayed along the X-Axis.
+     */
     abstract protected class VisualizationUpdateTask<AxisValuesType> extends LoggedTask<Boolean> {
 
         protected VisualizationUpdateTask(String taskName, boolean logStateChanges) {
@@ -533,7 +539,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
 
         /**
          * Clears the chart data and sets the horisontal axis range. For use
-         * within the derived impementation of {@link #call() }
+         * within the derived implementation of the call() method.
          *
          * @param axisValues
          */

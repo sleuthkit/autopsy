@@ -30,11 +30,15 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
  * A factory for creating archive extractor file ingest modules and the user
  * interface panels used to configure the settings for instances of the modules.
  */
+@NbBundle.Messages({
+    "EmbeddedFileExtractorIngestModule.ArchiveExtractor.moduleName=Embedded File Extractor",
+    "EmbeddedFileExtractorIngestModule.ArchiveExtractor.moduleDesc.text=Extracts embedded files (doc, docx, ppt, pptx, xls, xlsx, zip, rar, arj, 7z, gzip, bzip2, tar), schedules them for ingestion, and populates the directory tree with them."
+})
 @ServiceProvider(service = IngestModuleFactory.class)
 public class EmbeddedFileExtractorModuleFactory extends IngestModuleFactoryAdapter {
 
     static String getModuleName() {
-        return NbBundle.getMessage(EmbeddedFileExtractorIngestModule.class, "EmbeddedFileExtractorIngestModule.ArchiveExtractor.moduleName");
+        return Bundle.EmbeddedFileExtractorIngestModule_ArchiveExtractor_moduleName();
     }
 
     @Override
@@ -44,8 +48,7 @@ public class EmbeddedFileExtractorModuleFactory extends IngestModuleFactoryAdapt
 
     @Override
     public String getModuleDescription() {
-        return NbBundle.getMessage(EmbeddedFileExtractorIngestModule.class,
-                "EmbeddedFileExtractorIngestModule.ArchiveExtractor.moduleDesc.text");
+        return Bundle.EmbeddedFileExtractorIngestModule_ArchiveExtractor_moduleDesc_text();
     }
 
     @Override
