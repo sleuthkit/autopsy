@@ -54,10 +54,10 @@ import org.sleuthkit.datamodel.TskData.FileKnown;
  * Reports interesting events to Inbox and to viewers
  */
 @NbBundle.Messages({
-    "KeywordSearchIngestModule.init.tryStopSolrMsg={0}<br />Please try stopping Java Solr processes if any exist and restart the application.",
+    "# {0} - Reason for not starting Solr", "KeywordSearchIngestModule.init.tryStopSolrMsg={0}<br />Please try stopping Java Solr processes if any exist and restart the application.",
     "KeywordSearchIngestModule.init.badInitMsg=Keyword search server was not properly initialized, cannot run keyword search ingest.",
     "SolrConnectionCheck.Port=Invalid port number.",
-    "KeywordSearchIngestModule.init.exception.errConnToSolr.msg=Error connecting to SOLR server: {0}.",
+    "# {0} - Reason for not connecting to Solr", "KeywordSearchIngestModule.init.exception.errConnToSolr.msg=Error connecting to SOLR server: {0}.",
     "KeywordSearchIngestModule.startUp.noOpenCore.msg=The index could not be opened or does not exist.",
     "CannotRunFileTypeDetection=Unable to run file type detection."
 })

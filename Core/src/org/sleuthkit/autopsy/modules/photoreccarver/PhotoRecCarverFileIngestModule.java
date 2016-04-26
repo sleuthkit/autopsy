@@ -71,7 +71,7 @@ import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 @NbBundle.Messages({
     "PhotoRecIngestModule.PermissionsNotSufficient=Insufficient permissions accessing",
     "PhotoRecIngestModule.PermissionsNotSufficientSeeReference=See 'Shared Drive Authentication' in Autopsy help.",
-    "cannotCreateOutputDir.message=Unable to create output directory: {0}.",
+    "# {0} - output directory name", "cannotCreateOutputDir.message=Unable to create output directory: {0}.",
     "unallocatedSpaceProcessingSettingsError.message='Process Unallocated Space' is not checked. The PhotoRec module is designed to carve unallocated space. Either enable processing of unallocated space or disable this module.",
     "unsupportedOS.message=PhotoRec module is supported on Windows platforms only.",
     "missingExecutable.message=Unable to locate PhotoRec executable.",
