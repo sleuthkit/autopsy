@@ -1,0 +1,21 @@
+
+<html>
+    <head>
+        <title>Autopsy Timeline Snapshot:{{reportTitle}}</title>
+        <link rel="stylesheet" type="text/css" href="index.css" />
+        <link rel="icon" type="image/ico" href="favicon.ico" />
+    </head>
+    <body>
+        <div id="content">
+            <h1>{{reportTitle}}</h1>
+            <img src = "{{snapshotFile}}" alt = "snaphot"><table>
+                <tr><td>Time Range: </td><td>{{startTime}}
+                        to
+                        {{endTime}}</td></tr>
+                <tr><td>Description Level of Detail: </td><td>{{zoomParams.getDescriptionLOD.getDisplayName}}</td></tr>
+                <tr><td>Event Type Zoom Level: </td><td>{{zoomParams.getTypeZoomLevel.getDisplayName}}</td></tr>
+                <tr><td>Filters: </td><td><ul><li>LOWER(text) LIKE LOWER('')[x]</li><li>Data Source[x] : <ul><li>LogicalFileSet1[x]</li><li>ShirtsAndSkins1.E01[x]</li><li>small2.img[x]</li></ul></li><li>Event Types[x] : <ul><li>File System[x] : <ul><li>File Modified[x]</li><li>File Accessed[x]</li><li>File Created[x]</li><li>File Changed[x]</li></ul></li><li>Web Activity[x] : <ul><li>Web Downloads[x]</li><li>Web Cookies[x]</li><li>Web Bookmarks[x]</li><li>Web History[x]</li><li>Web Searches[x]</li></ul></li><li>Misc Types[x] : <ul><li>Messages[x]</li><li>GPS Routes[x]</li><li>Location History[x]</li><li>Calls[x]</li><li>Email[x]</li><li>Recent Documents[x]</li><li>Installed Programs[x]</li><li>Exif[x]</li><li>Devices Attached[x]</li></ul></li></ul></li></ul></td></tr>
+            </table>
+        </div>
+    </body>
+</html>

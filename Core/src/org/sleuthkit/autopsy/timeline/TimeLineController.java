@@ -902,7 +902,9 @@ public class TimeLineController {
         public void propertyChange(PropertyChangeEvent evt) {
             switch (Case.Events.valueOf(evt.getPropertyName())) {
                 case BLACKBOARD_ARTIFACT_TAG_ADDED:
-                    executor.submit(() -> filteredEvents.handleArtifactTagAdded((BlackBoardArtifactTagAddedEvent) evt));
+                    executor.submit(() -> {
+                        return filteredEvents.handleArtifactTagAdded((BlackBoardArtifactTagAddedEvent) evt);
+                    });
                     break;
                 case BLACKBOARD_ARTIFACT_TAG_DELETED:
                     executor.submit(() -> filteredEvents.handleArtifactTagDeleted((BlackBoardArtifactTagDeletedEvent) evt));
