@@ -59,8 +59,7 @@ import org.sleuthkit.datamodel.TskDataException;
  * An ingest module that extracts virtual machine files and adds them to a case
  * as data sources.
  */
-@NbBundle.Messages({
-    "VMExtractorIngestModule.cannotCreateOutputDir.message=Unable to create output directory: {0}."
+@NbBundle.Messages({"# {0} - output directory name", "VMExtractorIngestModule.cannotCreateOutputDir.message=Unable to create output directory: {0}."
 })
 final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
 
