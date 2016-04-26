@@ -14,7 +14,58 @@
                         {{endTime}}</td></tr>
                 <tr><td>Description Level of Detail: </td><td>{{zoomParams.getDescriptionLOD.getDisplayName}}</td></tr>
                 <tr><td>Event Type Zoom Level: </td><td>{{zoomParams.getTypeZoomLevel.getDisplayName}}</td></tr>
-                <tr><td>Filters: </td><td><ul><li>LOWER(text) LIKE LOWER('')[x]</li><li>Data Source[x] : <ul><li>LogicalFileSet1[x]</li><li>ShirtsAndSkins1.E01[x]</li><li>small2.img[x]</li></ul></li><li>Event Types[x] : <ul><li>File System[x] : <ul><li>File Modified[x]</li><li>File Accessed[x]</li><li>File Created[x]</li><li>File Changed[x]</li></ul></li><li>Web Activity[x] : <ul><li>Web Downloads[x]</li><li>Web Cookies[x]</li><li>Web Bookmarks[x]</li><li>Web History[x]</li><li>Web Searches[x]</li></ul></li><li>Misc Types[x] : <ul><li>Messages[x]</li><li>GPS Routes[x]</li><li>Location History[x]</li><li>Calls[x]</li><li>Email[x]</li><li>Recent Documents[x]</li><li>Installed Programs[x]</li><li>Exif[x]</li><li>Devices Attached[x]</li></ul></li></ul></li></ul></td></tr>
+                {{#zoomParams.getFilter}}
+                <tr>
+                    <td>Filters: </td>><td>
+                        <ul>
+                            {{#getTextFilter}}<li>text = "{{getText}}"[{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}]</li> {{/getTextFilter}}
+                            {{#getKnownFilter}}<li>Hide Known Files [{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}]</li> {{/getKnownFilter}}
+                            {{#getDataSourcesFilter}}
+                            <li>{{getDisplayName}} [{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}] : 
+                                <ul>
+                                    {{#getSubFilters}}
+                                    <li>{{getDisplayName}}[{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}]</li>
+                                    {{/getSubFilters}}
+                                </ul>
+                            </li>
+                            {{/getDataSourcesFilter}}
+                            {{#getTagsFilter}}
+                            <li>{{getDisplayName}} [{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}] : 
+                                <ul>
+                                    {{#getSubFilters}}
+                                    <li>{{getDisplayName}}[{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}]</li>
+                                    {{/getSubFilters}}
+                                </ul>
+                            </li>
+                            {{/getTagsFilter}}
+                            {{#getHashHitsFilter}}
+                            <li>{{getDisplayName}} [{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}] : 
+                                <ul>
+                                    {{#getSubFilters}}
+                                    <li>{{getDisplayName}}[{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}]</li>
+                                    {{/getSubFilters}}
+                                </ul>
+                            </li>
+                            {{/getHashHitsFilter}}
+                            {{#getTypeFilter}}
+                            <li>{{getDisplayName}} [{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}] : 
+                                <ul>
+                                    {{#getSubFilters}}
+                                    <li>{{getDisplayName}}[{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}]
+                                        <ul>  
+                                            {{#getSubFilters}}
+                                            <li>{{getDisplayName}}[{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}]</li>
+                                            {{/getSubFilters}}
+                                        </ul>
+                                    </li>
+                                    {{/getSubFilters}}
+                                </ul>
+                            </li>
+                            {{/getTypeFilter}}
+                        </ul>
+                    </td>
+                </tr>
+                {{/zoomParams.getFilter}}
             </table>
         </div>
     </body>

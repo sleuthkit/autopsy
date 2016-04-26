@@ -200,8 +200,6 @@ public class SaveSnapshotAsReport extends Action {
             summaryMustache.execute(writer, scopes);
             writer.flush();
         }
-
-//        writeTableRow(htmlWriter, "Filters", zoomParams.getFilter().getHTMLReportString()); //
     }
 
     /**
