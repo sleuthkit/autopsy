@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
@@ -43,7 +44,13 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
     private final KeywordSearchSettingsManager keywordListsManager;
 
     KeywordSearchJobSettingsPanel(KeywordSearchJobSettings initialSettings) {
-        keywordListsManager = KeywordSearchSettingsManager.getInstance();
+        try {
+            keywordListsManager = KeywordSearchSettingsManager.getInstance();
+        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+            JOptionPane.showMessageDialog(null, Bundle.GlobalEditListPanel_settingsLoadFail_message(), Bundle.GlobalEditListPanel_settingsLoadFail_title(), JOptionPane.ERROR_MESSAGE);
+            //OSTODO: FIGURE OUT HOW TO HANDLE LOAD FAILURE IN CONSTRUCTOR
+            return;
+        }
         initializeKeywordListSettings(initialSettings);
         initComponents();
         customizeComponents();

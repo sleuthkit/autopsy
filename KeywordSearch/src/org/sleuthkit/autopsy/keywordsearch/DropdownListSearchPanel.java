@@ -28,6 +28,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JCheckBox;
+import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
@@ -36,6 +37,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -316,13 +318,22 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
     }
 
     private class KeywordListsTableModel extends AbstractTableModel {
+
+        private static final long serialVersionUID = 1L;
         //data
 
         private KeywordSearchSettingsManager listsHandle;
         private List<ListTableEntry> listData = new ArrayList<>();
 
+        @Messages({"KeywordListsTableModel.settingsLoadFail.message=Couldn't load keyword list settings.",
+        "KeywordListsTableModel.settingsLoadFail.title=Failed to load settings."})
         private KeywordListsTableModel() {
-            listsHandle = KeywordSearchSettingsManager.getInstance();
+            try {
+                listsHandle = KeywordSearchSettingsManager.getInstance();
+            } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+                JOptionPane.showMessageDialog(null, Bundle.KeywordListsTableModel_settingsLoadFail_message(), Bundle.KeywordListsTableModel_settingsLoadFail_title(), JOptionPane.ERROR_MESSAGE);
+                logger.log(Level.SEVERE, "Couldn't load keyword settings.", ex);
+            }
         }
 
         @Override

@@ -20,9 +20,11 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Date;
 import java.util.List;
 import javax.swing.JOptionPane;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 
 final class GlobalListSettingsPanel extends javax.swing.JPanel implements OptionsPanel {
@@ -31,13 +33,23 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
     private final GlobalEditListPanel editListPanel = new GlobalEditListPanel();
     private KeywordSearchSettingsManager manager;
 
+    @Messages({"GlobalListSettingsPanel.settingsLoadFail.message=Failed to load keyword settings.",
+        "GlobalListSettingsPanel.settingsLoadFail.title=Load Failed"})
     GlobalListSettingsPanel() {
-        manager = KeywordSearchSettingsManager.getInstance();
+        try {
+            manager = KeywordSearchSettingsManager.getInstance();
+        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+            JOptionPane.showMessageDialog(null, Bundle.GlobalEditListPanel_settingsLoadFail_message(), Bundle.GlobalEditListPanel_settingsLoadFail_title(), JOptionPane.ERROR_MESSAGE);
+            //OSTODO: FIGURE OUT HOW TO HANDLE LOAD FAILURE IN CONSTRUCTOR
+            return;
+        }
         initComponents();
         customizeComponents();
         setName(org.openide.util.NbBundle.getMessage(DropdownToolbar.class, "ListBundleConfig"));
 
     }
+
+    @Messages({"# {0} - keyword list", "KeywordSearchConfigurationPanel1.customizeComponents.kwListSaveFailedMsg=Failed to save <{0}>"})
 
     private void customizeComponents() {
         listsManagementPanel.addListSelectionListener(editListPanel);
@@ -106,8 +118,13 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
                 }
 
                 if (shouldAdd) {
-                    manager.addList(new KeywordList(listName, new Date(), new Date(), false, false, keywords));
-                    KeywordSearchUtil.displayDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.kwListSavedMsg", listName), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+                    try {
+                        manager.addList(new KeywordList(listName, new Date(), new Date(), false, false, keywords));
+                        KeywordSearchUtil.displayDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.kwListSavedMsg", listName), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+                    } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+                        KeywordSearchUtil.displayDialog(FEATURE_NAME, Bundle.KeywordSearchConfigurationPanel1_customizeComponents_kwListSaveFailedMsg(listName), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+                    }
+
                 }
 
                 listsManagementPanel.resync();
