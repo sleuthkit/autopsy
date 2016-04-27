@@ -434,6 +434,7 @@ public class TimeLineController {
     /**
      * Show the entire range of the timeline.
      */
+    public boolean showFullRange() {
         synchronized (filteredEvents) {
             return pushTimeRange(filteredEvents.getSpanningInterval());
         }
@@ -652,7 +653,14 @@ public class TimeLineController {
         }
     }
 
-    @SuppressWarnings("AssignmentToMethodParameter") //clamp timerange to case
+    /**
+     * Change the view by setting a new time range that is the length of
+     * timeUnit and centered at the current center.
+     *
+     * @param timeUnit The unit of time to view
+     *
+     * @return true if the view actually changed.
+     */
     synchronized public boolean pushTimeUnit(TimeUnits timeUnit) {
         if (timeUnit == TimeUnits.FOREVER) {
             return showFullRange();

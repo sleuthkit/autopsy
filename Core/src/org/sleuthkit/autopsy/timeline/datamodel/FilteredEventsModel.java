@@ -167,8 +167,9 @@ public final class FilteredEventsModel {
     }
 
     /**
-     * @return a read only view of the time range requested via
-     *         {@link #requestTimeRange(org.joda.time.Interval)}
+     * Get a read only view of the time range currently in view.
+     *
+     * @return A read only view of the time range currently in view.
      */
     synchronized public ReadOnlyObjectProperty<Interval> timeRangeProperty() {
         if (requestedTimeRange.get() == null) {
@@ -189,6 +190,11 @@ public final class FilteredEventsModel {
         return requestedTypeZoom.getReadOnlyProperty();
     }
 
+    /**
+     * The time range currently in view.
+     *
+     * @return The time range currently in view.
+     */
     synchronized public Interval getTimeRange() {
         return timeRangeProperty().get();
     }
