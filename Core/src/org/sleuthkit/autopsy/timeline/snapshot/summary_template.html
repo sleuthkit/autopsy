@@ -7,7 +7,7 @@
     </head>
     <body>
         <div id="wrapper">
-            <h1>{{reportBranding.getReportTitle}}{{#ingestRunning}}<span>Warning, this report was run before ingest services completed!</span>{{/ingestRunning}}</h1>
+            <h1>{{reportBranding.getReportTitle}}:{{reportName}}{{#ingestRunning}}<span>Warning, this report was run before ingest services completed!</span>{{/ingestRunning}}</h1>
 
             <p class="subheadding">Timeline Report generated on {{generationDateTime}}</p>
             <div class="title">

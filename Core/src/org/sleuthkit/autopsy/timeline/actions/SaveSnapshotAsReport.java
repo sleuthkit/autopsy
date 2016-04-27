@@ -18,24 +18,13 @@
  */
 package org.sleuthkit.autopsy.timeline.actions;
 
-import com.github.mustachejava.DefaultMustacheFactory;
-import com.github.mustachejava.Mustache;
-import com.github.mustachejava.MustacheFactory;
 import java.awt.Desktop;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Writer;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Optional;
 import java.util.logging.Level;
-import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonBar;
@@ -45,21 +34,16 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.Modality;
 import javafx.stage.StageStyle;
-import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
 import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.control.HyperlinkLabel;
 import org.controlsfx.control.action.Action;
-import org.joda.time.Interval;
-import org.joda.time.format.DateTimeFormat;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.report.ReportBranding;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
+import org.sleuthkit.autopsy.timeline.snapshot.SnapShotReportWriter;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -71,8 +55,6 @@ public class SaveSnapshotAsReport extends Action {
     private static final Image SNAP_SHOT = new Image("org/sleuthkit/autopsy/timeline/images/image.png", 16, 16, true, true); //
     private static final ButtonType OPEN = new ButtonType(Bundle.OpenReportAction_DisplayName(), ButtonBar.ButtonData.NO);
     private static final ButtonType OK = new ButtonType(ButtonType.OK.getText(), ButtonBar.ButtonData.CANCEL_CLOSE);
-
-    private final static MustacheFactory mf = new DefaultMustacheFactory();
 
     private final TimeLineController controller;
     private final Case currentCase;
@@ -97,40 +79,34 @@ public class SaveSnapshotAsReport extends Action {
         this.currentCase = controller.getAutopsyCase();
 
         setEventHandler(actionEvent -> {
-            ReportBranding reportBranding = new ReportBranding();
             Date generationDate = new Date();
+            final String defaultReportName = FileUtil.escapeFileName(currentCase.getName() + " " + new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss").format(generationDate));
 
             TextInputDialog textInputDialog = new TextInputDialog();
-
             textInputDialog.setTitle("Timeline");
-            textInputDialog.setHeaderText("Enter a report name.");
-            Optional<String> showAndWait = textInputDialog.showAndWait();
+            textInputDialog.getEditor().setPromptText("leave empty for default report name: " + defaultReportName);
+            textInputDialog.getEditor().setStyle("-fx-prompt-text-fill: derive(-fx-control-inner-background, -30%);");
+            textInputDialog.setHeaderText("Enter a report name for the Timeline Snapshot Report.");
 
-            String reportName = showAndWait.orElseGet(() -> FileUtil.escapeFileName(currentCase.getName() + " " + new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss").format(generationDate)));
-            Path reportFolderPath = Paths.get(currentCase.getReportDirectory(), reportName, "Timeline Snapshot");
-            Path reportIndexFilePath = reportFolderPath.resolve("index.html");
-
-            ZoomParams zoomParams = controller.getEventsModel().zoomParametersProperty().get();
-
-            try {
-                //ensure directory exists and write html files
-                Files.createDirectories(reportFolderPath);
-                writeSummary(reportFolderPath, generationDate, reportBranding);
-                writeIndexHTML(reportFolderPath);
-                writeSnapShotHTMLFile(reportFolderPath, reportName, zoomParams);
-
-                //take snapshot and save in report directory
-                ImageIO.write(SwingFXUtils.fromFXImage(node.snapshot(null, null), null), "png",
-                        reportFolderPath.resolve("snapshot.png").toFile());
-
-                copyResources(reportFolderPath, reportBranding);
-
-                //add html file as report to case
+            textInputDialog.showAndWait().ifPresent(enteredReportName -> {
+                String reportName = StringUtils.defaultIfBlank(enteredReportName, defaultReportName);
+                Path reportFolderPath = Paths.get(currentCase.getReportDirectory(), reportName, "Timeline Snapshot");
+                Path reportIndexFilePath;
                 try {
-                    Case.getCurrentCase().addReport(reportIndexFilePath.toString(), Bundle.Timeline_ModuleName(), reportName); //
+
+                    reportIndexFilePath = new SnapShotReportWriter(currentCase, reportFolderPath, reportName, controller.getEventsModel().getZoomParamaters(), generationDate, node).writeReport();
+                } catch (IOException e) {
+                    LOGGER.log(Level.SEVERE, "Error writing report " + reportFolderPath + " to disk", e); //
+                    new Alert(Alert.AlertType.ERROR, Bundle.SaveSnapShotAsReport_ErrorWritingReport(reportFolderPath)).show();
+                    return;
+                }
+                try {
+                    //add html file as report to case
+                    Case.getCurrentCase().addReport(reportIndexFilePath.toString(), Bundle.Timeline_ModuleName(), reportName);
                 } catch (TskCoreException ex) {
                     LOGGER.log(Level.WARNING, "failed to add html wrapper as a report", ex); //
-                    new Alert(Alert.AlertType.ERROR, Bundle.SaveSnapShotAsReport_FailedToAddReport()).showAndWait();
+                    new Alert(Alert.AlertType.ERROR, Bundle.SaveSnapShotAsReport_FailedToAddReport()).show();
+                    return;
                 }
 
                 //create alert to notify user of report location
@@ -147,110 +123,11 @@ public class SaveSnapshotAsReport extends Action {
                 hyperlinkLabel.setOnAction(openReportAction);
                 alert.getDialogPane().setContent(hyperlinkLabel);
 
-                alert.showAndWait()
-                        .filter(OPEN::equals)
+                alert.showAndWait().filter(OPEN::equals)
                         .ifPresent(buttonType -> openReportAction.handle(null));
 
-            } catch (IOException e) {
-                LOGGER.log(Level.SEVERE, "Error writing report " + reportFolderPath + " to disk", e); //
-                new Alert(Alert.AlertType.ERROR, Bundle.SaveSnapShotAsReport_ErrorWritingReport(reportFolderPath)).showAndWait();
-            }
+            });
         });
-    }
-
-    private static void writeSnapShotHTMLFile(Path reportPath, String reportTitle, ZoomParams zoomParams) throws IOException {
-
-        HashMap<String, Object> context = new HashMap<>();
-
-        context.put("reportTitle", reportTitle);
-        Interval timeRange = zoomParams.getTimeRange();
-        context.put("startTime", timeRange.getStart().toString(DateTimeFormat.fullDateTime()));
-        context.put("endTime", timeRange.getEnd().toString(DateTimeFormat.fullDateTime()));
-        context.put("zoomParams", zoomParams);
-
-        try (Writer writer = Files.newBufferedWriter(reportPath.resolve("snapshot.html"), Charset.forName("UTF-8"))) {
-            Mustache summaryMustache = mf.compile(new InputStreamReader(SaveSnapshotAsReport.class.getResourceAsStream("/org/sleuthkit/autopsy/timeline/actions/snapshot_template.html")), "Snapshot");
-            summaryMustache.execute(writer, context);
-            writer.flush();
-        }
-    }
-
-    private void writeIndexHTML(Path reportPath) throws IOException {
-
-        HashMap<String, Object> context = new HashMap<>();
-
-        context.put("currentCase", currentCase);
-
-        try (Writer writer = Files.newBufferedWriter(reportPath.resolve("index.html"), Charset.forName("UTF-8"))) {
-            Mustache summaryMustache = mf.compile(new InputStreamReader(SaveSnapshotAsReport.class.getResourceAsStream("/org/sleuthkit/autopsy/timeline/actions/index_template.html")), "Index");
-            summaryMustache.execute(writer, context);
-            writer.flush();
-        }
-    }
-
-    /**
-     * Write the summary of the current case for this report.
-     *
-     * @param reportPath     the value of reportPath
-     * @param generationDate the value of generationDate
-     */
-    @NbBundle.Messages({
-        "ReportHTML.writeSum.caseName=Case:",
-        "ReportHTML.writeSum.caseNum=Case Number:",
-        "ReportHTML.writeSum.noCaseNum=<i>No case number</i>",
-        "ReportHTML.writeSum.noExaminer=<i>No examiner</i>",
-        "ReportHTML.writeSum.examiner=Examiner:",
-        "ReportHTML.writeSum.timezone=Timezone:",
-        "ReportHTML.writeSum.path=Path:"})
-    private void writeSummary(Path reportPath, final Date generationDate, ReportBranding reportBranding) throws IOException {
-        HashMap<String, Object> context = new HashMap<>();
-
-        context.put("reportBranding", reportBranding);
-        context.put("generationDateTime", new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(generationDate));
-        context.put("ingestRunning", IngestManager.getInstance().isIngestRunning());
-        context.put("currentCase", currentCase);
-
-        try (Writer writer = Files.newBufferedWriter(reportPath.resolve("summary.html"), Charset.forName("UTF-8"))) {
-
-            Mustache summaryMustache = mf.compile(new InputStreamReader(SaveSnapshotAsReport.class.getResourceAsStream("/org/sleuthkit/autopsy/timeline/actions/summary_template.html")), "Summary");
-            summaryMustache.execute(writer, context);
-            writer.flush();
-        }
-    }
-
-    private void copyResources(Path reportPath, ReportBranding reportBranding) throws IOException {
-        //copy navigation html
-        try (InputStream navStream = SaveSnapshotAsReport.class.getResourceAsStream("/org/sleuthkit/autopsy/timeline/actions/navigation_template.html")) {
-            Files.copy(navStream, reportPath.resolve("nav.html"));
-        }
-
-        //pull generator and agency logo from branding
-        String generatorLogoPath = reportBranding.getGeneratorLogoPath();
-        if (StringUtils.isNotBlank(generatorLogoPath)) {
-            Files.copy(Paths.get(generatorLogoPath), Files.newOutputStream(reportPath.resolve("generator_logo.png")));
-        }
-
-        String agencyLogoPath = reportBranding.getAgencyLogoPath();
-        if (StringUtils.isNotBlank(agencyLogoPath)) {
-            Files.copy(Paths.get(agencyLogoPath), Files.newOutputStream(reportPath.resolve("agency_logo.png")));
-        }
-
-        //copy favicon
-        try (InputStream faviconStream = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/favicon.ico")) {
-            Files.copy(faviconStream, reportPath.resolve("favicon.ico"));
-        }
-        try (InputStream faviconStream = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/summary.png")) {
-            Files.copy(faviconStream, reportPath.resolve("summary.png"));
-        }
-
-        //copy report css
-        try (InputStream resource = SaveSnapshotAsReport.class.getResourceAsStream("/org/sleuthkit/autopsy/timeline/index.css")) { //
-            Files.copy(resource, reportPath.resolve("index.css")); //
-        }
-        //copy summary css
-        try (InputStream resource = SaveSnapshotAsReport.class.getResourceAsStream("/org/sleuthkit/autopsy/timeline/actions/summary.css")) { //
-            Files.copy(resource, reportPath.resolve("summary.css")); //
-        }
     }
 
     @NbBundle.Messages({"OpenReportAction.DisplayName=Open Report",

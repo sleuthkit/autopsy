@@ -166,6 +166,10 @@ public final class FilteredEventsModel {
         return requestedZoomParamters.getReadOnlyProperty();
     }
 
+    synchronized public ZoomParams getZoomParamaters() {
+        return requestedZoomParamters.get();
+    }
+
     /**
      * @return a read only view of the time range requested via
      *         {@link #requestTimeRange(org.joda.time.Interval)}
