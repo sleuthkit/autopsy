@@ -502,7 +502,8 @@ public class IngestManager {
     }
 
     /**
-     * Starts an ingest job that will process a collection of data sources.
+     * Deprecated. Use beginIngestJob() instead. Starts an ingest job that will
+     * process a collection of data sources.
      *
      * @param dataSources The data sources to process.
      * @param settings    The settings for the ingest job.
