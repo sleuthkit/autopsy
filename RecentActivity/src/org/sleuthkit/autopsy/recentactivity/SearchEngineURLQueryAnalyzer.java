@@ -62,7 +62,7 @@ import org.xml.sax.SAXException;
     "cannotBuildXmlParser=Unable to build XML parser: ",
     "cannotLoadSEUQA=Unable to load Search Engine URL Query Analyzer settings file, SEUQAMappings.xml: ",
     "cannotParseXml=Unable to parse XML file: ",
-    "SearchEngineURLQueryAnalyzer.init.exception.msg=Unable to find {0}."
+    "# {0} - file name", "SearchEngineURLQueryAnalyzer.init.exception.msg=Unable to find {0}."
 })
 class SearchEngineURLQueryAnalyzer extends Extract {
 
