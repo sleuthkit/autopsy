@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import javafx.geometry.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.image.*?>
-<?import javafx.scene.layout.*?>
-<?import javafx.scene.text.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
 
-<fx:root alignment="TOP_LEFT" collapsible="false" contentDisplay="RIGHT" minHeight="-Infinity" minWidth="-Infinity" type="TitledPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+<fx:root alignment="TOP_LEFT" collapsible="false" contentDisplay="RIGHT" minHeight="-Infinity" minWidth="-Infinity" type="TitledPane" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1">
     <content>
         <AnchorPane minHeight="-Infinity" minWidth="-Infinity">
             <children>
@@ -54,6 +58,9 @@
                         <RowConstraints minHeight="-Infinity" vgrow="NEVER" />
                         <RowConstraints />
                     </rowConstraints>
+               <padding>
+                  <Insets top="5.0" />
+               </padding>
                 </GridPane>
             </children>
             <padding>
@@ -62,51 +69,14 @@
         </AnchorPane>
     </content>
     <graphic>
-        <BorderPane>
-            <left>
-                <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" spacing="5.0" BorderPane.alignment="CENTER_LEFT">
-                    <children>
-                        <Label fx:id="zoomLabel">
-                            <font>
-                                <Font name="System Bold" size="12.0" />
-                            </font>
-                            <graphic>
-                                <ImageView fitHeight="16.0" fitWidth="16.0"  preserveRatio="true">
-                                    <image>
-                                        <Image url="@../images/magnifier-zoom.png" />
-                                    </image>
-                                </ImageView>
-                            </graphic>
-                        </Label>
-                        <Region maxWidth="1.7976931348623157E308" minWidth="60.0" HBox.hgrow="ALWAYS" />
-                        <Label fx:id="historyLabel" />
-                        <Button fx:id="backButton" mnemonicParsing="false" HBox.hgrow="SOMETIMES">
-                            <graphic>
-                                <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
-                                    <image>
-                                        <Image url="@../images/arrow-180.png" />
-                                    </image>
-                                </ImageView>
-                            </graphic>
-                        </Button>
-                        <Button fx:id="forwardButton" mnemonicParsing="false" HBox.hgrow="SOMETIMES">
-                            <graphic>
-                                <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
-                                    <image>
-                                        <Image url="@../images/arrow.png" />
-                                    </image>
-                                </ImageView>
-                            </graphic>
-                        </Button>
-                    </children>
-                    <BorderPane.margin>
-                        <Insets top="3.0" />
-                    </BorderPane.margin>
-                    <padding>
-                        <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
-                    </padding>
-                </HBox>
-            </left>
-        </BorderPane>
+            <Label fx:id="zoomLabel" text="Zoom">
+                <graphic>
+                    <ImageView fitHeight="16.0" fitWidth="16.0" preserveRatio="true">
+                        <image>
+                            <Image url="@../images/magnifier-zoom.png" />
+                        </image>
+                    </ImageView>
+                </graphic>
+            </Label>
     </graphic>
 </fx:root>
