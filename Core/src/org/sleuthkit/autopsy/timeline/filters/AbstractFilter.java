@@ -68,10 +68,12 @@ public abstract class AbstractFilter implements Filter {
         return "[" + (isSelected() ? "x" : " ") + "]"; // NON-NLS
     }
 
+    @Override
     public boolean isActive() {
-        return activeProperty.get();
+        return activeProperty().get();
     }
 
+    @Override
     public BooleanBinding activeProperty() {
         return activeProperty;
     }

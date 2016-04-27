@@ -50,7 +50,6 @@ import javax.swing.JOptionPane;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.Interval;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
@@ -315,11 +314,6 @@ public class EventsRepository {
         return SQLHelper.getSQLWhere(f1).equals(SQLHelper.getSQLWhere(f2));
     }
 
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    public boolean isRebuilding() {
-        return dbWorker.isRunning();
-    }
-
     /**
      *
      * rebuild the entire repo.
@@ -446,8 +440,8 @@ public class EventsRepository {
                 progressHandle.finish();
             }
             progressHandle = cancellable
-                    ? ProgressHandleFactory.createHandle(title, this::requestCancel)
-                    : ProgressHandleFactory.createHandle(title);
+                    ? ProgressHandle.createHandle(title, this::requestCancel)
+                    : ProgressHandle.createHandle(title);
 
             if (workDone < 0) {
                 progressHandle.start();

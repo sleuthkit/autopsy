@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.timeline.filters;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
 import javafx.beans.value.ObservableBooleanValue;
 import org.openide.util.NbBundle;
 
@@ -29,19 +30,23 @@ import org.openide.util.NbBundle;
  */
 public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
 
+    //keep references to the overridden properties so they don't get GC'd
+    private final BooleanBinding activePropertyOverride;
+    private final BooleanBinding disabledPropertyOverride;
+
     public DataSourcesFilter() {
-        setSelected(false);
+        disabledPropertyOverride = Bindings.or(super.disabledProperty(), Bindings.size(getSubFilters()).lessThanOrEqualTo(1));
+        activePropertyOverride = super.activeProperty().and(Bindings.not(disabledPropertyOverride));
     }
 
     @Override
     public DataSourcesFilter copyOf() {
         final DataSourcesFilter filterCopy = new DataSourcesFilter();
+        //add a copy of each subfilter
+        getSubFilters().forEach(dataSourceFilter -> filterCopy.addSubFilter(dataSourceFilter.copyOf()));
+        //these need to happen after the listeners fired by adding the subfilters 
         filterCopy.setSelected(isSelected());
         filterCopy.setDisabled(isDisabled());
-        //add a copy of each subfilter
-        getSubFilters().forEach(dataSourceFilter ->
-                filterCopy.addSubFilter(dataSourceFilter.copyOf())
-        );
 
         return filterCopy;
     }
@@ -63,13 +68,6 @@ public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
                     .collect(Collectors.joining("</li><li>", "<ul><li>", "</li></ul>")); // NON-NLS
         }
         return string;
-    }
-
-    public void addSubFilter(DataSourceFilter dataSourceFilter) {
-        super.addSubFilter(dataSourceFilter);
-        if (getSubFilters().size() > 1) {
-            setSelected(Boolean.TRUE);
-        }
     }
 
     @Override
@@ -97,7 +95,12 @@ public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
 
     @Override
     public ObservableBooleanValue disabledProperty() {
-        return Bindings.or(super.disabledProperty(), Bindings.size(getSubFilters()).lessThanOrEqualTo(1));
+        return disabledPropertyOverride;
+    }
+
+    @Override
+    public BooleanBinding activeProperty() {
+        return activePropertyOverride;
     }
 
     @Override

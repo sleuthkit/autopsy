@@ -30,7 +30,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -503,7 +502,7 @@ final class DataSourceIngestJob {
                 String displayName = NbBundle.getMessage(this.getClass(),
                         "IngestJob.progress.dataSourceIngest.initialDisplayName",
                         this.dataSource.getName());
-                this.dataSourceIngestProgress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
+                this.dataSourceIngestProgress = ProgressHandle.createHandle(displayName, new Cancellable() {
                     @Override
                     public boolean cancel() {
                         // If this method is called, the user has already pressed 
@@ -538,7 +537,7 @@ final class DataSourceIngestJob {
                 String displayName = NbBundle.getMessage(this.getClass(),
                         "IngestJob.progress.fileIngest.displayName",
                         this.dataSource.getName());
-                this.fileIngestProgress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
+                this.fileIngestProgress = ProgressHandle.createHandle(displayName, new Cancellable() {
                     @Override
                     public boolean cancel() {
                         // If this method is called, the user has already pressed 

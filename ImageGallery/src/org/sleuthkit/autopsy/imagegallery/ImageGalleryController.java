@@ -54,7 +54,6 @@ import javafx.scene.paint.Color;
 import javax.annotation.Nullable;
 import javax.swing.SwingUtilities;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -791,7 +790,7 @@ public final class ImageGalleryController implements Executor {
                 }
 
                 progressHandle.finish();
-                progressHandle = ProgressHandleFactory.createHandle(Bundle.BulkTask_committingDb_status());
+                progressHandle = ProgressHandle.createHandle(Bundle.BulkTask_committingDb_status());
                 updateMessage(Bundle.BulkTask_committingDb_status());
                 updateProgress(1.0);
 
@@ -864,7 +863,7 @@ public final class ImageGalleryController implements Executor {
         @Override
         @NbBundle.Messages({"CopyAnalyzedFiles.populatingDb.status=populating analyzed image/video database",})
         ProgressHandle getInitialProgressHandle() {
-            return ProgressHandleFactory.createHandle(Bundle.CopyAnalyzedFiles_populatingDb_status(), this);
+            return ProgressHandle.createHandle(Bundle.CopyAnalyzedFiles_populatingDb_status(), this);
         }
     }
 
@@ -910,7 +909,7 @@ public final class ImageGalleryController implements Executor {
         @Override
         @NbBundle.Messages({"PrePopulateDataSourceFiles.prepopulatingDb.status=prepopulating image/video database",})
         ProgressHandle getInitialProgressHandle() {
-            return ProgressHandleFactory.createHandle(Bundle.PrePopulateDataSourceFiles_prepopulatingDb_status(), this);
+            return ProgressHandle.createHandle(Bundle.PrePopulateDataSourceFiles_prepopulatingDb_status(), this);
         }
     }
 

@@ -189,118 +189,118 @@ final class UserDefinedFileTypesManager {
             List<Signature> signatureList;
             signatureList = new ArrayList<>();
             signatureList.add(new Signature("<?xml", 0L));
-            fileType = new FileType("text/xml", signatureList, "", false); //NON-NLS
+            fileType = new FileType("text/xml", signatureList); //NON-NLS
             fileTypes.add(fileType);
 
             // Add rule for gzip
             byteArray = DatatypeConverter.parseHexBinary("1F8B");  //NON-NLS  
             signatureList.clear();
             signatureList.add(new Signature(byteArray, 0L));
-            fileType = new FileType("application/x-gzip", signatureList, "", false); //NON-NLS
+            fileType = new FileType("application/x-gzip", signatureList); //NON-NLS
             fileTypes.add(fileType);
 
             // Add rule for .wk1
             byteArray = DatatypeConverter.parseHexBinary("0000020006040600080000000000"); //NON-NLS
             signatureList.clear();
             signatureList.add(new Signature(byteArray, 0L));
-            fileType = new FileType("application/x-123", signatureList, "", false); //NON-NLS
+            fileType = new FileType("application/x-123", signatureList); //NON-NLS
             fileTypes.add(fileType);
 
             // Add rule for Radiance image
             byteArray = DatatypeConverter.parseHexBinary("233F52414449414E43450A");//NON-NLS
             signatureList.clear();
             signatureList.add(new Signature(byteArray, 0L));
-            fileType = new FileType("image/vnd.radiance", signatureList, "", false); //NON-NLS
+            fileType = new FileType("image/vnd.radiance", signatureList); //NON-NLS
             fileTypes.add(fileType);
 
             // Add rule for .dcx image
             byteArray = DatatypeConverter.parseHexBinary("B168DE3A"); //NON-NLS
             signatureList.clear();
             signatureList.add(new Signature(byteArray, 0L));
-            fileType = new FileType("image/x-dcx", signatureList, "", false); //NON-NLS
+            fileType = new FileType("image/x-dcx", signatureList); //NON-NLS
             fileTypes.add(fileType);
 
             // Add rule for .ics image
             signatureList.clear();
             signatureList.add(new Signature("icns", 0L));
-            fileType = new FileType("image/x-icns", signatureList, "", false); //NON-NLS
+            fileType = new FileType("image/x-icns", signatureList); //NON-NLS
             fileTypes.add(fileType);
 
             // Add rule for .pict image
             byteArray = DatatypeConverter.parseHexBinary("001102FF"); //NON-NLS
             signatureList.clear();
             signatureList.add(new Signature(byteArray, 522L));
-            fileType = new FileType("image/x-pict", signatureList, "", false); //NON-NLS
+            fileType = new FileType("image/x-pict", signatureList); //NON-NLS
             fileTypes.add(fileType);
             byteArray = DatatypeConverter.parseHexBinary("1100"); //NON-NLS
             signatureList.clear();
             signatureList.add(new Signature(byteArray, 522L));
-            fileType = new FileType("image/x-pict", signatureList, "", false); //NON-NLS
+            fileType = new FileType("image/x-pict", signatureList); //NON-NLS
             fileTypes.add(fileType);
 
             // Add rule for .pam
             signatureList.clear();
             signatureList.add(new Signature("P7", 0L));
-            fileType = new FileType("image/x-portable-arbitrarymap", signatureList, "", false); //NON-NLS
+            fileType = new FileType("image/x-portable-arbitrarymap", signatureList); //NON-NLS
             fileTypes.add(fileType);
 
             // Add rule for .pfm
             signatureList.clear();
             signatureList.add(new Signature("PF", 0L));
-            fileType = new FileType("image/x-portable-floatmap", signatureList, "", false); //NON-NLS
+            fileType = new FileType("image/x-portable-floatmap", signatureList); //NON-NLS
             fileTypes.add(fileType);
             signatureList.clear();
             signatureList.add(new Signature("Pf", 0L));
-            fileType = new FileType("image/x-portable-floatmap", signatureList, "", false); //NON-NLS
+            fileType = new FileType("image/x-portable-floatmap", signatureList); //NON-NLS
             fileTypes.add(fileType);
 
             // Add rule for .tga
             byteArray = DatatypeConverter.parseHexBinary("54525545564953494F4E2D5846494C452E00"); //NON-NLS
             signatureList.clear();
             signatureList.add(new Signature(byteArray, 17, false));
-            fileType = new FileType("image/x-tga", signatureList, "", false); //NON-NLS
+            fileType = new FileType("image/x-tga", signatureList); //NON-NLS
             fileTypes.add(fileType);
 
             // Add rule for .ilbm
             signatureList.clear();
             signatureList.add(new Signature("FORM", 0L));
             signatureList.add(new Signature("ILBM", 8L));
-            fileType = new FileType("image/x-ilbm", signatureList, "", false);
+            fileType = new FileType("image/x-ilbm", signatureList);
             fileTypes.add(fileType);
             signatureList.clear();
             signatureList.add(new Signature("FORM", 0L));
             signatureList.add(new Signature("PBM", 8L));
-            fileType = new FileType("image/x-ilbm", signatureList, "", false);
+            fileType = new FileType("image/x-ilbm", signatureList);
             fileTypes.add(fileType);
 
             // Add rule for .webp
             signatureList.clear();
             signatureList.add(new Signature("RIFF", 0L));
             signatureList.add(new Signature("WEBP", 8L));
-            fileType = new FileType("image/webp", signatureList, "", false);
+            fileType = new FileType("image/webp", signatureList);
             fileTypes.add(fileType);
 
             // Add rule for .aiff
             signatureList.clear();
             signatureList.add(new Signature("FORM", 0L));
             signatureList.add(new Signature("AIFF", 8L));
-            fileType = new FileType("audio/aiff", signatureList, "", false);
+            fileType = new FileType("audio/aiff", signatureList);
             fileTypes.add(fileType);
             signatureList.clear();
             signatureList.add(new Signature("FORM", 0L));
             signatureList.add(new Signature("AIFC", 8L));
-            fileType = new FileType("audio/aiff", signatureList, "", false);
+            fileType = new FileType("audio/aiff", signatureList);
             fileTypes.add(fileType);
             signatureList.clear();
             signatureList.add(new Signature("FORM", 0L));
             signatureList.add(new Signature("8SVX", 8L));
-            fileType = new FileType("audio/aiff", signatureList, "", false);
+            fileType = new FileType("audio/aiff", signatureList);
             fileTypes.add(fileType);
 
             // Add .iff
             signatureList.clear();
             signatureList.add(new Signature("FORM", 0L));
-            fileType = new FileType("application/x-iff", signatureList, "", false);
+            fileType = new FileType("application/x-iff", signatureList);
             fileTypes.add(fileType);
 
         } // parseHexBinary() throws this if the argument passed in is not Hex
@@ -472,13 +472,11 @@ final class UserDefinedFileTypesManager {
         private static FileType parseFileType(Element fileTypeElem) throws IllegalArgumentException, NumberFormatException {
             String mimeType = XMLDefinitionsReader.parseMimeType(fileTypeElem);
             Signature signature = XMLDefinitionsReader.parseSignature(fileTypeElem);
-            String filesSetName = XMLDefinitionsReader.parseInterestingFilesSet(fileTypeElem);
-            boolean alert = XMLDefinitionsReader.parseAlert(fileTypeElem);
             // File type definitions in the XML file were written prior to the 
             // implementation of multiple signatures per type. 
             List<Signature> sigList = new ArrayList<>();
             sigList.add(signature);
-            return new FileType(mimeType, sigList, filesSetName, alert);
+            return new FileType(mimeType, sigList);
         }
 
         /**

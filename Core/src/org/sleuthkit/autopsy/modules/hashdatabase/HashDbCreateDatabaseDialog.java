@@ -23,15 +23,13 @@ import java.awt.Toolkit;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
-
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
-import javax.swing.JFrame;
-import org.apache.commons.io.FilenameUtils;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDbManagerException;
@@ -332,7 +330,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
         String errorMessage = NbBundle
                 .getMessage(this.getClass(), "HashDbCreateDatabaseDialog.errMsg.hashDbCreationErr");
         try {
-            newHashDb = HashDbManager.getInstance().addNewHashDatabaseInternal(hashSetNameTextField.getText(), fileChooser.getSelectedFile().getCanonicalPath(), true, sendIngestMessagesCheckbox.isSelected(), type);
+            newHashDb = HashDbManager.getInstance().addNewHashDatabase(hashSetNameTextField.getText(), fileChooser.getSelectedFile().getCanonicalPath(), true, sendIngestMessagesCheckbox.isSelected(), type);
         } catch (IOException ex) {
             Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
             JOptionPane.showMessageDialog(this,
@@ -346,15 +344,6 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
             Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
             JOptionPane.showMessageDialog(this,
                     ex.getMessage(),
-                    NbBundle.getMessage(this.getClass(),
-                            "HashDbCreateDatabaseDialog.createHashDbErr"),
-                    JOptionPane.ERROR_MESSAGE);
-            return;
-        } catch (TskCoreException ex) {
-            Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.SEVERE, errorMessage, ex);
-            JOptionPane.showMessageDialog(this,
-                    NbBundle.getMessage(this.getClass(),
-                            "HashDbCreateDatabaseDialog.failedToCreateHashDbMsg"),
                     NbBundle.getMessage(this.getClass(),
                             "HashDbCreateDatabaseDialog.createHashDbErr"),
                     JOptionPane.ERROR_MESSAGE);

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,60 +28,45 @@ import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
 /**
- * A factory that creates file ingest modules that determine the types of files.
+ * A factory that creates file ingest modules that determine the MIME type of
+ * files.
  */
-// TODO: This class does not need to be public.
 @ServiceProvider(service = IngestModuleFactory.class)
 public class FileTypeIdModuleFactory extends IngestModuleFactoryAdapter {
 
-    FileTypeIdGlobalSettingsPanel globalSettingsPanel;
-
-    /**
-     * @inheritDoc
-     */
-    @Override
-    public String getModuleDisplayName() {
-        return getModuleName();
-    }
+    private FileTypeIdGlobalSettingsPanel globalSettingsPanel;
 
     /**
      * Gets the module display name.
      *
-     * @return The name string.
+     * @return The module display name.
      */
     static String getModuleName() {
         return NbBundle.getMessage(FileTypeIdIngestModule.class,
                 "FileTypeIdIngestModule.moduleName.text");
     }
+    
+    @Override
+    public String getModuleDisplayName() {
+        return getModuleName();
+    }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public String getModuleDescription() {
         return NbBundle.getMessage(FileTypeIdIngestModule.class,
                 "FileTypeIdIngestModule.moduleDesc.text");
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public String getModuleVersionNumber() {
         return Version.getVersion();
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public boolean hasGlobalSettingsPanel() {
         return true;
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public IngestModuleGlobalSettingsPanel getGlobalSettingsPanel() {
         if (null == globalSettingsPanel) {
@@ -91,19 +76,14 @@ public class FileTypeIdModuleFactory extends IngestModuleFactoryAdapter {
         return globalSettingsPanel;
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public boolean isFileIngestModuleFactory() {
         return true;
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
         return new FileTypeIdIngestModule();
     }
+
 }

@@ -1214,7 +1214,7 @@ public final class DrawableDB {
     }
 
     /**
-     * get the number of files in the given set that have the given category.
+     * get the number of files in the given set that are uncategorized(Cat-0).
      *
      * NOTE: although the category data is stored in autopsy as Tags, this
      * method is provided on DrawableDb to provide a single point of access for
@@ -1224,14 +1224,14 @@ public final class DrawableDB {
      * get their data form the drawabledb to a layer wrapping the drawable db:
      * something like ImageGalleryCaseData?
      *
-     * @param cat     the category to count the number of files for
      * @param fileIDs the the files ids to count within
      *
-     * @return the number of the with the given category
+     * @return the number of files with Cat-0
      */
-    public long getCategoryCount(Category cat, Collection<Long> fileIDs) {
+    public long getUncategorizedCount(Collection<Long> fileIDs) {
         DrawableTagsManager tagsManager = controller.getTagsManager();
 
+        // get a comma seperated list of TagName ids for non zero categories
         String catTagNameIDs = Category.getNonZeroCategories().stream()
                 .map(tagsManager::getTagName)
                 .map(TagName::getId)
@@ -1240,20 +1240,19 @@ public final class DrawableDB {
 
         String fileIdsList = "(" + StringUtils.join(fileIDs, ",") + " )";
 
-        //count the fileids that are in the given list and don't have a non-zero category assigned to them.
+        //count the file ids that are in the given list and don't have a non-zero category assigned to them.
         String name =
-                "SELECT COUNT(obj_id) FROM tsk_files where obj_id IN " + fileIdsList //NON-NLS
+                "SELECT COUNT(obj_id) as obj_count FROM tsk_files where obj_id IN " + fileIdsList //NON-NLS
                 + " AND obj_id NOT IN (SELECT obj_id FROM content_tags WHERE content_tags.tag_name_id IN " + catTagNameIDs + ")"; //NON-NLS
-        try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery(name);
+        try (SleuthkitCase.CaseDbQuery executeQuery = tskCase.executeQuery(name);
                 ResultSet resultSet = executeQuery.getResultSet();) {
             while (resultSet.next()) {
-                return resultSet.getLong("count(obj_id)"); //NON-NLS
+                return resultSet.getLong("obj_count"); //NON-NLS
             }
         } catch (SQLException | TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error getting category count.", ex); //NON-NLS
         }
         return -1;
-
     }
 
     /**

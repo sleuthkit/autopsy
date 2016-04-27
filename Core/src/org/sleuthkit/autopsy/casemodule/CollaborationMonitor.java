@@ -35,7 +35,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceEvent;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceFailedEvent;
@@ -371,7 +370,7 @@ final class CollaborationMonitor {
 
                 taskIdsToProgressBars = new HashMap<>();
                 event.getCurrentTasks().values().stream().forEach((task) -> {
-                    ProgressHandle progress = ProgressHandleFactory.createHandle(event.getHostName());
+                    ProgressHandle progress = ProgressHandle.createHandle(event.getHostName());
                     progress.start();
                     progress.progress(task.getStatus());
                     taskIdsToProgressBars.put(task.getId(), progress);
@@ -406,7 +405,7 @@ final class CollaborationMonitor {
                         /**
                          * A new task, create a progress bar.
                          */
-                        progress = ProgressHandleFactory.createHandle(event.getHostName());
+                        progress = ProgressHandle.createHandle(event.getHostName());
                         progress.start();
                         progress.progress(task.getStatus());
                         taskIdsToProgressBars.put(task.getId(), progress);
