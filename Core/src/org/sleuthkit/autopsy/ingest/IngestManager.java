@@ -64,6 +64,13 @@ import org.sleuthkit.datamodel.Content;
  * Manages the creation and execution of ingest jobs, i.e., the processing of
  * data sources by ingest modules.
  */
+@NbBundle.Messages({
+    "IngestAborted=Ingest Aborted.",
+    "# {0} - error message", "IngestManager.StartIngestJobsTask.run.startupErr.dlgErrorList=\nErrors: \n{0}",
+    "IngestManager.StartIngestJobsTask.run.startupErr.dlgSolution=Please disable the failed modules or fix the errors and then restart ingest \nby right clicking on the data source and selecting Run Ingest Modules.",
+    "IngestManager.StartIngestJobsTask.run.startupErr.dlgMsg=Unable to start up one or more ingest modules, ingest job cancelled.",
+    "IngestManager.StartIngestJobsTask.run.startupErr.dlgTitle=Ingest Failure"
+})
 public class IngestManager {
 
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
@@ -483,6 +490,17 @@ public class IngestManager {
         }
     }
 
+    public synchronized IngestJob beginIngestJob(Collection<Content> dataSources, IngestJobSettings settings, List<IngestModuleError> errors) {
+        if (this.jobCreationIsEnabled) {
+            IngestJob job = new IngestJob(dataSources, settings, RuntimeProperties.coreComponentsAreActive());
+            if (job.hasIngestPipeline()) {
+                errors.addAll(this.startIngestJob(job)); // capture any errors 
+                return job;
+            }
+        }
+        return null;
+    }
+
     /**
      * Starts an ingest job that will process a collection of data sources.
      *
@@ -491,16 +509,10 @@ public class IngestManager {
      *
      * @return The ingest job that was started on success or null on failure.
      */
+    @Deprecated
     public synchronized IngestJob startIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
-        if (this.jobCreationIsEnabled) {
-            IngestJob job = new IngestJob(dataSources, settings, RuntimeProperties.coreComponentsAreActive());
-            if (job.hasIngestPipeline()) {
-                if (this.startIngestJob(job)) {
-                    return job;
-                }
-            }
-        }
-        return null;
+        List<IngestModuleError> ignored = new ArrayList<>();
+        return beginIngestJob(dataSources, settings, ignored);
     }
 
     /**
@@ -508,10 +520,10 @@ public class IngestManager {
      *
      * @param job The ingest job to start.
      *
-     * @return True if the job was started, false otherwise.
+     * @return A list of errors, empty if the job was successfully started
      */
-    private boolean startIngestJob(IngestJob job) {
-        boolean success = false;
+    private List<IngestModuleError> startIngestJob(IngestJob job) {
+        List<IngestModuleError> errors = new ArrayList<>();
         if (this.jobCreationIsEnabled) {
             // multi-user cases must have multi-user database service running            
             if (Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) {
@@ -531,10 +543,12 @@ public class IngestManager {
                             });
                         }
                         // abort ingest
-                        return false;
+                        errors.add(new IngestModuleError(Bundle.IngestAborted(), null));
+                        return errors;
                     }
-                } catch (ServicesMonitor.ServicesMonitorException ignore) {
-                    return false;
+                } catch (ServicesMonitor.ServicesMonitorException ex) {
+                    errors.add(new IngestModuleError(Bundle.IngestAborted(), ex));
+                    return errors;
                 }
             }
 
@@ -545,11 +559,10 @@ public class IngestManager {
             synchronized (jobsById) {
                 jobsById.put(job.getId(), job);
             }
-            List<IngestModuleError> errors = job.start();
+            errors = job.start();
             if (errors.isEmpty()) {
                 this.fireIngestJobStarted(job.getId());
                 IngestManager.logger.log(Level.INFO, "Ingest job {0} started", job.getId()); //NON-NLS
-                success = true;
             } else {
                 synchronized (jobsById) {
                     this.jobsById.remove(job.getId());
@@ -559,38 +572,40 @@ public class IngestManager {
                 }
                 IngestManager.logger.log(Level.SEVERE, "Ingest job {0} could not be started", job.getId()); //NON-NLS
                 if (RuntimeProperties.coreComponentsAreActive()) {
-                    EventQueue.invokeLater(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            StringBuilder moduleStartUpErrors = new StringBuilder();
-                            for (IngestModuleError error : errors) {
-                                String moduleName = error.getModuleDisplayName();
-                                moduleStartUpErrors.append(moduleName);
-                                moduleStartUpErrors.append(": ");
-                                moduleStartUpErrors.append(error.getModuleError().getLocalizedMessage());
-                                moduleStartUpErrors.append("\n");
-                            }
-                            StringBuilder notifyMessage = new StringBuilder();
-                            notifyMessage.append(NbBundle.getMessage(this.getClass(),
-                                    "IngestManager.StartIngestJobsTask.run.startupErr.dlgMsg"));
-                            notifyMessage.append("\n");
-                            notifyMessage.append(NbBundle.getMessage(this.getClass(),
-                                    "IngestManager.StartIngestJobsTask.run.startupErr.dlgSolution"));
-                            notifyMessage.append("\n");
-                            notifyMessage.append(NbBundle.getMessage(this.getClass(),
-                                    "IngestManager.StartIngestJobsTask.run.startupErr.dlgErrorList",
-                                    moduleStartUpErrors.toString()));
-                            notifyMessage.append("\n\n");
-                            JOptionPane.showMessageDialog(null, notifyMessage.toString(),
-                                    NbBundle.getMessage(this.getClass(),
-                                            "IngestManager.StartIngestJobsTask.run.startupErr.dlgTitle"), JOptionPane.ERROR_MESSAGE);
-                        }
-                    });
+                    StringBuilder moduleStartUpErrors = new StringBuilder();
+                    for (IngestModuleError error : errors) {
+                        String moduleName = error.getModuleDisplayName();
+                        moduleStartUpErrors.append(moduleName);
+                        moduleStartUpErrors.append(": ");
+                        moduleStartUpErrors.append(error.getModuleError().getLocalizedMessage());
+                        moduleStartUpErrors.append("\n");
+                    }
+                    EventQueue.invokeLater(new NotifyUserOfErrors(moduleStartUpErrors.toString()));
                 }
             }
         }
-        return success;
+        return errors;
+    }
+
+    class NotifyUserOfErrors implements Runnable {
+
+        private String startupErrors;
+
+        NotifyUserOfErrors(String startupErrors) {
+            this.startupErrors = startupErrors;
+        }
+
+        @Override
+        public void run() {
+            StringBuilder notifyMessage = new StringBuilder();
+            notifyMessage.append(Bundle.IngestManager_StartIngestJobsTask_run_startupErr_dlgMsg());
+            notifyMessage.append("\n");
+            notifyMessage.append(Bundle.IngestManager_StartIngestJobsTask_run_startupErr_dlgSolution());
+            notifyMessage.append("\n");
+            notifyMessage.append(Bundle.IngestManager_StartIngestJobsTask_run_startupErr_dlgErrorList(startupErrors));
+            notifyMessage.append("\n\n");
+            JOptionPane.showMessageDialog(null, notifyMessage.toString(), Bundle.IngestManager_StartIngestJobsTask_run_startupErr_dlgTitle(), JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     synchronized void finishIngestJob(IngestJob job) {
