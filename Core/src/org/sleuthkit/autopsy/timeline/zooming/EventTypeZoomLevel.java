@@ -24,11 +24,15 @@ import org.openide.util.NbBundle;
  * Enum of event type zoom levels
  *
  */
+@NbBundle.Messages({
+    "EventTypeZoomLevel.rootType=Root Type",
+    "EventTypeZoomLevel.baseType=Base Type",
+    "EventTypeZoomLevel.subType=Sub Type"})
 public enum EventTypeZoomLevel implements DisplayNameProvider {
 
-    ROOT_TYPE(NbBundle.getMessage(EventTypeZoomLevel.class, "EventTypeZoomLevel.rootType")),
-    BASE_TYPE(NbBundle.getMessage(EventTypeZoomLevel.class, "EventTypeZoomLevel.baseType")),
-    SUB_TYPE(NbBundle.getMessage(EventTypeZoomLevel.class, "EventTypeZoomLevel.subType"));
+    ROOT_TYPE(Bundle.EventTypeZoomLevel_rootType()),
+    BASE_TYPE(Bundle.EventTypeZoomLevel_baseType()),
+    SUB_TYPE(Bundle.EventTypeZoomLevel_subType());
 
     @Override
     public String getDisplayName() {
