@@ -74,9 +74,7 @@ class KeywordSearchSettingsManager {
      * @throws KeywordSearchSettingsManagerException When the settings cannot be
      *                                               read from disk.
      */
-    private KeywordSearchSettingsManager() throws KeywordSearchSettingsManagerException {
-        prepopulateLists();
-        this.readSettings();
+    private KeywordSearchSettingsManager() {
     }
 
     /**
@@ -87,7 +85,7 @@ class KeywordSearchSettingsManager {
      * @throws KeywordSearchSettingsManagerException When the settings cannot be
      *                                               read from disk.
      */
-    static synchronized KeywordSearchSettingsManager getInstance() throws KeywordSearchSettingsManagerException {
+    static synchronized KeywordSearchSettingsManager getInstance() {
         if (instance == null) {
             instance = new KeywordSearchSettingsManager();
         }
@@ -115,7 +113,7 @@ class KeywordSearchSettingsManager {
      * @throws KeywordSearchSettingsManagerException If the settings cannot be
      *                                               read from disk.
      */
-    private void readSettings() throws KeywordSearchSettingsManagerException {
+    void readSettings() throws KeywordSearchSettingsManagerException {
         File serializedDefs = new File(CUR_LISTS_FILE);
         if (serializedDefs.exists()) {
             try {
@@ -126,34 +124,41 @@ class KeywordSearchSettingsManager {
                 throw new KeywordSearchSettingsManagerException("Couldn't read keyword search settings.", ex);
             }
         } else {
+            this.loadDefaultSettings();
             XmlKeywordSearchList xmlReader = XmlKeywordSearchList.getCurrent();
-            List<KeywordList> keywordLists = this.prepopulateLists();
+            List<KeywordList> newKeywordLists = new ArrayList<>();
+            List<KeywordList> keywordLists = this.settings.getKeywordLists();
+            newKeywordLists.addAll(keywordLists);
             List<KeywordList> xmlLists = xmlReader.load();
             if (xmlLists != null) {
-                keywordLists.addAll(xmlLists);
+                newKeywordLists.addAll(xmlLists);
             }
-            this.settings.setKeywordLists(keywordLists);
-            //setting default NSRL
-            if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_NSRL, "SkipKnown")) { //NON-NLS
-                settings.setSkipKnown(true);
-            }
-            //setting default Update Frequency
-            if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, "UpdateFrequency")) { //NON-NLS
-                settings.setUpdateFrequency(UpdateFrequency.DEFAULT);
-            }
-            //setting default Extract UTF8
-            if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, TextExtractor.ExtractOptions.EXTRACT_UTF8.toString())) {
-                settings.setStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString(), Boolean.TRUE.toString());
-            }
-            //setting default Extract UTF16
-            if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, TextExtractor.ExtractOptions.EXTRACT_UTF16.toString())) {
-                settings.setStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString(), Boolean.TRUE.toString());
-            }
-            //setting default Latin-1 Script
-            if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_SCRIPTS, SCRIPT.LATIN_1.name())) {
-                settings.setStringExtractOption(SCRIPT.LATIN_1.name(), Boolean.toString(true));
-            }
+            this.settings.setKeywordLists(newKeywordLists);
             this.writeSettings();
+        }
+    }
+
+    void loadDefaultSettings() {
+        List<KeywordList> keywordLists = this.prepopulateLists();
+        this.settings.setKeywordLists(keywordLists);
+        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_NSRL, "SkipKnown")) { //NON-NLS
+            settings.setSkipKnown(true);
+        }
+        //setting default Update Frequency
+        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, "UpdateFrequency")) { //NON-NLS
+            settings.setUpdateFrequency(UpdateFrequency.DEFAULT);
+        }
+        //setting default Extract UTF8
+        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, TextExtractor.ExtractOptions.EXTRACT_UTF8.toString())) {
+            settings.setStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString(), Boolean.TRUE.toString());
+        }
+        //setting default Extract UTF16
+        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, TextExtractor.ExtractOptions.EXTRACT_UTF16.toString())) {
+            settings.setStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString(), Boolean.TRUE.toString());
+        }
+        //setting default Latin-1 Script
+        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_SCRIPTS, SCRIPT.LATIN_1.name())) {
+            settings.setStringExtractOption(SCRIPT.LATIN_1.name(), Boolean.toString(true));
         }
     }
 
@@ -162,7 +167,7 @@ class KeywordSearchSettingsManager {
      *
      * @return The default lists.
      */
-    private List<KeywordList> prepopulateLists() {
+    List<KeywordList> prepopulateLists() {
         List<KeywordList> keywordLists = new ArrayList<>();
         //phone number
         List<Keyword> phones = new ArrayList<>();
@@ -247,12 +252,13 @@ class KeywordSearchSettingsManager {
         List<KeywordList> oldKeywordLists = settings.getKeywordLists();
         List<KeywordList> newKeywordLists = new ArrayList<>();
         newKeywordLists.addAll(oldKeywordLists);
-        newKeywordLists.add(list);
+
         for (int i = 0; i < newKeywordLists.size(); i++) {
             if (newKeywordLists.get(i).getName().equals(list.getName())) {
                 throw new KeywordSearchSettingsManagerException("There is already a keyword list with the same name as the given list.");
             }
         }
+        newKeywordLists.add(list);
         settings.setKeywordLists(newKeywordLists);
         try {
             this.writeSettings();

@@ -130,6 +130,12 @@ class LuceneQuery implements KeywordSearchQuery {
     @Override
     public QueryResults performQuery() throws NoOpenCoreException {
         KeywordSearchSettingsManager manager = KeywordSearchSettingsManager.getInstance();
+        try {
+            manager.readSettings();
+        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+            logger.log(Level.SEVERE, "Couldn't load settings, using defaults.", ex);
+            manager.loadDefaultSettings();
+        }
         QueryResults results = new QueryResults(this, keywordList);
         //in case of single term literal query there is only 1 term
         boolean showSnippets = manager.getShowSnippets();
@@ -342,6 +348,12 @@ class LuceneQuery implements KeywordSearchQuery {
          * configured to use snippets.
          */
         KeywordSearchSettingsManager manager = KeywordSearchSettingsManager.getInstance();
+        try {
+            manager.readSettings();
+        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+            logger.log(Level.SEVERE, "Couldn't load settings, using defaults.", ex);
+            manager.loadDefaultSettings();
+        }
         final String docId = solrDoc.getFieldValue(Server.Schema.ID.toString()).toString();
         String snippet = "";
         if (manager.getShowSnippets()) {

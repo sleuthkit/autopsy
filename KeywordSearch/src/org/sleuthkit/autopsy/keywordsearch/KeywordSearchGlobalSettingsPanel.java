@@ -81,7 +81,7 @@ final class KeywordSearchGlobalSettingsPanel extends IngestModuleGlobalSettingsP
         generalPanel.load();
 
         // Reload the XML to avoid 'ghost' vars
-        XmlKeywordSearchList.getCurrent().reload();
+        
     }
 
     @Override
@@ -97,7 +97,7 @@ final class KeywordSearchGlobalSettingsPanel extends IngestModuleGlobalSettingsP
     }
 
     public void cancel() {
-        XmlKeywordSearchList.getCurrent().reload();
+        
     }
 
     boolean valid() {

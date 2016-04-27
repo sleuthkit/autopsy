@@ -59,16 +59,17 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
     /**
      * Creates new form GlobalEditListPanel
      */
-    @Messages({"GlobalEditListPanel.settingsLoadFail.message=Failed to load keyword settings.",
+    @Messages({"GlobalEditListPanel.settingsLoadFail.message=Failed to load keyword settings, using defaults.",
         "GlobalEditListPanel.settingsLoadFail.title=Load Failed"})
     GlobalEditListPanel() {
         tableModel = new KeywordTableModel();
+        manager = KeywordSearchSettingsManager.getInstance();
         try {
-            manager = KeywordSearchSettingsManager.getInstance();
+            manager.readSettings();
         } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
             JOptionPane.showMessageDialog(null, Bundle.GlobalEditListPanel_settingsLoadFail_message(), Bundle.GlobalEditListPanel_settingsLoadFail_title(), JOptionPane.ERROR_MESSAGE);
             //OSTODO: FIGURE OUT HOW TO HANDLE LOAD FAILURE IN CONSTRUCTOR
-            return;
+            manager.loadDefaultSettings();
         }
         initComponents();
         customizeComponents();
@@ -528,15 +529,15 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
     @Messages({"GlobalEditListPanel.ingestMessageSettingFail.message=Failed to update ingest messages setting.",
         "GlobalEditListPanel.ingestMessageSettingFail.title=Ingest Messages Setting Change Failed"})
     private void ingestMessagesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ingestMessagesCheckboxActionPerformed
-     currentKeywordList.setIngestMessages(ingestMessagesCheckbox.isSelected());
-     try {
-         manager.updateList(currentKeywordList);
-     } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
-         JOptionPane.showMessageDialog(null, Bundle.GlobalEditListPanel_ingestMessageSettingFail_message(), Bundle.GlobalEditListPanel_ingestMessageSettingFail_title(), JOptionPane.ERROR_MESSAGE);
-         currentKeywordList.setIngestMessages(!ingestMessagesCheckbox.isSelected());
-         ingestMessagesCheckbox.setSelected(!ingestMessagesCheckbox.isSelected());
-         logger.log(Level.SEVERE, "Failed to add keyword to settings.", ex);
-     }
+        currentKeywordList.setIngestMessages(ingestMessagesCheckbox.isSelected());
+        try {
+            manager.updateList(currentKeywordList);
+        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+            JOptionPane.showMessageDialog(null, Bundle.GlobalEditListPanel_ingestMessageSettingFail_message(), Bundle.GlobalEditListPanel_ingestMessageSettingFail_title(), JOptionPane.ERROR_MESSAGE);
+            currentKeywordList.setIngestMessages(!ingestMessagesCheckbox.isSelected());
+            ingestMessagesCheckbox.setSelected(!ingestMessagesCheckbox.isSelected());
+            logger.log(Level.SEVERE, "Failed to add keyword to settings.", ex);
+        }
     }//GEN-LAST:event_ingestMessagesCheckboxActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel addKeywordPanel;

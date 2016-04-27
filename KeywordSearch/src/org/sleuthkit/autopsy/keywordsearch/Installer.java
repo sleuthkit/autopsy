@@ -23,10 +23,10 @@ import org.openide.modules.ModuleInstall;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.keywordsearch.Server.SolrServerNoPortException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
+import org.sleuthkit.autopsy.keywordsearch.Server.SolrServerNoPortException;
 
 /**
  * Starts up the Solr server when the module is loaded, and stops it when the
@@ -43,7 +43,7 @@ class Installer extends ModuleInstall {
     @Override
     public void restored() {
         //Setup the default KeywordSearch configuration files
-        KeywordSearchSettings.setDefaults();
+        //KeywordSearchSettings.setDefaults();
 
         Case.addEventSubscriber(Case.Events.CURRENT_CASE.toString(), new KeywordSearch.CaseChangeListener());
 

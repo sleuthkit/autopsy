@@ -131,7 +131,8 @@ final class XmlKeywordSearchList {
      * load and parse XML, then dispose
      */
     public List<KeywordList> load() {
-        final Document doc = XMLUtil.loadDoc(XmlKeywordSearchList.class, filePath);
+        final Document doc;
+        doc = XMLUtil.loadDoc(XmlKeywordSearchList.class, filePath);
         if (doc == null) {
             return null;
         }

@@ -97,14 +97,16 @@ public final class SearchRunner {
 
         // start the timer, if needed
         if ((jobs.size() > 0) && (updateTimerRunning == false)) {
+            KeywordSearchSettingsManager manager = KeywordSearchSettingsManager.getInstance();
             try {
-                final long updateIntervalMs = ((long) KeywordSearchSettingsManager.getInstance().getUpdateFrequency().getTime()) * 60 * 1000;
-                updateTimer.scheduleAtFixedRate(new UpdateTimerTask(), updateIntervalMs, updateIntervalMs);
-                updateTimerRunning = true;
+                manager.readSettings();
             } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
                 logger.log(Level.SEVERE, "Could not load update frequency setting, using default.", ex);
-
+                manager.loadDefaultSettings();
             }
+                final long updateIntervalMs = ((long) manager.getUpdateFrequency().getTime()) * 60 * 1000;
+                updateTimer.scheduleAtFixedRate(new UpdateTimerTask(), updateIntervalMs, updateIntervalMs);
+                updateTimerRunning = true;
         }
     }
 
@@ -543,6 +545,7 @@ public final class SearchRunner {
         private void updateKeywords() throws KeywordSearchSettingsManager.KeywordSearchSettingsManagerException {
             KeywordSearchSettingsManager loader;
             loader = KeywordSearchSettingsManager.getInstance();
+            loader.readSettings();
             keywords.clear();
             keywordToList.clear();
             keywordLists.clear();

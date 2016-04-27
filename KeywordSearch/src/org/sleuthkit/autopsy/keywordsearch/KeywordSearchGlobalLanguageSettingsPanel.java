@@ -63,6 +63,7 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
                         toUpdate.add(s);
                     }
                 }
+                store();
             }
         };
 
@@ -100,14 +101,14 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
     }
 
     private void reloadScriptsCheckBoxes() {
-        KeywordSearchSettingsManager manager;
+        KeywordSearchSettingsManager manager = KeywordSearchSettingsManager.getInstance();
         try {
-            manager = KeywordSearchSettingsManager.getInstance();
+            manager.readSettings();
         } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
             JOptionPane.showMessageDialog(null, Bundle.KeywordSearchGlobalLanguageSettingsPanel_failedReadSettings_message(),
                     Bundle.KeywordSearchGlobalLanguageSettingsPanel_failedReadSettings_title(), JOptionPane.ERROR_MESSAGE);
-            logger.log(Level.SEVERE, "Failed to read keyword search settings.", ex);
-            return;
+            logger.log(Level.SEVERE, "Failed to read keyword search settings, using default settings.", ex);
+            manager.loadDefaultSettings();
         }
         boolean utf16
                 = Boolean.parseBoolean(manager.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString()));
@@ -131,14 +132,14 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
     }
 
     private void activateWidgets() {
-        KeywordSearchSettingsManager manager;
+        KeywordSearchSettingsManager manager = KeywordSearchSettingsManager.getInstance();
         try {
-            manager = KeywordSearchSettingsManager.getInstance();
+            manager.readSettings();
         } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
             JOptionPane.showMessageDialog(null, Bundle.KeywordSearchGlobalLanguageSettingsPanel_failedReadSettings_message(),
                     Bundle.KeywordSearchGlobalLanguageSettingsPanel_failedReadSettings_title(), JOptionPane.ERROR_MESSAGE);
-            logger.log(Level.SEVERE, "Failed to read keyword search settings.", ex);
-            return;
+            logger.log(Level.SEVERE, "Failed to read keyword search settings, using defaults.", ex);
+            manager.loadDefaultSettings();
         }
         reloadScriptsCheckBoxes();
 
@@ -250,6 +251,7 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
         boolean selected = this.enableUTF8Checkbox.isSelected();
 
         activateScriptsCheckboxes(selected || this.enableUTF16Checkbox.isSelected());
+        store();
 
     }//GEN-LAST:event_enableUTF8CheckboxActionPerformed
 
@@ -258,6 +260,7 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
         boolean selected = this.enableUTF16Checkbox.isSelected();
 
         activateScriptsCheckboxes(selected || this.enableUTF8Checkbox.isSelected());
+        store();
     }//GEN-LAST:event_enableUTF16CheckboxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -270,19 +273,16 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
     // End of variables declaration//GEN-END:variables
 
     @Override
-    @Messages({"KeywordSearchGlobalLanguageSettingsPanel.failedReadSettings.message=Couldn't read keyword search settings",
-        "KeywordSearchGlobalLanguageSettingsPanel.failedReadSettings.title=Error Loading Settings",
+    @Messages({
         "KeywordSearchGlobalLanguageSettingsPanel.failedWriteSettings.message=Couldn't write keyword search settings",
         "KeywordSearchGlobalLanguageSettingsPanel.failedWriteSettings.title=Error Writing Settings"})
     public void store() {
-        KeywordSearchSettingsManager manager;
+        KeywordSearchSettingsManager manager = KeywordSearchSettingsManager.getInstance();
         try {
-            manager = KeywordSearchSettingsManager.getInstance();
+            manager.readSettings();
         } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
-            JOptionPane.showMessageDialog(null, Bundle.KeywordSearchGlobalLanguageSettingsPanel_failedReadSettings_message(),
-                    Bundle.KeywordSearchGlobalLanguageSettingsPanel_failedReadSettings_title(), JOptionPane.ERROR_MESSAGE);
-            logger.log(Level.SEVERE, "Failed to read keyword search settings.", ex);
-            return;
+            logger.log(Level.SEVERE, "Failed to read keyword search settings, using defaults.", ex);
+            manager.loadDefaultSettings();
         }
         try {
             manager.setStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString(),
@@ -295,8 +295,9 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
                 manager.setStringExtractScripts(toUpdate);
             }
         } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
-            JOptionPane.showMessageDialog(null, Bundle.KeywordSearchGlobalLanguageSettingsPanel_failedReadSettings_message(),
-                    Bundle.KeywordSearchGlobalLanguageSettingsPanel_failedReadSettings_title(), JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, Bundle.KeywordSearchGlobalLanguageSettingsPanel_failedWriteSettings_message(),
+                    Bundle.KeywordSearchGlobalLanguageSettingsPanel_failedWriteSettings_title(), JOptionPane.ERROR_MESSAGE);
+            this.reloadScriptsCheckBoxes();
             logger.log(Level.SEVERE, "Failed to write keyword search settings.", ex);
         }
 

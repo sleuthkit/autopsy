@@ -24,11 +24,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
+import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
@@ -41,15 +44,19 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
     private final KeywordListsTableModel tableModel = new KeywordListsTableModel();
     private final List<String> keywordListNames = new ArrayList<>();
     private final Map<String, Boolean> keywordListStates = new HashMap<>();
-    private final KeywordSearchSettingsManager keywordListsManager;
+    private KeywordSearchSettingsManager keywordListsManager;
+    private static final Logger logger = Logger.getLogger(KeywordSearchJobSettingsPanel.class.getName());
 
+    @Messages({"KeywordSearchJobSettingsPanel.settingsLoadFail.message=Failed to load keyword settings, using defaults.",
+        "KeywordSearchJobSettingsPanel.settingsLoadFail.title=Load Failed"})
     KeywordSearchJobSettingsPanel(KeywordSearchJobSettings initialSettings) {
+        keywordListsManager = KeywordSearchSettingsManager.getInstance();
         try {
-            keywordListsManager = KeywordSearchSettingsManager.getInstance();
+            keywordListsManager.readSettings();
         } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
-            JOptionPane.showMessageDialog(null, Bundle.GlobalEditListPanel_settingsLoadFail_message(), Bundle.GlobalEditListPanel_settingsLoadFail_title(), JOptionPane.ERROR_MESSAGE);
-            //OSTODO: FIGURE OUT HOW TO HANDLE LOAD FAILURE IN CONSTRUCTOR
-            return;
+            JOptionPane.showMessageDialog(null, Bundle.KeywordSearchJobSettingsPanel_settingsLoadFail_message(), Bundle.KeywordSearchJobSettingsPanel_settingsLoadFail_title(), JOptionPane.ERROR_MESSAGE);
+            logger.log(Level.SEVERE, "Couldn't load settings, using defaults.", ex);
+            keywordListsManager.loadDefaultSettings();
         }
         initializeKeywordListSettings(initialSettings);
         initComponents();

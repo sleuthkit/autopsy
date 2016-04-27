@@ -145,9 +145,10 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
             throw new IngestModuleException(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.startUp.fileTypeDetectorInitializationException.msg"), ex);
         }
+        manager = KeywordSearchSettingsManager.getInstance();
         try {
-            manager = KeywordSearchSettingsManager.getInstance();
-        } catch(KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+            manager.readSettings();
+        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
             throw new IngestModuleException("Couldn't create keyword settings manager.", ex);
         }
         ingester = Server.getIngester();

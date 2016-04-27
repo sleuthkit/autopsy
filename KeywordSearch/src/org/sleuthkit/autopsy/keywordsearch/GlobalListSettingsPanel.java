@@ -33,15 +33,16 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
     private final GlobalEditListPanel editListPanel = new GlobalEditListPanel();
     private KeywordSearchSettingsManager manager;
 
-    @Messages({"GlobalListSettingsPanel.settingsLoadFail.message=Failed to load keyword settings.",
+    @Messages({"GlobalListSettingsPanel.settingsLoadFail.message=Failed to load keyword settings, using defaults.",
         "GlobalListSettingsPanel.settingsLoadFail.title=Load Failed"})
     GlobalListSettingsPanel() {
+        manager = KeywordSearchSettingsManager.getInstance();
         try {
-            manager = KeywordSearchSettingsManager.getInstance();
+            manager.readSettings();
         } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
             JOptionPane.showMessageDialog(null, Bundle.GlobalEditListPanel_settingsLoadFail_message(), Bundle.GlobalEditListPanel_settingsLoadFail_title(), JOptionPane.ERROR_MESSAGE);
             //OSTODO: FIGURE OUT HOW TO HANDLE LOAD FAILURE IN CONSTRUCTOR
-            return;
+            manager.loadDefaultSettings();
         }
         initComponents();
         customizeComponents();
@@ -49,7 +50,8 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
 
     }
 
-    @Messages({"# {0} - keyword list", "KeywordSearchConfigurationPanel1.customizeComponents.kwListSaveFailedMsg=Failed to save <{0}>"})
+    @Messages({"# {0} - keyword list", "KeywordSearchConfigurationPanel1.customizeComponents.kwListSaveFailedMsg=Failed to save <{0}>",
+        "KeywordSearchConfigurationPanel1.customizeComponents.kwListSaveFailedTitle=Failed to save"})
 
     private void customizeComponents() {
         listsManagementPanel.addListSelectionListener(editListPanel);
@@ -60,7 +62,11 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
                     KeywordList toDelete = editListPanel.getCurrentKeywordList();
                     editListPanel.setCurrentKeywordList(null);
                     editListPanel.setButtonStates();
-                    manager.removeList(toDelete);
+                    try {
+                        manager.removeList(toDelete);
+                    } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+                        JOptionPane.showMessageDialog(null, Bundle.KeywordSearchConfigurationPanel1_customizeComponents_kwListSaveFailedMsg(toDelete.getName()), Bundle.KeywordSearchConfigurationPanel1_customizeComponents_kwListSaveFailedTitle(), JOptionPane.ERROR_MESSAGE);
+                    }
                     listsManagementPanel.resync();
                 }
             }
@@ -139,7 +145,6 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
 
     @Override
     public void store() {
-        XmlKeywordSearchList.getCurrent().save(false);
         //refresh the list viewer/searcher panel
         DropdownListSearchPanel.getDefault().resync();
     }

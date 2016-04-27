@@ -21,7 +21,9 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
+import java.util.logging.Level;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
@@ -34,6 +36,7 @@ abstract class KeywordSearchPanel extends javax.swing.JPanel {
 
     private final String keywordSearchErrorDialogHeader = org.openide.util.NbBundle.getMessage(this.getClass(), "AbstractKeywordSearchPerformer.search.dialogErrorHeader");
     protected int filesIndexed;
+    private static final Logger logger = Logger.getLogger(KeywordSearchPanel.class.getName());
 
     KeywordSearchPanel() {
         initListeners();
@@ -84,6 +87,12 @@ abstract class KeywordSearchPanel extends javax.swing.JPanel {
     public void search() {
         boolean isIngestRunning = IngestManager.getInstance().isIngestRunning();
         KeywordSearchSettingsManager manager = KeywordSearchSettingsManager.getInstance();
+        try {
+            manager.readSettings();
+        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+            logger.log(Level.SEVERE, "Couldn't load settings, using defaults.", ex);
+            manager.loadDefaultSettings();
+        }
 
         if (filesIndexed == 0) {
             try { // see if another node added any indexed files

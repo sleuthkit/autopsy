@@ -228,6 +228,13 @@ class RawText implements IndexedText {
      */
     private String getContentText(int currentPage, boolean hasChunks) throws SolrServerException {
         final Server solrServer = KeywordSearch.getServer();
+        KeywordSearchSettingsManager manager = KeywordSearchSettingsManager.getInstance();
+        try {
+            manager.readSettings();
+        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+            logger.log(Level.SEVERE, "Couldn't load settings, using defaults.", ex);
+            manager.loadDefaultSettings();
+        }
 
         if (hasChunks == false) {
             //if no chunks, it is safe to assume there is no text content
@@ -238,7 +245,7 @@ class RawText implements IndexedText {
             if (content instanceof AbstractFile) {
                 //we know it's AbstractFile, but do quick check to make sure if we index other objects in future
                 boolean isKnown = TskData.FileKnown.KNOWN.equals(((AbstractFile) content).getKnown());
-                if (isKnown && KeywordSearchSettingsManager.getInstance().getSkipKnown()) {
+                if (isKnown && manager.getSkipKnown()) {
                     msg = NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.getSolrContent.knownFileMsg", name);
                 }
             }

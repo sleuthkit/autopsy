@@ -325,14 +325,16 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
         private KeywordSearchSettingsManager listsHandle;
         private List<ListTableEntry> listData = new ArrayList<>();
 
-        @Messages({"KeywordListsTableModel.settingsLoadFail.message=Couldn't load keyword list settings.",
-        "KeywordListsTableModel.settingsLoadFail.title=Failed to load settings."})
+        @Messages({"KeywordListsTableModel.settingsLoadFail.message=Couldn't load keyword list settings, using defaults.",
+            "KeywordListsTableModel.settingsLoadFail.title=Failed to load settings."})
         private KeywordListsTableModel() {
+            listsHandle = KeywordSearchSettingsManager.getInstance();
             try {
-                listsHandle = KeywordSearchSettingsManager.getInstance();
+                listsHandle.readSettings();
             } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
                 JOptionPane.showMessageDialog(null, Bundle.KeywordListsTableModel_settingsLoadFail_message(), Bundle.KeywordListsTableModel_settingsLoadFail_title(), JOptionPane.ERROR_MESSAGE);
                 logger.log(Level.SEVERE, "Couldn't load keyword settings.", ex);
+                listsHandle.loadDefaultSettings();
             }
         }
 

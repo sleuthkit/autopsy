@@ -23,6 +23,8 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * A manager for keyword lists.
@@ -36,15 +38,18 @@ public class KeywordListsManager extends Observable {
     private static KeywordListsManager instance;
     private final PropertyChangeListener listsChangeListener;
     private KeywordSearchSettingsManager manager;
+    private static final Logger logger = Logger.getLogger(KeywordListsManager.class.getName());
 
     /**
      * Constructs a keyword lists manager.
      */
     private KeywordListsManager() {
+        manager = KeywordSearchSettingsManager.getInstance();
         try {
-            manager = KeywordSearchSettingsManager.getInstance();
+            manager.readSettings();
         } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
-            //OSTODO
+            manager.loadDefaultSettings();
+            logger.log(Level.SEVERE, "Couldn't load settings, using defaults.", ex);
         }
         this.listsChangeListener = new PropertyChangeListener() {
             @Override
@@ -78,12 +83,12 @@ public class KeywordListsManager extends Observable {
         }
         return names;
     }
-    
+
     /**
      * Force reload of the keyword lists XML file.
      */
-    public static void reloadKeywordLists(){
-        XmlKeywordSearchList.getCurrent().reload();
-    }    
+    public static void reloadKeywordLists() {
+
+    }
 
 }

@@ -44,14 +44,14 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
     }
 
     private void activateWidgets() {
-        KeywordSearchSettingsManager manager;
+        KeywordSearchSettingsManager manager = KeywordSearchSettingsManager.getInstance();
         try {
-            manager = KeywordSearchSettingsManager.getInstance();
+            manager.readSettings();
         } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
             JOptionPane.showMessageDialog(null, Bundle.KeywordSearchGlobalSearchSettingsPanel_failedReadSettings_message(),
                     Bundle.KeywordSearchGlobalSearchSettingsPanel_failedReadSettings_title(), JOptionPane.ERROR_MESSAGE);
-            logger.log(Level.SEVERE, "Failed to read keyword search settings.", ex);
-            return;
+            logger.log(Level.SEVERE, "Failed to read keyword search settings, using defaults.", ex);
+            manager.loadDefaultSettings();
         }
         skipNSRLCheckBox.setSelected(manager.getSkipKnown());
         showSnippetsCB.setSelected(manager.getShowSnippets());
@@ -257,9 +257,9 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
     @Messages({"KeywordSearchGlobalSearchSettingsPanel.failedWriteSettings.message=Couldn't write keyword search settings",
         "KeywordSearchGlobalSearchSettingsPanel.failedWriteSettings.title=Error Writing Settings"})
     public void store() {
-        KeywordSearchSettingsManager manager;
+        KeywordSearchSettingsManager manager = KeywordSearchSettingsManager.getInstance();
         try {
-            manager = KeywordSearchSettingsManager.getInstance();
+            manager.readSettings();
             manager.setSkipKnown(skipNSRLCheckBox.isSelected());
             manager.setUpdateFrequency(getSelectedTimeValue());
             manager.setShowSnippets(showSnippetsCB.isSelected());
@@ -300,17 +300,17 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
         return UpdateFrequency.DEFAULT;
     }
 
-    @Messages({"KeywordSearchGlobalSearchSettingsPanel.failedReadSettings.message=Couldn't read keyword search settings",
+    @Messages({"KeywordSearchGlobalSearchSettingsPanel.failedReadSettings.message=Couldn't read keyword search settings, using defaults.",
         "KeywordSearchGlobalSearchSettingsPanel.failedReadSettings.title=Error Loading Settings"})
     private void customizeComponents() {
-        KeywordSearchSettingsManager manager;
+        KeywordSearchSettingsManager manager = KeywordSearchSettingsManager.getInstance();
         try {
-            manager = KeywordSearchSettingsManager.getInstance();
+            manager.readSettings();
         } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
             JOptionPane.showMessageDialog(null, Bundle.KeywordSearchGlobalSearchSettingsPanel_failedReadSettings_message(),
                     Bundle.KeywordSearchGlobalSearchSettingsPanel_failedReadSettings_title(), JOptionPane.ERROR_MESSAGE);
-            logger.log(Level.SEVERE, "Failed to read keyword search settings.", ex);
-            return;
+            logger.log(Level.SEVERE, "Failed to read keyword search settings, using defaults.", ex);
+            manager.loadDefaultSettings();
         }
 
         timeGroup.add(timeRadioButton1);
