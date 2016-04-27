@@ -54,7 +54,7 @@ public class HistoryToolBar extends ToolBar {
     }
 
     @FXML
-    @NbBundle.Messages({"HistoryToolBar.historyLabel.text=Zoom & Filters History"})
+    @NbBundle.Messages({"HistoryToolBar.historyLabel.text=History"})
     void initialize() {
         assert historyLabel != null : "fx:id=\"historyLabel\" was not injected: check your FXML file 'HistoryToolBar.fxml'.";
         assert backButton != null : "fx:id=\"backButton\" was not injected: check your FXML file 'HistoryToolBar.fxml'.";
