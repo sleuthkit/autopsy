@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,59 +19,43 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class IngestJobStartResult {
 
-    private IngestJob job; // may be null
-    private IngestManagerException startupException; // may be null
-    private List<IngestModuleError> moduleErrors; // may be empty
+    private final IngestJob job;
+    private final IngestManagerException startupException;
+    private final List<IngestModuleError> moduleErrors;
 
-    public IngestJobStartResult() {
-        job = null;
-        startupException = null;
-        moduleErrors = new ArrayList<>();
+    IngestJobStartResult(IngestJob job, IngestManagerException startupException, List<IngestModuleError> moduleErrors) {
+        this.job = job;
+        this.startupException = startupException;
+        if (moduleErrors == null) {
+            this.moduleErrors = new ArrayList<>();
+        } else {
+            this.moduleErrors = moduleErrors;
+        }
     }
 
     /**
-     * @return the job
+     * @return the job, which may be null
      */
     public IngestJob getJob() {
         return job;
     }
 
     /**
-     * @param job the job to set
-     */
-    public void setJob(IngestJob job) {
-        this.job = job;
-    }
-
-    /**
-     * @return the startupException
+     * @return the startupException, which may be null
      */
     public IngestManagerException getStartupException() {
         return startupException;
     }
 
     /**
-     * @param startupException the startupException to set
-     */
-    public void setStartupException(IngestManagerException startupException) {
-        this.startupException = startupException;
-    }
-
-    /**
-     * @return the moduleErrors
+     * @return the moduleErrors, which may be empty
      */
     public List<IngestModuleError> getModuleErrors() {
-        return moduleErrors;
-    }
-
-    /**
-     * @param moduleErrors the moduleErrors to set
-     */
-    public void setModuleErrors(List<IngestModuleError> moduleErrors) {
-        this.moduleErrors = moduleErrors;
+        return Collections.unmodifiableList(moduleErrors);
     }
 }

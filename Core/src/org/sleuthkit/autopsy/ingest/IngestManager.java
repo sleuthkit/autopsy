@@ -500,14 +500,13 @@ public class IngestManager {
      *         start the ingest job.
      */
     public synchronized IngestJobStartResult beginIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
-        IngestJobStartResult ingestJobStartResult = new IngestJobStartResult();
         if (this.jobCreationIsEnabled) {
             IngestJob job = new IngestJob(dataSources, settings, RuntimeProperties.coreComponentsAreActive());
             if (job.hasIngestPipeline()) {
-                ingestJobStartResult = this.startIngestJob(job); // Start job
+                return this.startIngestJob(job); // Start job
             }
         }
-        return ingestJobStartResult;
+        return new IngestJobStartResult(null, new IngestManagerException("Job creation is not enabled."), null);
     }
 
     /**
@@ -534,8 +533,7 @@ public class IngestManager {
      *         start the ingest job.
      */
     private IngestJobStartResult startIngestJob(IngestJob job) {
-        IngestJobStartResult ingestJobStartResult = new IngestJobStartResult();
-        ingestJobStartResult.setJob(job);
+        List<IngestModuleError> errors = null;
         if (this.jobCreationIsEnabled) {
             // multi-user cases must have multi-user database service running            
             if (Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) {
@@ -555,12 +553,10 @@ public class IngestManager {
                             });
                         }
                         // abort ingest
-                        ingestJobStartResult.setStartupException(new IngestManagerException("Ingest aborted.", new Exception("Remote database is down"))); // KDM
-                        return ingestJobStartResult;
+                        return new IngestJobStartResult(null, new IngestManagerException("Ingest aborted. Remote database is down"), Collections.<IngestModuleError>emptyList());
                     }
                 } catch (ServicesMonitor.ServicesMonitorException ex) {
-                    ingestJobStartResult.setStartupException(new IngestManagerException("Ingest aborted.", ex));
-                    return ingestJobStartResult;
+                    return new IngestJobStartResult(null, new IngestManagerException("Database server is down.", ex), Collections.<IngestModuleError>emptyList());
                 }
             }
 
@@ -571,45 +567,54 @@ public class IngestManager {
             synchronized (jobsById) {
                 jobsById.put(job.getId(), job);
             }
-            ingestJobStartResult.setModuleErrors(job.start());
-            if (ingestJobStartResult.getModuleErrors().isEmpty()) {
+            errors = job.start();
+            if (errors.isEmpty()) {
                 this.fireIngestJobStarted(job.getId());
                 IngestManager.logger.log(Level.INFO, "Ingest job {0} started", job.getId()); //NON-NLS
             } else {
                 synchronized (jobsById) {
                     this.jobsById.remove(job.getId());
                 }
-                for (IngestModuleError error : ingestJobStartResult.getModuleErrors()) {
+                for (IngestModuleError error : errors) {
                     logger.log(Level.SEVERE, String.format("Error starting %s ingest module for job %d", error.getModuleDisplayName(), job.getId()), error.getModuleError()); //NON-NLS
                 }
                 IngestManager.logger.log(Level.SEVERE, "Ingest job {0} could not be started", job.getId()); //NON-NLS
                 if (RuntimeProperties.coreComponentsAreActive()) {
-                    EventQueue.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            StringBuilder moduleStartUpErrors = new StringBuilder();
-                            for (IngestModuleError error : ingestJobStartResult.getModuleErrors()) {
-                                String moduleName = error.getModuleDisplayName();
-                                moduleStartUpErrors.append(moduleName);
-                                moduleStartUpErrors.append(": ");
-                                moduleStartUpErrors.append(error.getModuleError().getLocalizedMessage());
-                                moduleStartUpErrors.append("\n");
-                            }
-                            StringBuilder notifyMessage = new StringBuilder();
-                            notifyMessage.append(Bundle.IngestManager_StartIngestJobsTask_run_startupErr_dlgMsg());
-                            notifyMessage.append("\n");
-                            notifyMessage.append(Bundle.IngestManager_StartIngestJobsTask_run_startupErr_dlgSolution());
-                            notifyMessage.append("\n");
-                            notifyMessage.append(Bundle.IngestManager_StartIngestJobsTask_run_startupErr_dlgErrorList(moduleStartUpErrors.toString()));
-                            notifyMessage.append("\n\n");
-                            JOptionPane.showMessageDialog(null, notifyMessage.toString(), Bundle.IngestManager_StartIngestJobsTask_run_startupErr_dlgTitle(), JOptionPane.ERROR_MESSAGE);
-                        }
-                    });
+
+                    StringBuilder moduleStartUpErrors = new StringBuilder();
+                    for (IngestModuleError error : errors) {
+                        String moduleName = error.getModuleDisplayName();
+                        moduleStartUpErrors.append(moduleName);
+                        moduleStartUpErrors.append(": ");
+                        moduleStartUpErrors.append(error.getModuleError().getLocalizedMessage());
+                        moduleStartUpErrors.append("\n");
+                    }
+                    EventQueue.invokeLater(new NotifyUserOfErrors(moduleStartUpErrors.toString()));
                 }
             }
-
         }
-        return ingestJobStartResult;
+        return new IngestJobStartResult(job, null, errors);
+    }
+
+    class NotifyUserOfErrors implements Runnable {
+
+        private String startupErrors;
+
+        NotifyUserOfErrors(String startupErrors) {
+            this.startupErrors = startupErrors;
+        }
+
+        @Override
+        public void run() {
+            StringBuilder notifyMessage = new StringBuilder();
+            notifyMessage.append(Bundle.IngestManager_StartIngestJobsTask_run_startupErr_dlgMsg());
+            notifyMessage.append("\n");
+            notifyMessage.append(Bundle.IngestManager_StartIngestJobsTask_run_startupErr_dlgSolution());
+            notifyMessage.append("\n");
+            notifyMessage.append(Bundle.IngestManager_StartIngestJobsTask_run_startupErr_dlgErrorList(startupErrors));
+            notifyMessage.append("\n\n");
+            JOptionPane.showMessageDialog(null, notifyMessage.toString(), Bundle.IngestManager_StartIngestJobsTask_run_startupErr_dlgTitle(), JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     synchronized void finishIngestJob(IngestJob job) {
