@@ -505,7 +505,11 @@ public class IngestManager {
             IngestJob job = new IngestJob(dataSources, settings, RuntimeProperties.coreComponentsAreActive());
             if (job.hasIngestPipeline()) {
                 errors.addAll(this.startIngestJob(job)); // capture any errors 
-                return job;
+                if (errors.isEmpty()) {
+                    return job;
+                } else {
+                    return null;
+                }
             }
         }
         return null;
