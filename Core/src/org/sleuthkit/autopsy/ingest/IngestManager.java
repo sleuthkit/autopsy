@@ -24,6 +24,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -490,6 +491,15 @@ public class IngestManager {
         }
     }
 
+    /**
+     * Starts an ingest job that will process a collection of data sources.
+     *
+     * @param dataSources The data sources to process.
+     * @param settings    The settings for the ingest job.
+     * @param errors      Out parameter. This is a list of errors encountered.
+     *
+     * @return The ingest job that was started on success or null on failure.
+     */
     public synchronized IngestJob beginIngestJob(Collection<Content> dataSources, IngestJobSettings settings, List<IngestModuleError> errors) {
         if (this.jobCreationIsEnabled) {
             IngestJob job = new IngestJob(dataSources, settings, RuntimeProperties.coreComponentsAreActive());
@@ -502,13 +512,14 @@ public class IngestManager {
     }
 
     /**
-     * Deprecated. Use beginIngestJob() instead. Starts an ingest job that will
-     * process a collection of data sources.
+     * Starts an ingest job that will process a collection of data sources.
      *
      * @param dataSources The data sources to process.
      * @param settings    The settings for the ingest job.
      *
      * @return The ingest job that was started on success or null on failure.
+     *
+     * @Deprecated. Use beginIngestJob() instead.
      */
     @Deprecated
     public synchronized IngestJob startIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
@@ -524,7 +535,6 @@ public class IngestManager {
      * @return A list of errors, empty if the job was successfully started
      */
     private List<IngestModuleError> startIngestJob(IngestJob job) {
-        List<IngestModuleError> errors = new ArrayList<>();
         if (this.jobCreationIsEnabled) {
             // multi-user cases must have multi-user database service running            
             if (Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) {
@@ -544,12 +554,10 @@ public class IngestManager {
                             });
                         }
                         // abort ingest
-                        errors.add(new IngestModuleError(Bundle.IngestAborted(), null));
-                        return errors;
+                        return Collections.<IngestModuleError>emptyList();
                     }
-                } catch (ServicesMonitor.ServicesMonitorException ex) {
-                    errors.add(new IngestModuleError(Bundle.IngestAborted(), ex));
-                    return errors;
+                } catch (ServicesMonitor.ServicesMonitorException ignore) {
+                    return Collections.<IngestModuleError>emptyList();
                 }
             }
 
@@ -560,7 +568,7 @@ public class IngestManager {
             synchronized (jobsById) {
                 jobsById.put(job.getId(), job);
             }
-            errors = job.start();
+            List<IngestModuleError> errors = job.start();
             if (errors.isEmpty()) {
                 this.fireIngestJobStarted(job.getId());
                 IngestManager.logger.log(Level.INFO, "Ingest job {0} started", job.getId()); //NON-NLS
@@ -573,40 +581,32 @@ public class IngestManager {
                 }
                 IngestManager.logger.log(Level.SEVERE, "Ingest job {0} could not be started", job.getId()); //NON-NLS
                 if (RuntimeProperties.coreComponentsAreActive()) {
-                    StringBuilder moduleStartUpErrors = new StringBuilder();
-                    for (IngestModuleError error : errors) {
-                        String moduleName = error.getModuleDisplayName();
-                        moduleStartUpErrors.append(moduleName);
-                        moduleStartUpErrors.append(": ");
-                        moduleStartUpErrors.append(error.getModuleError().getLocalizedMessage());
-                        moduleStartUpErrors.append("\n");
-                    }
-                    EventQueue.invokeLater(new NotifyUserOfErrors(moduleStartUpErrors.toString()));
+                    EventQueue.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            StringBuilder moduleStartUpErrors = new StringBuilder();
+                            for (IngestModuleError error : errors) {
+                                String moduleName = error.getModuleDisplayName();
+                                moduleStartUpErrors.append(moduleName);
+                                moduleStartUpErrors.append(": ");
+                                moduleStartUpErrors.append(error.getModuleError().getLocalizedMessage());
+                                moduleStartUpErrors.append("\n");
+                            }
+                            StringBuilder notifyMessage = new StringBuilder();
+                            notifyMessage.append(Bundle.IngestManager_StartIngestJobsTask_run_startupErr_dlgMsg());
+                            notifyMessage.append("\n");
+                            notifyMessage.append(Bundle.IngestManager_StartIngestJobsTask_run_startupErr_dlgSolution());
+                            notifyMessage.append("\n");
+                            notifyMessage.append(Bundle.IngestManager_StartIngestJobsTask_run_startupErr_dlgErrorList(moduleStartUpErrors.toString()));
+                            notifyMessage.append("\n\n");
+                            JOptionPane.showMessageDialog(null, notifyMessage.toString(), Bundle.IngestManager_StartIngestJobsTask_run_startupErr_dlgTitle(), JOptionPane.ERROR_MESSAGE);
+                        }
+                    });
                 }
             }
+            return errors;
         }
-        return errors;
-    }
-
-    class NotifyUserOfErrors implements Runnable {
-
-        private String startupErrors;
-
-        NotifyUserOfErrors(String startupErrors) {
-            this.startupErrors = startupErrors;
-        }
-
-        @Override
-        public void run() {
-            StringBuilder notifyMessage = new StringBuilder();
-            notifyMessage.append(Bundle.IngestManager_StartIngestJobsTask_run_startupErr_dlgMsg());
-            notifyMessage.append("\n");
-            notifyMessage.append(Bundle.IngestManager_StartIngestJobsTask_run_startupErr_dlgSolution());
-            notifyMessage.append("\n");
-            notifyMessage.append(Bundle.IngestManager_StartIngestJobsTask_run_startupErr_dlgErrorList(startupErrors));
-            notifyMessage.append("\n\n");
-            JOptionPane.showMessageDialog(null, notifyMessage.toString(), Bundle.IngestManager_StartIngestJobsTask_run_startupErr_dlgTitle(), JOptionPane.ERROR_MESSAGE);
-        }
+        return Collections.<IngestModuleError>emptyList();
     }
 
     synchronized void finishIngestJob(IngestJob job) {
