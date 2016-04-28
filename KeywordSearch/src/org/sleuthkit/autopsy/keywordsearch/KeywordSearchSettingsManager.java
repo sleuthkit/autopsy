@@ -147,6 +147,9 @@ class KeywordSearchSettingsManager {
         } else {
             settings.setSkipKnown(true);
         }
+        if (ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, "showSnippets")) {
+            settings.setShowSnippets(ModuleSettings.getConfigSetting(KeywordSearchSettings.PROPERTIES_OPTIONS, "showSnippets").equals("true")); //NON-NLS
+        }
         //setting default Update Frequency
         if (ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, "UpdateFrequency")) { //NON-NLS
             settings.setUpdateFrequency(UpdateFrequency.valueOf(ModuleSettings.getConfigSetting(KeywordSearchSettings.PROPERTIES_OPTIONS, "UpdateFrequency"))); //NON-NLS
