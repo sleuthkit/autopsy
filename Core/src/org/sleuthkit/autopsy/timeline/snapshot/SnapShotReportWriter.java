@@ -98,7 +98,7 @@ public class SnapShotReportWriter {
         Files.createDirectories(reportFolderPath);
 
         //save the snapshot in the report directory
-        ImageIO.write(image, "png", reportFolderPath.resolve("snapshot.png").toFile());
+        ImageIO.write(image, "png", reportFolderPath.resolve("snapshot.png").toFile()); //NON-NLS
 
         copyResources();
 
@@ -116,12 +116,12 @@ public class SnapShotReportWriter {
     private void writeSnapShotHTMLFile() throws IOException {
         //make a map of context objects to resolve template paramaters against
         HashMap<String, Object> snapShotContext = new HashMap<>();
-        snapShotContext.put("reportTitle", reportName);
-        snapShotContext.put("startTime", zoomParams.getTimeRange().getStart().toString(DateTimeFormat.fullDateTime()));
-        snapShotContext.put("endTime", zoomParams.getTimeRange().getEnd().toString(DateTimeFormat.fullDateTime()));
-        snapShotContext.put("zoomParams", zoomParams);
+        snapShotContext.put("reportTitle", reportName); //NON-NLS
+        snapShotContext.put("startTime", zoomParams.getTimeRange().getStart().toString(DateTimeFormat.fullDateTime())); //NON-NLS
+        snapShotContext.put("endTime", zoomParams.getTimeRange().getEnd().toString(DateTimeFormat.fullDateTime())); //NON-NLS
+        snapShotContext.put("zoomParams", zoomParams); //NON-NLS
 
-        fillTemplateAndWrite("/org/sleuthkit/autopsy/timeline/snapshot/snapshot_template.html", "Snapshot", snapShotContext, reportFolderPath.resolve("snapshot.html"));
+        fillTemplateAndWrite("/org/sleuthkit/autopsy/timeline/snapshot/snapshot_template.html", "Snapshot", snapShotContext, reportFolderPath.resolve("snapshot.html")); //NON-NLS
     }
 
     /**
@@ -135,10 +135,10 @@ public class SnapShotReportWriter {
     private Path writeIndexHTML() throws IOException {
         //make a map of context objects to resolve template paramaters against
         HashMap<String, Object> indexContext = new HashMap<>();
-        indexContext.put("currentCase", currentCase);
-        Path reportIndexFile = reportFolderPath.resolve("index.html");
+        indexContext.put("currentCase", currentCase); //NON-NLS
+        Path reportIndexFile = reportFolderPath.resolve("index.html"); //NON-NLS
 
-        fillTemplateAndWrite("/org/sleuthkit/autopsy/timeline/snapshot/index_template.html", "Index", indexContext, reportIndexFile);
+        fillTemplateAndWrite("/org/sleuthkit/autopsy/timeline/snapshot/index_template.html", "Index", indexContext, reportIndexFile); //NON-NLS
         return reportIndexFile;
     }
 
@@ -150,13 +150,13 @@ public class SnapShotReportWriter {
     private void writeSummaryHTML() throws IOException {
         //make a map of context objects to resolve template paramaters against
         HashMap<String, Object> summaryContext = new HashMap<>();
-        summaryContext.put("reportName", reportName);
-        summaryContext.put("reportBranding", reportBranding);
-        summaryContext.put("generationDateTime", new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(generationDate));
-        summaryContext.put("ingestRunning", IngestManager.getInstance().isIngestRunning());
-        summaryContext.put("currentCase", currentCase);
+        summaryContext.put("reportName", reportName); //NON-NLS
+        summaryContext.put("reportBranding", reportBranding); //NON-NLS
+        summaryContext.put("generationDateTime", new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(generationDate)); //NON-NLS
+        summaryContext.put("ingestRunning", IngestManager.getInstance().isIngestRunning()); //NON-NLS
+        summaryContext.put("currentCase", currentCase); //NON-NLS
 
-        fillTemplateAndWrite("/org/sleuthkit/autopsy/timeline/snapshot/summary_template.html", "Summary", summaryContext, reportFolderPath.resolve("summary.html"));
+        fillTemplateAndWrite("/org/sleuthkit/autopsy/timeline/snapshot/summary_template.html", "Summary", summaryContext, reportFolderPath.resolve("summary.html")); //NON-NLS
     }
 
     /**
@@ -178,7 +178,7 @@ public class SnapShotReportWriter {
     private void fillTemplateAndWrite(final String templateLocation, final String templateName, Object context, final Path outPutFile) throws IOException {
 
         Mustache summaryMustache = mf.compile(new InputStreamReader(SnapShotReportWriter.class.getResourceAsStream(templateLocation)), templateName);
-        try (Writer writer = Files.newBufferedWriter(outPutFile, Charset.forName("UTF-8"))) {
+        try (Writer writer = Files.newBufferedWriter(outPutFile, Charset.forName("UTF-8"))) { //NON-NLS
             summaryMustache.execute(writer, context);
         }
     }
@@ -194,36 +194,36 @@ public class SnapShotReportWriter {
         //pull generator and agency logos from branding
         String generatorLogoPath = reportBranding.getGeneratorLogoPath();
         if (StringUtils.isNotBlank(generatorLogoPath)) {
-            Files.copy(Files.newInputStream(Paths.get(generatorLogoPath)), reportFolderPath.resolve("generator_logo.png"));
+            Files.copy(Files.newInputStream(Paths.get(generatorLogoPath)), reportFolderPath.resolve("generator_logo.png")); //NON-NLS
         }
         String agencyLogoPath = reportBranding.getAgencyLogoPath();
         if (StringUtils.isNotBlank(agencyLogoPath)) {
-            Files.copy(Files.newInputStream(Paths.get(agencyLogoPath)), reportFolderPath.resolve("agency_logo.png"));
+            Files.copy(Files.newInputStream(Paths.get(agencyLogoPath)), reportFolderPath.resolve("agency_logo.png")); //NON-NLS
         }
 
         //copy navigation html
-        try (InputStream navStream = SnapShotReportWriter.class.getResourceAsStream("/org/sleuthkit/autopsy/timeline/snapshot/navigation.html")) {
-            Files.copy(navStream, reportFolderPath.resolve("nav.html"));
+        try (InputStream navStream = SnapShotReportWriter.class.getResourceAsStream("/org/sleuthkit/autopsy/timeline/snapshot/navigation.html")) { //NON-NLS
+            Files.copy(navStream, reportFolderPath.resolve("nav.html")); //NON-NLS
         }
         //copy favicon
-        try (InputStream faviconStream = SnapShotReportWriter.class.getResourceAsStream("/org/sleuthkit/autopsy/report/images/favicon.ico")) {
-            Files.copy(faviconStream, reportFolderPath.resolve("favicon.ico"));
+        try (InputStream faviconStream = SnapShotReportWriter.class.getResourceAsStream("/org/sleuthkit/autopsy/report/images/favicon.ico")) { //NON-NLS
+            Files.copy(faviconStream, reportFolderPath.resolve("favicon.ico")); //NON-NLS
         }
         //copy report summary icon
-        try (InputStream summaryStream = SnapShotReportWriter.class.getResourceAsStream("/org/sleuthkit/autopsy/report/images/summary.png")) {
-            Files.copy(summaryStream, reportFolderPath.resolve("summary.png"));
+        try (InputStream summaryStream = SnapShotReportWriter.class.getResourceAsStream("/org/sleuthkit/autopsy/report/images/summary.png")) { //NON-NLS
+            Files.copy(summaryStream, reportFolderPath.resolve("summary.png")); //NON-NLS
         }
         //copy snapshot icon
-        try (InputStream snapshotIconStream = SnapShotReportWriter.class.getResourceAsStream("/org/sleuthkit/autopsy/timeline/images/image.png")) {
-            Files.copy(snapshotIconStream, reportFolderPath.resolve("snapshot_icon.png"));
+        try (InputStream snapshotIconStream = SnapShotReportWriter.class.getResourceAsStream("/org/sleuthkit/autopsy/timeline/images/image.png")) { //NON-NLS
+            Files.copy(snapshotIconStream, reportFolderPath.resolve("snapshot_icon.png")); //NON-NLS
         }
         //copy main report css
-        try (InputStream resource = SnapShotReportWriter.class.getResourceAsStream("/org/sleuthkit/autopsy/timeline/snapshot/index.css")) { //
-            Files.copy(resource, reportFolderPath.resolve("index.css")); //
+        try (InputStream resource = SnapShotReportWriter.class.getResourceAsStream("/org/sleuthkit/autopsy/timeline/snapshot/index.css")) { //NON-NLS
+            Files.copy(resource, reportFolderPath.resolve("index.css")); //NON-NLS
         }
         //copy summary css
-        try (InputStream resource = SnapShotReportWriter.class.getResourceAsStream("/org/sleuthkit/autopsy/timeline/snapshot/summary.css")) { //
-            Files.copy(resource, reportFolderPath.resolve("summary.css")); //
+        try (InputStream resource = SnapShotReportWriter.class.getResourceAsStream("/org/sleuthkit/autopsy/timeline/snapshot/summary.css")) { //NON-NLS
+            Files.copy(resource, reportFolderPath.resolve("summary.css")); //NON-NLS
         }
     }
 }
