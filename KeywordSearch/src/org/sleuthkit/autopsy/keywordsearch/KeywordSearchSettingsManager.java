@@ -139,6 +139,10 @@ class KeywordSearchSettingsManager {
         }
     }
 
+    /**
+     * Loads the default keyword search settings into the settings object, or if
+     * there are properties files loads what is contained in them.
+     */
     private void loadDefaultSettings() {
         List<KeywordList> keywordLists = this.prepopulateLists();
         this.settings.setKeywordLists(keywordLists);
@@ -178,8 +182,7 @@ class KeywordSearchSettingsManager {
                 }
             }
             settings.setStringExtractScripts(scripts);
-        }
-        else {
+        } else {
             List<SCRIPT> scripts = new ArrayList<>();
             scripts.add(SCRIPT.LATIN_1);
             settings.setStringExtractScripts(scripts);
@@ -419,10 +422,6 @@ class KeywordSearchSettingsManager {
     synchronized boolean getSkipKnown() {
         return settings.getSkipKnown();
     }
-
-    /**
-     *
-     */
     /**
      * Sets what scripts to extract during ingest
      *
