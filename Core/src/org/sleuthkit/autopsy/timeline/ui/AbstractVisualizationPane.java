@@ -29,6 +29,7 @@ import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
+import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -46,9 +47,11 @@ import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.Tooltip;
 import javafx.scene.effect.Effect;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
@@ -101,9 +104,9 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
     protected ChartType chart;
 
     //// replacement axis label componenets
-    private final Pane leafPane; // container for the leaf lables in the declutterd axis
-    private final Pane branchPane;// container for the branch lables in the declutterd axis
-    protected final Region spacer;
+    private final Pane leafPane = new Pane(); // container for the leaf lables in the declutterd axis
+    private final Pane branchPane = new Pane();// container for the branch lables in the declutterd axis
+    protected final Region spacer = new Region();
 
     /**
      * task used to reload the content of this visualization
@@ -265,14 +268,18 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
         return eventTypeToSeriesMap.get(et);
     }
 
-    protected AbstractVisualizationPane(TimeLineController controller, Pane partPane, Pane contextPane, Region spacer) {
+    protected AbstractVisualizationPane(TimeLineController controller) {
         this.controller = controller;
         this.filteredEvents = controller.getEventsModel();
         this.filteredEvents.registerForEvents(this);
         this.filteredEvents.zoomParametersProperty().addListener(invalidationListener);
-        this.leafPane = partPane;
-        this.branchPane = contextPane;
-        this.spacer = spacer;
+        Platform.runLater(() -> {
+            setBottom(new HBox(spacer, new VBox(leafPane, branchPane)));
+            DoubleBinding spacerSize = getYAxis().widthProperty().add(getYAxis().tickLengthProperty()).add(getAxisMargin());//getXAxis().startMarginProperty().multiply(2));
+            spacer.minWidthProperty().bind(spacerSize);
+            spacer.prefWidthProperty().bind(spacerSize);
+            spacer.maxWidthProperty().bind(spacerSize);
+        });
 
         createSeries();
 
@@ -443,6 +450,8 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
 
         branchPane.getChildren().add(label);
     }
+
+    public abstract double getAxisMargin();
 
     /**
      * A simple data object used to represent a partial date as up to two parts.
