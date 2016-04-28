@@ -179,6 +179,11 @@ class KeywordSearchSettingsManager {
             }
             settings.setStringExtractScripts(scripts);
         }
+        else {
+            List<SCRIPT> scripts = new ArrayList<>();
+            scripts.add(SCRIPT.LATIN_1);
+            settings.setStringExtractScripts(scripts);
+        }
     }
 
     /**
