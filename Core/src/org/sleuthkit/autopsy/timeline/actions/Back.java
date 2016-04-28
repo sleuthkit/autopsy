@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.timeline.actions;
 
-import javafx.event.ActionEvent;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
@@ -28,26 +27,27 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 
 /**
- *
+ * An action that navigates back through the history stack.
  */
 //TODO: This and the corresponding imageanalyzer action are identical except for the type of the controller...  abstract something! -jm
 public class Back extends Action {
-    
+
     private static final Image BACK_IMAGE = new Image("/org/sleuthkit/autopsy/timeline/images/arrow-180.png", 16, 16, true, true, true); // NON-NLS
 
     private final TimeLineController controller;
-    
+
     @NbBundle.Messages({"Back.text=Back",
-        "Back.longText=Go back to the last view settings."})
+        "# {0} - action accelerator keys ",
+        "Back.longText=Back: {0}\nGo back to the last view settings."})
     public Back(TimeLineController controller) {
         super(Bundle.Back_text());
-        setLongText(Bundle.Back_longText());
+        this.controller = controller;
+
         setGraphic(new ImageView(BACK_IMAGE));
         setAccelerator(new KeyCodeCombination(KeyCode.LEFT, KeyCodeCombination.ALT_DOWN));
-        this.controller = controller;
-        disabledProperty().bind(controller.getCanRetreat().not());
-        setEventHandler((ActionEvent t) -> {
-            controller.retreat();
-        });
+        setLongText(Bundle.Back_longText(getAccelerator().getDisplayText()));
+        setEventHandler(actionEvent -> controller.retreat());
+
+        disabledProperty().bind(controller.canRetreatProperty().not());
     }
 }

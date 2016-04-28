@@ -45,10 +45,10 @@ import org.sleuthkit.datamodel.TskCoreException;
  * A file ingest module that generates interesting files set hit artifacts for
  * files that match interesting files set definitions.
  */
+@NbBundle.Messages({
+    "FilesIdentifierIngestModule.getFilesError=Error getting interesting files sets from file."
+})
 final class FilesIdentifierIngestModule implements FileIngestModule {
-    @Messages({
-        "FilesIdentifierIngestModule.getFilesError=Error getting interesting files sets from file."
-    })
 
     private static final Object sharedResourcesLock = new Object();
     private static final Logger logger = Logger.getLogger(FilesIdentifierIngestModule.class.getName());
@@ -102,7 +102,7 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
     @Override
     public ProcessResult process(AbstractFile file) {
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
-        
+
         // See if the file belongs to any defined interesting files set.
         List<FilesSet> filesSets = FilesIdentifierIngestModule.interestingFileSetsByJob.get(this.context.getJobId());
         for (FilesSet filesSet : filesSets) {
@@ -126,7 +126,7 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
                     // interesting files set membership rule that was satisfied.
                     BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, moduleName, ruleSatisfied);
                     artifact.addAttribute(ruleNameAttribute);
-                    
+
                     try {
                         // index the artifact for keyword search
                         blackboard.indexArtifact(artifact);
@@ -135,7 +135,7 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
                         MessageNotifyUtil.Notify.error(
                                 NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), artifact.getDisplayName());
                     }
-                    
+
                     IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, Collections.singletonList(artifact)));
 
                 } catch (TskCoreException ex) {

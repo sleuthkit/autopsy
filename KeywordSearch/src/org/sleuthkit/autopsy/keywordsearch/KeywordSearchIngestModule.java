@@ -53,6 +53,14 @@ import org.sleuthkit.datamodel.TskData.FileKnown;
  * on currently configured lists for ingest and writes results to blackboard
  * Reports interesting events to Inbox and to viewers
  */
+@NbBundle.Messages({
+    "# {0} - Reason for not starting Solr", "KeywordSearchIngestModule.init.tryStopSolrMsg={0}<br />Please try stopping Java Solr processes if any exist and restart the application.",
+    "KeywordSearchIngestModule.init.badInitMsg=Keyword search server was not properly initialized, cannot run keyword search ingest.",
+    "SolrConnectionCheck.Port=Invalid port number.",
+    "# {0} - Reason for not connecting to Solr", "KeywordSearchIngestModule.init.exception.errConnToSolr.msg=Error connecting to SOLR server: {0}.",
+    "KeywordSearchIngestModule.startUp.noOpenCore.msg=The index could not be opened or does not exist.",
+    "CannotRunFileTypeDetection=Unable to run file type detection."
+})
 public final class KeywordSearchIngestModule implements FileIngestModule {
 
     enum UpdateFrequency {
@@ -130,20 +138,19 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
      */
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
-        logger.log(Level.INFO, "Initializing instance {0}", instanceNum); //NON-NLS
         initialized = false;
         jobId = context.getJobId();
         dataSourceId = context.getDataSource().getId();
 
         Server server = KeywordSearch.getServer();
         if (server.coreIsOpen() == false) {
-            throw new IngestModuleException(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.startUp.noOpenCore.msg"));
+            throw new IngestModuleException(Bundle.KeywordSearchIngestModule_startUp_noOpenCore_msg());
         }
 
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            throw new IngestModuleException(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.startUp.fileTypeDetectorInitializationException.msg"), ex);
+            throw new IngestModuleException(Bundle.CannotRunFileTypeDetection(), ex);
         }
 
         try {
@@ -165,47 +172,29 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     port = Integer.parseInt(UserPreferences.getIndexingServerPort());
                 } catch (NumberFormatException ex) {
                     // if there is an error parsing the port number
-                    String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
-                    String details = NbBundle.getMessage(this.getClass(), "SolrConnectionCheck.Port");
-                    logger.log(Level.SEVERE, "{0}: {1} {2}", new Object[]{msg, details, ex.toString()});
-                    services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), msg, details));
-                    throw new IngestModuleException(msg, ex);
+                    throw new IngestModuleException(Bundle.KeywordSearchIngestModule_init_badInitMsg() + " " + Bundle.SolrConnectionCheck_Port(), ex);
                 }
                 try {
                     kwsService.tryConnect(UserPreferences.getIndexingServerHost(), port);
                 } catch (KeywordSearchServiceException ex) {
-                    String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
-                    String details = ex.getMessage();
-                    logger.log(Level.SEVERE, "{0}: {1} {2}", new Object[]{msg, details, ex.toString()});
-                    services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), msg, details));
-                    throw new IngestModuleException(msg, ex);
+                    throw new IngestModuleException(Bundle.KeywordSearchIngestModule_init_badInitMsg(), ex);
                 }
             } else {
                 // for single-user cases need to verify connection to local SOLR service
                 try {
                     if (!server.isRunning()) {
-                        String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
-                        logger.log(Level.SEVERE, msg);
-                        String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
-                        services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), msg, details));
-                        throw new IngestModuleException(msg);
+                        throw new IngestModuleException(Bundle.KeywordSearchIngestModule_init_tryStopSolrMsg(Bundle.KeywordSearchIngestModule_init_badInitMsg()));
                     }
                 } catch (KeywordSearchModuleException ex) {
-                    logger.log(Level.WARNING, "Error checking if Solr server is running while initializing ingest", ex); //NON-NLS
                     //this means Solr is not properly initialized
-                    String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
-                    String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
-                    services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), msg, details));
-                    throw new IngestModuleException(msg, ex);
+                    throw new IngestModuleException(Bundle.KeywordSearchIngestModule_init_tryStopSolrMsg(Bundle.KeywordSearchIngestModule_init_badInitMsg()), ex);
                 }
                 try {
                     // make an actual query to verify that server is responding
                     // we had cases where getStatus was OK, but the connection resulted in a 404
                     server.queryNumIndexedDocuments();
                 } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
-                    throw new IngestModuleException(
-                            NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.exception.errConnToSolr.msg",
-                                    ex.getMessage()), ex);
+                    throw new IngestModuleException(Bundle.KeywordSearchIngestModule_init_exception_errConnToSolr_msg(ex.getMessage()), ex);
                 }
 
                 // check if this job has any searchable keywords    
@@ -228,14 +217,13 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         stringExtractor = new StringsTextExtractor(this);
         stringExtractor.setScripts(manager.getStringExtractScripts());
         stringExtractor.setOptions(manager.getStringExtractOptions());
-
         //log the scripts used for debugging
+        
         final StringBuilder sbScripts = new StringBuilder();
         for (SCRIPT s : manager.getStringExtractScripts()) {
             sbScripts.append(s.name()).append(" ");
         }
         logger.log(Level.INFO, "Using string extract scripts: {0}", sbScripts.toString()); //NON-NLS
-
         textExtractors = new ArrayList<>();
         //order matters, more specific extractors first
         textExtractors.add(new HtmlTextExtractor(this));

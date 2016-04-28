@@ -1,4 +1,4 @@
- /*
+/*
  *
  * Autopsy Forensic Browser
  * 
@@ -49,6 +49,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import java.nio.file.Path;
+import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 
 /**
  * Extract windows registry data using regripper. Runs two versions of
@@ -56,58 +58,55 @@ import org.xml.sax.SAXException;
  * set that were customized for Autopsy to produce a more structured output of
  * XML so that we can parse and turn into blackboard artifacts.
  */
+@NbBundle.Messages({
+    "RegRipperNotFound=Autopsy RegRipper executable not found.",
+    "RegRipperFullNotFound=Full version RegRipper executable not found."
+})
 class ExtractRegistry extends Extract {
 
-    private Logger logger = Logger.getLogger(this.getClass().getName());
+    private final Logger logger = Logger.getLogger(this.getClass().getName());
     private String RR_PATH;
     private String RR_FULL_PATH;
-    private String rrHome;  // The current version of RegRipper need to be run from its own directory
-    private String rrFullHome;
-    private boolean rrFound = false;    // true if we found the Autopsy-specific version of regripper
-    private boolean rrFullFound = false; // true if we found the full version of regripper    
+    private Path rrHome;  // Path to the Autopsy version of RegRipper
+    private Path rrFullHome; // Path to the full version of RegRipper    
     private Content dataSource;
     private IngestJobContext context;
-    final private static UsbDeviceIdMapper usbMapper = new UsbDeviceIdMapper();
+    final private static UsbDeviceIdMapper USB_MAPPER = new UsbDeviceIdMapper();
+    final private static String RIP_EXE = "rip.exe";
+    final private static String RIP_PL = "rip.pl";
+    final private static String PERL = "perl ";
 
-    ExtractRegistry() {
+    ExtractRegistry() throws IngestModuleException {
         moduleName = NbBundle.getMessage(ExtractIE.class, "ExtractRegistry.moduleName.text");
         final File rrRoot = InstalledFileLocator.getDefault().locate("rr", ExtractRegistry.class.getPackage().getName(), false); //NON-NLS
         if (rrRoot == null) {
-            logger.log(Level.SEVERE, "RegRipper not found"); //NON-NLS
-            rrFound = false;
-            return;
-        } else {
-            rrFound = true;
-        }
-
-        rrHome = rrRoot.getAbsolutePath();
-        logger.log(Level.INFO, "RegRipper home: {0}", rrHome); //NON-NLS
-
-        if (PlatformUtil.isWindowsOS()) {
-            RR_PATH = rrHome + File.separator + "rip.exe"; //NON-NLS
-        } else {
-            RR_PATH = "perl " + rrHome + File.separator + "rip.pl"; //NON-NLS
+            throw new IngestModuleException(Bundle.RegRipperNotFound());
         }
 
         final File rrFullRoot = InstalledFileLocator.getDefault().locate("rr-full", ExtractRegistry.class.getPackage().getName(), false); //NON-NLS
         if (rrFullRoot == null) {
-            logger.log(Level.SEVERE, "RegRipper Full not found"); //NON-NLS
-            rrFullFound = false;
-        } else {
-            rrFullFound = true;
+            throw new IngestModuleException(Bundle.RegRipperFullNotFound());
         }
 
-        if (rrFullRoot != null) {
-            rrFullHome = rrFullRoot.getAbsolutePath();
-        } else {
-            rrFullHome = "";
+        String executableToRun = RIP_EXE;
+        if (!PlatformUtil.isWindowsOS()) {
+            executableToRun = RIP_PL;
         }
-        logger.log(Level.INFO, "RegRipper Full home: {0}", rrFullHome); //NON-NLS
+        rrHome = rrRoot.toPath();
+        RR_PATH = rrHome.resolve(executableToRun).toString();
+        rrFullHome = rrFullRoot.toPath();
+        RR_FULL_PATH = rrFullHome.resolve(executableToRun).toString();
 
-        if (PlatformUtil.isWindowsOS()) {
-            RR_FULL_PATH = rrFullHome + File.separator + "rip.exe"; //NON-NLS
-        } else {
-            RR_FULL_PATH = "perl " + rrFullHome + File.separator + "rip.pl"; //NON-NLS
+        if (!(new File(RR_PATH).exists())) {
+            throw new IngestModuleException(Bundle.RegRipperNotFound());
+        }
+        if (!(new File(RR_FULL_PATH).exists())) {
+            throw new IngestModuleException(Bundle.RegRipperFullNotFound());
+        }
+
+        if (!PlatformUtil.isWindowsOS()) {
+            RR_PATH = PERL + RR_PATH;
+            RR_FULL_PATH = PERL + RR_FULL_PATH;
         }
     }
 
@@ -257,7 +256,7 @@ class ExtractRegistry extends Extract {
         }
 
         // run the autopsy-specific set of modules
-        if (!autopsyType.isEmpty() && rrFound) {
+        if (!autopsyType.isEmpty()) {
             regOutputFiles.autopsyPlugins = outFilePathBase + "-autopsy.txt"; //NON-NLS
             String errFilePath = outFilePathBase + "-autopsy.err.txt"; //NON-NLS
             logger.log(Level.INFO, "Writing RegRipper results to: {0}", regOutputFiles.autopsyPlugins); //NON-NLS
@@ -268,7 +267,7 @@ class ExtractRegistry extends Extract {
         }
 
         // run the full set of rr modules
-        if (!fullType.isEmpty() && rrFullFound) {
+        if (!fullType.isEmpty()) {
             regOutputFiles.fullPlugins = outFilePathBase + "-full.txt"; //NON-NLS
             String errFilePath = outFilePathBase + "-full.err.txt"; //NON-NLS
             logger.log(Level.INFO, "Writing Full RegRipper results to: {0}", regOutputFiles.fullPlugins); //NON-NLS
@@ -277,9 +276,8 @@ class ExtractRegistry extends Extract {
         return regOutputFiles;
     }
 
-    private void executeRegRipper(String regRipperPath, String regRipperHomeDir, String hiveFilePath, String hiveFileType, String outputFile, String errFile) {
+    private void executeRegRipper(String regRipperPath, Path regRipperHomeDir, String hiveFilePath, String hiveFileType, String outputFile, String errFile) {
         try {
-            logger.log(Level.INFO, "Writing RegRipper results to: {0}", outputFile); //NON-NLS
             List<String> commandLine = new ArrayList<>();
             commandLine.add(regRipperPath);
             commandLine.add("-r"); //NON-NLS
@@ -288,7 +286,7 @@ class ExtractRegistry extends Extract {
             commandLine.add(hiveFileType);
 
             ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
-            processBuilder.directory(new File(regRipperHomeDir)); // RegRipper 2.8 has to be run from its own directory
+            processBuilder.directory(regRipperHomeDir.toFile()); // RegRipper 2.8 has to be run from its own directory
             processBuilder.redirectOutput(new File(outputFile));
             processBuilder.redirectError(new File(errFile));
             ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context));
@@ -425,7 +423,7 @@ class ExtractRegistry extends Extract {
                         if (results.isEmpty()) {
                             BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_OS_INFO);
                             bbart.addAttributes(bbattributes);
-                                                
+
                             // index the artifact for keyword search
                             this.indexArtifact(bbart);
                         } else {
@@ -515,7 +513,7 @@ class ExtractRegistry extends Extract {
                         if (results.isEmpty()) {
                             BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_OS_INFO);
                             bbart.addAttributes(bbattributes);
-                                                
+
                             // index the artifact for keyword search
                             this.indexArtifact(bbart);
                         } else {
@@ -554,7 +552,7 @@ class ExtractRegistry extends Extract {
                                         String make = "";
                                         String model = dev;
                                         if (dev.toLowerCase().contains("vid")) { //NON-NLS
-                                            USBInfo info = usbMapper.parseAndLookup(dev);
+                                            USBInfo info = USB_MAPPER.parseAndLookup(dev);
                                             if (info.getVendor() != null) {
                                                 make = info.getVendor();
                                             }
@@ -566,7 +564,7 @@ class ExtractRegistry extends Extract {
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL, parentModuleName, model));
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID, parentModuleName, value));
                                         bbart.addAttributes(bbattributes);
-                                                            
+
                                         // index the artifact for keyword search
                                         this.indexArtifact(bbart);
                                     } catch (TskCoreException ex) {
@@ -588,7 +586,7 @@ class ExtractRegistry extends Extract {
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, parentModuleName, itemMtime));
                                         BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
                                         bbart.addAttributes(bbattributes);
-                                                            
+
                                         // index the artifact for keyword search
                                         this.indexArtifact(bbart);
                                     } catch (TskCoreException ex) {
@@ -608,7 +606,7 @@ class ExtractRegistry extends Extract {
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE, parentModuleName, value));
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME, parentModuleName, artnode.getNodeName()));
                                         bbart.addAttributes(bbattributes);
-                                                            
+
                                         // index the artifact for keyword search
                                         this.indexArtifact(bbart);
                                     } catch (TskCoreException ex) {

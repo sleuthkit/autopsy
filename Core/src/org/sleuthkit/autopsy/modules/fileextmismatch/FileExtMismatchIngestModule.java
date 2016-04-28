@@ -23,7 +23,6 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
-import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -46,6 +45,10 @@ import org.sleuthkit.datamodel.TskException;
 /**
  * Flags mismatched filename extensions based on file signature.
  */
+@NbBundle.Messages({
+    "CannotRunFileTypeDetection=Unable to run file type detection.",
+    "FileExtMismatchIngestModule.readError.message=Could not read settings."
+})
 public class FileExtMismatchIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(FileExtMismatchIngestModule.class.getName());
@@ -87,22 +90,18 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
     }
 
     @Override
-    @Messages({"FileExtMismatchIngestModule.readError.message=Could not read settings."})
     public void startUp(IngestJobContext context) throws IngestModuleException {
         jobId = context.getJobId();
         refCounter.incrementAndGet(jobId);
 
         try {
             mimeTypeToExtsMap = FileExtMismatchSettings.readSettings().getMimeTypeToExtsMap();
+            this.detector = new FileTypeDetector();
         } catch (FileExtMismatchSettings.FileExtMismatchSettingsException ex) {
             throw new IngestModuleException(Bundle.FileExtMismatchIngestModule_readError_message(), ex);
-        }
-        try {
-            this.detector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            throw new IngestModuleException("Could not create file type detector.", ex);
+            throw new IngestModuleException(Bundle.CannotRunFileTypeDetection(), ex);
         }
-
     }
 
     @Override
@@ -186,8 +185,8 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
                 if (e.equals(currActualExt)) {
                     return false;
                 }
-                return true; //potential mismatch
             }
+            return true; //potential mismatch
         }
 
         return false;

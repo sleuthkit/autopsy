@@ -201,7 +201,7 @@ public class SolrSearchService implements KeywordSearchService {
                 try {
                     if (InetAddress.getByName(host).isReachable(IS_REACHABLE_TIMEOUT_MS)) {
                         // if we can reach the host, then it's probably port problem
-                        result = NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.Port"); //NON-NLS
+                        result = Bundle.SolrConnectionCheck_Port();
                     } else {
                         result = NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.HostnameOrPort"); //NON-NLS
                     }
@@ -214,7 +214,7 @@ public class SolrSearchService implements KeywordSearchService {
             }
             throw new KeywordSearchServiceException(result);
         } catch (NumberFormatException ex) {
-            throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.Port")); //NON-NLS
+            throw new KeywordSearchServiceException(Bundle.SolrConnectionCheck_Port());
         } catch (IllegalArgumentException ex) {
             throw new KeywordSearchServiceException(ex.getMessage());
         } finally {

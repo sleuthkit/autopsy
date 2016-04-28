@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,25 +18,149 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 import javafx.scene.control.TreeItem;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 
 /**
  * A node in the nav tree. Manages inserts and resorts. Has parents and
  * children. Does not have graphical properties these are configured in
- * {@link EventTreeCell}. Each NavTreeItem has a EventBundle which has a type,
- * description , count, etc.
+ * EventsTree.EventTreeCell. Each EventsTreeItem has a TimeLineEvent which has a
+ * type, description , count, etc.
  */
 abstract class EventsTreeItem extends TreeItem<TimeLineEvent> {
 
-    abstract void resort(Comparator<TreeItem<TimeLineEvent>> comp, Boolean recursive);
+    /**
+     * the comparator if any used to sort the children of this item
+     */
+    private Comparator<TreeItem<TimeLineEvent>> comparator;
 
-    abstract EventsTreeItem findTreeItemForEvent(TimeLineEvent event);
+    /**
+     * Constructor
+     *
+     * @param comparator the initial comparator used to sort the children of
+     *                   this tree item
+     */
+    EventsTreeItem(Comparator<TreeItem<TimeLineEvent>> comparator) {
+        this.comparator = comparator;
+    }
 
+    /**
+     * Get the comparator currently used to sort this tree items children.
+     *
+     * @return the comparator currently used to sort this tree items children.
+     */
+    public Comparator<TreeItem<TimeLineEvent>> getComparator() {
+        return comparator;
+    }
+
+    final protected void setComparator(Comparator<TreeItem<TimeLineEvent>> comparator) {
+        this.comparator = comparator;
+    }
+
+    /**
+     * Sort this tree item's children.
+     *
+     * @param comparator the comparator to use to sort this tree item's children
+     * @param recursive  if true: sort the children's children , etc using the
+     *                   same given comparator
+     */
+    abstract void sort(Comparator<TreeItem<TimeLineEvent>> comparator, Boolean recursive);
+
+    /**
+     * Get the tree item for the given event if on exists in this tree (item)
+     *
+     * @param event the event to find a tree item for
+     *
+     * @return an EventsTreeItem for the given eventm or null if there is none
+     *         in this tree (item). Could return this tree item.
+     */
+    public EventsTreeItem findTreeItemForEvent(TimeLineEvent event) {
+        for (TreeItem<TimeLineEvent> child : getChildren()) {
+            final EventsTreeItem findTreeItemForEvent = ((EventsTreeItem) child).findTreeItemForEvent(event);
+            if (findTreeItemForEvent != null) {
+                return findTreeItemForEvent;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get the text to display in the tree for this item.
+     *
+     * @return the display text for this item.
+     */
     abstract String getDisplayText();
 
+    /**
+     * Get the EventType of this tree item.
+     *
+     * @return the EventType of this tree item.
+     */
     abstract EventType getEventType();
 
+    /**
+     * Remove the event represented by the given path from this tree item and
+     * all of this tree item's children.
+     *
+     * @param path A representation of an event as a path from its root
+     *             EventStripe though the tree, as returned by
+     *             getTreePath(event)
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    abstract void remove(List<TimeLineEvent> path);
+
+    /**
+     * Insert the event represented by the given path into this tree item and
+     * all of this tree item's children.
+     *
+     * @param path A representation of an event as a path from its root
+     *             EventStripe though the tree, as returned by
+     *             getTreePath(event)
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    abstract void insert(List<TimeLineEvent> path);
+
+    /**
+     * Get the tree path from the root event stripe of the given event to the
+     * given event itself
+     *
+     * @param event the event to get a tree path for
+     *
+     * @return A representation of an event as a path from its root EventStripe
+     *         though the tree. The root is the first item and the event itself
+     *         is the last item in the list.
+     */
+    static List<TimeLineEvent> getTreePath(TimeLineEvent event) {
+        List<TimeLineEvent> path = new ArrayList<>();
+        path.add(0, event);
+        Optional<EventStripe> parentOptional = event.getParentStripe();
+        while (parentOptional.isPresent()) {
+            EventStripe parent = parentOptional.get();
+            path.add(0, parent);
+            parentOptional = parent.getParentStripe();
+        }
+        return path;
+    }
+
+    /**
+     * Configure initial properties that all EventsTreeItems share.
+     *
+     * @param <T>         the type of tree item
+     * @param newTreeItem a new tree item of type T
+     *
+     * @return the given tree item with initial properties configured
+     */
+    <T extends EventsTreeItem> T configureNewTreeItem(T newTreeItem) {
+        getChildren().add(newTreeItem);
+        newTreeItem.setExpanded(true);
+        sort(getComparator(), false);
+        return newTreeItem;
+    }
 }
