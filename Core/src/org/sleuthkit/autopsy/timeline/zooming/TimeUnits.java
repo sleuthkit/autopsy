@@ -30,7 +30,7 @@ import org.joda.time.Years;
 /**
  * predefined units of time for use in choosing axis labels and sub intervals.
  */
-public enum TimeUnits {
+public enum TimeUnits implements DisplayNameProvider {
 
     FOREVER(null, ChronoUnit.FOREVER),
     YEARS(Years.ONE.toPeriod(), ChronoUnit.YEARS),
@@ -88,7 +88,8 @@ public enum TimeUnits {
         this.cu = cu;
     }
 
-    String getDisplayName() {
+    @Override
+    public String getDisplayName() {
         return toString();
     }
 }

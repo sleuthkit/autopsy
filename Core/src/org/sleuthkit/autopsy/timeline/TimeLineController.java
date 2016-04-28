@@ -88,6 +88,7 @@ import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
+import org.sleuthkit.autopsy.timeline.zooming.TimeUnits;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.Content;
 
@@ -433,9 +434,9 @@ public class TimeLineController {
     /**
      * Show the entire range of the timeline.
      */
-    public void showFullRange() {
+    public boolean showFullRange() {
         synchronized (filteredEvents) {
-            pushTimeRange(filteredEvents.getSpanningInterval());
+            return pushTimeRange(filteredEvents.getSpanningInterval());
         }
     }
 
@@ -649,6 +650,22 @@ public class TimeLineController {
             return true;
         } else {
             return false;
+        }
+    }
+
+    /**
+     * Change the view by setting a new time range that is the length of
+     * timeUnit and centered at the current center.
+     *
+     * @param timeUnit The unit of time to view
+     *
+     * @return true if the view actually changed.
+     */
+    synchronized public boolean pushTimeUnit(TimeUnits timeUnit) {
+        if (timeUnit == TimeUnits.FOREVER) {
+            return showFullRange();
+        } else {
+            return pushTimeRange(IntervalUtils.getIntervalAroundMiddle(filteredEvents.getTimeRange(), timeUnit.getPeriod()));
         }
     }
 
