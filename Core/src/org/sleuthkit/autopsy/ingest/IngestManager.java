@@ -66,7 +66,6 @@ import org.sleuthkit.datamodel.Content;
  * data sources by ingest modules.
  */
 @NbBundle.Messages({
-    "IngestAborted=Ingest Aborted.",
     "# {0} - error message", "IngestManager.StartIngestJobsTask.run.startupErr.dlgErrorList=\nErrors: \n{0}",
     "IngestManager.StartIngestJobsTask.run.startupErr.dlgSolution=Please disable the failed modules or fix the errors and then restart ingest \nby right clicking on the data source and selecting Run Ingest Modules.",
     "IngestManager.StartIngestJobsTask.run.startupErr.dlgMsg=Unable to start up one or more ingest modules, ingest job cancelled.",
@@ -496,23 +495,19 @@ public class IngestManager {
      *
      * @param dataSources The data sources to process.
      * @param settings    The settings for the ingest job.
-     * @param errors      Out parameter. This is a list of errors encountered.
      *
-     * @return The ingest job that was started on success or null on failure.
+     * @return The IngestJobStartResult describing the results of attempting to
+     *         start the ingest job.
      */
-    public synchronized IngestJob beginIngestJob(Collection<Content> dataSources, IngestJobSettings settings, List<IngestModuleError> errors) {
+    public synchronized IngestJobStartResult beginIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
+        IngestJobStartResult ingestJobStartResult = new IngestJobStartResult();
         if (this.jobCreationIsEnabled) {
             IngestJob job = new IngestJob(dataSources, settings, RuntimeProperties.coreComponentsAreActive());
             if (job.hasIngestPipeline()) {
-                errors.addAll(this.startIngestJob(job)); // capture any errors 
-                if (errors.isEmpty()) {
-                    return job;
-                } else {
-                    return null;
-                }
+                ingestJobStartResult = this.startIngestJob(job); // Start job
             }
         }
-        return null;
+        return ingestJobStartResult;
     }
 
     /**
@@ -527,8 +522,7 @@ public class IngestManager {
      */
     @Deprecated
     public synchronized IngestJob startIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
-        List<IngestModuleError> ignored = new ArrayList<>();
-        return beginIngestJob(dataSources, settings, ignored);
+        return beginIngestJob(dataSources, settings).getJob();
     }
 
     /**
@@ -536,9 +530,12 @@ public class IngestManager {
      *
      * @param job The ingest job to start.
      *
-     * @return A list of errors, empty if the job was successfully started
+     * @return The IngestJobStartResult describing the results of attempting to
+     *         start the ingest job.
      */
-    private List<IngestModuleError> startIngestJob(IngestJob job) {
+    private IngestJobStartResult startIngestJob(IngestJob job) {
+        IngestJobStartResult ingestJobStartResult = new IngestJobStartResult();
+        ingestJobStartResult.setJob(job);
         if (this.jobCreationIsEnabled) {
             // multi-user cases must have multi-user database service running            
             if (Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) {
@@ -558,10 +555,12 @@ public class IngestManager {
                             });
                         }
                         // abort ingest
-                        return Collections.<IngestModuleError>emptyList();
+                        ingestJobStartResult.setStartupException(new IngestManagerException("Ingest aborted.", new Exception("Remote database is down"))); // KDM
+                        return ingestJobStartResult;
                     }
-                } catch (ServicesMonitor.ServicesMonitorException ignore) {
-                    return Collections.<IngestModuleError>emptyList();
+                } catch (ServicesMonitor.ServicesMonitorException ex) {
+                    ingestJobStartResult.setStartupException(new IngestManagerException("Ingest aborted.", ex));
+                    return ingestJobStartResult;
                 }
             }
 
@@ -572,15 +571,15 @@ public class IngestManager {
             synchronized (jobsById) {
                 jobsById.put(job.getId(), job);
             }
-            List<IngestModuleError> errors = job.start();
-            if (errors.isEmpty()) {
+            ingestJobStartResult.setModuleErrors(job.start());
+            if (ingestJobStartResult.getModuleErrors().isEmpty()) {
                 this.fireIngestJobStarted(job.getId());
                 IngestManager.logger.log(Level.INFO, "Ingest job {0} started", job.getId()); //NON-NLS
             } else {
                 synchronized (jobsById) {
                     this.jobsById.remove(job.getId());
                 }
-                for (IngestModuleError error : errors) {
+                for (IngestModuleError error : ingestJobStartResult.getModuleErrors()) {
                     logger.log(Level.SEVERE, String.format("Error starting %s ingest module for job %d", error.getModuleDisplayName(), job.getId()), error.getModuleError()); //NON-NLS
                 }
                 IngestManager.logger.log(Level.SEVERE, "Ingest job {0} could not be started", job.getId()); //NON-NLS
@@ -589,7 +588,7 @@ public class IngestManager {
                         @Override
                         public void run() {
                             StringBuilder moduleStartUpErrors = new StringBuilder();
-                            for (IngestModuleError error : errors) {
+                            for (IngestModuleError error : ingestJobStartResult.getModuleErrors()) {
                                 String moduleName = error.getModuleDisplayName();
                                 moduleStartUpErrors.append(moduleName);
                                 moduleStartUpErrors.append(": ");
@@ -608,9 +607,9 @@ public class IngestManager {
                     });
                 }
             }
-            return errors;
+
         }
-        return Collections.<IngestModuleError>emptyList();
+        return ingestJobStartResult;
     }
 
     synchronized void finishIngestJob(IngestJob job) {
