@@ -43,6 +43,7 @@
         <dependency conf="autopsy_core->*" org="org.jfxtras" name="jfxtras-fxml" rev="8.0-r4" />
         <dependency conf="autopsy_core->*" org="org.jfxtras" name="jfxtras-controls" rev="8.0-r4" />
         <dependency conf="autopsy_core->*" org="org.jfxtras" name="jfxtras-common" rev="8.0-r4" />
+        <!-- templateing engine used by timeline to generate its snapshot report -->
         <dependency conf="autopsy_core->*" org="com.github.spullara.mustache.java" name="compiler" rev="0.9.1" />
         
         <!-- image support for autopsy and image gallery -->
