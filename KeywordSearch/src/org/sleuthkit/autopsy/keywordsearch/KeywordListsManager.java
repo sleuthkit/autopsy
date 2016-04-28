@@ -44,12 +44,12 @@ public class KeywordListsManager extends Observable {
      * Constructs a keyword lists manager.
      */
     private KeywordListsManager() {
-        manager = KeywordSearchSettingsManager.getInstance();
+
         try {
-            manager.readSettings();
+            manager = KeywordSearchSettingsManager.getInstance();
         } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
-            manager.loadDefaultSettings();
-            logger.log(Level.SEVERE, "Couldn't load settings, using defaults.", ex);
+            //OSTODO
+            logger.log(Level.SEVERE, "Couldn't load settings.", ex);
         }
         this.listsChangeListener = new PropertyChangeListener() {
             @Override
@@ -88,7 +88,7 @@ public class KeywordListsManager extends Observable {
      * Force reload of the keyword lists XML file.
      */
     public static void reloadKeywordLists() {
-
+        
     }
 
 }

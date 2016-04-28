@@ -86,12 +86,12 @@ abstract class KeywordSearchPanel extends javax.swing.JPanel {
      */
     public void search() {
         boolean isIngestRunning = IngestManager.getInstance().isIngestRunning();
-        KeywordSearchSettingsManager manager = KeywordSearchSettingsManager.getInstance();
+        KeywordSearchSettingsManager manager;
         try {
-            manager.readSettings();
+            manager = KeywordSearchSettingsManager.getInstance();
         } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
-            logger.log(Level.SEVERE, "Couldn't load settings, using defaults.", ex);
-            manager.loadDefaultSettings();
+            logger.log(Level.SEVERE, "Couldn't load settings.", ex);
+            return;
         }
 
         if (filesIndexed == 0) {

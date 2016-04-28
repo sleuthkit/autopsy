@@ -59,20 +59,14 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
     /**
      * Creates new form GlobalEditListPanel
      */
-    @Messages({"GlobalEditListPanel.settingsLoadFail.message=Failed to load keyword settings, using defaults.",
-        "GlobalEditListPanel.settingsLoadFail.title=Load Failed"})
-    GlobalEditListPanel() {
+    @Messages({"GlobalEditListPanel.settingsLoadFail.message=Failed to load keyword settings.",
+        "GlobalEditListPanel.settingsLoadFail.title=Failed Load"})
+    GlobalEditListPanel(KeywordSearchSettingsManager manager) {
         tableModel = new KeywordTableModel();
-        manager = KeywordSearchSettingsManager.getInstance();
-        try {
-            manager.readSettings();
-        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
-            JOptionPane.showMessageDialog(null, Bundle.GlobalEditListPanel_settingsLoadFail_message(), Bundle.GlobalEditListPanel_settingsLoadFail_title(), JOptionPane.ERROR_MESSAGE);
-            //OSTODO: FIGURE OUT HOW TO HANDLE LOAD FAILURE IN CONSTRUCTOR
-            manager.loadDefaultSettings();
-        }
+        this.manager = manager;
         initComponents();
         customizeComponents();
+        enableComponents();
     }
 
     private void customizeComponents() {
@@ -152,6 +146,30 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                 }
             }
         });
+    }
+
+    private void enableComponents() {
+        boolean enable = manager != null;
+        this.addKeywordPanel.setEnabled(enable);
+        this.addWordButton.setEnabled(enable);
+        this.addWordField.setEnabled(enable);
+        this.chRegex.setEnabled(enable);
+        this.copyMenuItem.setEnabled(enable);
+        this.cutMenuItem.setEnabled(enable);
+        this.deleteListButton.setEnabled(enable);
+        this.deleteWordButton.setEnabled(enable);
+        this.exportButton.setEnabled(enable);
+        this.ingestMessagesCheckbox.setEnabled(enable);
+        this.jScrollPane1.setEnabled(enable);
+        this.keywordTable.setEnabled(enable);
+        this.keywordTable.setColumnSelectionAllowed(enable);
+        this.keywordTable.setRowSelectionAllowed(enable);
+        this.listEditorPanel.setEnabled(enable);
+        this.pasteMenuItem.setEnabled(enable);
+        this.rightClickMenu.setEnabled(enable);
+        this.saveListButton.setEnabled(enable);
+        this.selectAllMenuItem.setEnabled(enable);
+
     }
 
     void setButtonStates() {
@@ -572,7 +590,6 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
             int index = listSelectionModel.getMinSelectionIndex();
 
             listSelectionModel.setSelectionInterval(index, index);
-            XmlKeywordSearchList loader = XmlKeywordSearchList.getCurrent();
 
             List<KeywordList> keywordLists = manager.getKeywordLists();
             KeywordList listAtIndex = null;

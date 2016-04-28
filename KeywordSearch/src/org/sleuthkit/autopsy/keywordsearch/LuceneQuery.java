@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
+import org.sleuthkit.autopsy.keywordsearch.KeywordSearchSettingsManager.KeywordSearchSettingsManagerException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -128,14 +129,9 @@ class LuceneQuery implements KeywordSearchQuery {
     }
 
     @Override
-    public QueryResults performQuery() throws NoOpenCoreException {
-        KeywordSearchSettingsManager manager = KeywordSearchSettingsManager.getInstance();
-        try {
-            manager.readSettings();
-        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
-            logger.log(Level.SEVERE, "Couldn't load settings, using defaults.", ex);
-            manager.loadDefaultSettings();
-        }
+    public QueryResults performQuery() throws NoOpenCoreException, KeywordSearchSettingsManagerException {
+        KeywordSearchSettingsManager manager;
+        manager = KeywordSearchSettingsManager.getInstance();
         QueryResults results = new QueryResults(this, keywordList);
         //in case of single term literal query there is only 1 term
         boolean showSnippets = manager.getShowSnippets();
@@ -251,7 +247,7 @@ class LuceneQuery implements KeywordSearchQuery {
                 KeywordHit contentHit;
                 try {
                     contentHit = createKeywordtHit(resultDoc, highlightResponse, sleuthkitCase);
-                } catch (TskException ex) {
+                } catch (TskException | KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
                     return matches;
                 }
                 matches.add(contentHit);
@@ -342,18 +338,13 @@ class LuceneQuery implements KeywordSearchQuery {
         return solrDocumentsWithMatches;
     }
 
-    private KeywordHit createKeywordtHit(SolrDocument solrDoc, Map<String, Map<String, List<String>>> highlightResponse, SleuthkitCase caseDb) throws TskException {
+    private KeywordHit createKeywordtHit(SolrDocument solrDoc, Map<String, Map<String, List<String>>> highlightResponse, SleuthkitCase caseDb) throws TskException, KeywordSearchSettingsManager.KeywordSearchSettingsManagerException {
         /**
          * Get the first snippet from the document if keyword search is
          * configured to use snippets.
          */
-        KeywordSearchSettingsManager manager = KeywordSearchSettingsManager.getInstance();
-        try {
-            manager.readSettings();
-        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
-            logger.log(Level.SEVERE, "Couldn't load settings, using defaults.", ex);
-            manager.loadDefaultSettings();
-        }
+        KeywordSearchSettingsManager manager;
+        manager = KeywordSearchSettingsManager.getInstance();
         final String docId = solrDoc.getFieldValue(Server.Schema.ID.toString()).toString();
         String snippet = "";
         if (manager.getShowSnippets()) {

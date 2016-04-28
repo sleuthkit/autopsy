@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,10 +24,8 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskData;
 
 /**
  * Display content with just raw text
@@ -149,7 +147,12 @@ class RawText implements IndexedText {
     public String getText() {
         try {
             if (this.content != null) {
-                return getContentText(currentPage, hasChunks);
+                if (hasChunks) {
+                    return getIndexedTextForPage(currentPage);
+                } else {
+                    String msg = NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.getSolrContent.noTxtYetMsg", content.getName());
+                    return NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.getSolrContent.txtBodyItal", msg);
+                }
             } else if (this.blackboardArtifact != null) {
                 return KeywordSearch.getServer().getSolrContent(this.objectId, 1);
             }
@@ -204,79 +207,46 @@ class RawText implements IndexedText {
             } else {
                 hasChunks = true;
             }
-        } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Could not get number of chunks: ", ex); //NON-NLS		
-
-        } catch (NoOpenCoreException ex) {
+        } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
             logger.log(Level.WARNING, "Could not get number of chunks: ", ex); //NON-NLS		
         }
     }
 
     /**
-     * Get extracted content for a node from Solr
+     * Gets the indexed text from Solr for a given page in the content viewer.
      *
-     * @param node        a node that has extracted content in Solr (check with
-     *                    solrHasContent(ContentNode))
-     * @param currentPage currently used page
-     * @param hasChunks   true if the content behind the node has multiple
-     *                    chunks. This means we need to address the content
-     *                    pages specially.
+     * @param pageNumber The page number.
      *
-     * @return the extracted content
+     * @return The indexed text for the page.
      *
-     * @throws SolrServerException if something goes wrong
+     * @throws NoOpenCoreException if there is no open Solr core.
+     * @throws SolrServerException if there is a problem querying the Solr
+     *                             server for the indexed text.
      */
-    private String getContentText(int currentPage, boolean hasChunks) throws SolrServerException {
-        final Server solrServer = KeywordSearch.getServer();
-        KeywordSearchSettingsManager manager = KeywordSearchSettingsManager.getInstance();
-        try {
-            manager.readSettings();
-        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
-            logger.log(Level.SEVERE, "Couldn't load settings, using defaults.", ex);
-            manager.loadDefaultSettings();
+    private String getIndexedTextForPage(int pageNumber) throws SolrServerException, NoOpenCoreException {
+        /*
+         * Each page displays a single chunk from the Solr document, so the page
+         * number is the chunk id.
+         */
+        int chunkId = pageNumber;
+
+        /*
+         * Is the indexed text for this page in the cache?
+         */
+        if (cachedString != null && cachedChunk == chunkId) {
+            return cachedString;
         }
 
-        if (hasChunks == false) {
-            //if no chunks, it is safe to assume there is no text content
-            //because we are storing extracted text in chunks only
-            //and the non-chunk stores meta-data only
-            String name = content.getName();
-            String msg = null;
-            if (content instanceof AbstractFile) {
-                //we know it's AbstractFile, but do quick check to make sure if we index other objects in future
-                boolean isKnown = TskData.FileKnown.KNOWN.equals(((AbstractFile) content).getKnown());
-                if (isKnown && manager.getSkipKnown()) {
-                    msg = NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.getSolrContent.knownFileMsg", name);
-                }
-            }
-            if (msg == null) {
-                msg = NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.getSolrContent.noTxtYetMsg", name);
-            }
-            String htmlMsg = NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.getSolrContent.txtBodyItal", msg);
-            return htmlMsg;
-        }
-
-        int chunkId = currentPage;
-
-        //check if cached
-        if (cachedString != null) {
-            if (cachedChunk == chunkId) {
-                return cachedString;
-            }
-        }
-
-        //not cached
-        try {
-            String indexedText = solrServer.getSolrContent(this.objectId, chunkId);
-            cachedString = EscapeUtil.escapeHtml(indexedText).trim();
-            StringBuilder sb = new StringBuilder(cachedString.length() + 20);
-            sb.append("<pre>").append(cachedString).append("</pre>"); //NON-NLS
-            cachedString = sb.toString();
-            cachedChunk = chunkId;
-        } catch (NoOpenCoreException ex) {
-            logger.log(Level.WARNING, "Couldn't get text content.", ex); //NON-NLS
-            return "";
-        }
+        /*
+         * Get the indexed text form the Solr server, format it, and cache it.
+         */
+        Server solrServer = KeywordSearch.getServer();
+        String indexedText = solrServer.getSolrContent(this.objectId, chunkId);
+        cachedString = EscapeUtil.escapeHtml(indexedText).trim();
+        StringBuilder sb = new StringBuilder(cachedString.length() + 20);
+        sb.append("<pre>").append(cachedString).append("</pre>"); //NON-NLS
+        cachedString = sb.toString();
+        cachedChunk = pageNumber;
         return cachedString;
     }
 }

@@ -74,7 +74,8 @@ class KeywordSearchSettingsManager {
      * @throws KeywordSearchSettingsManagerException When the settings cannot be
      *                                               read from disk.
      */
-    private KeywordSearchSettingsManager() {
+    private KeywordSearchSettingsManager() throws KeywordSearchSettingsManagerException {
+        readSettings();
     }
 
     /**
@@ -85,7 +86,7 @@ class KeywordSearchSettingsManager {
      * @throws KeywordSearchSettingsManagerException When the settings cannot be
      *                                               read from disk.
      */
-    static synchronized KeywordSearchSettingsManager getInstance() {
+    static synchronized KeywordSearchSettingsManager getInstance() throws KeywordSearchSettingsManagerException {
         if (instance == null) {
             instance = new KeywordSearchSettingsManager();
         }
@@ -113,7 +114,7 @@ class KeywordSearchSettingsManager {
      * @throws KeywordSearchSettingsManagerException If the settings cannot be
      *                                               read from disk.
      */
-    void readSettings() throws KeywordSearchSettingsManagerException {
+    private void readSettings() throws KeywordSearchSettingsManagerException {
         File serializedDefs = new File(CUR_LISTS_FILE);
         if (serializedDefs.exists()) {
             try {
@@ -138,7 +139,7 @@ class KeywordSearchSettingsManager {
         }
     }
 
-    void loadDefaultSettings() {
+    private void loadDefaultSettings() {
         List<KeywordList> keywordLists = this.prepopulateLists();
         this.settings.setKeywordLists(keywordLists);
         if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_NSRL, "SkipKnown")) { //NON-NLS

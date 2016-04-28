@@ -22,6 +22,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -34,25 +35,19 @@ import org.sleuthkit.autopsy.keywordsearch.KeywordSearchIngestModule.UpdateFrequ
 class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implements OptionsPanel {
 
     private final Logger logger = Logger.getLogger(KeywordSearchGlobalSearchSettingsPanel.class.getName());
+    KeywordSearchSettingsManager manager;
 
     /**
      * Creates new form KeywordSearchConfigurationPanel2
      */
-    KeywordSearchGlobalSearchSettingsPanel() {
+    KeywordSearchGlobalSearchSettingsPanel(KeywordSearchSettingsManager manager) {
+        this.manager = manager;
         initComponents();
         customizeComponents();
+        enableComponents();
     }
 
     private void activateWidgets() {
-        KeywordSearchSettingsManager manager = KeywordSearchSettingsManager.getInstance();
-        try {
-            manager.readSettings();
-        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
-            JOptionPane.showMessageDialog(null, Bundle.KeywordSearchGlobalSearchSettingsPanel_failedReadSettings_message(),
-                    Bundle.KeywordSearchGlobalSearchSettingsPanel_failedReadSettings_title(), JOptionPane.ERROR_MESSAGE);
-            logger.log(Level.SEVERE, "Failed to read keyword search settings, using defaults.", ex);
-            manager.loadDefaultSettings();
-        }
         skipNSRLCheckBox.setSelected(manager.getSkipKnown());
         showSnippetsCB.setSelected(manager.getShowSnippets());
         boolean enable = !IngestManager.getInstance().isIngestRunning();
@@ -82,6 +77,18 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
                 timeRadioButton3.setSelected(true);
                 break;
         }
+    }
+
+    private void enableComponents() {
+        boolean enable = manager != null;
+        this.showSnippetsCB.setEnabled(enable);
+        this.skipNSRLCheckBox.setEnabled(enable);
+        this.timeRadioButton1.setEnabled(enable);
+        this.timeRadioButton2.setEnabled(enable);
+        this.timeRadioButton3.setEnabled(enable);
+        this.timeRadioButton4.setEnabled(enable);
+        this.timeRadioButton5.setEnabled(enable);
+
     }
 
     /**
@@ -257,23 +264,30 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
     @Messages({"KeywordSearchGlobalSearchSettingsPanel.failedWriteSettings.message=Couldn't write keyword search settings",
         "KeywordSearchGlobalSearchSettingsPanel.failedWriteSettings.title=Error Writing Settings"})
     public void store() {
-        KeywordSearchSettingsManager manager = KeywordSearchSettingsManager.getInstance();
-        try {
-            manager.readSettings();
-            manager.setSkipKnown(skipNSRLCheckBox.isSelected());
-            manager.setUpdateFrequency(getSelectedTimeValue());
-            manager.setShowSnippets(showSnippetsCB.isSelected());
-        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
-            JOptionPane.showMessageDialog(null, Bundle.KeywordSearchGlobalSearchSettingsPanel_failedReadSettings_message(),
-                    Bundle.KeywordSearchGlobalSearchSettingsPanel_failedReadSettings_title(), JOptionPane.ERROR_MESSAGE);
-            logger.log(Level.SEVERE, "Failed to write keyword search settings.", ex);
-        }
+        if (manager != null) {
+            try {
+                manager.setSkipKnown(skipNSRLCheckBox.isSelected());
+                manager.setUpdateFrequency(getSelectedTimeValue());
+                manager.setShowSnippets(showSnippetsCB.isSelected());
+            } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        JOptionPane.showMessageDialog(null, Bundle.KeywordSearchGlobalSearchSettingsPanel_failedReadSettings_message(),
+                                Bundle.KeywordSearchGlobalSearchSettingsPanel_failedReadSettings_title(), JOptionPane.ERROR_MESSAGE);
+                    }
+                });
+                logger.log(Level.SEVERE, "Failed to write keyword search settings.", ex);
+            }
 
+        }
     }
 
     @Override
     public void load() {
-        activateWidgets();
+        if (manager != null) {
+            activateWidgets();
+        }
     }
 
     private void setTimeSettingEnabled(boolean enabled) {
@@ -303,15 +317,6 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
     @Messages({"KeywordSearchGlobalSearchSettingsPanel.failedReadSettings.message=Couldn't read keyword search settings, using defaults.",
         "KeywordSearchGlobalSearchSettingsPanel.failedReadSettings.title=Error Loading Settings"})
     private void customizeComponents() {
-        KeywordSearchSettingsManager manager = KeywordSearchSettingsManager.getInstance();
-        try {
-            manager.readSettings();
-        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
-            JOptionPane.showMessageDialog(null, Bundle.KeywordSearchGlobalSearchSettingsPanel_failedReadSettings_message(),
-                    Bundle.KeywordSearchGlobalSearchSettingsPanel_failedReadSettings_title(), JOptionPane.ERROR_MESSAGE);
-            logger.log(Level.SEVERE, "Failed to read keyword search settings, using defaults.", ex);
-            manager.loadDefaultSettings();
-        }
 
         timeGroup.add(timeRadioButton1);
         timeGroup.add(timeRadioButton2);
@@ -319,8 +324,9 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
         timeGroup.add(timeRadioButton4);
         timeGroup.add(timeRadioButton5);
 
-        this.skipNSRLCheckBox.setSelected(manager.getSkipKnown());
-
+        if (manager != null) {
+            this.skipNSRLCheckBox.setSelected(manager.getSkipKnown());
+        }
         try {
             filesIndexedValue.setText(Integer.toString(KeywordSearch.getServer().queryNumIndexedFiles()));
             chunksValLabel.setText(Integer.toString(KeywordSearch.getServer().queryNumIndexedChunks()));

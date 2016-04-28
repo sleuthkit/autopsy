@@ -145,9 +145,9 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
             throw new IngestModuleException(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.startUp.fileTypeDetectorInitializationException.msg"), ex);
         }
-        manager = KeywordSearchSettingsManager.getInstance();
+
         try {
-            manager.readSettings();
+            manager = KeywordSearchSettingsManager.getInstance();
         } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
             throw new IngestModuleException("Couldn't create keyword settings manager.", ex);
         }
@@ -271,7 +271,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         // Start searching if it hasn't started already
         if (!startedSearching) {
             List<String> keywordListNames = settings.getNamesOfEnabledKeyWordLists();
-            SearchRunner.getInstance().startJob(jobId, dataSourceId, keywordListNames);
+            SearchRunner.getInstance().startJob(jobId, dataSourceId, keywordListNames, manager.getUpdateFrequency());
             startedSearching = true;
         }
 

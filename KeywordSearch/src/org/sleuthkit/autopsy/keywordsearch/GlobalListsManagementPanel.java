@@ -45,17 +45,18 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
 
     @Messages({"GlobalListsManagementPanel.settingsLoadFail.message=Failed to load keyword settings, using defaults.",
         "GlobalListsManagementPanel.settingsLoadFail.title=Load Failed"})
-    GlobalListsManagementPanel() {
+    GlobalListsManagementPanel(KeywordSearchSettingsManager manager) {
         tableModel = new KeywordListTableModel();
-        manager = KeywordSearchSettingsManager.getInstance();
-        try {
-            manager.readSettings();
-        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
-            JOptionPane.showMessageDialog(null, Bundle.GlobalListsManagementPanel_settingsLoadFail_message(), Bundle.GlobalListsManagementPanel_settingsLoadFail_title(), JOptionPane.ERROR_MESSAGE);
-            manager.loadDefaultSettings();
-        }
+        this.manager = manager;
         initComponents();
         customizeComponents();
+        enableComponents();
+        if (this.manager == null) {
+            this.importButton.setEnabled(false);
+            this.jScrollPane1.setEnabled(false);
+            this.listsTable.setEnabled(false);
+            this.newListButton.setEnabled(false);
+        }
     }
 
     private void customizeComponents() {
@@ -86,6 +87,19 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
          * listsTable.getSelectionModel().setSelectionInterval(0, 0); } else {
          * listsTable.getSelectionModel().clearSelection(); } } } });
          */
+    }
+
+    /**
+     * Enables the components of this panel based upon whether or not the
+     * settings could be loaded.
+     */
+    private void enableComponents() {
+        boolean enable = this.manager != null;
+        this.importButton.setEnabled(enable);
+        this.jScrollPane1.setEnabled(enable);
+        this.listsTable.setEnabled(enable);
+        this.newListButton.setEnabled(enable);
+
     }
 
     /**
@@ -444,9 +458,11 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         @Override
         public int getRowCount() {
             int count = 0;
-            for (KeywordList list : manager.getKeywordLists()) {
-                if (!list.isLocked()) {
-                    count++;
+            if (manager != null) {
+                for (KeywordList list : manager.getKeywordLists()) {
+                    if (!list.isLocked()) {
+                        count++;
+                    }
                 }
             }
             return count;
@@ -459,12 +475,14 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            for (KeywordList list : manager.getKeywordLists()) {
-                if (rowIndex == 0 && !list.isLocked()) {
-                    return list.getName();
-                }
-                if (!list.isLocked()) {
-                    rowIndex--;
+            if (manager != null) {
+                for (KeywordList list : manager.getKeywordLists()) {
+                    if (rowIndex == 0 && !list.isLocked()) {
+                        return list.getName();
+                    }
+                    if (!list.isLocked()) {
+                        rowIndex--;
+                    }
                 }
             }
             return "";

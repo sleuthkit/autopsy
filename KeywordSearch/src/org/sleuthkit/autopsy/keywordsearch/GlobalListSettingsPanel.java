@@ -28,31 +28,26 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 
 final class GlobalListSettingsPanel extends javax.swing.JPanel implements OptionsPanel {
-
-    private final GlobalListsManagementPanel listsManagementPanel = new GlobalListsManagementPanel();
-    private final GlobalEditListPanel editListPanel = new GlobalEditListPanel();
+    
+    private final GlobalListsManagementPanel listsManagementPanel;
+    private final GlobalEditListPanel editListPanel;
     private KeywordSearchSettingsManager manager;
-
-    @Messages({"GlobalListSettingsPanel.settingsLoadFail.message=Failed to load keyword settings, using defaults.",
-        "GlobalListSettingsPanel.settingsLoadFail.title=Load Failed"})
-    GlobalListSettingsPanel() {
-        manager = KeywordSearchSettingsManager.getInstance();
-        try {
-            manager.readSettings();
-        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
-            JOptionPane.showMessageDialog(null, Bundle.GlobalEditListPanel_settingsLoadFail_message(), Bundle.GlobalEditListPanel_settingsLoadFail_title(), JOptionPane.ERROR_MESSAGE);
-            //OSTODO: FIGURE OUT HOW TO HANDLE LOAD FAILURE IN CONSTRUCTOR
-            manager.loadDefaultSettings();
-        }
+    
+    @Messages({"GlobalListSettingsPanel.settingsLoadFail.message=Failed to load keyword settings.",
+        "GlobalListSettingsPanel.settingsLoadFail.title=Failed Load"})
+    GlobalListSettingsPanel(KeywordSearchSettingsManager manager) {
+        this.manager = manager;
+        editListPanel = new GlobalEditListPanel(manager);
+        listsManagementPanel = new GlobalListsManagementPanel(manager);
         initComponents();
         customizeComponents();
         setName(org.openide.util.NbBundle.getMessage(DropdownToolbar.class, "ListBundleConfig"));
-
+        
     }
-
+    
     @Messages({"# {0} - keyword list", "KeywordSearchConfigurationPanel1.customizeComponents.kwListSaveFailedMsg=Failed to save <{0}>",
         "KeywordSearchConfigurationPanel1.customizeComponents.kwListSaveFailedTitle=Failed to save"})
-
+    
     private void customizeComponents() {
         listsManagementPanel.addListSelectionListener(editListPanel);
         editListPanel.addDeleteButtonActionPerformed(new ActionListener() {
@@ -71,21 +66,21 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
                 }
             }
         });
-
+        
         editListPanel.addSaveButtonActionPerformed(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 final String FEATURE_NAME = NbBundle.getMessage(this.getClass(),
                         "KeywordSearchGlobalListSettingsPanel.component.featureName.text");
                 KeywordList currentKeywordList = editListPanel.getCurrentKeywordList();
-
+                
                 List<Keyword> keywords = currentKeywordList.getKeywords();
                 if (keywords.isEmpty()) {
                     KeywordSearchUtil.displayDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.keywordListEmptyErr"),
                             KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
                     return;
                 }
-
+                
                 String listName = (String) JOptionPane.showInputDialog(
                         null,
                         NbBundle.getMessage(this.getClass(), "KeywordSearch.newKwListTitle"),
@@ -97,7 +92,7 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
                 if (listName == null || listName.trim().equals("")) {
                     return;
                 }
-
+                
                 KeywordList listWithSameName = null;
                 List<KeywordList> keywordLists = manager.getKeywordLists();
                 for (int i = 0; i < keywordLists.size(); i++) {
@@ -118,11 +113,11 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
                     if (replace) {
                         shouldAdd = true;
                     }
-
+                    
                 } else {
                     shouldAdd = true;
                 }
-
+                
                 if (shouldAdd) {
                     try {
                         manager.addList(new KeywordList(listName, new Date(), new Date(), false, false, keywords));
@@ -130,25 +125,25 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
                     } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
                         KeywordSearchUtil.displayDialog(FEATURE_NAME, Bundle.KeywordSearchConfigurationPanel1_customizeComponents_kwListSaveFailedMsg(listName), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
                     }
-
+                    
                 }
-
+                
                 listsManagementPanel.resync();
             }
         });
-
+        
         mainSplitPane.setLeftComponent(listsManagementPanel);
         mainSplitPane.setRightComponent(editListPanel);
         mainSplitPane.revalidate();
         mainSplitPane.repaint();
     }
-
+    
     @Override
     public void store() {
         //refresh the list viewer/searcher panel
         DropdownListSearchPanel.getDefault().resync();
     }
-
+    
     @Override
     public void load() {
         listsManagementPanel.load();

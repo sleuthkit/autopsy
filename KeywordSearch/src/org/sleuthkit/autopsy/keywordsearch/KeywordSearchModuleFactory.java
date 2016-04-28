@@ -63,19 +63,20 @@ public class KeywordSearchModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public IngestModuleIngestJobSettings getDefaultIngestJobSettings() {
-        KeywordSearchSettingsManager listManager = KeywordSearchSettingsManager.getInstance();
-        try {
-            listManager.readSettings();
-        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
-            listManager.loadDefaultSettings();
-        }
+        KeywordSearchSettingsManager listManager;
         List<String> enabledKeywordLists = new ArrayList<>();
-        List<KeywordList> keywordLists = listManager.getKeywordLists();
-        for (KeywordList keywordList : keywordLists) {
-            if (!defaultDisabledKeywordListNames.contains(keywordList.getName())) {
-                enabledKeywordLists.add(keywordList.getName());
+        try {
+            listManager = KeywordSearchSettingsManager.getInstance();
+            List<KeywordList> keywordLists = listManager.getKeywordLists();
+            for (KeywordList keywordList : keywordLists) {
+                if (!defaultDisabledKeywordListNames.contains(keywordList.getName())) {
+                    enabledKeywordLists.add(keywordList.getName());
+                }
             }
+        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+            //Don't do anything because now we are just using the empty list
         }
+
         return new KeywordSearchJobSettings(enabledKeywordLists);
     }
 

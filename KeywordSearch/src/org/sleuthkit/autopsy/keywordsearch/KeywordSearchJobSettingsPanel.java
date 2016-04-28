@@ -50,16 +50,18 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
     @Messages({"KeywordSearchJobSettingsPanel.settingsLoadFail.message=Failed to load keyword settings, using defaults.",
         "KeywordSearchJobSettingsPanel.settingsLoadFail.title=Load Failed"})
     KeywordSearchJobSettingsPanel(KeywordSearchJobSettings initialSettings) {
-        keywordListsManager = KeywordSearchSettingsManager.getInstance();
+initComponents();
         try {
-            keywordListsManager.readSettings();
+            keywordListsManager = KeywordSearchSettingsManager.getInstance();
+            this.setEnabled(true);
         } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
             JOptionPane.showMessageDialog(null, Bundle.KeywordSearchJobSettingsPanel_settingsLoadFail_message(), Bundle.KeywordSearchJobSettingsPanel_settingsLoadFail_title(), JOptionPane.ERROR_MESSAGE);
-            logger.log(Level.SEVERE, "Couldn't load settings, using defaults.", ex);
-            keywordListsManager.loadDefaultSettings();
+            logger.log(Level.SEVERE, "Couldn't load settings.", ex);
+            this.setEnabled(false);
+            return;
         }
         initializeKeywordListSettings(initialSettings);
-        initComponents();
+        
         customizeComponents();
     }
 
