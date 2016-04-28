@@ -142,24 +142,39 @@ class KeywordSearchSettingsManager {
     private void loadDefaultSettings() {
         List<KeywordList> keywordLists = this.prepopulateLists();
         this.settings.setKeywordLists(keywordLists);
-        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_NSRL, "SkipKnown")) { //NON-NLS
+        if (ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_NSRL, "SkipKnown")) { //NON-NLS
+            settings.setSkipKnown(Boolean.parseBoolean(ModuleSettings.getConfigSetting(KeywordSearchSettings.PROPERTIES_NSRL, "SkipKnown")));
+        } else {
             settings.setSkipKnown(true);
         }
         //setting default Update Frequency
-        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, "UpdateFrequency")) { //NON-NLS
+        if (ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, "UpdateFrequency")) { //NON-NLS
+            settings.setUpdateFrequency(UpdateFrequency.valueOf(ModuleSettings.getConfigSetting(KeywordSearchSettings.PROPERTIES_OPTIONS, "UpdateFrequency"))); //NON-NLS
+        } else {
             settings.setUpdateFrequency(UpdateFrequency.DEFAULT);
         }
         //setting default Extract UTF8
-        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, TextExtractor.ExtractOptions.EXTRACT_UTF8.toString())) {
+        if (ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, TextExtractor.ExtractOptions.EXTRACT_UTF8.toString())) {
+            settings.setStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString(), ModuleSettings.getConfigSetting(KeywordSearchSettings.PROPERTIES_OPTIONS, TextExtractor.ExtractOptions.EXTRACT_UTF8.toString()));
+        } else {
             settings.setStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString(), Boolean.TRUE.toString());
         }
         //setting default Extract UTF16
-        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, TextExtractor.ExtractOptions.EXTRACT_UTF16.toString())) {
+        if (ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, TextExtractor.ExtractOptions.EXTRACT_UTF16.toString())) {
+            settings.setStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString(), ModuleSettings.getConfigSetting(KeywordSearchSettings.PROPERTIES_OPTIONS, TextExtractor.ExtractOptions.EXTRACT_UTF16.toString()));
+
+        } else {
             settings.setStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString(), Boolean.TRUE.toString());
         }
         //setting default Latin-1 Script
-        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_SCRIPTS, SCRIPT.LATIN_1.name())) {
-            settings.setStringExtractOption(SCRIPT.LATIN_1.name(), Boolean.toString(true));
+        if (ModuleSettings.getConfigSettings(KeywordSearchSettings.PROPERTIES_SCRIPTS) != null && !ModuleSettings.getConfigSettings(KeywordSearchSettings.PROPERTIES_SCRIPTS).isEmpty()) {
+            List<SCRIPT> scripts = new ArrayList<>();
+            for (Map.Entry<String, String> kvp : ModuleSettings.getConfigSettings(KeywordSearchSettings.PROPERTIES_SCRIPTS).entrySet()) {
+                if (kvp.getValue().equals("true")) { //NON-NLS
+                    scripts.add(SCRIPT.valueOf(kvp.getKey()));
+                }
+            }
+            settings.setStringExtractScripts(scripts);
         }
     }
 
