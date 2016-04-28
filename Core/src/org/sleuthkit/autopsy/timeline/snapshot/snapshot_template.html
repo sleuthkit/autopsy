@@ -1,14 +1,14 @@
 
 <html>
     <head>
-        <title>Autopsy Timeline Snapshot:{{reportTitle}}</title>
+        <title>Timeline Snapshot: {{reportTitle}}</title>
         <link rel="stylesheet" type="text/css" href="index.css" />
         <link rel="icon" type="image/ico" href="favicon.ico" />
     </head>
-    <body>
+    <body><div id="header">Timeline Snapshot</div>
         <div id="content">
-            <h1>{{reportTitle}}</h1>
-            <img src = "snapshot.png" alt = "snaphot"/>
+
+            <img src = "snapshot.png" alt = "snaphot">
             <table>
                 <tr><td>Time Range: </td><td>{{startTime}}
                         to
@@ -17,15 +17,16 @@
                 <tr><td>Event Type Zoom Level: </td><td>{{zoomParams.getTypeZoomLevel.getDisplayName}}</td></tr>
                 {{#zoomParams.getFilter}}
                 <tr>
-                    <td>Filters: </td>><td>
+                    <td>Filters: </td>
+                    <td>
                         <ul>
-                            {{#getTextFilter}}<li>text = "{{getText}}"[{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}]</li> {{/getTextFilter}}
+                            {{#getTextFilter}}<li>text = "{{getText}}" [{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}]</li> {{/getTextFilter}}
                             {{#getKnownFilter}}<li>Hide Known Files [{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}]</li> {{/getKnownFilter}}
                             {{#getDataSourcesFilter}}
                             <li>{{getDisplayName}} [{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}] : 
                                 <ul>
                                     {{#getSubFilters}}
-                                    <li>{{getDisplayName}}[{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}]</li>
+                                    <li>{{getDisplayName}} [{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}]</li>
                                     {{/getSubFilters}}
                                 </ul>
                             </li>
@@ -34,7 +35,7 @@
                             <li>{{getDisplayName}} [{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}] : 
                                 <ul>
                                     {{#getSubFilters}}
-                                    <li>{{getDisplayName}}[{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}]</li>
+                                    <li>{{getDisplayName}} [{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}]</li>
                                     {{/getSubFilters}}
                                 </ul>
                             </li>
@@ -43,7 +44,7 @@
                             <li>{{getDisplayName}} [{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}] : 
                                 <ul>
                                     {{#getSubFilters}}
-                                    <li>{{getDisplayName}}[{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}]</li>
+                                    <li>{{getDisplayName}} [{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}]</li>
                                     {{/getSubFilters}}
                                 </ul>
                             </li>
@@ -52,10 +53,10 @@
                             <li>{{getDisplayName}} [{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}] : 
                                 <ul>
                                     {{#getSubFilters}}
-                                    <li>{{getDisplayName}}[{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}]
+                                    <li>{{getDisplayName}} [{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}]
                                         <ul>  
                                             {{#getSubFilters}}
-                                            <li>{{getDisplayName}}[{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}]</li>
+                                            <li>{{getDisplayName}} [{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}]</li>
                                             {{/getSubFilters}}
                                         </ul>
                                     </li>

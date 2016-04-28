@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-15 Basis Technology Corp.
+ * Copyright 2014-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,12 +19,15 @@
 package org.sleuthkit.autopsy.timeline.actions;
 
 import java.awt.Desktop;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.function.Supplier;
 import java.util.logging.Level;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonBar;
@@ -32,8 +35,6 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.stage.Modality;
-import javafx.stage.StageStyle;
 import javax.swing.JOptionPane;
 import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.control.HyperlinkLabel;
@@ -47,19 +48,27 @@ import org.sleuthkit.autopsy.timeline.snapshot.SnapShotReportWriter;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Save a snapshot of the given node as an autopsy report.
+ * Action that saves a snapshot of the given node as an autopsy report.
+ * Delegates to SnapsHotReportWrite to actually generate and write the report.
  */
 public class SaveSnapshotAsReport extends Action {
 
     private static final Logger LOGGER = Logger.getLogger(SaveSnapshotAsReport.class.getName());
-    private static final Image SNAP_SHOT = new Image("org/sleuthkit/autopsy/timeline/images/image.png", 16, 16, true, true); //
+    private static final Image SNAP_SHOT = new Image("org/sleuthkit/autopsy/timeline/images/image.png", 16, 16, true, true);
     private static final ButtonType OPEN = new ButtonType(Bundle.OpenReportAction_DisplayName(), ButtonBar.ButtonData.NO);
     private static final ButtonType OK = new ButtonType(ButtonType.OK.getText(), ButtonBar.ButtonData.CANCEL_CLOSE);
 
     private final TimeLineController controller;
     private final Case currentCase;
 
-    @NbBundle.Messages({"SaveSnapshot.action.name.text=Snapshot Report",
+    /**
+     * Constructor
+     *
+     * @param controller   The controller for this timeline action
+     * @param nodeSupplier The Supplier of the node to snapshot.
+     */
+    @NbBundle.Messages({
+        "SaveSnapshot.action.name.text=Snapshot Report",
         "SaveSnapshot.action.longText=Save a screen capture of the visualization as a report.",
         "SaveSnapshot.fileChoose.title.text=Save snapshot to",
         "# {0} - report file path",
@@ -67,10 +76,10 @@ public class SaveSnapshotAsReport extends Action {
         "Timeline.ModuleName=Timeline", "SaveSnapShotAsReport.Success=Success",
         "# {0} - uniqueness identifier, local date time at report creation time",
         "SaveSnapsHotAsReport.ReportName=timeline-report-{0}",
-        "SaveSnapShotAsReport.FailedToAddReport=Failed to add snaphot as a report. See log for details",
+        "SaveSnapShotAsReport.FailedToAddReport=Failed to add snaphot to case as a report.",
         "# {0} - report name",
-        "SaveSnapShotAsReport.ErrorWritingReport=Error writing report {0} to disk. See log for details",})
-    public SaveSnapshotAsReport(TimeLineController controller, Node node) {
+        "SaveSnapShotAsReport.ErrorWritingReport=Error writing report {0} to disk.",})
+    public SaveSnapshotAsReport(TimeLineController controller, Supplier<Node> nodeSupplier) {
         super(Bundle.SaveSnapshot_action_name_text());
         setLongText(Bundle.SaveSnapshot_action_longText());
         setGraphic(new ImageView(SNAP_SHOT));
@@ -79,9 +88,13 @@ public class SaveSnapshotAsReport extends Action {
         this.currentCase = controller.getAutopsyCase();
 
         setEventHandler(actionEvent -> {
+            //capture generation date and use to make default report name
             Date generationDate = new Date();
             final String defaultReportName = FileUtil.escapeFileName(currentCase.getName() + " " + new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss").format(generationDate));
 
+            BufferedImage snapshot = SwingFXUtils.fromFXImage(nodeSupplier.get().snapshot(null, null), null);
+
+            //prompt user to pick report name
             TextInputDialog textInputDialog = new TextInputDialog();
             textInputDialog.setTitle("Timeline");
             textInputDialog.getEditor().setPromptText("leave empty for default report name: " + defaultReportName);
@@ -89,48 +102,54 @@ public class SaveSnapshotAsReport extends Action {
             textInputDialog.setHeaderText("Enter a report name for the Timeline Snapshot Report.");
 
             textInputDialog.showAndWait().ifPresent(enteredReportName -> {
+                //reportName defaults to case name + timestamp if left blank
                 String reportName = StringUtils.defaultIfBlank(enteredReportName, defaultReportName);
                 Path reportFolderPath = Paths.get(currentCase.getReportDirectory(), reportName, "Timeline Snapshot");
-                Path reportIndexFilePath;
-                try {
+                Path reportMainFilePath;
 
-                    reportIndexFilePath = new SnapShotReportWriter(currentCase, reportFolderPath, reportName, controller.getEventsModel().getZoomParamaters(), generationDate, node).writeReport();
-                } catch (IOException e) {
-                    LOGGER.log(Level.SEVERE, "Error writing report " + reportFolderPath + " to disk", e); //
+                try {
+                    //generate and write report
+                    reportMainFilePath = new SnapShotReportWriter(currentCase,
+                            reportFolderPath,
+                            reportName,
+                            controller.getEventsModel().getZoomParamaters(),
+                            generationDate, snapshot).writeReport();
+                } catch (IOException ex) {
+                    LOGGER.log(Level.SEVERE, "Error writing report to disk at " + reportFolderPath, ex);
                     new Alert(Alert.AlertType.ERROR, Bundle.SaveSnapShotAsReport_ErrorWritingReport(reportFolderPath)).show();
                     return;
                 }
+
                 try {
-                    //add html file as report to case
-                    Case.getCurrentCase().addReport(reportIndexFilePath.toString(), Bundle.Timeline_ModuleName(), reportName);
+                    //add main file as report to case
+                    Case.getCurrentCase().addReport(reportMainFilePath.toString(), Bundle.Timeline_ModuleName(), reportName);
                 } catch (TskCoreException ex) {
-                    LOGGER.log(Level.WARNING, "failed to add html wrapper as a report", ex); //
+                    LOGGER.log(Level.WARNING, "Failed to add " + reportMainFilePath.toString() + " to case as a report", ex); //
                     new Alert(Alert.AlertType.ERROR, Bundle.SaveSnapShotAsReport_FailedToAddReport()).show();
                     return;
                 }
 
-                //create alert to notify user of report location
+                //notify user of report location
                 final Alert alert = new Alert(Alert.AlertType.INFORMATION, null, OPEN, OK);
                 alert.setTitle(Bundle.SaveSnapshot_action_name_text());
                 alert.setHeaderText(Bundle.SaveSnapShotAsReport_Success());
-                alert.initStyle(StageStyle.UTILITY);
-                alert.initOwner(node.getScene().getWindow());
-                alert.initModality(Modality.APPLICATION_MODAL);
 
                 //make action to open report, and hyperlinklable to invoke action
-                final OpenReportAction openReportAction = new OpenReportAction(reportIndexFilePath);
-                HyperlinkLabel hyperlinkLabel = new HyperlinkLabel(Bundle.SaveSnapShotAsReport_ReportSavedAt(reportIndexFilePath.toString()));
+                final OpenReportAction openReportAction = new OpenReportAction(reportMainFilePath);
+                HyperlinkLabel hyperlinkLabel = new HyperlinkLabel(Bundle.SaveSnapShotAsReport_ReportSavedAt(reportMainFilePath.toString()));
                 hyperlinkLabel.setOnAction(openReportAction);
                 alert.getDialogPane().setContent(hyperlinkLabel);
 
-                alert.showAndWait().filter(OPEN::equals)
-                        .ifPresent(buttonType -> openReportAction.handle(null));
-
+                alert.showAndWait().filter(OPEN::equals).ifPresent(buttonType -> openReportAction.handle(null));
             });
         });
     }
 
-    @NbBundle.Messages({"OpenReportAction.DisplayName=Open Report",
+    /**
+     * Action that opens the given Path in the system default application.
+     */
+    @NbBundle.Messages({
+        "OpenReportAction.DisplayName=Open Report",
         "OpenReportAction.NoAssociatedEditorMessage=There is no associated editor for reports of this type or the associated application failed to launch.",
         "OpenReportAction.MessageBoxTitle=Open Report Failure",
         "OpenReportAction.NoOpenInEditorSupportMessage=This platform (operating system) does not support opening a file in an editor this way.",
