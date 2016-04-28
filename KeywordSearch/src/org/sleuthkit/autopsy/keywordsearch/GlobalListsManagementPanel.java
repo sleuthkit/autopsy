@@ -72,17 +72,17 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         tableModel.resync();
 
         /*
-         * XmlKeywordSearchList.getCurrent().addPropertyChangeListener(new
+         * XmlKeywordListImportExport.getCurrent().addPropertyChangeListener(new
          * PropertyChangeListener() {
          *
          * @Override public void propertyChange(PropertyChangeEvent evt) { if
-         * (evt.getPropertyName().equals(XmlKeywordSearchList.ListsEvt.LIST_ADDED.toString()))
+         * (evt.getPropertyName().equals(XmlKeywordListImportExport.ListsEvt.LIST_ADDED.toString()))
          * { tableModel.resync(); for(int i = 0; i<listsTable.getRowCount();
          * i++) { String name = (String) listsTable.getValueAt(i, 0);
          * if(((String) evt.getNewValue()).equals(name)) {
          * listsTable.getSelectionModel().setSelectionInterval(i, i); } } } else
          * if
-         * (evt.getPropertyName().equals(XmlKeywordSearchList.ListsEvt.LIST_DELETED.toString()))
+         * (evt.getPropertyName().equals(XmlKeywordListImportExport.ListsEvt.LIST_DELETED.toString()))
          * { tableModel.resync(); if(listsTable.getRowCount() > 0) {
          * listsTable.getSelectionModel().setSelectionInterval(0, 0); } else {
          * listsTable.getSelectionModel().clearSelection(); } } } });
@@ -267,7 +267,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
             String fileAbs = selFile.getAbsolutePath();
 
             if (KeywordSearchUtil.isXMLList(fileAbs)) {
-                XmlKeywordSearchList reader = new XmlKeywordSearchList(fileAbs);
+                XmlKeywordListImportExport reader = new XmlKeywordListImportExport(fileAbs);
                 List<KeywordList> toImport = reader.load();
                 if (toImport == null) {
                     KeywordSearchUtil.displayDialog(
@@ -323,7 +323,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
 
                 }
             } else {
-                EnCaseKeywordSearchList reader = new EnCaseKeywordSearchList();
+                EnCaseKeywordListImport reader = new EnCaseKeywordListImport();
                 KeywordList keywordList = reader.load(fileAbs);
                 if (keywordList == null) {
                     KeywordSearchUtil.displayDialog(

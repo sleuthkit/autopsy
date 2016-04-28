@@ -37,7 +37,7 @@ public class KeywordListsManager extends Observable {
 
     private static KeywordListsManager instance;
     private final PropertyChangeListener listsChangeListener;
-    private KeywordSearchSettingsManager manager;
+    private static KeywordSearchSettingsManager manager;
     private static final Logger logger = Logger.getLogger(KeywordListsManager.class.getName());
 
     /**
@@ -88,7 +88,11 @@ public class KeywordListsManager extends Observable {
      * Force reload of the keyword lists XML file.
      */
     public static void reloadKeywordLists() {
-        
+        try {
+            manager.reload();
+        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+            logger.log(Level.SEVERE, "Couldn't reload keyword serach settings.", ex);
+        }
     }
 
 }

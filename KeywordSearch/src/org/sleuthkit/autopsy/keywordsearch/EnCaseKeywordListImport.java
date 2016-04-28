@@ -31,20 +31,20 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * @author dfickling EnCaseKeywordSearchList adds support for Encase
- * tab-delimited keyword list exports to Autopsy.
- *
- * load() does the I/O operation, converting lines from the text file to an
- * unsorted list of EncaseFileEntrys The next step is to recreate the original
- * folder hierarchy, and finally the EncaseFileEntries are converted to
- * KeywordSearchLists
+ * @author dfickling EnCaseKeywordListImport adds support for Encase
+ tab-delimited keyword list exports to Autopsy.
+
+ load() does the I/O operation, converting lines from the text file to an
+ unsorted list of EncaseFileEntrys The next step is to recreate the original
+ folder hierarchy, and finally the EncaseFileEntries are converted to
+ KeywordSearchLists
  *
  */
-class EnCaseKeywordSearchList {
+class EnCaseKeywordListImport {
 
     ArrayList<EncaseFileEntry> entriesUnsorted;
     EncaseFileEntry rootEntry;
-    private static final Logger logger = Logger.getLogger(EnCaseKeywordSearchList.class.getName());
+    private static final Logger logger = Logger.getLogger(EnCaseKeywordListImport.class.getName());
 
     /**
      * Follow the EncaseFileEntry hierarchy starting with given entry Create
@@ -163,7 +163,7 @@ class EnCaseKeywordSearchList {
                 return Expression;
             } else {
                 throw new IllegalArgumentException(
-                        NbBundle.getMessage(EnCaseKeywordSearchList.class,
+                        NbBundle.getMessage(EnCaseKeywordListImport.class,
                                 "KeywordSearchListsEncase.encaseMetaType.exception.msg",
                                 type));
             }

@@ -126,7 +126,7 @@ class KeywordSearchSettingsManager {
             }
         } else {
             this.loadDefaultSettings();
-            XmlKeywordSearchList xmlReader = XmlKeywordSearchList.getCurrent();
+            XmlKeywordListImportExport xmlReader = XmlKeywordListImportExport.getCurrent();
             List<KeywordList> newKeywordLists = new ArrayList<>();
             List<KeywordList> keywordLists = this.settings.getKeywordLists();
             newKeywordLists.addAll(keywordLists);
@@ -187,6 +187,13 @@ class KeywordSearchSettingsManager {
             scripts.add(SCRIPT.LATIN_1);
             settings.setStringExtractScripts(scripts);
         }
+    }
+
+    /**
+     * Reloads the settings from the disk.
+     */
+    void reload() throws KeywordSearchSettingsManagerException {
+        this.readSettings();
     }
 
     /**
@@ -422,6 +429,7 @@ class KeywordSearchSettingsManager {
     synchronized boolean getSkipKnown() {
         return settings.getSkipKnown();
     }
+
     /**
      * Sets what scripts to extract during ingest
      *

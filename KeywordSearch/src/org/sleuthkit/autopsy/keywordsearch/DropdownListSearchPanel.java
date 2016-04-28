@@ -52,7 +52,7 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
 
     private static final Logger logger = Logger.getLogger(DropdownListSearchPanel.class.getName());
     private static DropdownListSearchPanel instance;
-    private XmlKeywordSearchList loader;
+    private XmlKeywordListImportExport loader;
     private final KeywordListsTableModel listsTableModel;
     private final KeywordsTableModel keywordsTableModel;
     private ActionListener searchAddListener;
@@ -101,7 +101,7 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
             }
         }
 
-        loader = XmlKeywordSearchList.getCurrent();
+        loader = XmlKeywordListImportExport.getCurrent();
         listsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {

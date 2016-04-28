@@ -41,9 +41,9 @@ import org.w3c.dom.NodeList;
  * Manages reading and writing of keyword lists to user settings XML file
  * keywords.xml or to any file provided in constructor
  */
-final class XmlKeywordSearchList {
+final class XmlKeywordListImportExport {
 
-    private static final Logger xmlListslogger = Logger.getLogger(XmlKeywordSearchList.class.getName());
+    private static final Logger xmlListslogger = Logger.getLogger(XmlKeywordListImportExport.class.getName());
     private static final String CUR_LISTS_FILE_NAME = "keywords.xml";     //NON-NLS
     private static final String CUR_LISTS_FILE = PlatformUtil.getUserConfigDirectory() + File.separator + CUR_LISTS_FILE_NAME;
     private static final String ROOT_EL = "keyword_lists"; //NON-NLS
@@ -58,13 +58,13 @@ final class XmlKeywordSearchList {
     private static final String KEYWORD_SELECTOR_ATTR = "selector"; //NON-NLS
     private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss"; //NON-NLS
     private static final String ENCODING = "UTF-8"; //NON-NLS
-    private static XmlKeywordSearchList currentInstance = null;
+    private static XmlKeywordListImportExport currentInstance = null;
     private final DateFormat dateFormatter;
     private String filePath;
 
-    static synchronized XmlKeywordSearchList getCurrent() {
+    static synchronized XmlKeywordListImportExport getCurrent() {
         if (currentInstance == null) {
-            currentInstance = new XmlKeywordSearchList(CUR_LISTS_FILE);
+            currentInstance = new XmlKeywordListImportExport(CUR_LISTS_FILE);
         }
         return currentInstance;
     }
@@ -75,7 +75,7 @@ final class XmlKeywordSearchList {
      *
      * @param xmlFile xmlFile to obtain XmlKeywordSearchList handle on
      */
-    XmlKeywordSearchList(String xmlFile) {
+    XmlKeywordListImportExport(String xmlFile) {
         this.filePath = xmlFile;
         dateFormatter = new SimpleDateFormat(DATE_FORMAT);
     }
@@ -120,7 +120,7 @@ final class XmlKeywordSearchList {
                 rootEl.appendChild(listEl);
             }
 
-            success = XMLUtil.saveDoc(XmlKeywordSearchList.class, filePath, ENCODING, doc);
+            success = XMLUtil.saveDoc(XmlKeywordListImportExport.class, filePath, ENCODING, doc);
         } catch (ParserConfigurationException e) {
             xmlListslogger.log(Level.SEVERE, "Error saving keyword list: can't initialize parser.", e); //NON-NLS
         }
@@ -132,7 +132,7 @@ final class XmlKeywordSearchList {
      */
     public List<KeywordList> load() {
         final Document doc;
-        doc = XMLUtil.loadDoc(XmlKeywordSearchList.class, filePath);
+        doc = XMLUtil.loadDoc(XmlKeywordListImportExport.class, filePath);
         if (doc == null) {
             return null;
         }

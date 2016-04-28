@@ -535,7 +535,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
 
             List<KeywordList> toWrite = new ArrayList<>();
             toWrite.add(currentKeywordList);
-            final XmlKeywordSearchList exporter = new XmlKeywordSearchList(fileAbs);
+            final XmlKeywordListImportExport exporter = new XmlKeywordListImportExport(fileAbs);
             boolean written = exporter.save(toWrite);
             if (written) {
                 KeywordSearchUtil.displayDialog(FEATURE_NAME,
