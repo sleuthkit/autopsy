@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,8 @@
  */
 package org.sleuthkit.autopsy.timeline.zooming;
 
-import java.time.temporal.ChronoUnit;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -32,37 +33,33 @@ import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.VisualizationMode;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 
 /**
  * A Panel that acts as a view for a given
  * TimeLineController/FilteredEventsModel. It has sliders to provide
- * context/control over three axes of zooming (timescale, event hierarchy, and
- * description detail).
+ * context/control over three axes of zooming (timescale, event hierarchy level,
+ * and description level of detail).
  */
 public class ZoomSettingsPane extends TitledPane {
 
     @FXML
+    private Label zoomLabel;
+
+    @FXML
+    private Label descrLODLabel;
+    @FXML
     private Slider descrLODSlider;
 
+    @FXML
+    private Label typeZoomLabel;
     @FXML
     private Slider typeZoomSlider;
 
     @FXML
-    private Slider timeUnitSlider;
-
-    @FXML
-    private Label descrLODLabel;
-
-    @FXML
-    private Label typeZoomLabel;
-
-    @FXML
     private Label timeUnitLabel;
-
     @FXML
-    private Label zoomLabel;
+    private Slider timeUnitSlider;
 
     private final TimeLineController controller;
     private final FilteredEventsModel filteredEvents;
@@ -84,126 +81,169 @@ public class ZoomSettingsPane extends TitledPane {
         "ZoomSettingsPane.timeUnitLabel.text=Time Units:",
         "ZoomSettingsPane.zoomLabel.text=Zoom"})
     public void initialize() {
-        timeUnitSlider.setMax(TimeUnits.values().length - 2);
-        timeUnitSlider.setLabelFormatter(new TimeUnitConverter());
-
-        typeZoomSlider.setMin(1);
-        typeZoomSlider.setMax(2);
-        typeZoomSlider.setLabelFormatter(new TypeZoomConverter());
-        descrLODSlider.setMax(DescriptionLoD.values().length - 1);
-        descrLODSlider.setLabelFormatter(new DescrLODConverter());
-        descrLODLabel.setText(Bundle.ZoomSettingsPane_descrLODLabel_text());
-        typeZoomLabel.setText(Bundle.ZoomSettingsPane_typeZoomLabel_text());
-        timeUnitLabel.setText(Bundle.ZoomSettingsPane_timeUnitLabel_text());
         zoomLabel.setText(Bundle.ZoomSettingsPane_zoomLabel_text());
 
-        initializeSlider(timeUnitSlider,
-                () -> {
-            TimeUnits requestedUnit = TimeUnits.values()[new Double(timeUnitSlider.getValue()).intValue()];
-            if (requestedUnit == TimeUnits.FOREVER) {
-                controller.showFullRange();
-            } else {
-                controller.pushTimeRange(IntervalUtils.getIntervalAround(IntervalUtils.middleOf(ZoomSettingsPane.this.filteredEvents.timeRangeProperty().get()), requestedUnit.getPeriod()));
-            }
-        },
-                this.filteredEvents.timeRangeProperty(),
-                () -> {
-            RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(this.filteredEvents.timeRangeProperty().get());
-            ChronoUnit chronoUnit = rangeInfo.getPeriodSize().getChronoUnit();
-            timeUnitSlider.setValue(TimeUnits.fromChronoUnit(chronoUnit).ordinal() - 1);
-        });
+        typeZoomSlider.setMin(1); //don't show ROOT_TYPE
+        typeZoomSlider.setMax(EventTypeZoomLevel.values().length - 1);
+        configureSliderListeners(typeZoomSlider,
+                controller::pushEventTypeZoom,
+                filteredEvents.eventTypeZoomProperty(),
+                EventTypeZoomLevel.class,
+                EventTypeZoomLevel::ordinal,
+                Function.identity());
+        typeZoomLabel.setText(Bundle.ZoomSettingsPane_typeZoomLabel_text());
 
-        initializeSlider(descrLODSlider,
-                () -> controller.pushDescrLOD(DescriptionLoD.values()[Math.round(descrLODSlider.valueProperty().floatValue())]),
-                this.filteredEvents.descriptionLODProperty(), () -> {
-            descrLODSlider.setValue(this.filteredEvents.descriptionLODProperty().get().ordinal());
-        });
-
-        initializeSlider(typeZoomSlider,
-                () -> controller.pushEventTypeZoom(EventTypeZoomLevel.values()[Math.round(typeZoomSlider.valueProperty().floatValue())]),
-                this.filteredEvents.eventTypeZoomProperty(),
-                () -> typeZoomSlider.setValue(this.filteredEvents.eventTypeZoomProperty().get().ordinal()));
-
+        descrLODSlider.setMax(DescriptionLoD.values().length - 1);
+        configureSliderListeners(descrLODSlider,
+                controller::pushDescrLOD,
+                filteredEvents.descriptionLODProperty(),
+                DescriptionLoD.class,
+                DescriptionLoD::ordinal,
+                Function.identity());
+        descrLODLabel.setText(Bundle.ZoomSettingsPane_descrLODLabel_text());
+        //the description slider is only usefull in the detail view
         descrLODSlider.disableProperty().bind(controller.viewModeProperty().isEqualTo(VisualizationMode.COUNTS));
+
+        /**
+         * In order for the selected value in the time unit slider to correspond
+         * to the amount of time used as units along the x-axis of the
+         * visualization, and since we don't want to show "forever" as a time
+         * unit, the range of the slider is restricted, and there is an offset
+         * of 1 between the "real" value, and what is shown in the slider
+         * labels.
+         */
+        timeUnitSlider.setMax(TimeUnits.values().length - 2);
+        configureSliderListeners(timeUnitSlider,
+                controller::pushTimeUnit,
+                filteredEvents.timeRangeProperty(),
+                TimeUnits.class,
+                //for the purposes of this slider we want the TimeUnit one bigger than RangeDivisionInfo indicates
+                modelTimeRange -> RangeDivisionInfo.getRangeDivisionInfo(modelTimeRange).getPeriodSize().ordinal() - 1,
+                index -> index + 1);  //compensate for the -1 above when mapping to the Enum whose displayName will be shown at index
+        timeUnitLabel.setText(Bundle.ZoomSettingsPane_timeUnitLabel_text());
     }
 
     /**
-     * setup a slider that with a listener that is added and removed to avoid
-     * circular updates.
+     * Configure the listeners that keep the given slider in sync with model
+     * property changes, and that handle user input on the slider. The listener
+     * attached to the slider is added and removed to avoid circular updates.
      *
-     * @param <T>                 the type of the driving property
-     * @param slider              the slider that will have its change handlers
-     *                            setup
-     * @param sliderChangeHandler the runnable that will be executed whenever
-     *                            the slider value has changed and is not
-     *                            currently changing
-     * @param driver              the property that drives updates to this
-     *                            slider
-     * @param driverChangHandler  the code to update the slider bases on the
-     *                            value of the driving property. This will be
-     *                            wrapped in a remove/add-listener pair to
-     *                            prevent circular updates.
+     * Because Sliders work in terms of Doubles but represent ordered Enums that
+     * are indexed by Integers, and because the model properties may not be of
+     * the same type as the Enum(timeUnitSlider relates to an Interval in the
+     * filteredEvents model, rather than the TimeUnits shown on the Slider), a
+     * mapper is needed to convert between DriverType and Integer
+     * indices(driverValueMapper). Another mapper is used to modifiy the mapping
+     * from Integer index to Enum value displayed as the slider tick
+     * label(labelIndexMapper).
+     *
+     * @param <DriverType>        The type of the driving model property.
+     * @param <EnumType>          The type of the Enum that is represented along
+     *                            the slider.
+     *
+     *
+     * @param slider              The slider that we are configuring.
+     *
+     * @param sliderValueConsumer The consumer that will get passed the newly
+     *                            selected slider value (mapped to EnumType
+     *                            automatically).
+     *
+     * @param modelProperty       The readonly model property that this slider
+     *                            should be synced to.
+     *
+     * @param enumClass           A type token for EnumType, ie value of type
+     *                            Class<EnumType>
+     *
+     * @param driverValueMapper   A Function that maps from driver values of
+     *                            type DriverType to Integers representing the
+     *                            index of the corresponding EnumType.
+     *
+     * @param labelIndexMapper    A Function that maps from Integer (narrowed
+     *                            slider value) to Integers representing the
+     *                            index of the corresponding EnumType. Used to
+     *                            compensate for slider values that do not
+     *                            lineup exactly with the Enum value indices to
+     *                            use as tick Labels.
      */
-    private <T> void initializeSlider(Slider slider, Runnable sliderChangeHandler, ReadOnlyObjectProperty<T> driver, Runnable driverChangHandler) {
+    private static <DriverType, EnumType extends Enum<EnumType> & DisplayNameProvider> void configureSliderListeners(
+            Slider slider,
+            Consumer<EnumType> sliderValueConsumer,
+            ReadOnlyObjectProperty<DriverType> modelProperty,
+            Class<EnumType> enumClass,
+            Function<DriverType, Integer> driverValueMapper,
+            Function<Integer, Integer> labelIndexMapper) {
+
+        //set the tick labels to the enum displayNames
+        slider.setLabelFormatter(new EnumSliderLabelFormatter<>(enumClass, labelIndexMapper));
+
+        //make a listener to responds to slider value changes (by updating the visualization)
         final InvalidationListener sliderListener = observable -> {
+            //only process event if the slider value is not changing (user has released slider thumb)
             if (slider.isValueChanging() == false) {
-                sliderChangeHandler.run();
+                //convert slider value to EnumType and pass to consumer
+                EnumType sliderValueAsEnum = enumClass.getEnumConstants()[Math.round((float) slider.getValue())];
+                sliderValueConsumer.accept(sliderValueAsEnum);
             }
         };
+        //attach listener
         slider.valueProperty().addListener(sliderListener);
         slider.valueChangingProperty().addListener(sliderListener);
 
-        Platform.runLater(driverChangHandler);
+        //set intial value of slider
+        slider.setValue(driverValueMapper.apply(modelProperty.get()));
 
-        driver.addListener(observable -> {
-            slider.valueProperty().removeListener(sliderListener);
-            slider.valueChangingProperty().removeListener(sliderListener);
-
+        modelProperty.addListener(modelProp -> {
+            //handle changes in the model property
             Platform.runLater(() -> {
-                driverChangHandler.run();
+                //remove listener to avoid circular updates
+                slider.valueProperty().removeListener(sliderListener);
+                slider.valueChangingProperty().removeListener(sliderListener);
+
+                //sync value of slider to model property value
+                slider.setValue(driverValueMapper.apply(modelProperty.get()));
+
+                //reattach listener
                 slider.valueProperty().addListener(sliderListener);
                 slider.valueChangingProperty().addListener(sliderListener);
             });
         });
     }
 
-    //Can these be abstracted to a sort of Enum converter for use in a potential enumslider
-    private static class TimeUnitConverter extends StringConverter<Double> {
+    /**
+     * StringConverter for the tick Labels of a Slider that is "backed" by an
+     * Enum that extends DisplayNameProvider. Narrows the Slider's Double value
+     * to an Integer and then uses that as the index of the Enum value whose
+     * displayName will be shown as the tick Label
+     *
+     * @param <EnumType> The type of Enum that this converter works with.
+     */
+    static private class EnumSliderLabelFormatter<EnumType extends Enum<EnumType> & DisplayNameProvider> extends StringConverter<Double> {
+
+        /**
+         * A Type token for the class of Enum that this converter works with.
+         */
+        private final Class<EnumType> clazz;
+        /**
+         *
+         * A Function that can be used to adjust the narrowed slider value if it
+         * doesn't correspond exactly to the Enum value index.
+         */
+        private final Function<Integer, Integer> indexAdjsuter;
+
+        EnumSliderLabelFormatter(Class<EnumType> clazz, Function<Integer, Integer> indexMapper) {
+            this.clazz = clazz;
+            this.indexAdjsuter = indexMapper;
+        }
 
         @Override
-        public String toString(Double object) {
-            return TimeUnits.values()[Math.min(TimeUnits.values().length - 1, object.intValue() + 1)].getDisplayName();
+        public String toString(Double dbl) {
+            //get the displayName of the EnumType whose index is the given dbl after it has been narrowed and then adjusted
+            return clazz.getEnumConstants()[indexAdjsuter.apply(dbl.intValue())].getDisplayName();
         }
 
         @Override
         public Double fromString(String string) {
-            return new Integer(TimeUnits.valueOf(string).ordinal()).doubleValue();
-        }
-    }
-
-    private static class TypeZoomConverter extends StringConverter<Double> {
-
-        @Override
-        public String toString(Double object) {
-            return EventTypeZoomLevel.values()[object.intValue()].getDisplayName();
-        }
-
-        @Override
-        public Double fromString(String string) {
-            return new Integer(EventTypeZoomLevel.valueOf(string).ordinal()).doubleValue();
-        }
-    }
-
-    private static class DescrLODConverter extends StringConverter<Double> {
-
-        @Override
-        public String toString(Double object) {
-            return DescriptionLoD.values()[object.intValue()].getDisplayName();
-        }
-
-        @Override
-        public Double fromString(String string) {
-            return new Integer(DescriptionLoD.valueOf(string).ordinal()).doubleValue();
+            throw new UnsupportedOperationException("This method should not be used. This EnumSliderLabelFormatter is being used in an unintended way.");
         }
     }
 }
