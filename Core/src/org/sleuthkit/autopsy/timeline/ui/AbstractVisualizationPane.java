@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-15 Basis Technology Corp.
+ * Copyright 2014-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,7 +44,6 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.control.Label;
 import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.Tooltip;
-import javafx.scene.effect.Effect;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
@@ -143,62 +142,70 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
     }
 
     /**
-     * @param value a value along this visualization's x axis
+     * Should the tick mark at the given value be bold, because it has
+     * interesting data associated with it?
      *
-     * @return true if the tick label for the given value should be bold ( has
-     *         relevant data), false* otherwise
+     * @param value A value along this visualization's x axis
+     *
+     * @return True if the tick label for the given value should be bold ( has
+     *         relevant data), false otherwise
      */
     abstract protected Boolean isTickBold(X value);
 
     /**
-     * apply this visualization's 'selection effect' to the given node
+     * Apply this visualization's 'selection effect' to the given node
      *
-     * @param node    the node to apply the 'effect' to
-     * @param applied true if the effect should be applied, false if the effect
-     *                should
+     * @param node    The node to apply the 'effect' to
+     * @param applied True if the effect should be applied, false if the effect
+     *                should not
      */
     abstract protected void applySelectionEffect(NodeType node, Boolean applied);
 
     /**
-     * @return a task to execute on a background thread to reload this
+     * Get a background Task that fetches the appropriate data and loads it into
+     * this visualization.
+     *
+     * @return A task to execute on a background thread to reload this
      *         visualization with different data.
      */
     abstract protected Task<Boolean> getUpdateTask();
 
     /**
-     * @return return the {@link Effect} applied to 'selected nodes' in this
-     *         visualization, or null if selection is visualized via another
-     *         mechanism
-     */
-    abstract protected Effect getSelectionEffect();
-
-    /**
-     * @param tickValue
+     * Get the label that should be used for a tick mark at the given value.
      *
-     * @return a String to use for a tick mark label given a tick value
+     * @param tickValue The value to get a label for.
+     *
+     * @return a String to use for a tick mark label given a tick value.
      */
     abstract protected String getTickMarkLabel(X tickValue);
 
     /**
-     * the spacing (in pixels) between tick marks of the horizontal axis. This
-     * will be used to layout the decluttered replacement labels.
+     * Get the spacing, in pixels, between tick marks of the horizontal axis.
+     * This will be used to layout the decluttered replacement labels.
      *
-     * @return the spacing in pixels between tick marks of the horizontal axis
+     * @return The spacing, in pixels, between tick marks of the horizontal axis
      */
     abstract protected double getTickSpacing();
 
     /**
+     * Get the X-Axis of this Visualization's chart
+     *
      * @return the horizontal axis used by this Visualization's chart
      */
     abstract protected Axis<X> getXAxis();
 
     /**
+     * Get the Y-Axis of this Visualization's chart
+     *
      * @return the vertical axis used by this Visualization's chart
      */
     abstract protected Axis<Y> getYAxis();
 
+    /**
+     * Clear all data items from this chart.
+     */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    abstract protected void resetData();
+    abstract protected void clearChartData();
 
     /**
      * update this visualization based on current state of zoom / filters.
@@ -243,7 +250,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
     }
 
     /**
-     * make a series for each event type in a consistent order
+     * Make a series for each event type in a consistent order
      */
     protected final void createSeries() {
         for (EventType eventType : EventType.allTypes) {
@@ -538,16 +545,15 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
         }
 
         /**
-         * Clears the chart data and sets the horisontal axis range. For use
+         * Clears the chart data and sets the horizontal axis range. For use
          * within the derived implementation of the call() method.
          *
          * @param axisValues
          */
         @ThreadConfined(type = ThreadConfined.ThreadType.NOT_UI)
         protected void resetChart(AxisValuesType axisValues) {
-
             Platform.runLater(() -> {
-                resetData();
+                clearChartData();
                 setDateAxisValues(axisValues);
             });
         }

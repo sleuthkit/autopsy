@@ -40,7 +40,6 @@ import javafx.scene.control.RadioButton;
 import javafx.scene.control.Slider;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
-import javafx.scene.effect.Effect;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
@@ -57,8 +56,6 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
-import org.sleuthkit.autopsy.timeline.ui.detailview.HideDescriptionAction;
-import org.sleuthkit.autopsy.timeline.ui.detailview.UnhideDescriptionAction;
 import org.sleuthkit.autopsy.timeline.utils.MappedList;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
@@ -205,7 +202,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     @Override
-    protected void resetData() {
+    protected void clearChartData() {
         chart.reset();
     }
 
@@ -232,11 +229,6 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
     @Override
     protected Task<Boolean> getUpdateTask() {
         return new DetailsUpdateTask();
-    }
-
-    @Override
-    protected Effect getSelectionEffect() {
-        return null;
     }
 
     @Override
