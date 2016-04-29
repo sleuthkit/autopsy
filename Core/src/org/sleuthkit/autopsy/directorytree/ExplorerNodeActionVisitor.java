@@ -18,11 +18,9 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.actions.AddContentTagAction;
-import java.awt.Toolkit;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -37,6 +35,8 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
@@ -113,6 +113,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
     public List<? extends Action> visit(final VirtualDirectory d) {
         List<Action> actions = new ArrayList<>();
         actions.add(ExtractAction.getInstance());
+        actions.add(AddContentTagAction.getInstance());
         actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions;
     }
