@@ -113,7 +113,6 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
     public List<? extends Action> visit(final VirtualDirectory d) {
         List<Action> actions = new ArrayList<>();
         actions.add(ExtractAction.getInstance());
-        actions.add(AddContentTagAction.getInstance());
         actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions;
     }
