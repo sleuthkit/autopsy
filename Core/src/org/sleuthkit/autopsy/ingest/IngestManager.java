@@ -1132,4 +1132,31 @@ public class IngestManager {
 
     }
 
+    /**
+     * An exception thrown by the ingest manager.
+     */
+    public final static class IngestManagerException extends Exception {
+
+        private static final long serialVersionUID = 1L;
+
+        /**
+         * Creates an exception containing an error message.
+         *
+         * @param message The message.
+         */
+        private IngestManagerException(String message) {
+            super(message);
+        }
+
+        /**
+         * Creates an exception containing an error message and a cause.
+         *
+         * @param message The message
+         * @param cause   The cause.
+         */
+        private IngestManagerException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
+
 }

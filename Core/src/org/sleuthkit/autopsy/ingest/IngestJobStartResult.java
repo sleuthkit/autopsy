@@ -25,10 +25,10 @@ import java.util.List;
 public class IngestJobStartResult {
 
     private final IngestJob job;
-    private final IngestManagerException startupException;
+    private final IngestManager.IngestManagerException startupException;
     private final List<IngestModuleError> moduleErrors;
 
-    IngestJobStartResult(IngestJob job, IngestManagerException startupException, List<IngestModuleError> moduleErrors) {
+    IngestJobStartResult(IngestJob job, IngestManager.IngestManagerException startupException, List<IngestModuleError> moduleErrors) {
         this.job = job;
         this.startupException = startupException;
         if (moduleErrors == null) {
@@ -48,7 +48,7 @@ public class IngestJobStartResult {
     /**
      * @return the startupException, which may be null
      */
-    public IngestManagerException getStartupException() {
+    public IngestManager.IngestManagerException getStartupException() {
         return startupException;
     }
 
