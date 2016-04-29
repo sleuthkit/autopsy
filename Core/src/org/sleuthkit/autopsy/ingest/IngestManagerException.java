@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,21 +22,26 @@ package org.sleuthkit.autopsy.ingest;
  * Encapsulates an exception thrown by an ingest module during an operation such
  * as startup or shut down with an exception object for the error that occurred.
  */
-public final class IngestModuleError {
+public final class IngestManagerException extends Exception {
 
-    private final String moduleDisplayName;
-    private final Throwable error;
+    private static final long serialVersionUID = 1L;
 
-    IngestModuleError(String moduleDisplayName, Throwable error) {
-        this.moduleDisplayName = moduleDisplayName;
-        this.error = error;
+    /**
+     * Create exception containing the error message
+     *
+     * @param message the message
+     */
+    IngestManagerException(String message) {
+        super(message);
     }
 
-    public String getModuleDisplayName() {
-        return this.moduleDisplayName;
-    }
-
-    public Throwable getModuleError() {
-        return this.error;
+    /**
+     * Create exception containing the error message
+     *
+     * @param message the message
+     * @param ex      cause exception
+     */
+    public IngestManagerException(String message, Exception ex) {
+        super(message, ex);
     }
 }
