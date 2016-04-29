@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.Node;
@@ -81,7 +82,7 @@ public class SaveSnapshotAsReport extends Action {
         "SaveSnapShotAsReport.reportName.prompt=leave empty for default report name: {0}.",
         "SaveSnapShotAsReport.reportName.header=Enter a report name for the Timeline Snapshot Report."
     })
-    public SaveSnapshotAsReport(TimeLineController controller, Node node) {
+    public SaveSnapshotAsReport(TimeLineController controller, Supplier<Node> nodeSupplier) {
         super(Bundle.SaveSnapShotAsReport_action_name_text());
         setLongText(Bundle.SaveSnapShotAsReport_action_longText());
         setGraphic(new ImageView(SNAP_SHOT));
@@ -93,8 +94,7 @@ public class SaveSnapshotAsReport extends Action {
             //capture generation date and use to make default report name
             Date generationDate = new Date();
             final String defaultReportName = FileUtil.escapeFileName(currentCase.getName() + " " + new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss").format(generationDate)); //NON_NLS
-
-            BufferedImage snapshot = SwingFXUtils.fromFXImage(node.snapshot(null, null), null);
+            BufferedImage snapshot = SwingFXUtils.fromFXImage(nodeSupplier.get().snapshot(null, null), null);
 
             //prompt user to pick report name
             TextInputDialog textInputDialog = new TextInputDialog();
