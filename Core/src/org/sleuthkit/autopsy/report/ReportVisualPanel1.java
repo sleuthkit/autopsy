@@ -137,8 +137,8 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
 
     // Make sure that the report module has a valid non-null name.
     private boolean moduleIsValid(ReportModule module) {
-        return module.getName() != null && !module.getName().isEmpty() 
-            && module.getRelativeFilePath() != null;
+        return module.getName() != null && !module.getName().isEmpty()
+                && module.getRelativeFilePath() != null;
     }
 
     private void popupWarning(ReportModule module) {
@@ -163,13 +163,13 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
      *
      * @return
      */
-    Map<TableReportModule, Boolean> getTableModuleStates() {
+    TableReportModule getTableModule() {
         Map<TableReportModule, Boolean> reportModuleStates = new LinkedHashMap<>();
         ReportModule mod = getSelectedModule();
         if (tableModules.contains(mod)) {
-            reportModuleStates.put((TableReportModule) mod, Boolean.TRUE);
+            return (TableReportModule) mod;
         }
-        return reportModuleStates;
+        return null;
     }
 
     /**
@@ -177,13 +177,12 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
      *
      * @return
      */
-    Map<GeneralReportModule, Boolean> getGeneralModuleStates() {
-        Map<GeneralReportModule, Boolean> reportModuleStates = new LinkedHashMap<>();
+    GeneralReportModule getGeneralModule() {
         ReportModule mod = getSelectedModule();
         if (generalModules.contains(mod)) {
-            reportModuleStates.put((GeneralReportModule) mod, Boolean.TRUE);
+            return (GeneralReportModule) mod;
         }
-        return reportModuleStates;
+        return null;
     }
 
     /**
@@ -191,13 +190,12 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
      *
      * @return
      */
-    Map<FileReportModule, Boolean> getFileModuleStates() {
-        Map<FileReportModule, Boolean> reportModuleStates = new LinkedHashMap<>();
+    FileReportModule getFileModule() {
         ReportModule mod = getSelectedModule();
         if (fileModules.contains(mod)) {
-            reportModuleStates.put((FileReportModule) mod, Boolean.TRUE);
+            return (FileReportModule) mod;
         }
-        return reportModuleStates;
+        return null;
     }
 
     /**
