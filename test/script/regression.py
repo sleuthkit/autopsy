@@ -746,7 +746,6 @@ class TestConfiguration(object):
         if not dir_exists(self.output_parent_dir):
             os.makedirs(self.output_parent_dir)
         self.output_dir = make_path(self.output_parent_dir, time.strftime("%Y.%m.%d-%H.%M.%S"))
-        print(self.output_dir)
         os.makedirs(self.output_dir)
         self.csv = make_local_path(self.output_dir, "CSV.txt")
         self.html_log = make_path(self.output_dir, "AutopsyTestCase.html")
