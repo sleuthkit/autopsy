@@ -18,10 +18,9 @@
  */
 package org.sleuthkit.autopsy.modules.fileextmismatch;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -31,9 +30,9 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
+import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -46,12 +45,16 @@ import org.sleuthkit.datamodel.TskException;
 /**
  * Flags mismatched filename extensions based on file signature.
  */
+@NbBundle.Messages({
+    "CannotRunFileTypeDetection=Unable to run file type detection.",
+    "FileExtMismatchIngestModule.readError.message=Could not read settings."
+})
 public class FileExtMismatchIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(FileExtMismatchIngestModule.class.getName());
     private final IngestServices services = IngestServices.getInstance();
     private final FileExtMismatchDetectorModuleSettings settings;
-    private HashMap<String, String[]> SigTypeToExtMap = new HashMap<>();
+    private HashMap<String, Set<String>> mimeTypeToExtsMap = new HashMap<>();
     private long jobId;
     private static final HashMap<Long, IngestJobTotals> totalsForIngestJobs = new HashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
@@ -91,20 +94,20 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
         jobId = context.getJobId();
         refCounter.incrementAndGet(jobId);
 
-        FileExtMismatchXML xmlLoader = FileExtMismatchXML.getDefault();
-        SigTypeToExtMap = xmlLoader.load();
         try {
+            mimeTypeToExtsMap = FileExtMismatchSettings.readSettings().getMimeTypeToExtsMap();
             this.detector = new FileTypeDetector();
+        } catch (FileExtMismatchSettings.FileExtMismatchSettingsException ex) {
+            throw new IngestModuleException(Bundle.FileExtMismatchIngestModule_readError_message(), ex);
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            throw new IngestModuleException("Could not create file type detector.", ex);
+            throw new IngestModuleException(Bundle.CannotRunFileTypeDetection(), ex);
         }
-
     }
 
     @Override
     public ProcessResult process(AbstractFile abstractFile) {
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
-        if(this.settings.skipKnownFiles() && (abstractFile.getKnown() == FileKnown.KNOWN)) {
+        if (this.settings.skipKnownFiles() && (abstractFile.getKnown() == FileKnown.KNOWN)) {
             return ProcessResult.OK;
         }
 
@@ -175,19 +178,15 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
         }
 
         //get known allowed values from the map for this type
-        String[] allowedExtArray = SigTypeToExtMap.get(currActualSigType);
-        if (allowedExtArray != null) {
-            List<String> allowedExtList = Arrays.asList(allowedExtArray);
-
+        Set<String> allowedExtSet = mimeTypeToExtsMap.get(currActualSigType);
+        if (allowedExtSet != null) {
             // see if the filename ext is in the allowed list
-            if (allowedExtList != null) {
-                for (String e : allowedExtList) {
-                    if (e.equals(currActualExt)) {
-                        return false;
-                    }
+            for (String e : allowedExtSet) {
+                if (e.equals(currActualExt)) {
+                    return false;
                 }
-                return true; //potential mismatch
             }
+            return true; //potential mismatch
         }
 
         return false;

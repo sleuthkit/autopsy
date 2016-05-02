@@ -18,7 +18,10 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 
@@ -37,4 +40,9 @@ class StripeFlattener implements Function<EventNodeBase<?>, Stream<TimeLineEvent
                 node.getSubNodes().stream().flatMap(clusterNode ->
                         clusterNode.getSubNodes().stream().flatMap(this)));
     }
+
+    static public List<TimeLineEvent> flatten(Collection<EventNodeBase<?>> nodes) {
+        return nodes.stream().flatMap(new StripeFlattener()).collect(Collectors.toList());
+    }
+
 }

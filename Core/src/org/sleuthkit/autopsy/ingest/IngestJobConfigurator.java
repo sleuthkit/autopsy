@@ -28,7 +28,7 @@ import org.sleuthkit.datamodel.Content;
  * more data sources using the ingest job configuration.
  *
  * @deprecated Use the IngestModuleSettings and IngestJobConfigurationPanel
- * classes and IngestManager.startIngestJob() instead.
+ * classes and IngestManager.beginIngestJob() instead.
  */
 @Deprecated
 public final class IngestJobConfigurator {

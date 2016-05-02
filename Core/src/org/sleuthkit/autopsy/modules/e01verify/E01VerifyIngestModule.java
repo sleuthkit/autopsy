@@ -35,12 +35,16 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.openide.util.NbBundle;
 
 /**
  * Data source ingest module that verifies the integrity of an Expert Witness
  * Format (EWF) E01 image file by generating a hash of the file and comparing it
  * to the value stored in the image.
  */
+@NbBundle.Messages({
+    "UnableToCalculateHashes=Unable to calculate MD5 hashes."
+})
 public class E01VerifyIngestModule implements DataSourceIngestModule {
 
     private static final Logger logger = Logger.getLogger(E01VerifyIngestModule.class.getName());
@@ -66,16 +70,14 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
         try {
             messageDigest = MessageDigest.getInstance("MD5"); //NON-NLS
         } catch (NoSuchAlgorithmException ex) {
-            logger.log(Level.WARNING, "Error getting md5 algorithm", ex); //NON-NLS
-            throw new RuntimeException(
-                    NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.startUp.exception.failGetMd5"));
+            throw new IngestModuleException(Bundle.UnableToCalculateHashes(), ex);
         }
     }
 
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
         String imgName = dataSource.getName();
-        
+
         // Skip non-images
         if (!(dataSource instanceof Image)) {
             logger.log(Level.INFO, "Skipping non-image {0}", imgName); //NON-NLS
@@ -105,7 +107,7 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
                             imgName)));
             return ProcessResult.ERROR;
         }
-        
+
         storedHash = img.getMd5().toLowerCase();
         logger.log(Level.INFO, "Hash value stored in {0}: {1}", new Object[]{imgName, storedHash}); //NON-NLS
 
@@ -130,7 +132,7 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
         chunkSize = (chunkSize == 0) ? DEFAULT_CHUNK_SIZE : chunkSize;
 
         // Casting to double to capture decimals
-        int totalChunks = (int) Math.ceil((double)size / (double)chunkSize);
+        int totalChunks = (int) Math.ceil((double) size / (double) chunkSize);
         logger.log(Level.INFO, "Total chunks = {0}", totalChunks); //NON-NLS
         int read;
 
@@ -151,9 +153,9 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
                 logger.log(Level.SEVERE, msg, ex);
                 return ProcessResult.ERROR;
             }
-            
+
             // Only update with the read bytes.
-            if(read == chunkSize) {
+            if (read == chunkSize) {
                 messageDigest.update(data);
             } else {
                 byte[] subData = Arrays.copyOfRange(data, 0, read);

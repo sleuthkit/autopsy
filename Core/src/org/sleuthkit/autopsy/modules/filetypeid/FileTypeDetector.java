@@ -24,6 +24,7 @@ import java.util.SortedSet;
 import org.apache.tika.Tika;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MimeTypes;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -36,6 +37,9 @@ import org.sleuthkit.datamodel.TskData;
  * Detects the MIME type of a file by an inspection of its contents, using both
  * user-defined type definitions and Tika.
  */
+@NbBundle.Messages({
+    "CouldNotInitializeFileTypeDetector=Error loading user-defined file types."
+})
 public class FileTypeDetector {
 
     private static final Tika tika = new Tika();
@@ -58,7 +62,7 @@ public class FileTypeDetector {
         try {
             userDefinedFileTypes = UserDefinedFileTypesManager.getInstance().getFileTypes();
         } catch (UserDefinedFileTypesManager.UserDefinedFileTypesException ex) {
-            throw new FileTypeDetectorInitException("Error loading user-defined file types", ex); //NON-NLS
+            throw new FileTypeDetectorInitException(Bundle.CouldNotInitializeFileTypeDetector(), ex);
         }
     }
 
@@ -129,8 +133,8 @@ public class FileTypeDetector {
      * Gets the MIME type of a file, detecting it if it is not already known. If
      * detection is necessary, the result is added to the case database.
      *
-     * IMPORTANT: This method should only be called by ingest modules. All
-     * other clients should call AbstractFile.getMIMEType, and may call
+     * IMPORTANT: This method should only be called by ingest modules. All other
+     * clients should call AbstractFile.getMIMEType, and may call
      * FileTypeDetector.detect, if AbstractFile.getMIMEType returns null.
      *
      * @param file The file.
@@ -281,7 +285,7 @@ public class FileTypeDetector {
      * Determines whether or not the a file matches a user-defined or Autopsy
      * predefined file type.
      *
-     * @param file             The file to test.
+     * @param file The file to test.
      *
      * @return The file type name string or null, if no match is detected.
      *
