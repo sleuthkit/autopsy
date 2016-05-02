@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.timeline.ui.countsview;
 
 import com.google.common.collect.Lists;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -47,6 +46,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
 import static org.sleuthkit.autopsy.timeline.ui.countsview.Bundle.*;
@@ -89,27 +89,27 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
     }
 
     @Override
-    protected Task<Boolean> getUpdateTask() {
+    protected Task<Boolean> getNewUpdateTask() {
         return new CountsUpdateTask();
     }
 
     /**
      * Constructor
      *
-     * @param controller  The TimelineController for this visualization
-     * @param partPane
-     * @param contextPane
-     * @param spacer
+     * @param controller   The TimelineController for this visualization.
+     * @param specificPane The container for the specific axis labels.
+     * @param contextPane  The container for the contextual axis labels.
+     * @param spacer       The Region to use as a spacer to keep the axis labels
+     *                     aligned.
      */
     @NbBundle.Messages({"CountsViewPane.numberOfEvents=Number of Events ({0})"})
-    public CountsViewPane(TimeLineController controller, Pane partPane, Pane contextPane, Region spacer) {
-        super(controller, partPane, contextPane, spacer);
-        chart = new EventCountsChart(controller, dateAxis, countAxis, selectedNodes);
-        chart.setData(dataSeries);
-        setCenter(chart);
-        Tooltip.install(chart, getDefaultTooltip());
+    public CountsViewPane(TimeLineController controller, Pane specificPane, Pane contextPane, Region spacer) {
+        super(controller, partspecificPanePane, contextPane, spacer);
+        setChart(new EventCountsChart(controller, dateAxis, countAxis, getSelectedNodes()));
+        getChart().setData(dataSeries);
+        Tooltip.install(getChart(), getDefaultTooltip());
 
-        settingsNodes = new ArrayList<>(new CountsViewSettingsPane().getChildrenUnmodifiable());
+        setSettingsNodes(new CountsViewSettingsPane().getChildrenUnmodifiable());
 
         dateAxis.getTickMarks().addListener((Observable tickMarks) -> layoutDateLabels());
         dateAxis.categorySpacingProperty().addListener((Observable spacing) -> layoutDateLabels());
@@ -126,9 +126,9 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
         countAxis.minorTickVisibleProperty().bind(scaleIsLinear);
         scaleProp.addListener(scale -> {
             update();
-            countAxis.setLabel(Bundle.CountsViewPane_numberOfEvents(scaleProp.get().getDisplayName()));
+            syncAxisScaleLabel();
         });
-        countAxis.setLabel(Bundle.CountsViewPane_numberOfEvents(scaleProp.get().getDisplayName()));
+        syncAxisScaleLabel();
     }
 
     @Override
@@ -148,7 +148,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
 
     @Override
     protected void applySelectionEffect(Node c1, Boolean applied) {
-        c1.setEffect(applied ? chart.getSelectionEffect() : null);
+        c1.setEffect(applied ? getChart().getSelectionEffect() : null);
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
@@ -160,6 +160,14 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
         dataSeries.clear();
         eventTypeToSeriesMap.clear();
         createSeries();
+    }
+
+    /**
+     * Set the appropriate label on the vertical axis, deepending on the
+     * selected scale.
+     */
+    private void syncAxisScaleLabel() {
+        countAxis.setLabel(Bundle.CountsViewPane_numberOfEvents(scaleProp.get().getDisplayName()));
     }
 
     /**
@@ -271,9 +279,10 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
             if (isCancelled()) {
                 return null;
             }
+            FilteredEventsModel eventsModel = getEventsModel();
 
-            final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(getTimeRange());
-            chart.setRangeInfo(rangeInfo);  //do we need this.  It seems like a hack.
+            final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(eventsModel.getTimeRange());
+            getChart().setRangeInfo(rangeInfo);  //do we need this.  It seems like a hack.
             List<Interval> intervals = rangeInfo.getIntervals();
 
             //clear old data, and reset ranges and series
@@ -299,7 +308,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
                 int maxPerInterval = 0;
 
                 //query for current interval
-                Map<EventType, Long> eventCounts = filteredEvents.getEventCounts(interval);
+                Map<EventType, Long> eventCounts = eventsModel.getEventCounts(interval);
 
                 //for each type add data to graph
                 for (final EventType eventType : eventCounts.keySet()) {

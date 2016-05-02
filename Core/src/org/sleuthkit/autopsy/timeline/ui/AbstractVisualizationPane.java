@@ -29,25 +29,31 @@ import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
-import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.concurrent.Service;
+import javafx.collections.transformation.SortedList;
 import javafx.concurrent.Task;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.chart.Axis;
-import javafx.scene.chart.Chart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Label;
 import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.Tooltip;
+import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.BorderStroke;
+import javafx.scene.layout.BorderStrokeStyle;
+import javafx.scene.layout.BorderWidths;
+import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
@@ -55,7 +61,6 @@ import javafx.scene.text.TextAlignment;
 import javax.annotation.concurrent.Immutable;
 import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.control.MaskerPane;
-import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -66,79 +71,142 @@ import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 
 /**
- * Abstract base class for {@link Chart} based {@link TimeLineView}s used in the
- * main visualization area.
+ * Abstract base class for TimeLineChart based visualizations.
  *
  * @param <X>         the type of data plotted along the x axis
  * @param <Y>         the type of data plotted along the y axis
  * @param <NodeType>  the type of nodes used to represent data items
- * @param <ChartType> the type of the {@link XYChart<X,Y>} this class uses to
- *                    plot the data.
+ * @param <ChartType> the type of the TimeLineChart<X> this class uses to plot
+ *                    the data. Must extend Region.
  *
  * TODO: this is becoming (too?) closely tied to the notion that their is a
- * {@link XYChart} doing the rendering. Is this a good idea? -jm TODO: pull up
- * common history context menu items out of derived classes? -jm
+ * XYChart doing the rendering. Is this a good idea? -jm
+ *
+ * TODO: pull up common history context menu items out of derived classes? -jm
  */
 public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, ChartType extends Region & TimeLineChart<X>> extends BorderPane {
 
+    private static final Logger LOGGER = Logger.getLogger(AbstractVisualizationPane.class.getName());
+
     @NbBundle.Messages("AbstractVisualization.Default_Tooltip.text=Drag the mouse to select a time interval to zoom into.\nRight-click for more actions.")
     private static final Tooltip DEFAULT_TOOLTIP = new Tooltip(Bundle.AbstractVisualization_Default_Tooltip_text());
-    private static final Logger LOGGER = Logger.getLogger(AbstractVisualizationPane.class.getName());
+    private static final Border ONLY_LEFT_BORDER = new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(0, 0, 0, 1)));
 
     public static Tooltip getDefaultTooltip() {
         return DEFAULT_TOOLTIP;
     }
 
-    protected final SimpleBooleanProperty hasEvents = new SimpleBooleanProperty(true);
+    private final ReadOnlyBooleanWrapper hasVisibleEvents = new ReadOnlyBooleanWrapper(true);
 
-    /**
+    /*
      * access to chart data via series
      */
     protected final ObservableList<XYChart.Series<X, Y>> dataSeries = FXCollections.<XYChart.Series<X, Y>>observableArrayList();
     protected final Map<EventType, XYChart.Series<X, Y>> eventTypeToSeriesMap = new HashMap<>();
 
-    protected ChartType chart;
+    private ChartType chart;
 
-    //// replacement axis label componenets
-    private final Pane leafPane; // container for the leaf lables in the declutterd axis
-    private final Pane branchPane;// container for the branch lables in the declutterd axis
-    protected final Region spacer;
+    private final Pane specificLabelPane; // container for the specific labels in the declutterd axis
+    private final Pane contextLabelPane;// container for the contextual labels in the declutterd axis
+    private final Region spacer;
 
     /**
      * task used to reload the content of this visualization
      */
     private Task<Boolean> updateTask;
 
-    final protected TimeLineController controller;
+    final private TimeLineController controller;
+    final private FilteredEventsModel filteredEvents;
 
-    final protected FilteredEventsModel filteredEvents;
+    final private ObservableList<NodeType> selectedNodes = FXCollections.observableArrayList();
 
-    final protected ObservableList<NodeType> selectedNodes = FXCollections.observableArrayList();
+    private InvalidationListener updateListener = any -> update();
 
-    private InvalidationListener invalidationListener = (Observable observable) -> {
-        update();
-    };
-
+    /**
+     * The visualization nodes that are selected.
+     *
+     * @return An ObservableList<NodeType> of the nodes that are selected in
+     *         this visualization.
+     */
     public ObservableList<NodeType> getSelectedNodes() {
         return selectedNodes;
     }
 
     /**
-     * list of {@link Node}s to insert into the toolbar. This should be set in
-     * an implementations constructor.
+     * List of Nodes to insert into the toolbar. This should be set in an
+     * implementations constructor.
      */
-    protected List<Node> settingsNodes;
+    private List<Node> settingsNodes;
 
+    /**
+     * Get a List of nodes containing settings widgets to insert into this
+     * visualization's header.
+     *
+     * @return The List of settings Nodes.
+     */
+    protected List<Node> getSettingsNodes() {
+        return Collections.unmodifiableList(settingsNodes);
+    }
+
+    /**
+     * Set the List of nodes containing settings widgets to insert into this
+     * visualization's header.
+     *
+     *
+     * @param settingsNodes The List of nodes containing settings widgets to
+     *                      insert into this visualization's header.
+     */
+    protected void setSettingsNodes(List<Node> settingsNodes) {
+        this.settingsNodes = settingsNodes;
+    }
+
+    /**
+     * Get the TimelineController for this visualization.
+     *
+     * @return The TimelineController for this visualization.
+     */
     public TimeLineController getController() {
         return controller;
     }
 
     /**
-     * @return the list of nodes containing settings widgets to insert into this
-     *         visualization's header
+     * Get the CharType that implements this visualization.
+     *
+     * @return The CharType that implements this visualization.
      */
-    protected List<Node> getSettingsNodes() {
-        return Collections.unmodifiableList(settingsNodes);
+    protected ChartType getChart() {
+        return chart;
+    }
+
+    /**
+     * Get the FilteredEventsModel for this visualization.
+     *
+     * @return The FilteredEventsModel for this visualization.
+     */
+    public FilteredEventsModel getEventsModel() {
+        return filteredEvents;
+    }
+
+    /**
+     * Set the ChartType that implements this visualization.
+     *
+     * @param chart The ChartType that implements this visualization.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    protected void setChart(ChartType chart) {
+        this.chart = chart;
+        setCenter(chart);
+    }
+
+    /**
+     * A property that indicates whether there are any events visible in this
+     * visualization with the current view parameters.
+     *
+     * @return A property that indicates whether there are any events visible in
+     *         this visualization with the current view parameters.
+     */
+    ReadOnlyBooleanProperty hasVisibleEventsProperty() {
+        return hasVisibleEvents.getReadOnlyProperty();
     }
 
     /**
@@ -153,7 +221,8 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
     abstract protected Boolean isTickBold(X value);
 
     /**
-     * Apply this visualization's 'selection effect' to the given node
+     * Apply this visualization's 'selection effect' to the given node, if
+     * applied is true. If applied is false, remove the affect
      *
      * @param node    The node to apply the 'effect' to
      * @param applied True if the effect should be applied, false if the effect
@@ -162,13 +231,31 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
     abstract protected void applySelectionEffect(NodeType node, Boolean applied);
 
     /**
-     * Get a background Task that fetches the appropriate data and loads it into
+     * Apply this visualization's 'selection effect' to the given node.
+     *
+     * @param node The node to apply the 'effect' to.
+     */
+    protected void applySelectionEffect(NodeType node) {
+        applySelectionEffect(node, true);
+    }
+
+    /**
+     * Remove this visualization's 'selection effect' from the given node.
+     *
+     * @param node The node to remvoe the 'effect' from.
+     */
+    protected void removeSelectionEffect(NodeType node) {
+        applySelectionEffect(node, Boolean.FALSE);
+    }
+
+    /**
+     * Get a new background Task that fetches the appropriate data and loads it into
      * this visualization.
      *
-     * @return A task to execute on a background thread to reload this
+     * @return A new task to execute on a background thread to reload this
      *         visualization with different data.
      */
-    abstract protected Task<Boolean> getUpdateTask();
+    abstract protected Task<Boolean> getNewUpdateTask();
 
     /**
      * Get the label that should be used for a tick mark at the given value.
@@ -190,14 +277,14 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
     /**
      * Get the X-Axis of this Visualization's chart
      *
-     * @return the horizontal axis used by this Visualization's chart
+     * @return The horizontal axis used by this Visualization's chart
      */
     abstract protected Axis<X> getXAxis();
 
     /**
      * Get the Y-Axis of this Visualization's chart
      *
-     * @return the vertical axis used by this Visualization's chart
+     * @return The vertical axis used by this Visualization's chart
      */
     abstract protected Axis<Y> getYAxis();
 
@@ -208,19 +295,18 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
     abstract protected void clearChartData();
 
     /**
-     * update this visualization based on current state of zoom / filters.
-     * Primarily this invokes the background {@link VisualizationUpdateTask}
-     * returned by {@link #getUpdateTask()}, which derived classes must
-     * implement.
+     * Update this visualization based on current state of zoom / filters.
+     * Primarily this invokes the background VisualizationUpdateTask returned by
+     * getUpdateTask(), which derived classes must implement.
      *
-     * TODO: replace this logic with a {@link Service} ? -jm
+     * TODO: replace this logic with a javafx Service ? -jm
      */
     final synchronized public void update() {
         if (updateTask != null) {
             updateTask.cancel(true);
             updateTask = null;
         }
-        updateTask = getUpdateTask();
+        updateTask = getNewUpdateTask();
         updateTask.stateProperty().addListener((Observable observable) -> {
             switch (updateTask.getState()) {
                 case CANCELLED:
@@ -231,9 +317,9 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
                     break;
                 case SUCCEEDED:
                     try {
-                        this.hasEvents.set(updateTask.get());
+                        this.hasVisibleEvents.set(updateTask.get());
                     } catch (InterruptedException | ExecutionException ex) {
-                        LOGGER.log(Level.SEVERE, "Unexpected exception updating visualization", ex); //NOI18N NON-NLS
+                        LOGGER.log(Level.SEVERE, "Unexpected exception updating visualization", ex); //NON-NLS
                     }
                     break;
             }
@@ -241,16 +327,26 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
         controller.monitorTask(updateTask);
     }
 
+    /**
+     * Dispose of this visualization and any resources it holds onto.
+     */
     final synchronized public void dispose() {
+
+        //cancel and gc updateTask
         if (updateTask != null) {
             updateTask.cancel(true);
+            updateTask = null;
         }
-        this.filteredEvents.zoomParametersProperty().removeListener(invalidationListener);
-        invalidationListener = null;
+        //remvoe and gc updateListener
+        this.filteredEvents.zoomParametersProperty().removeListener(updateListener);
+        TimeLineController.getTimeZone().removeListener(updateListener);
+        updateListener = null;
+
+        filteredEvents.unRegisterForEvents(this);
     }
 
     /**
-     * Make a series for each event type in a consistent order
+     * Make a series for each event type in a consistent order.
      */
     protected final void createSeries() {
         for (EventType eventType : EventType.allTypes) {
@@ -262,72 +358,87 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
     }
 
     /**
+     * Get the series for the given EventType.
      *
-     * @param et the EventType to get the series for
+     * @param et The EventType to get the series for
      *
-     * @return a Series object to contain all the events with the given
+     * @return A Series object to contain all the events with the given
      *         EventType
      */
     protected final XYChart.Series<X, Y> getSeries(final EventType et) {
         return eventTypeToSeriesMap.get(et);
     }
 
-    protected AbstractVisualizationPane(TimeLineController controller, Pane partPane, Pane contextPane, Region spacer) {
+    /**
+     * Constructor
+     *
+     * @param controller   The TimelineController for this visualization.
+     * @param specificPane The container for the specific axis labels.
+     * @param contextPane  The container for the contextual axis labels.
+     * @param spacer       The Region to use as a spacer to keep the axis labels
+     *                     aligned.
+     */
+    protected AbstractVisualizationPane(TimeLineController controller, Pane specificPane, Pane contextPane, Region spacer) {
         this.controller = controller;
         this.filteredEvents = controller.getEventsModel();
         this.filteredEvents.registerForEvents(this);
-        this.filteredEvents.zoomParametersProperty().addListener(invalidationListener);
-        this.leafPane = partPane;
-        this.branchPane = contextPane;
+        this.filteredEvents.zoomParametersProperty().addListener(updateListener);
+        this.specificLabelPane = specificPane;
+        this.contextLabelPane = contextPane;
         this.spacer = spacer;
 
         createSeries();
 
-        selectedNodes.addListener((ListChangeListener.Change<? extends NodeType> c) -> {
-            while (c.next()) {
-                c.getRemoved().forEach(n -> applySelectionEffect(n, false));
-                c.getAddedSubList().forEach(n -> applySelectionEffect(n, true));
+        selectedNodes.addListener((ListChangeListener.Change<? extends NodeType> change) -> {
+            while (change.next()) {
+                change.getRemoved().forEach(this::removeSelectionEffect);
+                change.getAddedSubList().forEach(this::applySelectionEffect);
             }
         });
 
-        TimeLineController.getTimeZone().addListener(invalidationListener);
+        TimeLineController.getTimeZone().addListener(updateListener);
 
         //show tooltip text in status bar
-        hoverProperty().addListener(observable -> controller.setStatus(isHover() ? DEFAULT_TOOLTIP.getText() : ""));
+        hoverProperty().addListener(hover -> controller.setStatus(isHover() ? DEFAULT_TOOLTIP.getText() : "")); //NON-NLS
 
     }
 
+    /**
+     * Handler for RefreshRequestedEvents. Updates visualization.
+     *
+     * @param event The RefreshRequestedEvent.
+     */
     @Subscribe
     public void handleRefreshRequested(RefreshRequestedEvent event) {
         update();
     }
 
     /**
-     * iterate through the list of tick-marks building a two level structure of
-     * replacement tick marl labels. (Visually) upper level has most
-     * detailed/highest frequency part of date/time. Second level has rest of
-     * date/time grouped by unchanging part. eg:
+     * Iterate through the list of tick-marks building a two level structure of
+     * replacement tick mark labels. (Visually) upper level has most
+     * detailed/highest frequency part of date/time (specific label). Second
+     * level has rest of date/time grouped by unchanging part (contextual
+     * label).
      *
+     * eg:
      *
-     * october-30_october-31_september-01_september-02_september-03
+     * October-October-31_September-01_September-02_September-03
      *
-     * becomes
+     * becomes:
      *
      * _________30_________31___________01___________02___________03
      *
-     * _________october___________|_____________september___________
+     * _________October___________|_____________September___________
      *
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     public synchronized void layoutDateLabels() {
-
         //clear old labels
-        branchPane.getChildren().clear();
-        leafPane.getChildren().clear();
+        contextLabelPane.getChildren().clear();
+        specificLabelPane.getChildren().clear();
         //since the tickmarks aren't necessarily in value/position order,
         //make a clone of the list sorted by position along axis
-        ObservableList<Axis.TickMark<X>> tickMarks = FXCollections.observableArrayList(getXAxis().getTickMarks());
-        tickMarks.sort(Comparator.comparing(Axis.TickMark::getPosition));
+        SortedList<Axis.TickMark<X>> tickMarks = getXAxis().getTickMarks().sorted(Comparator.comparing(Axis.TickMark::getPosition));
 
         if (tickMarks.isEmpty() == false) {
             //get the spacing between ticks in the underlying axis
@@ -335,53 +446,51 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
 
             //initialize values from first tick
             TwoPartDateTime dateTime = new TwoPartDateTime(getTickMarkLabel(tickMarks.get(0).getValue()));
-            String lastSeenBranchLabel = dateTime.branch;
-            //cumulative width of the current branch label
+            String lastSeenContextLabel = dateTime.context;
 
             //x-positions (pixels) of the current branch and leaf labels
-            double leafLabelX = 0;
+            double specificLabelX = 0;
 
-            if (dateTime.branch.isEmpty()) {
+            if (dateTime.context.isEmpty()) {
                 //if there is only one part to the date (ie only year), just add a label for each tick
                 for (Axis.TickMark<X> t : tickMarks) {
-                    assignLeafLabel(new TwoPartDateTime(getTickMarkLabel(t.getValue())).leaf,
+                    addSpecificLabel(new TwoPartDateTime(getTickMarkLabel(t.getValue())).specifics,
                             spacing,
-                            leafLabelX,
+                            specificLabelX,
                             isTickBold(t.getValue())
                     );
 
-                    leafLabelX += spacing;  //increment x
+                    specificLabelX += spacing;  //increment x
                 }
             } else {
                 //there are two parts so ...
                 //initialize additional state
-                double branchLabelX = 0;
-                double branchLabelWidth = 0;
+                double contextLabelX = 0;
+                double contextLabelWidth = 0;
 
-                for (Axis.TickMark<X> t : tickMarks) {               //for each tick
-
+                for (Axis.TickMark<X> t : tickMarks) {
                     //split the label into a TwoPartDateTime
                     dateTime = new TwoPartDateTime(getTickMarkLabel(t.getValue()));
 
-                    //if we are still on the same branch
-                    if (lastSeenBranchLabel.equals(dateTime.branch)) {
-                        //increment branch width
-                        branchLabelWidth += spacing;
-                    } else {// we are on to a new branch, so ...
-                        assignBranchLabel(lastSeenBranchLabel, branchLabelWidth, branchLabelX);
+                    //if we are still in the same context
+                    if (lastSeenContextLabel.equals(dateTime.context)) {
+                        //increment context width
+                        contextLabelWidth += spacing;
+                    } else {// we are on to a new context, so ...
+                        addContextLabel(lastSeenContextLabel, contextLabelWidth, contextLabelX);
                         //and then update label, x-pos, and width
-                        lastSeenBranchLabel = dateTime.branch;
-                        branchLabelX += branchLabelWidth;
-                        branchLabelWidth = spacing;
+                        lastSeenContextLabel = dateTime.context;
+                        contextLabelX += contextLabelWidth;
+                        contextLabelWidth = spacing;
                     }
-                    //add the label for the leaf (highest frequency part)
-                    assignLeafLabel(dateTime.leaf, spacing, leafLabelX, isTickBold(t.getValue()));
+                    //add the specific label (highest frequency part)
+                    addSpecificLabel(dateTime.specifics, spacing, specificLabelX, isTickBold(t.getValue()));
 
-                    //increment leaf position
-                    leafLabelX += spacing;
+                    //increment specific position
+                    specificLabelX += spacing;
                 }
-                //we have reached end so add branch label for current branch
-                assignBranchLabel(lastSeenBranchLabel, branchLabelWidth, branchLabelX);
+                //we have reached end so add label for current context
+                addContextLabel(lastSeenContextLabel, contextLabelWidth, contextLabelX);
             }
         }
         //request layout since we have modified scene graph structure
@@ -389,45 +498,48 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
     }
 
     /**
-     * add a {@link Text} node to the leaf container for the decluttered axis
-     * labels
+     * Add a Text Node to the specific label container for the decluttered axis
+     * labels.
      *
-     * @param labelText  the string to add
-     * @param labelWidth the width of the space available for the text
-     * @param labelX     the horizontal position in the partPane of the text
-     * @param bold       true if the text should be bold, false otherwise
+     * @param labelText  The String to add.
+     * @param labelWidth The width, in pixels, of the space available for the
+     *                   text.
+     * @param labelX     The horizontal position, in pixels, in the specificPane
+     *                   of the text.
+     * @param bold       True if the text should be bold, false otherwise.
      */
-    private synchronized void assignLeafLabel(String labelText, double labelWidth, double labelX, boolean bold) {
+    private synchronized void addSpecificLabel(String labelText, double labelWidth, double labelX, boolean bold) {
 
-        Text label = new Text(" " + labelText + " "); //NOI18N
+        Text label = new Text(" " + labelText + " "); //NON-NLS
         label.setTextAlignment(TextAlignment.CENTER);
         label.setFont(Font.font(null, bold ? FontWeight.BOLD : FontWeight.NORMAL, 10));
         //position label accounting for width
         label.relocate(labelX + labelWidth / 2 - label.getBoundsInLocal().getWidth() / 2, 0);
         label.autosize();
 
-        if (leafPane.getChildren().isEmpty()) {
+        if (specificLabelPane.getChildren().isEmpty()) {
             //just add first label
-            leafPane.getChildren().add(label);
+            specificLabelPane.getChildren().add(label);
         } else {
             //otherwise don't actually add the label if it would intersect with previous label
-            final Text lastLabel = (Text) leafPane.getChildren().get(leafPane.getChildren().size() - 1);
+            final Node lastLabel = specificLabelPane.getChildren().get(specificLabelPane.getChildren().size() - 1);
 
-            if (!lastLabel.getBoundsInParent().intersects(label.getBoundsInParent())) {
-                leafPane.getChildren().add(label);
+            if (false == lastLabel.getBoundsInParent().intersects(label.getBoundsInParent())) {
+                specificLabelPane.getChildren().add(label);
             }
         }
     }
 
     /**
-     * add a {@link Label} node to the branch container for the decluttered axis
-     * labels
+     * Add a Label Node to the contextual label container for the decluttered
+     * axis labels.
      *
-     * @param labelText  the string to add
-     * @param labelWidth the width of the space to use for the label
-     * @param labelX     the horizontal position in the partPane of the text
+     * @param labelText  The String to add.
+     * @param labelWidth The width, in pixels, of the space to use for the label
+     * @param labelX     The horizontal position, in pixels, in the specificPane
+     *                   of the text
      */
-    private synchronized void assignBranchLabel(String labelText, double labelWidth, double labelX) {
+    private synchronized void addContextLabel(String labelText, double labelWidth, double labelX) {
 
         Label label = new Label(labelText);
         label.setAlignment(Pos.CENTER);
@@ -443,63 +555,76 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
         label.relocate(labelX, 0);
 
         if (labelX == 0) { // first label has no border
-            label.setStyle("-fx-border-width: 0 0 0 0 ; -fx-border-color:black;"); // NON-NLS //NOI18N
+            label.setBorder(null);
+//            label.setStyle("-fx-border-width: 0 0 0 0 ; -fx-border-color:black;"); //NON-NLS 
         } else {  // subsequent labels have border on left to create dividers
-            label.setStyle("-fx-border-width: 0 0 0 1; -fx-border-color:black;"); // NON-NLS //NOI18N
+            label.setBorder(ONLY_LEFT_BORDER);
+//            label.setStyle("-fx-border-width: 0 0 0 1; -fx-border-color:black;"); //NON-NLS 
         }
 
-        branchPane.getChildren().add(label);
+        contextLabelPane.getChildren().add(label);
     }
 
     /**
      * A simple data object used to represent a partial date as up to two parts.
-     * A low frequency part (branch) containing all but the most specific
-     * element, and a highest frequency part (leaf) containing the most specific
-     * element. The branch and leaf names come from thinking of the space of all
-     * date times as a tree with higher frequency information further from the
-     * root. If there is only one part, it will be in the branch and the leaf
-     * will equal an empty string
+     * A low frequency part (context) containing all but the most specific
+     * element, and a highest frequency part containing the most specific
+     * element. If there is only one part, it will be in the context and the
+     * specifics will equal an empty string
      */
     @Immutable
     private static final class TwoPartDateTime {
 
         /**
-         * the low frequency part of a date/time eg 2001-May-4
+         * The low frequency part of a date/time eg 2001-May-4
          */
-        private final String branch;
+        private final String context;
 
         /**
-         * the highest frequency part of a date/time eg 14 (2pm)
+         * The highest frequency part of a date/time eg 14 (2pm)
          */
-        private final String leaf;
+        private final String specifics;
 
+        /**
+         * Constructor
+         *
+         * @param dateString The Date/Time to represent, formatted as per
+         *                   RangeDivisionInfo.getTickFormatter().
+         */
         TwoPartDateTime(String dateString) {
-            //find index of separator to spit on
-            int splitIndex = StringUtils.lastIndexOfAny(dateString, " ", "-", ":"); //NOI18N
+            //find index of separator to split on
+            int splitIndex = StringUtils.lastIndexOfAny(dateString, " ", "-", ":"); //NON-NLS
             if (splitIndex < 0) { // there is only one part
-                leaf = dateString;
-                branch = ""; //NOI18N
+                specifics = dateString;
+                context = ""; //NON-NLS
             } else { //split at index
-                leaf = StringUtils.substring(dateString, splitIndex + 1);
-                branch = StringUtils.substring(dateString, 0, splitIndex);
+                specifics = StringUtils.substring(dateString, splitIndex + 1);
+                context = StringUtils.substring(dateString, 0, splitIndex);
             }
         }
-    }
-
-    protected Interval getTimeRange() {
-        return filteredEvents.timeRangeProperty().get();
     }
 
     /**
      * Base class for Tasks that update a visualization when the view settings
      * change.
      *
-     * @param <AxisValuesType> the type of data displayed along the X-Axis.
+     * @param <AxisValuesType> The type of a single object that can represent
+     *                         the range of data displayed along the X-Axis.
      */
     abstract protected class VisualizationUpdateTask<AxisValuesType> extends LoggedTask<Boolean> {
 
+        private final Node center;
+
+        /**
+         * Constructor
+         *
+         * @param taskName        The name of this task.
+         * @param logStateChanges Whether or not task state chanes should be
+         *                        logged.
+         */
         protected VisualizationUpdateTask(String taskName, boolean logStateChanges) {
             super(taskName, logStateChanges);
+            this.center = getCenter();
         }
 
         /**
@@ -507,9 +632,10 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
          * indicator over the visualization. Derived Tasks should be sure to
          * call this as part of their call() implementation.
          *
-         * @return true
+         * @return True
          *
-         * @throws Exception
+         * @throws Exception If there is an unhandled exception during the
+         *                   background operation
          */
         @NbBundle.Messages({"VisualizationUpdateTask.preparing=Analyzing zoom and filter settings"})
         @Override
@@ -526,10 +652,9 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
 
             return true;
         }
-        private final Node center = getCenter();
 
         /**
-         * updates the horisontal axis and removes the blocking progress
+         * Updates the horizontal axis and removes the blocking progress
          * indicator. Derived Tasks should be sure to call this as part of their
          * succeeded() implementation.
          */
@@ -537,11 +662,36 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
         protected void succeeded() {
             super.succeeded();
             layoutDateLabels();
+            cleanup();
+        }
 
-            Platform.runLater(() -> {
-                setCenter(center); //clear masker pane
-                setCursor(Cursor.DEFAULT);
-            });
+        /**
+         * Removes the blocking progress indicator. Derived Tasks should be sure
+         * to call this as part of their cancelled() implementation.
+         */
+        @Override
+        protected void cancelled() {
+            super.cancelled();
+            cleanup();
+        }
+
+        /**
+         * Removes the blocking progress indicator. Derived Tasks should be sure
+         * to call this as part of their failed() implementation.
+         */
+        @Override
+        protected void failed() {
+            super.failed();
+            cleanup();
+        }
+
+        /**
+         * Removes the blocking progress indicator and reset the cursor to the
+         * default.
+         */
+        private void cleanup() {
+            setCenter(center); //clear masker pane installed in call()
+            setCursor(Cursor.DEFAULT);
         }
 
         /**
@@ -558,6 +708,12 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
             });
         }
 
+        /**
+         * Set the horizontal range that this chart will show.
+         *
+         * @param values A single object representing the range that this chart
+         *               will show.
+         */
         abstract protected void setDateAxisValues(AxisValuesType values);
     }
 }
