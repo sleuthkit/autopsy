@@ -673,6 +673,10 @@ class TestConfiguration(object):
         self.args = args
         # Paths:
         self.output_parent_dir = make_path("..", "output", "results")
+        if not dir_exists(self.output_parent_dir):
+            os.chdir('..')
+            os.makedirs(wgetcwd().decode("utf-8") + "/output/results")
+            os.chdir('script')
         self.output_dir = ""
         self.input_dir = make_local_path("..","input")
         self.gold = make_path("..", "output", "gold")
@@ -742,6 +746,7 @@ class TestConfiguration(object):
         if not dir_exists(self.output_parent_dir):
             os.makedirs(self.output_parent_dir)
         self.output_dir = make_path(self.output_parent_dir, time.strftime("%Y.%m.%d-%H.%M.%S"))
+        print(self.output_dir)
         os.makedirs(self.output_dir)
         self.csv = make_local_path(self.output_dir, "CSV.txt")
         self.html_log = make_path(self.output_dir, "AutopsyTestCase.html")
