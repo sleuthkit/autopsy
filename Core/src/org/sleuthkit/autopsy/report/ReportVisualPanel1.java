@@ -24,9 +24,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import static java.util.Collections.swap;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -164,7 +162,6 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
      * @return
      */
     TableReportModule getTableModule() {
-        Map<TableReportModule, Boolean> reportModuleStates = new LinkedHashMap<>();
         ReportModule mod = getSelectedModule();
         if (tableModules.contains(mod)) {
             return (TableReportModule) mod;
