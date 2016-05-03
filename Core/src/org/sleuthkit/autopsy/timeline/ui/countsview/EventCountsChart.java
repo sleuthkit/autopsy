@@ -359,7 +359,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
                 super(Bundle.Timeline_ui_countsview_menuItem_zoomIntoTimeRange());
                 setEventHandler(action -> {
                     if (interval.toDuration().isShorterThan(Seconds.ONE.toStandardDuration()) == false) {
-                        controller.pushTimeRange(interval);
+                        controller.pushInterval(interval);
                     }
                 });
             }
@@ -396,7 +396,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
                 }
             } else if (e.getClickCount() >= 2) {  //double-click => zoom in time
                 if (interval.toDuration().isLongerThan(Seconds.ONE.toStandardDuration())) {
-                    controller.pushTimeRange(interval);
+                    controller.pushInterval(interval);
                 } else {
 
                     int showConfirmDialog = JOptionPane.showConfirmDialog(null,

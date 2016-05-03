@@ -37,7 +37,6 @@ import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuButton;
-import javafx.scene.control.TitledPane;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
@@ -56,6 +55,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import static javafx.scene.layout.Region.USE_PREF_SIZE;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.util.Callback;
 import javax.annotation.Nonnull;
@@ -83,6 +83,7 @@ import org.sleuthkit.autopsy.timeline.actions.ZoomToEvents;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.TagsUpdatedEvent;
 import org.sleuthkit.autopsy.timeline.filters.TagsFilter;
+import static org.sleuthkit.autopsy.timeline.ui.Bundle.*;
 import org.sleuthkit.autopsy.timeline.ui.countsview.CountsViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.tree.EventsTree;
@@ -102,7 +103,7 @@ final public class VisualizationPanel extends BorderPane {
 
     private static final Image INFORMATION = new Image("org/sleuthkit/autopsy/timeline/images/information.png", 16, 16, true, true); // NON-NLS
     private static final Image REFRESH = new Image("org/sleuthkit/autopsy/timeline/images/arrow-circle-double-135.png"); // NON-NLS
-    private static final Background background = new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY));
+    private static final Background GRAY_BACKGROUND = new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY));
 
     @GuardedBy("this")
     private LoggedTask<Void> histogramTask;
@@ -179,11 +180,9 @@ final public class VisualizationPanel extends BorderPane {
             if (rangeSlider.isHighValueChanging() == false
                     && rangeSlider.isLowValueChanging() == false) {
                 Long minTime = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval()).getLowerBound();
-                if (false == controller.pushTimeRange(new Interval(
+                controller.pushInterval(new Interval(
                         (long) (rangeSlider.getLowValue() + minTime),
-                        (long) (rangeSlider.getHighValue() + minTime + 1000)))) {
-                    refreshTimeUI();
-                }
+                        (long) (rangeSlider.getHighValue() + minTime + 1000)));
             }
         }
     };
@@ -216,15 +215,21 @@ final public class VisualizationPanel extends BorderPane {
     }
 
     /**
-     * convert the given epoch millis to a LocalDateTime USING THE CURERNT
+     * Convert the given epoch millis to a LocalDateTime USING THE CURERNT
      * TIMEZONE FROM TIMELINECONTROLLER
      *
      * @param millis
      *
-     * @return the given epoch millis as a LocalDateTime
+     * @return The given epoch millis as a LocalDateTime
      */
     private static LocalDateTime epochMillisToLocalDateTime(long millis) {
         return LocalDateTime.ofInstant(Instant.ofEpochMilli(millis), TimeLineController.getTimeZoneID());
+    }
+    static private final Region NO_EVENTS_BACKGROUND = new Region();
+
+    static {
+        NO_EVENTS_BACKGROUND.setBackground(GRAY_BACKGROUND);
+        NO_EVENTS_BACKGROUND.setOpacity(.3);
     }
 
     public VisualizationPanel(@Nonnull TimeLineController controller, @Nonnull EventsTree eventsTree) {
@@ -392,14 +397,10 @@ final public class VisualizationPanel extends BorderPane {
                     if (newValue == false) {
 
                         notificationPane.setContent(
-                                new StackPane(visualization,
-                                        new Region() {
-                                    {
-                                        setBackground(new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY)));
-                                        setOpacity(.3);
-                                    }
-                                },
-                                        new NoEventsDialog(() -> notificationPane.setContent(visualization))));
+                                new StackPane(
+                                        visualization,
+                                        NO_EVENTS_BACKGROUND,
+                                        new NoEventsDialog()));
                     } else {
                         notificationPane.setContent(visualization);
                     }
@@ -427,54 +428,54 @@ final public class VisualizationPanel extends BorderPane {
 
         histogramTask = new LoggedTask<Void>(
                 NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.title"), true) { // NON-NLS
-                    private final Lighting lighting = new Lighting();
+            private final Lighting lighting = new Lighting();
 
             @Override
             protected Void call() throws Exception {
 
-                        updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.preparing")); // NON-NLS
+                updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.preparing")); // NON-NLS
 
-                        long max = 0;
-                        final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval());
-                        final long lowerBound = rangeInfo.getLowerBound();
-                        final long upperBound = rangeInfo.getUpperBound();
-                        Interval timeRange = new Interval(new DateTime(lowerBound, TimeLineController.getJodaTimeZone()), new DateTime(upperBound, TimeLineController.getJodaTimeZone()));
+                long max = 0;
+                final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval());
+                final long lowerBound = rangeInfo.getLowerBound();
+                final long upperBound = rangeInfo.getUpperBound();
+                Interval timeRange = new Interval(new DateTime(lowerBound, TimeLineController.getJodaTimeZone()), new DateTime(upperBound, TimeLineController.getJodaTimeZone()));
 
-                        //extend range to block bounderies (ie day, month, year)
-                        int p = 0; // progress counter
+                //extend range to block bounderies (ie day, month, year)
+                int p = 0; // progress counter
 
-                        //clear old data, and reset ranges and series
-                        Platform.runLater(() -> {
-                            updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.resetUI")); // NON-NLS
+                //clear old data, and reset ranges and series
+                Platform.runLater(() -> {
+                    updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.resetUI")); // NON-NLS
 
-                        });
+                });
 
-                        ArrayList<Long> bins = new ArrayList<>();
+                ArrayList<Long> bins = new ArrayList<>();
 
-                        DateTime start = timeRange.getStart();
-                        while (timeRange.contains(start)) {
-                            if (isCancelled()) {
-                                return null;
-                            }
-                            DateTime end = start.plus(rangeInfo.getPeriodSize().getPeriod());
-                            final Interval interval = new Interval(start, end);
-                            //increment for next iteration
+                DateTime start = timeRange.getStart();
+                while (timeRange.contains(start)) {
+                    if (isCancelled()) {
+                        return null;
+                    }
+                    DateTime end = start.plus(rangeInfo.getPeriodSize().getPeriod());
+                    final Interval interval = new Interval(start, end);
+                    //increment for next iteration
 
-                            start = end;
+                    start = end;
 
-                            updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.queryDb")); // NON-NLS
-                            //query for current range
-                            long count = filteredEvents.getEventCounts(interval).values().stream().mapToLong(Long::valueOf).sum();
-                            bins.add(count);
+                    updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.queryDb")); // NON-NLS
+                    //query for current range
+                    long count = filteredEvents.getEventCounts(interval).values().stream().mapToLong(Long::valueOf).sum();
+                    bins.add(count);
 
-                            max = Math.max(count, max);
+                    max = Math.max(count, max);
 
-                            final double fMax = Math.log(max);
-                            final ArrayList<Long> fbins = new ArrayList<>(bins);
-                            Platform.runLater(() -> {
-                                updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.updateUI2")); // NON-NLS
+                    final double fMax = Math.log(max);
+                    final ArrayList<Long> fbins = new ArrayList<>(bins);
+                    Platform.runLater(() -> {
+                        updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.updateUI2")); // NON-NLS
 
-                                histogramBox.getChildren().clear();
+                        histogramBox.getChildren().clear();
 
                         for (Long bin : fbins) {
                             if (isCancelled()) {
@@ -485,7 +486,7 @@ final public class VisualizationPanel extends BorderPane {
                             bar.prefHeightProperty().bind(histogramBox.heightProperty().multiply(Math.log(bin)).divide(fMax));
                             bar.setMaxHeight(USE_PREF_SIZE);
                             bar.setMinHeight(USE_PREF_SIZE);
-                            bar.setBackground(background);
+                            bar.setBackground(GRAY_BACKGROUND);
                             bar.setOnMouseEntered((MouseEvent event) -> {
                                 Tooltip.install(bar, new Tooltip(bin.toString()));
                             });
@@ -499,7 +500,7 @@ final public class VisualizationPanel extends BorderPane {
                 return null;
             }
 
-                };
+        };
         new Thread(histogramTask).start();
         controller.monitorTask(histogramTask);
     }
@@ -541,39 +542,28 @@ final public class VisualizationPanel extends BorderPane {
         }
     }
 
-    @NbBundle.Messages("NoEventsDialog.titledPane.text=No Visible Events")
-    private class NoEventsDialog extends StackPane {
+    private class NoEventsDialog extends VBox {
 
-        @FXML
-        private TitledPane titledPane;
         @FXML
         private Button backButton;
         @FXML
         private Button resetFiltersButton;
         @FXML
-        private Button dismissButton;
-        @FXML
         private Button zoomButton;
         @FXML
         private Label noEventsDialogLabel;
 
-        private final Runnable closeCallback;
-
-        private NoEventsDialog(Runnable closeCallback) {
-            this.closeCallback = closeCallback;
+        private NoEventsDialog() {
             FXMLConstructor.construct(this, "NoEventsDialog.fxml"); // NON-NLS
         }
 
         @FXML
+        @NbBundle.Messages("VisualizationPanel.noEventsDialogLabel.text=There are no events visible with the current zoom / filter settings.")
         void initialize() {
             assert resetFiltersButton != null : "fx:id=\"resetFiltersButton\" was not injected: check your FXML file 'NoEventsDialog.fxml'."; // NON-NLS
-            assert dismissButton != null : "fx:id=\"dismissButton\" was not injected: check your FXML file 'NoEventsDialog.fxml'."; // NON-NLS
             assert zoomButton != null : "fx:id=\"zoomButton\" was not injected: check your FXML file 'NoEventsDialog.fxml'."; // NON-NLS
 
-            titledPane.setText(Bundle.NoEventsDialog_titledPane_text());
-            noEventsDialogLabel.setText(NbBundle.getMessage(NoEventsDialog.class, "VisualizationPanel.noEventsDialogLabel.text")); // NON-NLS
-
-            dismissButton.setOnAction(actionEvent -> closeCallback.run());
+            noEventsDialogLabel.setText(VisualizationPanel_noEventsDialogLabel_text()); // NON-NLS
 
             ActionUtils.configureButton(new ZoomToEvents(controller), zoomButton);
             ActionUtils.configureButton(new Back(controller), backButton);
@@ -599,8 +589,7 @@ final public class VisualizationPanel extends BorderPane {
         public void invalidated(Observable observable) {
             LocalDateTime pickerTime = pickerSupplier.get().getLocalDateTime();
             if (pickerTime != null) {
-                controller.pushTimeRange(intervalMapper.apply(filteredEvents.timeRangeProperty().get(), localDateTimeToEpochMilli(pickerTime)));
-                Platform.runLater(VisualizationPanel.this::refreshTimeUI);
+                controller.pushInterval(intervalMapper.apply(filteredEvents.timeRangeProperty().get(), localDateTimeToEpochMilli(pickerTime)));
             }
         }
     }

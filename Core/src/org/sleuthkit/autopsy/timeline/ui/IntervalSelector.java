@@ -218,7 +218,7 @@ public abstract class IntervalSelector<X> extends BorderPane {
         DateTime start = parseDateTime(getSpanStart());
         DateTime end = parseDateTime(getSpanEnd());
         Interval i = adjustInterval(start.isBefore(end) ? new Interval(start, end) : new Interval(end, start));
-        controller.pushTimeRange(i);
+        controller.pushInterval(i);
     }
 
     /**

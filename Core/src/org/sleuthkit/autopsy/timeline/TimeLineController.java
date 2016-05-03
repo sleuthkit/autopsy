@@ -434,10 +434,8 @@ public class TimeLineController {
     /**
      * Show the entire range of the timeline.
      */
-    public boolean showFullRange() {
-        synchronized (filteredEvents) {
-            return pushTimeRange(filteredEvents.getSpanningInterval());
-        }
+    synchronized public void showFullRange() {
+         pushInterval(filteredEvents.getSpanningInterval());
     }
 
     /**
@@ -566,7 +564,7 @@ public class TimeLineController {
     synchronized public void pushPeriod(ReadablePeriod period) {
         synchronized (filteredEvents) {
             final DateTime middleOf = IntervalUtils.middleOf(filteredEvents.timeRangeProperty().get());
-            pushTimeRange(IntervalUtils.getIntervalAround(middleOf, period));
+            pushInterval(IntervalUtils.getIntervalAround(middleOf, period));
         }
     }
 
@@ -575,7 +573,7 @@ public class TimeLineController {
         long toDurationMillis = timeRange.toDurationMillis() / 4;
         DateTime start = timeRange.getStart().minus(toDurationMillis);
         DateTime end = timeRange.getEnd().plus(toDurationMillis);
-        pushTimeRange(new Interval(start, end));
+        pushInterval(new Interval(start, end));
     }
 
     synchronized public void pushZoomInTime() {
@@ -583,7 +581,7 @@ public class TimeLineController {
         long toDurationMillis = timeRange.toDurationMillis() / 4;
         DateTime start = timeRange.getStart().plus(toDurationMillis);
         DateTime end = timeRange.getEnd().minus(toDurationMillis);
-        pushTimeRange(new Interval(start, end));
+        pushInterval(new Interval(start, end));
     }
 
     synchronized public void setViewMode(VisualizationMode visualizationMode) {
@@ -639,18 +637,14 @@ public class TimeLineController {
     }
 
     @SuppressWarnings("AssignmentToMethodParameter") //clamp timerange to case
-    synchronized public boolean pushTimeRange(Interval timeRange) {
+    synchronized public void pushInterval(Interval timeRange) {
         timeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
         ZoomParams currentZoom = filteredEvents.zoomParametersProperty().get();
         if (currentZoom == null) {
             advance(InitialZoomState.withTimeRange(timeRange));
-            return true;
         } else if (currentZoom.hasTimeRange(timeRange) == false) {
             advance(currentZoom.withTimeRange(timeRange));
-            return true;
-        } else {
-            return false;
-        }
+        } 
     }
 
     /**
@@ -661,11 +655,11 @@ public class TimeLineController {
      *
      * @return true if the view actually changed.
      */
-    synchronized public boolean pushTimeUnit(TimeUnits timeUnit) {
+    synchronized public void pushTimeUnit(TimeUnits timeUnit) {
         if (timeUnit == TimeUnits.FOREVER) {
-            return showFullRange();
+             showFullRange();
         } else {
-            return pushTimeRange(IntervalUtils.getIntervalAroundMiddle(filteredEvents.getTimeRange(), timeUnit.getPeriod()));
+             pushInterval(IntervalUtils.getIntervalAroundMiddle(filteredEvents.getTimeRange(), timeUnit.getPeriod()));
         }
     }
 
