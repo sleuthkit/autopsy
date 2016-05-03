@@ -39,9 +39,7 @@ public class ZoomToEvents extends Action {
         super(Bundle.ZoomToEvents_action_text());
         setLongText(Bundle.ZoomToEvents_longText());
         setGraphic(new ImageView(MAGNIFIER_OUT));
-        setEventHandler(actionEvent -> {
-            controller.zoomOutToActivity();
-        });
+        setEventHandler(actionEvent -> controller.zoomOutToActivity());
 
         //disable action when the current time range already encompases the entire case.
         disabledProperty().bind(new BooleanBinding() {
