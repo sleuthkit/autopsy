@@ -116,7 +116,7 @@ class ReportWizardPanel1 implements WizardDescriptor.FinishablePanel<WizardDescr
         // Store preferences that WizardIterator will use to determine what 
         // panels need to be shown
         Preferences prefs = NbPreferences.forModule(ReportWizardPanel1.class);
-        prefs.putBoolean("tableModuleState", module != null); //NON-NLS
+        prefs.putBoolean("tableModule", module != null); //NON-NLS
         prefs.putBoolean("generalModule", general != null); //NON-NLS
     }
 
