@@ -82,10 +82,6 @@ class ReportKML implements GeneralReportModule {
         String reportPath2 = baseReportDir + "ReportKML.txt"; //NON-NLS
         currentCase = Case.getCurrentCase();
         skCase = currentCase.getSleuthkitCase();
-
-        if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
-            return;
-        }
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportKML.progress.loading"));
         // Check if ingest has finished
         String ingestwarning = "";
@@ -99,9 +95,6 @@ class ReportKML implements GeneralReportModule {
         // Why not just print the coordinates as we find them and make some utility methods to do the printing?
         // Should pull out time values for all of these points and store in TimeSpan element
         try {
-            if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
-                return;
-            }
             try (BufferedWriter out = new BufferedWriter(new FileWriter(reportPath2))) {
 
                 double lat = 0; // temp latitude

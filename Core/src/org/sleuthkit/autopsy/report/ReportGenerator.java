@@ -318,7 +318,7 @@ class ReportGenerator {
 
             List<AbstractFile> files = getFiles();
             int numFiles = files.size();
-            if (fileReportModule != null) {
+            if (progressPanel.getStatus() != ReportStatus.CANCELED) {
                 fileReportModule.startReport(reportPath);
                 fileReportModule.startTable(enabledInfo);
             }
@@ -329,12 +329,8 @@ class ReportGenerator {
             // Add files to report.
             for (AbstractFile file : files) {
                 // Check to see if any reports have been cancelled.
-                if (fileReportModule == null) {
-                    break;
-                }
-                // Remove cancelled reports, add files to report otherwise.
                 if (progressPanel.getStatus() == ReportStatus.CANCELED) {
-                    fileReportModule = null;
+                    return 0;
                 } else {
                     fileReportModule.addRow(file, enabledInfo);
                     progressPanel.increment();
@@ -428,22 +424,28 @@ class ReportGenerator {
         @Override
         protected Integer doInBackground() throws Exception {
             // Start the progress indicators for each active TableReportModule.
-            if (progressPanel.getStatus() == ReportStatus.CANCELED) {
-            } else {
-                tableReportModule.startReport(reportPath);
-                progressPanel.start();
-                progressPanel.setIndeterminate(false);
-                progressPanel.setMaximumProgress(this.artifactTypes.size() + 2); // +2 for content and blackboard artifact tags
-            }
+            tableReportModule.startReport(reportPath);
+            progressPanel.start();
+            progressPanel.setIndeterminate(false);
+            progressPanel.setMaximumProgress(this.artifactTypes.size() + 2); // +2 for content and blackboard artifact tags
             // report on the blackboard results
-            makeBlackboardArtifactTables();
+            if (progressPanel.getStatus() != ReportStatus.CANCELED) {
+                makeBlackboardArtifactTables();
+            }
 
             // report on the tagged files and artifacts
-            makeContentTagsTables();
-            makeBlackboardArtifactTagsTables();
+            if (progressPanel.getStatus() != ReportStatus.CANCELED) {
+                makeContentTagsTables();
+            }
 
-            // report on the tagged images
-            makeThumbnailTable();
+            if (progressPanel.getStatus() != ReportStatus.CANCELED) {
+                makeBlackboardArtifactTagsTables();
+            }
+
+            if (progressPanel.getStatus() != ReportStatus.CANCELED) {
+                // report on the tagged images
+                makeThumbnailTable();
+            }
 
             // finish progress, wrap up
             progressPanel.complete(ReportStatus.COMPLETE);
@@ -466,8 +468,8 @@ class ReportGenerator {
             // Add a table to the report for every enabled blackboard artifact type.
             for (BlackboardArtifact.Type type : artifactTypes) {
                 // Check for cancellaton.
-                removeCancelledTableReportModules();
-                if (tableReportModule == null) {
+
+                if (progressPanel.getStatus() == ReportStatus.CANCELED) {
                     return;
                 }
 
@@ -543,11 +545,6 @@ class ReportGenerator {
          */
         @SuppressWarnings("deprecation")
         private void makeContentTagsTables() {
-            // Check for cancellaton.
-            removeCancelledTableReportModules();
-            if (tableReportModule == null) {
-                return;
-            }
 
             // Get the content tags.
             List<ContentTag> tags;
@@ -660,11 +657,6 @@ class ReportGenerator {
          */
         @SuppressWarnings("deprecation")
         private void makeBlackboardArtifactTagsTables() {
-            // Check for cancellaton.
-            removeCancelledTableReportModules();
-            if (tableReportModule == null) {
-                return;
-            }
 
             List<BlackboardArtifactTag> tags;
             try {
@@ -722,12 +714,6 @@ class ReportGenerator {
          */
         private boolean passesTagNamesFilter(String tagName) {
             return tagNamesFilter.isEmpty() || tagNamesFilter.contains(tagName);
-        }
-
-        void removeCancelledTableReportModules() {
-            if (progressPanel.getStatus() == ReportStatus.CANCELED) {
-                tableReportModule = null;
-            }
         }
 
         /**
