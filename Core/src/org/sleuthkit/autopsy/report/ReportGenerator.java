@@ -121,7 +121,15 @@ class ReportGenerator {
         }
     }
 
-    ReportGenerator(TableReportModule tableModuleStates, GeneralReportModule generalModuleStates, FileReportModule fileListModuleStates) {
+    /**
+     * Creates a report generator. Only one of the passed arguments should be
+     * non-null.
+     *
+     * @param tableModule The table report module
+     * @param generalModule The general report module
+     * @param fileListModule The file report module
+     */
+    ReportGenerator(TableReportModule tableModule, GeneralReportModule generalModule, FileReportModule fileListModule) {
         // Create the root reports directory path of the form: <CASE DIRECTORY>/Reports/<Case fileName> <Timestamp>/
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
         Date date = new Date();
@@ -140,7 +148,7 @@ class ReportGenerator {
         }
 
         // Initialize the progress panels
-        setupProgressPanels(tableModuleStates, generalModuleStates, fileListModuleStates);
+        setupProgressPanels(tableModule, generalModule, fileListModule);
         this.columnHeaderMap = new HashMap<>();
     }
 
