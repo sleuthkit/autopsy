@@ -20,52 +20,67 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Date;
 import java.util.List;
 import javax.swing.JOptionPane;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 
 final class GlobalListSettingsPanel extends javax.swing.JPanel implements OptionsPanel {
-
-    private final GlobalListsManagementPanel listsManagementPanel = new GlobalListsManagementPanel();
-    private final GlobalEditListPanel editListPanel = new GlobalEditListPanel();
-
-    GlobalListSettingsPanel() {
+    
+    private final GlobalListsManagementPanel listsManagementPanel;
+    private final GlobalEditListPanel editListPanel;
+    private KeywordSearchSettingsManager manager;
+    
+    @Messages({"GlobalListSettingsPanel.settingsLoadFail.message=Failed to load keyword settings.",
+        "GlobalListSettingsPanel.settingsLoadFail.title=Failed Load"})
+    GlobalListSettingsPanel(KeywordSearchSettingsManager manager) {
+        this.manager = manager;
+        editListPanel = new GlobalEditListPanel(manager);
+        listsManagementPanel = new GlobalListsManagementPanel(manager);
         initComponents();
         customizeComponents();
         setName(org.openide.util.NbBundle.getMessage(DropdownToolbar.class, "ListBundleConfig"));
+        
     }
-
+    
+    @Messages({"# {0} - keyword list", "KeywordSearchConfigurationPanel1.customizeComponents.kwListSaveFailedMsg=Failed to save <{0}>",
+        "KeywordSearchConfigurationPanel1.customizeComponents.kwListSaveFailedTitle=Failed to save"})
+    
     private void customizeComponents() {
         listsManagementPanel.addListSelectionListener(editListPanel);
         editListPanel.addDeleteButtonActionPerformed(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.title"), NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.body"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
-                    String toDelete = editListPanel.getCurrentKeywordList().getName();
+                    KeywordList toDelete = editListPanel.getCurrentKeywordList();
                     editListPanel.setCurrentKeywordList(null);
                     editListPanel.setButtonStates();
-                    XmlKeywordSearchList deleter = XmlKeywordSearchList.getCurrent();
-                    deleter.deleteList(toDelete);
+                    try {
+                        manager.removeList(toDelete);
+                    } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+                        JOptionPane.showMessageDialog(null, Bundle.KeywordSearchConfigurationPanel1_customizeComponents_kwListSaveFailedMsg(toDelete.getName()), Bundle.KeywordSearchConfigurationPanel1_customizeComponents_kwListSaveFailedTitle(), JOptionPane.ERROR_MESSAGE);
+                    }
                     listsManagementPanel.resync();
                 }
             }
         });
-
+        
         editListPanel.addSaveButtonActionPerformed(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 final String FEATURE_NAME = NbBundle.getMessage(this.getClass(),
                         "KeywordSearchGlobalListSettingsPanel.component.featureName.text");
                 KeywordList currentKeywordList = editListPanel.getCurrentKeywordList();
-
+                
                 List<Keyword> keywords = currentKeywordList.getKeywords();
                 if (keywords.isEmpty()) {
                     KeywordSearchUtil.displayDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.keywordListEmptyErr"),
                             KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
                     return;
                 }
-
+                
                 String listName = (String) JOptionPane.showInputDialog(
                         null,
                         NbBundle.getMessage(this.getClass(), "KeywordSearch.newKwListTitle"),
@@ -77,46 +92,58 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
                 if (listName == null || listName.trim().equals("")) {
                     return;
                 }
-
-                XmlKeywordSearchList writer = XmlKeywordSearchList.getCurrent();
-                if (writer.listExists(listName) && writer.getList(listName).isLocked()) {
+                
+                KeywordList listWithSameName = null;
+                List<KeywordList> keywordLists = manager.getKeywordLists();
+                for (int i = 0; i < keywordLists.size(); i++) {
+                    KeywordList currList = keywordLists.get(i);
+                    if (currList.getName().equals(listName)) {
+                        listWithSameName = currList;
+                        i = keywordLists.size();
+                    }
+                }
+                if (listWithSameName != null && listWithSameName.isLocked()) {
                     KeywordSearchUtil.displayDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.noOwDefaultMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
                     return;
                 }
                 boolean shouldAdd = false;
-                if (writer.listExists(listName)) {
+                if (listWithSameName != null) {
                     boolean replace = KeywordSearchUtil.displayConfirmDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.kwListExistMsg", listName),
                             KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
                     if (replace) {
                         shouldAdd = true;
                     }
-
+                    
                 } else {
                     shouldAdd = true;
                 }
-
+                
                 if (shouldAdd) {
-                    writer.addList(listName, keywords);
-                    KeywordSearchUtil.displayDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.kwListSavedMsg", listName), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+                    try {
+                        manager.addList(new KeywordList(listName, new Date(), new Date(), false, false, keywords));
+                        KeywordSearchUtil.displayDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.kwListSavedMsg", listName), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+                    } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+                        KeywordSearchUtil.displayDialog(FEATURE_NAME, Bundle.KeywordSearchConfigurationPanel1_customizeComponents_kwListSaveFailedMsg(listName), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+                    }
+                    
                 }
-
+                
                 listsManagementPanel.resync();
             }
         });
-
+        
         mainSplitPane.setLeftComponent(listsManagementPanel);
         mainSplitPane.setRightComponent(editListPanel);
         mainSplitPane.revalidate();
         mainSplitPane.repaint();
     }
-
+    
     @Override
     public void store() {
-        XmlKeywordSearchList.getCurrent().save(false);
         //refresh the list viewer/searcher panel
         DropdownListSearchPanel.getDefault().resync();
     }
-
+    
     @Override
     public void load() {
         listsManagementPanel.load();

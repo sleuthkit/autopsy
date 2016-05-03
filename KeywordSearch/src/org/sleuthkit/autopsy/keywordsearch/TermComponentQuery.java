@@ -32,7 +32,6 @@ import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.TermsResponse;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.sleuthkit.autopsy.coreutils.Version;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -209,7 +208,7 @@ class TermComponentQuery implements KeywordSearchQuery {
     }
 
     @Override
-    public QueryResults performQuery() throws NoOpenCoreException {
+    public QueryResults performQuery() throws NoOpenCoreException, KeywordSearchSettingsManager.KeywordSearchSettingsManagerException {
 
         final SolrQuery q = createQuery();
         q.setShowDebugInfo(DEBUG);
@@ -241,12 +240,13 @@ class TermComponentQuery implements KeywordSearchQuery {
                     filesResults.addAll(keyRes);
                 }
                 results.addResult(new Keyword(term.getTerm(), false), new ArrayList<>(filesResults));
-            } catch (NoOpenCoreException e) {
+            } catch (NoOpenCoreException | RuntimeException | KeywordSearchSettingsManager.KeywordSearchSettingsManagerException e) {
                 logger.log(Level.WARNING, "Error executing Solr query,", e); //NON-NLS
                 throw e;
-            } catch (RuntimeException e) {
-                logger.log(Level.WARNING, "Error executing Solr query,", e); //NON-NLS
             }
+            //NON-NLS
+            //NON-NLS
+            
 
         }
 

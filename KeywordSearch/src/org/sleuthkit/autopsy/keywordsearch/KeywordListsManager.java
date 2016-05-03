@@ -23,6 +23,8 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * A manager for keyword lists.
@@ -35,11 +37,20 @@ public class KeywordListsManager extends Observable {
 
     private static KeywordListsManager instance;
     private final PropertyChangeListener listsChangeListener;
+    private static KeywordSearchSettingsManager manager;
+    private static final Logger logger = Logger.getLogger(KeywordListsManager.class.getName());
 
     /**
      * Constructs a keyword lists manager.
      */
     private KeywordListsManager() {
+
+        try {
+            manager = KeywordSearchSettingsManager.getInstance();
+        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+            //OSTODO
+            logger.log(Level.SEVERE, "Couldn't load settings.", ex);
+        }
         this.listsChangeListener = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
@@ -47,7 +58,7 @@ public class KeywordListsManager extends Observable {
                 KeywordListsManager.this.notifyObservers();
             }
         };
-        XmlKeywordSearchList.getCurrent().addPropertyChangeListener(this.listsChangeListener);
+        manager.addPropertyChangeListener(listsChangeListener);
     }
 
     /**
@@ -67,17 +78,21 @@ public class KeywordListsManager extends Observable {
      */
     public List<String> getKeywordListNames() {
         List<String> names = new ArrayList<>();
-        for (KeywordList list : XmlKeywordSearchList.getCurrent().getListsL()) {
+        for (KeywordList list : manager.getKeywordLists()) {
             names.add(list.getName());
         }
         return names;
     }
-    
+
     /**
      * Force reload of the keyword lists XML file.
      */
-    public static void reloadKeywordLists(){
-        XmlKeywordSearchList.getCurrent().reload();
-    }    
+    public static void reloadKeywordLists() {
+        try {
+            manager.reload();
+        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+            logger.log(Level.SEVERE, "Couldn't reload keyword serach settings.", ex);
+        }
+    }
 
 }

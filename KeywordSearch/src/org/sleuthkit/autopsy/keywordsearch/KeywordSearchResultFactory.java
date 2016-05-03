@@ -62,23 +62,23 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
     public static enum CommonPropertyTypes {
 
         KEYWORD {
-                    @Override
-                    public String toString() {
-                        return BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getDisplayName();
-                    }
-                },
+            @Override
+            public String toString() {
+                return BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getDisplayName();
+            }
+        },
         REGEX {
-                    @Override
-                    public String toString() {
-                        return BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getDisplayName();
-                    }
-                },
+            @Override
+            public String toString() {
+                return BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getDisplayName();
+            }
+        },
         CONTEXT {
-                    @Override
-                    public String toString() {
-                        return BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getDisplayName();
-                    }
-                },
+            @Override
+            public String toString() {
+                return BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getDisplayName();
+            }
+        },
     }
     private Collection<QueryRequest> queryRequests;
     private final DataResultTopComponent viewer; //viewer driving this child node factory
@@ -158,10 +158,11 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
         QueryResults queryResults;
         try {
             queryResults = keywordSearchQuery.performQuery();
-        } catch (NoOpenCoreException ex) {
+        } catch (NoOpenCoreException | KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
             logger.log(Level.SEVERE, "Could not perform the query " + keywordSearchQuery.getQueryString(), ex); //NON-NLS
             return false;
         }
+        //NON-NLS
 
         int id = 0;
         List<KeyValueQueryContent> tempList = new ArrayList<>();
@@ -226,10 +227,8 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
                 // add hit with lowest SolrObjectID-Chunk-ID combination.
                 if (!hits.containsKey(hit.getSolrObjectId())) {
                     hits.put(hit.getSolrObjectId(), hit);
-                } else {
-                    if (hit.getChunkId() < hits.get(hit.getSolrObjectId()).getChunkId()) {
-                        hits.put(hit.getSolrObjectId(), hit);
-                    }
+                } else if (hit.getChunkId() < hits.get(hit.getSolrObjectId()).getChunkId()) {
+                    hits.put(hit.getSolrObjectId(), hit);
                 }
             }
         }
@@ -409,11 +408,11 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
             try {
                 progress = ProgressHandle.createHandle(
                         NbBundle.getMessage(this.getClass(), "KeywordSearchResultFactory.progress.saving", queryDisp), new Cancellable() {
-                            @Override
-                            public boolean cancel() {
-                                return BlackboardResultWriter.this.cancel(true);
-                            }
-                        });
+                    @Override
+                    public boolean cancel() {
+                        return BlackboardResultWriter.this.cancel(true);
+                    }
+                });
 
                 // Create blackboard artifacts
                 newArtifacts = hits.writeAllHitsToBlackBoard(progress, null, this, false);

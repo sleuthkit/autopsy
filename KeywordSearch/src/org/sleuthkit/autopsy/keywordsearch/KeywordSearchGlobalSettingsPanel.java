@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import javax.swing.JOptionPane;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
@@ -36,12 +37,23 @@ final class KeywordSearchGlobalSettingsPanel extends IngestModuleGlobalSettingsP
         customizeComponents();
     }
 
-    @NbBundle.Messages({"KeywordSearchGlobalSettingsPanel.Title=Global Keyword Search Settings"})
+    @NbBundle.Messages({"KeywordSearchGlobalSettingsPanel.Title=Global Keyword Search Settings",
+    "KeywordSearchGlobalSettingsPanel.noLoad.message=Couldn't load keyword settings.",
+    "KeywordSearchGlobalSettingsPanel.noLoad.title=Load Failure"})
     private void customizeComponents() {
+        KeywordSearchSettingsManager manager;
+        try {
+            manager = KeywordSearchSettingsManager.getInstance();
+            this.setEnabled(true);
+        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+            this.setEnabled(false);
+            JOptionPane.showMessageDialog(null, Bundle.KeywordSearchGlobalSettingsPanel_noLoad_message(), Bundle.KeywordSearchJobSettingsPanel_settingsLoadFail_title(), JOptionPane.ERROR_MESSAGE);
+            manager = null;
+        }
         setName(Bundle.KeywordSearchGlobalSettingsPanel_Title());
-        listsPanel = new GlobalListSettingsPanel();
-        languagesPanel = new KeywordSearchGlobalLanguageSettingsPanel();
-        generalPanel = new KeywordSearchGlobalSearchSettingsPanel();
+        listsPanel = new GlobalListSettingsPanel(manager);
+        languagesPanel = new KeywordSearchGlobalLanguageSettingsPanel(manager);
+        generalPanel = new KeywordSearchGlobalSearchSettingsPanel(manager);
         tabbedPane.insertTab(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.listTabTitle"), null,
                 listsPanel, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.listLabToolTip"), 0);
         tabbedPane.insertTab(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.stringExtTitle"), null,
@@ -75,13 +87,14 @@ final class KeywordSearchGlobalSettingsPanel extends IngestModuleGlobalSettingsP
     @Override
     public void load() {
         // This calls actually clears the component.
-        listsPanel.load();
+        if (listsPanel != null && languagesPanel != null && generalPanel != null) {
+            listsPanel.load();
 
-        languagesPanel.load();
-        generalPanel.load();
+            languagesPanel.load();
+            generalPanel.load();
+        }
 
         // Reload the XML to avoid 'ghost' vars
-        XmlKeywordSearchList.getCurrent().reload();
     }
 
     @Override
@@ -97,7 +110,7 @@ final class KeywordSearchGlobalSettingsPanel extends IngestModuleGlobalSettingsP
     }
 
     public void cancel() {
-        XmlKeywordSearchList.getCurrent().reload();
+
     }
 
     boolean valid() {

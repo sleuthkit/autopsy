@@ -24,14 +24,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
-import java.util.Timer;
-import java.util.TimerTask;
 import org.netbeans.api.progress.aggregate.AggregateProgressFactory;
 import org.netbeans.api.progress.aggregate.AggregateProgressHandle;
 import org.netbeans.api.progress.aggregate.ProgressContributor;
@@ -41,6 +41,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.keywordsearch.KeywordSearchIngestModule.UpdateFrequency;
+import org.sleuthkit.autopsy.keywordsearch.KeywordSearchSettingsManager.KeywordSearchSettingsManagerException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
@@ -84,8 +86,26 @@ public final class SearchRunner {
      *                         searches should be restricted to.
      * @param keywordListNames List of keyword lists that will be searched. List
      *                         contents will be refreshed each search.
+     *
+     * @deprecated Use other startJob(jobId, dataSourceId, keywordListNames,
+     * frequency) instead.
      */
+    @Deprecated
     public synchronized void startJob(long jobId, long dataSourceId, List<String> keywordListNames) {
+        startJob(jobId, dataSourceId, keywordListNames, UpdateFrequency.DEFAULT);
+    }
+
+    /**
+     * Add a new job. Searches will be periodically performed after this is
+     * called.
+     *
+     * @param jobId            Job ID that this is associated with
+     * @param dataSourceId     Data source that is being indexed and that
+     *                         searches should be restricted to.
+     * @param keywordListNames List of keyword lists that will be searched. List
+     *                         contents will be refreshed each search.
+     */
+    public synchronized void startJob(long jobId, long dataSourceId, List<String> keywordListNames, UpdateFrequency frequency) {
         if (jobs.containsKey(jobId) == false) {
             logger.log(Level.INFO, "Adding job {0}", jobId); //NON-NLS
             SearchJobInfo jobData = new SearchJobInfo(jobId, dataSourceId, keywordListNames);
@@ -97,7 +117,7 @@ public final class SearchRunner {
 
         // start the timer, if needed
         if ((jobs.size() > 0) && (updateTimerRunning == false)) {
-            final long updateIntervalMs = ((long) KeywordSearchSettings.getUpdateFrequency().getTime()) * 60 * 1000;
+            final long updateIntervalMs = ((long) frequency.getTime()) * 60 * 1000;
             updateTimer.scheduleAtFixedRate(new UpdateTimerTask(), updateIntervalMs, updateIntervalMs);
             updateTimerRunning = true;
         }
@@ -453,7 +473,7 @@ public final class SearchRunner {
                     // Do the actual search
                     try {
                         queryResults = keywordSearchQuery.performQuery();
-                    } catch (NoOpenCoreException ex) {
+                    } catch (NoOpenCoreException | KeywordSearchSettingsManagerException ex) {
                         logger.log(Level.WARNING, "Error performing query: " + keywordQuery.getQuery(), ex); //NON-NLS
                         //no reason to continue with next query if recovery failed
                         //or wait for recovery to kick in and run again later
@@ -535,21 +555,30 @@ public final class SearchRunner {
         /**
          * Sync-up the updated keywords from the currently used lists in the XML
          */
-        private void updateKeywords() {
-            XmlKeywordSearchList loader = XmlKeywordSearchList.getCurrent();
-
+        private void updateKeywords() throws KeywordSearchSettingsManager.KeywordSearchSettingsManagerException {
+            KeywordSearchSettingsManager loader;
+            loader = KeywordSearchSettingsManager.getInstance();
             keywords.clear();
             keywordToList.clear();
             keywordLists.clear();
+            List<KeywordList> loadedKeywordLists = loader.getKeywordLists();
+            Map<String, KeywordList> keywordListMap = new HashMap<>();
+            for (KeywordList keywordList : loadedKeywordLists) {
+                keywordListMap.put(keywordList.getName(), keywordList);
+            }
 
             for (String name : keywordListNames) {
-                KeywordList list = loader.getList(name);
-                keywordLists.add(list);
-                for (Keyword k : list.getKeywords()) {
-                    keywords.add(k);
-                    keywordToList.put(k.getQuery(), list);
+                KeywordList list = keywordListMap.get(name);
+                if (list != null) {
+                    keywordLists.add(list);
+                    for (Keyword k : list.getKeywords()) {
+                        keywords.add(k);
+                        keywordToList.put(k.getQuery(), list);
+                    }
                 }
+
             }
+
         }
 
         /**

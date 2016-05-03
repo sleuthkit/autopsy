@@ -32,6 +32,7 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import javax.swing.JFileChooser;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
@@ -40,6 +41,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -52,14 +54,19 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
     private static final Logger logger = Logger.getLogger(GlobalEditListPanel.class.getName());
     private KeywordTableModel tableModel;
     private KeywordList currentKeywordList;
+    private KeywordSearchSettingsManager manager;
 
     /**
      * Creates new form GlobalEditListPanel
      */
-    GlobalEditListPanel() {
+    @Messages({"GlobalEditListPanel.settingsLoadFail.message=Failed to load keyword settings.",
+        "GlobalEditListPanel.settingsLoadFail.title=Failed Load"})
+    GlobalEditListPanel(KeywordSearchSettingsManager manager) {
         tableModel = new KeywordTableModel();
+        this.manager = manager;
         initComponents();
         customizeComponents();
+        enableComponents();
     }
 
     private void customizeComponents() {
@@ -139,6 +146,30 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                 }
             }
         });
+    }
+
+    private void enableComponents() {
+        boolean enable = manager != null;
+        this.addKeywordPanel.setEnabled(enable);
+        this.addWordButton.setEnabled(enable);
+        this.addWordField.setEnabled(enable);
+        this.chRegex.setEnabled(enable);
+        this.copyMenuItem.setEnabled(enable);
+        this.cutMenuItem.setEnabled(enable);
+        this.deleteListButton.setEnabled(enable);
+        this.deleteWordButton.setEnabled(enable);
+        this.exportButton.setEnabled(enable);
+        this.ingestMessagesCheckbox.setEnabled(enable);
+        this.jScrollPane1.setEnabled(enable);
+        this.keywordTable.setEnabled(enable);
+        this.keywordTable.setColumnSelectionAllowed(enable);
+        this.keywordTable.setRowSelectionAllowed(enable);
+        this.listEditorPanel.setEnabled(enable);
+        this.pasteMenuItem.setEnabled(enable);
+        this.rightClickMenu.setEnabled(enable);
+        this.saveListButton.setEnabled(enable);
+        this.selectAllMenuItem.setEnabled(enable);
+
     }
 
     void setButtonStates() {
@@ -390,6 +421,8 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    @Messages({"# {0} - keyword", "GlobalEditListPanel.addKeywordFail.message=Failed to add the keyword: {0}",
+        "GlobalEditListPanel.addKeywordFail.title=Add Keyword Failed"})
     private void addWordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addWordButtonActionPerformed
         String newWord = addWordField.getText().trim();
         boolean isLiteral = !chRegex.isSelected();
@@ -419,20 +452,43 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         }
 
         //add & reset checkbox
-        tableModel.addKeyword(keyword);
-        XmlKeywordSearchList.getCurrent().addList(currentKeywordList);
-        chRegex.setSelected(false);
-        addWordField.setText("");
+        try {
+
+            tableModel.addKeyword(keyword);
+            manager.updateList(currentKeywordList);
+            chRegex.setSelected(false);
+            addWordField.setText("");
+        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+            JOptionPane.showMessageDialog(null, Bundle.GlobalEditListPanel_addKeywordFail_message(keyword.getQuery()), Bundle.GlobalEditListPanel_addKeywordFail_title(), JOptionPane.ERROR_MESSAGE);
+            this.tableModel.removeKeyword(keyword);
+            logger.log(Level.SEVERE, "Failed to add keyword to settings.", ex);
+        }
 
         setButtonStates();
     }//GEN-LAST:event_addWordButtonActionPerformed
-
+    @Messages({"GlobalEditListPanel.deleteKeywordFail.message=Failed to delete the keywords.",
+        "GlobalEditListPanel.deleteKeywordFail.title=Delete Keyword Failed"})
     private void deleteWordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteWordButtonActionPerformed
+        int[] selected = keywordTable.getSelectedRows();
+        List<Keyword> words = currentKeywordList.getKeywords();
+        List<Keyword> selectedWords = new ArrayList<>();
+        Arrays.sort(selected);
+        for (int arrayi = selected.length - 1; arrayi >= 0; arrayi--) {
+            selectedWords.add(words.get(selected[arrayi]));
+        }
         if (KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.removeKwMsg"), NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.deleteWordButtonActionPerformed.delConfirmMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
+            try {
 
-            tableModel.deleteSelected(keywordTable.getSelectedRows());
-            XmlKeywordSearchList.getCurrent().addList(currentKeywordList);
-            setButtonStates();
+                tableModel.deleteSelected(keywordTable.getSelectedRows());
+                manager.updateList(currentKeywordList);
+                setButtonStates();
+            } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+                JOptionPane.showMessageDialog(null, Bundle.GlobalEditListPanel_deleteKeywordFail_message(), Bundle.GlobalEditListPanel_deleteKeywordFail_title(), JOptionPane.ERROR_MESSAGE);
+                for (Keyword word : selectedWords) {
+                    tableModel.addKeyword(word);
+                }
+                logger.log(Level.SEVERE, "Failed to add keyword to settings.", ex);
+            }
         }
     }//GEN-LAST:event_deleteWordButtonActionPerformed
 
@@ -477,12 +533,10 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                 return;
             }
 
-            XmlKeywordSearchList reader = XmlKeywordSearchList.getCurrent();
-
             List<KeywordList> toWrite = new ArrayList<>();
-            toWrite.add(reader.getList(currentKeywordList.getName()));
-            final XmlKeywordSearchList exporter = new XmlKeywordSearchList(fileAbs);
-            boolean written = exporter.saveLists(toWrite);
+            toWrite.add(currentKeywordList);
+            final XmlKeywordListImportExport exporter = new XmlKeywordListImportExport(fileAbs);
+            boolean written = exporter.save(toWrite);
             if (written) {
                 KeywordSearchUtil.displayDialog(FEATURE_NAME,
                         NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.exportButtonActionPerformed.kwListExportedMsg"),
@@ -490,11 +544,18 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
             }
         }
     }//GEN-LAST:event_exportButtonActionPerformed
-
+    @Messages({"GlobalEditListPanel.ingestMessageSettingFail.message=Failed to update ingest messages setting.",
+        "GlobalEditListPanel.ingestMessageSettingFail.title=Ingest Messages Setting Change Failed"})
     private void ingestMessagesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ingestMessagesCheckboxActionPerformed
         currentKeywordList.setIngestMessages(ingestMessagesCheckbox.isSelected());
-        XmlKeywordSearchList updater = XmlKeywordSearchList.getCurrent();
-        updater.addList(currentKeywordList);
+        try {
+            manager.updateList(currentKeywordList);
+        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+            JOptionPane.showMessageDialog(null, Bundle.GlobalEditListPanel_ingestMessageSettingFail_message(), Bundle.GlobalEditListPanel_ingestMessageSettingFail_title(), JOptionPane.ERROR_MESSAGE);
+            currentKeywordList.setIngestMessages(!ingestMessagesCheckbox.isSelected());
+            ingestMessagesCheckbox.setSelected(!ingestMessagesCheckbox.isSelected());
+            logger.log(Level.SEVERE, "Failed to add keyword to settings.", ex);
+        }
     }//GEN-LAST:event_ingestMessagesCheckboxActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel addKeywordPanel;
@@ -529,11 +590,23 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
             int index = listSelectionModel.getMinSelectionIndex();
 
             listSelectionModel.setSelectionInterval(index, index);
-            XmlKeywordSearchList loader = XmlKeywordSearchList.getCurrent();
 
-            currentKeywordList = loader.getListsL(false).get(index);
-            tableModel.resync();
-            setButtonStates();
+            List<KeywordList> keywordLists = manager.getKeywordLists();
+            KeywordList listAtIndex = null;
+            for (int i = 0; i < keywordLists.size(); i++) {
+                KeywordList currList = keywordLists.get(i);
+                if (index == 0 && !currList.isLocked()) {
+                    listAtIndex = currList;
+                    i = keywordLists.size();
+                } else if (!currList.isLocked()) {
+                    --index;
+                }
+            }
+            if (listAtIndex != null) {
+                currentKeywordList = listAtIndex;
+                tableModel.resync();
+                setButtonStates();
+            }
         } else {
             currentKeywordList = null;
             tableModel.resync();
@@ -635,6 +708,13 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         void addKeyword(Keyword keyword) {
             if (!currentKeywordList.hasKeyword(keyword)) {
                 currentKeywordList.getKeywords().add(keyword);
+            }
+            fireTableDataChanged();
+        }
+
+        void removeKeyword(Keyword keyword) {
+            if (currentKeywordList.hasKeyword(keyword)) {
+                currentKeywordList.getKeywords().remove(keyword);
             }
             fireTableDataChanged();
         }
