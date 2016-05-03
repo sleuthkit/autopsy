@@ -85,9 +85,16 @@ class ReportGenerator {
     private Case currentCase = Case.getCurrentCase();
     private SleuthkitCase skCase = currentCase.getSleuthkitCase();
 
+    /**
+     * Only one of the ReportModules below should be non-null for a given report
+     * generator.
+     */
     private TableReportModule tableReportModule;
     private GeneralReportModule generalReportModule;
     private FileReportModule fileReportModule;
+    /**
+     * Progress panel that can be used to check for cancellation.
+     */
     private ReportProgressPanel progressPanel;
     private Map<Integer, List<Column>> columnHeaderMap;
 
@@ -101,8 +108,6 @@ class ReportGenerator {
     /**
      * Displays the list of errors during report generation in user-friendly
      * way. MessageNotifyUtil used to display bubble notification.
-     *
-     * @param listOfErrors List of strings explaining the errors.
      */
     private void displayReportErrors() {
         if (!errorList.isEmpty()) {
@@ -143,14 +148,14 @@ class ReportGenerator {
      * Create a ReportProgressPanel for each report generation module selected
      * by the user.
      *
-     * @param tableModule          The enabled/disabled state of each
-     *                             TableReportModule
-     * @param generalModuleStates  The enabled/disabled state of each
-     *                             GeneralReportModule
-     * @param fileListModuleStates The enabled/disabled state of each
-     *                             FileReportModule
+     * @param tableModule    The TableReportModule
+     * @param generalModule  The GeneralReportModule
+     * @param fileListModule The FileReportModule
      */
     private void setupProgressPanels(TableReportModule tableModule, GeneralReportModule generalModule, FileReportModule fileListModule) {
+        /*
+         * Sets ups the progress panels based upon which one is null.
+         */
         if (null != tableModule) {
             String reportFilePath = tableModule.getRelativeFilePath();
             if (!reportFilePath.isEmpty()) {
@@ -847,7 +852,7 @@ class ReportGenerator {
     /**
      * Write the keyword hits to the provided TableReportModules.
      *
-     * @param tableModules modules to report on
+     * @param tableModule module to report on
      */
     @SuppressWarnings("deprecation")
     private void writeKeywordHits(TableReportModule tableModule, String comment, HashSet<String> tagNamesFilter) {
@@ -1011,7 +1016,7 @@ class ReportGenerator {
     /**
      * Write the hash set hits to the provided TableReportModules.
      *
-     * @param tableModules modules to report on
+     * @param tableModule module to report on
      */
     @SuppressWarnings("deprecation")
     private void writeHashsetHits(TableReportModule tableModule, String comment, HashSet<String> tagNamesFilter) {
