@@ -36,6 +36,5 @@ abstract public class TagsUpdatedEvent {
 
     public TagsUpdatedEvent(Set<Long> updatedEventIDs) {
         this.updatedEventIDs = updatedEventIDs;
-
     }
 }
