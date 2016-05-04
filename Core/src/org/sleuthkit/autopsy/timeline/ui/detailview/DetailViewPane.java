@@ -40,8 +40,6 @@ import javafx.scene.control.Slider;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.Region;
 import javafx.stage.Modality;
 import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.control.action.Action;
@@ -100,8 +98,8 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
      *                         axis
      * @param bottomLeftSpacer a spacer to keep everything aligned.
      */
-    public DetailViewPane(TimeLineController controller, Pane partPane, Pane contextPane, Region bottomLeftSpacer) {
-        super(controller, partPane, contextPane, bottomLeftSpacer);
+    public DetailViewPane(TimeLineController controller) {
+        super(controller);
         this.selectedEvents = new MappedList<>(getSelectedNodes(), EventNodeBase<?>::getEvent);
 
         //initialize chart;
@@ -112,9 +110,6 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
         detailsChartDateAxis.getTickMarks().addListener((Observable observable) -> layoutDateLabels());
         detailsChartDateAxis.getTickSpacing().addListener(observable -> layoutDateLabels());
         verticalAxis.setAutoRanging(false); //prevent XYChart.updateAxisRange() from accessing dataSeries on JFX thread causing ConcurrentModificationException
-        bottomLeftSpacer.minWidthProperty().bind(verticalAxis.widthProperty().add(verticalAxis.tickLengthProperty()));
-        bottomLeftSpacer.prefWidthProperty().bind(verticalAxis.widthProperty().add(verticalAxis.tickLengthProperty()));
-        bottomLeftSpacer.maxWidthProperty().bind(verticalAxis.widthProperty().add(verticalAxis.tickLengthProperty()));
 
         getSelectedNodes().addListener((Observable observable) -> {
             //update selected nodes highlight
@@ -171,7 +166,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
     }
 
     @Override
-    public Axis<DateTime> getXAxis() {
+    final public DateAxis getXAxis() {
         return detailsChartDateAxis;
     }
 
@@ -211,7 +206,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
     }
 
     @Override
-    protected Axis<EventStripe> getYAxis() {
+    final protected Axis<EventStripe> getYAxis() {
         return verticalAxis;
     }
 
@@ -233,6 +228,11 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
     @Override
     protected void applySelectionEffect(EventNodeBase<?> c1, Boolean selected) {
         c1.applySelectionEffect(selected);
+    }
+
+    @Override
+    public double getAxisMargin() {
+        return 0;
     }
 
     /**

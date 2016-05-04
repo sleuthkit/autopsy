@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.timeline.filters;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import javafx.collections.FXCollections;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
@@ -107,15 +106,6 @@ public class TypeFilter extends UnionFilter<TypeFilter> {
         filterCopy.setSelected(isSelected());
         filterCopy.setDisabled(isDisabled());
         return filterCopy;
-    }
-
-    @Override
-    public String getHTMLReportString() {
-        String string = getEventType().getDisplayName() + getStringCheckBox();
-        if (getSubFilters().isEmpty() == false) {
-            string = string + " : " + getSubFilters().stream().filter(Filter::isSelected).map(Filter::getHTMLReportString).collect(Collectors.joining("</li><li>", "<ul><li>", "</li></ul>")); // NON-NLS
-        }
-        return string;
     }
 
     @Override

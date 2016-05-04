@@ -43,7 +43,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.Region;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
@@ -112,9 +111,11 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
      * @param spacer       The Region to use as a spacer to keep the axis labels
      *                     aligned.
      */
-    @NbBundle.Messages({"CountsViewPane.numberOfEvents=Number of Events ({0})"})
-    public CountsViewPane(TimeLineController controller, Pane specificPane, Pane contextPane, Region spacer) {
-        super(controller, specificPane, contextPane, spacer);
+    @NbBundle.Messages({
+        "# {0} - scale name",
+        "CountsViewPane.numberOfEvents=Number of Events ({0})"})
+    public CountsViewPane(TimeLineController controller) {
+        super(controller);
         setChart(new EventCountsChart(controller, dateAxis, countAxis, getSelectedNodes()));
         getChart().setData(dataSeries);
         Tooltip.install(getChart(), getDefaultTooltip());
@@ -124,10 +125,6 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
         dateAxis.getTickMarks().addListener((Observable tickMarks) -> layoutDateLabels());
         dateAxis.categorySpacingProperty().addListener((Observable spacing) -> layoutDateLabels());
         dateAxis.getCategories().addListener((Observable categories) -> layoutDateLabels());
-
-        spacer.minWidthProperty().bind(countAxis.widthProperty().add(countAxis.tickLengthProperty()).add(dateAxis.startMarginProperty().multiply(2)));
-        spacer.prefWidthProperty().bind(countAxis.widthProperty().add(countAxis.tickLengthProperty()).add(dateAxis.startMarginProperty().multiply(2)));
-        spacer.maxWidthProperty().bind(countAxis.widthProperty().add(countAxis.tickLengthProperty()).add(dateAxis.startMarginProperty().multiply(2)));
 
         //bind tick visibility to scaleProp
         BooleanBinding scaleIsLinear = scaleProp.isEqualTo(Scale.LINEAR);
@@ -142,12 +139,12 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
     }
 
     @Override
-    protected NumberAxis getYAxis() {
+    final protected NumberAxis getYAxis() {
         return countAxis;
     }
 
     @Override
-    protected CategoryAxis getXAxis() {
+    final protected CategoryAxis getXAxis() {
         return dateAxis;
     }
 
@@ -220,6 +217,11 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
         public String getDisplayName() {
             return displayName;
         }
+    }
+
+    @Override
+    public double getAxisMargin() {
+        return dateAxis.getStartMargin() + dateAxis.getEndMargin();
     }
 
     /*

@@ -60,11 +60,6 @@ public class TagNameFilter extends AbstractFilter {
     }
 
     @Override
-    public String getHTMLReportString() {
-        return getDisplayName() + getStringCheckBox();
-    }
-
-    @Override
     public int hashCode() {
         int hash = 3;
         hash = 53 * hash + Objects.hashCode(this.tagName);

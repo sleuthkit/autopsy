@@ -41,7 +41,7 @@ The Autopsy code is released under the Apache License, Version 2.  See LICENSE-2
 
 EMBEDDED SOFTWARE
 
-This section lists the software components and libraries that are used by of
+This section lists the software components and libraries that are used by 
 Autopsy.   These tools are bundled with the Windows installer, unless specified otherwise.
 
 JRE (Java Runtime Environment) 1.8
@@ -50,8 +50,7 @@ JRE (Java Runtime Environment) 1.8
 
 Netbeans 8.0.2 RCP platform and .jar files bundled with the platform
 - Web page: http://netbeans.org/features/platform/
-- License: 
-https://netbeans.org/downloads/jdk-bundle/8.0.2/nb802-LICENSE.txt
+- License: https://netbeans.org/downloads/jdk-bundle/8.0.2/nb802-LICENSE.txt
 
 Sleuth Kit for analyzing disk images.
 - Web page: http://www.sleuthkit.org/sleuthkit/
@@ -113,6 +112,26 @@ Sigar for process monitoring
 ImgScalr 4.2 for image resizing in image viewers
 - Web page: http://www.thebuzzmedia.com/software/imgscalr-java-image-scaling-library/
 - License: http://www.thebuzzmedia.com/software/imgscalr-java-image-scaling-library/#license
+
+ControlsFX JavaFX GUI library
+- Web page: http://fxexperience.com/controlsfx/
+- License: https://bitbucket.org/controlsfx/controlsfx/src/default/license.txt?fileviewer=file-view-default
+
+JFXtras JavaFX GUI library
+- Web page: http://jfxtras.org/
+- License: https://github.com/JFXtras/jfxtras#license
+
+Mustache.java templating system
+- Web page: https://github.com/spullara/mustache.java
+- License: https://github.com/spullara/mustache.java/blob/master/LICENSE
+
+Joda-Time date and time library
+- Web page: http://www.joda.org/joda-time/
+- License: http://www.joda.org/joda-time/license.html
+
+TwelveMonkeys ImageIO plugins
+- Web page: https://github.com/haraldk/TwelveMonkeys
+- License: https://github.com/haraldk/TwelveMonkeys#license
 
 
 EMBEDDED RESOURCES

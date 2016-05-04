@@ -29,6 +29,7 @@ import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
+import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.collections.FXCollections;
@@ -50,9 +51,11 @@ import javafx.scene.layout.BorderStroke;
 import javafx.scene.layout.BorderStrokeStyle;
 import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -106,9 +109,10 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
 
     private ChartType chart;
 
-    private final Pane specificLabelPane; // container for the specific labels in the declutterd axis
-    private final Pane contextLabelPane;// container for the contextual labels in the declutterd axis
-    private final Region spacer;
+    //// replacement axis label componenets
+    private final Pane specificLabelPane = new Pane(); // container for the specfic labels in the declutterd axis
+    private final Pane contextLabelPane = new Pane();// container for the contextual labels in the declutterd axis
+    protected final Region spacer = new Region();
 
     /**
      * task used to reload the content of this visualization
@@ -249,8 +253,8 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
     }
 
     /**
-     * Get a new background Task that fetches the appropriate data and loads it into
-     * this visualization.
+     * Get a new background Task that fetches the appropriate data and loads it
+     * into this visualization.
      *
      * @return A new task to execute on a background thread to reload this
      *         visualization with different data.
@@ -372,42 +376,41 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
     /**
      * Constructor
      *
-     * @param controller   The TimelineController for this visualization.
-     * @param specificPane The container for the specific axis labels.
-     * @param contextPane  The container for the contextual axis labels.
-     * @param spacer       The Region to use as a spacer to keep the axis labels
-     *                     aligned.
+     * @param controller The TimelineController for this visualization.
      */
-    protected AbstractVisualizationPane(TimeLineController controller, Pane specificPane, Pane contextPane, Region spacer) {
+    protected AbstractVisualizationPane(TimeLineController controller) {
         this.controller = controller;
         this.filteredEvents = controller.getEventsModel();
         this.filteredEvents.registerForEvents(this);
         this.filteredEvents.zoomParametersProperty().addListener(updateListener);
-        this.specificLabelPane = specificPane;
-        this.contextLabelPane = contextPane;
-        this.spacer = spacer;
+        Platform.runLater(() -> {
+            VBox vBox = new VBox(specificLabelPane, contextLabelPane);
+            vBox.setFillWidth(false);
+            HBox hBox = new HBox(spacer, vBox);
+            hBox.setFillHeight(false);
+            setBottom(hBox);
+            DoubleBinding spacerSize = getYAxis().widthProperty().add(getYAxis().tickLengthProperty()).add(getAxisMargin());//getXAxis().startMarginProperty().multiply(2));
+            spacer.minWidthProperty().bind(spacerSize);
+            spacer.prefWidthProperty().bind(spacerSize);
+            spacer.maxWidthProperty().bind(spacerSize);
+        });
 
         createSeries();
 
-        selectedNodes.addListener((ListChangeListener.Change<? extends NodeType> change) -> {
-            while (change.next()) {
-                change.getRemoved().forEach(this::removeSelectionEffect);
-                change.getAddedSubList().forEach(this::applySelectionEffect);
+        selectedNodes.addListener((ListChangeListener.Change<? extends NodeType> c) -> {
+            while (c.next()) {
+                c.getRemoved().forEach(n -> applySelectionEffect(n, false));
+                c.getAddedSubList().forEach(n -> applySelectionEffect(n, true));
             }
         });
 
         TimeLineController.getTimeZone().addListener(updateListener);
 
         //show tooltip text in status bar
-        hoverProperty().addListener(hover -> controller.setStatus(isHover() ? DEFAULT_TOOLTIP.getText() : "")); //NON-NLS
+        hoverProperty().addListener(observable -> controller.setStatus(isHover() ? DEFAULT_TOOLTIP.getText() : ""));
 
     }
 
-    /**
-     * Handler for RefreshRequestedEvents. Updates visualization.
-     *
-     * @param event The RefreshRequestedEvent.
-     */
     @Subscribe
     public void handleRefreshRequested(RefreshRequestedEvent event) {
         update();
@@ -438,6 +441,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
         specificLabelPane.getChildren().clear();
         //since the tickmarks aren't necessarily in value/position order,
         //make a clone of the list sorted by position along axis
+
         SortedList<Axis.TickMark<X>> tickMarks = getXAxis().getTickMarks().sorted(Comparator.comparing(Axis.TickMark::getPosition));
 
         if (tickMarks.isEmpty() == false) {
@@ -465,6 +469,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
             } else {
                 //there are two parts so ...
                 //initialize additional state
+
                 double contextLabelX = 0;
                 double contextLabelWidth = 0;
 
@@ -522,6 +527,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
             specificLabelPane.getChildren().add(label);
         } else {
             //otherwise don't actually add the label if it would intersect with previous label
+
             final Node lastLabel = specificLabelPane.getChildren().get(specificLabelPane.getChildren().size() - 1);
 
             if (false == lastLabel.getBoundsInParent().intersects(label.getBoundsInParent())) {
@@ -540,7 +546,6 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
      *                   of the text
      */
     private synchronized void addContextLabel(String labelText, double labelWidth, double labelX) {
-
         Label label = new Label(labelText);
         label.setAlignment(Pos.CENTER);
         label.setTextAlignment(TextAlignment.CENTER);
@@ -556,14 +561,14 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
 
         if (labelX == 0) { // first label has no border
             label.setBorder(null);
-//            label.setStyle("-fx-border-width: 0 0 0 0 ; -fx-border-color:black;"); //NON-NLS 
         } else {  // subsequent labels have border on left to create dividers
             label.setBorder(ONLY_LEFT_BORDER);
-//            label.setStyle("-fx-border-width: 0 0 0 1; -fx-border-color:black;"); //NON-NLS 
         }
 
         contextLabelPane.getChildren().add(label);
     }
+
+    public abstract double getAxisMargin();
 
     /**
      * A simple data object used to represent a partial date as up to two parts.
