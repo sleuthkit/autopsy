@@ -59,8 +59,6 @@ class PhotoRecCarverOutputParser {
      * database as $CarvedFiles under the passed-in parent id.
      *
      * @param xmlInputFile The XML file we are trying to read and parse
-     * @param id           The parent id of the unallocated space we are
-     *                     parsing.
      * @param af           The AbstractFile representing the unallocated space
      *                     we are parsing.
      *
@@ -70,7 +68,7 @@ class PhotoRecCarverOutputParser {
      * @throws FileNotFoundException
      * @throws IOException
      */
-    List<LayoutFile> parse(File xmlInputFile, long id, AbstractFile af) throws FileNotFoundException, IOException {
+    List<LayoutFile> parse(File xmlInputFile, AbstractFile af) throws FileNotFoundException, IOException {
         try {
             final Document doc = XMLUtil.loadDoc(PhotoRecCarverOutputParser.class, xmlInputFile.toString());
             if (doc == null) {
@@ -133,7 +131,7 @@ class PhotoRecCarverOutputParser {
                     if (fileByteEnd > af.getSize()) {
                         long overshoot = fileByteEnd - af.getSize();
                         if (fileSize > overshoot) {
-                            fileSize = fileSize - overshoot;
+                            fileSize -= overshoot;
                         } else {
                             // This better never happen... Data for this file is corrupted. Skip it.
                             continue;
@@ -142,14 +140,13 @@ class PhotoRecCarverOutputParser {
 
                     tskRanges.add(new TskFileRange(fileByteStart, len, rangeIndex));
                 }
-
                 if (!tskRanges.isEmpty()) {
-                    carvedFileContainer.add(new CarvedFileContainer(fileName, fileSize, id, tskRanges));
+                    carvedFileContainer.add(new CarvedFileContainer(fileName, fileSize, af.getId(), tskRanges));
                 }
             }
             return fileManager.addCarvedFiles(carvedFileContainer);
         } catch (NumberFormatException | TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error parsing PhotoRec output and inserting it into the database: {0}", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error parsing PhotoRec output and inserting it into the database: ", ex); //NON-NLS
         }
 
         List<LayoutFile> empty = Collections.emptyList();
