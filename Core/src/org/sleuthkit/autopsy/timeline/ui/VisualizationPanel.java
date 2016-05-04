@@ -29,6 +29,7 @@ import java.util.function.Supplier;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
@@ -96,16 +97,16 @@ import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
  * TODO: refactor common code out of histogram and CountsView? -jm
  */
 final public class VisualizationPanel extends BorderPane {
-    
+
     private static final Logger LOGGER = Logger.getLogger(VisualizationPanel.class.getName());
-    
+
     private static final Image INFORMATION = new Image("org/sleuthkit/autopsy/timeline/images/information.png", 16, 16, true, true); // NON-NLS
     private static final Image REFRESH = new Image("org/sleuthkit/autopsy/timeline/images/arrow-circle-double-135.png"); // NON-NLS
     private static final Background background = new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY));
-    
+
     @GuardedBy("this")
     private LoggedTask<Void> histogramTask;
-    
+
     private final EventsTree eventsTree;
     private AbstractVisualizationPane<?, ?, ?, ?> visualization;
     //// range slider and histogram componenets
@@ -120,13 +121,13 @@ final public class VisualizationPanel extends BorderPane {
      */
     @FXML
     private StackPane rangeHistogramStack;
-    
+
     private final RangeSlider rangeSlider = new RangeSlider(0, 1.0, .25, .75);
 
     //// time range selection components
     @FXML
     private MenuButton zoomMenuButton;
-    
+
     @FXML
     private Button zoomOutButton;
     @FXML
@@ -158,13 +159,15 @@ final public class VisualizationPanel extends BorderPane {
     @FXML
     private Button snapShotButton;
     @FXML
+    private Button refreshButton;
+    @FXML
     private Label visualizationModeLabel;
 
     /**
      * wraps contained visualization so that we can show notifications over it.
      */
     private final NotificationPane notificationPane = new NotificationPane();
-    
+    private final ReadOnlyBooleanWrapper needsRefresh = new ReadOnlyBooleanWrapper(false);
     private final TimeLineController controller;
     private final FilteredEventsModel filteredEvents;
 
@@ -190,7 +193,7 @@ final public class VisualizationPanel extends BorderPane {
     /**
      * hides the notification pane on any event
      */
-    private final InvalidationListener zoomListener = any -> notificationPane.hide();
+    private final InvalidationListener zoomListener = any -> setNeedsRefresh(false);
 
     /**
      * listen to change in end time picker and push to controller
@@ -225,14 +228,14 @@ final public class VisualizationPanel extends BorderPane {
     private static LocalDateTime epochMillisToLocalDateTime(long millis) {
         return LocalDateTime.ofInstant(Instant.ofEpochMilli(millis), TimeLineController.getTimeZoneID());
     }
-    
+
     public VisualizationPanel(@Nonnull TimeLineController controller, @Nonnull EventsTree eventsTree) {
         this.controller = controller;
         this.filteredEvents = controller.getEventsModel();
         this.eventsTree = eventsTree;
         FXMLConstructor.construct(this, "VisualizationPanel.fxml"); // NON-NLS
     }
-    
+
     @FXML // This method is called by the FXMLLoader when initialization is complete
     @NbBundle.Messages({
         "VisualizationPanel.visualizationModeLabel.text=Visualization Mode:",
@@ -266,7 +269,7 @@ final public class VisualizationPanel extends BorderPane {
                 controller.setViewMode(VisualizationMode.DETAIL);
             }
         };
-        
+
         if (countsToggle.getToggleGroup() != null) {
             countsToggle.getToggleGroup().selectedToggleProperty().addListener(toggleListener);
         } else {
@@ -279,6 +282,7 @@ final public class VisualizationPanel extends BorderPane {
 
         //configure snapshor button / action
         ActionUtils.configureButton(new SaveSnapshotAsReport(controller, VisualizationPanel.this), snapShotButton);
+        ActionUtils.configureButton(new Refresh(), refreshButton);
 
         /////configure start and end pickers
         startLabel.setText(Bundle.VisualizationPanel_startLabel_text());
@@ -343,9 +347,9 @@ final public class VisualizationPanel extends BorderPane {
             }
         });
         refreshHistorgram();
-        
+
     }
-    
+
     private void setViewMode(VisualizationMode visualizationMode) {
         switch (visualizationMode) {
             case COUNTS:
@@ -357,75 +361,83 @@ final public class VisualizationPanel extends BorderPane {
                 detailsToggle.setSelected(true);
                 break;
         }
+
     }
-    
+
     private synchronized void setVisualization(final AbstractVisualizationPane<?, ?, ?, ?> newViz) {
         Platform.runLater(() -> {
-            synchronized (VisualizationPanel.this) {
-                if (visualization != null) {
-                    toolBar.getItems().removeAll(visualization.getSettingsNodes());
-                    visualization.dispose();
-                }
-                
-                visualization = newViz;
-                visualization.update();
-                toolBar.getItems().addAll(newViz.getSettingsNodes());
-                
-                notificationPane.setContent(visualization);
-                if (visualization instanceof DetailViewPane) {
-                    Platform.runLater(() -> {
-                        ((DetailViewPane) visualization).setHighLightedEvents(eventsTree.getSelectedEvents());
-                        eventsTree.setDetailViewPane((DetailViewPane) visualization);
-                    });
-                }
-                visualization.hasEvents.addListener((observable, oldValue, newValue) -> {
-                    if (newValue == false) {
-                        
-                        notificationPane.setContent(
-                                new StackPane(visualization,
-                                        new Region() {
-                                    {
-                                        setBackground(new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY)));
-                                        setOpacity(.3);
-                                    }
-                                },
-                                        new NoEventsDialog(() -> notificationPane.setContent(visualization))));
-                    } else {
-                        notificationPane.setContent(visualization);
-                    }
+            if (visualization != null) {
+                toolBar.getItems().removeAll(visualization.getSettingsNodes());
+                visualization.dispose();
+            }
+
+            visualization = newViz;
+            visualization.update();
+            toolBar.getItems().addAll(newViz.getSettingsNodes());
+
+            notificationPane.setContent(visualization);
+            if (visualization instanceof DetailViewPane) {
+                Platform.runLater(() -> {
+                    ((DetailViewPane) visualization).setHighLightedEvents(eventsTree.getSelectedEvents());
+                    eventsTree.setDetailViewPane((DetailViewPane) visualization);
                 });
             }
+            visualization.hasEvents.addListener((observable, oldValue, newValue) -> {
+                if (newValue == false) {
+
+                    notificationPane.setContent(
+                            new StackPane(visualization,
+                                    new Region() {
+                                {
+                                    setBackground(new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY)));
+                                    setOpacity(.3);
+                                }
+                            },
+                                    new NoEventsDialog(() -> notificationPane.setContent(visualization))));
+                } else {
+                    notificationPane.setContent(visualization);
+                }
+            });
+
         });
+        setNeedsRefresh(false);
     }
-    
+
     @Subscribe
     @NbBundle.Messages("VisualizationPanel.tagsAddedOrDeleted=Tags have been created and/or deleted.  The visualization may not be up to date.")
     public void handleTimeLineTagEvent(TagsUpdatedEvent event) {
-        Platform.runLater(() -> {
-            notificationPane.setCloseButtonVisible(false);
-            notificationPane.getActions().setAll(new Refresh());
-            notificationPane.show(Bundle.VisualizationPanel_tagsAddedOrDeleted(), new ImageView(INFORMATION));
-        });
+        setNeedsRefresh(true);
     }
-    
+
     @Subscribe
     public void handleRefreshRequestedEvent(RefreshRequestedEvent event) {
-        Platform.runLater(notificationPane::hide);
+        setNeedsRefresh(false);
     }
-    
+
+    private void setNeedsRefresh(Boolean needsRefresh) {
+        Platform.runLater(() -> {
+            VisualizationPanel.this.needsRefresh.set(needsRefresh);
+            if (needsRefresh) {
+                notificationPane.show(Bundle.VisualizationPanel_tagsAddedOrDeleted(), new ImageView(INFORMATION));
+            } else {
+                notificationPane.hide();
+            }
+        });
+    }
+
     synchronized private void refreshHistorgram() {
-        
+
         if (histogramTask != null) {
             histogramTask.cancel(true);
         }
-        
+
         histogramTask = new LoggedTask<Void>(
                 NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.title"), true) { // NON-NLS
             private final Lighting lighting = new Lighting();
-            
+
             @Override
             protected Void call() throws Exception {
-                
+
                 updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.preparing")); // NON-NLS
 
                 long max = 0;
@@ -442,9 +454,9 @@ final public class VisualizationPanel extends BorderPane {
                     updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.resetUI")); // NON-NLS
 
                 });
-                
+
                 ArrayList<Long> bins = new ArrayList<>();
-                
+
                 DateTime start = timeRange.getStart();
                 while (timeRange.contains(start)) {
                     if (isCancelled()) {
@@ -455,21 +467,21 @@ final public class VisualizationPanel extends BorderPane {
                     //increment for next iteration
 
                     start = end;
-                    
+
                     updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.queryDb")); // NON-NLS
                     //query for current range
                     long count = filteredEvents.getEventCounts(interval).values().stream().mapToLong(Long::valueOf).sum();
                     bins.add(count);
-                    
+
                     max = Math.max(count, max);
-                    
+
                     final double fMax = Math.log(max);
                     final ArrayList<Long> fbins = new ArrayList<>(bins);
                     Platform.runLater(() -> {
                         updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.updateUI2")); // NON-NLS
 
                         histogramBox.getChildren().clear();
-                        
+
                         for (Long bin : fbins) {
                             if (isCancelled()) {
                                 break;
@@ -492,41 +504,41 @@ final public class VisualizationPanel extends BorderPane {
                 }
                 return null;
             }
-            
+
         };
         new Thread(histogramTask).start();
         controller.monitorTask(histogramTask);
     }
-    
+
     private void refreshTimeUI() {
         refreshTimeUI(filteredEvents.timeRangeProperty().get());
     }
-    
+
     private void refreshTimeUI(Interval interval) {
-        
+
         RangeDivisionInfo rangeDivisionInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval());
-        
+
         final long minTime = rangeDivisionInfo.getLowerBound();
         final long maxTime = rangeDivisionInfo.getUpperBound();
-        
+
         long startMillis = interval.getStartMillis();
         long endMillis = interval.getEndMillis();
-        
+
         if (minTime > 0 && maxTime > minTime) {
-            
+
             Platform.runLater(() -> {
                 startPicker.localDateTimeProperty().removeListener(startListener);
                 endPicker.localDateTimeProperty().removeListener(endListener);
                 rangeSlider.highValueChangingProperty().removeListener(rangeSliderListener);
                 rangeSlider.lowValueChangingProperty().removeListener(rangeSliderListener);
-                
+
                 rangeSlider.setMax((maxTime - minTime));
-                
+
                 rangeSlider.setLowValue(startMillis - minTime);
                 rangeSlider.setHighValue(endMillis - minTime);
                 startPicker.setLocalDateTime(epochMillisToLocalDateTime(startMillis));
                 endPicker.setLocalDateTime(epochMillisToLocalDateTime(endMillis));
-                
+
                 rangeSlider.highValueChangingProperty().addListener(rangeSliderListener);
                 rangeSlider.lowValueChangingProperty().addListener(rangeSliderListener);
                 startPicker.localDateTimeProperty().addListener(startListener);
@@ -534,10 +546,10 @@ final public class VisualizationPanel extends BorderPane {
             });
         }
     }
-    
+
     @NbBundle.Messages("NoEventsDialog.titledPane.text=No Visible Events")
     private class NoEventsDialog extends StackPane {
-        
+
         @FXML
         private TitledPane titledPane;
         @FXML
@@ -550,14 +562,14 @@ final public class VisualizationPanel extends BorderPane {
         private Button zoomButton;
         @FXML
         private Label noEventsDialogLabel;
-        
+
         private final Runnable closeCallback;
-        
+
         private NoEventsDialog(Runnable closeCallback) {
             this.closeCallback = closeCallback;
             FXMLConstructor.construct(this, "NoEventsDialog.fxml"); // NON-NLS
         }
-        
+
         @FXML
         void initialize() {
             assert resetFiltersButton != null : "fx:id=\"resetFiltersButton\" was not injected: check your FXML file 'NoEventsDialog.fxml'."; // NON-NLS
@@ -568,7 +580,7 @@ final public class VisualizationPanel extends BorderPane {
             noEventsDialogLabel.setText(NbBundle.getMessage(NoEventsDialog.class, "VisualizationPanel.noEventsDialogLabel.text")); // NON-NLS
 
             dismissButton.setOnAction(actionEvent -> closeCallback.run());
-            
+
             ActionUtils.configureButton(new ZoomToEvents(controller), zoomButton);
             ActionUtils.configureButton(new Back(controller), backButton);
             ActionUtils.configureButton(new ResetFilters(controller), resetFiltersButton);
@@ -580,15 +592,15 @@ final public class VisualizationPanel extends BorderPane {
      * the selected LocalDateTime as start/end to the timelinecontroller.
      */
     private class PickerListener implements InvalidationListener {
-        
+
         private final BiFunction< Interval, Long, Interval> intervalMapper;
         private final Supplier<LocalDateTimeTextField> pickerSupplier;
-        
+
         PickerListener(Supplier<LocalDateTimeTextField> pickerSupplier, BiFunction<Interval, Long, Interval> intervalMapper) {
             this.pickerSupplier = pickerSupplier;
             this.intervalMapper = intervalMapper;
         }
-        
+
         @Override
         public void invalidated(Observable observable) {
             LocalDateTime pickerTime = pickerSupplier.get().getLocalDateTime();
@@ -603,7 +615,7 @@ final public class VisualizationPanel extends BorderPane {
      * callback that disabled date/times outside the span of the current case.
      */
     private class LocalDateDisabler implements Callback<LocalDateTimePicker.LocalDateTimeRange, Void> {
-        
+
         @Override
         public Void call(LocalDateTimePicker.LocalDateTimeRange viewedRange) {
             startPicker.disabledLocalDateTimes().clear();
@@ -613,7 +625,7 @@ final public class VisualizationPanel extends BorderPane {
             Interval spanningInterval = filteredEvents.getSpanningInterval();
             long spanStartMillis = spanningInterval.getStartMillis();
             long spaneEndMillis = spanningInterval.getEndMillis();
-            
+
             LocalDate rangeStartLocalDate = viewedRange.getStartLocalDateTime().toLocalDate();
             LocalDate rangeEndLocalDate = viewedRange.getEndLocalDateTime().toLocalDate().plusDays(1);
             //iterate over days of the displayed range and disable ones not in spanning interval
@@ -641,11 +653,11 @@ final public class VisualizationPanel extends BorderPane {
          * picker to reset if invalid info was entered
          */
         private final LocalDateTimeTextField picker;
-        
+
         LocalDateTimeValidator(LocalDateTimeTextField picker) {
             this.picker = picker;
         }
-        
+
         @Override
         public Boolean call(LocalDateTime param) {
             long epochMilli = localDateTimeToEpochMilli(param);
@@ -660,15 +672,16 @@ final public class VisualizationPanel extends BorderPane {
             }
         }
     }
-    
+
     private class Refresh extends Action {
-        
+
         @NbBundle.Messages({"VisualizationPanel.refresh=refresh"})
         Refresh() {
             super(Bundle.VisualizationPanel_refresh());
-            
+
             setGraphic(new ImageView(REFRESH));
             setEventHandler(actionEvent -> filteredEvents.refresh());
+            disabledProperty().bind(needsRefresh.not());
         }
     }
 }
