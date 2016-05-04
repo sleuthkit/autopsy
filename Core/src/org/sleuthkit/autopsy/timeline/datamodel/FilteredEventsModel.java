@@ -162,8 +162,22 @@ public final class FilteredEventsModel {
         requestedZoomParamters.bind(currentStateProperty);
     }
 
+    /**
+     * Readonly observable property for the current ZoomParams
+     *
+     * @return A readonly observable property for the current ZoomParams.
+     */
     synchronized public ReadOnlyObjectProperty<ZoomParams> zoomParametersProperty() {
         return requestedZoomParamters.getReadOnlyProperty();
+    }
+
+    /**
+     * Get the current ZoomParams
+     *
+     * @return The current ZoomParams
+     */
+    synchronized public ZoomParams getZoomParamaters() {
+        return requestedZoomParamters.get();
     }
 
     /**
