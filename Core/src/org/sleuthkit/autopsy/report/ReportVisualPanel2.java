@@ -22,7 +22,6 @@ import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -41,7 +40,6 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -164,21 +162,11 @@ final class ReportVisualPanel2 extends JPanel {
         return result;
     }
 
-    private boolean areArtifactsSelected() {
-        boolean result = false;
-        for (Entry<BlackboardArtifact.Type, Boolean> entry : artifactStates.entrySet()) {
-            if (entry.getValue()) {
-                result = true;
-            }
-        }
-        return result;
-    }
-
     private void updateFinishButton() {
         if (taggedResultsRadioButton.isSelected()) {
             wizPanel.setFinish(areTagsSelected());
         } else {
-            wizPanel.setFinish(areArtifactsSelected());
+            wizPanel.setFinish(true);
         }
     }
 
@@ -216,9 +204,19 @@ final class ReportVisualPanel2 extends JPanel {
                 taggedResultsRadioButtonStateChanged(evt);
             }
         });
+        taggedResultsRadioButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                taggedResultsRadioButtonMouseReleased(evt);
+            }
+        });
 
         optionsButtonGroup.add(allResultsRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(allResultsRadioButton, org.openide.util.NbBundle.getMessage(ReportVisualPanel2.class, "ReportVisualPanel2.allResultsRadioButton.text")); // NOI18N
+        allResultsRadioButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                allResultsRadioButtonMouseReleased(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(dataLabel, org.openide.util.NbBundle.getMessage(ReportVisualPanel2.class, "ReportVisualPanel2.dataLabel.text")); // NOI18N
 
@@ -294,11 +292,7 @@ final class ReportVisualPanel2 extends JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void taggedResultsRadioButtonStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_taggedResultsRadioButtonStateChanged
-        tagsList.setEnabled(taggedResultsRadioButton.isSelected());
-        selectAllButton.setEnabled(taggedResultsRadioButton.isSelected());
-        deselectAllButton.setEnabled(taggedResultsRadioButton.isSelected());
-        advancedButton.setEnabled(!taggedResultsRadioButton.isSelected());
-        updateFinishButton();
+
     }//GEN-LAST:event_taggedResultsRadioButtonStateChanged
 
     private void selectAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectAllButtonActionPerformed
@@ -319,8 +313,24 @@ final class ReportVisualPanel2 extends JPanel {
 
     private void advancedButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_advancedButtonActionPerformed
         artifactStates = dialog.display();
-        wizPanel.setFinish(areArtifactsSelected());
     }//GEN-LAST:event_advancedButtonActionPerformed
+
+    private void taggedResultsRadioButtonMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_taggedResultsRadioButtonMouseReleased
+        tagsList.setEnabled(taggedResultsRadioButton.isSelected());
+        selectAllButton.setEnabled(taggedResultsRadioButton.isSelected());
+        deselectAllButton.setEnabled(taggedResultsRadioButton.isSelected());
+        advancedButton.setEnabled(!taggedResultsRadioButton.isSelected());
+        updateFinishButton();
+    }//GEN-LAST:event_taggedResultsRadioButtonMouseReleased
+
+    private void allResultsRadioButtonMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_allResultsRadioButtonMouseReleased
+        tagsList.setEnabled(taggedResultsRadioButton.isSelected());
+        selectAllButton.setEnabled(taggedResultsRadioButton.isSelected());
+        deselectAllButton.setEnabled(taggedResultsRadioButton.isSelected());
+        advancedButton.setEnabled(!taggedResultsRadioButton.isSelected());
+        updateFinishButton();
+    }//GEN-LAST:event_allResultsRadioButtonMouseReleased
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton advancedButton;
     private javax.swing.JRadioButton allResultsRadioButton;
