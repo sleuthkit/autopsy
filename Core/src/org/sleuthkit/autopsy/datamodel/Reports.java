@@ -42,7 +42,6 @@ import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -111,7 +110,7 @@ public final class Reports implements AutopsyVisitableItem {
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {
                     String eventType = evt.getPropertyName();
-                    if (eventType.equals(Case.Events.REPORT_ADDED.toString())) {
+                    if (eventType.equals(Case.Events.REPORT_ADDED.toString()) || eventType.equals(Case.Events.REPORT_DELETED.toString())) {
                         /**
                          * Checking for a current case is a stop gap measure
                          * until a different way of handling the closing of
@@ -272,7 +271,6 @@ public final class Reports implements AutopsyVisitableItem {
                         JOptionPane.YES_NO_OPTION) == 0) {
                     try {
                         Case.getCurrentCase().deleteReports(selectedReportsCollection, checkbox.isSelected());
-                        DataContentTopComponent.findInstance().repaint();
                     } catch (TskCoreException | IllegalStateException ex) {
                         Logger.getLogger(DeleteReportAction.class.getName()).log(Level.INFO, "Error deleting the reports. ", ex); // NON-NLS - Provide solution to the user?
                     }
