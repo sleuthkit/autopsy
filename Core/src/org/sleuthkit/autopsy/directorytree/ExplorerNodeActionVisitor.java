@@ -112,8 +112,10 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
     @Override
     public List<? extends Action> visit(final VirtualDirectory d) {
         List<Action> actions = new ArrayList<>();
+        if (!d.isDataSource()) {
+            actions.add(AddContentTagAction.getInstance());
+        }
         actions.add(ExtractAction.getInstance());
-        actions.add(AddContentTagAction.getInstance());
         actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions;
     }
