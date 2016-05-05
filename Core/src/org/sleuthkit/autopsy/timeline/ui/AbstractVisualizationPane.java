@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.timeline.ui;
 
 import com.google.common.eventbus.Subscribe;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -76,10 +77,10 @@ import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 /**
  * Abstract base class for TimeLineChart based visualizations.
  *
- * @param <X>         the type of data plotted along the x axis
- * @param <Y>         the type of data plotted along the y axis
- * @param <NodeType>  the type of nodes used to represent data items
- * @param <ChartType> the type of the TimeLineChart<X> this class uses to plot
+ * @param <X>         The type of data plotted along the x axis
+ * @param <Y>         The type of data plotted along the y axis
+ * @param <NodeType>  The type of nodes used to represent data items
+ * @param <ChartType> The type of the TimeLineChart<X> this class uses to plot
  *                    the data. Must extend Region.
  *
  * TODO: this is becoming (too?) closely tied to the notion that their is a
@@ -95,6 +96,12 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
     private static final Tooltip DEFAULT_TOOLTIP = new Tooltip(Bundle.AbstractVisualization_Default_Tooltip_text());
     private static final Border ONLY_LEFT_BORDER = new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(0, 0, 0, 1)));
 
+    /**
+     * Get the tool tip to use for this visualization when no more specific
+     * tooltip is needed.
+     *
+     * @return The default tooltip.
+     */
     public static Tooltip getDefaultTooltip() {
         return DEFAULT_TOOLTIP;
     }
@@ -110,9 +117,9 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
     private ChartType chart;
 
     //// replacement axis label componenets
-    private final Pane specificLabelPane = new Pane(); // container for the specfic labels in the declutterd axis
-    private final Pane contextLabelPane = new Pane();// container for the contextual labels in the declutterd axis
-    protected final Region spacer = new Region();
+    private final Pane specificLabelPane = new Pane(); // container for the specfic labels in the decluttered axis
+    private final Pane contextLabelPane = new Pane();// container for the contextual labels in the decluttered axis
+    private final Region spacer = new Region();
 
     /**
      * task used to reload the content of this visualization
@@ -132,7 +139,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
      * @return An ObservableList<NodeType> of the nodes that are selected in
      *         this visualization.
      */
-    public ObservableList<NodeType> getSelectedNodes() {
+    protected ObservableList<NodeType> getSelectedNodes() {
         return selectedNodes;
     }
 
@@ -169,7 +176,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
      *
      * @return The TimelineController for this visualization.
      */
-    public TimeLineController getController() {
+    protected TimeLineController getController() {
         return controller;
     }
 
@@ -187,7 +194,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
      *
      * @return The FilteredEventsModel for this visualization.
      */
-    public FilteredEventsModel getEventsModel() {
+    protected FilteredEventsModel getEventsModel() {
         return filteredEvents;
     }
 
@@ -214,6 +221,24 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
     }
 
     /**
+     * Apply this visualization's 'selection effect' to the given node.
+     *
+     * @param node The node to apply the 'effect' to.
+     */
+    protected void applySelectionEffect(NodeType node) {
+        applySelectionEffect(node, true);
+    }
+
+    /**
+     * Remove this visualization's 'selection effect' from the given node.
+     *
+     * @param node The node to remvoe the 'effect' from.
+     */
+    protected void removeSelectionEffect(NodeType node) {
+        applySelectionEffect(node, Boolean.FALSE);
+    }
+
+    /**
      * Should the tick mark at the given value be bold, because it has
      * interesting data associated with it?
      *
@@ -233,24 +258,6 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
      *                should not
      */
     abstract protected void applySelectionEffect(NodeType node, Boolean applied);
-
-    /**
-     * Apply this visualization's 'selection effect' to the given node.
-     *
-     * @param node The node to apply the 'effect' to.
-     */
-    protected void applySelectionEffect(NodeType node) {
-        applySelectionEffect(node, true);
-    }
-
-    /**
-     * Remove this visualization's 'selection effect' from the given node.
-     *
-     * @param node The node to remvoe the 'effect' from.
-     */
-    protected void removeSelectionEffect(NodeType node) {
-        applySelectionEffect(node, Boolean.FALSE);
-    }
 
     /**
      * Get a new background Task that fetches the appropriate data and loads it
@@ -293,6 +300,15 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
     abstract protected Axis<Y> getYAxis();
 
     /**
+     * Get the total amount of space (in pixels) the x-axis uses to pad the left
+     * and right sides. This value is used to keep decluttered axis aligned
+     * correctly.
+     *
+     * @return The x-axis margin (in pixels)
+     */
+    abstract protected double getAxisMargin();
+
+    /**
      * Clear all data items from this chart.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
@@ -305,7 +321,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
      *
      * TODO: replace this logic with a javafx Service ? -jm
      */
-    final synchronized public void update() {
+    protected final synchronized void update() {
         if (updateTask != null) {
             updateTask.cancel(true);
             updateTask = null;
@@ -334,7 +350,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
     /**
      * Dispose of this visualization and any resources it holds onto.
      */
-    final synchronized public void dispose() {
+    final synchronized void dispose() {
 
         //cancel and gc updateTask
         if (updateTask != null) {
@@ -389,7 +405,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
             HBox hBox = new HBox(spacer, vBox);
             hBox.setFillHeight(false);
             setBottom(hBox);
-            DoubleBinding spacerSize = getYAxis().widthProperty().add(getYAxis().tickLengthProperty()).add(getAxisMargin());//getXAxis().startMarginProperty().multiply(2));
+            DoubleBinding spacerSize = getYAxis().widthProperty().add(getYAxis().tickLengthProperty()).add(getAxisMargin());
             spacer.minWidthProperty().bind(spacerSize);
             spacer.prefWidthProperty().bind(spacerSize);
             spacer.maxWidthProperty().bind(spacerSize);
@@ -397,20 +413,26 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
 
         createSeries();
 
-        selectedNodes.addListener((ListChangeListener.Change<? extends NodeType> c) -> {
-            while (c.next()) {
-                c.getRemoved().forEach(n -> applySelectionEffect(n, false));
-                c.getAddedSubList().forEach(n -> applySelectionEffect(n, true));
+        selectedNodes.addListener((ListChangeListener.Change<? extends NodeType> change) -> {
+            while (change.next()) {
+                change.getRemoved().forEach(node -> applySelectionEffect(node, false));
+                change.getAddedSubList().forEach(node -> applySelectionEffect(node, true));
             }
         });
 
         TimeLineController.getTimeZone().addListener(updateListener);
 
         //show tooltip text in status bar
-        hoverProperty().addListener(observable -> controller.setStatus(isHover() ? DEFAULT_TOOLTIP.getText() : ""));
+        hoverProperty().addListener(hoverProp -> controller.setStatus(isHover() ? DEFAULT_TOOLTIP.getText() : ""));
 
     }
 
+    /**
+     * Handle a RefreshRequestedEvent from the events model by updating the
+     * visualization.
+     *
+     * @param event The RefreshRequestedEvent to handle.
+     */
     @Subscribe
     public void handleRefreshRequested(RefreshRequestedEvent event) {
         update();
@@ -435,13 +457,12 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
      *
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    public synchronized void layoutDateLabels() {
+    protected synchronized void layoutDateLabels() {
         //clear old labels
         contextLabelPane.getChildren().clear();
         specificLabelPane.getChildren().clear();
         //since the tickmarks aren't necessarily in value/position order,
-        //make a clone of the list sorted by position along axis
-
+        //make a copy of the list sorted by position along axis
         SortedList<Axis.TickMark<X>> tickMarks = getXAxis().getTickMarks().sorted(Comparator.comparing(Axis.TickMark::getPosition));
 
         if (tickMarks.isEmpty() == false) {
@@ -463,13 +484,11 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
                             specificLabelX,
                             isTickBold(t.getValue())
                     );
-
                     specificLabelX += spacing;  //increment x
                 }
             } else {
                 //there are two parts so ...
                 //initialize additional state
-
                 double contextLabelX = 0;
                 double contextLabelWidth = 0;
 
@@ -514,7 +533,6 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
      * @param bold       True if the text should be bold, false otherwise.
      */
     private synchronized void addSpecificLabel(String labelText, double labelWidth, double labelX, boolean bold) {
-
         Text label = new Text(" " + labelText + " "); //NON-NLS
         label.setTextAlignment(TextAlignment.CENTER);
         label.setFont(Font.font(null, bold ? FontWeight.BOLD : FontWeight.NORMAL, 10));
@@ -567,8 +585,6 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
 
         contextLabelPane.getChildren().add(label);
     }
-
-    public abstract double getAxisMargin();
 
     /**
      * A simple data object used to represent a partial date as up to two parts.

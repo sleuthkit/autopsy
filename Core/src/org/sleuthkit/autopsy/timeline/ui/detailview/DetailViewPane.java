@@ -166,7 +166,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
     }
 
     @Override
-    final public DateAxis getXAxis() {
+    final protected DateAxis getXAxis() {
         return detailsChartDateAxis;
     }
 
@@ -231,7 +231,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
     }
 
     @Override
-    public double getAxisMargin() {
+    protected double getAxisMargin() {
         return 0;
     }
 

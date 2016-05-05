@@ -214,13 +214,13 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
          *
          * @return The display name.
          */
-        public String getDisplayName() {
+        private String getDisplayName() {
             return displayName;
         }
     }
 
     @Override
-    public double getAxisMargin() {
+     protected double getAxisMargin() {
         return dateAxis.getStartMargin() + dateAxis.getEndMargin();
     }
 
