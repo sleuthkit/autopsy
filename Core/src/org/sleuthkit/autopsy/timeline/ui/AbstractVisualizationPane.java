@@ -29,6 +29,7 @@ import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
+import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -46,9 +47,11 @@ import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.Tooltip;
 import javafx.scene.effect.Effect;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
@@ -81,15 +84,15 @@ import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
  * common history context menu items out of derived classes? -jm
  */
 public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, ChartType extends Region & TimeLineChart<X>> extends BorderPane {
-
+    
     @NbBundle.Messages("AbstractVisualization.Default_Tooltip.text=Drag the mouse to select a time interval to zoom into.\nRight-click for more actions.")
     private static final Tooltip DEFAULT_TOOLTIP = new Tooltip(Bundle.AbstractVisualization_Default_Tooltip_text());
     private static final Logger LOGGER = Logger.getLogger(AbstractVisualizationPane.class.getName());
-
+    
     public static Tooltip getDefaultTooltip() {
         return DEFAULT_TOOLTIP;
     }
-
+    
     protected final SimpleBooleanProperty hasEvents = new SimpleBooleanProperty(true);
 
     /**
@@ -97,29 +100,29 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
      */
     protected final ObservableList<XYChart.Series<X, Y>> dataSeries = FXCollections.<XYChart.Series<X, Y>>observableArrayList();
     protected final Map<EventType, XYChart.Series<X, Y>> eventTypeToSeriesMap = new HashMap<>();
-
+    
     protected ChartType chart;
 
     //// replacement axis label componenets
-    private final Pane leafPane; // container for the leaf lables in the declutterd axis
-    private final Pane branchPane;// container for the branch lables in the declutterd axis
-    protected final Region spacer;
+    private final Pane leafPane = new Pane(); // container for the leaf lables in the declutterd axis
+    private final Pane branchPane = new Pane();// container for the branch lables in the declutterd axis
+    protected final Region spacer = new Region();
 
     /**
      * task used to reload the content of this visualization
      */
     private Task<Boolean> updateTask;
-
+    
     final protected TimeLineController controller;
-
+    
     final protected FilteredEventsModel filteredEvents;
-
+    
     final protected ObservableList<NodeType> selectedNodes = FXCollections.observableArrayList();
-
+    
     private InvalidationListener invalidationListener = (Observable observable) -> {
         update();
     };
-
+    
     public ObservableList<NodeType> getSelectedNodes() {
         return selectedNodes;
     }
@@ -129,7 +132,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
      * an implementations constructor.
      */
     protected List<Node> settingsNodes;
-
+    
     public TimeLineController getController() {
         return controller;
     }
@@ -196,7 +199,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
      * @return the vertical axis used by this Visualization's chart
      */
     abstract protected Axis<Y> getYAxis();
-
+    
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     abstract protected void resetData();
 
@@ -233,7 +236,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
         });
         controller.monitorTask(updateTask);
     }
-
+    
     final synchronized public void dispose() {
         if (updateTask != null) {
             updateTask.cancel(true);
@@ -264,32 +267,40 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
     protected final XYChart.Series<X, Y> getSeries(final EventType et) {
         return eventTypeToSeriesMap.get(et);
     }
-
-    protected AbstractVisualizationPane(TimeLineController controller, Pane partPane, Pane contextPane, Region spacer) {
+    
+    protected AbstractVisualizationPane(TimeLineController controller) {
         this.controller = controller;
         this.filteredEvents = controller.getEventsModel();
         this.filteredEvents.registerForEvents(this);
         this.filteredEvents.zoomParametersProperty().addListener(invalidationListener);
-        this.leafPane = partPane;
-        this.branchPane = contextPane;
-        this.spacer = spacer;
-
+        Platform.runLater(() -> {
+            VBox vBox = new VBox(leafPane, branchPane);
+            vBox.setFillWidth(false);
+            HBox hBox = new HBox(spacer, vBox);
+            hBox.setFillHeight(false);
+            setBottom(hBox);
+            DoubleBinding spacerSize = getYAxis().widthProperty().add(getYAxis().tickLengthProperty()).add(getAxisMargin());//getXAxis().startMarginProperty().multiply(2));
+            spacer.minWidthProperty().bind(spacerSize);
+            spacer.prefWidthProperty().bind(spacerSize);
+            spacer.maxWidthProperty().bind(spacerSize);
+        });
+        
         createSeries();
-
+        
         selectedNodes.addListener((ListChangeListener.Change<? extends NodeType> c) -> {
             while (c.next()) {
                 c.getRemoved().forEach(n -> applySelectionEffect(n, false));
                 c.getAddedSubList().forEach(n -> applySelectionEffect(n, true));
             }
         });
-
+        
         TimeLineController.getTimeZone().addListener(invalidationListener);
 
         //show tooltip text in status bar
         hoverProperty().addListener(observable -> controller.setStatus(isHover() ? DEFAULT_TOOLTIP.getText() : ""));
-
+        
     }
-
+    
     @Subscribe
     public void handleRefreshRequested(RefreshRequestedEvent event) {
         update();
@@ -321,7 +332,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
         //make a clone of the list sorted by position along axis
         ObservableList<Axis.TickMark<X>> tickMarks = FXCollections.observableArrayList(getXAxis().getTickMarks());
         tickMarks.sort(Comparator.comparing(Axis.TickMark::getPosition));
-
+        
         if (tickMarks.isEmpty() == false) {
             //get the spacing between ticks in the underlying axis
             double spacing = getTickSpacing();
@@ -333,7 +344,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
 
             //x-positions (pixels) of the current branch and leaf labels
             double leafLabelX = 0;
-
+            
             if (dateTime.branch.isEmpty()) {
                 //if there is only one part to the date (ie only year), just add a label for each tick
                 for (Axis.TickMark<X> t : tickMarks) {
@@ -342,7 +353,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
                             leafLabelX,
                             isTickBold(t.getValue())
                     );
-
+                    
                     leafLabelX += spacing;  //increment x
                 }
             } else {
@@ -350,7 +361,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
                 //initialize additional state
                 double branchLabelX = 0;
                 double branchLabelWidth = 0;
-
+                
                 for (Axis.TickMark<X> t : tickMarks) {               //for each tick
 
                     //split the label into a TwoPartDateTime
@@ -391,21 +402,21 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
      * @param bold       true if the text should be bold, false otherwise
      */
     private synchronized void assignLeafLabel(String labelText, double labelWidth, double labelX, boolean bold) {
-
+        
         Text label = new Text(" " + labelText + " "); //NOI18N
         label.setTextAlignment(TextAlignment.CENTER);
         label.setFont(Font.font(null, bold ? FontWeight.BOLD : FontWeight.NORMAL, 10));
         //position label accounting for width
         label.relocate(labelX + labelWidth / 2 - label.getBoundsInLocal().getWidth() / 2, 0);
         label.autosize();
-
+        
         if (leafPane.getChildren().isEmpty()) {
             //just add first label
             leafPane.getChildren().add(label);
         } else {
             //otherwise don't actually add the label if it would intersect with previous label
             final Text lastLabel = (Text) leafPane.getChildren().get(leafPane.getChildren().size() - 1);
-
+            
             if (!lastLabel.getBoundsInParent().intersects(label.getBoundsInParent())) {
                 leafPane.getChildren().add(label);
             }
@@ -421,7 +432,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
      * @param labelX     the horizontal position in the partPane of the text
      */
     private synchronized void assignBranchLabel(String labelText, double labelWidth, double labelX) {
-
+        
         Label label = new Label(labelText);
         label.setAlignment(Pos.CENTER);
         label.setTextAlignment(TextAlignment.CENTER);
@@ -434,15 +445,17 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
         label.setPrefWidth(labelWidth);
         label.setMaxWidth(labelWidth);
         label.relocate(labelX, 0);
-
+        
         if (labelX == 0) { // first label has no border
             label.setStyle("-fx-border-width: 0 0 0 0 ; -fx-border-color:black;"); // NON-NLS //NOI18N
         } else {  // subsequent labels have border on left to create dividers
             label.setStyle("-fx-border-width: 0 0 0 1; -fx-border-color:black;"); // NON-NLS //NOI18N
         }
-
+        
         branchPane.getChildren().add(label);
     }
+    
+    public abstract double getAxisMargin();
 
     /**
      * A simple data object used to represent a partial date as up to two parts.
@@ -465,7 +478,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
          * the highest frequency part of a date/time eg 14 (2pm)
          */
         private final String leaf;
-
+        
         TwoPartDateTime(String dateString) {
             //find index of separator to spit on
             int splitIndex = StringUtils.lastIndexOfAny(dateString, " ", "-", ":"); //NOI18N
@@ -478,7 +491,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
             }
         }
     }
-
+    
     protected Interval getTimeRange() {
         return filteredEvents.timeRangeProperty().get();
     }
@@ -490,7 +503,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
      * @param <AxisValuesType> the type of data displayed along the X-Axis.
      */
     abstract protected class VisualizationUpdateTask<AxisValuesType> extends LoggedTask<Boolean> {
-
+        
         protected VisualizationUpdateTask(String taskName, boolean logStateChanges) {
             super(taskName, logStateChanges);
         }
@@ -516,7 +529,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
                 setCenter(new StackPane(center, maskerPane));
                 setCursor(Cursor.WAIT);
             });
-
+            
             return true;
         }
         private final Node center = getCenter();
@@ -530,7 +543,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
         protected void succeeded() {
             super.succeeded();
             layoutDateLabels();
-
+            
             Platform.runLater(() -> {
                 setCenter(center); //clear masker pane
                 setCursor(Cursor.DEFAULT);
@@ -545,13 +558,13 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
          */
         @ThreadConfined(type = ThreadConfined.ThreadType.NOT_UI)
         protected void resetChart(AxisValuesType axisValues) {
-
+            
             Platform.runLater(() -> {
                 resetData();
                 setDateAxisValues(axisValues);
             });
         }
-
+        
         abstract protected void setDateAxisValues(AxisValuesType values);
     }
 }

@@ -55,11 +55,6 @@ public class HashSetFilter extends AbstractFilter {
     }
 
     @Override
-    public String getHTMLReportString() {
-        return getDisplayName() + getStringCheckBox();
-    }
-
-    @Override
     public int hashCode() {
         int hash = 7;
         hash = 37 * hash + Objects.hashCode(this.hashSetName);

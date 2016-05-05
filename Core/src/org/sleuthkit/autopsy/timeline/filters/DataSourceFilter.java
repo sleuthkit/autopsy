@@ -55,11 +55,6 @@ public class DataSourceFilter extends AbstractFilter {
     }
 
     @Override
-    public String getHTMLReportString() {
-        return getDisplayName() + getStringCheckBox();
-    }
-
-    @Override
     public int hashCode() {
         int hash = 5;
         hash = 97 * hash + Objects.hashCode(this.dataSourceName);

@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.timeline.filters;
 import java.util.Objects;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleStringProperty;
-import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 
 /**
@@ -62,11 +61,6 @@ public class TextFilter extends AbstractFilter {
         textFilter.setSelected(isSelected());
         textFilter.setDisabled(isDisabled());
         return textFilter;
-    }
-
-    @Override
-    public String getHTMLReportString() {
-        return "LOWER(text) LIKE LOWER(\'" + StringUtils.defaultIfBlank(text.getValue(), "") + "\')" + getStringCheckBox(); // NON-NLS
     }
 
     @Override

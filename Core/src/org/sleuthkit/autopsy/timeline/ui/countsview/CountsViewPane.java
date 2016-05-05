@@ -40,8 +40,6 @@ import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.Tooltip;
 import javafx.scene.effect.Effect;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.Region;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -100,8 +98,8 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
         return new CountsUpdateTask();
     }
 
-    public CountsViewPane(TimeLineController controller, Pane partPane, Pane contextPane, Region spacer) {
-        super(controller, partPane, contextPane, spacer);
+    public CountsViewPane(TimeLineController controller) {
+        super(controller);
         chart = new EventCountsChart(controller, dateAxis, countAxis, selectedNodes);
 
         chart.setData(dataSeries);
@@ -111,19 +109,9 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
 
         settingsNodes = new ArrayList<>(new CountsViewSettingsPane().getChildrenUnmodifiable());
 
-        dateAxis.getTickMarks().addListener((Observable observable) -> {
-            layoutDateLabels();
-        });
-        dateAxis.categorySpacingProperty().addListener((Observable observable) -> {
-            layoutDateLabels();
-        });
-        dateAxis.getCategories().addListener((Observable observable) -> {
-            layoutDateLabels();
-        });
-
-        spacer.minWidthProperty().bind(countAxis.widthProperty().add(countAxis.tickLengthProperty()).add(dateAxis.startMarginProperty().multiply(2)));
-        spacer.prefWidthProperty().bind(countAxis.widthProperty().add(countAxis.tickLengthProperty()).add(dateAxis.startMarginProperty().multiply(2)));
-        spacer.maxWidthProperty().bind(countAxis.widthProperty().add(countAxis.tickLengthProperty()).add(dateAxis.startMarginProperty().multiply(2)));
+        dateAxis.getTickMarks().addListener((Observable observable) -> layoutDateLabels());
+        dateAxis.categorySpacingProperty().addListener((Observable observable) -> layoutDateLabels());
+        dateAxis.getCategories().addListener((Observable observable) -> layoutDateLabels());
 
         scale.addListener(o -> {
             countAxis.tickLabelsVisibleProperty().bind(scale.isEqualTo(ScaleType.LINEAR));
@@ -135,12 +123,12 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
     }
 
     @Override
-    protected NumberAxis getYAxis() {
+    final protected NumberAxis getYAxis() {
         return countAxis;
     }
 
     @Override
-    protected CategoryAxis getXAxis() {
+    final protected CategoryAxis getXAxis() {
         return dateAxis;
     }
 
@@ -162,6 +150,11 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
             c1.setEffect(null);
 
         }
+    }
+
+    @Override
+    public double getAxisMargin() {
+        return dateAxis.getStartMargin() + dateAxis.getEndMargin();
     }
 
     private class CountsViewSettingsPane extends HBox {

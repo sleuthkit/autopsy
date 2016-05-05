@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.timeline.filters;
 
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.value.ObservableBooleanValue;
@@ -55,19 +54,6 @@ public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
     @NbBundle.Messages("DataSourcesFilter.displayName.text=Data Source")
     public String getDisplayName() {
         return Bundle.DataSourcesFilter_displayName_text();
-    }
-
-    @Override
-    public String getHTMLReportString() {
-        //move this logic into SaveSnapshot
-        String string = getDisplayName() + getStringCheckBox();
-        if (getSubFilters().isEmpty() == false) {
-            string = string + " : " + getSubFilters().stream()
-                    .filter(Filter::isSelected)
-                    .map(Filter::getHTMLReportString)
-                    .collect(Collectors.joining("</li><li>", "<ul><li>", "</li></ul>")); // NON-NLS
-        }
-        return string;
     }
 
     @Override

@@ -192,13 +192,13 @@ public class ZoomSettingsPane extends TitledPane {
         //set intial value of slider
         slider.setValue(driverValueMapper.apply(modelProperty.get()));
 
+        //handle changes in the model property
         modelProperty.addListener(modelProp -> {
-            //handle changes in the model property
-            Platform.runLater(() -> {
-                //remove listener to avoid circular updates
-                slider.valueProperty().removeListener(sliderListener);
-                slider.valueChangingProperty().removeListener(sliderListener);
+            //remove listener to avoid circular updates
+            slider.valueProperty().removeListener(sliderListener);
+            slider.valueChangingProperty().removeListener(sliderListener);
 
+            Platform.runLater(() -> {
                 //sync value of slider to model property value
                 slider.setValue(driverValueMapper.apply(modelProperty.get()));
 

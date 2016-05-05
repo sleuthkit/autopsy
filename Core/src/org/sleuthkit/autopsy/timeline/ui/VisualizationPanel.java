@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -51,7 +51,6 @@ import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import static javafx.scene.layout.Region.USE_PREF_SIZE;
@@ -140,14 +139,6 @@ final public class VisualizationPanel extends BorderPane {
     private Label startLabel;
     @FXML
     private Label endLabel;
-
-    //// replacemetn axis label componenets
-    @FXML
-    private Pane partPane;
-    @FXML
-    private Pane contextPane;
-    @FXML
-    private Region spacer;
 
     //// header toolbar componenets
     @FXML
@@ -279,9 +270,8 @@ final public class VisualizationPanel extends BorderPane {
         }
         controller.viewModeProperty().addListener(observable -> setViewMode(controller.viewModeProperty().get()));
         setViewMode(controller.viewModeProperty().get());
-
         //configure snapshor button / action
-        ActionUtils.configureButton(new SaveSnapshotAsReport(controller, VisualizationPanel.this), snapShotButton);
+        ActionUtils.configureButton(new SaveSnapshotAsReport(controller, notificationPane::getContent), snapShotButton);
         ActionUtils.configureButton(new Refresh(), refreshButton);
 
         /////configure start and end pickers
@@ -353,11 +343,11 @@ final public class VisualizationPanel extends BorderPane {
     private void setViewMode(VisualizationMode visualizationMode) {
         switch (visualizationMode) {
             case COUNTS:
-                setVisualization(new CountsViewPane(controller, partPane, contextPane, spacer));
+                setVisualization(new CountsViewPane(controller));
                 countsToggle.setSelected(true);
                 break;
             case DETAIL:
-                setVisualization(new DetailViewPane(controller, partPane, contextPane, spacer));
+                setVisualization(new DetailViewPane(controller));
                 detailsToggle.setSelected(true);
                 break;
         }

@@ -11,8 +11,6 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Pane?>
-<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
@@ -21,101 +19,91 @@
 
 <fx:root prefHeight="-1.0" prefWidth="-1.0" type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1">
     <top>
-      <HBox BorderPane.alignment="CENTER">
-         <children>
-              <ToolBar fx:id="toolBar" prefWidth="200.0" HBox.hgrow="ALWAYS">
-                  <items>
-                      <HBox alignment="CENTER" BorderPane.alignment="CENTER">
-                          <children>
-                              <Label fx:id="visualizationModeLabel">
-                                  <HBox.margin>
-                                      <Insets right="5.0" />
-                                  </HBox.margin>
-                           <font>
-                              <Font name="System Bold" size="14.0" />
-                           </font>
-                              </Label>
+        <HBox BorderPane.alignment="CENTER">
+            <children>
+                <ToolBar fx:id="toolBar" HBox.hgrow="ALWAYS">
+                    <items>
+                        <HBox alignment="CENTER" BorderPane.alignment="CENTER">
+                            <children>
+                                <Label fx:id="visualizationModeLabel" text="Visualisation Mode:">
+                                    <HBox.margin>
+                                        <Insets right="5.0" />
+                                    </HBox.margin>
+                                    <font>
+                                        <Font name="System Bold" size="14.0" />
+                                    </font>
+                                </Label>
                                    
-                              <org.controlsfx.control.SegmentedButton maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity">
-                                  <buttons>   
-                                      <ToggleButton fx:id="countsToggle" alignment="TOP_LEFT" mnemonicParsing="false" selected="true">
-                                          <graphic>
-                                              <ImageView fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true">
-                                                  <image>
-                                                      <Image url="@../images/chart_bar.png" />
-                                                  </image>
-                                              </ImageView>
-                                          </graphic>
-                                 <font>
-                                    <Font name="System Bold" size="16.0" />
-                                 </font>
-                                      </ToggleButton>
-                                      <ToggleButton fx:id="detailsToggle" alignment="CENTER_RIGHT" layoutX="74.0" mnemonicParsing="false" selected="false">
-                                          <graphic>
-                                              <ImageView fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" rotate="0.0" smooth="true" style="-fx-background-color:white;" x="2.0" y="1.0">
-                                                  <image>
-                                                      <Image url="@../images/20140521121247760_easyicon_net_32_colorized.png" />
-                                                  </image>
-                                              </ImageView>
-                                          </graphic>
-                                 <font>
-                                    <Font name="System Bold" size="16.0" />
-                                 </font>
-                                      </ToggleButton>
-                                  </buttons>
+                                <SegmentedButton maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity">
+                                    <buttons>   
+                                        <ToggleButton fx:id="countsToggle" alignment="TOP_LEFT" mnemonicParsing="false" selected="true">
+                                            <graphic>
+                                                <ImageView fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true">
+                                                    <image>
+                                                        <Image url="@../images/chart_bar.png" />
+                                                    </image>
+                                                </ImageView>
+                                            </graphic>
+                                            <font>
+                                                <Font name="System Bold" size="16.0" />
+                                            </font>
+                                        </ToggleButton>
+                                        <ToggleButton fx:id="detailsToggle" alignment="CENTER_RIGHT" layoutX="74.0" mnemonicParsing="false" selected="false">
+                                            <graphic>
+                                                <ImageView fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" rotate="0.0" smooth="true" style="-fx-background-color:white;" x="2.0" y="1.0">
+                                                    <image>
+                                                        <Image url="@../images/20140521121247760_easyicon_net_32_colorized.png" />
+                                                    </image>
+                                                </ImageView>
+                                            </graphic>
+                                            <font>
+                                                <Font name="System Bold" size="16.0" />
+                                            </font>
+                                        </ToggleButton>
+                                    </buttons>
                                           
-                              </org.controlsfx.control.SegmentedButton>
-                          </children>
-                          <padding>
-                              <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
-                          </padding>
-                          <BorderPane.margin>
-                              <Insets left="10.0" />
-                          </BorderPane.margin>
-                      </HBox>
-                  </items>
-              </ToolBar>
-            <ToolBar maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
-              <items>
-                      <Separator orientation="VERTICAL" />
-                      <Button fx:id="snapShotButton" mnemonicParsing="false">
-                          <graphic>
-                              <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
-                                  <image>
-                                      <Image url="@../images/image.png" />
-                                  </image>
-                              </ImageView>
-                          </graphic>
-                      </Button>
-                      <Separator halignment="LEFT" maxWidth="1.7976931348623157E308" orientation="VERTICAL" />
-                  <Button fx:id="refreshButton" alignment="CENTER_RIGHT" mnemonicParsing="false" text="Refresh">
-                     <graphic>
-                        <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
-                           <image>
-                              <Image url="@../images/arrow-circle-double-135.png" />
-                           </image>
-                        </ImageView>
-                     </graphic>
-                  </Button>
-              </items>
-            </ToolBar>
-         </children>
-      </HBox>
+                                </SegmentedButton>
+                            </children>
+                            <padding>
+                                <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+                            </padding>
+                            <BorderPane.margin>
+                                <Insets left="10.0" />
+                            </BorderPane.margin>
+                        </HBox>
+                        <Separator orientation="VERTICAL" />
+                    </items>
+                </ToolBar>
+                <ToolBar maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
+                    <items>
+                        <Separator orientation="VERTICAL" />
+                        <Button fx:id="snapShotButton" mnemonicParsing="false">
+                            <graphic>
+                                <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                                    <image>
+                                        <Image url="@../images/image.png" />
+                                    </image>
+                                </ImageView>
+                            </graphic>
+                        </Button>
+                        <Separator halignment="LEFT" maxWidth="1.7976931348623157E308" orientation="VERTICAL" />
+                        <Button fx:id="refreshButton" alignment="CENTER_RIGHT" mnemonicParsing="false" text="Refresh">
+                            <graphic>
+                                <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                                    <image>
+                                        <Image url="@../images/arrow-circle-double-135.png" />
+                                    </image>
+                                </ImageView>
+                            </graphic>
+                        </Button>
+                    </items>
+                </ToolBar>
+            </children>
+        </HBox>
     </top> 
     <bottom>
         <VBox maxHeight="-Infinity">
             <children>
-                <HBox fillHeight="false" BorderPane.alignment="CENTER">
-                    <children>
-                        <Region fx:id="spacer" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="5.0" prefWidth="20.0" />
-                        <VBox fillWidth="false">
-                            <children>
-                                <Pane fx:id="partPane" />
-                                <Pane fx:id="contextPane" />
-                            </children>
-                        </VBox>
-                    </children>
-                </HBox>
                 <Separator />
                 <Separator />
                 <StackPane fx:id="rangeHistogramStack" maxHeight="-Infinity" BorderPane.alignment="CENTER">
@@ -199,4 +187,4 @@
             </children>
         </VBox>
     </bottom>
-   </fx:root>
+</fx:root>
