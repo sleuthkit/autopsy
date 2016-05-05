@@ -19,12 +19,12 @@
                   <graphic>
                       <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
                           <image>
-                              <Image url="@../images/info-icon-16.png" />
+                              <Image url="@../images/information-frame.png" />
                           </image>
                       </ImageView>
                   </graphic>
               </Label>
-            <Button fx:id="updateDBButton" mnemonicParsing="false" text="Update">
+            <Button fx:id="updateDBButton" mnemonicParsing="false" text="Update DB">
                <graphic>
                   <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
                      <image>
@@ -40,7 +40,7 @@
          <graphic>
             <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
                <image>
-                  <Image url="@../images/information-gray.png" />
+                  <Image url="@../images/information-white.png" />
                </image>
             </ImageView>
          </graphic>

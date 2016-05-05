@@ -64,7 +64,7 @@ public class StatusBar extends ToolBar {
     }
 
     @FXML
-    @NbBundle.Messages({"StatusBar.refreshLabel.text=The timeline may be out of date."})
+    @NbBundle.Messages({"StatusBar.refreshLabel.text=The timeline DB may be out of date."})
     void initialize() {
         assert refreshLabel != null : "fx:id=\"refreshLabel\" was not injected: check your FXML file 'StatusBar.fxml'."; // NON-NLS
         assert progressBar != null : "fx:id=\"progressBar\" was not injected: check your FXML file 'StatusBar.fxml'."; // NON-NLS

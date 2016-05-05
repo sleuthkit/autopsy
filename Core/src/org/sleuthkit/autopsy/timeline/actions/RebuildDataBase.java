@@ -32,10 +32,12 @@ public class RebuildDataBase extends Action {
 
     private static final Image DB_REFRESH = new Image("org/sleuthkit/autopsy/timeline/images/database_refresh.png");
 
-    @NbBundle.Messages({"RebuildDataBase.text=Update"})
+    @NbBundle.Messages({
+        "RebuildDataBase.text=Update DB",
+        "RebuildDataBase.longText=Update the DB to include new events."})
     public RebuildDataBase(TimeLineController controller) {
         super(Bundle.RebuildDataBase_text());
-
+        setLongText(Bundle.RebuildDataBase_longText());
         setGraphic(new ImageView(DB_REFRESH));
         setEventHandler(actionEvent -> controller.rebuildRepo());
     }

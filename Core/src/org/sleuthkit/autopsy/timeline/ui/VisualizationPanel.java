@@ -394,7 +394,6 @@ final public class VisualizationPanel extends BorderPane {
     }
 
     @Subscribe
-    @NbBundle.Messages("VisualizationPanel.tagsAddedOrDeleted=Tags have been created and/or deleted.  The visualization may not be up to date.")
     public void handleTimeLineTagEvent(TagsUpdatedEvent event) {
         setNeedsRefresh(true);
     }
@@ -404,10 +403,12 @@ final public class VisualizationPanel extends BorderPane {
         setNeedsRefresh(false);
     }
 
+    @NbBundle.Messages("VisualizationPanel.tagsAddedOrDeleted=Tags have been created and/or deleted.  The visualization may not be up to date.")
     private void setNeedsRefresh(Boolean needsRefresh) {
         Platform.runLater(() -> {
             VisualizationPanel.this.needsRefresh.set(needsRefresh);
             if (needsRefresh) {
+                notificationPane.getActions().setAll(new Refresh());
                 notificationPane.show(Bundle.VisualizationPanel_tagsAddedOrDeleted(), new ImageView(INFORMATION));
             } else {
                 notificationPane.hide();
@@ -665,10 +666,13 @@ final public class VisualizationPanel extends BorderPane {
 
     private class Refresh extends Action {
 
-        @NbBundle.Messages({"VisualizationPanel.refresh=refresh"})
-        Refresh() {
-            super(Bundle.VisualizationPanel_refresh());
+        @NbBundle.Messages({
+            "VisualizationPanel.refresh.text=Refresh",
+            "VisualizationPanel.refresh.longText=Refresh the visualization to include information that is in the database but not visualized, such as newly updated tags."})
 
+        Refresh() {
+            super(Bundle.VisualizationPanel_refresh_text());
+            setLongText(Bundle.VisualizationPanel_refresh_longText());
             setGraphic(new ImageView(REFRESH));
             setEventHandler(actionEvent -> filteredEvents.refresh());
             disabledProperty().bind(needsRefresh.not());
