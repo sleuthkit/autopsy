@@ -379,7 +379,7 @@ final public class VisualizationPanel extends BorderPane {
                         eventsTree.setDetailViewPane((DetailViewPane) visualization);
                     });
                 }
-                visualization.hasEvents.addListener((observable, oldValue, newValue) -> {
+                visualization.hasVisibleEventsProperty().addListener((observable, oldValue, newValue) -> {
                     if (newValue == false) {
 
                         notificationPane.setContent(
