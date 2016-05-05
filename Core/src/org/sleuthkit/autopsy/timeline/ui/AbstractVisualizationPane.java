@@ -168,7 +168,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
      *                      insert into this visualization's header.
      */
     protected void setSettingsNodes(List<Node> settingsNodes) {
-        this.settingsNodes = settingsNodes;
+        this.settingsNodes = new ArrayList<>(settingsNodes);
     }
 
     /**
