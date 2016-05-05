@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.modules.interestingitems;
 
 import java.awt.EventQueue;
-import java.awt.Font;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,15 +34,13 @@ import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.apache.tika.mime.MediaType;
+import org.apache.tika.mime.MimeTypes;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
-import org.apache.tika.mime.MediaType;
-import org.apache.tika.mime.MimeTypes;
-import org.openide.util.Exceptions;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * A panel that allows a user to make interesting item definitions.
@@ -482,12 +479,12 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         editRuleButton = new javax.swing.JButton();
         rulesListLabel = new javax.swing.JLabel();
         rulesListScrollPane = new javax.swing.JScrollPane();
-        rulesList = new javax.swing.JList<FilesSet.Rule>();
+        rulesList = new javax.swing.JList<>();
         setDescScrollPanel = new javax.swing.JScrollPane();
         setDescriptionTextArea = new javax.swing.JTextArea();
         editSetButton = new javax.swing.JButton();
         setsListScrollPane = new javax.swing.JScrollPane();
-        setsList = new javax.swing.JList<FilesSet>();
+        setsList = new javax.swing.JList<>();
         fileNameExtensionRadioButton = new javax.swing.JRadioButton();
         jLabel3 = new javax.swing.JLabel();
         fileNameTextField = new javax.swing.JTextField();
@@ -510,7 +507,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         jScrollPane2 = new javax.swing.JScrollPane();
         jTextArea1 = new javax.swing.JTextArea();
         jLabel7 = new javax.swing.JLabel();
-        mimeTypeComboBox = new javax.swing.JComboBox<String>();
+        mimeTypeComboBox = new javax.swing.JComboBox<>();
         jLabel8 = new javax.swing.JLabel();
         equalitySignComboBox = new javax.swing.JComboBox<String>();
         jSpinner1 = new javax.swing.JSpinner();
@@ -567,6 +564,8 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         setDescriptionTextArea.setFont(setDescriptionTextArea.getFont().deriveFont(setDescriptionTextArea.getFont().getStyle() & ~java.awt.Font.BOLD, 13));
         setDescriptionTextArea.setLineWrap(true);
         setDescriptionTextArea.setRows(2);
+        setDescriptionTextArea.setMinimumSize(new java.awt.Dimension(10, 22));
+        setDescriptionTextArea.setPreferredSize(new java.awt.Dimension(14, 40));
         setDescScrollPanel.setViewportView(setDescriptionTextArea);
 
         editSetButton.setFont(editSetButton.getFont().deriveFont(editSetButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
@@ -706,6 +705,8 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         mimeTypeComboBox.setEditable(true);
         mimeTypeComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] {""}));
         mimeTypeComboBox.setEnabled(false);
+        mimeTypeComboBox.setMinimumSize(new java.awt.Dimension(0, 20));
+        mimeTypeComboBox.setPreferredSize(new java.awt.Dimension(12, 20));
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel8, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.jLabel8.text")); // NOI18N
 
@@ -713,6 +714,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         equalitySignComboBox.setEnabled(false);
 
         jSpinner1.setEnabled(false);
+        jSpinner1.setMinimumSize(new java.awt.Dimension(2, 20));
 
         fileSizeUnitComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { Bundle.InterestingItemDefsPanel_bytes(), Bundle.InterestingItemDefsPanel_kiloBytes(), Bundle.InterestingItemDefsPanel_megaBytes(), Bundle.InterestingItemDefsPanel_gigaBytes() }));
         fileSizeUnitComboBox.setEnabled(false);
@@ -725,9 +727,8 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(setsListLabel)
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                        .addComponent(setsListScrollPane, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 314, Short.MAX_VALUE)
-                        .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.LEADING))
+                    .addComponent(setsListScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 314, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 314, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(newSetButton, javax.swing.GroupLayout.PREFERRED_SIZE, 93, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -738,18 +739,15 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 .addComponent(separator, javax.swing.GroupLayout.PREFERRED_SIZE, 6, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(12, 12, 12)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jLabel1)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jLabel2)
-                        .addGap(27, 27, 27)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
+                        .addGap(92, 92, 92)
                         .addComponent(filesRadioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(dirsRadioButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(bothRadioButton)
-                        .addGap(27, 27, 27))))
+                        .addComponent(bothRadioButton)))
+                .addGap(27, 27, 27))
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
@@ -759,20 +757,22 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jLabel3)
                                     .addComponent(jLabel7)
-                                    .addComponent(jLabel8))
+                                    .addComponent(jLabel8)
+                                    .addComponent(jLabel2))
                                 .addGap(6, 6, 6))
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                                 .addComponent(jLabel4)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)))
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(rulePathConditionTextField, javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
                                 .addComponent(equalitySignComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jSpinner1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(fileSizeUnitComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(mimeTypeComboBox, javax.swing.GroupLayout.Alignment.LEADING, 0, 245, Short.MAX_VALUE)
+                                .addComponent(fileSizeUnitComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(8, 8, 8))
+                            .addComponent(mimeTypeComboBox, javax.swing.GroupLayout.Alignment.LEADING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(fileNameTextField)))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(360, 360, 360)
@@ -785,13 +785,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
                         .addComponent(ignoreKnownFilesCheckbox))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(360, 360, 360)
-                        .addComponent(setDescScrollPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 336, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(360, 360, 360)
                         .addComponent(jLabel6))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(360, 360, 360)
-                        .addComponent(rulesListScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 336, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(360, 360, 360)
                         .addComponent(newRuleButton)
@@ -808,8 +802,14 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
                                 .addComponent(fileNameExtensionRadioButton)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(fileNameRegexCheckbox))
-                            .addComponent(rulePathConditionRegexCheckBox))))
-                .addGap(20, 20, 20))
+                            .addComponent(rulePathConditionRegexCheckBox)))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(360, 360, 360)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(setDescScrollPanel)
+                            .addComponent(rulesListScrollPane))
+                        .addGap(7, 7, 7)))
+                .addGap(23, 23, 23))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -824,12 +824,13 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
                                 .addGap(18, 18, 18)
                                 .addComponent(setsListLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(setsListScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 199, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(setsListScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 199, Short.MAX_VALUE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                     .addComponent(newSetButton)
                                     .addComponent(editSetButton)
-                                    .addComponent(deleteSetButton)))
+                                    .addComponent(deleteSetButton))
+                                .addGap(13, 13, 13))
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addComponent(jLabel6)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -841,7 +842,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(rulesListLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(rulesListScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 64, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(rulesListScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 64, Short.MAX_VALUE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                     .addComponent(newRuleButton)
@@ -879,7 +880,8 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
                             .addComponent(jLabel8)
                             .addComponent(equalitySignComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(fileSizeUnitComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                            .addComponent(fileSizeUnitComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(19, 19, 19)))
                 .addContainerGap())
         );
 
@@ -892,12 +894,12 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 728, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 34, Short.MAX_VALUE))
+                .addComponent(jScrollPane1)
+                .addGap(34, 34, 34))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 503, Short.MAX_VALUE)
+            .addComponent(jScrollPane1)
         );
     }// </editor-fold>//GEN-END:initComponents
 
