@@ -627,6 +627,7 @@ public class TimeLineController {
         }
         mainFrame.open();
         mainFrame.toFront();
+        mainFrame.requestActive();
     }
 
     synchronized public void pushEventTypeZoom(EventTypeZoomLevel typeZoomeLevel) {
