@@ -1032,7 +1032,7 @@ final class DataSourceIngestJob {
      */
     private void logIngestModuleErrors(List<IngestModuleError> errors) {
         for (IngestModuleError error : errors) {
-            DataSourceIngestJob.logger.log(Level.SEVERE, String.format("%s experienced an error analyzing %s (jobId=%d)", error.getModuleDisplayName(), dataSource.getName(), this.id), error.getModuleError()); //NON-NLS
+            DataSourceIngestJob.logger.log(Level.SEVERE, String.format("%s experienced an error analyzing %s (jobId=%d)", error.getModuleDisplayName(), dataSource.getName(), this.id), error.getThrowable()); //NON-NLS
         }
     }
 
