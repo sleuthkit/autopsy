@@ -181,9 +181,7 @@
         </Component>
         <Component class="javax.swing.JLabel" name="descriptionLabel">
           <Properties>
-            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/sleuthkit/autopsy/ingest/Bundle.properties" key="IngestJobSettingsPanel.descriptionLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-            </Property>
+            <Property name="text" type="java.lang.String" value="DO NOT REMOVE. This dummy text is used to anchor the inner panel&apos;s size to the outer panel, while still being expandable. Without this the expandability behavior doesn&apos;t work well. This text will never be shown, as it would only be shown when no module is selected (which is not possible)."/>
           </Properties>
         </Component>
         <Container class="javax.swing.JScrollPane" name="jScrollPane1">
