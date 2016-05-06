@@ -184,7 +184,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
             }
         });
 
-        descriptionLabel.setText(org.openide.util.NbBundle.getMessage(IngestJobSettingsPanel.class, "IngestJobSettingsPanel.descriptionLabel.text")); // NOI18N
+        descriptionLabel.setText("dummmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy texxxxxxxxxxxxxxxttttttttttttttttttttttttttttttttttttttttttt");
 
         jScrollPane1.setBorder(null);
         jScrollPane1.setPreferredSize(new java.awt.Dimension(250, 180));

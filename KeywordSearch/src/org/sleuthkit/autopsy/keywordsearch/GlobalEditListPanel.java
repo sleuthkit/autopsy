@@ -218,10 +218,17 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(GlobalEditListPanel.class, "KeywordSearchEditListPanel.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
 
+        setMinimumSize(new java.awt.Dimension(0, 0));
+        setPreferredSize(new java.awt.Dimension(0, 0));
+
+        listEditorPanel.setMinimumSize(new java.awt.Dimension(0, 0));
+        listEditorPanel.setPreferredSize(new java.awt.Dimension(0, 0));
+
         jScrollPane1.setPreferredSize(new java.awt.Dimension(340, 300));
 
         keywordTable.setModel(tableModel);
         keywordTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
+        keywordTable.setMaximumSize(new java.awt.Dimension(30000, 30000));
         keywordTable.setShowHorizontalLines(false);
         keywordTable.setShowVerticalLines(false);
         keywordTable.getTableHeader().setReorderingAllowed(false);
@@ -277,7 +284,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                     .addComponent(deleteWordButton))
                 .addGap(6, 6, 6)
                 .addComponent(chRegex)
-                .addContainerGap(43, Short.MAX_VALUE))
+                .addGap(43, 43, 43))
         );
 
         ingestMessagesCheckbox.setSelected(true);
@@ -329,7 +336,9 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                                 .addComponent(keywordOptionsLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(keywordOptionsSeparator))
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(listEditorPanelLayout.createSequentialGroup()
+                                .addGap(10, 10, 10)
+                                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                             .addGroup(listEditorPanelLayout.createSequentialGroup()
                                 .addGroup(listEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(keywordsLabel)
@@ -352,7 +361,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                 .addContainerGap()
                 .addComponent(keywordsLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 178, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 135, Short.MAX_VALUE)
                 .addGap(10, 10, 10)
                 .addGroup(listEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(listEditorPanelLayout.createSequentialGroup()
@@ -380,13 +389,13 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(listEditorPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(listEditorPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 424, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(listEditorPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(listEditorPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 371, Short.MAX_VALUE)
+                .addGap(5, 5, 5))
         );
     }// </editor-fold>//GEN-END:initComponents
 
