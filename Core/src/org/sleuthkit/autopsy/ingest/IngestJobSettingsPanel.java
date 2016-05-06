@@ -286,7 +286,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void globalSettingsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_globalSettingsButtonActionPerformed
-        final AdvancedConfigurationDialog dialog = new AdvancedConfigurationDialog();
+        final AdvancedConfigurationDialog dialog = new AdvancedConfigurationDialog(true);
 
         dialog.addApplyButtonListener(new ActionListener() {
             @Override
