@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.interestingitems;
 
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import javax.swing.JComponent;
@@ -39,23 +40,38 @@ public final class InterestingItemDefsOptionsPanelController extends OptionsPane
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
 
+    /**
+     * Component should load its data here.
+     */
     @Override
     public void update() {
         getPanel().load();
         changed = false;
     }
 
+    /**
+     * This method is called when both the Ok and Apply buttons are pressed. It
+     * applies to any of the panels that have been opened in the process of
+     * using the options pane.
+     */
     @Override
     public void applyChanges() {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                getPanel().store();
-                changed = false;
-            }
-        });
+        if (changed) {
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    getPanel().store();
+                    changed = false;
+                }
+            });
+        }
     }
 
+    /**
+     * This method is called when the Cancel button is pressed. It applies to
+     * any of the panels that have been opened in the process of using the
+     * options pane.
+     */
     @Override
     public void cancel() {
         // need not do anything special, if no changes have been persisted yet
@@ -66,6 +82,12 @@ public final class InterestingItemDefsOptionsPanelController extends OptionsPane
         return true;
     }
 
+    /**
+     * Used to determine whether any changes have been made to this controller's
+     * panel.
+     *
+     * @return Whether or not a change has been made.
+     */
     @Override
     public boolean isChanged() {
         return changed;
@@ -94,6 +116,14 @@ public final class InterestingItemDefsOptionsPanelController extends OptionsPane
     private InterestingItemDefsPanel getPanel() {
         if (panel == null) {
             panel = new InterestingItemDefsPanel();
+            panel.addPropertyChangeListener(new PropertyChangeListener() {
+                @Override
+                public void propertyChange(PropertyChangeEvent evt) {
+                    if (evt.getPropertyName().equals(OptionsPanelController.PROP_CHANGED)) {
+                        changed();
+                    }
+                }
+            });
         }
         return panel;
     }
