@@ -22,14 +22,14 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.AbstractTableModel;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * A panel to manage all keyword lists created/imported in Autopsy.
@@ -91,11 +91,12 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         keywordListsLabel = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(250, 0));
-        setPreferredSize(new java.awt.Dimension(250, 492));
+        setPreferredSize(new java.awt.Dimension(0, 0));
 
         jScrollPane1.setPreferredSize(new java.awt.Dimension(200, 402));
 
         listsTable.setModel(tableModel);
+        listsTable.setMaximumSize(new java.awt.Dimension(30000, 30000));
         listsTable.setShowHorizontalLines(false);
         listsTable.setShowVerticalLines(false);
         listsTable.getTableHeader().setReorderingAllowed(false);
@@ -106,23 +107,23 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         });
         jScrollPane1.setViewportView(listsTable);
 
-        newListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/new16.png"))); // NOI18N NON-NLS
-        newListButton.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "KeywordSearchListsManagementPanel.newListButton.text")); // NOI18N
+        newListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/new16.png"))); // NOI18N
+        newListButton.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "GlobalListsManagementPanel.newListButton.text")); // NOI18N
         newListButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 newListButtonActionPerformed(evt);
             }
         });
 
-        importButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/import16.png"))); // NOI18N NON-NLS
-        importButton.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "KeywordSearchListsManagementPanel.importButton.text")); // NOI18N
+        importButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/import16.png"))); // NOI18N
+        importButton.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "GlobalListsManagementPanel.importButton.text")); // NOI18N
         importButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 importButtonActionPerformed(evt);
             }
         });
 
-        keywordListsLabel.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "KeywordSearchListsManagementPanel.keywordListsLabel.text")); // NOI18N
+        keywordListsLabel.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "GlobalListsManagementPanel.keywordListsLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);

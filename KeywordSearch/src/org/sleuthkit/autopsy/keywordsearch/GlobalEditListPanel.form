@@ -41,10 +41,10 @@
   </NonVisualComponents>
   <Properties>
     <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-      <Dimension value="[0, 388]"/>
+      <Dimension value="[0, 0]"/>
     </Property>
     <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-      <Dimension value="[424, 388]"/>
+      <Dimension value="[0, 0]"/>
     </Property>
   </Properties>
   <AuxValues>
@@ -62,14 +62,14 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="listEditorPanel" alignment="0" max="32767" attributes="0"/>
+          <Component id="listEditorPanel" alignment="0" pref="424" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" attributes="0">
-              <Component id="listEditorPanel" max="32767" attributes="0"/>
-              <EmptySpace min="-2" pref="24" max="-2" attributes="0"/>
+              <Component id="listEditorPanel" pref="371" max="32767" attributes="0"/>
+              <EmptySpace min="-2" pref="5" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -78,10 +78,10 @@
     <Container class="javax.swing.JPanel" name="listEditorPanel">
       <Properties>
         <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[0, 364]"/>
+          <Dimension value="[0, 0]"/>
         </Property>
         <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[424, 364]"/>
+          <Dimension value="[0, 0]"/>
         </Property>
       </Properties>
 
@@ -143,7 +143,7 @@
                   <EmptySpace min="-2" max="-2" attributes="0"/>
                   <Component id="keywordsLabel" min="-2" max="-2" attributes="0"/>
                   <EmptySpace min="-2" max="-2" attributes="0"/>
-                  <Component id="jScrollPane1" pref="178" max="32767" attributes="0"/>
+                  <Component id="jScrollPane1" pref="135" max="32767" attributes="0"/>
                   <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
@@ -194,13 +194,7 @@
                 </Property>
                 <Property name="autoResizeMode" type="int" value="0"/>
                 <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[0, 100]"/>
-                </Property>
-                <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[0, 100]"/>
-                </Property>
-                <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[0, 100]"/>
+                  <Dimension value="[30000, 30000]"/>
                 </Property>
                 <Property name="showHorizontalLines" type="boolean" value="false"/>
                 <Property name="showVerticalLines" type="boolean" value="false"/>
