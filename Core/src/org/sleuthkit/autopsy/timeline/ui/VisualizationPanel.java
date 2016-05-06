@@ -70,6 +70,7 @@ import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.VisualizationMode;
@@ -88,10 +89,10 @@ import org.sleuthkit.autopsy.timeline.ui.detailview.tree.EventsTree;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 
 /**
- * A container for an {@link AbstractVisualizationPane}, has a toolbar on top to
- * hold settings widgets supplied by contained {@link AbstAbstractVisualization}
- * and, the histogram / time selection on bottom. Also supplies containers for
- * replacement axis to contained {@link AbstractAbstractVisualization}
+ * A container for an AbstractVisualizationPane, has a Toolbar on top to hold
+ * settings widgets supplied by contained AbstractVisualizationPane and, the
+ * histogram / time selection on bottom. Also supplies containers for
+ * replacement axis to contained AbstractVisualizationPane
  *
  * TODO: refactor common code out of histogram and CountsView? -jm
  */
@@ -101,22 +102,24 @@ final public class VisualizationPanel extends BorderPane {
 
     private static final Image INFORMATION = new Image("org/sleuthkit/autopsy/timeline/images/information.png", 16, 16, true, true); // NON-NLS
     private static final Image REFRESH = new Image("org/sleuthkit/autopsy/timeline/images/arrow-circle-double-135.png"); // NON-NLS
-    private static final Background background = new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY));
+    private static final Background GRAY_BACKGROUND = new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY));
 
     @GuardedBy("this")
     private LoggedTask<Void> histogramTask;
 
     private final EventsTree eventsTree;
     private AbstractVisualizationPane<?, ?, ?, ?> visualization;
-    //// range slider and histogram componenets
-    /**
-     * hbox that contains the histogram bars. //TODO: abstract this into a
-     * seperate class, and/or use a real bar chart?
+
+    /*
+     * HBox that contains the histogram bars.
+     *
+     * //TODO: Abstract this into a seperate class, and/or use a real bar
+     * chart? -jm
      */
     @FXML
     private HBox histogramBox;
-    /**
-     * stack pane that superimposes rangeslider over histogram
+    /*
+     * Stack pane that superimposes rangeslider over histogram
      */
     @FXML
     private StackPane rangeHistogramStack;
@@ -126,7 +129,6 @@ final public class VisualizationPanel extends BorderPane {
     //// time range selection components
     @FXML
     private MenuButton zoomMenuButton;
-
     @FXML
     private Button zoomOutButton;
     @FXML
@@ -144,6 +146,8 @@ final public class VisualizationPanel extends BorderPane {
     @FXML
     private ToolBar toolBar;
     @FXML
+    private Label visualizationModeLabel;
+    @FXML
     private ToggleButton countsToggle;
     @FXML
     private ToggleButton detailsToggle;
@@ -151,20 +155,25 @@ final public class VisualizationPanel extends BorderPane {
     private Button snapShotButton;
     @FXML
     private Button refreshButton;
-    @FXML
-    private Label visualizationModeLabel;
 
-    /**
-     * wraps contained visualization so that we can show notifications over it.
+    /*
+     * Wraps contained visualization so that we can show notifications over it.
      */
     private final NotificationPane notificationPane = new NotificationPane();
+
+    /*
+     * Boolean property that holds true if the visualziation may not represent
+     * the current state of the DB, because, for example, tags have been updated
+     * but the vis. was not refreshed.
+     */
     private final ReadOnlyBooleanWrapper needsRefresh = new ReadOnlyBooleanWrapper(false);
+
     private final TimeLineController controller;
     private final FilteredEventsModel filteredEvents;
 
     /**
-     * listen to change in range slider selected time and push to controller.
-     * waits until the user releases thumb to send controller.
+     * Listen to changes in the range slider selection and forward to the
+     * controller. Waits until the user releases thumb to send to controller.
      */
     private final InvalidationListener rangeSliderListener = new InvalidationListener() {
         @Override
@@ -197,20 +206,21 @@ final public class VisualizationPanel extends BorderPane {
     private final InvalidationListener startListener = new PickerListener(() -> startPicker, Interval::withStartMillis);
 
     /**
-     * convert the given LocalDateTime to epoch millis USING THE CURERNT
-     * TIMEZONE FROM TIMELINECONTROLLER
+     * Convert the given LocalDateTime to epoch millis USING THE CURRENT
+     * TIMEZONE FROM THE TIMELINECONTROLLER
      *
-     * @param localDateTime
+     * @param localDateTime The LocalDateTime to convert to millis since the
+     *                      Unix epoch.
      *
-     * @return the given localdatetime as epoch millis
+     * @return the given LocalDateTime as epoch millis
      */
     private static long localDateTimeToEpochMilli(LocalDateTime localDateTime) {
         return localDateTime.atZone(TimeLineController.getTimeZoneID()).toInstant().toEpochMilli();
     }
 
     /**
-     * Convert the given epoch millis to a LocalDateTime USING THE CURERNT
-     * TIMEZONE FROM TIMELINECONTROLLER
+     * Convert the given "millis from the Unix Epoch" to a LocalDateTime USING
+     * THE CURRENT TIMEZONE FROM THE TIMELINECONTROLLER
      *
      * @param millis The milliseconds to convert.
      *
@@ -220,6 +230,12 @@ final public class VisualizationPanel extends BorderPane {
         return LocalDateTime.ofInstant(Instant.ofEpochMilli(millis), TimeLineController.getTimeZoneID());
     }
 
+    /**
+     * Constructor
+     *
+     * @param controller The TimeLineController for this VisualizationPanel
+     * @param eventsTree The EventsTree this VisualizationPanel hosts.
+     */
     public VisualizationPanel(@Nonnull TimeLineController controller, @Nonnull EventsTree eventsTree) {
         this.controller = controller;
         this.filteredEvents = controller.getEventsModel();
@@ -227,14 +243,15 @@ final public class VisualizationPanel extends BorderPane {
         FXMLConstructor.construct(this, "VisualizationPanel.fxml"); // NON-NLS
     }
 
-    @FXML // This method is called by the FXMLLoader when initialization is complete
+    @FXML
     @NbBundle.Messages({
         "VisualizationPanel.visualizationModeLabel.text=Visualization Mode:",
         "VisualizationPanel.startLabel.text=Start:",
         "VisualizationPanel.endLabel.text=End:",
         "VisualizationPanel.countsToggle.text=Counts",
         "VisualizationPanel.detailsToggle.text=Details",
-        "VisualizationPanel.zoomMenuButton.text=Zoom in/out to"})
+        "VisualizationPanel.zoomMenuButton.text=Zoom in/out to",
+        "VisualizationPanel.tagsAddedOrDeleted=Tags have been created and/or deleted.  The visualization may not be up to date."})
     void initialize() {
         assert endPicker != null : "fx:id=\"endPicker\" was not injected: check your FXML file 'ViewWrapper.fxml'."; // NON-NLS
         assert histogramBox != null : "fx:id=\"histogramBox\" was not injected: check your FXML file 'ViewWrapper.fxml'."; // NON-NLS
@@ -245,7 +262,15 @@ final public class VisualizationPanel extends BorderPane {
 
         //configure notification pane 
         notificationPane.getStyleClass().add(NotificationPane.STYLE_CLASS_DARK);
+        notificationPane.getActions().setAll(new Refresh());
         setCenter(notificationPane);
+        needsRefresh.addListener(observable -> {
+            if (needsRefresh.get()) {
+                notificationPane.show(Bundle.VisualizationPanel_tagsAddedOrDeleted(), new ImageView(INFORMATION));
+            } else {
+                notificationPane.hide();
+            }
+        });
 
         //configure visualization mode toggle
         visualizationModeLabel.setText(Bundle.VisualizationPanel_visualizationModeLabel_text());
@@ -354,13 +379,22 @@ final public class VisualizationPanel extends BorderPane {
 
     }
 
+    /**
+     * Set the given AbstractVisualizationPane as the one hosted by this
+     * VisualizationPanel.
+     *
+     * @param newViz The AbstractVisualizationPane to host.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.NOT_UI)
     private synchronized void setVisualization(final AbstractVisualizationPane<?, ?, ?, ?> newViz) {
         Platform.runLater(() -> {
+            //clear out old vis.
             if (visualization != null) {
                 toolBar.getItems().removeAll(visualization.getSettingsNodes());
                 visualization.dispose();
             }
 
+            //setup new vis.
             visualization = newViz;
             visualization.update();
             toolBar.getItems().addAll(newViz.getSettingsNodes());
@@ -374,7 +408,6 @@ final public class VisualizationPanel extends BorderPane {
             }
             visualization.hasEvents.addListener((observable, oldValue, newValue) -> {
                 if (newValue == false) {
-
                     notificationPane.setContent(
                             new StackPane(visualization,
                                     new Region() {
@@ -388,36 +421,55 @@ final public class VisualizationPanel extends BorderPane {
                     notificationPane.setContent(visualization);
                 }
             });
-
         });
         setNeedsRefresh(false);
     }
 
+    /**
+     * Handle TagsUpdatedEvents.
+     *
+     * Mark that the visualization needs to be refreshed.
+     *
+     * NOTE: This VisualizationPanel must be registered with the
+     * filteredEventsModel's EventBus in order for this handler to be invoked.
+     *
+     * @param event The TagsUpdatedEvent to handle.
+     */
     @Subscribe
     public void handleTimeLineTagEvent(TagsUpdatedEvent event) {
         setNeedsRefresh(true);
     }
 
+    /**
+     * Handle RefreshRequestedEvent.
+     *
+     * Mark that the visualization has been refreshed.
+     *
+     * NOTE: This VisualizationPanel must be registered with the
+     * filteredEventsModel's EventBus in order for this handler to be invoked.
+     *
+     * @param event The TagsUpdatedEvent to handle.
+     */
     @Subscribe
     public void handleRefreshRequestedEvent(RefreshRequestedEvent event) {
         setNeedsRefresh(false);
     }
 
-    @NbBundle.Messages("VisualizationPanel.tagsAddedOrDeleted=Tags have been created and/or deleted.  The visualization may not be up to date.")
+    /**
+     * Set if the visualziation may not represent the current state of the DB,
+     * because, for example, tags have been updated.
+     *
+     * @param needsRefresh True if the visualization may not represent the
+     *                     current state of the DB.
+     */
     private void setNeedsRefresh(Boolean needsRefresh) {
-        Platform.runLater(() -> {
-            VisualizationPanel.this.needsRefresh.set(needsRefresh);
-            if (needsRefresh) {
-                notificationPane.getActions().setAll(new Refresh());
-                notificationPane.show(Bundle.VisualizationPanel_tagsAddedOrDeleted(), new ImageView(INFORMATION));
-            } else {
-                notificationPane.hide();
-            }
-        });
+        Platform.runLater(() -> VisualizationPanel.this.needsRefresh.set(needsRefresh));
     }
 
+    /**
+     * Refresh the Histogram to represent the current state of the DB.
+     */
     synchronized private void refreshHistorgram() {
-
         if (histogramTask != null) {
             histogramTask.cancel(true);
         }
@@ -482,7 +534,7 @@ final public class VisualizationPanel extends BorderPane {
                             bar.prefHeightProperty().bind(histogramBox.heightProperty().multiply(Math.log(bin)).divide(fMax));
                             bar.setMaxHeight(USE_PREF_SIZE);
                             bar.setMinHeight(USE_PREF_SIZE);
-                            bar.setBackground(background);
+                            bar.setBackground(GRAY_BACKGROUND);
                             bar.setOnMouseEntered((MouseEvent event) -> {
                                 Tooltip.install(bar, new Tooltip(bin.toString()));
                             });
@@ -664,12 +716,14 @@ final public class VisualizationPanel extends BorderPane {
         }
     }
 
+    /**
+     * Action that refreshes the Visualization.
+     */
     private class Refresh extends Action {
 
         @NbBundle.Messages({
             "VisualizationPanel.refresh.text=Refresh",
             "VisualizationPanel.refresh.longText=Refresh the visualization to include information that is in the database but not visualized, such as newly updated tags."})
-
         Refresh() {
             super(Bundle.VisualizationPanel_refresh_text());
             setLongText(Bundle.VisualizationPanel_refresh_longText());
