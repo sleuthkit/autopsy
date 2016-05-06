@@ -20,14 +20,11 @@ package org.sleuthkit.autopsy.modules.hashdatabase;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.logging.Level;
 import javax.swing.JComponent;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 @OptionsPanelController.TopLevelRegistration(
         categoryName = "#OptionsCategory_Name_HashDatabase",
@@ -45,6 +42,9 @@ public final class HashDatabaseOptionsPanelController extends OptionsPanelContro
     private boolean changed;
     private static final Logger logger = Logger.getLogger(HashDatabaseOptionsPanelController.class.getName());
 
+    /**
+     * Component should load its data here.
+     */
     @Override
     public void update() {
         getPanel().load();
@@ -121,25 +121,9 @@ public final class HashDatabaseOptionsPanelController extends OptionsPanelContro
         if (!changed) {
             changed = true;
 
-            try {
-                pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, false, true);
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "HashDatabaseOptionsPanelController listener threw exception", e); //NON-NLS
-                MessageNotifyUtil.Notify.show(
-                        NbBundle.getMessage(this.getClass(), "HashDatabaseOptionsPanelController.moduleErr"),
-                        NbBundle.getMessage(this.getClass(), "HashDatabaseOptionsPanelController.moduleErrMsg"),
-                        MessageNotifyUtil.MessageType.ERROR);
-            }
+            pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, false, true);
         }
 
-        try {
-            pcs.firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "HashDatabaseOptionsPanelController listener threw exception", e); //NON-NLS
-            MessageNotifyUtil.Notify.show(
-                    NbBundle.getMessage(this.getClass(), "HashDatabaseOptionsPanelController.moduleErr"),
-                    NbBundle.getMessage(this.getClass(), "HashDatabaseOptionsPanelController.moduleErrMsg"),
-                    MessageNotifyUtil.MessageType.ERROR);
-        }
+        pcs.firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
     }
 }

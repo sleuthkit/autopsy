@@ -26,6 +26,9 @@ public final class FileTypeIdOptionsPanelController extends OptionsPanelControll
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
 
+    /**
+     * Component should load its data here.
+     */
     @Override
     public void update() {
 
@@ -99,7 +102,7 @@ public final class FileTypeIdOptionsPanelController extends OptionsPanelControll
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {
                     if (evt.getPropertyName().equals(OptionsPanelController.PROP_CHANGED)) {
-                        changed = true;
+                        changed();
                     }
                 }
             });

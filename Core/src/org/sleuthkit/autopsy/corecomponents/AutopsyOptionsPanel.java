@@ -36,7 +36,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
-    AutopsyOptionsPanel(AutopsyOptionsPanelController controller) {
+    AutopsyOptionsPanel() {
         initComponents();
         int availableProcessors = Runtime.getRuntime().availableProcessors();
         Integer fileIngestThreadCountChoices[];

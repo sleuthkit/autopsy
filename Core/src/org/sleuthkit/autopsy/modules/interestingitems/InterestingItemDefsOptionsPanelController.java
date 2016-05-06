@@ -40,6 +40,9 @@ public final class InterestingItemDefsOptionsPanelController extends OptionsPane
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
 
+    /**
+     * Component should load its data here.
+     */
     @Override
     public void update() {
         getPanel().load();
@@ -117,7 +120,7 @@ public final class InterestingItemDefsOptionsPanelController extends OptionsPane
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {
                     if (evt.getPropertyName().equals(OptionsPanelController.PROP_CHANGED)) {
-                        changed = true;
+                        changed();
                     }
                 }
             });

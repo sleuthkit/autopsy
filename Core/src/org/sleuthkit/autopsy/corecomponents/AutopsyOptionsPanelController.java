@@ -21,14 +21,11 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.logging.Level;
 import javax.swing.JComponent;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 @OptionsPanelController.TopLevelRegistration(categoryName = "#OptionsCategory_Name_General",
         iconBase = "org/sleuthkit/autopsy/corecomponents/checkbox32.png",
@@ -42,6 +39,9 @@ public final class AutopsyOptionsPanelController extends OptionsPanelController 
     private boolean changed;
     private static final Logger logger = Logger.getLogger(AutopsyOptionsPanelController.class.getName());
 
+    /**
+     * Component should load its data here.
+     */
     @Override
     public void update() {
         getPanel().load();
@@ -108,12 +108,12 @@ public final class AutopsyOptionsPanelController extends OptionsPanelController 
 
     private AutopsyOptionsPanel getPanel() {
         if (panel == null) {
-            panel = new AutopsyOptionsPanel(this);
+            panel = new AutopsyOptionsPanel();
             panel.addPropertyChangeListener(new PropertyChangeListener() {
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {
                     if (evt.getPropertyName().equals(OptionsPanelController.PROP_CHANGED)) {
-                        changed = true;
+                        changed();
                     }
                 }
             });
@@ -124,26 +124,9 @@ public final class AutopsyOptionsPanelController extends OptionsPanelController 
     void changed() {
         if (!changed) {
             changed = true;
-
-            try {
-                pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, false, true);
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "GeneralOptionsPanelController listener threw exception", e); //NON-NLS
-                MessageNotifyUtil.Notify.show(
-                        NbBundle.getMessage(this.getClass(), "GeneralOptionsPanelController.moduleErr"),
-                        NbBundle.getMessage(this.getClass(), "GeneralOptionsPanelController.moduleErr.msg"),
-                        MessageNotifyUtil.MessageType.ERROR);
-            }
+            pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, false, true);
         }
+        pcs.firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
 
-        try {
-            pcs.firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "GeneralOptionsPanelController listener threw exception", e); //NON-NLS
-            MessageNotifyUtil.Notify.show(
-                    NbBundle.getMessage(this.getClass(), "GeneralOptionsPanelController.moduleErr"),
-                    NbBundle.getMessage(this.getClass(), "GeneralOptionsPanelController.moduleErr.msg"),
-                    MessageNotifyUtil.MessageType.ERROR);
-        }
     }
 }
