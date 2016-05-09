@@ -20,8 +20,17 @@ package org.sleuthkit.autopsy.timeline.events;
 
 import java.util.Set;
 
+/**
+ * A TagsUpdatedEvent for tags that have been added to events.
+ */
 public class TagsAddedEvent extends TagsUpdatedEvent {
 
+    /**
+     * Constructor
+     *
+     * @param updatedEventIDs The event IDs of the events that have had tags
+     *                        added to them.
+     */
     public TagsAddedEvent(Set<Long> updatedEventIDs) {
         super(updatedEventIDs);
     }

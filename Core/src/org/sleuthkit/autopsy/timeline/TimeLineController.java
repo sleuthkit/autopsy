@@ -93,9 +93,9 @@ import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * Controller in the MVC design along with model = {@link FilteredEventsModel}
- * and views = {@link TimeLineView}. Forwards interpreted user gestures form
- * views to model. Provides model to view. Is entry point for timeline module.
+ * Controller in the MVC design along with FilteredEventsModel TimeLineView.
+ * Forwards interpreted user gestures form views to model. Provides model to
+ * view. Is entry point for timeline module.
  *
  * Concurrency Policy:<ul>
  * <li>Since filteredEvents is internally synchronized, only compound access to
@@ -618,7 +618,8 @@ public class TimeLineController {
     }
 
     /**
-     * private method to build gui if necessary and make it visible.
+     * Show the timeline TimeLineTopComponent. This method will construct a new
+     * instance of TimeLineTopComponent if necessary.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     synchronized private void showWindow() {
@@ -627,6 +628,10 @@ public class TimeLineController {
         }
         mainFrame.open();
         mainFrame.toFront();
+        /*
+         * Make this top component active so its ExplorerManager's lookup gets
+         * proxied in Utilities.actionsGlobalContext()
+         */
         mainFrame.requestActive();
     }
 
