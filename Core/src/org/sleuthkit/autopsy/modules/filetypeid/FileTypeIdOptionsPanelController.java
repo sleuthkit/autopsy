@@ -5,6 +5,7 @@
  */
 package org.sleuthkit.autopsy.modules.filetypeid;
 
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import javax.swing.JComponent;
@@ -19,26 +20,41 @@ import org.openide.util.Lookup;
         keywordsCategory = "FileTypeId",
         position = 6
 )
-// moved messages to Bundle.properties
-//@org.openide.util.NbBundle.Messages({"OptionsCategory_Name_FileTypeId=FileTypeId", "OptionsCategory_Keywords_FileTypeId=FileTypeId"})
 public final class FileTypeIdOptionsPanelController extends OptionsPanelController {
 
     private FileTypeIdGlobalSettingsPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
 
+    /**
+     * Component should load its data here.
+     */
     @Override
     public void update() {
+
         getPanel().load();
         changed = false;
+
     }
 
+    /**
+     * This method is called when both the Ok and Apply buttons are pressed. It
+     * applies to any of the panels that have been opened in the process of
+     * using the options pane.
+     */
     @Override
     public void applyChanges() {
-        getPanel().store();
-        changed = false;
+        if (changed) {
+            getPanel().store();
+            changed = false;
+        }
     }
 
+    /**
+     * This method is called when the Cancel button is pressed. It applies to
+     * any of the panels that have been opened in the process of using the
+     * options pane.
+     */
     @Override
     public void cancel() {
     }
@@ -48,6 +64,12 @@ public final class FileTypeIdOptionsPanelController extends OptionsPanelControll
         return true;
     }
 
+    /**
+     * Used to determine whether any changes have been made to this controller's
+     * panel.
+     *
+     * @return Whether or not a change has been made.
+     */
     @Override
     public boolean isChanged() {
         return changed;
@@ -76,6 +98,14 @@ public final class FileTypeIdOptionsPanelController extends OptionsPanelControll
     private FileTypeIdGlobalSettingsPanel getPanel() {
         if (panel == null) {
             panel = new FileTypeIdGlobalSettingsPanel();
+            panel.addPropertyChangeListener(new PropertyChangeListener() {
+                @Override
+                public void propertyChange(PropertyChangeEvent evt) {
+                    if (evt.getPropertyName().equals(OptionsPanelController.PROP_CHANGED)) {
+                        changed();
+                    }
+                }
+            });
         }
         return panel;
     }
