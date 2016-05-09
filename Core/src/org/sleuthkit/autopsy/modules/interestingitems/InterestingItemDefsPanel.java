@@ -208,6 +208,10 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         this.filesRadioButton.setSelected(true);
         this.rulePathConditionTextField.setText("");
         this.rulePathConditionRegexCheckBox.setSelected(false);
+        this.mimeTypeComboBox.setSelectedIndex(0);
+        this.equalitySignComboBox.setSelectedIndex(2);
+        this.fileSizeUnitComboBox.setSelectedIndex(1);
+        this.fileSizeSpinner.setValue(0);
         this.newRuleButton.setEnabled(!this.setsListModel.isEmpty());
         this.editRuleButton.setEnabled(false);
         this.deleteRuleButton.setEnabled(false);
@@ -317,11 +321,11 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 if (fileSizeCondition != null) {
                     InterestingItemDefsPanel.this.fileSizeUnitComboBox.setSelectedItem(fileSizeCondition.getUnit().getName());
                     InterestingItemDefsPanel.this.equalitySignComboBox.setSelectedItem(fileSizeCondition.getComparator().getSymbol());
-                    InterestingItemDefsPanel.this.jSpinner1.setValue(fileSizeCondition.getSizeValue());
+                    InterestingItemDefsPanel.this.fileSizeSpinner.setValue(fileSizeCondition.getSizeValue());
                 } else {
                     InterestingItemDefsPanel.this.fileSizeUnitComboBox.setSelectedIndex(1);
                     InterestingItemDefsPanel.this.equalitySignComboBox.setSelectedIndex(2);
-                    InterestingItemDefsPanel.this.jSpinner1.setValue(0);
+                    InterestingItemDefsPanel.this.fileSizeSpinner.setValue(0);
                 }
 
                 // Enable the new, edit and delete rule buttons.
@@ -493,12 +497,12 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         editRuleButton = new javax.swing.JButton();
         rulesListLabel = new javax.swing.JLabel();
         rulesListScrollPane = new javax.swing.JScrollPane();
-        rulesList = new javax.swing.JList<FilesSet.Rule>();
+        rulesList = new javax.swing.JList<>();
         setDescScrollPanel = new javax.swing.JScrollPane();
         setDescriptionTextArea = new javax.swing.JTextArea();
         editSetButton = new javax.swing.JButton();
         setsListScrollPane = new javax.swing.JScrollPane();
-        setsList = new javax.swing.JList<FilesSet>();
+        setsList = new javax.swing.JList<>();
         fileNameExtensionRadioButton = new javax.swing.JRadioButton();
         jLabel3 = new javax.swing.JLabel();
         fileNameTextField = new javax.swing.JTextField();
@@ -521,10 +525,10 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         jScrollPane2 = new javax.swing.JScrollPane();
         jTextArea1 = new javax.swing.JTextArea();
         jLabel7 = new javax.swing.JLabel();
-        mimeTypeComboBox = new javax.swing.JComboBox<String>();
+        mimeTypeComboBox = new javax.swing.JComboBox<>();
         jLabel8 = new javax.swing.JLabel();
         equalitySignComboBox = new javax.swing.JComboBox<String>();
-        jSpinner1 = new javax.swing.JSpinner();
+        fileSizeSpinner = new javax.swing.JSpinner();
         fileSizeUnitComboBox = new javax.swing.JComboBox<String>();
 
         setFont(getFont().deriveFont(getFont().getStyle() & ~java.awt.Font.BOLD, 11));
@@ -723,7 +727,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         equalitySignComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { "=", ">", "≥", "<", "≤" }));
         equalitySignComboBox.setEnabled(false);
 
-        jSpinner1.setEnabled(false);
+        fileSizeSpinner.setEnabled(false);
 
         fileSizeUnitComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { Bundle.InterestingItemDefsPanel_bytes(), Bundle.InterestingItemDefsPanel_kiloBytes(), Bundle.InterestingItemDefsPanel_megaBytes(), Bundle.InterestingItemDefsPanel_gigaBytes() }));
         fileSizeUnitComboBox.setEnabled(false);
@@ -780,7 +784,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
                             .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
                                 .addComponent(equalitySignComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(fileSizeSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(fileSizeUnitComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addComponent(mimeTypeComboBox, javax.swing.GroupLayout.Alignment.LEADING, 0, 245, Short.MAX_VALUE)
@@ -889,7 +893,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel8)
                             .addComponent(equalitySignComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(fileSizeSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(fileSizeUnitComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
                 .addContainerGap())
         );
@@ -931,6 +935,11 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         FilesSet.Rule selectedRule = this.rulesList.getSelectedValue();
         rules.remove(selectedRule.getUuid());
         this.replaceFilesSet(oldSet, oldSet.getName(), oldSet.getDescription(), oldSet.ignoresKnownFiles(), rules);
+        if (!this.rulesListModel.isEmpty()) {
+            this.rulesList.setSelectedIndex(0);
+        } else {
+            this.resetRuleComponents();
+        }
         pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_deleteRuleButtonActionPerformed
 
@@ -985,6 +994,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
     private javax.swing.JRadioButton fileNameRadioButton;
     private javax.swing.JCheckBox fileNameRegexCheckbox;
     private javax.swing.JTextField fileNameTextField;
+    private javax.swing.JSpinner fileSizeSpinner;
     private javax.swing.JComboBox<String> fileSizeUnitComboBox;
     private javax.swing.JRadioButton filesRadioButton;
     private javax.swing.JCheckBox ignoreKnownFilesCheckbox;
@@ -999,7 +1009,6 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JSpinner jSpinner1;
     private javax.swing.JTextArea jTextArea1;
     private javax.swing.JComboBox<String> mimeTypeComboBox;
     private javax.swing.JButton newRuleButton;
