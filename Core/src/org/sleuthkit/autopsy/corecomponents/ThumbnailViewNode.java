@@ -28,7 +28,6 @@ import javax.swing.SwingWorker;
 import javax.swing.Timer;
 import org.apache.commons.lang3.StringUtils;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
@@ -82,7 +81,7 @@ class ThumbnailViewNode extends FilterNode {
             }
             if (swingWorker == null || swingWorker.isDone()) {
                 swingWorker = new SwingWorker<Image, Object>() {
-                    final private ProgressHandle progressHandle = ProgressHandleFactory.createHandle(Bundle.ThumbnailViewNode_progressHandle_text(content.getName()));
+                    final private ProgressHandle progressHandle = ProgressHandle.createHandle(Bundle.ThumbnailViewNode_progressHandle_text(content.getName()));
 
                     @Override
                     protected Image doInBackground() throws Exception {

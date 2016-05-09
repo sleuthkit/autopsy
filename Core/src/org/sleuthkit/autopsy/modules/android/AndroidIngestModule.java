@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,28 +19,19 @@
 package org.sleuthkit.autopsy.modules.android;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
-import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
-import org.sleuthkit.autopsy.ingest.IngestServices;
 
 class AndroidIngestModule implements DataSourceIngestModule {
 
-    private static final HashMap<Long, Long> fileCountsForIngestJobs = new HashMap<>();
     private IngestJobContext context = null;
-    private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
-    private static final Logger logger = Logger.getLogger(AndroidIngestModule.class.getName());
-    private IngestServices services = IngestServices.getInstance();
 
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
@@ -49,10 +40,6 @@ class AndroidIngestModule implements DataSourceIngestModule {
 
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
-        services.postMessage(IngestMessage.createMessage(IngestMessage.MessageType.INFO, AndroidModuleFactory.getModuleName(),
-                NbBundle.getMessage(this.getClass(),
-                        "AndroidIngestModule.processing.startedAnalysis")));
-
         ArrayList<String> errors = new ArrayList<>();
         progressBar.switchToDeterminate(9);
         FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
@@ -155,11 +142,6 @@ class AndroidIngestModule implements DataSourceIngestModule {
             errorMessage.append("No errors"); //NON-NLS
             errorMsgSubject = "No errors"; //NON-NLS
         }
-
-        services.postMessage(IngestMessage.createMessage(msgLevel, AndroidModuleFactory.getModuleName(),
-                NbBundle.getMessage(this.getClass(),
-                        "AndroidIngestModule.processing.finishedAnalysis",
-                        errorMsgSubject), errorMessage.toString()));
 
         return IngestModule.ProcessResult.OK;
     }

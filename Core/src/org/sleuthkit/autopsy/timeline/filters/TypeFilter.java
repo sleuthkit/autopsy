@@ -18,8 +18,9 @@
  */
 package org.sleuthkit.autopsy.timeline.filters;
 
+import java.util.Comparator;
 import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.function.Predicate;
 import javafx.collections.FXCollections;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
@@ -32,6 +33,8 @@ import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
  * the event type hierarchy with one filter/node for each event type.
  */
 public class TypeFilter extends UnionFilter<TypeFilter> {
+
+    static private final Comparator<TypeFilter> comparator = Comparator.comparing(TypeFilter::getEventType, EventType.getComparator());
 
     /**
      * the event type this filter passes
@@ -52,7 +55,7 @@ public class TypeFilter extends UnionFilter<TypeFilter> {
 
         if (recursive) { // add subfilters for each subtype
             for (EventType subType : et.getSubTypes()) {
-                this.getSubFilters().add(new TypeFilter(subType));
+                addSubFilter(new TypeFilter(subType), comparator);
             }
         }
     }
@@ -96,24 +99,13 @@ public class TypeFilter extends UnionFilter<TypeFilter> {
     @Override
     public TypeFilter copyOf() {
         //make a nonrecursive copy of this filter
-        final TypeFilter typeFilter = new TypeFilter(eventType, false);
-        typeFilter.setSelected(isSelected());
-        typeFilter.setDisabled(isDisabled());
+        final TypeFilter filterCopy = new TypeFilter(eventType, false);
         //add a copy of each subfilter
-        this.getSubFilters().forEach((TypeFilter t) -> {
-            typeFilter.getSubFilters().add(t.copyOf());
-        });
-
-        return typeFilter;
-    }
-
-    @Override
-    public String getHTMLReportString() {
-        String string = getEventType().getDisplayName() + getStringCheckBox();
-        if (getSubFilters().isEmpty() == false) {
-            string = string + " : " + getSubFilters().stream().filter(Filter::isSelected).map(Filter::getHTMLReportString).collect(Collectors.joining("</li><li>", "<ul><li>", "</li></ul>")); // NON-NLS
-        }
-        return string;
+        getSubFilters().forEach(typeFilter -> filterCopy.addSubFilter(typeFilter.copyOf(), comparator));
+        //these need to happen after the listeners fired by adding the subfilters 
+        filterCopy.setSelected(isSelected());
+        filterCopy.setDisabled(isDisabled());
+        return filterCopy;
     }
 
     @Override
@@ -141,5 +133,10 @@ public class TypeFilter extends UnionFilter<TypeFilter> {
         int hash = 7;
         hash = 67 * hash + Objects.hashCode(this.eventType);
         return hash;
+    }
+
+    @Override
+    Predicate<TypeFilter> getDuplicatePredicate(TypeFilter subfilter) {
+        return t -> subfilter.getEventType().equals(t.eventType);
     }
 }

@@ -28,9 +28,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
-
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JMenuItem;
 import javax.swing.JTextPane;
 import javax.swing.SizeRequirements;
@@ -38,14 +35,15 @@ import javax.swing.SwingWorker;
 import javax.swing.text.Element;
 import javax.swing.text.View;
 import javax.swing.text.ViewFactory;
-import javax.swing.text.html.InlineView;
-import javax.swing.text.html.ParagraphView;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.HTMLEditorKit.HTMLFactory;
+import javax.swing.text.html.InlineView;
+import javax.swing.text.html.ParagraphView;
 import javax.swing.text.html.StyleSheet;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TextUtil;
 
 /**
@@ -686,7 +684,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
 
         @Override
         protected Object doInBackground() throws Exception {
-            progress = ProgressHandleFactory.createHandle(
+            progress = ProgressHandle.createHandle(
                     NbBundle.getMessage(this.getClass(), "ExtractedContentPanel.SetMarkup.progress.loading"));
             progress.setDisplayName(
                     NbBundle.getMessage(this.getClass(), "ExtractedContentPanel.SetMarkup.progress.displayName"));

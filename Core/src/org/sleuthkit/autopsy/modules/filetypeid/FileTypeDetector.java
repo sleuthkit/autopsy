@@ -21,15 +21,12 @@ package org.sleuthkit.autopsy.modules.filetypeid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.SortedSet;
-import java.util.logging.Level;
 import org.apache.tika.Tika;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MimeTypes;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -40,6 +37,9 @@ import org.sleuthkit.datamodel.TskData;
  * Detects the MIME type of a file by an inspection of its contents, using both
  * user-defined type definitions and Tika.
  */
+@NbBundle.Messages({
+    "CouldNotInitializeFileTypeDetector=Error loading user-defined file types."
+})
 public class FileTypeDetector {
 
     private static final Tika tika = new Tika();
@@ -62,7 +62,7 @@ public class FileTypeDetector {
         try {
             userDefinedFileTypes = UserDefinedFileTypesManager.getInstance().getFileTypes();
         } catch (UserDefinedFileTypesManager.UserDefinedFileTypesException ex) {
-            throw new FileTypeDetectorInitException("Error loading user-defined file types", ex); //NON-NLS
+            throw new FileTypeDetectorInitException(Bundle.CouldNotInitializeFileTypeDetector(), ex);
         }
     }
 
@@ -133,8 +133,8 @@ public class FileTypeDetector {
      * Gets the MIME type of a file, detecting it if it is not already known. If
      * detection is necessary, the result is added to the case database.
      *
-     * IMPORTANT: This method should only be called by ingest modules. All
-     * other clients should call AbstractFile.getMIMEType, and may call
+     * IMPORTANT: This method should only be called by ingest modules. All other
+     * clients should call AbstractFile.getMIMEType, and may call
      * FileTypeDetector.detect, if AbstractFile.getMIMEType returns null.
      *
      * @param file The file.
@@ -207,7 +207,7 @@ public class FileTypeDetector {
          * If the file is a regular file, give precedence to user-defined types.
          */
         if (null == mimeType) {
-            mimeType = detectUserDefinedType(file, addToCaseDb);
+            mimeType = detectUserDefinedType(file);
         }
 
         /*
@@ -283,49 +283,17 @@ public class FileTypeDetector {
 
     /**
      * Determines whether or not the a file matches a user-defined or Autopsy
-     * predefined file type. If postToBlackBoard is true, and a match is found,
-     * and the file type definition calls for an alert on a match, an
-     * interesting file hit artifact is posted to the blackboard.
+     * predefined file type.
      *
-     * @param file             The file to test.
-     * @param postToBlackBoard Whether an interesting file hit could be posted
-     *                         to the blackboard.
+     * @param file The file to test.
      *
      * @return The file type name string or null, if no match is detected.
      *
      * @throws TskCoreException
      */
-    private String detectUserDefinedType(AbstractFile file, boolean postToBlackBoard) throws TskCoreException {
+    private String detectUserDefinedType(AbstractFile file) throws TskCoreException {
         for (FileType fileType : userDefinedFileTypes) {
             if (fileType.matches(file)) {
-                if (postToBlackBoard && fileType.alertOnMatch()) {
-                    /*
-                     * Create an interesting file hit artifact.
-                     */
-                    BlackboardArtifact artifact;
-                    artifact = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
-                    BlackboardAttribute setNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, FileTypeIdModuleFactory.getModuleName(), fileType.getFilesSetName());
-                    artifact.addAttribute(setNameAttribute);
-
-                    /*
-                     * Use the MIME type as the category attribute, i.e., the
-                     * rule that determined this file belongs to the interesting
-                     * files set.
-                     */
-                    BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, FileTypeIdModuleFactory.getModuleName(), fileType.getMimeType());
-                    artifact.addAttribute(ruleNameAttribute);
-
-                    /*
-                     * Index the artifact for keyword search.
-                     */
-                    try {
-                        Case.getCurrentCase().getServices().getBlackboard().indexArtifact(artifact);
-                    } catch (Blackboard.BlackboardException | IllegalStateException ex) {
-                        logger.log(Level.SEVERE, String.format("Unable to index blackboard artifact %d", artifact.getArtifactID()), ex); //NON-NLS
-                        MessageNotifyUtil.Notify.error(
-                                NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), artifact.getDisplayName());
-                    }
-                }
                 return fileType.getMimeType();
             }
         }

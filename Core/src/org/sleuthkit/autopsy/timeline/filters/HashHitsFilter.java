@@ -18,8 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.filters;
 
-import java.util.Comparator;
-import java.util.stream.Collectors;
+import java.util.function.Predicate;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ObservableBooleanValue;
 import org.openide.util.NbBundle;
@@ -42,28 +41,16 @@ public class HashHitsFilter extends UnionFilter<HashSetFilter> {
     @Override
     public HashHitsFilter copyOf() {
         HashHitsFilter filterCopy = new HashHitsFilter();
+        //add a copy of each subfilter
+        this.getSubFilters().forEach(hashSetFilter -> filterCopy.addSubFilter(hashSetFilter.copyOf()));
+        //these need to happen after the listeners fired by adding the subfilters 
         filterCopy.setSelected(isSelected());
         filterCopy.setDisabled(isDisabled());
-        //add a copy of each subfilter
-        this.getSubFilters().forEach((HashSetFilter t) -> {
-            filterCopy.addSubFilter(t.copyOf());
-        });
+
         return filterCopy;
     }
 
-    @Override
-    public String getHTMLReportString() {
-        //move this logic into SaveSnapshot
-        String string = getDisplayName() + getStringCheckBox();
-        if (getSubFilters().isEmpty() == false) {
-            string = string + " : " + getSubFilters().stream()
-                    .filter(Filter::isSelected)
-                    .map(Filter::getHTMLReportString)
-                    .collect(Collectors.joining("</li><li>", "<ul><li>", "</li></ul>")); // NON-NLS
-        }
-        return string;
-    }
-
+   
     @Override
     public int hashCode() {
         return 7;
@@ -86,18 +73,13 @@ public class HashHitsFilter extends UnionFilter<HashSetFilter> {
         return areSubFiltersEqual(this, other);
     }
 
-    public void addSubFilter(HashSetFilter hashSetFilter) {
-        if (getSubFilters().stream()
-                .map(HashSetFilter::getHashSetID)
-                .filter(t -> t == hashSetFilter.getHashSetID())
-                .findAny().isPresent() == false) {
-            getSubFilters().add(hashSetFilter);
-            getSubFilters().sort(Comparator.comparing(HashSetFilter::getDisplayName));
-        }
-    }
-
     @Override
     public ObservableBooleanValue disabledProperty() {
         return Bindings.or(super.disabledProperty(), Bindings.isEmpty(getSubFilters()));
+    }
+
+    @Override
+    Predicate<HashSetFilter> getDuplicatePredicate(HashSetFilter subfilter) {
+        return hashSetFilter -> subfilter.getHashSetID() == hashSetFilter.getHashSetID();
     }
 }

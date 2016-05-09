@@ -152,6 +152,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
             this.mimeTypeComboBox.setSelectedItem(mimeTypeCondition.getMimeType());
         }
     }
+
     private void populateSizeConditionComponents(FilesSet.Rule rule) {
         FilesSet.Rule.FileSizeCondition fileSizeCondition = rule.getFileSizeCondition();
         if (fileSizeCondition != null) {
@@ -311,14 +312,12 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
                     DialogDisplayer.getDefault().notify(notifyDesc);
                     return false;
                 }
-            } else {
-                if (this.nameTextField.getText().isEmpty() || !FilesSetRulePanel.containsOnlyLegalChars(this.nameTextField.getText(), FilesSetRulePanel.ILLEGAL_FILE_NAME_CHARS)) {
-                    NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
-                            NbBundle.getMessage(FilesSetPanel.class, "FilesSetRulePanel.messages.invalidCharInName"),
-                            NotifyDescriptor.WARNING_MESSAGE);
-                    DialogDisplayer.getDefault().notify(notifyDesc);
-                    return false;
-                }
+            } else if (this.nameTextField.getText().isEmpty() || !FilesSetRulePanel.containsOnlyLegalChars(this.nameTextField.getText(), FilesSetRulePanel.ILLEGAL_FILE_NAME_CHARS)) {
+                NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
+                        NbBundle.getMessage(FilesSetPanel.class, "FilesSetRulePanel.messages.invalidCharInName"),
+                        NotifyDescriptor.WARNING_MESSAGE);
+                DialogDisplayer.getDefault().notify(notifyDesc);
+                return false;
             }
         }
 
@@ -342,14 +341,12 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
                     DialogDisplayer.getDefault().notify(notifyDesc);
                     return false;
                 }
-            } else {
-                if (this.pathTextField.getText().isEmpty() || !FilesSetRulePanel.containsOnlyLegalChars(this.pathTextField.getText(), FilesSetRulePanel.ILLEGAL_FILE_PATH_CHARS)) {
-                    NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
-                            NbBundle.getMessage(FilesSetPanel.class, "FilesSetRulePanel.messages.invalidCharInPath"),
-                            NotifyDescriptor.WARNING_MESSAGE);
-                    DialogDisplayer.getDefault().notify(notifyDesc);
-                    return false;
-                }
+            } else if (this.pathTextField.getText().isEmpty() || !FilesSetRulePanel.containsOnlyLegalChars(this.pathTextField.getText(), FilesSetRulePanel.ILLEGAL_FILE_PATH_CHARS)) {
+                NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
+                        NbBundle.getMessage(FilesSetPanel.class, "FilesSetRulePanel.messages.invalidCharInPath"),
+                        NotifyDescriptor.WARNING_MESSAGE);
+                DialogDisplayer.getDefault().notify(notifyDesc);
+                return false;
             }
         }
         if (this.mimeCheck.isSelected()) {
@@ -362,7 +359,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
             }
         }
         if (this.fileSizeCheck.isSelected()) {
-            if ((Integer) this.fileSizeSpinner.getValue() == 0 && !((String)this.equalitySymbolComboBox.getSelectedItem()).equals("=")) {
+            if ((Integer) this.fileSizeSpinner.getValue() == 0 && !((String) this.equalitySymbolComboBox.getSelectedItem()).equals("=")) {
                 NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
                         Bundle.FilesSetRulePanel_ZeroFileSizeError(),
                         NotifyDescriptor.WARNING_MESSAGE);
@@ -407,17 +404,15 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
                     logger.log(Level.SEVERE, "Attempt to get regex name condition that does not compile", ex); // NON-NLS
                     throw new IllegalStateException("The files set rule panel name condition is not in a valid state"); // NON-NLS
                 }
-            } else {
-                if (FilesSetRulePanel.containsOnlyLegalChars(this.nameTextField.getText(), FilesSetRulePanel.ILLEGAL_FILE_NAME_CHARS)) {
-                    if (this.fullNameRadioButton.isSelected()) {
-                        condition = new FilesSet.Rule.FullNameCondition(this.nameTextField.getText());
-                    } else {
-                        condition = new FilesSet.Rule.ExtensionCondition(this.nameTextField.getText());
-                    }
+            } else if (FilesSetRulePanel.containsOnlyLegalChars(this.nameTextField.getText(), FilesSetRulePanel.ILLEGAL_FILE_NAME_CHARS)) {
+                if (this.fullNameRadioButton.isSelected()) {
+                    condition = new FilesSet.Rule.FullNameCondition(this.nameTextField.getText());
                 } else {
-                    logger.log(Level.SEVERE, "Attempt to get name condition with illegal chars"); // NON-NLS
-                    throw new IllegalStateException("The files set rule panel name condition is not in a valid state"); // NON-NLS                    
+                    condition = new FilesSet.Rule.ExtensionCondition(this.nameTextField.getText());
                 }
+            } else {
+                logger.log(Level.SEVERE, "Attempt to get name condition with illegal chars"); // NON-NLS
+                throw new IllegalStateException("The files set rule panel name condition is not in a valid state"); // NON-NLS                    
             }
         }
         return condition;
@@ -443,11 +438,13 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
      */
     FilesSet.Rule.FileSizeCondition getFileSizeCondition() {
         FilesSet.Rule.FileSizeCondition condition = null;
-        if ((Integer) this.fileSizeSpinner.getValue() != 0 || ((String)this.equalitySymbolComboBox.getSelectedItem()).equals("=")) {
-            FilesSet.Rule.FileSizeCondition.COMPARATOR comparator = FilesSet.Rule.FileSizeCondition.COMPARATOR.fromSymbol((String) this.equalitySymbolComboBox.getSelectedItem());
-            FilesSet.Rule.FileSizeCondition.SIZE_UNIT unit = FilesSet.Rule.FileSizeCondition.SIZE_UNIT.fromName((String) this.fileSizeComboBox.getSelectedItem());
-            int fileSizeValue = (Integer) this.fileSizeSpinner.getValue();
-            condition = new FilesSet.Rule.FileSizeCondition(comparator, unit, fileSizeValue);
+        if (this.fileSizeCheck.isSelected()) {
+            if ((Integer) this.fileSizeSpinner.getValue() != 0 || ((String) this.equalitySymbolComboBox.getSelectedItem()).equals("=")) {
+                FilesSet.Rule.FileSizeCondition.COMPARATOR comparator = FilesSet.Rule.FileSizeCondition.COMPARATOR.fromSymbol((String) this.equalitySymbolComboBox.getSelectedItem());
+                FilesSet.Rule.FileSizeCondition.SIZE_UNIT unit = FilesSet.Rule.FileSizeCondition.SIZE_UNIT.fromName((String) this.fileSizeComboBox.getSelectedItem());
+                int fileSizeValue = (Integer) this.fileSizeSpinner.getValue();
+                condition = new FilesSet.Rule.FileSizeCondition(comparator, unit, fileSizeValue);
+            }
         }
         return condition;
     }

@@ -58,6 +58,12 @@ import org.xml.sax.SAXException;
  * To add search engines, edit SearchEngines.xml under RecentActivity
  *
  */
+@NbBundle.Messages({
+    "cannotBuildXmlParser=Unable to build XML parser: ",
+    "cannotLoadSEUQA=Unable to load Search Engine URL Query Analyzer settings file, SEUQAMappings.xml: ",
+    "cannotParseXml=Unable to parse XML file: ",
+    "# {0} - file name", "SearchEngineURLQueryAnalyzer.init.exception.msg=Unable to find {0}."
+})
 class SearchEngineURLQueryAnalyzer extends Extract {
 
     private static final Logger logger = Logger.getLogger(SearchEngineURLQueryAnalyzer.class.getName());
@@ -161,11 +167,11 @@ class SearchEngineURLQueryAnalyzer extends Extract {
             }
 
         } catch (IOException e) {
-            throw new IngestModuleException("Was not able to load SEUQAMappings.xml: " + e.getLocalizedMessage(), e); //NON-NLS
+            throw new IngestModuleException(Bundle.cannotLoadSEUQA() + e.getLocalizedMessage(), e); //NON-NLS
         } catch (ParserConfigurationException pce) {
-            throw new IngestModuleException("Unable to build XML parser: " + pce.getLocalizedMessage(), pce); //NON-NLS
+            throw new IngestModuleException(Bundle.cannotBuildXmlParser() + pce.getLocalizedMessage(), pce); //NON-NLS
         } catch (SAXException sxe) {
-            throw new IngestModuleException("Unable to parse XML file: " + sxe.getLocalizedMessage(), sxe); //NON-NLS
+            throw new IngestModuleException(Bundle.cannotParseXml() + sxe.getLocalizedMessage(), sxe); //NON-NLS
         }
 
         NodeList nlist = xmlinput.getElementsByTagName("SearchEngine"); //NON-NLS
@@ -391,12 +397,10 @@ class SearchEngineURLQueryAnalyzer extends Extract {
         try {
             PlatformUtil.extractResourceToUserConfigDir(SearchEngineURLQueryAnalyzer.class, XMLFILE, true);
         } catch (IOException e) {
-            String message = NbBundle
-                    .getMessage(this.getClass(), "SearchEngineURLQueryAnalyzer.init.exception.msg", XMLFILE);
+            String message = Bundle.SearchEngineURLQueryAnalyzer_init_exception_msg(XMLFILE);
             logger.log(Level.SEVERE, message, e);
             throw new IngestModuleException(message, e);
         }
-
         loadConfigFile();
     }
 

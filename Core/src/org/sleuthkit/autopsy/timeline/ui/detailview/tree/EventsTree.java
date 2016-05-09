@@ -25,7 +25,9 @@ import java.util.Objects;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
@@ -43,13 +45,13 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import org.apache.commons.lang3.StringUtils;
+import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
-import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
+import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
 
@@ -66,42 +68,37 @@ final public class EventsTree extends BorderPane {
     private DetailViewPane detailViewPane;
 
     @FXML
-    private TreeView<EventBundle<?>> eventsTree;
+    private TreeView<TimeLineEvent> eventsTree;
 
     @FXML
     private Label eventsTreeLabel;
 
     @FXML
     private ComboBox<TreeComparator> sortByBox;
+    private final ObservableList<TimeLineEvent> selectedEvents = FXCollections.observableArrayList();
 
     public EventsTree(TimeLineController controller) {
         this.controller = controller;
-
         FXMLConstructor.construct(this, "EventsTree.fxml"); // NON-NLS 
     }
 
     public void setDetailViewPane(DetailViewPane detailViewPane) {
         this.detailViewPane = detailViewPane;
-        detailViewPane.setSelectionModel(eventsTree.getSelectionModel());
 
-        detailViewPane.getEventStripes().addListener((ListChangeListener.Change<? extends EventBundle<?>> c) -> {
+        detailViewPane.getAllNestedEvents().addListener((ListChangeListener.Change<? extends TimeLineEvent> c) -> {
             //on jfx thread
             while (c.next()) {
-                for (EventBundle<?> bundle : c.getAddedSubList()) {
-                    getRoot().insert(bundle);
-                }
-                for (EventBundle<?> bundle : c.getRemoved()) {
-                    getRoot().remove(bundle);
-                }
+                c.getRemoved().forEach(getRoot()::remove);
+                c.getAddedSubList().forEach(getRoot()::insert);
             }
         });
 
         setRoot();
 
-        detailViewPane.getSelectedNodes().addListener((Observable observable) -> {
+        detailViewPane.getSelectedEvents().addListener((Observable observable) -> {
             eventsTree.getSelectionModel().clearSelection();
-            detailViewPane.getSelectedNodes().forEach(eventBundleNode -> {
-                eventsTree.getSelectionModel().select(getRoot().findTreeItemForEvent(eventBundleNode.getEventBundle()));
+            detailViewPane.getSelectedEvents().forEach(event -> {
+                eventsTree.getSelectionModel().select(getRoot().findTreeItemForEvent(event));
             });
         });
 
@@ -114,11 +111,8 @@ final public class EventsTree extends BorderPane {
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void setRoot() {
         RootItem root = new RootItem(TreeComparator.Type.reversed().thenComparing(sortByBox.getSelectionModel().getSelectedItem()));
-        for (EventBundle<?> bundle : detailViewPane.getEventStripes()) {
-            root.insert(bundle);
-        }
+        detailViewPane.getAllNestedEvents().forEach(root::insert);
         eventsTree.setRoot(root);
-
     }
 
     @FXML
@@ -130,81 +124,83 @@ final public class EventsTree extends BorderPane {
         sortByBox.getSelectionModel().select(TreeComparator.Description);
         sortByBox.setCellFactory(listView -> new TreeComparatorCell());
         sortByBox.setButtonCell(new TreeComparatorCell());
-        sortByBox.getSelectionModel().selectedItemProperty().addListener((Observable o) -> {
-            getRoot().resort(TreeComparator.Type.reversed().thenComparing(sortByBox.getSelectionModel().getSelectedItem()), true);
+        sortByBox.getSelectionModel().selectedItemProperty().addListener(selectedItemProperty -> {
+            getRoot().sort(TreeComparator.Type.reversed().thenComparing(sortByBox.getSelectionModel().getSelectedItem()), true);
         });
-        eventsTree.setShowRoot(false);
 
-        eventsTree.setCellFactory(treeView -> new EventBundleTreeCell());
+        eventsTree.setShowRoot(false);
+        eventsTree.setCellFactory(treeView -> new EventTreeCell());
         eventsTree.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+        eventsTree.getSelectionModel().getSelectedItems().addListener((ListChangeListener.Change<? extends TreeItem<TimeLineEvent>> change) -> {
+            while (change.next()) {
+                change.getRemoved().stream().map(TreeItem<TimeLineEvent>::getValue).forEach(selectedEvents::remove);
+                change.getAddedSubList().stream().map(TreeItem<TimeLineEvent>::getValue).filter(Objects::nonNull).forEach(selectedEvents::add);
+            }
+        });
 
         eventsTreeLabel.setText(Bundle.EventsTree_Label_text());
     }
 
+    public ObservableList<TimeLineEvent> getSelectedEvents() {
+        return selectedEvents;
+    }
+
     /**
-     * A tree cell to display {@link EventBundle}s. Shows the description, and
-     * count, as well a a "legend icon" for the event type.
+     * A tree cell to display TimeLineEvents. Shows the description, and count,
+     * as well a a "legend icon" for the event type.
      */
-    private class EventBundleTreeCell extends TreeCell<EventBundle<?>> {
+    private class EventTreeCell extends TreeCell<TimeLineEvent> {
 
         private static final double HIDDEN_MULTIPLIER = .6;
         private final Rectangle rect = new Rectangle(24, 24);
         private final ImageView imageView = new ImageView();
         private InvalidationListener filterStateChangeListener;
-        SimpleBooleanProperty hidden = new SimpleBooleanProperty(false);
+        private final SimpleBooleanProperty hidden = new SimpleBooleanProperty(false);
 
-        EventBundleTreeCell() {
+        EventTreeCell() {
             rect.setArcHeight(5);
             rect.setArcWidth(5);
             rect.setStrokeWidth(2);
         }
 
         @Override
-        protected void updateItem(EventBundle<?> item, boolean empty) {
+        protected void updateItem(TimeLineEvent item, boolean empty) {
             super.updateItem(item, empty);
-            if (item == null || empty) {
+            if (empty) {
                 setText(null);
                 setTooltip(null);
                 setGraphic(null);
-                setContextMenu(null);
                 deRegisterListeners(controller.getQuickHideFilters());
             } else {
-                filterStateChangeListener = (filterState) -> updateHiddenState(item);
-                controller.getQuickHideFilters().addListener((ListChangeListener.Change<? extends DescriptionFilter> listChange) -> {
-                    while (listChange.next()) {
-                        deRegisterListeners(listChange.getRemoved());
-                        registerListeners(listChange.getAddedSubList(), item);
-                    }
-                    updateHiddenState(item);
-                });
-                registerListeners(controller.getQuickHideFilters(), item);
-                String text;
-                if (getTreeItem() instanceof EventTypeTreeItem) {
-                    text = item.getEventType().getDisplayName();
-                    setDisable(true);
-                } else {
-                    setDisable(false);
-                    text = item.getDescription() + " (" + item.getCount() + ")"; // NON-NLS
-                    TreeItem<EventBundle<?>> parent = getTreeItem().getParent();
-                    if (parent != null && parent.getValue() != null && (parent instanceof EventDescriptionTreeItem)) {
-                        text = StringUtils.substringAfter(text, parent.getValue().getDescription());
-                    }
-                }
+                EventsTreeItem treeItem = (EventsTreeItem) getTreeItem();
+                String text = treeItem.getDisplayText();
                 setText(text);
                 setTooltip(new Tooltip(text));
-                imageView.setImage(item.getEventType().getFXImage());
+
+                imageView.setImage(treeItem.getEventType().getFXImage());
                 setGraphic(new StackPane(rect, imageView));
-                updateHiddenState(item);
-                if (getTreeItem() instanceof EventDescriptionTreeItem) {
+                updateHiddenState(treeItem);
+                deRegisterListeners(controller.getQuickHideFilters());
+
+                if (item != null) {
+                    filterStateChangeListener = (filterState) -> updateHiddenState(treeItem);
+                    controller.getQuickHideFilters().addListener((ListChangeListener.Change<? extends DescriptionFilter> listChange) -> {
+                        while (listChange.next()) {
+                            deRegisterListeners(listChange.getRemoved());
+                            registerListeners(listChange.getAddedSubList(), item);
+                        }
+                        updateHiddenState(treeItem);
+                    });
+                    registerListeners(controller.getQuickHideFilters(), item);
                     setOnMouseClicked((MouseEvent event) -> {
                         if (event.getButton() == MouseButton.SECONDARY) {
-                            if (hidden.get()) {
-                                ActionUtils.createContextMenu(ImmutableList.of(detailViewPane.newUnhideDescriptionAction(item.getDescription(), item.getDescriptionLoD())))
-                                        .show(EventBundleTreeCell.this, event.getScreenX(), event.getScreenY());
-                            } else {
-                                ActionUtils.createContextMenu(ImmutableList.of(detailViewPane.newHideDescriptionAction(item.getDescription(), item.getDescriptionLoD())))
-                                        .show(EventBundleTreeCell.this, event.getScreenX(), event.getScreenY());
-                            }
+                            Action action = hidden.get()
+                                    ? detailViewPane.newUnhideDescriptionAction(item.getDescription(), item.getDescriptionLoD())
+                                    : detailViewPane.newHideDescriptionAction(item.getDescription(), item.getDescriptionLoD());
+
+                            ActionUtils.createContextMenu(ImmutableList.of(action))
+                                    .show(this, event.getScreenX(), event.getScreenY());
                         }
                     });
                 } else {
@@ -213,7 +209,7 @@ final public class EventsTree extends BorderPane {
             }
         }
 
-        private void registerListeners(Collection<? extends DescriptionFilter> filters, EventBundle<?> item) {
+        private void registerListeners(Collection<? extends DescriptionFilter> filters, TimeLineEvent item) {
             for (DescriptionFilter filter : filters) {
                 if (filter.getDescription().equals(item.getDescription())) {
                     filter.activeProperty().addListener(filterStateChangeListener);
@@ -229,25 +225,22 @@ final public class EventsTree extends BorderPane {
             }
         }
 
-        private void updateHiddenState(EventBundle<?> item) {
-            TreeItem<EventBundle<?>> treeItem = getTreeItem();
-
-            hidden.set(controller.getQuickHideFilters().stream().
-                    filter(AbstractFilter::isActive)
-                    .anyMatch(filter -> filter.getDescription().equals(item.getDescription())));
+        private void updateHiddenState(EventsTreeItem treeItem) {
+            TimeLineEvent event = treeItem.getValue();
+            hidden.set(event != null && controller.getQuickHideFilters().stream().
+                    filter(DescriptionFilter::isActive)
+                    .anyMatch(filter -> StringUtils.equalsIgnoreCase(filter.getDescription(), event.getDescription())));
             if (hidden.get()) {
-                if (treeItem != null) {
-                    treeItem.setExpanded(false);
-                }
+                treeItem.setExpanded(false);
                 setTextFill(Color.gray(0, HIDDEN_MULTIPLIER));
                 imageView.setOpacity(HIDDEN_MULTIPLIER);
-                rect.setStroke(item.getEventType().getColor().deriveColor(0, HIDDEN_MULTIPLIER, 1, HIDDEN_MULTIPLIER));
-                rect.setFill(item.getEventType().getColor().deriveColor(0, HIDDEN_MULTIPLIER, HIDDEN_MULTIPLIER, 0.1));
+                rect.setStroke(treeItem.getEventType().getColor().deriveColor(0, HIDDEN_MULTIPLIER, 1, HIDDEN_MULTIPLIER));
+                rect.setFill(treeItem.getEventType().getColor().deriveColor(0, HIDDEN_MULTIPLIER, HIDDEN_MULTIPLIER, 0.1));
             } else {
                 setTextFill(Color.BLACK);
                 imageView.setOpacity(1);
-                rect.setStroke(item.getEventType().getColor());
-                rect.setFill(item.getEventType().getColor().deriveColor(0, 1, 1, 0.1));
+                rect.setStroke(treeItem.getEventType().getColor());
+                rect.setFill(treeItem.getEventType().getColor().deriveColor(0, 1, 1, 0.1));
             }
         }
     }

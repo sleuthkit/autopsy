@@ -30,7 +30,6 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.JFrame;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.apache.commons.io.FilenameUtils;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
@@ -333,19 +332,11 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                 "HashDbImportDatabaseDialog.errorMessage.failedToOpenHashDbMsg",
                 selectedFilePath);
         try {
-            selectedHashDb = HashDbManager.getInstance().addExistingHashDatabaseInternal(hashSetNameTextField.getText(), selectedFilePath, true, sendIngestMessagesCheckbox.isSelected(), type);
+            selectedHashDb = HashDbManager.getInstance().addExistingHashDatabase(hashSetNameTextField.getText(), selectedFilePath, true, sendIngestMessagesCheckbox.isSelected(), type);
         } catch (HashDbManagerException ex) {
             Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
             JOptionPane.showMessageDialog(this,
                     ex.getMessage(),
-                    NbBundle.getMessage(this.getClass(),
-                            "HashDbImportDatabaseDialog.importHashDbErr"),
-                    JOptionPane.ERROR_MESSAGE);
-            return;
-        } catch (TskCoreException ex) {
-            Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.SEVERE, errorMessage, ex);
-            JOptionPane.showMessageDialog(this,
-                    errorMessage,
                     NbBundle.getMessage(this.getClass(),
                             "HashDbImportDatabaseDialog.importHashDbErr"),
                     JOptionPane.ERROR_MESSAGE);

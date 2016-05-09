@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.timeline.actions;
 
-import javafx.event.ActionEvent;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
@@ -28,24 +27,27 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 
 /**
- *
+ * An action that navigates forward through the history.
  */
 //TODO: This and the corresponding imageanalyzer action are identical except for the type of the controller...  abstract something! -jm
 public class Forward extends Action {
 
-    private static final Image BACK_IMAGE = new Image("/org/sleuthkit/autopsy/timeline/images/arrow.png", 16, 16, true, true, true); // NON-NLS
+    private static final Image FORWARD_IMAGE = new Image("/org/sleuthkit/autopsy/timeline/images/arrow.png", 16, 16, true, true, true); // NON-NLS
 
     private final TimeLineController controller;
 
-    @NbBundle.Messages("Forward.text=Forward")
+    @NbBundle.Messages({"Forward.text=Forward",
+        "# {0} - action accelerator keys ",
+        "Forward.longText=Forward: {0}\nGo forward to the next view settings."})
     public Forward(TimeLineController controller) {
         super(Bundle.Forward_text());
-        setGraphic(new ImageView(BACK_IMAGE));
-        setAccelerator(new KeyCodeCombination(KeyCode.RIGHT, KeyCodeCombination.ALT_DOWN));
         this.controller = controller;
-        disabledProperty().bind(controller.getCanAdvance().not());
-        setEventHandler((ActionEvent t) -> {
-            controller.advance();
-        });
+
+        setGraphic(new ImageView(FORWARD_IMAGE));
+        setAccelerator(new KeyCodeCombination(KeyCode.RIGHT, KeyCodeCombination.ALT_DOWN));
+        setLongText(Bundle.Forward_longText(getAccelerator().getDisplayText()));
+        setEventHandler(actionEvent -> controller.advance());
+
+        disabledProperty().bind(controller.canAdvanceProperty().not());
     }
 }

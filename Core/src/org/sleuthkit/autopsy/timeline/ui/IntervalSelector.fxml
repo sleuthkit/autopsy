@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.*?>
-<?import javafx.scene.image.*?>
-<?import javafx.scene.control.*?>
-<?import java.lang.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 
-<fx:root maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" styleClass="intervalSelector" stylesheets="@IntervalSelector.css" type="BorderPane" xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1">
+<fx:root maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" pickOnBounds="false" prefHeight="400.0" prefWidth="600.0" styleClass="intervalSelector" stylesheets="@IntervalSelector.css" type="BorderPane" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1">
    <top>
       <Button fx:id="closeButton" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" opacity="0.5" prefHeight="16.0" prefWidth="16.0" styleClass="closeButton" BorderPane.alignment="CENTER_RIGHT">
          <graphic>
@@ -22,7 +25,7 @@
       <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
    </padding>
    <bottom>
-      <BorderPane fx:id="bottomBorder" minHeight="32.0" BorderPane.alignment="BOTTOM_LEFT">
+      <BorderPane fx:id="bottomBorder" minHeight="32.0" pickOnBounds="false" BorderPane.alignment="BOTTOM_CENTER">
          <left>
             <HBox alignment="BOTTOM_LEFT" BorderPane.alignment="BOTTOM_LEFT">
                <children>

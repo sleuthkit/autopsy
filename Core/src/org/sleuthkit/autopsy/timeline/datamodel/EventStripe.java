@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,10 +22,10 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.SortedSet;
 import javax.annotation.concurrent.Immutable;
-import org.python.google.common.base.Objects;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
@@ -34,15 +34,15 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
  * description, and zoom levels, but not necessarily close together in time.
  */
 @Immutable
-public final class EventStripe implements EventBundle<EventCluster> {
+public final class EventStripe implements MultiEvent<EventCluster> {
 
     public static EventStripe merge(EventStripe u, EventStripe v) {
         Preconditions.checkNotNull(u);
         Preconditions.checkNotNull(v);
-        Preconditions.checkArgument(Objects.equal(u.description, v.description));
-        Preconditions.checkArgument(Objects.equal(u.lod, v.lod));
-        Preconditions.checkArgument(Objects.equal(u.type, v.type));
-        Preconditions.checkArgument(Objects.equal(u.parent, v.parent));
+        Preconditions.checkArgument(Objects.equals(u.description, v.description));
+        Preconditions.checkArgument(Objects.equals(u.lod, v.lod));
+        Preconditions.checkArgument(Objects.equals(u.type, v.type));
+        Preconditions.checkArgument(Objects.equals(u.parent, v.parent));
         return new EventStripe(u, v);
     }
 
@@ -82,8 +82,10 @@ public final class EventStripe implements EventBundle<EventCluster> {
     private final ImmutableSet<Long> hashHits;
 
     public EventStripe withParent(EventCluster parent) {
-        EventStripe eventStripe = new EventStripe(parent, this.type, this.description, this.lod, clusters, eventIDs, tagged, hashHits);
-        return eventStripe;
+        if (java.util.Objects.nonNull(this.parent)) {
+            throw new IllegalStateException("Event Stripe already has a parent!");
+        }
+        return new EventStripe(parent, this.type, this.description, this.lod, clusters, eventIDs, tagged, hashHits);
     }
 
     private EventStripe(EventCluster parent, EventType type, String description, DescriptionLoD lod, SortedSet<EventCluster> clusters, ImmutableSet<Long> eventIDs, ImmutableSet<Long> tagged, ImmutableSet<Long> hashHits) {
@@ -98,9 +100,10 @@ public final class EventStripe implements EventBundle<EventCluster> {
         this.hashHits = hashHits;
     }
 
-    public EventStripe(EventCluster cluster, EventCluster parent) {
+    public EventStripe(EventCluster cluster) {
+
         this.clusters = ImmutableSortedSet.orderedBy(Comparator.comparing(EventCluster::getStartMillis))
-                .add(cluster).build();
+                .add(cluster.withParent(this)).build();
 
         type = cluster.getEventType();
         description = cluster.getDescription();
@@ -108,7 +111,7 @@ public final class EventStripe implements EventBundle<EventCluster> {
         eventIDs = cluster.getEventIDs();
         tagged = cluster.getEventIDsWithTags();
         hashHits = cluster.getEventIDsWithHashHits();
-        this.parent = parent;
+        this.parent = null;
     }
 
     private EventStripe(EventStripe u, EventStripe v) {
@@ -132,12 +135,20 @@ public final class EventStripe implements EventBundle<EventCluster> {
                 .addAll(u.getEventIDsWithHashHits())
                 .addAll(v.getEventIDsWithHashHits())
                 .build();
-        parent = u.getParentBundle().orElse(v.getParentBundle().orElse(null));
+        parent = u.getParent().orElse(v.getParent().orElse(null));
     }
 
     @Override
-    public Optional<EventCluster> getParentBundle() {
+    public Optional<EventCluster> getParent() {
         return Optional.ofNullable(parent);
+    }
+
+    public Optional<EventStripe> getParentStripe() {
+        if (getParent().isPresent()) {
+            return getParent().get().getParent();
+        } else {
+            return Optional.empty();
+        }
     }
 
     @Override
@@ -156,19 +167,16 @@ public final class EventStripe implements EventBundle<EventCluster> {
     }
 
     @Override
-    @SuppressWarnings("ReturnOfCollectionOrArrayField")
     public ImmutableSet<Long> getEventIDs() {
         return eventIDs;
     }
 
     @Override
-    @SuppressWarnings("ReturnOfCollectionOrArrayField")
     public ImmutableSet<Long> getEventIDsWithHashHits() {
         return hashHits;
     }
 
     @Override
-    @SuppressWarnings("ReturnOfCollectionOrArrayField")
     public ImmutableSet<Long> getEventIDsWithTags() {
         return tagged;
     }
@@ -184,13 +192,53 @@ public final class EventStripe implements EventBundle<EventCluster> {
     }
 
     @Override
-    @SuppressWarnings("ReturnOfCollectionOrArrayField")
     public ImmutableSortedSet< EventCluster> getClusters() {
         return clusters;
     }
 
     @Override
     public String toString() {
-        return "EventStripe{" + "description=" + description + ", eventIDs=" + eventIDs.size() + '}'; //NON-NLS
+        return "EventStripe{" + "description=" + description + ", eventIDs=" + (Objects.isNull(eventIDs) ? 0 : eventIDs.size()) + '}'; //NON-NLS
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 79 * hash + Objects.hashCode(this.clusters);
+        hash = 79 * hash + Objects.hashCode(this.type);
+        hash = 79 * hash + Objects.hashCode(this.description);
+        hash = 79 * hash + Objects.hashCode(this.lod);
+        hash = 79 * hash + Objects.hashCode(this.eventIDs);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final EventStripe other = (EventStripe) obj;
+        if (!Objects.equals(this.description, other.description)) {
+            return false;
+        }
+        if (!Objects.equals(this.clusters, other.clusters)) {
+            return false;
+        }
+        if (!Objects.equals(this.type, other.type)) {
+            return false;
+        }
+        if (this.lod != other.lod) {
+            return false;
+        }
+        if (!Objects.equals(this.eventIDs, other.eventIDs)) {
+            return false;
+        }
+        return true;
     }
 }

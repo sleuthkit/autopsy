@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-14 Basis Technology Corp.
+ * Copyright 2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,84 +19,50 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
 import java.util.Comparator;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.Map;
-import javafx.collections.FXCollections;
 import javafx.scene.control.TreeItem;
-import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
+import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 
-class EventTypeTreeItem extends NavTreeItem {
+/**
+ * abstract EventTreeItem for event types
+ */
+abstract class EventTypeTreeItem extends EventsTreeItem {
 
     /**
-     * maps a description to the child item of this item with that description
+     * The event type for this tree item.
      */
-    private final Map<String, EventDescriptionTreeItem> childMap = new HashMap<>();
+    private final EventType eventType;
 
-    private Comparator<TreeItem<EventBundle<?>>> comparator = TreeComparator.Description;
-
-    EventTypeTreeItem(EventBundle<?> g, Comparator<TreeItem<EventBundle<?>>> comp) {
-        setValue(g);
-        comparator = comp;
+    /**
+     * Constructor
+     *
+     * @param eventType  the event type for this tree item
+     * @param comparator the initial comparator used to sort the children of
+     *                   this tree item
+     */
+    EventTypeTreeItem(EventType eventType, Comparator<TreeItem<TimeLineEvent>> comparator) {
+        super(comparator);
+        this.eventType = eventType;
     }
 
     @Override
-    public long getCount() {
-        return getValue().getCount();
-    }
-
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    public void insert(Deque<EventBundle<?>> path) {
-        EventBundle<?> head = path.removeFirst();
-        EventDescriptionTreeItem treeItem = childMap.computeIfAbsent(head.getDescription(), description -> {
-            EventDescriptionTreeItem newTreeItem = new EventDescriptionTreeItem(head, comparator);
-            newTreeItem.setExpanded(true);
-            childMap.put(head.getDescription(), newTreeItem);
-            getChildren().add(newTreeItem);
-            resort(comparator, false);
-            return newTreeItem;
-        });
-
-        if (path.isEmpty() == false) {
-            treeItem.insert(path);
-        }
-    }
-
-    void remove(Deque<EventBundle<?>> path) {
-        EventBundle<?> head = path.removeFirst();
-        EventDescriptionTreeItem descTreeItem = childMap.get(head.getDescription());
-        if (descTreeItem != null) {
-            if (path.isEmpty() == false) {
-                descTreeItem.remove(path);
-            }
-            if (descTreeItem.getChildren().isEmpty()) {
-                childMap.remove(head.getDescription());
-                getChildren().remove(descTreeItem);
-            }
-        }
-    }
-
-    @Override
-    public NavTreeItem findTreeItemForEvent(EventBundle<?> t) {
-        if (t.getEventType().getBaseType() == getValue().getEventType().getBaseType()) {
-
-            for (EventDescriptionTreeItem child : childMap.values()) {
-                final NavTreeItem findTreeItemForEvent = child.findTreeItemForEvent(t);
-                if (findTreeItemForEvent != null) {
-                    return findTreeItemForEvent;
-                }
-            }
-        }
-        return null;
-    }
-
-    @Override
-    void resort(Comparator<TreeItem<EventBundle<?>>> comp, Boolean recursive) {
-        this.comparator = comp;
-        FXCollections.sort(getChildren(), comp);
+    void sort(Comparator<TreeItem<TimeLineEvent>> comp, Boolean recursive) {
+        setComparator(comp);
         if (recursive) {
-            childMap.values().forEach(ti -> ti.resort(comp, true));
+            //sort childrens children
+            getChildren().stream()
+                    .map(EventsTreeItem.class::cast)
+                    .forEach(ti -> ti.sort(comp, true));
         }
+    }
+
+    @Override
+    String getDisplayText() {
+        return eventType.getDisplayName();
+    }
+
+    @Override
+    EventType getEventType() {
+        return eventType;
     }
 }

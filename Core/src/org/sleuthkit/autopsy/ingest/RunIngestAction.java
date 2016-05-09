@@ -46,33 +46,21 @@ public final class RunIngestAction extends CallableSystemAction implements Prese
         return new RunIngestAction();
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public void performAction() {
         getMenuPresenter();
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public String getName() {
         return NbBundle.getMessage(RunIngestAction.class, "RunIngestModulesMenu.getName.text");
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public HelpCtx getHelpCtx() {
         return HelpCtx.DEFAULT_HELP;
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public JMenuItem getMenuPresenter() {
         JMenuItem sublist = new RunIngestSubMenu();
@@ -80,9 +68,6 @@ public final class RunIngestAction extends CallableSystemAction implements Prese
         return sublist;
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public void actionPerformed(ActionEvent e) {
         performAction();

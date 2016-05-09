@@ -41,7 +41,6 @@ import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
 import net.sf.sevenzipjbinding.simple.ISimpleInArchive;
 import net.sf.sevenzipjbinding.simple.ISimpleInArchiveItem;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
@@ -120,21 +119,9 @@ class SevenZipExtractor {
         // TODO Expand to support more formats after upgrading Tika
     }
 
-    SevenZipExtractor(IngestJobContext context, FileTypeDetector fileTypeDetector, String moduleDirRelative, String moduleDirAbsolute) throws IngestModuleException {
+    SevenZipExtractor(IngestJobContext context, FileTypeDetector fileTypeDetector, String moduleDirRelative, String moduleDirAbsolute) throws SevenZipNativeInitializationException {
         if (!SevenZip.isInitializedSuccessfully() && (SevenZip.getLastInitializationException() == null)) {
-            try {
-                SevenZip.initSevenZipFromPlatformJAR();
-                String platform = SevenZip.getUsedPlatform();
-                logger.log(Level.INFO, "7-Zip-JBinding library was initialized on supported platform: {0}", platform); //NON-NLS
-            } catch (SevenZipNativeInitializationException e) {
-                logger.log(Level.SEVERE, "Error initializing 7-Zip-JBinding library", e); //NON-NLS
-                String msg = NbBundle.getMessage(SevenZipExtractor.class, "EmbeddedFileExtractorIngestModule.ArchiveExtractor.init.errInitModule.msg",
-                        EmbeddedFileExtractorModuleFactory.getModuleName());
-                String details = NbBundle.getMessage(SevenZipExtractor.class, "EmbeddedFileExtractorIngestModule.ArchiveExtractor.init.errCantInitLib",
-                        e.getMessage());
-                services.postMessage(IngestMessage.createErrorMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), msg, details));
-                throw new IngestModuleException(e.getMessage(), e);
-            }
+            SevenZip.initSevenZipFromPlatformJAR();
         }
         this.context = context;
         this.fileTypeDetector = fileTypeDetector;
@@ -151,7 +138,7 @@ class SevenZipExtractor {
      * @param abstractFile The AbstractFilw whose mimetype is to be determined.
      *
      * @return This method returns true if the file format is currently
-     * supported. Else it returns false.
+     *         supported. Else it returns false.
      */
     boolean isSevenZipExtractionSupported(AbstractFile abstractFile) {
         try {
@@ -185,7 +172,7 @@ class SevenZipExtractor {
      *
      * More heuristics to be added here
      *
-     * @param archiveName the parent archive
+     * @param archiveName     the parent archive
      * @param archiveFileItem the archive item
      *
      * @return true if potential zip bomb, false otherwise
@@ -276,7 +263,7 @@ class SevenZipExtractor {
      * Unpack the file to local folder and return a list of derived files
      *
      * @param pipelineContext current ingest context
-     * @param archiveFile file to unpack
+     * @param archiveFile     file to unpack
      *
      * @return list of unpacked derived files
      */
@@ -327,8 +314,7 @@ class SevenZipExtractor {
         ISevenZipInArchive inArchive = null;
         SevenZipContentReadStream stream = null;
 
-        final ProgressHandle progress = ProgressHandleFactory.createHandle(
-                NbBundle.getMessage(SevenZipExtractor.class, "EmbeddedFileExtractorIngestModule.ArchiveExtractor.moduleName"));
+        final ProgressHandle progress = ProgressHandle.createHandle(Bundle.EmbeddedFileExtractorIngestModule_ArchiveExtractor_moduleName());
         int processedItems = 0;
 
         boolean progressStarted = false;
@@ -773,8 +759,8 @@ class SevenZipExtractor {
         /**
          *
          * @param localPathRoot Path in module output folder that files will be
-         * saved to
-         * @param archiveFile Archive file being extracted
+         *                      saved to
+         * @param archiveFile   Archive file being extracted
          * @param fileManager
          */
         UnpackedTree(String localPathRoot, AbstractFile archiveFile) {
@@ -1033,7 +1019,7 @@ class SevenZipExtractor {
         /**
          * Add a new archive to track of depth
          *
-         * @param parent parent archive or null
+         * @param parent   parent archive or null
          * @param objectId object id of the new archive
          *
          * @return the archive added

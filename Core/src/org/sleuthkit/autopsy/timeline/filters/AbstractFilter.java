@@ -60,18 +60,17 @@ public abstract class AbstractFilter implements Filter {
 
     @Override
     public boolean isDisabled() {
-        return disabled.get();
+        return disabledProperty().get();
+    }
+
+    
+
+    @Override
+    public boolean isActive() {
+        return activeProperty().get();
     }
 
     @Override
-    public String getStringCheckBox() {
-        return "[" + (isSelected() ? "x" : " ") + "]"; // NON-NLS
-    }
-
-    public boolean isActive() {
-        return activeProperty.get();
-    }
-
     public BooleanBinding activeProperty() {
         return activeProperty;
     }

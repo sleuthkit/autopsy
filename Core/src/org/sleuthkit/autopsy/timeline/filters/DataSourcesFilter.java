@@ -18,9 +18,9 @@
  */
 package org.sleuthkit.autopsy.timeline.filters;
 
-import java.util.Comparator;
-import java.util.stream.Collectors;
+import java.util.function.Predicate;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
 import javafx.beans.value.ObservableBooleanValue;
 import org.openide.util.NbBundle;
 
@@ -29,19 +29,23 @@ import org.openide.util.NbBundle;
  */
 public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
 
+    //keep references to the overridden properties so they don't get GC'd
+    private final BooleanBinding activePropertyOverride;
+    private final BooleanBinding disabledPropertyOverride;
+
     public DataSourcesFilter() {
-        setSelected(false);
+        disabledPropertyOverride = Bindings.or(super.disabledProperty(), Bindings.size(getSubFilters()).lessThanOrEqualTo(1));
+        activePropertyOverride = super.activeProperty().and(Bindings.not(disabledPropertyOverride));
     }
 
     @Override
     public DataSourcesFilter copyOf() {
         final DataSourcesFilter filterCopy = new DataSourcesFilter();
+        //add a copy of each subfilter
+        getSubFilters().forEach(dataSourceFilter -> filterCopy.addSubFilter(dataSourceFilter.copyOf()));
+        //these need to happen after the listeners fired by adding the subfilters 
         filterCopy.setSelected(isSelected());
         filterCopy.setDisabled(isDisabled());
-        //add a copy of each subfilter
-        this.getSubFilters().forEach((DataSourceFilter t) -> {
-            filterCopy.addSubFilter(t.copyOf());
-        });
 
         return filterCopy;
     }
@@ -50,32 +54,6 @@ public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
     @NbBundle.Messages("DataSourcesFilter.displayName.text=Data Source")
     public String getDisplayName() {
         return Bundle.DataSourcesFilter_displayName_text();
-    }
-
-    @Override
-    public String getHTMLReportString() {
-        //move this logic into SaveSnapshot
-        String string = getDisplayName() + getStringCheckBox();
-        if (getSubFilters().isEmpty() == false) {
-            string = string + " : " + getSubFilters().stream()
-                    .filter(Filter::isSelected)
-                    .map(Filter::getHTMLReportString)
-                    .collect(Collectors.joining("</li><li>", "<ul><li>", "</li></ul>")); // NON-NLS
-        }
-        return string;
-    }
-
-    public void addSubFilter(DataSourceFilter dataSourceFilter) {
-        if (getSubFilters().stream().map(DataSourceFilter.class::cast)
-                .map(DataSourceFilter::getDataSourceID)
-                .filter(t -> t == dataSourceFilter.getDataSourceID())
-                .findAny().isPresent() == false) {
-            getSubFilters().add(dataSourceFilter);
-            getSubFilters().sort(Comparator.comparing(DataSourceFilter::getDisplayName));
-        }
-        if (getSubFilters().size() > 1) {
-            setSelected(Boolean.TRUE);
-        }
     }
 
     @Override
@@ -103,7 +81,16 @@ public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
 
     @Override
     public ObservableBooleanValue disabledProperty() {
-        return Bindings.or(super.disabledProperty(), Bindings.size(getSubFilters()).lessThanOrEqualTo(1));
+        return disabledPropertyOverride;
     }
 
+    @Override
+    public BooleanBinding activeProperty() {
+        return activePropertyOverride;
+    }
+
+    @Override
+    Predicate<DataSourceFilter> getDuplicatePredicate(DataSourceFilter subfilter) {
+        return dataSourcefilter -> dataSourcefilter.getDataSourceID() == subfilter.getDataSourceID();
+    }
 }

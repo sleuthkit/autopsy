@@ -28,7 +28,6 @@ import javafx.scene.image.Image;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -75,7 +74,7 @@ public class VideoFile extends DrawableFile {
 
         if (cacheFile.exists() == false || cacheFile.length() < getAbstractFile().getSize()) {
             Files.createParentDirs(cacheFile);
-            ProgressHandle progressHandle = ProgressHandleFactory.createHandle(Bundle.VideoFile_getMedia_progress());
+            ProgressHandle progressHandle = ProgressHandle.createHandle(Bundle.VideoFile_getMedia_progress());
             progressHandle.start(100);
             ContentUtils.writeToFile(this.getAbstractFile(), cacheFile, progressHandle, null, true);
             progressHandle.finish();

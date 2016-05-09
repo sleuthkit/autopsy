@@ -50,7 +50,6 @@ import javax.swing.JOptionPane;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.Interval;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
@@ -59,7 +58,7 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.CancellationProgressTask;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.ArtifactEventType;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.FileSystemTypes;
@@ -105,7 +104,7 @@ public class EventsRepository {
 
     private final LoadingCache<Object, Long> maxCache;
     private final LoadingCache<Object, Long> minCache;
-    private final LoadingCache<Long, TimeLineEvent> idToEventCache;
+    private final LoadingCache<Long, SingleEvent> idToEventCache;
     private final LoadingCache<ZoomParams, Map<EventType, Long>> eventCountsCache;
     private final LoadingCache<ZoomParams, List<EventStripe>> eventStripeCache;
 
@@ -179,11 +178,11 @@ public class EventsRepository {
 
     }
 
-    public TimeLineEvent getEventById(Long eventID) {
+    public SingleEvent getEventById(Long eventID) {
         return idToEventCache.getUnchecked(eventID);
     }
 
-    synchronized public Set<TimeLineEvent> getEventsById(Collection<Long> eventIDs) {
+    synchronized public Set<SingleEvent> getEventsById(Collection<Long> eventIDs) {
         return eventIDs.stream()
                 .map(idToEventCache::getUnchecked)
                 .collect(Collectors.toSet());
@@ -315,11 +314,6 @@ public class EventsRepository {
         return SQLHelper.getSQLWhere(f1).equals(SQLHelper.getSQLWhere(f2));
     }
 
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    public boolean isRebuilding() {
-        return dbWorker.isRunning();
-    }
-
     /**
      *
      * rebuild the entire repo.
@@ -446,8 +440,8 @@ public class EventsRepository {
                 progressHandle.finish();
             }
             progressHandle = cancellable
-                    ? ProgressHandleFactory.createHandle(title, this::requestCancel)
-                    : ProgressHandleFactory.createHandle(title);
+                    ? ProgressHandle.createHandle(title, this::requestCancel)
+                    : ProgressHandle.createHandle(title);
 
             if (workDone < 0) {
                 progressHandle.start();

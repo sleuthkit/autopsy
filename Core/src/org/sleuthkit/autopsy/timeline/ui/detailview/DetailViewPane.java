@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-15 Basis Technology Corp.
+ * Copyright 2014-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,212 +18,186 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
-import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
-import javafx.geometry.Orientation;
 import javafx.scene.chart.Axis;
-import javafx.scene.chart.XYChart;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
-import javafx.scene.control.CustomMenuItem;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuButton;
-import javafx.scene.control.MultipleSelectionModel;
 import javafx.scene.control.RadioButton;
-import javafx.scene.control.ScrollBar;
-import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.Slider;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
-import javafx.scene.control.TreeItem;
-import javafx.scene.effect.Effect;
-import static javafx.scene.input.KeyCode.DOWN;
-import static javafx.scene.input.KeyCode.KP_DOWN;
-import static javafx.scene.input.KeyCode.KP_UP;
-import static javafx.scene.input.KeyCode.PAGE_DOWN;
-import static javafx.scene.input.KeyCode.PAGE_UP;
-import static javafx.scene.input.KeyCode.UP;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
+import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.control.action.Action;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
+import org.sleuthkit.autopsy.timeline.utils.MappedList;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 /**
- * Controller class for a {@link EventDetailsChart} based implementation of a
- * TimeLineView.
+ * Controller class for a DetailsChart based implementation of a timeline view.
  *
- * This class listens to changes in the assigned {@link FilteredEventsModel} and
- * updates the internal {@link EventDetailsChart} to reflect the currently
- * requested events.
+ * This class listens to changes in the assigned FilteredEventsModel and updates
+ * the internal DetailsChart to reflect the currently requested view settings.
  *
- * Concurrency Policy: Access to the private members clusterChart, dateAxis,
- * EventTypeMap, and dataSets is all linked directly to the ClusterChart which
- * must only be manipulated on the JavaFx thread.
+ * Conceptually this view visualizes trees of events grouped by type and
+ * description as a set of nested rectangles with their positions along the
+ * x-axis tied to their times, and their vertical positions arbitrary but
+ * constrained by the heirarchical relationships of the tree.The root of the
+ * trees are EventStripes, which contain EventCluster, which contain more finely
+ * grouped EventStripes, etc, etc. The leaves of the trees are EventClusters or
+ * SingleEvents.
  */
-public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStripe, EventBundleNodeBase<?, ?, ?>, EventDetailsChart> {
+public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStripe, EventNodeBase<?>, DetailsChart> {
 
     private final static Logger LOGGER = Logger.getLogger(DetailViewPane.class.getName());
 
-    private static final double LINE_SCROLL_PERCENTAGE = .10;
-    private static final double PAGE_SCROLL_PERCENTAGE = .70;
+    private final DateAxis detailsChartDateAxis = new DateAxis();
+    private final DateAxis pinnedDateAxis = new DateAxis();
 
-    private final DateAxis dateAxis = new DateAxis();
-    private final Axis<EventStripe> verticalAxis = new EventAxis();
-    private final ScrollBar vertScrollBar = new ScrollBar();
-    private final Region scrollBarSpacer = new Region();
+    @NbBundle.Messages("DetailViewPane.primaryLaneLabel.text=All Events (Filtered)")
+    private final Axis<EventStripe> verticalAxis = new EventAxis<>(Bundle.DetailViewPane_primaryLaneLabel_text());
 
-    private MultipleSelectionModel<TreeItem<EventBundle<?>>> treeSelectionModel;
-    private final ObservableList<EventBundleNodeBase<?, ?, ?>> highlightedNodes = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
+    /**
+     * ObservableList of events selected in this detail view. It is
+     * automatically mapped from the list of nodes selected in this view.
+     */
+    private final MappedList<TimeLineEvent, EventNodeBase<?>> selectedEvents;
 
-    public ObservableList<EventStripe> getEventStripes() {
-        return chart.getEventStripes();
+    /**
+     * Constructor for a DetailViewPane
+     *
+     * @param controller       the Controller to use
+     * @param partPane         the Pane that represents the smaller part of the
+     *                         time unit displayed on the horizontal axis
+     * @param contextPane      the Pane that represents the larger/contextual
+     *                         part of the time unit displayed on the horizontal
+     *                         axis
+     * @param bottomLeftSpacer a spacer to keep everything aligned.
+     */
+    public DetailViewPane(TimeLineController controller) {
+        super(controller);
+        this.selectedEvents = new MappedList<>(getSelectedNodes(), EventNodeBase<?>::getEvent);
+
+        //initialize chart;
+        setChart(new DetailsChart(controller, detailsChartDateAxis, pinnedDateAxis, verticalAxis, getSelectedNodes()));
+        setSettingsNodes(new DetailViewSettingsPane(getChart().getLayoutSettings()).getChildrenUnmodifiable());
+
+        //bind layout fo axes and spacers
+        detailsChartDateAxis.getTickMarks().addListener((Observable observable) -> layoutDateLabels());
+        detailsChartDateAxis.getTickSpacing().addListener(observable -> layoutDateLabels());
+        verticalAxis.setAutoRanging(false); //prevent XYChart.updateAxisRange() from accessing dataSeries on JFX thread causing ConcurrentModificationException
+
+        getSelectedNodes().addListener((Observable observable) -> {
+            //update selected nodes highlight
+            getChart().setHighlightPredicate(getSelectedNodes()::contains);
+
+            //update controllers list of selected event ids when view's selection changes.
+            getController().selectEventIDs(getSelectedNodes().stream()
+                    .flatMap(detailNode -> detailNode.getEventIDs().stream())
+                    .collect(Collectors.toList()));
+        });
+    }
+
+    /*
+     * Get all the trees of events flattened into a single list, but only
+     * including EventStripes and any leaf SingleEvents, since, EventClusters
+     * contain no interesting non-time related information.
+     */
+    public ObservableList<TimeLineEvent> getAllNestedEvents() {
+        return getChart().getAllNestedEvents();
+    }
+
+    /*
+     * Get a list of the events that are selected in thes view.
+     */
+    public ObservableList<TimeLineEvent> getSelectedEvents() {
+        return selectedEvents;
+    }
+
+    /**
+     * Observe the list of events that should be highlighted in this view.
+     *
+     *
+     * @param highlightedEvents the ObservableList of events that should be
+     *                          highlighted in this view.
+     */
+    public void setHighLightedEvents(ObservableList<TimeLineEvent> highlightedEvents) {
+        highlightedEvents.addListener((Observable observable) -> {
+            /*
+             * build a predicate that matches events with the same description
+             * as any of the events in highlightedEvents or which are selected
+             */
+            Predicate<EventNodeBase<?>> highlightPredicate =
+                    highlightedEvents.stream() // => events
+                    .map(TimeLineEvent::getDescription)// => event descriptions 
+                    .map(new Function<String, Predicate<EventNodeBase<?>>>() {
+                        @Override
+                        public Predicate<EventNodeBase<?>> apply(String description) {
+                            return eventNode -> StringUtils.equalsIgnoreCase(eventNode.getDescription(), description);
+                        }
+                    })// => predicates that match strings agains the descriptions of the events in highlightedEvents
+                    .reduce(getSelectedNodes()::contains, Predicate::or); // => predicate that matches an of the descriptions or selected nodes
+            getChart().setHighlightPredicate(highlightPredicate); //use this predicate to highlight nodes
+        });
     }
 
     @Override
-    protected void resetData() {
-        for (XYChart.Series<DateTime, EventStripe> s : dataSeries) {
-            s.getData().forEach(chart::removeDataItem);
-            s.getData().clear();
-        }
-        Platform.runLater(() -> {
-            vertScrollBar.setValue(0);
-        });
-
+    final protected DateAxis getXAxis() {
+        return detailsChartDateAxis;
     }
 
-    public DetailViewPane(TimeLineController controller, Pane partPane, Pane contextPane, Region bottomLeftSpacer) {
-        super(controller, partPane, contextPane, bottomLeftSpacer);
-        //initialize chart;
-        chart = new EventDetailsChart(controller, dateAxis, verticalAxis, selectedNodes);
-        setChartClickHandler(); //can we push this into chart
-        chart.setData(dataSeries);
-        setCenter(chart);
-
-        settingsNodes = new ArrayList<>(new DetailViewSettingsPane().getChildrenUnmodifiable());
-        //bind layout fo axes and spacers
-        dateAxis.setTickLabelGap(0);
-        dateAxis.setAutoRanging(false);
-        dateAxis.setTickLabelsVisible(false);
-        dateAxis.getTickMarks().addListener((Observable observable) -> layoutDateLabels());
-        dateAxis.getTickSpacing().addListener(observable -> layoutDateLabels());
-
-        verticalAxis.setAutoRanging(false); //prevent XYChart.updateAxisRange() from accessing dataSeries on JFX thread causing ConcurrentModificationException
-        bottomLeftSpacer.minWidthProperty().bind(verticalAxis.widthProperty().add(verticalAxis.tickLengthProperty()));
-        bottomLeftSpacer.prefWidthProperty().bind(verticalAxis.widthProperty().add(verticalAxis.tickLengthProperty()));
-        bottomLeftSpacer.maxWidthProperty().bind(verticalAxis.widthProperty().add(verticalAxis.tickLengthProperty()));
-
-        scrollBarSpacer.minHeightProperty().bind(dateAxis.heightProperty());
-
-        //configure scrollbar
-        vertScrollBar.setOrientation(Orientation.VERTICAL);
-        vertScrollBar.maxProperty().bind(chart.maxVScrollProperty().subtract(chart.heightProperty()));
-        vertScrollBar.visibleAmountProperty().bind(chart.heightProperty());
-        vertScrollBar.visibleProperty().bind(vertScrollBar.visibleAmountProperty().greaterThanOrEqualTo(0));
-        VBox.setVgrow(vertScrollBar, Priority.ALWAYS);
-        setRight(new VBox(vertScrollBar, scrollBarSpacer));
-
-        //interpret scroll events to the scrollBar
-        this.setOnScroll(scrollEvent ->
-                vertScrollBar.valueProperty().set(clampScroll(vertScrollBar.getValue() - scrollEvent.getDeltaY())));
-
-        //request focus for keyboard scrolling
-        setOnMouseClicked(mouseEvent -> requestFocus());
-
-        //interpret scroll related keys to scrollBar
-        this.setOnKeyPressed((KeyEvent t) -> {
-            switch (t.getCode()) {
-                case PAGE_UP:
-                    incrementScrollValue(-PAGE_SCROLL_PERCENTAGE);
-                    t.consume();
-                    break;
-                case PAGE_DOWN:
-                    incrementScrollValue(PAGE_SCROLL_PERCENTAGE);
-                    t.consume();
-                    break;
-                case KP_UP:
-                case UP:
-                    incrementScrollValue(-LINE_SCROLL_PERCENTAGE);
-                    t.consume();
-                    break;
-                case KP_DOWN:
-                case DOWN:
-                    incrementScrollValue(LINE_SCROLL_PERCENTAGE);
-                    t.consume();
-                    break;
-            }
-        });
-
-        //scrollbar value change handler.  This forwards changes in scroll bar to chart
-        this.vertScrollBar.valueProperty().addListener(observable -> chart.setVScroll(vertScrollBar.getValue()));
-
-        //maintain highlighted effect on correct nodes
-        highlightedNodes.addListener((ListChangeListener.Change<? extends EventBundleNodeBase<?, ?, ?>> change) -> {
-            while (change.next()) {
-                change.getAddedSubList().forEach(node -> {
-                    node.applyHighlightEffect(true);
-                });
-                change.getRemoved().forEach(node -> {
-                    node.applyHighlightEffect(false);
-                });
-            }
-        });
-
-        selectedNodes.addListener((Observable observable) -> {
-            highlightedNodes.clear();
-            selectedNodes.stream().forEach((tn) -> {
-                for (EventBundleNodeBase<?, ?, ?> n : chart.getNodes((EventBundleNodeBase<?, ?, ?> t) ->
-                        t.getDescription().equals(tn.getDescription()))) {
-                    highlightedNodes.add(n);
-                }
-            });
-        });
+    /**
+     * Get a new Action that will unhide events with the given description.
+     *
+     * @param description    the description to unhide
+     * @param descriptionLoD the description level of detail to match
+     *
+     * @return a new Action that will unhide events with the given description.
+     */
+    public Action newUnhideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
+        return new UnhideDescriptionAction(description, descriptionLoD, getChart());
     }
 
-    private void incrementScrollValue(double factor) {
-        vertScrollBar.valueProperty().set(clampScroll(vertScrollBar.getValue() + factor * chart.getHeight()));
+    /**
+     * Get a new Action that will hide events with the given description.
+     *
+     * @param description    the description to hide
+     * @param descriptionLoD the description level of detail to match
+     *
+     * @return a new Action that will hide events with the given description.
+     */
+    public Action newHideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
+        return new HideDescriptionAction(description, descriptionLoD, getChart());
     }
 
-    private Double clampScroll(Double value) {
-        return Math.max(0, Math.min(vertScrollBar.getMax() + 50, value));
-    }
-
-    public void setSelectionModel(MultipleSelectionModel<TreeItem<EventBundle<?>>> selectionModel) {
-        this.treeSelectionModel = selectionModel;
-
-        treeSelectionModel.getSelectedItems().addListener((Observable observable) -> {
-            highlightedNodes.clear();
-            for (TreeItem<EventBundle<?>> tn : treeSelectionModel.getSelectedItems()) {
-
-                for (EventBundleNodeBase<?, ?, ?> n : chart.getNodes((EventBundleNodeBase<?, ?, ?> t) ->
-                        t.getDescription().equals(tn.getValue().getDescription()))) {
-                    highlightedNodes.add(n);
-                }
-            }
-        });
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    @Override
+    protected void clearChartData() {
+        getChart().reset();
     }
 
     @Override
@@ -232,41 +206,40 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
     }
 
     @Override
-    protected Axis<EventStripe> getYAxis() {
+    final protected Axis<EventStripe> getYAxis() {
         return verticalAxis;
     }
 
     @Override
-    protected Axis<DateTime> getXAxis() {
-        return dateAxis;
-    }
-
-    @Override
     protected double getTickSpacing() {
-        return dateAxis.getTickSpacing().get();
+        return detailsChartDateAxis.getTickSpacing().get();
     }
 
     @Override
     protected String getTickMarkLabel(DateTime value) {
-        return dateAxis.getTickMarkLabel(value);
+        return detailsChartDateAxis.getTickMarkLabel(value);
     }
 
     @Override
-    protected Task<Boolean> getUpdateTask() {
+    protected Task<Boolean> getNewUpdateTask() {
         return new DetailsUpdateTask();
     }
 
     @Override
-    protected Effect getSelectionEffect() {
-        return null;
-    }
-
-    @Override
-    protected void applySelectionEffect(EventBundleNodeBase<?, ?, ?> c1, Boolean selected) {
+    protected void applySelectionEffect(EventNodeBase<?> c1, Boolean selected) {
         c1.applySelectionEffect(selected);
     }
 
-    private class DetailViewSettingsPane extends HBox {
+    @Override
+    protected double getAxisMargin() {
+        return 0;
+    }
+
+    /**
+     * A Pane that contains widgets to adjust settings specific to a
+     * DetailViewPane
+     */
+    static private class DetailViewSettingsPane extends HBox {
 
         @FXML
         private RadioButton hiddenRadio;
@@ -299,47 +272,43 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
         private MenuButton advancedLayoutOptionsButtonLabel;
 
         @FXML
-        private CustomMenuItem bandByTypeBoxMenuItem;
+        private ToggleButton pinnedEventsToggle;
 
-        @FXML
-        private CustomMenuItem oneEventPerRowBoxMenuItem;
+        private final DetailsChartLayoutSettings layoutSettings;
 
-        @FXML
-        private CustomMenuItem truncateAllBoxMenuItem;
-
-        @FXML
-        private CustomMenuItem truncateSliderLabelMenuItem;
-
-        @FXML
-        private CustomMenuItem showRadioMenuItem;
-
-        @FXML
-        private CustomMenuItem countsRadioMenuItem;
-
-        @FXML
-        private CustomMenuItem hiddenRadioMenuItem;
-
-        @FXML
-        private SeparatorMenuItem descVisibilitySeparatorMenuItem;
-
-        DetailViewSettingsPane() {
+        DetailViewSettingsPane(DetailsChartLayoutSettings layoutSettings) {
+            this.layoutSettings = layoutSettings;
             FXMLConstructor.construct(DetailViewSettingsPane.this, "DetailViewSettingsPane.fxml"); // NON-NLS
         }
 
+        @NbBundle.Messages({
+            "DetailViewPane.truncateSliderLabel.text=max description width (px):",
+            "DetailViewPane.advancedLayoutOptionsButtonLabel.text=Advanced Layout Options",
+            "DetailViewPane.bandByTypeBox.text=Band by Type",
+            "DetailViewPane.oneEventPerRowBox.text=One Per Row",
+            "DetailViewPane.truncateAllBox.text=Truncate Descriptions",
+            "DetailViewPane.showRadio.text=Show Full Description",
+            "DetailViewPane.countsRadio.text=Show Counts Only",
+            "DetailViewPane.hiddenRadio.text=Hide Description"})
         @FXML
         void initialize() {
             assert bandByTypeBox != null : "fx:id=\"bandByTypeBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
             assert oneEventPerRowBox != null : "fx:id=\"oneEventPerRowBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
             assert truncateAllBox != null : "fx:id=\"truncateAllBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
             assert truncateWidthSlider != null : "fx:id=\"truncateAllSlider\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
-            bandByTypeBox.selectedProperty().bindBidirectional(chart.bandByTypeProperty());
-            truncateAllBox.selectedProperty().bindBidirectional(chart.truncateAllProperty());
-            oneEventPerRowBox.selectedProperty().bindBidirectional(chart.oneEventPerRowProperty());
+            assert pinnedEventsToggle != null : "fx:id=\"pinnedEventsToggle\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
+
+            //bind widgets to settings object properties
+            bandByTypeBox.selectedProperty().bindBidirectional(layoutSettings.bandByTypeProperty());
+
+            oneEventPerRowBox.selectedProperty().bindBidirectional(layoutSettings.oneEventPerRowProperty());
+            truncateAllBox.selectedProperty().bindBidirectional(layoutSettings.truncateAllProperty());
             truncateSliderLabel.disableProperty().bind(truncateAllBox.selectedProperty().not());
-            truncateSliderLabel.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.truncateSliderLabel.text"));
-            final InvalidationListener sliderListener = o -> {
+            pinnedEventsToggle.selectedProperty().bindBidirectional(layoutSettings.pinnedLaneShowing());
+
+            final InvalidationListener sliderListener = observable -> {
                 if (truncateWidthSlider.isValueChanging() == false) {
-                    chart.getTruncateWidth().set(truncateWidthSlider.getValue());
+                    layoutSettings.truncateWidthProperty().set(truncateWidthSlider.getValue());
                 }
             };
             truncateWidthSlider.valueProperty().addListener(sliderListener);
@@ -347,44 +316,24 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
 
             descrVisibility.selectedToggleProperty().addListener((observable, oldToggle, newToggle) -> {
                 if (newToggle == countsRadio) {
-                    chart.descrVisibilityProperty().set(DescriptionVisibility.COUNT_ONLY);
+                    layoutSettings.descrVisibilityProperty().set(DescriptionVisibility.COUNT_ONLY);
                 } else if (newToggle == showRadio) {
-                    chart.descrVisibilityProperty().set(DescriptionVisibility.SHOWN);
+                    layoutSettings.descrVisibilityProperty().set(DescriptionVisibility.SHOWN);
                 } else if (newToggle == hiddenRadio) {
-                    chart.descrVisibilityProperty().set(DescriptionVisibility.HIDDEN);
+                    layoutSettings.descrVisibilityProperty().set(DescriptionVisibility.HIDDEN);
                 }
             });
 
-            advancedLayoutOptionsButtonLabel.setText(
-                    NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.advancedLayoutOptionsButtonLabel.text"));
-            bandByTypeBox.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.bandByTypeBox.text"));
-            bandByTypeBoxMenuItem.setText(
-                    NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.bandByTypeBoxMenuItem.text"));
-            oneEventPerRowBox.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.oneEventPerRowBox.text"));
-            oneEventPerRowBoxMenuItem.setText(
-                    NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.oneEventPerRowBoxMenuItem.text"));
-            truncateAllBox.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPan.truncateAllBox.text"));
-            truncateAllBoxMenuItem.setText(
-                    NbBundle.getMessage(DetailViewPane.class, "DetailViewPan.truncateAllBoxMenuItem.text"));
-            truncateSliderLabelMenuItem.setText(
-                    NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.truncateSlideLabelMenuItem.text"));
-            descVisibilitySeparatorMenuItem.setText(
-                    NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.descVisSeparatorMenuItem.text"));
-            showRadioMenuItem.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.showRadioMenuItem.text"));
-            showRadio.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.showRadio.text"));
-            countsRadioMenuItem.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.countsRadioMenuItem.text"));
-            countsRadio.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.countsRadio.text"));
-            hiddenRadioMenuItem.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.hiddenRadioMenuItem.text"));
-            hiddenRadio.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.hiddenRadio.text"));
+            //Assign localized labels
+            truncateSliderLabel.setText(Bundle.DetailViewPane_truncateSliderLabel_text());
+            advancedLayoutOptionsButtonLabel.setText(Bundle.DetailViewPane_advancedLayoutOptionsButtonLabel_text());
+            bandByTypeBox.setText(Bundle.DetailViewPane_bandByTypeBox_text());
+            oneEventPerRowBox.setText(Bundle.DetailViewPane_oneEventPerRowBox_text());
+            truncateAllBox.setText(Bundle.DetailViewPane_truncateAllBox_text());
+            showRadio.setText(Bundle.DetailViewPane_showRadio_text());
+            countsRadio.setText(Bundle.DetailViewPane_countsRadio_text());
+            hiddenRadio.setText(Bundle.DetailViewPane_hiddenRadio_text());
         }
-    }
-
-    public Action newUnhideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
-        return chart.new UnhideDescriptionAction(description, descriptionLoD);
-    }
-
-    public Action newHideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
-        return chart.new HideDescriptionAction(description, descriptionLoD);
     }
 
     @NbBundle.Messages({
@@ -407,20 +356,25 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
             if (isCancelled()) {
                 return null;
             }
+            FilteredEventsModel eventsModel = getEventsModel();
 
-            resetChart(getTimeRange());
+            //clear the chart and set the horixontal axis
+            resetChart(eventsModel.getTimeRange());
 
             updateMessage(Bundle.DetailViewPane_loggedTask_queryDb());
-            List<EventStripe> eventStripes = filteredEvents.getEventStripes();
-            if (eventStripes.size() > 2000) {
-                Task<ButtonType> task = new Task<ButtonType>() {
 
+            //get the event stripes to be displayed
+            List<EventStripe> eventStripes = eventsModel.getEventStripes();
+            final int size = eventStripes.size();
+            //if there are too many stipes show a confirmation dialog
+            if (size > 2000) {
+                Task<ButtonType> task = new Task<ButtonType>() {
                     @Override
                     protected ButtonType call() throws Exception {
                         ButtonType ContinueButtonType = new ButtonType(Bundle.DetailViewPane_loggedTask_continueButton(), ButtonBar.ButtonData.OK_DONE);
                         ButtonType back = new ButtonType(Bundle.DetailViewPane_loggedTask_backButton(), ButtonBar.ButtonData.CANCEL_CLOSE);
 
-                        Alert alert = new Alert(Alert.AlertType.WARNING, Bundle.DetailViewPane_loggedTask_prompt(eventStripes.size()), ContinueButtonType, back);
+                        Alert alert = new Alert(Alert.AlertType.WARNING, Bundle.DetailViewPane_loggedTask_prompt(size), ContinueButtonType, back);
                         alert.setHeaderText("");
                         alert.initModality(Modality.APPLICATION_MODAL);
                         alert.initOwner(getScene().getWindow());
@@ -431,20 +385,21 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
                         return orElse;
                     }
                 };
+                //show dialog on JFX thread and block this thread until the dialog is dismissed.
                 Platform.runLater(task);
-                ButtonType get = task.get();
+                task.get();
             }
+
             updateMessage(Bundle.DetailViewPane_loggedTask_updateUI());
-            final int size = eventStripes.size();
+
+            //add all the stripes
             for (int i = 0; i < size; i++) {
                 if (isCancelled()) {
                     return null;
                 }
                 updateProgress(i, size);
-                final EventStripe cluster = eventStripes.get(i);
-                final XYChart.Data<DateTime, EventStripe> dataItem = new XYChart.Data<>(new DateTime(cluster.getStartMillis()), cluster);
-                getSeries(cluster.getEventType()).getData().add(dataItem);
-                chart.addDataItem(dataItem);
+                final EventStripe stripe = eventStripes.get(i);
+                Platform.runLater(() -> getChart().addStripe(stripe));
             }
 
             return eventStripes.isEmpty() == false;
@@ -453,12 +408,13 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
         @Override
         protected void cancelled() {
             super.cancelled();
-            controller.retreat();
+            getController().retreat();
         }
 
         @Override
         protected void setDateAxisValues(Interval timeRange) {
-            dateAxis.setRange(timeRange, true);
+            detailsChartDateAxis.setRange(timeRange, true);
+            pinnedDateAxis.setRange(timeRange, true);
         }
     }
 }
