@@ -74,21 +74,6 @@ public interface Filter {
     String getDisplayName();
 
     /**
-     * get a representation of this filter (and it's state) as a HTML string
-     *
-     * @return a html representation of this filter
-     */
-    String getHTMLReportString();
-
-    /**
-     * get an Ascii representation of this filter's selected state: ie [x] for
-     * selected or [ ] for not selected
-     *
-     * @return an Ascii representation of this filter's selected state
-     */
-    String getStringCheckBox();
-
-    /**
      * is this filter selected
      *
      * @return true if this filter is selected
