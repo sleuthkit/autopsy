@@ -392,6 +392,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         updateExtList();
         extTableModel.resync();
         this.userExtTextField.setText("");
+        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_addExtButtonActionPerformed
 
     private void addTypeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addTypeButtonActionPerformed
