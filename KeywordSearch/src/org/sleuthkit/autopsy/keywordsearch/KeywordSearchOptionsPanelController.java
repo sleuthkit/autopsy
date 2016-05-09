@@ -18,15 +18,13 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import javax.swing.JComponent;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 @OptionsPanelController.TopLevelRegistration(
@@ -42,18 +40,33 @@ public final class KeywordSearchOptionsPanelController extends OptionsPanelContr
     private boolean changed;
     private static final Logger logger = Logger.getLogger(KeywordSearchGlobalSettingsPanel.class.getName());
 
+    /**
+     * Component should load its data here.
+     */
     @Override
     public void update() {
         getPanel().load();
         changed = false;
     }
 
+    /**
+     * This method is called when both the Ok and Apply buttons are pressed. It
+     * applies to any of the panels that have been opened in the process of
+     * using the options pane.
+     */
     @Override
     public void applyChanges() {
-        getPanel().store();
-        changed = false;
+        if (changed) {
+            getPanel().store();
+            changed = false;
+        }
     }
 
+    /**
+     * This method is called when the Cancel button is pressed. It applies to
+     * any of the panels that have been opened in the process of using the
+     * options pane.
+     */
     @Override
     public void cancel() {
         getPanel().cancel();
@@ -64,6 +77,12 @@ public final class KeywordSearchOptionsPanelController extends OptionsPanelContr
         return getPanel().valid();
     }
 
+    /**
+     * Used to determine whether any changes have been made to this controller's
+     * panel.
+     *
+     * @return Whether or not a change has been made.
+     */
     @Override
     public boolean isChanged() {
         return changed;
@@ -92,6 +111,14 @@ public final class KeywordSearchOptionsPanelController extends OptionsPanelContr
     private KeywordSearchGlobalSettingsPanel getPanel() {
         if (panel == null) {
             panel = new KeywordSearchGlobalSettingsPanel();
+            panel.addPropertyChangeListener(new PropertyChangeListener() {
+                @Override
+                public void propertyChange(PropertyChangeEvent evt) {
+                    if (evt.getPropertyName().equals(OptionsPanelController.PROP_CHANGED)) {
+                        changed();
+                    }
+                }
+            });
         }
         return panel;
     }
@@ -99,25 +126,8 @@ public final class KeywordSearchOptionsPanelController extends OptionsPanelContr
     void changed() {
         if (!changed) {
             changed = true;
-
-            try {
-                pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, false, true);
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "KeywordSearchOptionsPanelController listener threw exception", e); //NON-NLS
-                MessageNotifyUtil.Notify.show(
-                        NbBundle.getMessage(this.getClass(), "KeywordSearchOptionsPanelController.moduleErr"),
-                        NbBundle.getMessage(this.getClass(), "KeywordSearchOptionsPanelController.moduleErr.msg1"),
-                        MessageNotifyUtil.MessageType.ERROR);
-            }
+            pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, false, true);
         }
-        try {
-            pcs.firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "KeywordSearchOptionsPanelController listener threw exception", e); //NON-NLS
-            MessageNotifyUtil.Notify.show(
-                    NbBundle.getMessage(this.getClass(), "KeywordSearchOptionsPanelController.moduleErr"),
-                    NbBundle.getMessage(this.getClass(), "KeywordSearchOptionsPanelController.moduleErr.msg2"),
-                    MessageNotifyUtil.MessageType.ERROR);
-        }
+        pcs.firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
     }
 }

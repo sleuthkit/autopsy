@@ -46,6 +46,7 @@ import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.actions.Back;
 import org.sleuthkit.autopsy.timeline.actions.Forward;
+import org.sleuthkit.autopsy.timeline.ui.HistoryToolBar;
 import org.sleuthkit.autopsy.timeline.ui.StatusBar;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineResultView;
 import org.sleuthkit.autopsy.timeline.ui.TimeZonePanel;
@@ -118,12 +119,13 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
                 }
             });
 
+            HistoryToolBar historyToolBar = new HistoryToolBar(controller);
             final TimeZonePanel timeZonePanel = new TimeZonePanel();
             VBox.setVgrow(timeZonePanel, Priority.SOMETIMES);
 
             final ZoomSettingsPane zoomSettingsPane = new ZoomSettingsPane(controller);
 
-            final VBox leftVBox = new VBox(5, timeZonePanel, zoomSettingsPane, leftTabPane);
+            final VBox leftVBox = new VBox(5, timeZonePanel,historyToolBar, zoomSettingsPane, leftTabPane);
             SplitPane.setResizableWithParent(leftVBox, Boolean.FALSE);
 
             final SplitPane mainSplitPane = new SplitPane(leftVBox, visualizationPanel);

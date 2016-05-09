@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.timeline.filters;
 
 import java.util.Objects;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
@@ -52,11 +51,6 @@ public class DescriptionFilter extends AbstractFilter {
         return getDescriptionLoD().getDisplayName() + ": " + getDescription();
     }
 
-    @Override
-    public String getHTMLReportString() {
-        return getDisplayName() + getStringCheckBox();
-    }
-
     /**
      * @return the descriptionLoD
      */
@@ -72,7 +66,7 @@ public class DescriptionFilter extends AbstractFilter {
     }
 
     @NbBundle.Messages({"DescriptionFilter.mode.exclude=Exclude",
-            "DescriptionFilter.mode.include=Include"})
+        "DescriptionFilter.mode.include=Include"})
     public enum FilterMode {
 
         EXCLUDE(Bundle.DescriptionFilter_mode_exclude()),

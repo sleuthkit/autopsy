@@ -23,7 +23,6 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
-import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -186,8 +185,8 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
                 if (e.equals(currActualExt)) {
                     return false;
                 }
-                return true; //potential mismatch
             }
+            return true; //potential mismatch
         }
 
         return false;

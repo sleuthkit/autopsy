@@ -67,4 +67,19 @@ public class IntervalUtils {
         final Interval newInterval = new Interval(middleOf.minus(halfRange), middleOf.plus(halfRange));
         return newInterval;
     }
+
+    /**
+     * Get an interval the length of the given period, centered around the
+     * center of the given interval.
+     *
+     * @param interval The interval whose center will be the center of the new
+     *                 interval.
+     * @param period   The length of the new interval
+     *
+     * @return An interval the length of the given period, centered around the
+     *         center of the given interval.
+     */
+    static public Interval getIntervalAroundMiddle(Interval interval, ReadablePeriod period) {
+        return getIntervalAround(middleOf(interval), period);
+    }
 }

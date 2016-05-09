@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.timeline.filters;
 
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ObservableBooleanValue;
 import org.openide.util.NbBundle;
@@ -51,19 +50,7 @@ public class HashHitsFilter extends UnionFilter<HashSetFilter> {
         return filterCopy;
     }
 
-    @Override
-    public String getHTMLReportString() {
-        //move this logic into SaveSnapshot
-        String string = getDisplayName() + getStringCheckBox();
-        if (getSubFilters().isEmpty() == false) {
-            string = string + " : " + getSubFilters().stream()
-                    .filter(Filter::isSelected)
-                    .map(Filter::getHTMLReportString)
-                    .collect(Collectors.joining("</li><li>", "<ul><li>", "</li></ul>")); // NON-NLS
-        }
-        return string;
-    }
-
+   
     @Override
     public int hashCode() {
         return 7;

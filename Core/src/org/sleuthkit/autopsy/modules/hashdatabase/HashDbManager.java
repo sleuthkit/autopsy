@@ -729,7 +729,7 @@ public class HashDbManager implements PropertyChangeListener {
             return SleuthkitJNI.hashDatabaseHasLookupIndex(handle);
         }
 
-        boolean hasIndexOnly() throws TskCoreException {
+        public boolean hasIndexOnly() throws TskCoreException {
             return SleuthkitJNI.hashDatabaseIsIndexOnly(handle);
         }
 
