@@ -19,14 +19,6 @@
  */
 package org.sleuthkit.autopsy.report;
 
-import javax.swing.JPanel;
-
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.*;
-import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -37,12 +29,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.logging.Level;
+import javax.swing.JPanel;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.Namespace;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
-import org.apache.commons.lang.StringEscapeUtils;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.datamodel.*;
 
 /**
  * Generates a KML file based on geo coordinates store in blackboard.
@@ -84,7 +82,6 @@ class ReportKML implements GeneralReportModule {
         String reportPath2 = baseReportDir + "ReportKML.txt"; //NON-NLS
         currentCase = Case.getCurrentCase();
         skCase = currentCase.getSleuthkitCase();
-
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportKML.progress.loading"));
         // Check if ingest has finished
         String ingestwarning = "";
@@ -108,6 +105,9 @@ class ReportKML implements GeneralReportModule {
 
                 File f;
                 for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF)) {
+                    if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
+                        return;
+                    }
                     lat = 0;
                     lon = 0;
                     geoPath = "";

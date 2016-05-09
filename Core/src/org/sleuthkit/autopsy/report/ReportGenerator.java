@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -53,7 +52,6 @@ import javax.swing.SwingWorker;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -66,13 +64,13 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.BlackboardAttribute.Type;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
-import org.sleuthkit.datamodel.BlackboardAttribute.Type;
 
 /**
  * Instances of this class use GeneralReportModules, TableReportModules and
@@ -87,9 +85,17 @@ class ReportGenerator {
     private Case currentCase = Case.getCurrentCase();
     private SleuthkitCase skCase = currentCase.getSleuthkitCase();
 
-    private Map<TableReportModule, ReportProgressPanel> tableProgress;
-    private Map<GeneralReportModule, ReportProgressPanel> generalProgress;
-    private Map<FileReportModule, ReportProgressPanel> fileProgress;
+    /**
+     * Only one of the ReportModules below should be non-null for a given report
+     * generator.
+     */
+    private TableReportModule tableReportModule;
+    private GeneralReportModule generalReportModule;
+    private FileReportModule fileReportModule;
+    /**
+     * Progress panel that can be used to check for cancellation.
+     */
+    private ReportProgressPanel progressPanel;
     private Map<Integer, List<Column>> columnHeaderMap;
 
     private String reportPath;
@@ -102,8 +108,6 @@ class ReportGenerator {
     /**
      * Displays the list of errors during report generation in user-friendly
      * way. MessageNotifyUtil used to display bubble notification.
-     *
-     * @param listOfErrors List of strings explaining the errors.
      */
     private void displayReportErrors() {
         if (!errorList.isEmpty()) {
@@ -117,7 +121,15 @@ class ReportGenerator {
         }
     }
 
-    ReportGenerator(Map<TableReportModule, Boolean> tableModuleStates, Map<GeneralReportModule, Boolean> generalModuleStates, Map<FileReportModule, Boolean> fileListModuleStates) {
+    /**
+     * Creates a report generator. Only one of the passed arguments should be
+     * non-null.
+     *
+     * @param tableModule The table report module
+     * @param generalModule The general report module
+     * @param fileListModule The file report module
+     */
+    ReportGenerator(TableReportModule tableModule, GeneralReportModule generalModule, FileReportModule fileListModule) {
         // Create the root reports directory path of the form: <CASE DIRECTORY>/Reports/<Case fileName> <Timestamp>/
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
         Date date = new Date();
@@ -136,10 +148,7 @@ class ReportGenerator {
         }
 
         // Initialize the progress panels
-        generalProgress = new HashMap<>();
-        tableProgress = new HashMap<>();
-        fileProgress = new HashMap<>();
-        setupProgressPanels(tableModuleStates, generalModuleStates, fileListModuleStates);
+        setupProgressPanels(tableModule, generalModule, fileListModule);
         this.columnHeaderMap = new HashMap<>();
     }
 
@@ -147,53 +156,44 @@ class ReportGenerator {
      * Create a ReportProgressPanel for each report generation module selected
      * by the user.
      *
-     * @param tableModuleStates    The enabled/disabled state of each
-     *                             TableReportModule
-     * @param generalModuleStates  The enabled/disabled state of each
-     *                             GeneralReportModule
-     * @param fileListModuleStates The enabled/disabled state of each
-     *                             FileReportModule
+     * @param tableModule    The TableReportModule
+     * @param generalModule  The GeneralReportModule
+     * @param fileListModule The FileReportModule
      */
-    private void setupProgressPanels(Map<TableReportModule, Boolean> tableModuleStates, Map<GeneralReportModule, Boolean> generalModuleStates, Map<FileReportModule, Boolean> fileListModuleStates) {
-        if (null != tableModuleStates) {
-            for (Entry<TableReportModule, Boolean> entry : tableModuleStates.entrySet()) {
-                if (entry.getValue()) {
-                    TableReportModule module = entry.getKey();
-                    String reportFilePath = module.getRelativeFilePath();
-                    if (!reportFilePath.isEmpty()) {
-                        tableProgress.put(module, panel.addReport(module.getName(), reportPath + reportFilePath));
-                    } else {
-                        tableProgress.put(module, panel.addReport(module.getName(), null));
-                    }
-                }
+    private void setupProgressPanels(TableReportModule tableModule, GeneralReportModule generalModule, FileReportModule fileListModule) {
+        /*
+         * Sets ups the progress panels based upon which one is null.
+         */
+        if (null != tableModule) {
+            String reportFilePath = tableModule.getRelativeFilePath();
+            if (!reportFilePath.isEmpty()) {
+                this.tableReportModule = tableModule;
+                this.progressPanel = panel.addReport(tableModule.getName(), reportPath + reportFilePath);
+            } else {
+                this.tableReportModule = tableModule;
+                this.progressPanel = panel.addReport(tableModule.getName(), null);
             }
         }
 
-        if (null != generalModuleStates) {
-            for (Entry<GeneralReportModule, Boolean> entry : generalModuleStates.entrySet()) {
-                if (entry.getValue()) {
-                    GeneralReportModule module = entry.getKey();
-                    String reportFilePath = module.getRelativeFilePath();
-                    if (!reportFilePath.isEmpty()) {
-                        generalProgress.put(module, panel.addReport(module.getName(), reportPath + reportFilePath));
-                    } else {
-                        generalProgress.put(module, panel.addReport(module.getName(), null));
-                    }
-                }
+        if (null != generalModule) {
+            String reportFilePath = generalModule.getRelativeFilePath();
+            if (!reportFilePath.isEmpty()) {
+                this.generalReportModule = generalModule;
+                this.progressPanel = panel.addReport(generalModule.getName(), reportPath + reportFilePath);
+            } else {
+                this.generalReportModule = generalModule;
+                this.progressPanel = panel.addReport(generalModule.getName(), null);
             }
         }
 
-        if (null != fileListModuleStates) {
-            for (Entry<FileReportModule, Boolean> entry : fileListModuleStates.entrySet()) {
-                if (entry.getValue()) {
-                    FileReportModule module = entry.getKey();
-                    String reportFilePath = module.getRelativeFilePath();
-                    if (!reportFilePath.isEmpty()) {
-                        fileProgress.put(module, panel.addReport(module.getName(), reportPath + reportFilePath));
-                    } else {
-                        fileProgress.put(module, panel.addReport(module.getName(), null));
-                    }
-                }
+        if (null != fileListModule) {
+            String reportFilePath = fileListModule.getRelativeFilePath();
+            if (!reportFilePath.isEmpty()) {
+                fileReportModule = fileListModule;
+                this.progressPanel = panel.addReport(fileListModule.getName(), reportPath + reportFilePath);
+            } else {
+                fileReportModule = fileListModule;
+                this.progressPanel = panel.addReport(fileListModule.getName(), null);
             }
         }
     }
@@ -236,8 +236,10 @@ class ReportGenerator {
      * Run the GeneralReportModules using a SwingWorker.
      */
     public void generateGeneralReports() {
-        GeneralReportsWorker worker = new GeneralReportsWorker();
-        worker.execute();
+        if (this.generalReportModule != null) {
+            GeneralReportsWorker worker = new GeneralReportsWorker();
+            worker.execute();
+        }
     }
 
     /**
@@ -249,7 +251,7 @@ class ReportGenerator {
      *                               to be included in the report
      */
     public void generateTableReports(Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) {
-        if (!tableProgress.isEmpty() && null != artifactTypeSelections) {
+        if (tableReportModule != null && null != artifactTypeSelections) {
             TableReportsWorker worker = new TableReportsWorker(artifactTypeSelections, tagNameSelections);
             worker.execute();
         }
@@ -262,7 +264,7 @@ class ReportGenerator {
      *                    file in the report.
      */
     public void generateFileListReports(Map<FileReportDataTypes, Boolean> enabledInfo) {
-        if (!fileProgress.isEmpty() && null != enabledInfo) {
+        if (fileReportModule != null && null != enabledInfo) {
             List<FileReportDataTypes> enabled = new ArrayList<>();
             for (Entry<FileReportDataTypes, Boolean> e : enabledInfo.entrySet()) {
                 if (e.getValue()) {
@@ -271,6 +273,7 @@ class ReportGenerator {
             }
             FileReportsWorker worker = new FileReportsWorker(enabled);
             worker.execute();
+
         }
     }
 
@@ -281,11 +284,8 @@ class ReportGenerator {
 
         @Override
         protected Integer doInBackground() throws Exception {
-            for (Entry<GeneralReportModule, ReportProgressPanel> entry : generalProgress.entrySet()) {
-                GeneralReportModule module = entry.getKey();
-                if (generalProgress.get(module).getStatus() != ReportStatus.CANCELED) {
-                    module.generateReport(reportPath, generalProgress.get(module));
-                }
+            if (progressPanel.getStatus() != ReportStatus.CANCELED) {
+                generalReportModule.generateReport(reportPath, progressPanel);
             }
             return 0;
         }
@@ -316,68 +316,50 @@ class ReportGenerator {
     private class FileReportsWorker extends SwingWorker<Integer, Integer> {
 
         private List<FileReportDataTypes> enabledInfo = Arrays.asList(FileReportDataTypes.values());
-        private List<FileReportModule> fileModules = new ArrayList<>();
 
         FileReportsWorker(List<FileReportDataTypes> enabled) {
             enabledInfo = enabled;
-            for (Entry<FileReportModule, ReportProgressPanel> entry : fileProgress.entrySet()) {
-                fileModules.add(entry.getKey());
-            }
         }
 
         @Override
         protected Integer doInBackground() throws Exception {
-            for (FileReportModule module : fileModules) {
-                ReportProgressPanel progress = fileProgress.get(module);
-                if (progress.getStatus() != ReportStatus.CANCELED) {
-                    progress.start();
-                    progress.updateStatusLabel(
-                            NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.queryingDb.text"));
-                }
+            if (progressPanel.getStatus() != ReportStatus.CANCELED) {
+                progressPanel.start();
+                progressPanel.updateStatusLabel(
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.queryingDb.text"));
             }
 
             List<AbstractFile> files = getFiles();
             int numFiles = files.size();
-            for (FileReportModule module : fileModules) {
-                module.startReport(reportPath);
-                module.startTable(enabledInfo);
-                fileProgress.get(module).setIndeterminate(false);
-                fileProgress.get(module).setMaximumProgress(numFiles);
+            if (progressPanel.getStatus() != ReportStatus.CANCELED) {
+                fileReportModule.startReport(reportPath);
+                fileReportModule.startTable(enabledInfo);
             }
+            progressPanel.setIndeterminate(false);
+            progressPanel.setMaximumProgress(numFiles);
 
             int i = 0;
             // Add files to report.
             for (AbstractFile file : files) {
                 // Check to see if any reports have been cancelled.
-                if (fileModules.isEmpty()) {
-                    break;
+                if (progressPanel.getStatus() == ReportStatus.CANCELED) {
+                    return 0;
+                } else {
+                    fileReportModule.addRow(file, enabledInfo);
+                    progressPanel.increment();
                 }
-                // Remove cancelled reports, add files to report otherwise.
-                Iterator<FileReportModule> iter = fileModules.iterator();
-                while (iter.hasNext()) {
-                    FileReportModule module = iter.next();
-                    ReportProgressPanel progress = fileProgress.get(module);
-                    if (progress.getStatus() == ReportStatus.CANCELED) {
-                        iter.remove();
-                    } else {
-                        module.addRow(file, enabledInfo);
-                        progress.increment();
-                    }
 
-                    if ((i % 100) == 0) {
-                        progress.updateStatusLabel(
-                                NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processingFile.text",
-                                        file.getName()));
-                    }
+                if ((i % 100) == 0) {
+                    progressPanel.updateStatusLabel(
+                            NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processingFile.text",
+                                    file.getName()));
                 }
                 i++;
             }
 
-            for (FileReportModule module : fileModules) {
-                module.endTable();
-                module.endReport();
-                fileProgress.get(module).complete(ReportStatus.COMPLETE);
-            }
+            fileReportModule.endTable();
+            fileReportModule.endReport();
+            progressPanel.complete(ReportStatus.COMPLETE);
 
             return 0;
         }
@@ -428,17 +410,12 @@ class ReportGenerator {
      */
     private class TableReportsWorker extends SwingWorker<Integer, Integer> {
 
-        private List<TableReportModule> tableModules = new ArrayList<>();
         private List<BlackboardArtifact.Type> artifactTypes = new ArrayList<>();
         private HashSet<String> tagNamesFilter = new HashSet<>();
 
         private List<Content> images = new ArrayList<>();
 
         TableReportsWorker(Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) {
-            // Get the report modules selected by the user.
-            for (Entry<TableReportModule, ReportProgressPanel> entry : tableProgress.entrySet()) {
-                tableModules.add(entry.getKey());
-            }
 
             // Get the artifact types selected by the user.
             for (Entry<BlackboardArtifact.Type, Boolean> entry : artifactTypeSelections.entrySet()) {
@@ -460,31 +437,32 @@ class ReportGenerator {
         @Override
         protected Integer doInBackground() throws Exception {
             // Start the progress indicators for each active TableReportModule.
-            for (TableReportModule module : tableModules) {
-                ReportProgressPanel progress = tableProgress.get(module);
-                if (progress.getStatus() != ReportStatus.CANCELED) {
-                    module.startReport(reportPath);
-                    progress.start();
-                    progress.setIndeterminate(false);
-                    progress.setMaximumProgress(this.artifactTypes.size() + 2); // +2 for content and blackboard artifact tags
-                }
-            }
-
+            tableReportModule.startReport(reportPath);
+            progressPanel.start();
+            progressPanel.setIndeterminate(false);
+            progressPanel.setMaximumProgress(this.artifactTypes.size() + 2); // +2 for content and blackboard artifact tags
             // report on the blackboard results
-            makeBlackboardArtifactTables();
+            if (progressPanel.getStatus() != ReportStatus.CANCELED) {
+                makeBlackboardArtifactTables();
+            }
 
             // report on the tagged files and artifacts
-            makeContentTagsTables();
-            makeBlackboardArtifactTagsTables();
+            if (progressPanel.getStatus() != ReportStatus.CANCELED) {
+                makeContentTagsTables();
+            }
 
-            // report on the tagged images
-            makeThumbnailTable();
+            if (progressPanel.getStatus() != ReportStatus.CANCELED) {
+                makeBlackboardArtifactTagsTables();
+            }
+
+            if (progressPanel.getStatus() != ReportStatus.CANCELED) {
+                // report on the tagged images
+                makeThumbnailTable();
+            }
 
             // finish progress, wrap up
-            for (TableReportModule module : tableModules) {
-                tableProgress.get(module).complete(ReportStatus.COMPLETE);
-                module.endReport();
-            }
+            progressPanel.complete(ReportStatus.COMPLETE);
+            tableReportModule.endReport();
 
             return 0;
         }
@@ -503,23 +481,21 @@ class ReportGenerator {
             // Add a table to the report for every enabled blackboard artifact type.
             for (BlackboardArtifact.Type type : artifactTypes) {
                 // Check for cancellaton.
-                removeCancelledTableReportModules();
-                if (tableModules.isEmpty()) {
+
+                if (progressPanel.getStatus() == ReportStatus.CANCELED) {
                     return;
                 }
 
-                for (TableReportModule module : tableModules) {
-                    tableProgress.get(module).updateStatusLabel(
-                            NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processing",
-                                    type.getDisplayName()));
-                }
+                progressPanel.updateStatusLabel(
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processing",
+                                type.getDisplayName()));
 
                 // Keyword hits and hashset hit artifacts get special handling.
                 if (type.getTypeID() == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
-                    writeKeywordHits(tableModules, comment.toString(), tagNamesFilter);
+                    writeKeywordHits(tableReportModule, comment.toString(), tagNamesFilter);
                     continue;
                 } else if (type.getTypeID() == ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
-                    writeHashsetHits(tableModules, comment.toString(), tagNamesFilter);
+                    writeHashsetHits(tableReportModule, comment.toString(), tagNamesFilter);
                     continue;
                 }
 
@@ -558,30 +534,22 @@ class ReportGenerator {
                     columnHeaderNames.add(currColumn.getColumnHeader());
                 }
 
-                for (TableReportModule module : tableModules) {
-                    module.startDataType(type.getDisplayName(), comment.toString());
-                    module.startTable(columnHeaderNames);
-                }
+                tableReportModule.startDataType(type.getDisplayName(), comment.toString());
+                tableReportModule.startTable(columnHeaderNames);
                 for (ArtifactData artifactData : artifactList) {
-                    // Add the row data to all of the reports.
-                    for (TableReportModule module : tableModules) {
-
-                        // Get the row data for this artifact, and has the 
-                        // module add it.
-                        List<String> rowData = artifactData.getRow();
-                        if (rowData.isEmpty()) {
-                            continue;
-                        }
-
-                        module.addRow(rowData);
+                    // Get the row data for this artifact, and has the 
+                    // module add it.
+                    List<String> rowData = artifactData.getRow();
+                    if (rowData.isEmpty()) {
+                        continue;
                     }
+
+                    tableReportModule.addRow(rowData);
                 }
                 // Finish up this data type
-                for (TableReportModule module : tableModules) {
-                    tableProgress.get(module).increment();
-                    module.endTable();
-                    module.endDataType();
-                }
+                progressPanel.increment();
+                tableReportModule.endTable();
+                tableReportModule.endDataType();
             }
         }
 
@@ -590,11 +558,6 @@ class ReportGenerator {
          */
         @SuppressWarnings("deprecation")
         private void makeContentTagsTables() {
-            // Check for cancellaton.
-            removeCancelledTableReportModules();
-            if (tableModules.isEmpty()) {
-                return;
-            }
 
             // Get the content tags.
             List<ContentTag> tags;
@@ -607,37 +570,35 @@ class ReportGenerator {
             }
 
             // Tell the modules reporting on content tags is beginning.
-            for (TableReportModule module : tableModules) {
-                // @@@ This casting is a tricky little workaround to allow the HTML report module to slip in a content hyperlink.
-                // @@@ Alos Using the obsolete ARTIFACT_TYPE.TSK_TAG_FILE is also an expedient hack.
-                tableProgress.get(module).updateStatusLabel(
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processing",
-                                ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName()));
-                ArrayList<String> columnHeaders = new ArrayList<>(Arrays.asList(
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.tag"),
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.file"),
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.comment"),
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.timeModified"),
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.timeChanged"),
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.timeAccessed"),
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.timeCreated"),
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.size"),
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.hash")));
+            // @@@ This casting is a tricky little workaround to allow the HTML report module to slip in a content hyperlink.
+            // @@@ Alos Using the obsolete ARTIFACT_TYPE.TSK_TAG_FILE is also an expedient hack.
+            progressPanel.updateStatusLabel(
+                    NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processing",
+                            ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName()));
+            ArrayList<String> columnHeaders = new ArrayList<>(Arrays.asList(
+                    NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.tag"),
+                    NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.file"),
+                    NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.comment"),
+                    NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.timeModified"),
+                    NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.timeChanged"),
+                    NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.timeAccessed"),
+                    NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.timeCreated"),
+                    NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.size"),
+                    NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.hash")));
 
-                StringBuilder comment = new StringBuilder();
-                if (!tagNamesFilter.isEmpty()) {
-                    comment.append(
-                            NbBundle.getMessage(this.getClass(), "ReportGenerator.makeContTagTab.taggedFiles.msg"));
-                    comment.append(makeCommaSeparatedList(tagNamesFilter));
-                }
-                if (module instanceof ReportHTML) {
-                    ReportHTML htmlReportModule = (ReportHTML) module;
-                    htmlReportModule.startDataType(ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName(), comment.toString());
-                    htmlReportModule.startContentTagsTable(columnHeaders);
-                } else {
-                    module.startDataType(ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName(), comment.toString());
-                    module.startTable(columnHeaders);
-                }
+            StringBuilder comment = new StringBuilder();
+            if (!tagNamesFilter.isEmpty()) {
+                comment.append(
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.makeContTagTab.taggedFiles.msg"));
+                comment.append(makeCommaSeparatedList(tagNamesFilter));
+            }
+            if (tableReportModule instanceof ReportHTML) {
+                ReportHTML htmlReportModule = (ReportHTML) tableReportModule;
+                htmlReportModule.startDataType(ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName(), comment.toString());
+                htmlReportModule.startContentTagsTable(columnHeaders);
+            } else {
+                tableReportModule.startDataType(ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName(), comment.toString());
+                tableReportModule.startTable(columnHeaders);
             }
 
             // Give the modules the rows for the content tags. 
@@ -667,14 +628,12 @@ class ReportGenerator {
                     rowData.add(Long.toString(file.getSize()));
                     rowData.add(file.getMd5Hash());
                 }
-                for (TableReportModule module : tableModules) {
-                    // @@@ This casting is a tricky little workaround to allow the HTML report module to slip in a content hyperlink.
-                    if (module instanceof ReportHTML) {
-                        ReportHTML htmlReportModule = (ReportHTML) module;
-                        htmlReportModule.addRowWithTaggedContentHyperlink(rowData, tag);
-                    } else {
-                        module.addRow(rowData);
-                    }
+                // @@@ This casting is a tricky little workaround to allow the HTML report module to slip in a content hyperlink.
+                if (tableReportModule instanceof ReportHTML) {
+                    ReportHTML htmlReportModule = (ReportHTML) tableReportModule;
+                    htmlReportModule.addRowWithTaggedContentHyperlink(rowData, tag);
+                } else {
+                    tableReportModule.addRow(rowData);
                 }
 
                 // see if it is for an image so that we later report on it
@@ -682,11 +641,9 @@ class ReportGenerator {
             }
 
             // The the modules content tags reporting is ended.
-            for (TableReportModule module : tableModules) {
-                tableProgress.get(module).increment();
-                module.endTable();
-                module.endDataType();
-            }
+            progressPanel.increment();
+            tableReportModule.endTable();
+            tableReportModule.endDataType();
         }
 
         @Override
@@ -713,11 +670,6 @@ class ReportGenerator {
          */
         @SuppressWarnings("deprecation")
         private void makeBlackboardArtifactTagsTables() {
-            // Check for cancellaton.
-            removeCancelledTableReportModules();
-            if (tableModules.isEmpty()) {
-                return;
-            }
 
             List<BlackboardArtifactTag> tags;
             try {
@@ -730,23 +682,21 @@ class ReportGenerator {
 
             // Tell the modules reporting on blackboard artifact tags data type is beginning.
             // @@@ Using the obsolete ARTIFACT_TYPE.TSK_TAG_ARTIFACT is an expedient hack.
-            for (TableReportModule module : tableModules) {
-                tableProgress.get(module).updateStatusLabel(
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processing",
-                                ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getDisplayName()));
-                StringBuilder comment = new StringBuilder();
-                if (!tagNamesFilter.isEmpty()) {
-                    comment.append(
-                            NbBundle.getMessage(this.getClass(), "ReportGenerator.makeBbArtTagTab.taggedRes.msg"));
-                    comment.append(makeCommaSeparatedList(tagNamesFilter));
-                }
-                module.startDataType(ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getDisplayName(), comment.toString());
-                module.startTable(new ArrayList<>(Arrays.asList(
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.tagTable.header.resultType"),
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.tagTable.header.tag"),
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.tagTable.header.comment"),
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.tagTable.header.srcFile"))));
+            progressPanel.updateStatusLabel(
+                    NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processing",
+                            ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getDisplayName()));
+            StringBuilder comment = new StringBuilder();
+            if (!tagNamesFilter.isEmpty()) {
+                comment.append(
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.makeBbArtTagTab.taggedRes.msg"));
+                comment.append(makeCommaSeparatedList(tagNamesFilter));
             }
+            tableReportModule.startDataType(ARTIFACT_TYPE.TSK_TAG_ARTIFACT.getDisplayName(), comment.toString());
+            tableReportModule.startTable(new ArrayList<>(Arrays.asList(
+                    NbBundle.getMessage(this.getClass(), "ReportGenerator.tagTable.header.resultType"),
+                    NbBundle.getMessage(this.getClass(), "ReportGenerator.tagTable.header.tag"),
+                    NbBundle.getMessage(this.getClass(), "ReportGenerator.tagTable.header.comment"),
+                    NbBundle.getMessage(this.getClass(), "ReportGenerator.tagTable.header.srcFile"))));
 
             // Give the modules the rows for the content tags. 
             for (BlackboardArtifactTag tag : tags) {
@@ -755,21 +705,17 @@ class ReportGenerator {
                 }
 
                 List<String> row;
-                for (TableReportModule module : tableModules) {
-                    row = new ArrayList<>(Arrays.asList(tag.getArtifact().getArtifactTypeName(), tag.getName().getDisplayName(), tag.getComment(), tag.getContent().getName()));
-                    module.addRow(row);
-                }
+                row = new ArrayList<>(Arrays.asList(tag.getArtifact().getArtifactTypeName(), tag.getName().getDisplayName(), tag.getComment(), tag.getContent().getName()));
+                tableReportModule.addRow(row);
 
                 // check if the tag is an image that we should later make a thumbnail for
                 checkIfTagHasImage(tag);
             }
 
             // The the modules blackboard artifact tags reporting is ended.
-            for (TableReportModule module : tableModules) {
-                tableProgress.get(module).increment();
-                module.endTable();
-                module.endDataType();
-            }
+            progressPanel.increment();
+            tableReportModule.endTable();
+            tableReportModule.endDataType();
         }
 
         /**
@@ -783,41 +729,30 @@ class ReportGenerator {
             return tagNamesFilter.isEmpty() || tagNamesFilter.contains(tagName);
         }
 
-        void removeCancelledTableReportModules() {
-            Iterator<TableReportModule> iter = tableModules.iterator();
-            while (iter.hasNext()) {
-                TableReportModule module = iter.next();
-                if (tableProgress.get(module).getStatus() == ReportStatus.CANCELED) {
-                    iter.remove();
-                }
-            }
-        }
-
         /**
          * Make a report for the files that were previously found to be images.
          */
         private void makeThumbnailTable() {
-            for (TableReportModule module : tableModules) {
-                tableProgress.get(module).updateStatusLabel(
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.createdThumb.text"));
+            progressPanel.updateStatusLabel(
+                    NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.createdThumb.text"));
 
-                if (module instanceof ReportHTML) {
-                    ReportHTML htmlModule = (ReportHTML) module;
-                    htmlModule.startDataType(
-                            NbBundle.getMessage(this.getClass(), "ReportGenerator.thumbnailTable.name"),
-                            NbBundle.getMessage(this.getClass(), "ReportGenerator.thumbnailTable.desc"));
-                    List<String> emptyHeaders = new ArrayList<>();
-                    for (int i = 0; i < ReportHTML.THUMBNAIL_COLUMNS; i++) {
-                        emptyHeaders.add("");
-                    }
-                    htmlModule.startTable(emptyHeaders);
-
-                    htmlModule.addThumbnailRows(images);
-
-                    htmlModule.endTable();
-                    htmlModule.endDataType();
+            if (tableReportModule instanceof ReportHTML) {
+                ReportHTML htmlModule = (ReportHTML) tableReportModule;
+                htmlModule.startDataType(
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.thumbnailTable.name"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.thumbnailTable.desc"));
+                List<String> emptyHeaders = new ArrayList<>();
+                for (int i = 0; i < ReportHTML.THUMBNAIL_COLUMNS; i++) {
+                    emptyHeaders.add("");
                 }
+                htmlModule.startTable(emptyHeaders);
+
+                htmlModule.addThumbnailRows(images);
+
+                htmlModule.endTable();
+                htmlModule.endDataType();
             }
+
         }
 
         /**
@@ -876,7 +811,7 @@ class ReportGenerator {
         }
     }
 
-    /// @@@ Should move the methods specific to TableReportsWorker into that scope.
+/// @@@ Should move the methods specific to TableReportsWorker into that scope.
     private Boolean failsTagFilter(HashSet<String> tagNames, HashSet<String> tagsNamesFilter) {
         if (null == tagsNamesFilter || tagsNamesFilter.isEmpty()) {
             return false;
@@ -925,10 +860,10 @@ class ReportGenerator {
     /**
      * Write the keyword hits to the provided TableReportModules.
      *
-     * @param tableModules modules to report on
+     * @param tableModule module to report on
      */
     @SuppressWarnings("deprecation")
-    private void writeKeywordHits(List<TableReportModule> tableModules, String comment, HashSet<String> tagNamesFilter) {
+    private void writeKeywordHits(TableReportModule tableModule, String comment, HashSet<String> tagNamesFilter) {
 
         // Query for keyword lists-only so that we can tell modules what lists
         // will exist for their index.
@@ -942,11 +877,16 @@ class ReportGenerator {
             orderByClause = "ORDER BY list ASC"; //NON-NLS
         }
         String keywordListQuery
-                = "SELECT att.value_text AS list " + //NON-NLS
-                "FROM blackboard_attributes AS att, blackboard_artifacts AS art " + //NON-NLS
-                "WHERE att.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + " " + //NON-NLS
-                "AND art.artifact_type_id = " + ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + " " + //NON-NLS
-                "AND att.artifact_id = art.artifact_id " + //NON-NLS
+                = "SELECT att.value_text AS list "
+                + //NON-NLS
+                "FROM blackboard_attributes AS att, blackboard_artifacts AS art "
+                + //NON-NLS
+                "WHERE att.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + " "
+                + //NON-NLS
+                "AND art.artifact_type_id = " + ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + " "
+                + //NON-NLS
+                "AND att.artifact_id = art.artifact_id "
+                + //NON-NLS
                 "GROUP BY list " + orderByClause; //NON-NLS
 
         try (CaseDbQuery dbQuery = skCase.executeQuery(keywordListQuery)) {
@@ -961,13 +901,11 @@ class ReportGenerator {
             }
 
             // Make keyword data type and give them set index
-            for (TableReportModule module : tableModules) {
-                module.startDataType(ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName(), comment);
-                module.addSetIndex(lists);
-                tableProgress.get(module).updateStatusLabel(
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processing",
-                                ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName()));
-            }
+            tableModule.startDataType(ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName(), comment);
+            tableModule.addSetIndex(lists);
+            progressPanel.updateStatusLabel(
+                    NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processing",
+                            ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName()));
         } catch (TskCoreException | SQLException ex) {
             errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedQueryKWLists"));
             logger.log(Level.SEVERE, "Failed to query keyword lists: ", ex); //NON-NLS
@@ -985,16 +923,26 @@ class ReportGenerator {
         }
         // Query for keywords, grouped by list
         String keywordsQuery
-                = "SELECT art.artifact_id, art.obj_id, att1.value_text AS keyword, att2.value_text AS preview, att3.value_text AS list, f.name AS name, f.parent_path AS parent_path " + //NON-NLS
-                "FROM blackboard_artifacts AS art, blackboard_attributes AS att1, blackboard_attributes AS att2, blackboard_attributes AS att3, tsk_files AS f " + //NON-NLS
-                "WHERE (att1.artifact_id = art.artifact_id) " + //NON-NLS
-                "AND (att2.artifact_id = art.artifact_id) " + //NON-NLS
-                "AND (att3.artifact_id = art.artifact_id) " + //NON-NLS
-                "AND (f.obj_id = art.obj_id) " + //NON-NLS
-                "AND (att1.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID() + ") " + //NON-NLS
-                "AND (att2.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID() + ") " + //NON-NLS
-                "AND (att3.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ") " + //NON-NLS
-                "AND (art.artifact_type_id = " + ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") " + //NON-NLS
+                = "SELECT art.artifact_id, art.obj_id, att1.value_text AS keyword, att2.value_text AS preview, att3.value_text AS list, f.name AS name, f.parent_path AS parent_path "
+                + //NON-NLS
+                "FROM blackboard_artifacts AS art, blackboard_attributes AS att1, blackboard_attributes AS att2, blackboard_attributes AS att3, tsk_files AS f "
+                + //NON-NLS
+                "WHERE (att1.artifact_id = art.artifact_id) "
+                + //NON-NLS
+                "AND (att2.artifact_id = art.artifact_id) "
+                + //NON-NLS
+                "AND (att3.artifact_id = art.artifact_id) "
+                + //NON-NLS
+                "AND (f.obj_id = art.obj_id) "
+                + //NON-NLS
+                "AND (att1.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID() + ") "
+                + //NON-NLS
+                "AND (att2.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID() + ") "
+                + //NON-NLS
+                "AND (att3.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ") "
+                + //NON-NLS
+                "AND (art.artifact_type_id = " + ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") "
+                + //NON-NLS
                 orderByClause; //NON-NLS
 
         try (CaseDbQuery dbQuery = skCase.executeQuery(keywordsQuery)) {
@@ -1004,15 +952,8 @@ class ReportGenerator {
             String currentList = "";
             while (resultSet.next()) {
                 // Check to see if all the TableReportModules have been canceled
-                if (tableModules.isEmpty()) {
+                if (progressPanel.getStatus() == ReportStatus.CANCELED) {
                     break;
-                }
-                Iterator<TableReportModule> iter = tableModules.iterator();
-                while (iter.hasNext()) {
-                    TableReportModule module = iter.next();
-                    if (tableProgress.get(module).getStatus() == ReportStatus.CANCELED) {
-                        iter.remove();
-                    }
                 }
 
                 // Get any tags that associated with this artifact and apply the tag filter.
@@ -1043,49 +984,37 @@ class ReportGenerator {
                 if ((!list.equals(currentList) && !list.isEmpty()) || (list.isEmpty() && !currentList.equals(
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.writeKwHits.userSrchs")))) {
                     if (!currentList.isEmpty()) {
-                        for (TableReportModule module : tableModules) {
-                            module.endTable();
-                            module.endSet();
-                        }
+                        tableModule.endTable();
+                        tableModule.endSet();
                     }
                     currentList = list.isEmpty() ? NbBundle
                             .getMessage(this.getClass(), "ReportGenerator.writeKwHits.userSrchs") : list;
                     currentKeyword = ""; // reset the current keyword because it's a new list
-                    for (TableReportModule module : tableModules) {
-                        module.startSet(currentList);
-                        tableProgress.get(module).updateStatusLabel(
-                                NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processingList",
-                                        ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName(), currentList));
-                    }
+                    tableModule.startSet(currentList);
+                    progressPanel.updateStatusLabel(
+                            NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processingList",
+                                    ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName(), currentList));
                 }
                 if (!keyword.equals(currentKeyword)) {
                     if (!currentKeyword.equals("")) {
-                        for (TableReportModule module : tableModules) {
-                            module.endTable();
-                        }
+                        tableModule.endTable();
                     }
                     currentKeyword = keyword;
-                    for (TableReportModule module : tableModules) {
-                        module.addSetElement(currentKeyword);
-                        List<String> columnHeaderNames = new ArrayList<>();
-                        columnHeaderNames.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.preview"));
-                        columnHeaderNames.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile"));
-                        columnHeaderNames.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tags"));
-                        module.startTable(columnHeaderNames);
-                    }
+                    tableModule.addSetElement(currentKeyword);
+                    List<String> columnHeaderNames = new ArrayList<>();
+                    columnHeaderNames.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.preview"));
+                    columnHeaderNames.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile"));
+                    columnHeaderNames.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tags"));
+                    tableModule.startTable(columnHeaderNames);
                 }
 
                 String previewreplace = EscapeUtil.escapeHtml(preview);
-                for (TableReportModule module : tableModules) {
-                    module.addRow(Arrays.asList(new String[]{previewreplace.replaceAll("<!", ""), uniquePath, tagsList}));
-                }
+                tableModule.addRow(Arrays.asList(new String[]{previewreplace.replaceAll("<!", ""), uniquePath, tagsList}));
             }
 
             // Finish the current data type
-            for (TableReportModule module : tableModules) {
-                tableProgress.get(module).increment();
-                module.endDataType();
-            }
+            progressPanel.increment();
+            tableModule.endDataType();
         } catch (TskCoreException | SQLException ex) {
             errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedQueryKWs"));
             logger.log(Level.SEVERE, "Failed to query keywords: ", ex); //NON-NLS
@@ -1095,10 +1024,10 @@ class ReportGenerator {
     /**
      * Write the hash set hits to the provided TableReportModules.
      *
-     * @param tableModules modules to report on
+     * @param tableModule module to report on
      */
     @SuppressWarnings("deprecation")
-    private void writeHashsetHits(List<TableReportModule> tableModules, String comment, HashSet<String> tagNamesFilter) {
+    private void writeHashsetHits(TableReportModule tableModule, String comment, HashSet<String> tagNamesFilter) {
         String orderByClause;
         if (currentCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) {
             orderByClause = "ORDER BY convert_to(att.value_text, 'SQL_ASCII') ASC NULLS FIRST"; //NON-NLS
@@ -1106,11 +1035,16 @@ class ReportGenerator {
             orderByClause = "ORDER BY att.value_text ASC"; //NON-NLS
         }
         String hashsetsQuery
-                = "SELECT att.value_text AS list " + //NON-NLS
-                "FROM blackboard_attributes AS att, blackboard_artifacts AS art " + //NON-NLS
-                "WHERE att.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + " " + //NON-NLS
-                "AND art.artifact_type_id = " + ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID() + " " + //NON-NLS
-                "AND att.artifact_id = art.artifact_id " + //NON-NLS
+                = "SELECT att.value_text AS list "
+                + //NON-NLS
+                "FROM blackboard_attributes AS att, blackboard_artifacts AS art "
+                + //NON-NLS
+                "WHERE att.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + " "
+                + //NON-NLS
+                "AND art.artifact_type_id = " + ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID() + " "
+                + //NON-NLS
+                "AND att.artifact_id = art.artifact_id "
+                + //NON-NLS
                 "GROUP BY list " + orderByClause; //NON-NLS
 
         try (CaseDbQuery dbQuery = skCase.executeQuery(hashsetsQuery)) {
@@ -1121,13 +1055,11 @@ class ReportGenerator {
                 lists.add(listsRs.getString("list")); //NON-NLS
             }
 
-            for (TableReportModule module : tableModules) {
-                module.startDataType(ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName(), comment);
-                module.addSetIndex(lists);
-                tableProgress.get(module).updateStatusLabel(
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processing",
-                                ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName()));
-            }
+            tableModule.startDataType(ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName(), comment);
+            tableModule.addSetIndex(lists);
+            progressPanel.updateStatusLabel(
+                    NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processing",
+                            ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName()));
         } catch (TskCoreException | SQLException ex) {
             errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedQueryHashsetLists"));
             logger.log(Level.SEVERE, "Failed to query hashset lists: ", ex); //NON-NLS
@@ -1143,12 +1075,18 @@ class ReportGenerator {
             orderByClause = "ORDER BY att.value_text ASC, f.parent_path ASC, f.name ASC, size ASC"; //NON-NLS
         }
         String hashsetHitsQuery
-                = "SELECT art.artifact_id, art.obj_id, att.value_text AS setname, f.name AS name, f.size AS size, f.parent_path AS parent_path " + //NON-NLS
-                "FROM blackboard_artifacts AS art, blackboard_attributes AS att, tsk_files AS f " + //NON-NLS
-                "WHERE (att.artifact_id = art.artifact_id) " + //NON-NLS
-                "AND (f.obj_id = art.obj_id) " + //NON-NLS
-                "AND (att.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ") " + //NON-NLS
-                "AND (art.artifact_type_id = " + ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID() + ") " + //NON-NLS
+                = "SELECT art.artifact_id, art.obj_id, att.value_text AS setname, f.name AS name, f.size AS size, f.parent_path AS parent_path "
+                + //NON-NLS
+                "FROM blackboard_artifacts AS art, blackboard_attributes AS att, tsk_files AS f "
+                + //NON-NLS
+                "WHERE (att.artifact_id = art.artifact_id) "
+                + //NON-NLS
+                "AND (f.obj_id = art.obj_id) "
+                + //NON-NLS
+                "AND (att.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ") "
+                + //NON-NLS
+                "AND (art.artifact_type_id = " + ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID() + ") "
+                + //NON-NLS
                 orderByClause; //NON-NLS
 
         try (CaseDbQuery dbQuery = skCase.executeQuery(hashsetHitsQuery)) {
@@ -1157,15 +1095,8 @@ class ReportGenerator {
             String currentSet = "";
             while (resultSet.next()) {
                 // Check to see if all the TableReportModules have been canceled
-                if (tableModules.isEmpty()) {
+                if (progressPanel.getStatus() == ReportStatus.CANCELED) {
                     break;
-                }
-                Iterator<TableReportModule> iter = tableModules.iterator();
-                while (iter.hasNext()) {
-                    TableReportModule module = iter.next();
-                    if (tableProgress.get(module).getStatus() == ReportStatus.CANCELED) {
-                        iter.remove();
-                    }
                 }
 
                 // Get any tags that associated with this artifact and apply the tag filter.
@@ -1195,36 +1126,28 @@ class ReportGenerator {
                 // If the sets aren't the same, we've started a new set
                 if (!set.equals(currentSet)) {
                     if (!currentSet.isEmpty()) {
-                        for (TableReportModule module : tableModules) {
-                            module.endTable();
-                            module.endSet();
-                        }
+                        tableModule.endTable();
+                        tableModule.endSet();
                     }
                     currentSet = set;
-                    for (TableReportModule module : tableModules) {
-                        module.startSet(currentSet);
-                        List<String> columnHeaderNames = new ArrayList<>();
-                        columnHeaderNames.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.file"));
-                        columnHeaderNames.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.size"));
-                        columnHeaderNames.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tags"));
-                        module.startTable(columnHeaderNames);
-                        tableProgress.get(module).updateStatusLabel(
-                                NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processingList",
-                                        ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName(), currentSet));
-                    }
+                    tableModule.startSet(currentSet);
+                    List<String> columnHeaderNames = new ArrayList<>();
+                    columnHeaderNames.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.file"));
+                    columnHeaderNames.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.size"));
+                    columnHeaderNames.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tags"));
+                    tableModule.startTable(columnHeaderNames);
+                    progressPanel.updateStatusLabel(
+                            NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processingList",
+                                    ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName(), currentSet));
                 }
 
                 // Add a row for this hit to every module
-                for (TableReportModule module : tableModules) {
-                    module.addRow(Arrays.asList(new String[]{uniquePath, size, tagsList}));
-                }
+                tableModule.addRow(Arrays.asList(new String[]{uniquePath, size, tagsList}));
             }
 
             // Finish the current data type
-            for (TableReportModule module : tableModules) {
-                tableProgress.get(module).increment();
-                module.endDataType();
-            }
+            progressPanel.increment();
+            tableModule.endDataType();
         } catch (TskCoreException | SQLException ex) {
             errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedQueryHashsetHits"));
             logger.log(Level.SEVERE, "Failed to query hashsets hits: ", ex); //NON-NLS
@@ -1948,13 +1871,11 @@ class ReportGenerator {
                 orderedRowData.addAll(Arrays.asList(attributeDataArray));
                 orderedRowData.add(makeCommaSeparatedList(getTags()));
 
-            } else {
-                if (ReportGenerator.this.columnHeaderMap.containsKey(this.artifact.getArtifactTypeID())) {
+            } else if (ReportGenerator.this.columnHeaderMap.containsKey(this.artifact.getArtifactTypeID())) {
 
-                    for (Column currColumn : ReportGenerator.this.columnHeaderMap.get(this.artifact.getArtifactTypeID())) {
-                        String cellData = currColumn.getCellData(this);
-                        orderedRowData.add(cellData);
-                    }
+                for (Column currColumn : ReportGenerator.this.columnHeaderMap.get(this.artifact.getArtifactTypeID())) {
+                    String cellData = currColumn.getCellData(this);
+                    orderedRowData.add(cellData);
                 }
             }
 
@@ -1976,7 +1897,8 @@ class ReportGenerator {
     private HashSet<String> getUniqueTagNames(long artifactId) throws TskCoreException {
         HashSet<String> uniqueTagNames = new HashSet<>();
 
-        String query = "SELECT display_name, artifact_id FROM tag_names AS tn, blackboard_artifact_tags AS bat " + //NON-NLS 
+        String query = "SELECT display_name, artifact_id FROM tag_names AS tn, blackboard_artifact_tags AS bat "
+                + //NON-NLS 
                 "WHERE tn.tag_name_id = bat.tag_name_id AND bat.artifact_id = " + artifactId; //NON-NLS
 
         try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
