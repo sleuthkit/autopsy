@@ -368,15 +368,19 @@ final public class VisualizationPanel extends BorderPane {
     private void setViewMode(VisualizationMode visualizationMode) {
         switch (visualizationMode) {
             case COUNTS:
-                setVisualization(new CountsViewPane(controller));
                 countsToggle.setSelected(true);
+                setVisualization(new CountsViewPane(controller));
                 break;
             case DETAIL:
-                setVisualization(new DetailViewPane(controller));
                 detailsToggle.setSelected(true);
+                DetailViewPane detailViewPane = new DetailViewPane(controller);
+                setVisualization(detailViewPane);
+                Platform.runLater(() -> {
+                    detailViewPane.setHighLightedEvents(eventsTree.getSelectedEvents());
+                    eventsTree.setDetailViewPane(detailViewPane);
+                });
                 break;
         }
-
     }
 
     /**
@@ -400,13 +404,8 @@ final public class VisualizationPanel extends BorderPane {
             toolBar.getItems().addAll(newViz.getSettingsNodes());
 
             notificationPane.setContent(visualization);
-            if (visualization instanceof DetailViewPane) {
-                Platform.runLater(() -> {
-                    ((DetailViewPane) visualization).setHighLightedEvents(eventsTree.getSelectedEvents());
-                    eventsTree.setDetailViewPane((DetailViewPane) visualization);
-                });
-            }
-            visualization.hasEvents.addListener((observable, oldValue, newValue) -> {
+
+            visualization.hasVisibleEventsProperty().addListener((observable, oldValue, newValue) -> {
                 if (newValue == false) {
                     notificationPane.setContent(
                             new StackPane(visualization,

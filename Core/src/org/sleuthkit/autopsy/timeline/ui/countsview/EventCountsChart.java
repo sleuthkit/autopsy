@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-15 Basis Technology Corp.
+ * Copyright 2014-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -87,7 +87,6 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
         dateAxis.setTickLabelsVisible(false);
         dateAxis.setTickLabelGap(0);
 
-        countAxis.setLabel(NbBundle.getMessage(CountsViewPane.class, "CountsChartPane.numberOfEvents"));
         countAxis.setAutoRanging(false);
         countAxis.setLowerBound(0);
         countAxis.setAnimated(true);
@@ -167,6 +166,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
         return new CountsIntervalSelector(this);
     }
 
+    @Override
     public ObservableList<Node> getSelectedNodes() {
         return selectedNodes;
     }
