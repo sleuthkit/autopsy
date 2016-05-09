@@ -204,7 +204,7 @@ public class TimeLineController {
     @GuardedBy("this")
     private final ReadOnlyObjectWrapper<VisualizationMode> viewMode = new ReadOnlyObjectWrapper<>(VisualizationMode.COUNTS);
 
-    synchronized public ReadOnlyObjectProperty<VisualizationMode> viewModeProperty() {
+    synchronized public ReadOnlyObjectProperty<VisualizationMode> visualizationModeProperty() {
         return viewMode.getReadOnlyProperty();
     }
 

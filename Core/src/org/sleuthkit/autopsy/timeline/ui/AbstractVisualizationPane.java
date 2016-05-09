@@ -221,6 +221,17 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
     }
 
     /**
+     * Are there are any events visible in this visualization with the current
+     * view parameters?
+     *
+     * @return True if there are events visible in this visualization with the
+     *         current view parameters.
+     */
+    boolean hasVisibleEvents() {
+        return hasVisibleEventsProperty().get();
+    }
+
+    /**
      * Apply this visualization's 'selection effect' to the given node.
      *
      * @param node The node to apply the 'effect' to.

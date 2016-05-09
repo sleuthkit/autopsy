@@ -102,7 +102,7 @@ public class ZoomSettingsPane extends TitledPane {
                 Function.identity());
         descrLODLabel.setText(Bundle.ZoomSettingsPane_descrLODLabel_text());
         //the description slider is only usefull in the detail view
-        descrLODSlider.disableProperty().bind(controller.viewModeProperty().isEqualTo(VisualizationMode.COUNTS));
+        descrLODSlider.disableProperty().bind(controller.visualizationModeProperty().isEqualTo(VisualizationMode.COUNTS));
 
         /**
          * In order for the selected value in the time unit slider to correspond

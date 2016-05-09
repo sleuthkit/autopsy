@@ -70,7 +70,6 @@ import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.VisualizationMode;
@@ -89,10 +88,9 @@ import org.sleuthkit.autopsy.timeline.ui.detailview.tree.EventsTree;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 
 /**
- * A container for an AbstractVisualizationPane, has a Toolbar on top to hold
- * settings widgets supplied by contained AbstractVisualizationPane and, the
- * histogram / time selection on bottom. Also supplies containers for
- * replacement axis to contained AbstractVisualizationPane
+ * A container for an AbstractVisualizationPane. Has a Toolbar on top to hold
+ * settings widgets supplied by contained AbstractVisualizationPane, and the
+ * histogram / time selection on bottom.
  *
  * TODO: refactor common code out of histogram and CountsView? -jm
  */
@@ -103,6 +101,13 @@ final public class VisualizationPanel extends BorderPane {
     private static final Image INFORMATION = new Image("org/sleuthkit/autopsy/timeline/images/information.png", 16, 16, true, true); // NON-NLS
     private static final Image REFRESH = new Image("org/sleuthkit/autopsy/timeline/images/arrow-circle-double-135.png"); // NON-NLS
     private static final Background GRAY_BACKGROUND = new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY));
+
+    private final static Region NO_EVENTS_BLOCKER = new Region() {
+        {
+            setBackground(GRAY_BACKGROUND);
+            setOpacity(.3);
+        }
+    };
 
     @GuardedBy("this")
     private LoggedTask<Void> histogramTask;
@@ -293,8 +298,10 @@ final public class VisualizationPanel extends BorderPane {
                 countsToggle.getToggleGroup().selectedToggleProperty().addListener(toggleListener);
             });
         }
-        controller.viewModeProperty().addListener(observable -> setViewMode(controller.viewModeProperty().get()));
-        setViewMode(controller.viewModeProperty().get());
+
+        controller.visualizationModeProperty().addListener(visualizationMode -> syncVisualizationMode());
+        syncVisualizationMode();
+
         //configure snapshor button / action
         ActionUtils.configureButton(new SaveSnapshotAsReport(controller, notificationPane::getContent), snapShotButton);
         ActionUtils.configureButton(new Refresh(), refreshButton);
@@ -365,65 +372,6 @@ final public class VisualizationPanel extends BorderPane {
 
     }
 
-    private void setViewMode(VisualizationMode visualizationMode) {
-        switch (visualizationMode) {
-            case COUNTS:
-                countsToggle.setSelected(true);
-                setVisualization(new CountsViewPane(controller));
-                break;
-            case DETAIL:
-                detailsToggle.setSelected(true);
-                DetailViewPane detailViewPane = new DetailViewPane(controller);
-                setVisualization(detailViewPane);
-                Platform.runLater(() -> {
-                    detailViewPane.setHighLightedEvents(eventsTree.getSelectedEvents());
-                    eventsTree.setDetailViewPane(detailViewPane);
-                });
-                break;
-        }
-    }
-
-    /**
-     * Set the given AbstractVisualizationPane as the one hosted by this
-     * VisualizationPanel.
-     *
-     * @param newViz The AbstractVisualizationPane to host.
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.NOT_UI)
-    private synchronized void setVisualization(final AbstractVisualizationPane<?, ?, ?, ?> newViz) {
-        Platform.runLater(() -> {
-            //clear out old vis.
-            if (visualization != null) {
-                toolBar.getItems().removeAll(visualization.getSettingsNodes());
-                visualization.dispose();
-            }
-
-            //setup new vis.
-            visualization = newViz;
-            visualization.update();
-            toolBar.getItems().addAll(newViz.getSettingsNodes());
-
-            notificationPane.setContent(visualization);
-
-            visualization.hasVisibleEventsProperty().addListener((observable, oldValue, newValue) -> {
-                if (newValue == false) {
-                    notificationPane.setContent(
-                            new StackPane(visualization,
-                                    new Region() {
-                                {
-                                    setBackground(new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY)));
-                                    setOpacity(.3);
-                                }
-                            },
-                                    new NoEventsDialog(() -> notificationPane.setContent(visualization))));
-                } else {
-                    notificationPane.setContent(visualization);
-                }
-            });
-        });
-        setNeedsRefresh(false);
-    }
-
     /**
      * Handle TagsUpdatedEvents.
      *
@@ -447,7 +395,7 @@ final public class VisualizationPanel extends BorderPane {
      * NOTE: This VisualizationPanel must be registered with the
      * filteredEventsModel's EventBus in order for this handler to be invoked.
      *
-     * @param event The TagsUpdatedEvent to handle.
+     * @param event The RefreshRequestedEvent to handle.
      */
     @Subscribe
     public void handleRefreshRequestedEvent(RefreshRequestedEvent event) {
@@ -455,8 +403,8 @@ final public class VisualizationPanel extends BorderPane {
     }
 
     /**
-     * Set if the visualziation may not represent the current state of the DB,
-     * because, for example, tags have been updated.
+     * Set whether the visualziation may not represent the current state of the
+     * DB, because, for example, tags have been updated.
      *
      * @param needsRefresh True if the visualization may not represent the
      *                     current state of the DB.
@@ -587,6 +535,60 @@ final public class VisualizationPanel extends BorderPane {
                 endPicker.localDateTimeProperty().addListener(endListener);
             });
         }
+    }
+
+    /**
+     * Switch to the given VisualizationMode, by swapping out the hosted
+     * AbstractVislualization for one of the correct type.
+     */
+    private void syncVisualizationMode() {
+        AbstractVisualizationPane<?, ?, ?, ?> vizPane;
+        VisualizationMode visMode = controller.visualizationModeProperty().get();
+
+        //make new visualization.
+        switch (visMode) {
+            case COUNTS:
+                vizPane = new CountsViewPane(controller);
+                Platform.runLater(() -> countsToggle.setSelected(true));
+                break;
+            case DETAIL:
+                DetailViewPane detailViewPane = new DetailViewPane(controller);
+                Platform.runLater(() -> {
+                    detailsToggle.setSelected(true);
+                    detailViewPane.setHighLightedEvents(eventsTree.getSelectedEvents());
+                    eventsTree.setDetailViewPane(detailViewPane);
+                });
+                vizPane = detailViewPane;
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown VisualizationMode: " + visMode.toString());
+        }
+
+        //Set the new AbstractVisualizationPane as the one hosted by this VisualizationPanel.
+        Platform.runLater(() -> {
+            //clear out old vis.
+            if (visualization != null) {
+                toolBar.getItems().removeAll(visualization.getSettingsNodes());
+                visualization.dispose();
+            }
+            //setup new vis.
+            visualization = vizPane;
+            visualization.update();
+            toolBar.getItems().addAll(vizPane.getSettingsNodes());
+            notificationPane.setContent(visualization);
+
+            //listen to has event sproperty and show "dialog" if it is false.
+            visualization.hasVisibleEventsProperty().addListener(hasEvents -> {
+                notificationPane.setContent(visualization.hasVisibleEvents()
+                        ? visualization
+                        : new StackPane(visualization,
+                                NO_EVENTS_BLOCKER,
+                                new NoEventsDialog(() -> notificationPane.setContent(visualization))
+                        )
+                );
+            });
+        });
+        setNeedsRefresh(false);
     }
 
     @NbBundle.Messages("NoEventsDialog.titledPane.text=No Visible Events")
