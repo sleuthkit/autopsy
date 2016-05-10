@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
 /**
  * Panel for adding or editing file types.
  */
-public class AddFileTypePanel extends javax.swing.JPanel {
+class AddFileTypePanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
 

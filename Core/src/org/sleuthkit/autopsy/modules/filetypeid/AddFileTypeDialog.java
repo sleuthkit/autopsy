@@ -38,7 +38,7 @@ import org.openide.util.NbBundle.Messages;
 /**
  * Dialog used for editing or adding file types.
  */
-public class AddFileTypeDialog extends JDialog {
+class AddFileTypeDialog extends JDialog {
 
     /**
      * Enum used for letting creator of this dialog know whether or not OK was
