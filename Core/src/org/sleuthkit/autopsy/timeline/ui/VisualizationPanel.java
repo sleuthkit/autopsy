@@ -68,8 +68,10 @@ import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.VisualizationMode;
@@ -81,6 +83,7 @@ import org.sleuthkit.autopsy.timeline.actions.ZoomIn;
 import org.sleuthkit.autopsy.timeline.actions.ZoomOut;
 import org.sleuthkit.autopsy.timeline.actions.ZoomToEvents;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.events.DBUpdatedEvent;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsUpdatedEvent;
 import org.sleuthkit.autopsy.timeline.ui.countsview.CountsViewPane;
@@ -206,7 +209,7 @@ final public class VisualizationPanel extends BorderPane {
     /**
      * hides the notification pane on any event
      */
-    private final InvalidationListener zoomListener = any -> setNeedsRefresh(false);
+    private final InvalidationListener zoomListener = any -> handleRefreshRequested(null);
 
     /**
      * listen to change in end time picker and push to controller
@@ -264,8 +267,8 @@ final public class VisualizationPanel extends BorderPane {
         "VisualizationPanel.countsToggle.text=Counts",
         "VisualizationPanel.detailsToggle.text=Details",
         "VisualizationPanel.zoomMenuButton.text=Zoom in/out to",
-        "VisualizationPanel.tagsAddedOrDeleted=Tags have been created and/or deleted.  The visualization may not be up to date.",
-        "StatusBar.refreshLabel.text=The timeline DB may be out of date."})
+        "VisualizationPanel.tagsAddedOrDeleted=Tags have been created and/or deleted.  The visualization may not be up to date."
+    })
     void initialize() {
         assert endPicker != null : "fx:id=\"endPicker\" was not injected: check your FXML file 'ViewWrapper.fxml'."; // NON-NLS
         assert histogramBox != null : "fx:id=\"histogramBox\" was not injected: check your FXML file 'ViewWrapper.fxml'."; // NON-NLS
@@ -276,29 +279,7 @@ final public class VisualizationPanel extends BorderPane {
 
         //configure notification pane 
         notificationPane.getStyleClass().add(NotificationPane.STYLE_CLASS_DARK);
-        notificationPane.getActions().setAll(new Refresh());
         setCenter(notificationPane);
-        needsRefresh.addListener(observable -> {
-            if (needsRefresh.get()) {
-                notificationPane.getActions().setAll(new Refresh());
-                notificationPane.show(Bundle.VisualizationPanel_tagsAddedOrDeleted(), new ImageView(INFORMATION));
-            } else {
-                notificationPane.hide();
-            }
-        });
-
-        //this should use an event(EventBus) , not this weird observable pattern
-        controller.eventsDBStaleProperty().addListener(staleProperty -> {
-            Platform.runLater(() -> {
-                if (controller.isEventsDBStale()) {
-                    notificationPane.getActions().setAll(new RebuildDataBase(controller));
-                    notificationPane.show(Bundle.StatusBar_refreshLabel_text(), new ImageView(WARNING));
-                } else {
-                    VisualizationPanel.this.refreshHistorgram();
-                    notificationPane.hide();
-                }
-            });
-        });
 
         //configure snapshor button / action
         ActionUtils.configureButton(new SaveSnapshotAsReport(controller, notificationPane::getContent), snapShotButton);
@@ -392,6 +373,13 @@ final public class VisualizationPanel extends BorderPane {
     }
 
     /**
+     * Set whether the visualziation may not represent the current state of the
+     * DB, because, for example, tags have been updated.
+     *
+     * @param needsRefresh True if the visualization may not represent the
+     *                     current state of the DB.
+     */
+    /**
      * Handle TagsUpdatedEvents.
      *
      * Mark that the visualization needs to be refreshed.
@@ -402,8 +390,14 @@ final public class VisualizationPanel extends BorderPane {
      * @param event The TagsUpdatedEvent to handle.
      */
     @Subscribe
-    public void handleTimeLineTagEvent(TagsUpdatedEvent event) {
-        setNeedsRefresh(true);
+    public void handleTimeLineTagUpdate(TagsUpdatedEvent event) {
+        Platform.runLater(() -> {
+            VisualizationPanel.this.needsRefresh.set(true);
+            if (notificationPane.isShowing() == false) {
+                notificationPane.getActions().setAll(new Refresh());
+                notificationPane.show(Bundle.VisualizationPanel_tagsAddedOrDeleted(), new ImageView(INFORMATION));
+            }
+        });
     }
 
     /**
@@ -417,19 +411,39 @@ final public class VisualizationPanel extends BorderPane {
      * @param event The RefreshRequestedEvent to handle.
      */
     @Subscribe
-    public void handleRefreshRequestedEvent(RefreshRequestedEvent event) {
-        setNeedsRefresh(false);
+    public void handleRefreshRequested(RefreshRequestedEvent event) {
+        Platform.runLater(() -> {
+            VisualizationPanel.this.needsRefresh.set(false);
+            if (notificationPane.getText().equals(Bundle.VisualizationPanel_tagsAddedOrDeleted())) {
+                notificationPane.hide();
+            }
+        });
     }
 
-    /**
-     * Set whether the visualziation may not represent the current state of the
-     * DB, because, for example, tags have been updated.
-     *
-     * @param needsRefresh True if the visualization may not represent the
-     *                     current state of the DB.
-     */
-    private void setNeedsRefresh(Boolean needsRefresh) {
-        Platform.runLater(() -> VisualizationPanel.this.needsRefresh.set(needsRefresh));
+   
+
+    @Subscribe
+    public void handleFresh(DBUpdatedEvent event) {
+        Platform.runLater(() -> {
+            VisualizationPanel.this.refreshHistorgram();
+            notificationPane.hide();
+        });
+    }
+
+    @Subscribe
+    public void handlDataSourceAdded(DataSourceAddedEvent event) {
+        Platform.runLater(() -> {
+            notificationPane.getActions().setAll(new RebuildDataBase(controller));
+            notificationPane.show("A new datasource, " + event.getDataSource().getName() + ", has been added.  The Timeline DB may be out of date.", new ImageView(WARNING));
+        });
+    }
+
+    @Subscribe
+    public void handleAnalysisCompleted(DataSourceAnalysisCompletedEvent event) {
+        Platform.runLater(() -> {
+            notificationPane.getActions().setAll(new RebuildDataBase(controller));
+            notificationPane.show("Analysis has finished for " + event.getDataSource().getName() + ".  The Timeline DB may be out of date.", new ImageView(WARNING));
+        });
     }
 
     /**
@@ -607,7 +621,11 @@ final public class VisualizationPanel extends BorderPane {
                 );
             });
         });
-        setNeedsRefresh(false);
+
+        Platform.runLater(() -> {
+            VisualizationPanel.this.needsRefresh.set(false);
+            notificationPane.hide();
+        });
     }
 
     @NbBundle.Messages("NoEventsDialog.titledPane.text=No Visible Events")
@@ -748,7 +766,7 @@ final public class VisualizationPanel extends BorderPane {
             super(Bundle.VisualizationPanel_refresh_text());
             setLongText(Bundle.VisualizationPanel_refresh_longText());
             setGraphic(new ImageView(REFRESH));
-            setEventHandler(actionEvent -> filteredEvents.refresh());
+            setEventHandler(actionEvent -> filteredEvents.fireRefreshRequest());
             disabledProperty().bind(needsRefresh.not());
         }
     }

@@ -51,7 +51,6 @@ import javafx.concurrent.Task;
 import javafx.concurrent.Worker;
 import static javafx.concurrent.Worker.State.FAILED;
 import static javafx.concurrent.Worker.State.SUCCEEDED;
-import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.Immutable;
 import javax.swing.SwingUtilities;
@@ -74,10 +73,9 @@ import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent.CANCELLED;
-import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisEvent;
-import static org.sleuthkit.autopsy.timeline.Bundle.*;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
@@ -90,7 +88,6 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.zooming.TimeUnits;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
-import org.sleuthkit.datamodel.Content;
 
 /**
  * Controller in the MVC design along with FilteredEventsModel TimeLineView.
@@ -264,6 +261,7 @@ public class TimeLineController {
     @NbBundle.Messages({
         "TimeLineController.setEventsDBStale.errMsgStale=Failed to mark the timeline db as stale. Some results may be out of date or missing.",
         "TimeLineController.setEventsDBStale.errMsgNotStale=Failed to mark the timeline db as not stale. Some results may be out of date or missing."})
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void setEventsDBStale(final Boolean stale) {
         eventsDBStale.set(stale);
         try {
@@ -389,12 +387,13 @@ public class TimeLineController {
                         perCaseTimelineProperties.setIngestRunning(ingestRunning);
                     } catch (IOException ex) {
                         MessageNotifyUtil.Notify.error(Bundle.Timeline_dialogs_title(),
-                                ingestRunning ? TimeLineController_setIngestRunning_errMsgRunning()
-                                        : TimeLinecontroller_setIngestRunning_errMsgNotRunning());
+                                ingestRunning ? Bundle.TimeLineController_setIngestRunning_errMsgRunning()
+                                        : Bundle.TimeLinecontroller_setIngestRunning_errMsgNotRunning());
                         LOGGER.log(Level.SEVERE, "Error marking the ingest state while the timeline db was populated.", ex); //NON-NLS
                     }
                     if (markDBNotStale) {
                         setEventsDBStale(false);
+                        filteredEvents.fireDBUpdated();
                     }
                     SwingUtilities.invokeLater(this::showWindow);
                     break;
@@ -470,7 +469,7 @@ public class TimeLineController {
             listeningToAutopsy = true;
         }
 
-        Platform.runLater(() -> promptForRebuild(null));
+        Platform.runLater(() -> promptForRebuild());
     }
 
     /**
@@ -484,7 +483,7 @@ public class TimeLineController {
      *                       processing. Will be ignored if it is null or empty.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private void promptForRebuild(@Nullable String dataSourceName) {
+    private void promptForRebuild() {
 
         //if there is an existing prompt or progressdialog, just show that
         if (promptDialogManager.bringCurrentDialogToFront()) {
@@ -500,7 +499,7 @@ public class TimeLineController {
         //if necessary prompt user with reasons to rebuild
         List<String> rebuildReasons = getRebuildReasons();
         if (false == rebuildReasons.isEmpty()) {
-            if (promptDialogManager.confirmRebuild(dataSourceName, rebuildReasons)) {
+            if (promptDialogManager.confirmRebuild(rebuildReasons)) {
                 rebuildRepo();
                 return;
             }
@@ -818,42 +817,6 @@ public class TimeLineController {
     }
 
     /**
-     * Is the timeline window open?
-     *
-     * @return True if the timeline is open.
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private boolean isWindowOpen() {
-        return mainFrame != null && mainFrame.isOpened() && mainFrame.isVisible();
-    }
-
-    /**
-     * Rebuild the db ONLY IF THE TIMELINE WINDOW IS OPEN. The user will be
-     * prompted with reasons why the database needs to be rebuilt and can still
-     * cancel the rebuild. The prompt will include that ingest has finished for
-     * the given datasource name, if not blank.
-     *
-     * @param dataSourceName The name of the datasource that has finished
-     *                       ingest. Will be ignored if it is null or empty.
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private void rebuildIfWindowOpen(@Nullable String dataSourceName) {
-        if (isWindowOpen()) {
-            Platform.runLater(() -> this.promptForRebuild(dataSourceName));
-        }
-    }
-
-    /**
-     * Rebuild the db ONLY IF THE TIMELINE WINDOW IS OPEN. The user will be
-     * prompted with reasons why the database needs to be rebuilt and can still
-     * cancel the rebuild.
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    public void rebuildIfWindowOpen() {
-        rebuildIfWindowOpen(null);
-    }
-
-    /**
      * Listener for IngestManager.IngestModuleEvents.
      */
     @Immutable
@@ -903,8 +866,8 @@ public class TimeLineController {
             switch (IngestManager.IngestJobEvent.valueOf(evt.getPropertyName())) {
                 case DATA_SOURCE_ANALYSIS_COMPLETED:
                     // include data source name in rebuild prompt on ingest completed
-                    final Content dataSource = ((DataSourceAnalysisEvent) evt).getDataSource();
-                    SwingUtilities.invokeLater(() -> rebuildIfWindowOpen(dataSource.getName()));
+                    Platform.runLater(() -> setEventsDBStale(true));
+                    filteredEvents.reFireAutopsyEvent((AutopsyEvent) evt);
                     break;
                 case DATA_SOURCE_ANALYSIS_STARTED:
                 case CANCELLED:
@@ -939,6 +902,7 @@ public class TimeLineController {
                 case DATA_SOURCE_ADDED:
                     //mark db stale, and prompt to rebuild
                     Platform.runLater(() -> setEventsDBStale(true));
+                    filteredEvents.reFireAutopsyEvent((AutopsyEvent) evt);
                     break;
                 case CURRENT_CASE:
                     //close timeline on case changes.

@@ -157,7 +157,7 @@ class PromptDialogManager {
      * @return True if they want to continue anyways
      */
     @NbBundle.Messages({
-        "PromptDialogManager.confirmDuringIngest.headerText=You are trying to show a timeline before ingest has been completed.\nThe timeline may be incomplete.",
+        "PromptDialogManager.confirmDuringIngest.headerText=You are trying to update the Timeline DB before ingest has been completed.\nThe Timeline may be incomplete.",
         "PromptDialogManager.confirmDuringIngest.contentText=Do you want to continue?"})
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     boolean confirmDuringIngest() {
@@ -173,38 +173,24 @@ class PromptDialogManager {
 
     /**
      * Prompt the user to confirm rebuilding the database for the given list of
-     * reasons, adding that "ingest has finished" for the datasource with the
-     * given name, if not blank, as a reason and as extra header text.
+     * reasons.
      *
-     * @param finishedDataSourceName The name of the datasource that has
-     *                               finished be analyzed. Will be ignored if it
-     *                               is null or empty.
-     * @param rebuildReasons         A List of reasons why the database is out
-     *                               of date.
+     * @param rebuildReasons A List of reasons why the database is out of date.
      *
      * @return True if the user a confirms rebuilding the database.
      */
     @NbBundle.Messages({
         "PromptDialogManager.rebuildPrompt.headerText=The Timeline database is incomplete and/or out of date."
         + "  Some events may be missing or inaccurate and some features may be unavailable.",
-        "# {0} - data source name",
-        "PromptDialogManager.rebuildPrompt.ingestDone=Ingest has finished for {0}.",
         "PromptDialogManager.rebuildPrompt.details=Details"})
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    boolean confirmRebuild(@Nullable String finishedDataSourceName, List<String> rebuildReasons) {
+    boolean confirmRebuild(List<String> rebuildReasons) {
         currentDialog = new Alert(Alert.AlertType.CONFIRMATION, Bundle.TimeLinecontroller_updateNowQuestion(), UPDATE, CONTINUE_NO_UPDATE);
         currentDialog.initModality(Modality.APPLICATION_MODAL);
         currentDialog.setTitle(Bundle.Timeline_dialogs_title());
         setDialogIcons(currentDialog);
 
-        //configure header text depending on presence of finishedDataSourceName
-        String headerText = Bundle.PromptDialogManager_rebuildPrompt_headerText();
-        if (StringUtils.isNotBlank(finishedDataSourceName)) {
-            String datasourceMessage = Bundle.PromptDialogManager_rebuildPrompt_ingestDone(finishedDataSourceName);
-            rebuildReasons.add(0, datasourceMessage);
-            headerText = datasourceMessage + "\n\n" + headerText;
-        }
-        currentDialog.setHeaderText(headerText);
+        currentDialog.setHeaderText(Bundle.PromptDialogManager_rebuildPrompt_headerText());
 
         //set up listview of reasons to rebuild
         ListView<String> listView = new ListView<>(FXCollections.observableArrayList(rebuildReasons));
@@ -225,16 +211,4 @@ class PromptDialogManager {
         return currentDialog.showAndWait().map(UPDATE::equals).orElse(false);
     }
 
-    /**
-     * Prompt the user to confirm rebuilding the database for the given list of
-     * reasons.
-     *
-     * @param rebuildReasons S List of reasons why the database is out of date.
-     *
-     * @return True if the user a confirms rebuilding the database.
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    boolean confirmRebuild(ArrayList<String> rebuildReasons) {
-        return confirmRebuild(null, rebuildReasons);
-    }
 }

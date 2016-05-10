@@ -40,9 +40,11 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent.DeletedContentTagInfo;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
 import org.sleuthkit.autopsy.timeline.db.EventsRepository;
+import org.sleuthkit.autopsy.timeline.events.DBUpdatedEvent;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsAddedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsDeletedEvent;
@@ -436,8 +438,14 @@ public final class FilteredEventsModel {
         eventbus.unregister(0);
     }
 
-    public void refresh() {
+    public void fireDBUpdated() {
+        eventbus.post(new DBUpdatedEvent());
+    }
+    public void fireRefreshRequest() {
         eventbus.post(new RefreshRequestedEvent());
     }
 
+    public void reFireAutopsyEvent(AutopsyEvent event) {
+        eventbus.post(event);
+    }
 }
