@@ -25,6 +25,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -51,6 +53,8 @@ public class AddFileTypeDialog extends JDialog {
     private FileType fileType;
     private AddFileTypePanel addMimeTypePanel;
     private BUTTON_PRESSED result;
+    private JButton okButton;
+    private JButton closeButton;
 
     /**
      * Creates a dialog for creating a file type
@@ -100,13 +104,12 @@ public class AddFileTypeDialog extends JDialog {
         add(this.addMimeTypePanel, BorderLayout.PAGE_START);
 
         // Add the add/done button.
-        JButton addButton;
         if (add) {
-            addButton = new JButton(Bundle.AddMimeTypeDialog_addButton_title());
+            okButton = new JButton(Bundle.AddMimeTypeDialog_addButton_title());
         } else {
-            addButton = new JButton(Bundle.AddMimeTypeDialog_addButton_title2());
+            okButton = new JButton(Bundle.AddMimeTypeDialog_addButton_title2());
         }
-        addButton.addActionListener(new ActionListener() {
+        okButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 doButtonAction(true);
@@ -114,7 +117,7 @@ public class AddFileTypeDialog extends JDialog {
         });
 
         // Add a close button.
-        JButton closeButton = new JButton(Bundle.AddMimeTypeDialog_cancelButton_title());
+        closeButton = new JButton(Bundle.AddMimeTypeDialog_cancelButton_title());
         closeButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -126,7 +129,7 @@ public class AddFileTypeDialog extends JDialog {
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.LINE_AXIS));
         buttonPanel.add(new javax.swing.Box.Filler(new Dimension(10, 10), new Dimension(10, 10), new Dimension(10, 10)));
-        buttonPanel.add(addButton);
+        buttonPanel.add(okButton);
         buttonPanel.add(new javax.swing.Box.Filler(new Dimension(10, 10), new Dimension(10, 10), new Dimension(10, 10)));
         buttonPanel.add(closeButton);
         add(buttonPanel, BorderLayout.LINE_START);
@@ -141,13 +144,22 @@ public class AddFileTypeDialog extends JDialog {
                 doButtonAction(false);
             }
         });
-
+        this.addMimeTypePanel.addPropertyChangeListener(new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if (evt.getPropertyName().equals(AddFileTypePanel.EVENT.SIG_LIST_CHANGED.toString())) {
+                    enableOkButton();
+                }
+            }
+        });
+        enableOkButton();
         /**
          * Show the dialog.
          */
         pack();
         setResizable(false);
         setVisible(true);
+
     }
 
     /**
@@ -187,6 +199,10 @@ public class AddFileTypeDialog extends JDialog {
      */
     public BUTTON_PRESSED getResult() {
         return result;
+    }
+
+    private void enableOkButton() {
+        this.okButton.setEnabled(addMimeTypePanel.hasSignature());
     }
 
 }
