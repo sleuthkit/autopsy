@@ -74,6 +74,7 @@ import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.VisualizationMode;
 import org.sleuthkit.autopsy.timeline.actions.Back;
+import org.sleuthkit.autopsy.timeline.actions.RebuildDataBase;
 import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
 import org.sleuthkit.autopsy.timeline.actions.SaveSnapshotAsReport;
 import org.sleuthkit.autopsy.timeline.actions.ZoomIn;
@@ -99,6 +100,7 @@ final public class VisualizationPanel extends BorderPane {
     private static final Logger LOGGER = Logger.getLogger(VisualizationPanel.class.getName());
 
     private static final Image INFORMATION = new Image("org/sleuthkit/autopsy/timeline/images/information.png", 16, 16, true, true); // NON-NLS
+    private static final Image WARNING = new Image("org/sleuthkit/autopsy/timeline/images/warning_triangle.png", 16, 16, true, true); // NON-NLS
     private static final Image REFRESH = new Image("org/sleuthkit/autopsy/timeline/images/arrow-circle-double-135.png"); // NON-NLS
     private static final Background GRAY_BACKGROUND = new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY));
 
@@ -164,6 +166,8 @@ final public class VisualizationPanel extends BorderPane {
     private Button snapShotButton;
     @FXML
     private Button refreshButton;
+    @FXML
+    private Button updateDBButton;
 
     /*
      * Wraps contained visualization so that we can show notifications over it.
@@ -260,7 +264,8 @@ final public class VisualizationPanel extends BorderPane {
         "VisualizationPanel.countsToggle.text=Counts",
         "VisualizationPanel.detailsToggle.text=Details",
         "VisualizationPanel.zoomMenuButton.text=Zoom in/out to",
-        "VisualizationPanel.tagsAddedOrDeleted=Tags have been created and/or deleted.  The visualization may not be up to date."})
+        "VisualizationPanel.tagsAddedOrDeleted=Tags have been created and/or deleted.  The visualization may not be up to date.",
+        "StatusBar.refreshLabel.text=The timeline DB may be out of date."})
     void initialize() {
         assert endPicker != null : "fx:id=\"endPicker\" was not injected: check your FXML file 'ViewWrapper.fxml'."; // NON-NLS
         assert histogramBox != null : "fx:id=\"histogramBox\" was not injected: check your FXML file 'ViewWrapper.fxml'."; // NON-NLS
@@ -275,11 +280,31 @@ final public class VisualizationPanel extends BorderPane {
         setCenter(notificationPane);
         needsRefresh.addListener(observable -> {
             if (needsRefresh.get()) {
+                notificationPane.getActions().setAll(new Refresh());
                 notificationPane.show(Bundle.VisualizationPanel_tagsAddedOrDeleted(), new ImageView(INFORMATION));
             } else {
                 notificationPane.hide();
             }
         });
+
+        //this should use an event(EventBus) , not this weird observable pattern
+        controller.eventsDBStaleProperty().addListener(staleProperty -> {
+            Platform.runLater(() -> {
+                if (controller.isEventsDBStale()) {
+                    notificationPane.getActions().setAll(new RebuildDataBase(controller));
+                    notificationPane.show(Bundle.StatusBar_refreshLabel_text(), new ImageView(WARNING));
+                } else {
+                    VisualizationPanel.this.refreshHistorgram();
+                    notificationPane.hide();
+                }
+            });
+        });
+
+        //configure snapshor button / action
+        ActionUtils.configureButton(new SaveSnapshotAsReport(controller, notificationPane::getContent), snapShotButton);
+        ActionUtils.configureButton(new Refresh(), refreshButton);
+
+        ActionUtils.configureButton(new RebuildDataBase(controller), updateDBButton);
 
         //configure visualization mode toggle
         visualizationModeLabel.setText(Bundle.VisualizationPanel_visualizationModeLabel_text());
@@ -305,10 +330,6 @@ final public class VisualizationPanel extends BorderPane {
 
         controller.visualizationModeProperty().addListener(visualizationMode -> syncVisualizationMode());
         syncVisualizationMode();
-
-        //configure snapshor button / action
-        ActionUtils.configureButton(new SaveSnapshotAsReport(controller, notificationPane::getContent), snapShotButton);
-        ActionUtils.configureButton(new Refresh(), refreshButton);
 
         /////configure start and end pickers
         startLabel.setText(Bundle.VisualizationPanel_startLabel_text());
@@ -366,12 +387,6 @@ final public class VisualizationPanel extends BorderPane {
         filteredEvents.zoomParametersProperty().addListener(zoomListener);
         refreshTimeUI(); //populate the viz
 
-        //this should use an event(EventBus) , not this weird observable pattern
-        controller.eventsDBStaleProperty().addListener(staleProperty -> {
-            if (controller.isEventsDBStale()) {
-                Platform.runLater(VisualizationPanel.this::refreshHistorgram);
-            }
-        });
         refreshHistorgram();
 
     }

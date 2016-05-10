@@ -29,9 +29,9 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
  * ingest.
  */
 public class RebuildDataBase extends Action {
-
+    
     private static final Image DB_REFRESH = new Image("org/sleuthkit/autopsy/timeline/images/database_refresh.png");
-
+    
     @NbBundle.Messages({
         "RebuildDataBase.text=Update DB",
         "RebuildDataBase.longText=Update the DB to include new events."})
@@ -40,5 +40,6 @@ public class RebuildDataBase extends Action {
         setLongText(Bundle.RebuildDataBase_longText());
         setGraphic(new ImageView(DB_REFRESH));
         setEventHandler(actionEvent -> controller.rebuildRepo());
+        disabledProperty().bind(controller.eventsDBStaleProperty().not());
     }
 }

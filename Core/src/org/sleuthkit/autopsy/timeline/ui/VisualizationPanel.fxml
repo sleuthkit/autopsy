@@ -19,13 +19,13 @@
 
 <fx:root prefHeight="-1.0" prefWidth="-1.0" type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1">
     <top>
-        <HBox BorderPane.alignment="CENTER">
+        <HBox alignment="CENTER_LEFT" BorderPane.alignment="CENTER">
             <children>
-                <ToolBar fx:id="toolBar" HBox.hgrow="ALWAYS">
+                <ToolBar fx:id="toolBar" HBox.hgrow="NEVER">
                     <items>
-                        <HBox alignment="CENTER" BorderPane.alignment="CENTER">
+                        <HBox alignment="CENTER_LEFT" BorderPane.alignment="CENTER" HBox.hgrow="ALWAYS">
                             <children>
-                                <Label fx:id="visualizationModeLabel" text="Visualisation Mode:">
+                                <Label fx:id="visualizationModeLabel" text="Visualisation Mode:" textAlignment="CENTER" wrapText="true" HBox.hgrow="NEVER">
                                     <HBox.margin>
                                         <Insets right="5.0" />
                                     </HBox.margin>
@@ -34,7 +34,7 @@
                                     </font>
                                 </Label>
                                    
-                                <SegmentedButton maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity">
+                                <SegmentedButton maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" HBox.hgrow="NEVER">
                                     <buttons>   
                                         <ToggleButton fx:id="countsToggle" alignment="TOP_LEFT" mnemonicParsing="false" selected="true">
                                             <graphic>
@@ -74,10 +74,10 @@
                         <Separator orientation="VERTICAL" />
                     </items>
                 </ToolBar>
-                <ToolBar maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
+                <ToolBar maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
                     <items>
-                        <Separator orientation="VERTICAL" />
-                        <Button fx:id="snapShotButton" mnemonicParsing="false">
+                        <Separator halignment="RIGHT" orientation="VERTICAL" HBox.hgrow="ALWAYS" />
+                        <Button fx:id="snapShotButton" mnemonicParsing="false" text="Snapshot Report">
                             <graphic>
                                 <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
                                     <image>
@@ -86,12 +86,21 @@
                                 </ImageView>
                             </graphic>
                         </Button>
-                        <Separator halignment="LEFT" maxWidth="1.7976931348623157E308" orientation="VERTICAL" />
-                        <Button fx:id="refreshButton" alignment="CENTER_RIGHT" mnemonicParsing="false" text="Refresh">
+                        <Separator maxWidth="1.7976931348623157E308" orientation="VERTICAL" />
+                        <Button fx:id="refreshButton" alignment="CENTER_RIGHT" mnemonicParsing="false" text="Refresh Vis.">
                             <graphic>
                                 <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
                                     <image>
                                         <Image url="@../images/arrow-circle-double-135.png" />
+                                    </image>
+                                </ImageView>
+                            </graphic>
+                        </Button>
+                        <Button fx:id="updateDBButton" mnemonicParsing="false" text="Update DB">
+                            <graphic>
+                                <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                                    <image>
+                                        <Image url="@../images/database_refresh.png" />
                                     </image>
                                 </ImageView>
                             </graphic>
