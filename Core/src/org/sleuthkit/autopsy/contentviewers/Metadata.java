@@ -149,7 +149,7 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
         addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.md5"), md5);
         addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.hashLookupResults"), file.getKnown().toString());
 
-        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.internalid"), new Long(file.getId()).toString());
+        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.internalid"), Long.toString(file.getId()));
         if (file.getType().compareTo(TSK_DB_FILES_TYPE_ENUM.LOCAL) == 0) {
             addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.localPath"), file.getLocalAbsPath());
         }
@@ -209,10 +209,7 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
     @Override
     public boolean isSupported(Node node) {
         AbstractFile file = node.getLookup().lookup(AbstractFile.class);
-        if (file == null) {
-            return false;
-        }
-        return true;
+        return file != null;
     }
 
     @Override
