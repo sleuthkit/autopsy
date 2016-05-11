@@ -351,7 +351,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
         "DetailViewPane.loggedTask.continueButton=Continue",
         "DetailViewPane.loggedTask.backButton=Back (Cancel)",
         "# {0} - number of events",
-        "DetailViewPane.loggedTask.prompt=You are about to show details for {0} events.  This might be very slow or even crash Autopsy.\n\nDo you want to continue?"})
+        "DetailViewPane.loggedTask.prompt=You are about to show details for {0} events.  This might be very slow and could exhaust available memory.\n\nDo you want to continue?"})
     private class DetailsUpdateTask extends VisualizationUpdateTask<Interval> {
 
         DetailsUpdateTask() {
