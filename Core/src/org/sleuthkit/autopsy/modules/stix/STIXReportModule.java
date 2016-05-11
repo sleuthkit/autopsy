@@ -146,7 +146,7 @@ public class STIXReportModule implements GeneralReportModule {
             new File(baseReportDir).delete();
             return;
         }
-        
+
         try (BufferedWriter output = new BufferedWriter(new FileWriter(reportFile))) {
             // Store the path
             ModuleSettings.setConfigSetting("STIX", "defaultPath", stixFileName); //NON-NLS
@@ -191,12 +191,12 @@ public class STIXReportModule implements GeneralReportModule {
 
             // Set the progress bar to done. If any errors occurred along the way, modify
             // the "complete" message to indicate this.
+            Case.getCurrentCase().addReport(reportPath, stixFileName, "");
             if (hadErrors) {
                 progressPanel.complete(ReportStatus.ERROR);
                 progressPanel.updateStatusLabel(
                         NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.completedWithErrors"));
             } else {
-                Case.getCurrentCase().addReport(reportPath, stixFileName, "");
                 progressPanel.complete(ReportStatus.COMPLETE);
             }
         } catch (IOException ex) {
