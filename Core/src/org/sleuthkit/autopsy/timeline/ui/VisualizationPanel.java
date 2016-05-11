@@ -29,7 +29,6 @@ import java.util.function.Supplier;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
-import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
@@ -177,13 +176,6 @@ final public class VisualizationPanel extends BorderPane {
      */
     private final NotificationPane notificationPane = new NotificationPane();
 
-    /*
-     * Boolean property that holds true if the visualziation may not represent
-     * the current state of the DB, because, for example, tags have been updated
-     * but the vis. was not refreshed.
-     */
-    private final ReadOnlyBooleanWrapper needsRefresh = new ReadOnlyBooleanWrapper(false);
-
     private final TimeLineController controller;
     private final FilteredEventsModel filteredEvents;
 
@@ -283,7 +275,6 @@ final public class VisualizationPanel extends BorderPane {
 
         //configure snapshor button / action
         ActionUtils.configureButton(new SaveSnapshotAsReport(controller, notificationPane::getContent), snapShotButton);
-        ActionUtils.configureButton(new Refresh(), refreshButton);
 
         ActionUtils.configureButton(new RebuildDataBase(controller), updateDBButton);
 
@@ -391,8 +382,8 @@ final public class VisualizationPanel extends BorderPane {
      */
     @Subscribe
     public void handleTimeLineTagUpdate(TagsUpdatedEvent event) {
+        visualization.setNeedsRefresh();
         Platform.runLater(() -> {
-            VisualizationPanel.this.needsRefresh.set(true);
             if (notificationPane.isShowing() == false) {
                 notificationPane.getActions().setAll(new Refresh());
                 notificationPane.show(Bundle.VisualizationPanel_tagsAddedOrDeleted(), new ImageView(INFORMATION));
@@ -401,9 +392,8 @@ final public class VisualizationPanel extends BorderPane {
     }
 
     /**
-     * Handle RefreshRequestedEvent.
-     *
-     * Mark that the visualization has been refreshed.
+     * Handle a RefreshRequestedEvent from the events model by updating the
+     * visualization.
      *
      * NOTE: This VisualizationPanel must be registered with the
      * filteredEventsModel's EventBus in order for this handler to be invoked.
@@ -412,22 +402,18 @@ final public class VisualizationPanel extends BorderPane {
      */
     @Subscribe
     public void handleRefreshRequested(RefreshRequestedEvent event) {
+        visualization.update();
         Platform.runLater(() -> {
-            VisualizationPanel.this.needsRefresh.set(false);
-            if (notificationPane.getText().equals(Bundle.VisualizationPanel_tagsAddedOrDeleted())) {
+            if (Bundle.VisualizationPanel_tagsAddedOrDeleted().equals(notificationPane.getText())) {
                 notificationPane.hide();
             }
         });
     }
 
-   
-
     @Subscribe
-    public void handleFresh(DBUpdatedEvent event) {
-        Platform.runLater(() -> {
-            VisualizationPanel.this.refreshHistorgram();
-            notificationPane.hide();
-        });
+    public void handleDBUpdated(DBUpdatedEvent event) {
+        refreshHistorgram();
+        Platform.runLater(notificationPane::hide);
     }
 
     @Subscribe
@@ -606,8 +592,9 @@ final public class VisualizationPanel extends BorderPane {
             }
             //setup new vis.
             visualization = vizPane;
+            ActionUtils.configureButton(new Refresh(), refreshButton);
             visualization.update();
-            toolBar.getItems().addAll(vizPane.getSettingsNodes());
+            toolBar.getItems().addAll(2, vizPane.getSettingsNodes());
             notificationPane.setContent(visualization);
 
             //listen to has event sproperty and show "dialog" if it is false.
@@ -622,10 +609,7 @@ final public class VisualizationPanel extends BorderPane {
             });
         });
 
-        Platform.runLater(() -> {
-            VisualizationPanel.this.needsRefresh.set(false);
-            notificationPane.hide();
-        });
+        Platform.runLater(notificationPane::hide);
     }
 
     @NbBundle.Messages("NoEventsDialog.titledPane.text=No Visible Events")
@@ -760,14 +744,14 @@ final public class VisualizationPanel extends BorderPane {
     private class Refresh extends Action {
 
         @NbBundle.Messages({
-            "VisualizationPanel.refresh.text=Refresh",
+            "VisualizationPanel.refresh.text=Refresh Vis.",
             "VisualizationPanel.refresh.longText=Refresh the visualization to include information that is in the database but not visualized, such as newly updated tags."})
         Refresh() {
             super(Bundle.VisualizationPanel_refresh_text());
             setLongText(Bundle.VisualizationPanel_refresh_longText());
             setGraphic(new ImageView(REFRESH));
             setEventHandler(actionEvent -> filteredEvents.fireRefreshRequest());
-            disabledProperty().bind(needsRefresh.not());
+            disabledProperty().bind(visualization.needsRefreshProperty().not());
         }
     }
 }

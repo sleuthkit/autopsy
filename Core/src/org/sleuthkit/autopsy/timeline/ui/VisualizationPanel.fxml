@@ -19,96 +19,88 @@
 
 <fx:root prefHeight="-1.0" prefWidth="-1.0" type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1">
     <top>
-        <HBox alignment="CENTER_LEFT" BorderPane.alignment="CENTER">
-            <children>
-                <ToolBar fx:id="toolBar" HBox.hgrow="NEVER">
-                    <items>
-                        <HBox alignment="CENTER_LEFT" BorderPane.alignment="CENTER" HBox.hgrow="ALWAYS">
-                            <children>
-                                <Label fx:id="visualizationModeLabel" text="Visualisation Mode:" textAlignment="CENTER" wrapText="true" HBox.hgrow="NEVER">
-                                    <HBox.margin>
-                                        <Insets right="5.0" />
-                                    </HBox.margin>
-                                    <font>
-                                        <Font name="System Bold" size="14.0" />
-                                    </font>
-                                </Label>
+        <ToolBar fx:id="toolBar" HBox.hgrow="ALWAYS">
+            <items>
+                <HBox alignment="CENTER_LEFT" BorderPane.alignment="CENTER" HBox.hgrow="NEVER">
+                    <children>
+                        <Label fx:id="visualizationModeLabel" text="Visualisation Mode:" textAlignment="CENTER" wrapText="true" HBox.hgrow="NEVER">
+                            <HBox.margin>
+                                <Insets right="5.0" />
+                            </HBox.margin>
+                            <font>
+                                <Font name="System Bold" size="14.0" />
+                            </font>
+                        </Label>
                                    
-                                <SegmentedButton maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" HBox.hgrow="NEVER">
-                                    <buttons>   
-                                        <ToggleButton fx:id="countsToggle" alignment="TOP_LEFT" mnemonicParsing="false" selected="true">
-                                            <graphic>
-                                                <ImageView fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true">
-                                                    <image>
-                                                        <Image url="@../images/chart_bar.png" />
-                                                    </image>
-                                                </ImageView>
-                                            </graphic>
-                                            <font>
-                                                <Font name="System Bold" size="16.0" />
-                                            </font>
-                                        </ToggleButton>
-                                        <ToggleButton fx:id="detailsToggle" alignment="CENTER_RIGHT" layoutX="74.0" mnemonicParsing="false" selected="false">
-                                            <graphic>
-                                                <ImageView fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" rotate="0.0" smooth="true" style="-fx-background-color:white;" x="2.0" y="1.0">
-                                                    <image>
-                                                        <Image url="@../images/20140521121247760_easyicon_net_32_colorized.png" />
-                                                    </image>
-                                                </ImageView>
-                                            </graphic>
-                                            <font>
-                                                <Font name="System Bold" size="16.0" />
-                                            </font>
-                                        </ToggleButton>
-                                    </buttons>
+                        <SegmentedButton maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" HBox.hgrow="NEVER">
+                            <buttons>   
+                                <ToggleButton fx:id="countsToggle" alignment="TOP_LEFT" mnemonicParsing="false" selected="true">
+                                    <graphic>
+                                        <ImageView fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true">
+                                            <image>
+                                                <Image url="@../images/chart_bar.png" />
+                                            </image>
+                                        </ImageView>
+                                    </graphic>
+                                    <font>
+                                        <Font name="System Bold" size="16.0" />
+                                    </font>
+                                </ToggleButton>
+                                <ToggleButton fx:id="detailsToggle" alignment="CENTER_RIGHT" layoutX="74.0" mnemonicParsing="false" selected="false">
+                                    <graphic>
+                                        <ImageView fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" rotate="0.0" smooth="true" style="-fx-background-color:white;" x="2.0" y="1.0">
+                                            <image>
+                                                <Image url="@../images/20140521121247760_easyicon_net_32_colorized.png" />
+                                            </image>
+                                        </ImageView>
+                                    </graphic>
+                                    <font>
+                                        <Font name="System Bold" size="16.0" />
+                                    </font>
+                                </ToggleButton>
+                            </buttons>
                                           
-                                </SegmentedButton>
-                            </children>
-                            <padding>
-                                <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
-                            </padding>
-                            <BorderPane.margin>
-                                <Insets left="10.0" />
-                            </BorderPane.margin>
-                        </HBox>
-                        <Separator orientation="VERTICAL" />
-                    </items>
-                </ToolBar>
-                <ToolBar maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
-                    <items>
-                        <Separator halignment="RIGHT" orientation="VERTICAL" HBox.hgrow="ALWAYS" />
-                        <Button fx:id="snapShotButton" mnemonicParsing="false" text="Snapshot Report">
-                            <graphic>
-                                <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
-                                    <image>
-                                        <Image url="@../images/image.png" />
-                                    </image>
-                                </ImageView>
-                            </graphic>
-                        </Button>
-                        <Separator maxWidth="1.7976931348623157E308" orientation="VERTICAL" />
-                        <Button fx:id="refreshButton" alignment="CENTER_RIGHT" mnemonicParsing="false" text="Refresh Vis.">
-                            <graphic>
-                                <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
-                                    <image>
-                                        <Image url="@../images/arrow-circle-double-135.png" />
-                                    </image>
-                                </ImageView>
-                            </graphic>
-                        </Button>
-                        <Button fx:id="updateDBButton" mnemonicParsing="false" text="Update DB">
-                            <graphic>
-                                <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
-                                    <image>
-                                        <Image url="@../images/database_refresh.png" />
-                                    </image>
-                                </ImageView>
-                            </graphic>
-                        </Button>
-                    </items>
-                </ToolBar>
-            </children>
-        </HBox>
+                        </SegmentedButton>
+                    </children>
+                    <padding>
+                        <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+                    </padding>
+                    <BorderPane.margin>
+                        <Insets left="10.0" />
+                    </BorderPane.margin>
+                </HBox>
+                <Separator halignment="LEFT" maxWidth="1.7976931348623157E308" orientation="VERTICAL" />
+                <Separator halignment="LEFT" maxWidth="1.7976931348623157E308" orientation="VERTICAL" HBox.hgrow="ALWAYS" />
+                <Button fx:id="snapShotButton" mnemonicParsing="false" text="Snapshot Report">
+                    <graphic>
+                        <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                            <image>
+                                <Image url="@../images/image.png" />
+                            </image>
+                        </ImageView>
+                    </graphic>
+                </Button>
+                <Separator maxWidth="1.7976931348623157E308" orientation="VERTICAL" />
+                <Button fx:id="refreshButton" alignment="CENTER_RIGHT" mnemonicParsing="false" text="Refresh Vis.">
+                    <graphic>
+                        <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                            <image>
+                                <Image url="@../images/arrow-circle-double-135.png" />
+                            </image>
+                        </ImageView>
+                    </graphic>
+                </Button>
+                <Button fx:id="updateDBButton" mnemonicParsing="false" text="Update DB">
+                    <graphic>
+                        <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                            <image>
+                                <Image url="@../images/database_refresh.png" />
+                            </image>
+                        </ImageView>
+                    </graphic>
+                </Button>
+            </items>
+        </ToolBar>
     </top> 
     <bottom>
         <VBox maxHeight="-Infinity">

@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.timeline.ui;
 
-import com.google.common.eventbus.Subscribe;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -72,7 +71,6 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
-import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 
 /**
  * Abstract base class for TimeLineChart based visualizations.
@@ -106,6 +104,13 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
         return DEFAULT_TOOLTIP;
     }
 
+    /*
+     * Boolean property that holds true if the visualziation may not represent
+     * the current state of the DB, because, for example, tags have been updated
+     * but the vis. was not refreshed.
+     */
+    private final ReadOnlyBooleanWrapper needsRefresh = new ReadOnlyBooleanWrapper(false);
+
     private final ReadOnlyBooleanWrapper hasVisibleEvents = new ReadOnlyBooleanWrapper(true);
 
     /*
@@ -132,6 +137,14 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
     final private ObservableList<NodeType> selectedNodes = FXCollections.observableArrayList();
 
     private InvalidationListener updateListener = any -> update();
+
+    public boolean needsRefresh() {
+        return needsRefresh.get();
+    }
+
+    public ReadOnlyBooleanProperty needsRefreshProperty() {
+        return needsRefresh.getReadOnlyProperty();
+    }
 
     /**
      * The visualization nodes that are selected.
@@ -439,17 +452,6 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
     }
 
     /**
-     * Handle a RefreshRequestedEvent from the events model by updating the
-     * visualization.
-     *
-     * @param event The RefreshRequestedEvent to handle.
-     */
-    @Subscribe
-    public void handleRefreshRequested(RefreshRequestedEvent event) {
-        update();
-    }
-
-    /**
      * Iterate through the list of tick-marks building a two level structure of
      * replacement tick mark labels. (Visually) upper level has most
      * detailed/highest frequency part of date/time (specific label). Second
@@ -530,6 +532,10 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
         }
         //request layout since we have modified scene graph structure
         requestParentLayout();
+    }
+
+    void setNeedsRefresh() {
+        needsRefresh.set(true);
     }
 
     /**
@@ -693,6 +699,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
         @Override
         protected void succeeded() {
             super.succeeded();
+            needsRefresh.set(false);
             layoutDateLabels();
             cleanup();
         }
