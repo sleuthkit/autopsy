@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.contentviewers;
 import java.awt.Component;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
@@ -112,6 +113,8 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
         sb.append("</td></tr>"); //NON-NLS
     }
 
+    @Messages({"Metadata.tableRowTitle.mimeType=MIME Type",
+    "Metadata.tableRowTitle.knownState=Known Status"})
     @Override
     public void setNode(Node node) {
         AbstractFile file = node.getLookup().lookup(AbstractFile.class);
@@ -130,19 +133,22 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
         }
 
         addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.type"), file.getType().getName());
-        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.size"), new Long(file.getSize()).toString());
+        addRow(sb, Bundle.Metadata_tableRowTitle_mimeType(), file.getMIMEType());
+        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.size"), Long.toString(file.getSize()));
         addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.fileNameAlloc"), file.getDirFlagAsString());
         addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.metadataAlloc"), file.getMetaFlagsAsString());
         addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.modified"), ContentUtils.getStringTime(file.getMtime(), file));
         addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.accessed"), ContentUtils.getStringTime(file.getAtime(), file));
         addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.created"), ContentUtils.getStringTime(file.getCrtime(), file));
         addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.changed"), ContentUtils.getStringTime(file.getCtime(), file));
+        
 
         String md5 = file.getMd5Hash();
         if (md5 == null) {
             md5 = NbBundle.getMessage(this.getClass(), "Metadata.tableRowContent.md5notCalc");
         }
         addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.md5"), md5);
+        addRow(sb, Bundle.Metadata_tableRowTitle_knownState(), file.getKnown().getName());
         addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.hashLookupResults"), file.getKnown().toString());
 
         addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.internalid"), new Long(file.getId()).toString());
