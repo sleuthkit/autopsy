@@ -1,4 +1,4 @@
- /*
+/*
  *
  * Autopsy Forensic Browser
  * 
@@ -68,10 +68,16 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
             ReportGenerator generator = new ReportGenerator((TableReportModule) wiz.getProperty("tableModule"), //NON-NLS
                     (GeneralReportModule) wiz.getProperty("generalModule"), //NON-NLS
                     (FileReportModule) wiz.getProperty("fileModule")); //NON-NLS
-            generator.generateTableReports((Map<BlackboardArtifact.Type, Boolean>) wiz.getProperty("artifactStates"), (Map<String, Boolean>) wiz.getProperty("tagStates")); //NON-NLS
-            generator.generateFileListReports((Map<FileReportDataTypes, Boolean>) wiz.getProperty("fileReportOptions")); //NON-NLS
-            generator.generateGeneralReports();
-            generator.displayProgressPanels();
+            TableReportModule tableReport = (TableReportModule) wiz.getProperty("tableModule");
+            GeneralReportModule generalReport = (GeneralReportModule) wiz.getProperty("generalModule");
+            FileReportModule fileReport = (FileReportModule) wiz.getProperty("fileModule");
+            if (tableReport != null) {
+                generator.generateTableReport(tableReport, (Map<BlackboardArtifact.Type, Boolean>) wiz.getProperty("artifactStates"), (Map<String, Boolean>) wiz.getProperty("tagStates")); //NON-NLS
+            } else if (generalReport != null) {
+                generator.generateGeneralReport(generalReport);
+            } else if (fileReport != null) {
+                generator.generateFileListReport(fileReport, (Map<FileReportDataTypes, Boolean>) wiz.getProperty("fileReportOptions")); //NON-NLS
+            }
         }
     }
 
