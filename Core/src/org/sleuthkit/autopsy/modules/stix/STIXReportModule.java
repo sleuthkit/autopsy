@@ -18,48 +18,46 @@
  */
 package org.sleuthkit.autopsy.modules.stix;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
-import java.util.logging.Level;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
 import javax.swing.JPanel;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.namespace.QName;
-
 import org.mitre.cybox.cybox_2.ObjectType;
 import org.mitre.cybox.cybox_2.Observable;
 import org.mitre.cybox.cybox_2.ObservableCompositionType;
+import org.mitre.cybox.cybox_2.OperatorTypeEnum;
+import org.mitre.cybox.objects.AccountObjectType;
+import org.mitre.cybox.objects.Address;
+import org.mitre.cybox.objects.DomainName;
+import org.mitre.cybox.objects.EmailMessage;
+import org.mitre.cybox.objects.FileObjectType;
+import org.mitre.cybox.objects.SystemObjectType;
+import org.mitre.cybox.objects.URIObjectType;
+import org.mitre.cybox.objects.URLHistory;
+import org.mitre.cybox.objects.WindowsNetworkShare;
+import org.mitre.cybox.objects.WindowsRegistryKey;
 import org.mitre.stix.common_1.IndicatorBaseType;
 import org.mitre.stix.indicator_2.Indicator;
 import org.mitre.stix.stix_1.STIXPackage;
-
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.report.GeneralReportModule;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.report.ReportProgressPanel;
-import org.sleuthkit.datamodel.TskCoreException;
-
-import org.mitre.cybox.cybox_2.OperatorTypeEnum;
-import org.mitre.cybox.objects.Address;
-import org.mitre.cybox.objects.FileObjectType;
-import org.mitre.cybox.objects.URIObjectType;
-import org.mitre.cybox.objects.EmailMessage;
-import org.mitre.cybox.objects.WindowsNetworkShare;
-import org.mitre.cybox.objects.AccountObjectType;
-import org.mitre.cybox.objects.SystemObjectType;
-import org.mitre.cybox.objects.URLHistory;
-import org.mitre.cybox.objects.DomainName;
-import org.mitre.cybox.objects.WindowsRegistryKey;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.report.GeneralReportModule;
+import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
@@ -78,8 +76,6 @@ public class STIXReportModule implements GeneralReportModule {
     private List<EvalRegistryObj.RegistryFileInfo> registryFileData = null;
 
     private final boolean skipShortCircuit = true;
-
-    private BufferedWriter output = null;
 
     // Hidden constructor for the report
     private STIXReportModule() {
@@ -111,27 +107,12 @@ public class STIXReportModule implements GeneralReportModule {
         reportAllResults = configPanel.getShowAllResults();
 
         // Set up the output file
-        try {
-            File file = new File(reportPath);
-            output = new BufferedWriter(new FileWriter(file));
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, String.format("Unable to open STIX report file %s", reportPath), ex); //NON-NLS
-            MessageNotifyUtil.Notify.show("STIXReportModule", //NON-NLS
-                    NbBundle.getMessage(this.getClass(),
-                            "STIXReportModule.notifyMsg.unableToOpenReportFile",
-                            reportPath),
-                    MessageNotifyUtil.MessageType.ERROR);
-            progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel(
-                    NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.completedWithErrors"));
-            return;
-        }
-
         // Keep track of whether any errors occur during processing
         boolean hadErrors = false;
 
         // Process the file/directory name entry
         String stixFileName = configPanel.getStixFile();
+        File reportFile = new File(reportPath);
         if (stixFileName == null) {
             logger.log(Level.SEVERE, "STIXReportModuleConfigPanel.stixFile not initialized "); //NON-NLS
             MessageNotifyUtil.Message.error(
@@ -139,6 +120,7 @@ public class STIXReportModule implements GeneralReportModule {
             progressPanel.complete(ReportStatus.ERROR);
             progressPanel.updateStatusLabel(
                     NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.noFildDirProvided"));
+            new File(baseReportDir).delete();
             return;
         }
         if (stixFileName.isEmpty()) {
@@ -148,6 +130,7 @@ public class STIXReportModule implements GeneralReportModule {
             progressPanel.complete(ReportStatus.ERROR);
             progressPanel.updateStatusLabel(
                     NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.noFildDirProvided"));
+            new File(baseReportDir).delete();
             return;
         }
         File stixFile = new File(stixFileName);
@@ -160,58 +143,74 @@ public class STIXReportModule implements GeneralReportModule {
             progressPanel.complete(ReportStatus.ERROR);
             progressPanel.updateStatusLabel(
                     NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.couldNotOpenFileDir", stixFileName));
+            new File(baseReportDir).delete();
             return;
         }
+        
+        try (BufferedWriter output = new BufferedWriter(new FileWriter(reportFile))) {
+            // Store the path
+            ModuleSettings.setConfigSetting("STIX", "defaultPath", stixFileName); //NON-NLS
 
-        // Store the path
-        ModuleSettings.setConfigSetting("STIX", "defaultPath", stixFileName); //NON-NLS
-
-        // Create array of stix file(s)
-        File[] stixFiles;
-        if (stixFile.isFile()) {
-            stixFiles = new File[1];
-            stixFiles[0] = stixFile;
-        } else {
-            stixFiles = stixFile.listFiles();
-        }
-
-        // Set the length of the progress bar - we increment twice for each file
-        progressPanel.setMaximumProgress(stixFiles.length * 2 + 1);
-
-        // Process each STIX file
-        for (File file : stixFiles) {
-            try {
-                processFile(file.getAbsolutePath(), progressPanel);
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, String.format("Unable to process STIX file %s", file), ex); //NON-NLS
-                MessageNotifyUtil.Notify.show("STIXReportModule", //NON-NLS
-                        ex.getLocalizedMessage(),
-                        MessageNotifyUtil.MessageType.ERROR);
-                hadErrors = true;
+            // Create array of stix file(s)
+            File[] stixFiles;
+            if (stixFile.isFile()) {
+                stixFiles = new File[1];
+                stixFiles[0] = stixFile;
+            } else {
+                stixFiles = stixFile.listFiles();
             }
 
-            // Clear out the ID maps before loading the next file
-            idToObjectMap = new HashMap<String, ObjectType>();
-            idToResult = new HashMap<String, ObservableResult>();
-        }
+            // Set the length of the progress bar - we increment twice for each file
+            progressPanel.setMaximumProgress(stixFiles.length * 2 + 1);
 
-        // Close the output file
-        if (output != null) {
-            try {
-                output.close();
-            } catch (IOException ex) {
-                logger.log(Level.SEVERE, String.format("Error closing STIX report file %s", reportPath), ex); //NON-NLS
+            // Process each STIX file
+            for (File file : stixFiles) {
+                try {
+                    processFile(file.getAbsolutePath(), progressPanel, output);
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, String.format("Unable to process STIX file %s", file), ex); //NON-NLS
+                    MessageNotifyUtil.Notify.show("STIXReportModule", //NON-NLS
+                            ex.getLocalizedMessage(),
+                            MessageNotifyUtil.MessageType.ERROR);
+                    hadErrors = true;
+                }
+
+                // Clear out the ID maps before loading the next file
+                idToObjectMap = new HashMap<String, ObjectType>();
+                idToResult = new HashMap<String, ObservableResult>();
             }
-        }
 
-        // Set the progress bar to done. If any errors occurred along the way, modify
-        // the "complete" message to indicate this.
-        if (hadErrors) {
+            // Close the output file
+            if (output != null) {
+                try {
+                    output.close();
+                } catch (IOException ex) {
+                    logger.log(Level.SEVERE, String.format("Error closing STIX report file %s", reportPath), ex); //NON-NLS
+                }
+            }
+
+            // Set the progress bar to done. If any errors occurred along the way, modify
+            // the "complete" message to indicate this.
+            if (hadErrors) {
+                progressPanel.complete(ReportStatus.ERROR);
+                progressPanel.updateStatusLabel(
+                        NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.completedWithErrors"));
+            } else {
+                Case.getCurrentCase().addReport(reportPath, stixFileName, "");
+                progressPanel.complete(ReportStatus.COMPLETE);
+            }
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, String.format("Unable to open STIX report file %s", reportPath), ex); //NON-NLS
+            MessageNotifyUtil.Notify.show("STIXReportModule", //NON-NLS
+                    NbBundle.getMessage(this.getClass(),
+                            "STIXReportModule.notifyMsg.unableToOpenReportFile",
+                            reportPath),
+                    MessageNotifyUtil.MessageType.ERROR);
             progressPanel.complete(ReportStatus.ERROR);
             progressPanel.updateStatusLabel(
                     NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.completedWithErrors"));
-        } else {
-            progressPanel.complete(ReportStatus.COMPLETE);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Unable to add report to database.", ex);
         }
     }
 
@@ -223,14 +222,14 @@ public class STIXReportModule implements GeneralReportModule {
      *
      * @throws TskCoreException
      */
-    private void processFile(String stixFile, ReportProgressPanel progressPanel) throws
+    private void processFile(String stixFile, ReportProgressPanel progressPanel, BufferedWriter output) throws
             TskCoreException {
 
         // Load the STIX file
         STIXPackage stix;
         stix = loadSTIXFile(stixFile);
 
-        printFileHeader(stixFile);
+        printFileHeader(stixFile, output);
 
         // Save any observables listed up front
         processObservables(stix);
@@ -240,7 +239,7 @@ public class STIXReportModule implements GeneralReportModule {
         registryFileData = EvalRegistryObj.copyRegistryFiles();
 
         // Process the indicators
-        processIndicators(stix);
+        processIndicators(stix, output);
         progressPanel.increment();
 
     }
@@ -292,7 +291,7 @@ public class STIXReportModule implements GeneralReportModule {
      *
      * @param stix STIXPackage
      */
-    private void processIndicators(STIXPackage stix) throws TskCoreException {
+    private void processIndicators(STIXPackage stix, BufferedWriter output) throws TskCoreException {
         if (stix.getIndicators() != null) {
             List<IndicatorBaseType> s = stix.getIndicators().getIndicators();
             for (IndicatorBaseType t : s) {
@@ -302,7 +301,7 @@ public class STIXReportModule implements GeneralReportModule {
                         if (ind.getObservable().getObject() != null) {
                             ObservableResult result = evaluateSingleObservable(ind.getObservable(), "");
                             if (result.isTrue() || reportAllResults) {
-                                writeResultsToFile(ind, result.getDescription(), result.isTrue());
+                                writeResultsToFile(ind, result.getDescription(), result.isTrue(), output);
                             }
                             if (result.isTrue()) {
                                 saveResultsAsArtifacts(ind, result);
@@ -311,7 +310,7 @@ public class STIXReportModule implements GeneralReportModule {
                             ObservableResult result = evaluateObservableComposition(ind.getObservable().getObservableComposition(), "  ");
 
                             if (result.isTrue() || reportAllResults) {
-                                writeResultsToFile(ind, result.getDescription(), result.isTrue());
+                                writeResultsToFile(ind, result.getDescription(), result.isTrue(), output);
                             }
                             if (result.isTrue()) {
                                 saveResultsAsArtifacts(ind, result);
@@ -376,7 +375,7 @@ public class STIXReportModule implements GeneralReportModule {
      * @param resultStr - Full results for this indicator
      * @param found     - true if the indicator was found in datasource(s)
      */
-    private void writeResultsToFile(Indicator ind, String resultStr, boolean found) {
+    private void writeResultsToFile(Indicator ind, String resultStr, boolean found, BufferedWriter output) {
         if (output != null) {
             try {
                 if (found) {
@@ -412,7 +411,7 @@ public class STIXReportModule implements GeneralReportModule {
      *
      * @param a_fileName
      */
-    private void printFileHeader(String a_fileName) {
+    private void printFileHeader(String a_fileName, BufferedWriter output) {
         if (output != null) {
             try {
                 char[] chars = new char[a_fileName.length() + 8];
