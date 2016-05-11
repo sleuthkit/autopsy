@@ -113,8 +113,7 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
         sb.append("</td></tr>"); //NON-NLS
     }
 
-    @Messages({"Metadata.tableRowTitle.mimeType=MIME Type",
-    "Metadata.tableRowTitle.knownState=Known Status"})
+    @Messages({"Metadata.tableRowTitle.mimeType=MIME Type"})
     @Override
     public void setNode(Node node) {
         AbstractFile file = node.getLookup().lookup(AbstractFile.class);
@@ -148,7 +147,6 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
             md5 = NbBundle.getMessage(this.getClass(), "Metadata.tableRowContent.md5notCalc");
         }
         addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.md5"), md5);
-        addRow(sb, Bundle.Metadata_tableRowTitle_knownState(), file.getKnown().getName());
         addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.hashLookupResults"), file.getKnown().toString());
 
         addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.internalid"), new Long(file.getId()).toString());
