@@ -87,9 +87,6 @@
           <ResourceString bundle="org/sleuthkit/autopsy/report/Bundle.properties" key="ReportVisualPanel2.taggedResultsRadioButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
-      <Events>
-        <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="taggedResultsRadioButtonStateChanged"/>
-      </Events>
     </Component>
     <Component class="javax.swing.JRadioButton" name="allResultsRadioButton">
       <Properties>

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -51,7 +51,6 @@ import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import static javafx.scene.layout.Region.USE_PREF_SIZE;
@@ -140,14 +139,6 @@ final public class VisualizationPanel extends BorderPane {
     private Label startLabel;
     @FXML
     private Label endLabel;
-
-    //// replacemetn axis label componenets
-    @FXML
-    private Pane partPane;
-    @FXML
-    private Pane contextPane;
-    @FXML
-    private Region spacer;
 
     //// header toolbar componenets
     @FXML
@@ -288,7 +279,7 @@ final public class VisualizationPanel extends BorderPane {
         setViewMode(controller.viewModeProperty().get());
 
         //configure snapshor button / action
-        ActionUtils.configureButton(new SaveSnapshotAsReport(controller, VisualizationPanel.this), snapShotButton);
+        ActionUtils.configureButton(new SaveSnapshotAsReport(controller, notificationPane::getContent), snapShotButton);
 
         /////configure start and end pickers
         startLabel.setText(Bundle.VisualizationPanel_startLabel_text());
@@ -359,11 +350,11 @@ final public class VisualizationPanel extends BorderPane {
     private void setViewMode(VisualizationMode visualizationMode) {
         switch (visualizationMode) {
             case COUNTS:
-                setVisualization(new CountsViewPane(controller, partPane, contextPane, spacer));
+                setVisualization(new CountsViewPane(controller));
                 countsToggle.setSelected(true);
                 break;
             case DETAIL:
-                setVisualization(new DetailViewPane(controller, partPane, contextPane, spacer));
+                setVisualization(new DetailViewPane(controller));
                 detailsToggle.setSelected(true);
                 break;
         }
@@ -388,7 +379,7 @@ final public class VisualizationPanel extends BorderPane {
                         eventsTree.setDetailViewPane((DetailViewPane) visualization);
                     });
                 }
-                visualization.hasEvents.addListener((observable, oldValue, newValue) -> {
+                visualization.hasVisibleEventsProperty().addListener((observable, oldValue, newValue) -> {
                     if (newValue == false) {
 
                         notificationPane.setContent(
@@ -427,54 +418,54 @@ final public class VisualizationPanel extends BorderPane {
 
         histogramTask = new LoggedTask<Void>(
                 NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.title"), true) { // NON-NLS
-                    private final Lighting lighting = new Lighting();
+            private final Lighting lighting = new Lighting();
 
             @Override
             protected Void call() throws Exception {
 
-                        updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.preparing")); // NON-NLS
+                updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.preparing")); // NON-NLS
 
-                        long max = 0;
-                        final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval());
-                        final long lowerBound = rangeInfo.getLowerBound();
-                        final long upperBound = rangeInfo.getUpperBound();
-                        Interval timeRange = new Interval(new DateTime(lowerBound, TimeLineController.getJodaTimeZone()), new DateTime(upperBound, TimeLineController.getJodaTimeZone()));
+                long max = 0;
+                final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval());
+                final long lowerBound = rangeInfo.getLowerBound();
+                final long upperBound = rangeInfo.getUpperBound();
+                Interval timeRange = new Interval(new DateTime(lowerBound, TimeLineController.getJodaTimeZone()), new DateTime(upperBound, TimeLineController.getJodaTimeZone()));
 
-                        //extend range to block bounderies (ie day, month, year)
-                        int p = 0; // progress counter
+                //extend range to block bounderies (ie day, month, year)
+                int p = 0; // progress counter
 
-                        //clear old data, and reset ranges and series
-                        Platform.runLater(() -> {
-                            updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.resetUI")); // NON-NLS
+                //clear old data, and reset ranges and series
+                Platform.runLater(() -> {
+                    updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.resetUI")); // NON-NLS
 
-                        });
+                });
 
-                        ArrayList<Long> bins = new ArrayList<>();
+                ArrayList<Long> bins = new ArrayList<>();
 
-                        DateTime start = timeRange.getStart();
-                        while (timeRange.contains(start)) {
-                            if (isCancelled()) {
-                                return null;
-                            }
-                            DateTime end = start.plus(rangeInfo.getPeriodSize().getPeriod());
-                            final Interval interval = new Interval(start, end);
-                            //increment for next iteration
+                DateTime start = timeRange.getStart();
+                while (timeRange.contains(start)) {
+                    if (isCancelled()) {
+                        return null;
+                    }
+                    DateTime end = start.plus(rangeInfo.getPeriodSize().getPeriod());
+                    final Interval interval = new Interval(start, end);
+                    //increment for next iteration
 
-                            start = end;
+                    start = end;
 
-                            updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.queryDb")); // NON-NLS
-                            //query for current range
-                            long count = filteredEvents.getEventCounts(interval).values().stream().mapToLong(Long::valueOf).sum();
-                            bins.add(count);
+                    updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.queryDb")); // NON-NLS
+                    //query for current range
+                    long count = filteredEvents.getEventCounts(interval).values().stream().mapToLong(Long::valueOf).sum();
+                    bins.add(count);
 
-                            max = Math.max(count, max);
+                    max = Math.max(count, max);
 
-                            final double fMax = Math.log(max);
-                            final ArrayList<Long> fbins = new ArrayList<>(bins);
-                            Platform.runLater(() -> {
-                                updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.updateUI2")); // NON-NLS
+                    final double fMax = Math.log(max);
+                    final ArrayList<Long> fbins = new ArrayList<>(bins);
+                    Platform.runLater(() -> {
+                        updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.updateUI2")); // NON-NLS
 
-                                histogramBox.getChildren().clear();
+                        histogramBox.getChildren().clear();
 
                         for (Long bin : fbins) {
                             if (isCancelled()) {
@@ -499,7 +490,7 @@ final public class VisualizationPanel extends BorderPane {
                 return null;
             }
 
-                };
+        };
         new Thread(histogramTask).start();
         controller.monitorTask(histogramTask);
     }
