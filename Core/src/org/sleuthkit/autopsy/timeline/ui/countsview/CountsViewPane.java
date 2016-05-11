@@ -132,7 +132,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
         countAxis.tickMarkVisibleProperty().bind(scaleIsLinear);
         countAxis.minorTickVisibleProperty().bind(scaleIsLinear);
         scaleProp.addListener(scale -> {
-            update();
+            refresh();
             syncAxisScaleLabel();
         });
         syncAxisScaleLabel();
@@ -306,7 +306,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
     @NbBundle.Messages({
         "CountsViewPane.loggedTask.name=Updating Counts View",
         "CountsViewPane.loggedTask.updatingCounts=Populating visualization"})
-    private class CountsUpdateTask extends VisualizationUpdateTask<List<String>> {
+    private class CountsUpdateTask extends VisualizationRefreshTask<List<String>> {
 
         CountsUpdateTask() {
             super(Bundle.CountsViewPane_loggedTask_name(), true);

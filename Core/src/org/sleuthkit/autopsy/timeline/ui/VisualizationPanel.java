@@ -75,9 +75,9 @@ import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.VisualizationMode;
 import org.sleuthkit.autopsy.timeline.actions.Back;
-import org.sleuthkit.autopsy.timeline.actions.RebuildDataBase;
 import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
 import org.sleuthkit.autopsy.timeline.actions.SaveSnapshotAsReport;
+import org.sleuthkit.autopsy.timeline.actions.UpdateDB;
 import org.sleuthkit.autopsy.timeline.actions.ZoomIn;
 import org.sleuthkit.autopsy.timeline.actions.ZoomOut;
 import org.sleuthkit.autopsy.timeline.actions.ZoomToEvents;
@@ -273,11 +273,6 @@ final public class VisualizationPanel extends BorderPane {
         notificationPane.getStyleClass().add(NotificationPane.STYLE_CLASS_DARK);
         setCenter(notificationPane);
 
-        //configure snapshor button / action
-        ActionUtils.configureButton(new SaveSnapshotAsReport(controller, notificationPane::getContent), snapShotButton);
-
-        ActionUtils.configureButton(new RebuildDataBase(controller), updateDBButton);
-
         //configure visualization mode toggle
         visualizationModeLabel.setText(Bundle.VisualizationPanel_visualizationModeLabel_text());
         countsToggle.setText(Bundle.VisualizationPanel_countsToggle_text());
@@ -286,22 +281,25 @@ final public class VisualizationPanel extends BorderPane {
             if (newValue == null) {
                 countsToggle.getToggleGroup().selectToggle(oldValue != null ? oldValue : countsToggle);
             } else if (newValue == countsToggle && oldValue != null) {
-                controller.setViewMode(VisualizationMode.COUNTS);
+                controller.setVisualizationMode(VisualizationMode.COUNTS);
             } else if (newValue == detailsToggle && oldValue != null) {
-                controller.setViewMode(VisualizationMode.DETAIL);
+                controller.setVisualizationMode(VisualizationMode.DETAIL);
             }
         };
 
         if (countsToggle.getToggleGroup() != null) {
             countsToggle.getToggleGroup().selectedToggleProperty().addListener(toggleListener);
         } else {
-            countsToggle.toggleGroupProperty().addListener((Observable observable) -> {
+            countsToggle.toggleGroupProperty().addListener((Observable toggleGroup) -> {
                 countsToggle.getToggleGroup().selectedToggleProperty().addListener(toggleListener);
             });
         }
 
         controller.visualizationModeProperty().addListener(visualizationMode -> syncVisualizationMode());
         syncVisualizationMode();
+
+        ActionUtils.configureButton(new SaveSnapshotAsReport(controller, notificationPane::getContent), snapShotButton);
+        ActionUtils.configureButton(new UpdateDB(controller), updateDBButton);
 
         /////configure start and end pickers
         startLabel.setText(Bundle.VisualizationPanel_startLabel_text());
@@ -364,16 +362,8 @@ final public class VisualizationPanel extends BorderPane {
     }
 
     /**
-     * Set whether the visualziation may not represent the current state of the
-     * DB, because, for example, tags have been updated.
-     *
-     * @param needsRefresh True if the visualization may not represent the
-     *                     current state of the DB.
-     */
-    /**
-     * Handle TagsUpdatedEvents.
-     *
-     * Mark that the visualization needs to be refreshed.
+     * Handle TagsUpdatedEvents by marking that the visualization needs to be
+     * refreshed.
      *
      * NOTE: This VisualizationPanel must be registered with the
      * filteredEventsModel's EventBus in order for this handler to be invoked.
@@ -382,7 +372,7 @@ final public class VisualizationPanel extends BorderPane {
      */
     @Subscribe
     public void handleTimeLineTagUpdate(TagsUpdatedEvent event) {
-        visualization.setNeedsRefresh();
+        visualization.setOutOfDate();
         Platform.runLater(() -> {
             if (notificationPane.isShowing() == false) {
                 notificationPane.getActions().setAll(new Refresh());
@@ -392,7 +382,7 @@ final public class VisualizationPanel extends BorderPane {
     }
 
     /**
-     * Handle a RefreshRequestedEvent from the events model by updating the
+     * Handle a RefreshRequestedEvent from the events model by refreshing the
      * visualization.
      *
      * NOTE: This VisualizationPanel must be registered with the
@@ -402,7 +392,7 @@ final public class VisualizationPanel extends BorderPane {
      */
     @Subscribe
     public void handleRefreshRequested(RefreshRequestedEvent event) {
-        visualization.update();
+        visualization.refresh();
         Platform.runLater(() -> {
             if (Bundle.VisualizationPanel_tagsAddedOrDeleted().equals(notificationPane.getText())) {
                 notificationPane.hide();
@@ -410,25 +400,59 @@ final public class VisualizationPanel extends BorderPane {
         });
     }
 
+    /**
+     * Handle a DBUpdatedEvent from the events model by refreshing the
+     * visualization.
+     *
+     * NOTE: This VisualizationPanel must be registered with the
+     * filteredEventsModel's EventBus in order for this handler to be invoked.
+     *
+     * @param event The DBUpdatedEvent to handle.
+     */
     @Subscribe
     public void handleDBUpdated(DBUpdatedEvent event) {
+        visualization.refresh();
         refreshHistorgram();
         Platform.runLater(notificationPane::hide);
     }
 
+    /**
+     * Handle a DataSourceAddedEvent from the events model by showing a
+     * notification.
+     *
+     * NOTE: This VisualizationPanel must be registered with the
+     * filteredEventsModel's EventBus in order for this handler to be invoked.
+     *
+     * @param event The DataSourceAddedEvent to handle.
+     */
     @Subscribe
+    @NbBundle.Messages({
+        "# {0} - datasource name",
+        "VisualizationPanel.notification.newDataSource={0} has been added as a new datasource.  The Timeline DB may be out of date."})
     public void handlDataSourceAdded(DataSourceAddedEvent event) {
         Platform.runLater(() -> {
-            notificationPane.getActions().setAll(new RebuildDataBase(controller));
-            notificationPane.show("A new datasource, " + event.getDataSource().getName() + ", has been added.  The Timeline DB may be out of date.", new ImageView(WARNING));
+            notificationPane.getActions().setAll(new UpdateDB(controller));
+            notificationPane.show(Bundle.VisualizationPanel_notification_newDataSource(event.getDataSource().getName()), new ImageView(WARNING));
         });
     }
 
+    /**
+     * Handle a DataSourceAnalysisCompletedEvent from the events modelby showing
+     * a notification.
+     *
+     * NOTE: This VisualizationPanel must be registered with the
+     * filteredEventsModel's EventBus in order for this handler to be invoked.
+     *
+     * @param event The DataSourceAnalysisCompletedEvent to handle.
+     */
     @Subscribe
+    @NbBundle.Messages({
+        "# {0} - datasource name",
+        "VisualizationPanel.notification.analysisComplete=Analysis has finished for {0}.  The Timeline DB may be out of date."})
     public void handleAnalysisCompleted(DataSourceAnalysisCompletedEvent event) {
         Platform.runLater(() -> {
-            notificationPane.getActions().setAll(new RebuildDataBase(controller));
-            notificationPane.show("Analysis has finished for " + event.getDataSource().getName() + ".  The Timeline DB may be out of date.", new ImageView(WARNING));
+            notificationPane.getActions().setAll(new UpdateDB(controller));
+            notificationPane.show(Bundle.VisualizationPanel_notification_analysisComplete(event.getDataSource().getName()), new ImageView(WARNING));
         });
     }
 
@@ -590,14 +614,15 @@ final public class VisualizationPanel extends BorderPane {
                 toolBar.getItems().removeAll(visualization.getSettingsNodes());
                 visualization.dispose();
             }
-            //setup new vis.
+
             visualization = vizPane;
-            ActionUtils.configureButton(new Refresh(), refreshButton);
-            visualization.update();
+            //setup new vis.
+            ActionUtils.configureButton(new Refresh(), refreshButton);//configure new refresh action for new visualization
+            visualization.refresh();
             toolBar.getItems().addAll(2, vizPane.getSettingsNodes());
             notificationPane.setContent(visualization);
 
-            //listen to has event sproperty and show "dialog" if it is false.
+            //listen to has events property and show "dialog" if it is false.
             visualization.hasVisibleEventsProperty().addListener(hasEvents -> {
                 notificationPane.setContent(visualization.hasVisibleEvents()
                         ? visualization
@@ -608,8 +633,6 @@ final public class VisualizationPanel extends BorderPane {
                 );
             });
         });
-
-        Platform.runLater(notificationPane::hide);
     }
 
     @NbBundle.Messages("NoEventsDialog.titledPane.text=No Visible Events")
@@ -745,13 +768,13 @@ final public class VisualizationPanel extends BorderPane {
 
         @NbBundle.Messages({
             "VisualizationPanel.refresh.text=Refresh Vis.",
-            "VisualizationPanel.refresh.longText=Refresh the visualization to include information that is in the database but not visualized, such as newly updated tags."})
+            "VisualizationPanel.refresh.longText=Refresh the visualization to include information that is in the DB but not visualized, such as newly updated tags."})
         Refresh() {
             super(Bundle.VisualizationPanel_refresh_text());
             setLongText(Bundle.VisualizationPanel_refresh_longText());
             setGraphic(new ImageView(REFRESH));
-            setEventHandler(actionEvent -> filteredEvents.fireRefreshRequest());
-            disabledProperty().bind(visualization.needsRefreshProperty().not());
+            setEventHandler(actionEvent -> filteredEvents.postRefreshRequest());
+            disabledProperty().bind(visualization.outOfDateProperty().not());
         }
     }
 }

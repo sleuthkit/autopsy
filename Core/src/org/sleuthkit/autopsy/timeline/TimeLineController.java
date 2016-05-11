@@ -139,7 +139,7 @@ public class TimeLineController {
 
     private final ReadOnlyStringWrapper taskTitle = new ReadOnlyStringWrapper();
 
-    private final ReadOnlyStringWrapper status = new ReadOnlyStringWrapper();
+    private final ReadOnlyStringWrapper statusMessage = new ReadOnlyStringWrapper();
 
     /**
      * Status is a string that will be displayed in the status bar as a kind of
@@ -147,12 +147,12 @@ public class TimeLineController {
      *
      * @return The status property
      */
-    public ReadOnlyStringProperty getStatusProperty() {
-        return status.getReadOnlyProperty();
+    public ReadOnlyStringProperty statusMessageProperty() {
+        return statusMessage.getReadOnlyProperty();
     }
 
-    public void setStatus(String string) {
-        status.set(string);
+    public void setStatusMessage(String string) {
+        statusMessage.set(string);
     }
     private final Case autoCase;
     private final PerCaseTimelineProperties perCaseTimelineProperties;
@@ -199,10 +199,10 @@ public class TimeLineController {
     private final PropertyChangeListener ingestModuleListener = new AutopsyIngestModuleListener();
 
     @GuardedBy("this")
-    private final ReadOnlyObjectWrapper<VisualizationMode> viewMode = new ReadOnlyObjectWrapper<>(VisualizationMode.COUNTS);
+    private final ReadOnlyObjectWrapper<VisualizationMode> visualizationMode = new ReadOnlyObjectWrapper<>(VisualizationMode.COUNTS);
 
     synchronized public ReadOnlyObjectProperty<VisualizationMode> visualizationModeProperty() {
-        return viewMode.getReadOnlyProperty();
+        return visualizationMode.getReadOnlyProperty();
     }
 
     @GuardedBy("filteredEvents")
@@ -393,7 +393,7 @@ public class TimeLineController {
                     }
                     if (markDBNotStale) {
                         setEventsDBStale(false);
-                        filteredEvents.fireDBUpdated();
+                        filteredEvents.postDBUpdated();
                     }
                     SwingUtilities.invokeLater(this::showWindow);
                     break;
@@ -453,6 +453,7 @@ public class TimeLineController {
             mainFrame.close();
             mainFrame = null;
         }
+        OpenTimelineAction.invalidateController();
     }
 
     /**
@@ -469,18 +470,14 @@ public class TimeLineController {
             listeningToAutopsy = true;
         }
 
-        Platform.runLater(() -> promptForRebuild());
+        Platform.runLater(this::promptForRebuild);
     }
 
     /**
-     * Prompt the user to confirm rebuilding the db because ingest has finished
-     * on the datasource with the given name. Checks if a database rebuild is
-     * necessary for any other reasons and includes those in the prompt. If the
-     * user confirms, rebuilds the database. Shows the timeline window when the
-     * rebuild is done, or immediately if the rebuild is not confirmed.
-     *
-     * @param dataSourceName The name of the datasource that ingest has finished
-     *                       processing. Will be ignored if it is null or empty.
+     * Prompt the user to confirm rebuilding the db. Checks if a database
+     * rebuild is necessary and includes the reasons in the prompt. If the user
+     * confirms, rebuilds the database. Shows the timeline window when the
+     * rebuild is done, or immediately if the rebuild is not confirmed. F
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void promptForRebuild() {
@@ -559,7 +556,7 @@ public class TimeLineController {
      * Request a time range the same length as the given period and centered
      * around the middle of the currently viewed time range.
      *
-     * @param period The period of time to shw around the current center of the
+     * @param period The period of time to show around the current center of the
      *               view.
      */
     synchronized public void pushPeriod(ReadablePeriod period) {
@@ -585,9 +582,14 @@ public class TimeLineController {
         pushTimeRange(new Interval(start, end));
     }
 
-    synchronized public void setViewMode(VisualizationMode visualizationMode) {
-        if (viewMode.get() != visualizationMode) {
-            viewMode.set(visualizationMode);
+    /**
+     * Set a new Visualization mode as the active one.
+     *
+     * @param visualizationMode The new VisaualizationMode to set.
+     */
+    synchronized public void setVisualizationMode(VisualizationMode visualizationMode) {
+        if (this.visualizationMode.get() != visualizationMode) {
+            this.visualizationMode.set(visualizationMode);
         }
     }
 
@@ -811,11 +813,6 @@ public class TimeLineController {
         TimeLineController.timeZone.set(timeZone);
     }
 
-    Interval getSpanningInterval(Collection<Long> eventIDs) {
-        return filteredEvents.getSpanningInterval(eventIDs);
-
-    }
-
     /**
      * Listener for IngestManager.IngestModuleEvents.
      */
@@ -833,16 +830,14 @@ public class TimeLineController {
             try {
                 Case.getCurrentCase();
             } catch (IllegalStateException notUsed) {
-                /**
-                 * Case is closed, do nothing.
-                 */
+                // Case is closed, do nothing.
                 return;
             }
 
             switch (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName())) {
                 case CONTENT_CHANGED:
                 case DATA_ADDED:
-                    //since black board artifacts or new derived content have been added, the db is stale.
+                    //since black board artifacts or new derived content have been added, the DB is stale.
                     Platform.runLater(() -> setEventsDBStale(true));
                     break;
                 case FILE_DONE:
@@ -865,9 +860,9 @@ public class TimeLineController {
         public void propertyChange(PropertyChangeEvent evt) {
             switch (IngestManager.IngestJobEvent.valueOf(evt.getPropertyName())) {
                 case DATA_SOURCE_ANALYSIS_COMPLETED:
-                    // include data source name in rebuild prompt on ingest completed
+                    //mark db stale, and prompt to rebuild
                     Platform.runLater(() -> setEventsDBStale(true));
-                    filteredEvents.reFireAutopsyEvent((AutopsyEvent) evt);
+                    filteredEvents.postAutopsyEventLocally((AutopsyEvent) evt);
                     break;
                 case DATA_SOURCE_ANALYSIS_STARTED:
                 case CANCELLED:
@@ -902,11 +897,10 @@ public class TimeLineController {
                 case DATA_SOURCE_ADDED:
                     //mark db stale, and prompt to rebuild
                     Platform.runLater(() -> setEventsDBStale(true));
-                    filteredEvents.reFireAutopsyEvent((AutopsyEvent) evt);
+                    filteredEvents.postAutopsyEventLocally((AutopsyEvent) evt);
                     break;
                 case CURRENT_CASE:
                     //close timeline on case changes.
-                    OpenTimelineAction.invalidateController();
                     SwingUtilities.invokeLater(TimeLineController.this::shutDownTimeLine);
                     break;
             }

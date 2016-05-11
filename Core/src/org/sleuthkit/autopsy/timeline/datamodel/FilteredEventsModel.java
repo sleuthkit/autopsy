@@ -414,6 +414,15 @@ public final class FilteredEventsModel {
         return false;
     }
 
+    /**
+     * Post a TagsAddedEvent to all registered subscribers, if the given set of
+     * updated event IDs is not empty.
+     *
+     * @param updatedEventIDs The set of event ids to be included in the
+     *                        TagsAddedEvent.
+     *
+     * @return True if an event was posted.
+     */
     private boolean postTagsAdded(Set<Long> updatedEventIDs) {
         boolean tagsUpdated = !updatedEventIDs.isEmpty();
         if (tagsUpdated) {
@@ -422,6 +431,15 @@ public final class FilteredEventsModel {
         return tagsUpdated;
     }
 
+    /**
+     * Post a TagsDeletedEvent to all registered subscribers, if the given set
+     * of updated event IDs is not empty.
+     *
+     * @param updatedEventIDs The set of event ids to be included in the
+     *                        TagsDeletedEvent.
+     *
+     * @return True if an event was posted.
+     */
     private boolean postTagsDeleted(Set<Long> updatedEventIDs) {
         boolean tagsUpdated = !updatedEventIDs.isEmpty();
         if (tagsUpdated) {
@@ -430,22 +448,45 @@ public final class FilteredEventsModel {
         return tagsUpdated;
     }
 
+    /**
+     * Register the given object to receive events.
+     *
+     * @param o The object to register. Must implement public methods annotated
+     *          with Subscribe.
+     */
     synchronized public void registerForEvents(Object o) {
         eventbus.register(o);
     }
 
+    /**
+     * Un-register the given object, so it no longer receives events.
+     *
+     * @param o The object to un-register.
+     */
     synchronized public void unRegisterForEvents(Object o) {
         eventbus.unregister(0);
     }
 
-    public void fireDBUpdated() {
+    /**
+     * Post a DBUpdatedEvent to all registered subscribers.
+     */
+    public void postDBUpdated() {
         eventbus.post(new DBUpdatedEvent());
     }
-    public void fireRefreshRequest() {
+
+    /**
+     * Post a RefreshRequestedEvent to all registered subscribers.
+     */
+    public void postRefreshRequest() {
         eventbus.post(new RefreshRequestedEvent());
     }
 
-    public void reFireAutopsyEvent(AutopsyEvent event) {
+    /**
+     * (Re)Post an AutopsyEvent received from another event distribution system
+     * locally to all registered subscribers.
+     */
+    public void postAutopsyEventLocally(AutopsyEvent event) {
         eventbus.post(event);
     }
+
 }

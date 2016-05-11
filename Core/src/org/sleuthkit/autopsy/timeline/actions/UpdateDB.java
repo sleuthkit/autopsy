@@ -25,17 +25,22 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 
 /**
- * An action that rebuilds the events database to include any new results from
+ * An action that rebuilds the timeline database to include any new results from
  * ingest.
  */
-public class RebuildDataBase extends Action {
-    
+public class UpdateDB extends Action {
+
     private static final Image DB_REFRESH = new Image("org/sleuthkit/autopsy/timeline/images/database_refresh.png");
-    
+
+    /**
+     * Constructor
+     *
+     * @param controller The TimeLineController for this action.
+     */
     @NbBundle.Messages({
         "RebuildDataBase.text=Update DB",
         "RebuildDataBase.longText=Update the DB to include new events."})
-    public RebuildDataBase(TimeLineController controller) {
+    public UpdateDB(TimeLineController controller) {
         super(Bundle.RebuildDataBase_text());
         setLongText(Bundle.RebuildDataBase_longText());
         setGraphic(new ImageView(DB_REFRESH));

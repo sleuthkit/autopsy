@@ -27,7 +27,7 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 
 /**
  * Simple status bar that shows a possible message determined by
- * TimeLineController.getStatusProperty() and progress of background tasks.
+ * TimeLineController.statusMessageProperty() and progress of background tasks.
  */
 public class StatusBar extends ToolBar {
 
@@ -61,7 +61,7 @@ public class StatusBar extends ToolBar {
         messageLabel.textProperty().bind(this.controller.taskMessageProperty());
         progressBar.progressProperty().bind(this.controller.taskProgressProperty());
 
-        statusLabel.textProperty().bind(this.controller.getStatusProperty());
+        statusLabel.textProperty().bind(this.controller.statusMessageProperty());
         statusLabel.visibleProperty().bind(statusLabel.textProperty().isNotEmpty());
     }
 }

@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.timeline;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import javafx.collections.FXCollections;
@@ -34,8 +33,6 @@ import javafx.scene.control.ListView;
 import javafx.scene.image.Image;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javax.annotation.Nullable;
-import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.dialog.ProgressDialog;
 import org.controlsfx.tools.Borders;
 import org.openide.util.NbBundle;
@@ -50,13 +47,13 @@ class PromptDialogManager {
 
     private static final Logger LOGGER = Logger.getLogger(PromptDialogManager.class.getName());
 
-    @NbBundle.Messages("PrompDialogManager.buttonType.showTimeline=Show Timeline")
-    private static final ButtonType SHOW_TIMELINE = new ButtonType(Bundle.PrompDialogManager_buttonType_showTimeline(), ButtonBar.ButtonData.OK_DONE);
+    @NbBundle.Messages("PrompDialogManager.buttonType.showTimeline=Continue")
+    private static final ButtonType CONTINUE = new ButtonType(Bundle.PrompDialogManager_buttonType_showTimeline(), ButtonBar.ButtonData.OK_DONE);
 
     @NbBundle.Messages("PrompDialogManager.buttonType.continueNoUpdate=Continue Without Updating")
     private static final ButtonType CONTINUE_NO_UPDATE = new ButtonType(Bundle.PrompDialogManager_buttonType_continueNoUpdate(), ButtonBar.ButtonData.CANCEL_CLOSE);
 
-    @NbBundle.Messages("PrompDialogManager.buttonType.update=Update")
+    @NbBundle.Messages("PrompDialogManager.buttonType.update=Update DB")
     private static final ButtonType UPDATE = new ButtonType(Bundle.PrompDialogManager_buttonType_update(), ButtonBar.ButtonData.OK_DONE);
 
     /**
@@ -89,7 +86,7 @@ class PromptDialogManager {
     }
 
     /**
-     * Bring the currently managed dialog (if there is one) to the front
+     * Bring the currently managed dialog (if there is one) to the front.
      *
      * @return True if a dialog was brought to the front, or false of there is
      *         no currently managed open dialog
@@ -151,24 +148,24 @@ class PromptDialogManager {
     }
 
     /**
-     * Prompt the user that ingest is running and the db may not end up
+     * Prompt the user that ingest is running and the DB may not end up
      * complete.
      *
-     * @return True if they want to continue anyways
+     * @return True if they want to continue anyways.
      */
     @NbBundle.Messages({
-        "PromptDialogManager.confirmDuringIngest.headerText=You are trying to update the Timeline DB before ingest has been completed.\nThe Timeline may be incomplete.",
+        "PromptDialogManager.confirmDuringIngest.headerText=You are trying to update the Timeline DB before ingest has been completed.  The Timeline DB may be incomplete.",
         "PromptDialogManager.confirmDuringIngest.contentText=Do you want to continue?"})
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     boolean confirmDuringIngest() {
-        currentDialog = new Alert(Alert.AlertType.CONFIRMATION, Bundle.PromptDialogManager_confirmDuringIngest_contentText(), SHOW_TIMELINE, ButtonType.CANCEL);
+        currentDialog = new Alert(Alert.AlertType.CONFIRMATION, Bundle.PromptDialogManager_confirmDuringIngest_contentText(), CONTINUE, ButtonType.CANCEL);
         currentDialog.initModality(Modality.APPLICATION_MODAL);
         currentDialog.setTitle(Bundle.Timeline_dialogs_title());
         setDialogIcons(currentDialog);
         currentDialog.setHeaderText(Bundle.PromptDialogManager_confirmDuringIngest_headerText());
 
-        //show dialog and map all results except "show timeline" to false.
-        return currentDialog.showAndWait().map(SHOW_TIMELINE::equals).orElse(false);
+        //show dialog and map all results except "continue" to false.
+        return currentDialog.showAndWait().map(CONTINUE::equals).orElse(false);
     }
 
     /**
@@ -180,8 +177,7 @@ class PromptDialogManager {
      * @return True if the user a confirms rebuilding the database.
      */
     @NbBundle.Messages({
-        "PromptDialogManager.rebuildPrompt.headerText=The Timeline database is incomplete and/or out of date."
-        + "  Some events may be missing or inaccurate and some features may be unavailable.",
+        "PromptDialogManager.rebuildPrompt.headerText=The Timeline DB is incomplete and/or out of date.  Some events may be missing or inaccurate and some features may be unavailable.",
         "PromptDialogManager.rebuildPrompt.details=Details"})
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     boolean confirmRebuild(List<String> rebuildReasons) {
@@ -210,5 +206,4 @@ class PromptDialogManager {
         //show dialog and map all results except "update" to false.
         return currentDialog.showAndWait().map(UPDATE::equals).orElse(false);
     }
-
 }
