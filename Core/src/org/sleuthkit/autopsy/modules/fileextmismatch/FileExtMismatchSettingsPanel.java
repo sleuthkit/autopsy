@@ -439,6 +439,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         updateMimeList();
         mimeTableModel.resync();
         userTypeTextField.setText("");
+        this.clearErrLabels();
         pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_addTypeButtonActionPerformed
 
