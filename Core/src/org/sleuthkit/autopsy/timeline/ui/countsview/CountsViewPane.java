@@ -58,7 +58,6 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
-import static org.sleuthkit.autopsy.timeline.ui.countsview.Bundle.*;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 
 /**
@@ -93,8 +92,8 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
 
     @Override
     protected Boolean isTickBold(String value) {
-        return dataSeries.stream().flatMap((series) -> series.getData().stream())
-                .anyMatch((data) -> data.getXValue().equals(value) && data.getYValue().intValue() > 0);
+        return dataSeries.stream().flatMap(series -> series.getData().stream())
+                .anyMatch(data -> data.getXValue().equals(value) && data.getYValue().intValue() > 0);
     }
 
     @Override
@@ -105,11 +104,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
     /**
      * Constructor
      *
-     * @param controller   The TimelineController for this visualization.
-     * @param specificPane The container for the specific axis labels.
-     * @param contextPane  The container for the contextual axis labels.
-     * @param spacer       The Region to use as a spacer to keep the axis labels
-     *                     aligned.
+     * @param controller The TimelineController for this visualization.
      */
     @NbBundle.Messages({
         "# {0} - scale name",
@@ -220,7 +215,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
     }
 
     @Override
-     protected double getAxisMargin() {
+    protected double getAxisMargin() {
         return dateAxis.getStartMargin() + dateAxis.getEndMargin();
     }
 
@@ -249,20 +244,20 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
             "CountsViewPane.scaleLabel.text=Scale:",
             "CountsViewPane.scaleHelp.label.text=Scales:   ",
             "CountsViewPane.linearRadio.text=Linear",
-            "CountsViewPane.scaleHelp=The default linear scale is good for many use cases.  When this scale is selected, the height of the bars represents the counts in a linear, one-to-one fashion, and the y-axis is labeled with values. When the range of values is very large, date ranges with relatively low counts have a bar that may be too small to see.  To help avoid the misperception of this as no events, the labels for date ranges with events are bold.  To see bars that are too small, there are three options:  adjust the window size so that the visualization area has more vertical space, adjust the time range shown so that time periods with relatively much larger bars are excluded, or adjust the scale setting to logarithmic.\n\nThe logarithmic scale represents the number of events in a non-linear way that compresses the difference between very large and very small numbers. Note that even with the logarithmic scale, an extremely large difference in counts may still produce bars too small to see.  In this case the only option may be to exclude events to reduce the difference in counts.  NOTE: Because the logarithmic scale is applied to each event type separately, the height of the combined bar is not very meaningful, and to emphasize this, no labels are shown on the y-axis. The logarithmic scale should be used to quickly compare the counts ",
+            "CountsViewPane.scaleHelp=The linear scale is good for many use cases.  When this scale is selected, the height of the bars represents the counts in a linear, one-to-one fashion, and the y-axis is labeled with values. When the range of values is very large, time periods with low counts may have a bar that is too small to see.  To help the user detect this, the labels for date ranges with events are bold.  To see bars that are too small, there are three options:  adjust the window size so that the visualization area has more vertical space, adjust the time range shown so that time periods with larger bars are excluded, or adjust the scale setting to logarithmic.\n\nThe logarithmic scale represents the number of events in a non-linear way that compresses the difference between large and small numbers. Note that even with the logarithmic scale, an extremely large difference in counts may still produce bars too small to see.  In this case the only option may be to filter events to reduce the difference in counts.  NOTE: Because the logarithmic scale is applied to each event type separately, the maening of the height of the combined bar is not intuitive, and to emphasize this, no labels are shown on the y-axis with the logarithmic scale. The logarithmic scale should be used to quickly compare the counts ",
             "CountsViewPane.scaleHelp2=across time within a type, or across types for one time period, but not both.",
-            "CountsViewPane.scaleHelp3= The exact numbers (available in tooltips or the result viewer) should be used for absolute comparisons.  Use the logarithmic scale with care."})
+            "CountsViewPane.scaleHelp3= The actual counts (available in tooltips or the result viewer) should be used for absolute comparisons.  Use the logarithmic scale with care."})
         void initialize() {
             assert logRadio != null : "fx:id=\"logRadio\" was not injected: check your FXML file 'CountsViewSettingsPane.fxml'."; // NON-NLS
             assert linearRadio != null : "fx:id=\"linearRadio\" was not injected: check your FXML file 'CountsViewSettingsPane.fxml'."; // NON-NLS
-            scaleLabel.setText(CountsViewPane_scaleLabel_text());
-            linearRadio.setText(CountsViewPane_linearRadio_text());
-            logRadio.setText(CountsViewPane_logRadio_text());
+            scaleLabel.setText(Bundle.CountsViewPane_scaleLabel_text());
+            linearRadio.setText(Bundle.CountsViewPane_linearRadio_text());
+            logRadio.setText(Bundle.CountsViewPane_logRadio_text());
 
-            scaleGroup.selectedToggleProperty().addListener(observable -> {
-                if (scaleGroup.getSelectedToggle() == linearRadio) {
+            scaleGroup.selectedToggleProperty().addListener((observable, oldToggle, newToggle) -> {
+                if (newToggle == linearRadio) {
                     scaleProp.set(Scale.LINEAR);
-                } else if (scaleGroup.getSelectedToggle() == logRadio) {
+                } else if (newToggle == logRadio) {
                     scaleProp.set(Scale.LOGARITHMIC);
                 }
             });
