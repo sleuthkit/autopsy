@@ -108,12 +108,12 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
             final Tab eventsTreeTab = new Tab(Bundle.TimeLineTopComponent_eventsTab_name(), eventsTree);
             eventsTreeTab.setClosable(false);
             eventsTreeTab.setGraphic(new ImageView("org/sleuthkit/autopsy/timeline/images/timeline_marker.png")); // NON-NLS
-            eventsTreeTab.disableProperty().bind(controller.viewModeProperty().isEqualTo(VisualizationMode.COUNTS));
+            eventsTreeTab.disableProperty().bind(controller.visualizationModeProperty().isEqualTo(VisualizationMode.COUNTS));
 
             final TabPane leftTabPane = new TabPane(filterTab, eventsTreeTab);
             VBox.setVgrow(leftTabPane, Priority.ALWAYS);
-            controller.viewModeProperty().addListener((Observable observable) -> {
-                if (controller.viewModeProperty().get().equals(VisualizationMode.COUNTS)) {
+            controller.visualizationModeProperty().addListener((Observable observable) -> {
+                if (controller.visualizationModeProperty().get().equals(VisualizationMode.COUNTS)) {
                     //if view mode is counts, make sure events tabd is not active
                     leftTabPane.getSelectionModel().select(filterTab);
                 }
