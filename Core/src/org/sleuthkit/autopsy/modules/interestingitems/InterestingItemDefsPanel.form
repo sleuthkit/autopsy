@@ -128,7 +128,7 @@
                                                   <Group type="102" alignment="0" attributes="0">
                                                       <Component id="equalitySignComboBox" min="-2" pref="38" max="-2" attributes="0"/>
                                                       <EmptySpace min="-2" max="-2" attributes="0"/>
-                                                      <Component id="jSpinner1" max="32767" attributes="0"/>
+                                                      <Component id="fileSizeSpinner" max="32767" attributes="0"/>
                                                       <EmptySpace min="-2" max="-2" attributes="0"/>
                                                       <Component id="fileSizeUnitComboBox" min="-2" pref="83" max="-2" attributes="0"/>
                                                       <EmptySpace min="8" pref="8" max="-2" attributes="0"/>
@@ -198,9 +198,9 @@
                                       <Component id="jScrollPane2" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace type="separate" min="-2" max="-2" attributes="0"/>
                                       <Component id="setsListLabel" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="setsListScrollPane" min="-2" pref="354" max="-2" attributes="0"/>
-                                      <EmptySpace max="-2" attributes="0"/>
+                                      <EmptySpace min="-2" max="-2" attributes="0"/>
+                                      <Component id="setsListScrollPane" pref="354" max="32767" attributes="0"/>
+                                      <EmptySpace min="-2" max="-2" attributes="0"/>
                                       <Group type="103" groupAlignment="3" attributes="0">
                                           <Component id="newSetButton" linkSize="2" alignment="3" min="-2" max="-2" attributes="0"/>
                                           <Component id="editSetButton" linkSize="2" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -217,8 +217,8 @@
                                       <Component id="ignoreKnownFilesCheckbox" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
                                       <Component id="rulesListLabel" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="rulesListScrollPane" min="-2" pref="67" max="-2" attributes="0"/>
+                                      <EmptySpace min="-2" max="-2" attributes="0"/>
+                                      <Component id="rulesListScrollPane" pref="67" max="32767" attributes="0"/>
                                       <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
                                       <Group type="103" groupAlignment="3" attributes="0">
                                           <Component id="newRuleButton" linkSize="2" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -261,9 +261,10 @@
                                       <Group type="103" groupAlignment="3" attributes="0">
                                           <Component id="jLabel8" alignment="3" min="-2" max="-2" attributes="0"/>
                                           <Component id="equalitySignComboBox" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="jSpinner1" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="fileSizeSpinner" alignment="3" min="-2" max="-2" attributes="0"/>
                                           <Component id="fileSizeUnitComboBox" alignment="3" min="-2" max="-2" attributes="0"/>
                                       </Group>
+                                      <EmptySpace min="13" pref="13" max="-2" attributes="0"/>
                                   </Group>
                               </Group>
                               <EmptySpace min="-2" pref="5" max="-2" attributes="0"/>
@@ -818,7 +819,7 @@
                 <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
               </AuxValues>
             </Component>
-            <Component class="javax.swing.JSpinner" name="jSpinner1">
+            <Component class="javax.swing.JSpinner" name="fileSizeSpinner">
               <Properties>
                 <Property name="enabled" type="boolean" value="false"/>
                 <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
