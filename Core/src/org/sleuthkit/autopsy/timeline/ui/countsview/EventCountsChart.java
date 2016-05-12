@@ -403,7 +403,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
                             Bundle.CountsViewPane_detailSwitchMessage(),
                             Bundle.CountsViewPane_detailSwitchTitle(), JOptionPane.YES_NO_OPTION);
                     if (showConfirmDialog == JOptionPane.YES_OPTION) {
-                        controller.setViewMode(VisualizationMode.DETAIL);
+                        controller.setVisualizationMode(VisualizationMode.DETAIL);
                     }
 
                     /*
