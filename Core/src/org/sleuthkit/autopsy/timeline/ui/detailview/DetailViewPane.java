@@ -344,7 +344,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
         "DetailViewPane.loggedTask.backButton=Back (Cancel)",
         "# {0} - number of events",
         "DetailViewPane.loggedTask.prompt=You are about to show details for {0} events.  This might be very slow or even crash Autopsy.\n\nDo you want to continue?"})
-    private class DetailsUpdateTask extends VisualizationUpdateTask<Interval> {
+    private class DetailsUpdateTask extends VisualizationRefreshTask<Interval> {
 
         DetailsUpdateTask() {
             super(Bundle.DetailViewPane_loggedTask_name(), true);
