@@ -92,7 +92,7 @@ import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
  * settings widgets supplied by contained AbstractVisualizationPane, and the
  * histogram / time selection on bottom.
  *
- * TODO: refactor common code out of histogram and CountsView? -jm
+ * TODO: Refactor common code out of histogram and CountsView? -jm
  */
 final public class VisualizationPanel extends BorderPane {
 
@@ -102,7 +102,11 @@ final public class VisualizationPanel extends BorderPane {
     private static final Image REFRESH = new Image("org/sleuthkit/autopsy/timeline/images/arrow-circle-double-135.png"); // NON-NLS
     private static final Background GRAY_BACKGROUND = new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY));
 
-    private final static Region NO_EVENTS_BLOCKER = new Region() {
+    /**
+     * Region that will be stacked in between the no-events "dialog" and the
+     * hosted AbstractVisualizationPane in order to gray out the visualization.
+     */
+    private final static Region NO_EVENTS_BACKGROUND = new Region() {
         {
             setBackground(GRAY_BACKGROUND);
             setOpacity(.3);
@@ -582,7 +586,7 @@ final public class VisualizationPanel extends BorderPane {
                 notificationPane.setContent(visualization.hasVisibleEvents()
                         ? visualization
                         : new StackPane(visualization,
-                                NO_EVENTS_BLOCKER,
+                                NO_EVENTS_BACKGROUND,
                                 new NoEventsDialog(() -> notificationPane.setContent(visualization))
                         )
                 );
