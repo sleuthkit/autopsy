@@ -129,9 +129,9 @@ final public class FilterSetPanel extends BorderPane {
         hiddenDescriptionsListView.setItems(controller.getQuickHideFilters());
         hiddenDescriptionsListView.setCellFactory(listView -> getNewDiscriptionFilterListCell());
 
-        controller.viewModeProperty().addListener(observable -> {
+        controller.visualizationModeProperty().addListener(observable -> {
             applyFilters();
-            if (controller.viewModeProperty().get() == VisualizationMode.COUNTS) {
+            if (controller.visualizationModeProperty().get() == VisualizationMode.COUNTS) {
                 dividerPosition = splitPane.getDividerPositions()[0];
                 splitPane.setDividerPositions(1);
                 hiddenDescriptionsPane.setExpanded(false);
