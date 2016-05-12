@@ -182,12 +182,6 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
         Path tempFilePath = null;
         try {
-            long id = getRootId(file);
-            // make sure we have a valid systemID
-            if (id == -1) {
-                return IngestModule.ProcessResult.ERROR;
-            }
-
             // Verify initialization succeeded.
             if (null == this.executableFile) {
                 logger.log(Level.SEVERE, "PhotoRec carver called after failed start up");  // NON-NLS
@@ -276,7 +270,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             // Now that we've cleaned up the folders and data files, parse the xml output file to add carved items into the database
             long calcstart = System.currentTimeMillis();
             PhotoRecCarverOutputParser parser = new PhotoRecCarverOutputParser(outputDirPath);
-            List<LayoutFile> carvedItems = parser.parse(newAuditFile, id, file);
+            List<LayoutFile> carvedItems = parser.parse(newAuditFile, file);
             long calcdelta = (System.currentTimeMillis() - calcstart);
             totals.totalParsetime.addAndGet(calcdelta);
             if (carvedItems != null) { // if there were any results from carving, add the unallocated carving event to the reports list.
@@ -409,31 +403,6 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             throw new IngestModule.IngestModuleException(Bundle.cannotCreateOutputDir_message(ex.getLocalizedMessage()), ex);
         }
         return path;
-    }
-
-    /**
-     * Finds the root Volume or Image of the AbstractFile passed in.
-     *
-     * @param file The file we want to find the root parent for
-     *
-     * @return The ID of the root parent Volume or Image
-     */
-    private static long getRootId(AbstractFile file) {
-        long id = -1;
-        Content parent = null;
-        try {
-            parent = file.getParent();
-            while (parent != null) {
-                if (parent instanceof Volume || parent instanceof Image) {
-                    id = parent.getId();
-                    break;
-                }
-                parent = parent.getParent();
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "PhotoRec carver exception while trying to get parent of AbstractFile.", ex); //NON-NLS
-        }
-        return id;
     }
 
     /**

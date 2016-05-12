@@ -309,7 +309,7 @@ public class FileManager implements Closeable {
      *
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
-    public List<LayoutFile> addCarvedFiles(List<CarvedFileContainer> filesToAdd) throws TskCoreException {
+    public synchronized List<LayoutFile> addCarvedFiles(List<CarvedFileContainer> filesToAdd) throws TskCoreException {
         if (tskCase == null) {
             throw new TskCoreException(NbBundle.getMessage(this.getClass(), "FileManager.addCarvedFile.exception.msg"));
         } else {
