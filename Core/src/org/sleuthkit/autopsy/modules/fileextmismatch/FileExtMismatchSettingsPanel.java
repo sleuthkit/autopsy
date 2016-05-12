@@ -415,7 +415,17 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
             return;
         }
 
-        boolean mimeTypeDetectable = (null != fileTypeDetector) ? fileTypeDetector.isDetectable(newMime) : false;
+        FileTypeDetector detector;
+        try {
+            detector = new FileTypeDetector();
+        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+            mimeErrLabel.setForeground(Color.red);
+            mimeErrLabel.setText(NbBundle.getMessage(this.getClass(),
+                    "FileExtMismatchConfigPanel.addTypeButton.mimeTypeNotDetectable"));
+            logger.log(Level.WARNING, "Couldn't create file type detector for file ext mismatch settings.", ex);
+            return;
+        }
+        boolean mimeTypeDetectable = (null != detector) ? detector.isDetectable(newMime) : false;
         if (!mimeTypeDetectable) {
             mimeErrLabel.setForeground(Color.red);
             mimeErrLabel.setText(NbBundle.getMessage(this.getClass(),
@@ -429,6 +439,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         updateMimeList();
         mimeTableModel.resync();
         userTypeTextField.setText("");
+        this.clearErrLabels();
         pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_addTypeButtonActionPerformed
 
