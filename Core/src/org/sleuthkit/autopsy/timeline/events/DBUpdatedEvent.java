@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2016 Basis Technology Corp.
+ * Copyright 2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,20 +18,12 @@
  */
 package org.sleuthkit.autopsy.timeline.events;
 
-import java.util.Set;
-
 /**
- * A TagsUpdatedEvent for tags that have been added to events.
+ * A "local" event published by filteredEventsModel to indicate that DB has been
+ * updated.
+ *
+ * This event is not intended for use out side of the Timeline module.
  */
-public class TagsAddedEvent extends TagsUpdatedEvent {
+public class DBUpdatedEvent {
 
-    /**
-     * Constructor
-     *
-     * @param updatedEventIDs The event IDs of the events that have had tags
-     *                        added to them.
-     */
-    public TagsAddedEvent(Set<Long> updatedEventIDs) {
-        super(updatedEventIDs);
-    }
 }
