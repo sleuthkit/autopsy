@@ -43,7 +43,7 @@ import org.xml.sax.SAXException;
  * A singleton manager for the custom file types defined by Autopsy and by
  * users.
  */
-final class UserDefinedFileTypesManager {
+final class CustomFileTypesManager {
 
     private static final String XML_SETTINGS_FILE = "UserFileTypeDefinitions.xml"; //NON-NLS
     private static final String SERIALIZED_SETTINGS_FILE = "UserFileTypeDefinitions.settings"; //NON-NLS
@@ -55,7 +55,7 @@ final class UserDefinedFileTypesManager {
     private static final String BYTES_TAG_NAME = "Bytes"; //NON-NLS
     private static final String OFFSET_TAG_NAME = "Offset"; //NON-NLS
     private static final String RELATIVE_ATTRIBUTE = "RelativeToStart"; //NON-NLS
-    private static UserDefinedFileTypesManager instance;
+    private static CustomFileTypesManager instance;
     private final List<FileType> userDefinedFileTypes = new ArrayList<>();
     private final List<FileType> allFileTypes = new ArrayList<>();
 
@@ -65,9 +65,9 @@ final class UserDefinedFileTypesManager {
      *
      * @return The custom file types manager singleton.
      */
-    synchronized static UserDefinedFileTypesManager getInstance() {
+    synchronized static CustomFileTypesManager getInstance() {
         if (instance == null) {
-            instance = new UserDefinedFileTypesManager();
+            instance = new CustomFileTypesManager();
         }
         return instance;
     }
@@ -76,7 +76,7 @@ final class UserDefinedFileTypesManager {
      * Constructs a manager for the custom file types defined by Autopsy and by
      * users.
      */
-    private UserDefinedFileTypesManager() {
+    private CustomFileTypesManager() {
     }
 
     /**
@@ -84,10 +84,10 @@ final class UserDefinedFileTypesManager {
      *
      * @return A list of file types, possibly empty.
      *
-     * @throws UserDefinedFileTypesException if there is a problem accessing the
+     * @throws CustomFileTypesException if there is a problem accessing the
      *                                       file types.
      */
-    synchronized List<FileType> getFileTypes() throws UserDefinedFileTypesException {
+    synchronized List<FileType> getFileTypes() throws CustomFileTypesException {
         loadFileTypes();
 
         /**
@@ -104,10 +104,10 @@ final class UserDefinedFileTypesManager {
      *
      * @return A list of file types, possibly empty.
      *
-     * @throws UserDefinedFileTypesException if there is a problem accessing the
+     * @throws CustomFileTypesException if there is a problem accessing the
      *                                       file types.
      */
-    synchronized List<FileType> getUserDefinedFileTypes() throws UserDefinedFileTypesException {
+    synchronized List<FileType> getUserDefinedFileTypes() throws CustomFileTypesException {
         loadFileTypes();
 
         /**
@@ -122,10 +122,10 @@ final class UserDefinedFileTypesManager {
     /**
      * Loads or re-loads the custom file types defined by Autopsy and by users.
      *
-     * @throws UserDefinedFileTypesException if there is a problem loading the
+     * @throws CustomFileTypesException if there is a problem loading the
      *                                       file types.
      */
-    private void loadFileTypes() throws UserDefinedFileTypesException {
+    private void loadFileTypes() throws CustomFileTypesException {
         allFileTypes.clear();
         userDefinedFileTypes.clear();
 
@@ -140,10 +140,10 @@ final class UserDefinedFileTypesManager {
     /**
      * Loads or re-loads the custom file types defined by Autopsy.
      *
-     * @throws UserDefinedFileTypesException if there is a problem loading the
+     * @throws CustomFileTypesException if there is a problem loading the
      *                                       file types.
      */
-    private void loadPredefinedFileTypes() throws UserDefinedFileTypesException {
+    private void loadPredefinedFileTypes() throws CustomFileTypesException {
         byte[] byteArray;
         FileType fileType;
 
@@ -298,17 +298,17 @@ final class UserDefinedFileTypesManager {
             /*
              * parseHexBinary() throws this if the argument passed in is not hex
              */
-            throw new UserDefinedFileTypesException("Error creating predefined file types", ex); //
+            throw new CustomFileTypesException("Error creating predefined file types", ex); //
         }
     }
 
     /**
      * Loads or re-loads the custom file types defined by users.
      *
-     * @throws UserDefinedFileTypesException if there is a problem loading the
+     * @throws CustomFileTypesException if there is a problem loading the
      *                                       file types.
      */
-    private void loadUserDefinedFileTypes() throws UserDefinedFileTypesException {
+    private void loadUserDefinedFileTypes() throws CustomFileTypesException {
         try {
             File serialized = new File(getFileTypeDefinitionsFilePath(SERIALIZED_SETTINGS_FILE));
             if (serialized.exists()) {
@@ -331,7 +331,7 @@ final class UserDefinedFileTypesManager {
              */
             allFileTypes.clear();
             userDefinedFileTypes.clear();
-            throw new UserDefinedFileTypesException("UserDefinedFileTypesManager.loadFileTypes.errorMessage", ex);
+            throw new CustomFileTypesException("UserDefinedFileTypesManager.loadFileTypes.errorMessage", ex);
         }
     }
 
@@ -350,7 +350,7 @@ final class UserDefinedFileTypesManager {
      *
      * @param newFileTypes A list of user-defined file types.
      */
-    synchronized void setUserDefinedFileTypes(List<FileType> newFileTypes) throws UserDefinedFileTypesException {
+    synchronized void setUserDefinedFileTypes(List<FileType> newFileTypes) throws CustomFileTypesException {
         String filePath = getFileTypeDefinitionsFilePath(SERIALIZED_SETTINGS_FILE);
         writeFileTypes(newFileTypes, filePath);
     }
@@ -373,15 +373,15 @@ final class UserDefinedFileTypesManager {
      * @param fileTypes A collection of file types.
      * @param filePath  The path to the destination file.
      *
-     * @throws UserDefinedFileTypesException if there is a problem writing the
+     * @throws CustomFileTypesException if there is a problem writing the
      *                                       file types.
      */
-    private static void writeFileTypes(List<FileType> fileTypes, String filePath) throws UserDefinedFileTypesException {
+    private static void writeFileTypes(List<FileType> fileTypes, String filePath) throws CustomFileTypesException {
         try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(filePath))) {
             UserDefinedFileTypesSettings settings = new UserDefinedFileTypesSettings(fileTypes);
             out.writeObject(settings);
         } catch (IOException ex) {
-            throw new UserDefinedFileTypesException(String.format("Failed to write settings to %s", filePath), ex); //NON-NLS
+            throw new CustomFileTypesException(String.format("Failed to write settings to %s", filePath), ex); //NON-NLS
         }
     }
 
@@ -393,10 +393,10 @@ final class UserDefinedFileTypesManager {
      *
      * @return The custom file types.
      *
-     * @throws UserDefinedFileTypesException if there is a problem reading the
+     * @throws CustomFileTypesException if there is a problem reading the
      *                                       file types.
      */
-    private static List<FileType> readSerializedFileTypes() throws UserDefinedFileTypesException {
+    private static List<FileType> readSerializedFileTypes() throws CustomFileTypesException {
         File serializedDefs = new File(getFileTypeDefinitionsFilePath(SERIALIZED_SETTINGS_FILE));
         try {
             try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(serializedDefs))) {
@@ -404,7 +404,7 @@ final class UserDefinedFileTypesManager {
                 return filesSetsSettings.getUserDefinedFileTypes();
             }
         } catch (IOException | ClassNotFoundException ex) {
-            throw new UserDefinedFileTypesException("Couldn't read serialized settings.", ex); //NON-NLS
+            throw new CustomFileTypesException("Couldn't read serialized settings.", ex); //NON-NLS
         }
     }
 
@@ -540,15 +540,15 @@ final class UserDefinedFileTypesManager {
     /**
      * .An exception thrown by the custom file types manager.
      */
-    static class UserDefinedFileTypesException extends Exception {
+    static class CustomFileTypesException extends Exception {
 
         private static final long serialVersionUID = 1L;
 
-        UserDefinedFileTypesException(String message) {
+        CustomFileTypesException(String message) {
             super(message);
         }
 
-        UserDefinedFileTypesException(String message, Throwable throwable) {
+        CustomFileTypesException(String message, Throwable throwable) {
             super(message, throwable);
         }
     }

@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
-import org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException;
+import org.sleuthkit.autopsy.modules.filetypeid.CustomFileTypesManager.CustomFileTypesException;
 
 /**
  * A panel to allow a user to make custom file type definitions. In addition to
@@ -207,12 +207,12 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     @Override
     public void load() {
         try {
-            fileTypes = UserDefinedFileTypesManager.getInstance().getUserDefinedFileTypes();
+            fileTypes = CustomFileTypesManager.getInstance().getUserDefinedFileTypes();
             updateFileTypesListModel();
             if (!typesListModel.isEmpty()) {
                 typesList.setSelectedIndex(0);
             }
-        } catch (UserDefinedFileTypesException ex) {
+        } catch (CustomFileTypesException ex) {
             JOptionPane.showMessageDialog(null,
                     ex.getLocalizedMessage(),
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.loadFailed.title"),
@@ -266,8 +266,8 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     @Override
     public void store() {
         try {
-            UserDefinedFileTypesManager.getInstance().setUserDefinedFileTypes(fileTypes);
-        } catch (UserDefinedFileTypesManager.UserDefinedFileTypesException ex) {
+            CustomFileTypesManager.getInstance().setUserDefinedFileTypes(fileTypes);
+        } catch (CustomFileTypesManager.CustomFileTypesException ex) {
             JOptionPane.showMessageDialog(null,
                     ex.getLocalizedMessage(),
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.storeFailed.title"),
