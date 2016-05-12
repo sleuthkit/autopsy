@@ -39,6 +39,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.Tooltip;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -236,7 +237,9 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
         private Label scaleLabel;
 
         @FXML
-        private ImageView helpImageView;
+        private ImageView logImageView;
+        @FXML
+        private ImageView linearImageView;
 
         @FXML
         @NbBundle.Messages({
@@ -244,9 +247,10 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
             "CountsViewPane.scaleLabel.text=Scale:",
             "CountsViewPane.scaleHelp.label.text=Scales:   ",
             "CountsViewPane.linearRadio.text=Linear",
-            "CountsViewPane.scaleHelp=The linear scale is good for many use cases.  When this scale is selected, the height of the bars represents the counts in a linear, one-to-one fashion, and the y-axis is labeled with values. When the range of values is very large, time periods with low counts may have a bar that is too small to see.  To help the user detect this, the labels for date ranges with events are bold.  To see bars that are too small, there are three options:  adjust the window size so that the visualization area has more vertical space, adjust the time range shown so that time periods with larger bars are excluded, or adjust the scale setting to logarithmic.\n\nThe logarithmic scale represents the number of events in a non-linear way that compresses the difference between large and small numbers. Note that even with the logarithmic scale, an extremely large difference in counts may still produce bars too small to see.  In this case the only option may be to filter events to reduce the difference in counts.  NOTE: Because the logarithmic scale is applied to each event type separately, the maening of the height of the combined bar is not intuitive, and to emphasize this, no labels are shown on the y-axis with the logarithmic scale. The logarithmic scale should be used to quickly compare the counts ",
-            "CountsViewPane.scaleHelp2=across time within a type, or across types for one time period, but not both.",
-            "CountsViewPane.scaleHelp3= The actual counts (available in tooltips or the result viewer) should be used for absolute comparisons.  Use the logarithmic scale with care."})
+            "CountsViewPane.scaleHelpLinear=The linear scale is good for many use cases.  When this scale is selected, the height of the bars represents the counts in a linear, one-to-one fashion, and the y-axis is labeled with values. When the range of values is very large, time periods with low counts may have a bar that is too small to see.  To help the user detect this, the labels for date ranges with events are bold.  To see bars that are too small, there are three options:  adjust the window size so that the visualization area has more vertical space, adjust the time range shown so that time periods with larger bars are excluded, or adjust the scale setting to logarithmic.",
+            "CountsViewPane.scaleHelpLog=The logarithmic scale represents the number of events in a non-linear way that compresses the difference between large and small numbers. Note that even with the logarithmic scale, an extremely large difference in counts may still produce bars too small to see.  In this case the only option may be to filter events to reduce the difference in counts.  NOTE: Because the logarithmic scale is applied to each event type separately, the maening of the height of the combined bar is not intuitive, and to emphasize this, no labels are shown on the y-axis with the logarithmic scale. The logarithmic scale should be used to quickly compare the counts ",
+            "CountsViewPane.scaleHelpLog2=across time within a type, or across types for one time period, but not both.",
+            "CountsViewPane.scaleHelpLog3= The actual counts (available in tooltips or the result viewer) should be used for absolute comparisons.  Use the logarithmic scale with care."})
         void initialize() {
             assert logRadio != null : "fx:id=\"logRadio\" was not injected: check your FXML file 'CountsViewSettingsPane.fxml'."; // NON-NLS
             assert linearRadio != null : "fx:id=\"linearRadio\" was not injected: check your FXML file 'CountsViewSettingsPane.fxml'."; // NON-NLS
@@ -263,25 +267,28 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
             });
             logRadio.setSelected(true);
 
-            //make a popup hrlp window with descriptions of the scales.
-            helpImageView.setCursor(Cursor.HAND);
-            helpImageView.setOnMouseClicked(clicked -> {
-                Text text = new Text(Bundle.CountsViewPane_scaleHelp());
-                Text text2 = new Text(Bundle.CountsViewPane_scaleHelp2());
+            //make a popup help "window" with a description of the log scale.
+            logImageView.setCursor(Cursor.HAND);
+            logImageView.setOnMouseClicked(clicked -> {
+                Text text = new Text(Bundle.CountsViewPane_scaleHelpLog());
+                Text text2 = new Text(Bundle.CountsViewPane_scaleHelpLog2());
                 Font baseFont = text.getFont();
                 text2.setFont(Font.font(baseFont.getFamily(), FontWeight.BOLD, FontPosture.ITALIC, baseFont.getSize()));
-                Text text3 = new Text(Bundle.CountsViewPane_scaleHelp3());
+                Text text3 = new Text(Bundle.CountsViewPane_scaleHelpLog3());
+                showPopoverHelp(logImageView,
+                        Bundle.CountsViewPane_logRadio_text(),
+                        logImageView.getImage(),
+                        new TextFlow(text, text2, text3));
+            });
 
-                Pane borderPane = new BorderPane(null, null, new ImageView(helpImageView.getImage()),
-                        new TextFlow(text, text2, text3),
-                        new Label(Bundle.CountsViewPane_scaleHelp_label_text()));
-                borderPane.setPadding(new Insets(10));
-                borderPane.setPrefWidth(500);
-
-                PopOver popOver = new PopOver(borderPane);
-                popOver.setDetachable(false);
-                popOver.setArrowLocation(PopOver.ArrowLocation.TOP_CENTER);
-                popOver.show(helpImageView);
+            //make a popup help "window" with a description of the linear scale.
+            linearImageView.setCursor(Cursor.HAND);
+            linearImageView.setOnMouseClicked(clicked -> {
+                Text text = new Text(Bundle.CountsViewPane_scaleHelpLinear());
+                text.setWrappingWidth(480);  //This is a hack to fix the layout.
+                showPopoverHelp(linearImageView,
+                        Bundle.CountsViewPane_linearRadio_text(),
+                        linearImageView.getImage(), text);
             });
         }
 
@@ -291,6 +298,33 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
         CountsViewSettingsPane() {
             FXMLConstructor.construct(this, "CountsViewSettingsPane.fxml"); // NON-NLS
         }
+    }
+
+    /**
+     *
+     * Static utility to to show a Popover with the given Node as owner.
+     *
+     * @param owner       The owner of the Popover
+     * @param headerText  A short String that will be shown in the top-left
+     *                    corner of the Popover.
+     * @param headerImage An Image that will be shown at the top-right corner of
+     *                    the Popover.
+     * @param content     The main content of the Popover, shown in the
+     *                    bottom-center
+     *
+     */
+    private static void showPopoverHelp(final Node owner, final String headerText, final Image headerImage, final Node content) {
+        Pane borderPane = new BorderPane(null, null, new ImageView(headerImage),
+                content,
+                new Label(headerText));
+        borderPane.setPadding(new Insets(10));
+        borderPane.setPrefWidth(500);
+
+        PopOver popOver = new PopOver(borderPane);
+        popOver.setDetachable(false);
+        popOver.setArrowLocation(PopOver.ArrowLocation.TOP_CENTER);
+
+        popOver.show(owner);
     }
 
     /**
