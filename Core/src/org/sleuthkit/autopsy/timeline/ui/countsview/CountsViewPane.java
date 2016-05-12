@@ -58,7 +58,6 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
-import static org.sleuthkit.autopsy.timeline.ui.countsview.Bundle.*;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 
 /**
@@ -93,8 +92,8 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
 
     @Override
     protected Boolean isTickBold(String value) {
-        return dataSeries.stream().flatMap((series) -> series.getData().stream())
-                .anyMatch((data) -> data.getXValue().equals(value) && data.getYValue().intValue() > 0);
+        return dataSeries.stream().flatMap(series -> series.getData().stream())
+                .anyMatch(data -> data.getXValue().equals(value) && data.getYValue().intValue() > 0);
     }
 
     @Override
@@ -105,11 +104,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
     /**
      * Constructor
      *
-     * @param controller   The TimelineController for this visualization.
-     * @param specificPane The container for the specific axis labels.
-     * @param contextPane  The container for the contextual axis labels.
-     * @param spacer       The Region to use as a spacer to keep the axis labels
-     *                     aligned.
+     * @param controller The TimelineController for this visualization.
      */
     @NbBundle.Messages({
         "# {0} - scale name",
@@ -220,7 +215,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
     }
 
     @Override
-     protected double getAxisMargin() {
+    protected double getAxisMargin() {
         return dateAxis.getStartMargin() + dateAxis.getEndMargin();
     }
 
@@ -255,14 +250,14 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
         void initialize() {
             assert logRadio != null : "fx:id=\"logRadio\" was not injected: check your FXML file 'CountsViewSettingsPane.fxml'."; // NON-NLS
             assert linearRadio != null : "fx:id=\"linearRadio\" was not injected: check your FXML file 'CountsViewSettingsPane.fxml'."; // NON-NLS
-            scaleLabel.setText(CountsViewPane_scaleLabel_text());
-            linearRadio.setText(CountsViewPane_linearRadio_text());
-            logRadio.setText(CountsViewPane_logRadio_text());
+            scaleLabel.setText(Bundle.CountsViewPane_scaleLabel_text());
+            linearRadio.setText(Bundle.CountsViewPane_linearRadio_text());
+            logRadio.setText(Bundle.CountsViewPane_logRadio_text());
 
-            scaleGroup.selectedToggleProperty().addListener(observable -> {
-                if (scaleGroup.getSelectedToggle() == linearRadio) {
+            scaleGroup.selectedToggleProperty().addListener((observable, oldToggle, newToggle) -> {
+                if (newToggle == linearRadio) {
                     scaleProp.set(Scale.LINEAR);
-                } else if (scaleGroup.getSelectedToggle() == logRadio) {
+                } else if (newToggle == logRadio) {
                     scaleProp.set(Scale.LOGARITHMIC);
                 }
             });
