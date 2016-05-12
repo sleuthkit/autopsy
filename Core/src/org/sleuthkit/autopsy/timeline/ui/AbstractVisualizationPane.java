@@ -30,7 +30,6 @@ import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
-import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.collections.FXCollections;
@@ -52,11 +51,9 @@ import javafx.scene.layout.BorderStroke;
 import javafx.scene.layout.BorderStrokeStyle;
 import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -132,6 +129,18 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
     final private ObservableList<NodeType> selectedNodes = FXCollections.observableArrayList();
 
     private InvalidationListener updateListener = any -> update();
+
+    public Pane getSpecificLabelPane() {
+        return specificLabelPane;
+    }
+
+    public Pane getContextLabelPane() {
+        return contextLabelPane;
+    }
+
+    public Region getSpacer() {
+        return spacer;
+    }
 
     /**
      * The visualization nodes that are selected.
@@ -410,17 +419,17 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
         this.filteredEvents = controller.getEventsModel();
         this.filteredEvents.registerForEvents(this);
         this.filteredEvents.zoomParametersProperty().addListener(updateListener);
-        Platform.runLater(() -> {
-            VBox vBox = new VBox(specificLabelPane, contextLabelPane);
-            vBox.setFillWidth(false);
-            HBox hBox = new HBox(spacer, vBox);
-            hBox.setFillHeight(false);
-            setBottom(hBox);
-            DoubleBinding spacerSize = getYAxis().widthProperty().add(getYAxis().tickLengthProperty()).add(getAxisMargin());
-            spacer.minWidthProperty().bind(spacerSize);
-            spacer.prefWidthProperty().bind(spacerSize);
-            spacer.maxWidthProperty().bind(spacerSize);
-        });
+//        Platform.runLater(() -> {
+//            VBox vBox = new VBox(specificLabelPane, contextLabelPane);
+//            vBox.setFillWidth(false);
+//            HBox hBox = new HBox(spacer, vBox);
+//            hBox.setFillHeight(false);
+//            setBottom(hBox);
+//            DoubleBinding spacerSize = getYAxis().widthProperty().add(getYAxis().tickLengthProperty()).add(getAxisMargin());
+//            spacer.minWidthProperty().bind(spacerSize);
+//            spacer.prefWidthProperty().bind(spacerSize);
+//            spacer.maxWidthProperty().bind(spacerSize);
+//        });
 
         createSeries();
 
@@ -693,7 +702,6 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
         @Override
         protected void succeeded() {
             super.succeeded();
-            layoutDateLabels();
             cleanup();
         }
 

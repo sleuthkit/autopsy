@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.timeline.ui.detailview;
 import java.util.Arrays;
 import java.util.MissingResourceException;
 import java.util.function.Predicate;
-import javafx.beans.Observable;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -401,7 +400,7 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
             pinnedView = new ScrollingLaneWrapper(pinnedLane);
 
             pinnedLane.setMinHeight(MIN_PINNED_LANE_HEIGHT);
-            pinnedLane.maxVScrollProperty().addListener((Observable observable) -> syncPinnedHeight());
+            pinnedLane.maxVScrollProperty().addListener(maxVSCrollProp -> syncPinnedHeight());
             syncPinnedHeight();
 
             //assemble scene graph
@@ -427,17 +426,8 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
             configureMouseListeners(pinnedLane, mouseClickedHandler, chartDragHandler);
 
             //show and hide pinned lane in response to settings property change
-            getSkinnable().getLayoutSettings().pinnedLaneShowing().addListener(observable -> {
-                boolean selected = getSkinnable().getLayoutSettings().isPinnedLaneShowing();
-                if (selected == false) {
-                    dividerPosition = masterDetailPane.getDividerPosition();
-                }
-                masterDetailPane.setShowDetailNode(selected);
-                if (selected) {
-                    syncPinnedHeight();
-                    masterDetailPane.setDividerPosition(dividerPosition);
-                }
-            });
+            getSkinnable().getLayoutSettings().pinnedLaneShowing().addListener(observable -> syncPinnedLaneShowing());
+            syncPinnedLaneShowing();
 
             //show and remove interval selector in sync with control state change
             getSkinnable().intervalSelector().addListener((observable, oldIntervalSelector, newIntervalSelector) -> {
@@ -482,6 +472,18 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
             chartLane.setOnMouseDragged(chartDragHandler);
             chartLane.setOnMouseClicked(chartDragHandler);
             chartLane.addEventHandler(MouseEvent.MOUSE_CLICKED, mouseClickedHandler);
+        }
+
+        private void syncPinnedLaneShowing() {
+            boolean selected = getSkinnable().getLayoutSettings().isPinnedLaneShowing();
+            if (selected == false) {
+                dividerPosition = masterDetailPane.getDividerPosition();
+            }
+            masterDetailPane.setShowDetailNode(selected);
+            if (selected) {
+                syncPinnedHeight();
+                masterDetailPane.setDividerPosition(dividerPosition);
+            }
         }
     }
 }

@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
+import javafx.beans.binding.DoubleBinding;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
@@ -40,6 +41,7 @@ import javafx.scene.control.Slider;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.control.action.Action;
@@ -100,6 +102,18 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
      */
     public DetailViewPane(TimeLineController controller) {
         super(controller);
+        Platform.runLater(() -> {
+            VBox vBox = new VBox(getSpecificLabelPane(), getContextLabelPane());
+            vBox.setFillWidth(false);
+            HBox hBox = new HBox(getSpacer(), vBox);
+            hBox.setFillHeight(false);
+            setBottom(hBox);
+            DoubleBinding spacerSize = getYAxis().widthProperty().add(getYAxis().tickLengthProperty()).add(getAxisMargin());
+            getSpacer().minWidthProperty().bind(spacerSize);
+            getSpacer().prefWidthProperty().bind(spacerSize);
+            getSpacer().maxWidthProperty().bind(spacerSize);
+        });
+
         this.selectedEvents = new MappedList<>(getSelectedNodes(), EventNodeBase<?>::getEvent);
 
         //initialize chart;
@@ -415,6 +429,12 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
         protected void setDateAxisValues(Interval timeRange) {
             detailsChartDateAxis.setRange(timeRange, true);
             pinnedDateAxis.setRange(timeRange, true);
+        }
+
+        @Override
+        protected void succeeded() {
+            super.succeeded();
+            layoutDateLabels();
         }
     }
 }

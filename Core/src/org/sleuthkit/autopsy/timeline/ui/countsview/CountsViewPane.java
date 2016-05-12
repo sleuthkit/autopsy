@@ -25,6 +25,7 @@ import java.util.function.Function;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.binding.BooleanBinding;
+import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.concurrent.Task;
@@ -43,6 +44,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
@@ -116,6 +118,18 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
         "CountsViewPane.numberOfEvents=Number of Events ({0})"})
     public CountsViewPane(TimeLineController controller) {
         super(controller);
+        Platform.runLater(() -> {
+            VBox vBox = new VBox(getSpecificLabelPane(), getContextLabelPane());
+            vBox.setFillWidth(false);
+            HBox hBox = new HBox(getSpacer(), vBox);
+            hBox.setFillHeight(false);
+            setBottom(hBox);
+            DoubleBinding spacerSize = getYAxis().widthProperty().add(getYAxis().tickLengthProperty()).add(getAxisMargin());
+            getSpacer().minWidthProperty().bind(spacerSize);
+            getSpacer().prefWidthProperty().bind(spacerSize);
+            getSpacer().maxWidthProperty().bind(spacerSize);
+        });
+
         setChart(new EventCountsChart(controller, dateAxis, countAxis, getSelectedNodes()));
         getChart().setData(dataSeries);
         Tooltip.install(getChart(), getDefaultTooltip());
@@ -220,7 +234,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
     }
 
     @Override
-     protected double getAxisMargin() {
+    protected double getAxisMargin() {
         return dateAxis.getStartMargin() + dateAxis.getEndMargin();
     }
 
@@ -310,6 +324,12 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
 
         CountsUpdateTask() {
             super(Bundle.CountsViewPane_loggedTask_name(), true);
+        }
+
+        @Override
+        protected void succeeded() {
+            super.succeeded();
+            layoutDateLabels();
         }
 
         @Override

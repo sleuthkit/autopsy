@@ -23,5 +23,7 @@ package org.sleuthkit.autopsy.timeline;
  */
 public enum VisualizationMode {
 
-    COUNTS, DETAIL;
+    COUNTS,
+    DETAIL,
+    LIST;
 }

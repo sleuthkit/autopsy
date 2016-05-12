@@ -288,6 +288,10 @@ public final class FilteredEventsModel {
         return repo.getEventIDs(overlap, intersect);
     }
 
+    public Set<Long> getEventIDs() {
+        return getEventIDs(requestedTimeRange.get(), requestedFilter.get());
+    }
+
     /**
      * return the number of events that pass the requested filter and are within
      * the given time range.

@@ -60,6 +60,18 @@
                                                 <Font name="System Bold" size="16.0" />
                                             </font>
                                         </ToggleButton>
+                                        <ToggleButton fx:id="listToggle" alignment="CENTER_RIGHT" layoutX="74.0" mnemonicParsing="false" selected="false">
+                                            <graphic>
+                                                <ImageView fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" rotate="0.0" smooth="true" style="-fx-background-color:white;" x="2.0" y="1.0">
+                                                    <image>
+                                                        <Image url="@../images/table.png" />
+                                                    </image>
+                                                </ImageView>
+                                            </graphic>
+                                            <font>
+                                                <Font name="System Bold" size="16.0" />
+                                            </font>
+                                        </ToggleButton>
                                     </buttons>
                                           
                                 </SegmentedButton>

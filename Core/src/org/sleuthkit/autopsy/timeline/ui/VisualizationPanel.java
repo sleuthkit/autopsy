@@ -85,6 +85,7 @@ import org.sleuthkit.autopsy.timeline.events.TagsUpdatedEvent;
 import org.sleuthkit.autopsy.timeline.ui.countsview.CountsViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.tree.EventsTree;
+import org.sleuthkit.autopsy.timeline.ui.listvew.ListViewPane;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 
 /**
@@ -160,6 +161,8 @@ final public class VisualizationPanel extends BorderPane {
     private ToggleButton countsToggle;
     @FXML
     private ToggleButton detailsToggle;
+    @FXML
+    private ToggleButton listToggle;
     @FXML
     private Button snapShotButton;
     @FXML
@@ -292,6 +295,8 @@ final public class VisualizationPanel extends BorderPane {
                 controller.setViewMode(VisualizationMode.COUNTS);
             } else if (newValue == detailsToggle && oldValue != null) {
                 controller.setViewMode(VisualizationMode.DETAIL);
+            } else if (newValue == listToggle && oldValue != null) {
+                controller.setViewMode(VisualizationMode.LIST);
             }
         };
 
@@ -551,6 +556,10 @@ final public class VisualizationPanel extends BorderPane {
 
         //make new visualization.
         switch (visMode) {
+            case LIST:
+                vizPane = new ListViewPane(controller);
+                Platform.runLater(() -> listToggle.setSelected(true));
+                break;
             case COUNTS:
                 vizPane = new CountsViewPane(controller);
                 Platform.runLater(() -> countsToggle.setSelected(true));
