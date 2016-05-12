@@ -25,12 +25,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.TermsResponse;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -209,16 +209,23 @@ class TermComponentQuery implements KeywordSearchQuery {
 
     @Override
     public QueryResults performQuery() throws NoOpenCoreException, KeywordSearchSettingsManager.KeywordSearchSettingsManagerException {
-
+        /*
+         * Execute the regex query to get a list of terms that match the regex.
+         * Note that the field that is being searched is tokenized based on
+         * whitespace.
+         */ 
         final SolrQuery q = createQuery();
         q.setShowDebugInfo(DEBUG);
         q.setTermsLimit(MAX_TERMS_RESULTS);
         logger.log(Level.INFO, "Query: {0}", q.toString()); //NON-NLS
         terms = executeQuery(q);
 
+        /*
+         * For each term that matched the regex, query for the term to get the
+         * full set of document hits.
+         */
         QueryResults results = new QueryResults(this, keywordList);
         int resultSize = 0;
-
         for (Term term : terms) {
             final String termStr = KeywordSearchUtil.escapeLuceneQuery(term.getTerm());
 

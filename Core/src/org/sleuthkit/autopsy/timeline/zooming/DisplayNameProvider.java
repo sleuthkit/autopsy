@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,9 +16,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#this is the label for the vetical axis
-CountsChartPane.numberOfEvents=Number of Events
+package org.sleuthkit.autopsy.timeline.zooming;
 
-CountsViewPane.scaleLabel.text=Scale\:
-CountsViewPane.logRadio.text=Logarithmic
-CountsViewPane.linearRadio.text=Linear
+/**
+ * An interface for objects with a display name
+ */
+interface DisplayNameProvider {
+
+    /**
+     * Get the display name of this object
+     *
+     * @return The display name.
+     */
+    String getDisplayName();
+}

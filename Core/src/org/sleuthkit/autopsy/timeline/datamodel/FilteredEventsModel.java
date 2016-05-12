@@ -162,13 +162,28 @@ public final class FilteredEventsModel {
         requestedZoomParamters.bind(currentStateProperty);
     }
 
+    /**
+     * Readonly observable property for the current ZoomParams
+     *
+     * @return A readonly observable property for the current ZoomParams.
+     */
     synchronized public ReadOnlyObjectProperty<ZoomParams> zoomParametersProperty() {
         return requestedZoomParamters.getReadOnlyProperty();
     }
 
     /**
-     * @return a read only view of the time range requested via
-     *         {@link #requestTimeRange(org.joda.time.Interval)}
+     * Get the current ZoomParams
+     *
+     * @return The current ZoomParams
+     */
+    synchronized public ZoomParams getZoomParamaters() {
+        return requestedZoomParamters.get();
+    }
+
+    /**
+     * Get a read only view of the time range currently in view.
+     *
+     * @return A read only view of the time range currently in view.
      */
     synchronized public ReadOnlyObjectProperty<Interval> timeRangeProperty() {
         if (requestedTimeRange.get() == null) {
@@ -187,6 +202,15 @@ public final class FilteredEventsModel {
 
     synchronized public ReadOnlyObjectProperty<EventTypeZoomLevel> eventTypeZoomProperty() {
         return requestedTypeZoom.getReadOnlyProperty();
+    }
+
+    /**
+     * The time range currently in view.
+     *
+     * @return The time range currently in view.
+     */
+    synchronized public Interval getTimeRange() {
+        return timeRangeProperty().get();
     }
 
     synchronized public DescriptionLoD getDescriptionLOD() {

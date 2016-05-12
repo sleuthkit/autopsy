@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeListener;
 import java.util.Date;
 import java.util.List;
 import javax.swing.JOptionPane;
@@ -28,6 +29,8 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 
 final class GlobalListSettingsPanel extends javax.swing.JPanel implements OptionsPanel {
+
+    private static final long serialVersionUID = 1L;
     
     private final GlobalListsManagementPanel listsManagementPanel;
     private final GlobalEditListPanel editListPanel;
@@ -136,6 +139,17 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
         mainSplitPane.setRightComponent(editListPanel);
         mainSplitPane.revalidate();
         mainSplitPane.repaint();
+    }
+    @Override
+    public void addPropertyChangeListener(PropertyChangeListener l) {
+        listsManagementPanel.addPropertyChangeListener(l);
+        editListPanel.addPropertyChangeListener(l);
+    }
+
+    @Override
+    public void removePropertyChangeListener(PropertyChangeListener l) {
+        listsManagementPanel.removePropertyChangeListener(l);
+        editListPanel.removePropertyChangeListener(l);
     }
     
     @Override

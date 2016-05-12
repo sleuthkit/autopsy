@@ -45,11 +45,6 @@ public class HideKnownFilter extends AbstractFilter {
     }
 
     @Override
-    public String getHTMLReportString() {
-        return "hide known" + getStringCheckBox();// NON-NLS
-    }
-
-    @Override
     public int hashCode() {
         return 7;
     }

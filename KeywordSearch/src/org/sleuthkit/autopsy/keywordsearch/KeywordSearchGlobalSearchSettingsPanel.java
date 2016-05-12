@@ -20,9 +20,11 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -36,6 +38,7 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
 
     private final Logger logger = Logger.getLogger(KeywordSearchGlobalSearchSettingsPanel.class.getName());
     KeywordSearchSettingsManager manager;
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     /**
      * Creates new form KeywordSearchConfigurationPanel2
@@ -88,7 +91,16 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
         this.timeRadioButton3.setEnabled(enable);
         this.timeRadioButton4.setEnabled(enable);
         this.timeRadioButton5.setEnabled(enable);
+    }
 
+    @Override
+    public void addPropertyChangeListener(PropertyChangeListener l) {
+        pcs.addPropertyChangeListener(l);
+    }
+
+    @Override
+    public void removePropertyChangeListener(PropertyChangeListener l) {
+        pcs.removePropertyChangeListener(l);
     }
 
     /**
@@ -120,6 +132,11 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
 
         skipNSRLCheckBox.setText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.skipNSRLCheckBox.text")); // NOI18N
         skipNSRLCheckBox.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.skipNSRLCheckBox.toolTipText")); // NOI18N
+        skipNSRLCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                skipNSRLCheckBoxActionPerformed(evt);
+            }
+        });
 
         filesIndexedLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.filesIndexedLabel.text")); // NOI18N
 
@@ -138,17 +155,42 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
 
         timeRadioButton1.setText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.timeRadioButton1.text")); // NOI18N
         timeRadioButton1.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.timeRadioButton1.toolTipText")); // NOI18N
+        timeRadioButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                timeRadioButton1ActionPerformed(evt);
+            }
+        });
 
         timeRadioButton2.setText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.timeRadioButton2.text")); // NOI18N
         timeRadioButton2.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.timeRadioButton2.toolTipText")); // NOI18N
+        timeRadioButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                timeRadioButton2ActionPerformed(evt);
+            }
+        });
 
         timeRadioButton3.setText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.timeRadioButton3.text")); // NOI18N
         timeRadioButton3.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.timeRadioButton3.toolTipText")); // NOI18N
+        timeRadioButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                timeRadioButton3ActionPerformed(evt);
+            }
+        });
 
         timeRadioButton4.setText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.timeRadioButton4.text_1")); // NOI18N
         timeRadioButton4.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.timeRadioButton4.toolTipText")); // NOI18N
+        timeRadioButton4.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                timeRadioButton4ActionPerformed(evt);
+            }
+        });
 
         showSnippetsCB.setText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.showSnippetsCB.text")); // NOI18N
+        showSnippetsCB.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                showSnippetsCBActionPerformed(evt);
+            }
+        });
 
         timeRadioButton5.setText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.timeRadioButton5.text")); // NOI18N
         timeRadioButton5.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.timeRadioButton5.toolTipText")); // NOI18N
@@ -237,8 +279,32 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
     }// </editor-fold>//GEN-END:initComponents
 
     private void timeRadioButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_timeRadioButton5ActionPerformed
-        // TODO add your handling code here:
+        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_timeRadioButton5ActionPerformed
+
+    private void skipNSRLCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipNSRLCheckBoxActionPerformed
+        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+    }//GEN-LAST:event_skipNSRLCheckBoxActionPerformed
+
+    private void showSnippetsCBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showSnippetsCBActionPerformed
+        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+    }//GEN-LAST:event_showSnippetsCBActionPerformed
+
+    private void timeRadioButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_timeRadioButton1ActionPerformed
+        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+    }//GEN-LAST:event_timeRadioButton1ActionPerformed
+
+    private void timeRadioButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_timeRadioButton2ActionPerformed
+        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+    }//GEN-LAST:event_timeRadioButton2ActionPerformed
+
+    private void timeRadioButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_timeRadioButton3ActionPerformed
+        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+    }//GEN-LAST:event_timeRadioButton3ActionPerformed
+
+    private void timeRadioButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_timeRadioButton4ActionPerformed
+        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+    }//GEN-LAST:event_timeRadioButton4ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel chunksLabel;

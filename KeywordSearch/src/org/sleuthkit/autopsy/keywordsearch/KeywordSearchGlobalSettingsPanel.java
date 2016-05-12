@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.beans.PropertyChangeListener;
 import javax.swing.JOptionPane;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
@@ -60,6 +61,20 @@ final class KeywordSearchGlobalSettingsPanel extends IngestModuleGlobalSettingsP
                 languagesPanel, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.stringExtToolTip"), 1);
         tabbedPane.insertTab(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.genTabTitle"), null,
                 generalPanel, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.genTabToolTip"), 2);
+    }
+
+    @Override
+    public void addPropertyChangeListener(PropertyChangeListener l) {
+        listsPanel.addPropertyChangeListener(l);
+        languagesPanel.addPropertyChangeListener(l);
+        generalPanel.addPropertyChangeListener(l);
+    }
+
+    @Override
+    public void removePropertyChangeListener(PropertyChangeListener l) {
+        listsPanel.removePropertyChangeListener(l);
+        languagesPanel.removePropertyChangeListener(l);
+        generalPanel.removePropertyChangeListener(l);
     }
 
     /**

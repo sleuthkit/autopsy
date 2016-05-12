@@ -24,8 +24,8 @@ import javafx.beans.binding.BooleanBinding;
 import javafx.collections.FXCollections;
 
 /**
- * an implementation of (@link IntersectionFilter} designed to be used as the
- * root of a filter tree. provides named access to specific subfilters.
+ * An implementation of IntersectionFilter designed to be used as the root of a
+ * filter tree. provides named access to specific subfilters.
  */
 public class RootFilter extends IntersectionFilter<Filter> {
 
@@ -46,6 +46,18 @@ public class RootFilter extends IntersectionFilter<Filter> {
 
     public HashHitsFilter getHashHitsFilter() {
         return hashFilter;
+    }
+
+    public TypeFilter getTypeFilter() {
+        return typeFilter;
+    }
+
+    public HideKnownFilter getKnownFilter() {
+        return knownFilter;
+    }
+
+    public TextFilter getTextFilter() {
+        return textFilter;
     }
 
     public RootFilter(HideKnownFilter knownFilter, TagsFilter tagsFilter, HashHitsFilter hashFilter, TextFilter textFilter, TypeFilter typeFilter, DataSourcesFilter dataSourceFilter, Set<Filter> annonymousSubFilters) {
@@ -110,20 +122,19 @@ public class RootFilter extends IntersectionFilter<Filter> {
         return areSubFiltersEqual(this, (CompoundFilter<Filter>) obj);
     }
 
+    @Override
     public boolean isActive() {
         return true;
     }
 
+    @Override
     public BooleanBinding activeProperty() {
+
         return new BooleanBinding() {
             @Override
             protected boolean computeValue() {
                 return true;
             }
         };
-    }
-
-    public TypeFilter getTypeFilter() {
-        return typeFilter;
     }
 }

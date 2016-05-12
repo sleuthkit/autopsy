@@ -673,6 +673,10 @@ class TestConfiguration(object):
         self.args = args
         # Paths:
         self.output_parent_dir = make_path("..", "output", "results")
+        if not dir_exists(self.output_parent_dir):
+            os.chdir('..')
+            os.makedirs(wgetcwd().decode("utf-8") + "/output/results")
+            os.chdir('script')
         self.output_dir = ""
         self.input_dir = make_local_path("..","input")
         self.gold = make_path("..", "output", "gold")

@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.event.KeyEvent;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
@@ -29,6 +31,7 @@ import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.AbstractTableModel;
+import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
@@ -42,6 +45,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
     private Logger logger = Logger.getLogger(GlobalListsManagementPanel.class.getName());
     private KeywordListTableModel tableModel;
     private KeywordSearchSettingsManager manager;
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     @Messages({"GlobalListsManagementPanel.settingsLoadFail.message=Failed to load keyword settings, using defaults.",
         "GlobalListsManagementPanel.settingsLoadFail.title=Load Failed"})
@@ -87,6 +91,16 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
          * listsTable.getSelectionModel().setSelectionInterval(0, 0); } else {
          * listsTable.getSelectionModel().clearSelection(); } } } });
          */
+    }
+
+    @Override
+    public void addPropertyChangeListener(PropertyChangeListener l) {
+        pcs.addPropertyChangeListener(l);
+    }
+
+    @Override
+    public void removePropertyChangeListener(PropertyChangeListener l) {
+        pcs.removePropertyChangeListener(l);
     }
 
     /**
@@ -238,6 +252,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
              listsTable.getSelectionModel().addSelectionInterval(i, i);
          }
      }
+     pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_newListButtonActionPerformed
     @Messages({"GlobalListsManagementPanel.deleteListFail.message=Failed to delete list from settings.",
         "GlobalListsManagementPanel.deleteListFail.title=Delete List Failed"})
@@ -394,6 +409,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
                 }
             }
         }
+        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_importButtonActionPerformed
     private void listsTableKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_listsTableKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_DELETE) {
@@ -418,7 +434,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
                         JOptionPane.showMessageDialog(null, Bundle.GlobalListsManagementPanel_deleteListFail_message(), Bundle.GlobalListsManagementPanel_deleteListFail_title(), JOptionPane.ERROR_MESSAGE);
                     }
                 }
-
+                pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             } else {
                 return;
             }

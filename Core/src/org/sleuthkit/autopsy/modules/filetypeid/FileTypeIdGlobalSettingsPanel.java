@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.modules.filetypeid;
 import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.util.Collections;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
@@ -28,6 +29,7 @@ import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -67,6 +69,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     // modules obtained and shared a per data source ingest job snapshot of the
     // file type definitions.
     IngestJobEventPropertyChangeListener ingestJobEventsListener;
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     /**
      * Creates a panel to allow a user to make custom file type definitions.
@@ -90,6 +93,16 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         setOffsetRealtiveToComboBoxModel();
         addTypeListSelectionListener();
         populateTypeDetailsComponents();
+    }
+
+    @Override
+    public void addPropertyChangeListener(PropertyChangeListener l) {
+        pcs.addPropertyChangeListener(l);
+    }
+
+    @Override
+    public void removePropertyChangeListener(PropertyChangeListener l) {
+        pcs.removePropertyChangeListener(l);
     }
 
     /**
@@ -451,6 +464,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         if (result == AddFileTypeDialog.BUTTON_PRESSED.OK) {
             fileTypes.add(dialog.getFileType());
             updateFileTypesListModel();
+            pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
 
     }//GEN-LAST:event_newTypeButtonActionPerformed
@@ -462,6 +476,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         if (!typesListModel.isEmpty()) {
             typesList.setSelectedIndex(0);
         }
+        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_deleteTypeButtonActionPerformed
 
     private void editTypeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editTypeButtonActionPerformed
@@ -472,6 +487,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
             this.fileTypes.remove(selected);
             this.fileTypes.add(selected, dialog.getFileType());
             updateFileTypesListModel();
+            pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
     }//GEN-LAST:event_editTypeButtonActionPerformed
 

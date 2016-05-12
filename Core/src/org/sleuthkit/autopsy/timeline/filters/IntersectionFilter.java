@@ -59,14 +59,6 @@ public class IntersectionFilter<S extends Filter> extends CompoundFilter<S> {
     }
 
     @Override
-    public String getHTMLReportString() {
-        return getSubFilters().stream()
-                .filter(Filter::isSelected)
-                .map(Filter::getHTMLReportString)
-                .collect(Collectors.joining("</li><li>", "<ul><li>", "</li></ul>")); // NON-NLS
-    }
-
-    @Override
     public boolean equals(Object obj) {
         if (obj == null) {
             return false;

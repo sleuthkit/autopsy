@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -40,10 +39,7 @@ import javafx.scene.control.RadioButton;
 import javafx.scene.control.Slider;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
-import javafx.scene.effect.Effect;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.Region;
 import javafx.stage.Modality;
 import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.control.action.Action;
@@ -55,10 +51,9 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
+import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
-import org.sleuthkit.autopsy.timeline.ui.detailview.HideDescriptionAction;
-import org.sleuthkit.autopsy.timeline.ui.detailview.UnhideDescriptionAction;
 import org.sleuthkit.autopsy.timeline.utils.MappedList;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
@@ -103,29 +98,25 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
      *                         axis
      * @param bottomLeftSpacer a spacer to keep everything aligned.
      */
-    public DetailViewPane(TimeLineController controller, Pane partPane, Pane contextPane, Region bottomLeftSpacer) {
-        super(controller, partPane, contextPane, bottomLeftSpacer);
+    public DetailViewPane(TimeLineController controller) {
+        super(controller);
         this.selectedEvents = new MappedList<>(getSelectedNodes(), EventNodeBase<?>::getEvent);
 
         //initialize chart;
-        chart = new DetailsChart(controller, detailsChartDateAxis, pinnedDateAxis, verticalAxis, getSelectedNodes());
-        setCenter(chart);
-        settingsNodes = new ArrayList<>(new DetailViewSettingsPane(chart.getLayoutSettings()).getChildrenUnmodifiable());
+        setChart(new DetailsChart(controller, detailsChartDateAxis, pinnedDateAxis, verticalAxis, getSelectedNodes()));
+        setSettingsNodes(new DetailViewSettingsPane(getChart().getLayoutSettings()).getChildrenUnmodifiable());
 
         //bind layout fo axes and spacers
         detailsChartDateAxis.getTickMarks().addListener((Observable observable) -> layoutDateLabels());
         detailsChartDateAxis.getTickSpacing().addListener(observable -> layoutDateLabels());
         verticalAxis.setAutoRanging(false); //prevent XYChart.updateAxisRange() from accessing dataSeries on JFX thread causing ConcurrentModificationException
-        bottomLeftSpacer.minWidthProperty().bind(verticalAxis.widthProperty().add(verticalAxis.tickLengthProperty()));
-        bottomLeftSpacer.prefWidthProperty().bind(verticalAxis.widthProperty().add(verticalAxis.tickLengthProperty()));
-        bottomLeftSpacer.maxWidthProperty().bind(verticalAxis.widthProperty().add(verticalAxis.tickLengthProperty()));
 
-        selectedNodes.addListener((Observable observable) -> {
+        getSelectedNodes().addListener((Observable observable) -> {
             //update selected nodes highlight
-            chart.setHighlightPredicate(selectedNodes::contains);
+            getChart().setHighlightPredicate(getSelectedNodes()::contains);
 
             //update controllers list of selected event ids when view's selection changes.
-            getController().selectEventIDs(selectedNodes.stream()
+            getController().selectEventIDs(getSelectedNodes().stream()
                     .flatMap(detailNode -> detailNode.getEventIDs().stream())
                     .collect(Collectors.toList()));
         });
@@ -137,7 +128,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
      * contain no interesting non-time related information.
      */
     public ObservableList<TimeLineEvent> getAllNestedEvents() {
-        return chart.getAllNestedEvents();
+        return getChart().getAllNestedEvents();
     }
 
     /*
@@ -169,13 +160,13 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
                             return eventNode -> StringUtils.equalsIgnoreCase(eventNode.getDescription(), description);
                         }
                     })// => predicates that match strings agains the descriptions of the events in highlightedEvents
-                    .reduce(selectedNodes::contains, Predicate::or); // => predicate that matches an of the descriptions or selected nodes
-            chart.setHighlightPredicate(highlightPredicate); //use this predicate to highlight nodes
+                    .reduce(getSelectedNodes()::contains, Predicate::or); // => predicate that matches an of the descriptions or selected nodes
+            getChart().setHighlightPredicate(highlightPredicate); //use this predicate to highlight nodes
         });
     }
 
     @Override
-    public Axis<DateTime> getXAxis() {
+    final protected DateAxis getXAxis() {
         return detailsChartDateAxis;
     }
 
@@ -188,7 +179,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
      * @return a new Action that will unhide events with the given description.
      */
     public Action newUnhideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
-        return new UnhideDescriptionAction(description, descriptionLoD, chart);
+        return new UnhideDescriptionAction(description, descriptionLoD, getChart());
     }
 
     /**
@@ -200,13 +191,13 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
      * @return a new Action that will hide events with the given description.
      */
     public Action newHideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
-        return new HideDescriptionAction(description, descriptionLoD, chart);
+        return new HideDescriptionAction(description, descriptionLoD, getChart());
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     @Override
-    protected void resetData() {
-        chart.reset();
+    protected void clearChartData() {
+        getChart().reset();
     }
 
     @Override
@@ -215,7 +206,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
     }
 
     @Override
-    protected Axis<EventStripe> getYAxis() {
+    final protected Axis<EventStripe> getYAxis() {
         return verticalAxis;
     }
 
@@ -230,18 +221,18 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
     }
 
     @Override
-    protected Task<Boolean> getUpdateTask() {
+    protected Task<Boolean> getNewUpdateTask() {
         return new DetailsUpdateTask();
-    }
-
-    @Override
-    protected Effect getSelectionEffect() {
-        return null;
     }
 
     @Override
     protected void applySelectionEffect(EventNodeBase<?> c1, Boolean selected) {
         c1.applySelectionEffect(selected);
+    }
+
+    @Override
+    protected double getAxisMargin() {
+        return 0;
     }
 
     /**
@@ -365,14 +356,15 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
             if (isCancelled()) {
                 return null;
             }
+            FilteredEventsModel eventsModel = getEventsModel();
 
             //clear the chart and set the horixontal axis
-            resetChart(getTimeRange());
+            resetChart(eventsModel.getTimeRange());
 
             updateMessage(Bundle.DetailViewPane_loggedTask_queryDb());
 
             //get the event stripes to be displayed
-            List<EventStripe> eventStripes = filteredEvents.getEventStripes();
+            List<EventStripe> eventStripes = eventsModel.getEventStripes();
             final int size = eventStripes.size();
             //if there are too many stipes show a confirmation dialog
             if (size > 2000) {
@@ -407,7 +399,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
                 }
                 updateProgress(i, size);
                 final EventStripe stripe = eventStripes.get(i);
-                Platform.runLater(() -> chart.addStripe(stripe));
+                Platform.runLater(() -> getChart().addStripe(stripe));
             }
 
             return eventStripes.isEmpty() == false;
@@ -416,7 +408,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
         @Override
         protected void cancelled() {
             super.cancelled();
-            controller.retreat();
+            getController().retreat();
         }
 
         @Override
@@ -425,5 +417,4 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
             pinnedDateAxis.setRange(timeRange, true);
         }
     }
-
 }

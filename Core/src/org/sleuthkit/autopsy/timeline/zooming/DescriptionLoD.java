@@ -23,7 +23,7 @@ import org.openide.util.NbBundle;
 /**
  * Enumeration of all description levels of detail.
  */
-public enum DescriptionLoD {
+public enum DescriptionLoD implements DisplayNameProvider {
 
     SHORT(NbBundle.getMessage(DescriptionLoD.class, "DescriptionLOD.short")),
     MEDIUM(NbBundle.getMessage(DescriptionLoD.class, "DescriptionLOD.medium")),
