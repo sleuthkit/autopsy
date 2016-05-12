@@ -20,22 +20,16 @@ package org.sleuthkit.autopsy.modules.filetypeid;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 import javax.xml.bind.DatatypeConverter;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerException;
-import org.openide.util.NbBundle;
 import org.openide.util.io.NbObjectInputStream;
 import org.openide.util.io.NbObjectOutputStream;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
@@ -46,25 +40,13 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 /**
- * Manages user-defined file types characterized by MIME type, signature, and
- * optional membership in an interesting files set.
- * <p>
- * Note that this class exposes a very simple get/set API that operates on the
- * user-defined file types as a complete set - there is no concept of adding,
- * editing or deleting file types singly. This works because this class is not
- * exposed outside of this ingest module package and is ONLY used in a very
- * specific paradigm. In this paradigm, there is a single modal writer of file
- * types in the form of a global settings panel that disables itself when ingest
- * is running so that multiple readers in the form of file ingest modules get a
- * consistent set of file type definitions.
- * <p>
- * Thread-safe.
+ * A singleton manager for the custom file types defined by Autopsy and by
+ * users.
  */
 final class UserDefinedFileTypesManager {
 
-    private static final Logger logger = Logger.getLogger(UserDefinedFileTypesManager.class.getName());
-    private static final String USER_DEFINED_TYPES_XML_FILE = "UserFileTypeDefinitions.xml"; //NON-NLS
-    private static final String USER_DEFINED_TYPES_SERIALIZATION_FILE = "UserFileTypeDefinitions.settings";
+    private static final String XML_SETTINGS_FILE = "UserFileTypeDefinitions.xml"; //NON-NLS
+    private static final String SERIALIZED_SETTINGS_FILE = "UserFileTypeDefinitions.settings"; //NON-NLS
     private static final String FILE_TYPES_TAG_NAME = "FileTypes"; //NON-NLS
     private static final String FILE_TYPE_TAG_NAME = "FileType"; //NON-NLS
     private static final String MIME_TYPE_TAG_NAME = "MimeType"; //NON-NLS
@@ -73,34 +55,15 @@ final class UserDefinedFileTypesManager {
     private static final String BYTES_TAG_NAME = "Bytes"; //NON-NLS
     private static final String OFFSET_TAG_NAME = "Offset"; //NON-NLS
     private static final String RELATIVE_ATTRIBUTE = "RelativeToStart"; //NON-NLS
-    private static final String INTERESTING_FILES_SET_TAG_NAME = "InterestingFileSset"; //NON-NLS
-    private static final String ALERT_ATTRIBUTE = "alert"; //NON-NLS
-    private static final String ENCODING_FOR_XML_FILE = "UTF-8"; //NON-NLS
     private static UserDefinedFileTypesManager instance;
-
-    /**
-     * File types to be persisted to the user-defined file type definitions file
-     * are stored in this mapping of MIME types to file types. Access to this
-     * map is guarded by the intrinsic lock of the user-defined file types
-     * manager for thread-safety.
-     */
     private final List<FileType> userDefinedFileTypes = new ArrayList<>();
+    private final List<FileType> allFileTypes = new ArrayList<>();
 
     /**
-     * The combined set of user-defined file types and file types predefined by
-     * Autopsy are stored in this mapping of MIME types to file types. This is
-     * the current working set of file types. Access to this map is guarded by
-     * the intrinsic lock of the user-defined file types manager for
-     * thread-safety.
-     */
-    private final List<FileType> fileTypes = new ArrayList<>();
-
-    /**
-     * Gets the singleton manager of user-defined file types characterized by
-     * MIME type, signature, and optional membership in an interesting files
-     * set.
+     * Gets the singleton manager of the custom file types defined by Autopsy
+     * and by users.
      *
-     * @return The user-defined file types manager singleton.
+     * @return The custom file types manager singleton.
      */
     synchronized static UserDefinedFileTypesManager getInstance() {
         if (instance == null) {
@@ -110,19 +73,19 @@ final class UserDefinedFileTypesManager {
     }
 
     /**
-     * Creates a manager of user-defined file types characterized by MIME type,
-     * signature, and optional membership in an interesting files set.
+     * Constructs a manager for the custom file types defined by Autopsy and by
+     * users.
      */
     private UserDefinedFileTypesManager() {
     }
 
     /**
-     * Gets both the predefined and the user-defined file types.
+     * Gets all of the custom file types defined by Autopsy and by users.
      *
-     * @return A mapping of file type names to file types, possibly empty.
+     * @return A list of file types, possibly empty.
      *
-     * @throws
-     * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException
+     * @throws UserDefinedFileTypesException if there is a problem accessing the
+     *                                       file types.
      */
     synchronized List<FileType> getFileTypes() throws UserDefinedFileTypesException {
         loadFileTypes();
@@ -133,16 +96,16 @@ final class UserDefinedFileTypesManager {
          * Collections.unmodifiableCollection() is not used here because this
          * view of the file types is a snapshot.
          */
-        return new ArrayList<>(fileTypes);
+        return new ArrayList<>(allFileTypes);
     }
 
     /**
-     * Gets the user-defined file types.
+     * Gets the custom file types defined by users.
      *
-     * @return A mapping of file type names to file types, possibly empty.
+     * @return A list of file types, possibly empty.
      *
-     * @throws
-     * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException
+     * @throws UserDefinedFileTypesException if there is a problem accessing the
+     *                                       file types.
      */
     synchronized List<FileType> getUserDefinedFileTypes() throws UserDefinedFileTypesException {
         loadFileTypes();
@@ -157,15 +120,15 @@ final class UserDefinedFileTypesManager {
     }
 
     /**
-     * Loads the MIME type to file type mappings with predefined and
-     * user-defined types.
+     * Loads or re-loads the custom file types defined by Autopsy and by users.
      *
-     * @throws
-     * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException
+     * @throws UserDefinedFileTypesException if there is a problem loading the
+     *                                       file types.
      */
     private void loadFileTypes() throws UserDefinedFileTypesException {
-        fileTypes.clear();
+        allFileTypes.clear();
         userDefinedFileTypes.clear();
+
         /**
          * Load the predefined types first so that they can be overwritten by
          * any user-defined types with the same names.
@@ -175,156 +138,185 @@ final class UserDefinedFileTypesManager {
     }
 
     /**
-     * Adds the predefined file types to the in-memory mappings of MIME types to
-     * file types.
+     * Loads or re-loads the custom file types defined by Autopsy.
      *
-     * @throws
-     * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException
+     * @throws UserDefinedFileTypesException if there is a problem loading the
+     *                                       file types.
      */
     private void loadPredefinedFileTypes() throws UserDefinedFileTypesException {
         byte[] byteArray;
         FileType fileType;
 
         try {
+            /*
+             * Add type for xml.
+             */
             List<Signature> signatureList;
             signatureList = new ArrayList<>();
-            signatureList.add(new Signature("<?xml", 0L));
+            signatureList.add(new Signature("<?xml", 0L)); //NON-NLS
             fileType = new FileType("text/xml", signatureList); //NON-NLS
-            fileTypes.add(fileType);
+            allFileTypes.add(fileType);
 
-            // Add rule for gzip
+            /*
+             * Add type for gzip.
+             */
             byteArray = DatatypeConverter.parseHexBinary("1F8B");  //NON-NLS  
             signatureList.clear();
             signatureList.add(new Signature(byteArray, 0L));
             fileType = new FileType("application/x-gzip", signatureList); //NON-NLS
-            fileTypes.add(fileType);
+            allFileTypes.add(fileType);
 
-            // Add rule for .wk1
+            /*
+             * Add type for wk1.
+             */
             byteArray = DatatypeConverter.parseHexBinary("0000020006040600080000000000"); //NON-NLS
             signatureList.clear();
             signatureList.add(new Signature(byteArray, 0L));
             fileType = new FileType("application/x-123", signatureList); //NON-NLS
-            fileTypes.add(fileType);
+            allFileTypes.add(fileType);
 
-            // Add rule for Radiance image
+            /*
+             * Add type for Radiance images.
+             */
             byteArray = DatatypeConverter.parseHexBinary("233F52414449414E43450A");//NON-NLS
             signatureList.clear();
             signatureList.add(new Signature(byteArray, 0L));
             fileType = new FileType("image/vnd.radiance", signatureList); //NON-NLS
-            fileTypes.add(fileType);
+            allFileTypes.add(fileType);
 
-            // Add rule for .dcx image
+            /*
+             * Add type for dcx images.
+             */
             byteArray = DatatypeConverter.parseHexBinary("B168DE3A"); //NON-NLS
             signatureList.clear();
             signatureList.add(new Signature(byteArray, 0L));
             fileType = new FileType("image/x-dcx", signatureList); //NON-NLS
-            fileTypes.add(fileType);
+            allFileTypes.add(fileType);
 
-            // Add rule for .ics image
+            /*
+             * Add type for ics images.
+             */
             signatureList.clear();
-            signatureList.add(new Signature("icns", 0L));
+            signatureList.add(new Signature("icns", 0L)); //NON-NLS
             fileType = new FileType("image/x-icns", signatureList); //NON-NLS
-            fileTypes.add(fileType);
+            allFileTypes.add(fileType);
 
-            // Add rule for .pict image
+            /*
+             * Add type for pict images.
+             */
             byteArray = DatatypeConverter.parseHexBinary("001102FF"); //NON-NLS
             signatureList.clear();
             signatureList.add(new Signature(byteArray, 522L));
             fileType = new FileType("image/x-pict", signatureList); //NON-NLS
-            fileTypes.add(fileType);
+            allFileTypes.add(fileType);
             byteArray = DatatypeConverter.parseHexBinary("1100"); //NON-NLS
             signatureList.clear();
             signatureList.add(new Signature(byteArray, 522L));
             fileType = new FileType("image/x-pict", signatureList); //NON-NLS
-            fileTypes.add(fileType);
+            allFileTypes.add(fileType);
 
-            // Add rule for .pam
+            /*
+             * Add type for pam.
+             */
             signatureList.clear();
-            signatureList.add(new Signature("P7", 0L));
+            signatureList.add(new Signature("P7", 0L)); //NON-NLS
             fileType = new FileType("image/x-portable-arbitrarymap", signatureList); //NON-NLS
-            fileTypes.add(fileType);
+            allFileTypes.add(fileType);
 
-            // Add rule for .pfm
+            /*
+             * Add type for pfm.
+             */
             signatureList.clear();
-            signatureList.add(new Signature("PF", 0L));
+            signatureList.add(new Signature("PF", 0L)); //NON-NLS
             fileType = new FileType("image/x-portable-floatmap", signatureList); //NON-NLS
-            fileTypes.add(fileType);
+            allFileTypes.add(fileType);
             signatureList.clear();
-            signatureList.add(new Signature("Pf", 0L));
+            signatureList.add(new Signature("Pf", 0L)); //NON-NLS
             fileType = new FileType("image/x-portable-floatmap", signatureList); //NON-NLS
-            fileTypes.add(fileType);
+            allFileTypes.add(fileType);
 
-            // Add rule for .tga
+            /*
+             * Add type for tga.
+             */
             byteArray = DatatypeConverter.parseHexBinary("54525545564953494F4E2D5846494C452E00"); //NON-NLS
             signatureList.clear();
             signatureList.add(new Signature(byteArray, 17, false));
             fileType = new FileType("image/x-tga", signatureList); //NON-NLS
-            fileTypes.add(fileType);
+            allFileTypes.add(fileType);
 
-            // Add rule for .ilbm
+            /*
+             * Add type for ilbm.
+             */
             signatureList.clear();
-            signatureList.add(new Signature("FORM", 0L));
-            signatureList.add(new Signature("ILBM", 8L));
-            fileType = new FileType("image/x-ilbm", signatureList);
-            fileTypes.add(fileType);
+            signatureList.add(new Signature("FORM", 0L)); //NON-NLS
+            signatureList.add(new Signature("ILBM", 8L)); //NON-NLS
+            fileType = new FileType("image/x-ilbm", signatureList); //NON-NLS
+            allFileTypes.add(fileType);
             signatureList.clear();
-            signatureList.add(new Signature("FORM", 0L));
-            signatureList.add(new Signature("PBM", 8L));
-            fileType = new FileType("image/x-ilbm", signatureList);
-            fileTypes.add(fileType);
+            signatureList.add(new Signature("FORM", 0L)); //NON-NLS
+            signatureList.add(new Signature("PBM", 8L)); //NON-NLS
+            fileType = new FileType("image/x-ilbm", signatureList); //NON-NLS
+            allFileTypes.add(fileType);
 
-            // Add rule for .webp
+            /*
+             * Add type for webp.
+             */
             signatureList.clear();
-            signatureList.add(new Signature("RIFF", 0L));
-            signatureList.add(new Signature("WEBP", 8L));
-            fileType = new FileType("image/webp", signatureList);
-            fileTypes.add(fileType);
+            signatureList.add(new Signature("RIFF", 0L)); //NON-NLS
+            signatureList.add(new Signature("WEBP", 8L)); //NON-NLS
+            fileType = new FileType("image/webp", signatureList); //NON-NLS
+            allFileTypes.add(fileType);
 
-            // Add rule for .aiff
+            /*
+             * Add type for aiff.
+             */
             signatureList.clear();
-            signatureList.add(new Signature("FORM", 0L));
-            signatureList.add(new Signature("AIFF", 8L));
-            fileType = new FileType("audio/aiff", signatureList);
-            fileTypes.add(fileType);
+            signatureList.add(new Signature("FORM", 0L)); //NON-NLS
+            signatureList.add(new Signature("AIFF", 8L)); //NON-NLS
+            fileType = new FileType("audio/aiff", signatureList); //NON-NLS
+            allFileTypes.add(fileType);
             signatureList.clear();
-            signatureList.add(new Signature("FORM", 0L));
-            signatureList.add(new Signature("AIFC", 8L));
-            fileType = new FileType("audio/aiff", signatureList);
-            fileTypes.add(fileType);
+            signatureList.add(new Signature("FORM", 0L)); //NON-NLS
+            signatureList.add(new Signature("AIFC", 8L)); //NON-NLS
+            fileType = new FileType("audio/aiff", signatureList); //NON-NLS
+            allFileTypes.add(fileType);
             signatureList.clear();
-            signatureList.add(new Signature("FORM", 0L));
-            signatureList.add(new Signature("8SVX", 8L));
-            fileType = new FileType("audio/aiff", signatureList);
-            fileTypes.add(fileType);
+            signatureList.add(new Signature("FORM", 0L)); //NON-NLS
+            signatureList.add(new Signature("8SVX", 8L)); //NON-NLS
+            fileType = new FileType("audio/aiff", signatureList); //NON-NLS
+            allFileTypes.add(fileType);
 
-            // Add .iff
+            /*
+             * Add type for iff.
+             */
             signatureList.clear();
-            signatureList.add(new Signature("FORM", 0L));
-            fileType = new FileType("application/x-iff", signatureList);
-            fileTypes.add(fileType);
+            signatureList.add(new Signature("FORM", 0L)); //NON-NLS
+            fileType = new FileType("application/x-iff", signatureList); //NON-NLS
+            allFileTypes.add(fileType);
 
-        } // parseHexBinary() throws this if the argument passed in is not Hex
-        catch (IllegalArgumentException e) {
-            throw new UserDefinedFileTypesException("Error creating predefined file types", e); //
+        } catch (IllegalArgumentException ex) {
+            /*
+             * parseHexBinary() throws this if the argument passed in is not hex
+             */
+            throw new UserDefinedFileTypesException("Error creating predefined file types", ex); //
         }
     }
 
     /**
-     * Adds the user-defined file types to the in-memory mappings of MIME types
-     * to file types.
+     * Loads or re-loads the custom file types defined by users.
      *
-     * @throws
-     * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException
+     * @throws UserDefinedFileTypesException if there is a problem loading the
+     *                                       file types.
      */
     private void loadUserDefinedFileTypes() throws UserDefinedFileTypesException {
         try {
-            File serialized = new File(getFileTypeDefinitionsFilePath(USER_DEFINED_TYPES_SERIALIZATION_FILE));
+            File serialized = new File(getFileTypeDefinitionsFilePath(SERIALIZED_SETTINGS_FILE));
             if (serialized.exists()) {
-                for (FileType fileType : readFileTypesSerialized()) {
+                for (FileType fileType : readSerializedFileTypes()) {
                     addUserDefinedFileType(fileType);
                 }
             } else {
-                String filePath = getFileTypeDefinitionsFilePath(USER_DEFINED_TYPES_XML_FILE);
+                String filePath = getFileTypeDefinitionsFilePath(XML_SETTINGS_FILE);
                 File xmlFile = new File(filePath);
                 if (xmlFile.exists()) {
                     for (FileType fileType : XMLDefinitionsReader.readFileTypes(filePath)) {
@@ -337,31 +329,29 @@ final class UserDefinedFileTypesManager {
             /**
              * Using an all-or-none policy.
              */
-            fileTypes.clear();
+            allFileTypes.clear();
             userDefinedFileTypes.clear();
-            throwUserDefinedFileTypesException(ex, "UserDefinedFileTypesManager.loadFileTypes.errorMessage");
+            throw new UserDefinedFileTypesException("UserDefinedFileTypesManager.loadFileTypes.errorMessage", ex);
         }
     }
 
     /**
-     * Adds a user-defined file type to the in-memory mappings of MIME types to
-     * file types.
+     * Adds a custom file type to both internal file type lists.
      *
      * @param fileType The file type to add.
      */
     private void addUserDefinedFileType(FileType fileType) {
         userDefinedFileTypes.add(fileType);
-        fileTypes.add(fileType);
+        allFileTypes.add(fileType);
     }
 
     /**
-     * Sets the user-defined file types.
+     * Sets the user-defined custom file types.
      *
-     * @param newFileTypes A mapping of file type names to user-defined file
-     *                     types.
+     * @param newFileTypes A list of user-defined file types.
      */
     synchronized void setUserDefinedFileTypes(List<FileType> newFileTypes) throws UserDefinedFileTypesException {
-        String filePath = getFileTypeDefinitionsFilePath(USER_DEFINED_TYPES_SERIALIZATION_FILE);
+        String filePath = getFileTypeDefinitionsFilePath(SERIALIZED_SETTINGS_FILE);
         writeFileTypes(newFileTypes, filePath);
     }
 
@@ -378,72 +368,68 @@ final class UserDefinedFileTypesManager {
     }
 
     /**
-     * Writes a set of file types to a file.
+     * Writes a collection of custom file types to disk.
      *
      * @param fileTypes A collection of file types.
      * @param filePath  The path to the destination file.
      *
-     * @throws ParserConfigurationException
-     * @throws IOException
-     * @throws FileNotFoundException
-     * @throws UnsupportedEncodingException
-     * @throws TransformerException
+     * @throws UserDefinedFileTypesException if there is a problem writing the
+     *                                       file types.
      */
     private static void writeFileTypes(List<FileType> fileTypes, String filePath) throws UserDefinedFileTypesException {
         try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(filePath))) {
             UserDefinedFileTypesSettings settings = new UserDefinedFileTypesSettings(fileTypes);
             out.writeObject(settings);
         } catch (IOException ex) {
-            throw new UserDefinedFileTypesException(String.format("Failed to write settings to %s", filePath), ex);
+            throw new UserDefinedFileTypesException(String.format("Failed to write settings to %s", filePath), ex); //NON-NLS
         }
     }
 
     /**
-     * Reads the file types
+     * Reads a collection of custom file types from disk.
      *
-     * @param filePath the file path where the file types are to be read
+     * @param filePath The path of the file from which the custom file types are
+     *                 to be read.
      *
-     * @return the file types
+     * @return The custom file types.
      *
-     * @throws ParserConfigurationException If the file cannot be read
+     * @throws UserDefinedFileTypesException if there is a problem reading the
+     *                                       file types.
      */
-    private static List<FileType> readFileTypesSerialized() throws UserDefinedFileTypesException {
-        File serializedDefs = new File(getFileTypeDefinitionsFilePath(USER_DEFINED_TYPES_SERIALIZATION_FILE));
+    private static List<FileType> readSerializedFileTypes() throws UserDefinedFileTypesException {
+        File serializedDefs = new File(getFileTypeDefinitionsFilePath(SERIALIZED_SETTINGS_FILE));
         try {
             try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(serializedDefs))) {
                 UserDefinedFileTypesSettings filesSetsSettings = (UserDefinedFileTypesSettings) in.readObject();
                 return filesSetsSettings.getUserDefinedFileTypes();
             }
         } catch (IOException | ClassNotFoundException ex) {
-            throw new UserDefinedFileTypesException("Couldn't read serialized settings.", ex);
+            throw new UserDefinedFileTypesException("Couldn't read serialized settings.", ex); //NON-NLS
         }
     }
 
     /**
-     * Provides a mechanism for reading a set of file type definitions from an
-     * XML file.
+     * Provides a mechanism for reading a set of custom file type definitions
+     * from an XML file.
      */
     private static class XMLDefinitionsReader {
 
         /**
-         * Reads a set of file type definitions from an XML file.
+         * Reads a set of custom file type definitions from an XML file.
          *
          * @param filePath The path to the XML file.
          *
-         * @return A collection of file types read from the XML file.
+         * @return A collection of custom file types read from the XML file.
+         *
+         * @throws IOException                  if there is problem reading the
+         *                                      XML file.
+         * @throws SAXException                 if there is a problem parsing
+         *                                      the XML file.
+         * @throws ParserConfigurationException if there is a problem parsing
+         *                                      the XML file.
          */
         private static List<FileType> readFileTypes(String filePath) throws IOException, SAXException, ParserConfigurationException {
             List<FileType> fileTypes = new ArrayList<>();
-            /*
-             * RC: Commenting out the loadDocument overload that validates
-             * against the XSD is a temp fix for a failure to provide an upgrade
-             * path when the RelativeToStart attribute was added to the
-             * Signature element. The upgrade path can be supplied, but the plan
-             * is to replace the use of XML with object serialization for the
-             * settings, so it may not be worth the effort.
-             */
-            // private static final String FILE_TYPE_DEFINITIONS_SCHEMA_FILE = "FileTypes.xsd"; //NON-NLS
-            // Document doc = XMLUtil.loadDocument(filePath, UserDefinedFileTypesManager.class, FILE_TYPE_DEFINITIONS_SCHEMA_FILE);
             Document doc = XMLUtil.loadDocument(filePath);
             if (doc != null) {
                 Element fileTypesElem = doc.getDocumentElement();
@@ -460,14 +446,16 @@ final class UserDefinedFileTypesManager {
         }
 
         /**
-         * Gets a file type definition from a file type XML element.
+         * Gets a custom file type definition from a file type XML element.
          *
          * @param fileTypeElem The XML element.
          *
          * @return A file type object.
          *
-         * @throws IllegalArgumentException
-         * @throws NumberFormatException
+         * @throws IllegalArgumentException if there is a problem parsing the
+         *                                  file type.
+         * @throws NumberFormatException    if there is a problem parsing the
+         *                                  file type.
          */
         private static FileType parseFileType(Element fileTypeElem) throws IllegalArgumentException, NumberFormatException {
             String mimeType = XMLDefinitionsReader.parseMimeType(fileTypeElem);
@@ -523,35 +511,6 @@ final class UserDefinedFileTypesManager {
         }
 
         /**
-         * Gets the interesting files set name from a file type XML element.
-         *
-         * @param fileTypeElem The XML element.
-         *
-         * @return The files set name, possibly empty.
-         */
-        private static String parseInterestingFilesSet(Element fileTypeElem) {
-            String filesSetName = "";
-            NodeList filesSetElems = fileTypeElem.getElementsByTagName(INTERESTING_FILES_SET_TAG_NAME);
-            if (filesSetElems.getLength() > 0) {
-                Element filesSetElem = (Element) filesSetElems.item(0);
-                filesSetName = filesSetElem.getTextContent();
-            }
-            return filesSetName;
-        }
-
-        /**
-         * Gets the alert attribute from a file type XML element.
-         *
-         * @param fileTypeElem The XML element.
-         *
-         * @return True or false;
-         */
-        private static boolean parseAlert(Element fileTypeElem) {
-            String alertAttribute = fileTypeElem.getAttribute(ALERT_ATTRIBUTE);
-            return Boolean.parseBoolean(alertAttribute);
-        }
-
-        /**
          * Gets the text content of a single child element.
          *
          * @param elem    The parent element.
@@ -570,7 +529,7 @@ final class UserDefinedFileTypesManager {
         }
 
         /**
-         * Private constructor suppresses creation of instanmces of this utility
+         * Private constructor suppresses creation of instances of this utility
          * class.
          */
         private XMLDefinitionsReader() {
@@ -579,26 +538,7 @@ final class UserDefinedFileTypesManager {
     }
 
     /**
-     * Logs an exception, bundles the exception with a simple message in a
-     * uniform exception type, and throws the wrapper exception.
-     *
-     * @param ex         The exception to wrap.
-     * @param messageKey A key into the bundle file that maps to the desired
-     *                   message.
-     *
-     * @throws
-     * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException
-     */
-    private void throwUserDefinedFileTypesException(Exception ex, String messageKey) throws UserDefinedFileTypesException {
-        String message = NbBundle.getMessage(UserDefinedFileTypesManager.class, messageKey);
-        logger.log(Level.SEVERE, message, ex);
-        throw new UserDefinedFileTypesException(message, ex);
-    }
-
-    /**
-     * Used to translate more implementation-details-specific exceptions (which
-     * are logged by this class) into more generic exceptions for propagation to
-     * clients of the user-defined file types manager.
+     * .An exception thrown by the custom file types manager.
      */
     static class UserDefinedFileTypesException extends Exception {
 
