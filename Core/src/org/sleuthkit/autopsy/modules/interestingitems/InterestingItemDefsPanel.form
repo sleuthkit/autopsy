@@ -124,7 +124,7 @@
                                   <Group type="102" alignment="0" attributes="0">
                                       <Component id="equalitySignComboBox" min="-2" pref="38" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="jSpinner1" min="-2" pref="104" max="-2" attributes="0"/>
+                                      <Component id="fileSizeSpinner" min="-2" pref="104" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="fileSizeUnitComboBox" min="-2" pref="83" max="-2" attributes="0"/>
                                   </Group>
@@ -259,7 +259,7 @@
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="jLabel8" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="equalitySignComboBox" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="jSpinner1" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="fileSizeSpinner" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="fileSizeUnitComboBox" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                           </Group>
@@ -802,7 +802,7 @@
                 <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
               </AuxValues>
             </Component>
-            <Component class="javax.swing.JSpinner" name="jSpinner1">
+            <Component class="javax.swing.JSpinner" name="fileSizeSpinner">
               <Properties>
                 <Property name="enabled" type="boolean" value="false"/>
               </Properties>

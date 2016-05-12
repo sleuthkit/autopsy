@@ -184,7 +184,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
             }
         });
 
-        descriptionLabel.setText(org.openide.util.NbBundle.getMessage(IngestJobSettingsPanel.class, "IngestJobSettingsPanel.descriptionLabel.text")); // NOI18N
+        descriptionLabel.setText("DO NOT REMOVE. This dummy text is used to anchor the inner panel's size to the outer panel, while still being expandable. Without this the expandability behavior doesn't work well. This text will never be shown, as it would only be shown when no module is selected (which is not possible).");
 
         jScrollPane1.setBorder(null);
         jScrollPane1.setPreferredSize(new java.awt.Dimension(250, 180));
