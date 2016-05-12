@@ -544,21 +544,12 @@ final public class VisualizationPanel extends BorderPane {
     }
 
     private void refreshTimeUI() {
-        refreshTimeUI(filteredEvents.timeRangeProperty().get());
-    }
-
-    private void refreshTimeUI(Interval interval) {
-
         RangeDivisionInfo rangeDivisionInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval());
-
         final long minTime = rangeDivisionInfo.getLowerBound();
         final long maxTime = rangeDivisionInfo.getUpperBound();
-
-        long startMillis = interval.getStartMillis();
-        long endMillis = interval.getEndMillis();
-
+        long startMillis = filteredEvents.getTimeRange().getStartMillis();
+        long endMillis = filteredEvents.getTimeRange().getEndMillis();
         if (minTime > 0 && maxTime > minTime) {
-
             Platform.runLater(() -> {
                 startPicker.localDateTimeProperty().removeListener(startListener);
                 endPicker.localDateTimeProperty().removeListener(endListener);
