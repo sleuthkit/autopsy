@@ -60,8 +60,8 @@ public class FileTypeDetector {
      */
     public FileTypeDetector() throws FileTypeDetectorInitException {
         try {
-            userDefinedFileTypes = UserDefinedFileTypesManager.getInstance().getFileTypes();
-        } catch (UserDefinedFileTypesManager.UserDefinedFileTypesException ex) {
+            userDefinedFileTypes = CustomFileTypesManager.getInstance().getFileTypes();
+        } catch (CustomFileTypesManager.CustomFileTypesException ex) {
             throw new FileTypeDetectorInitException(Bundle.CouldNotInitializeFileTypeDetector(), ex);
         }
     }
