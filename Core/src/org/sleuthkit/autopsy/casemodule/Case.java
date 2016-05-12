@@ -1655,8 +1655,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     }
                 }
 
-                eventPublisher.publish(new AutopsyEvent(Events.REPORT_DELETED.toString(), null, null));
+                
             }
+            eventPublisher.publish(new AutopsyEvent(Events.REPORT_DELETED.toString(), null, null));
         }
     }
 
