@@ -24,6 +24,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
@@ -32,6 +33,7 @@ import javax.swing.event.ListSelectionListener;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
@@ -43,12 +45,15 @@ import org.sleuthkit.autopsy.modules.filetypeid.CustomFileTypesManager.CustomFil
  * appears in the NetBeans options dialog as an options panel.
  */
 final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
+    private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(FileTypeIdGlobalSettingsPanel.class.getName());
 
     private static final String RAW_SIGNATURE_TYPE_COMBO_BOX_ITEM = NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.signatureComboBox.rawItem");
     private static final String ASCII_SIGNATURE_TYPE_COMBO_BOX_ITEM = NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.signatureComboBox.asciiItem");
 
     private static final String START_OFFSET_RELATIVE_COMBO_BOX_ITEM = NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.offsetComboBox.startItem");
     private static final String END_OFFSET_RELATIVE_COMBO_BOX_ITEM = NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.offsetComboBox.endItem");
+
     /**
      * The list model for the file types list component of this panel is the set
      * of MIME types associated with the user-defined file types. A mapping of
@@ -213,8 +218,9 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
                 typesList.setSelectedIndex(0);
             }
         } catch (CustomFileTypesException ex) {
+            logger.log(Level.SEVERE, "Failed to get custom file types", ex);
             JOptionPane.showMessageDialog(null,
-                    ex.getLocalizedMessage(),
+                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.loadFileTypes.errorMessage"),
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.loadFailed.title"),
                     JOptionPane.ERROR_MESSAGE);
             fileTypes = Collections.emptyList();
@@ -268,8 +274,9 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         try {
             CustomFileTypesManager.getInstance().setUserDefinedFileTypes(fileTypes);
         } catch (CustomFileTypesManager.CustomFileTypesException ex) {
+            logger.log(Level.SEVERE, "Failed to set custom file types", ex);
             JOptionPane.showMessageDialog(null,
-                    ex.getLocalizedMessage(),
+                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.saveFileTypes.errorMessage"),
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.storeFailed.title"),
                     JOptionPane.ERROR_MESSAGE);
         }
