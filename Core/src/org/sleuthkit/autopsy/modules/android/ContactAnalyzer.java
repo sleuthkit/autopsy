@@ -27,7 +27,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 import java.util.logging.Level;
-import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
@@ -79,6 +79,7 @@ class ContactAnalyzer {
      *                     path The fileId will be the Abstract file associated
      *                     with the artifacts
      */
+    @Messages({"ContactAnalyzer.indexError.message=Failed to index contact artifact for keyword search."})
     private static void findContactsInDB(String databasePath, AbstractFile f) {
         Connection connection = null;
         ResultSet resultSet = null;
@@ -154,9 +155,9 @@ class ContactAnalyzer {
                     // index the artifact for keyword search
                     blackboard.indexArtifact(bba);
                 } catch (Blackboard.BlackboardException ex) {
-                    logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", bba.getDisplayName()), ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getDisplayName(), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(
-                        NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), bba.getDisplayName());
+                                        Bundle.ContactAnalyzer_indexError_message(), bba.getDisplayName());
                 }
             }
 

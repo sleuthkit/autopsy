@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -100,6 +99,7 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
      * @inheritDoc
      */
     @Override
+    @Messages({"FilesIdentifierIngestModule.indexError.message=Failed to index interesting file hit artifact for keyword search."})
     public ProcessResult process(AbstractFile file) {
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
 
@@ -131,9 +131,8 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
                         // index the artifact for keyword search
                         blackboard.indexArtifact(artifact);
                     } catch (Blackboard.BlackboardException ex) {
-                        logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", artifact.getDisplayName()), ex); //NON-NLS
-                        MessageNotifyUtil.Notify.error(
-                                NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), artifact.getDisplayName());
+                        logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getDisplayName(), ex); //NON-NLS
+                        MessageNotifyUtil.Notify.error(Bundle.FilesIdentifierIngestModule_indexError_message(), artifact.getDisplayName());
                     }
 
                     IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, Collections.singletonList(artifact)));
