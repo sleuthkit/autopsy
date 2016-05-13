@@ -61,9 +61,14 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
     private final Axis<EventStripe> verticalAxis;
 
     /**
-     * property that holds the interval selector if one is active
+     * Property that holds the interval selector if one is active
      */
-    private final SimpleObjectProperty<IntervalSelector<? extends DateTime>> intervalSelector = new SimpleObjectProperty<>();
+    private final SimpleObjectProperty<IntervalSelector<? extends DateTime>> intervalSelectorProp = new SimpleObjectProperty<>();
+
+    /**
+     * ObservableSet of GuieLines displayed in this chart
+     */
+    private final ObservableSet<GuideLine> guideLines = FXCollections.observableSet();
 
     /**
      * Predicate used to determine if a EventNode should be highlighted. Can be
@@ -74,12 +79,12 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
     private final SimpleObjectProperty<Predicate<EventNodeBase<?>>> highlightPredicate = new SimpleObjectProperty<>((x) -> false);
 
     /**
-     * an ObservableList of the Nodes that are selected in this chart.
+     * An ObservableList of the Nodes that are selected in this chart.
      */
     private final ObservableList<EventNodeBase<?>> selectedNodes;
 
     /**
-     * an ObservableList representing all the events in the tree as a flat list
+     * An ObservableList representing all the events in the tree as a flat list
      * of events whose roots are in the eventStripes lists
      *
      */
@@ -97,12 +102,25 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
     private final TimeLineController controller;
 
     /**
-     * an ObservableList of root event stripes to display in the chart. Must
-     * only be modified on the JFX Thread.
+     * An ObservableList of root event stripes to display in the chart.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private final ObservableList<EventStripe> rootEventStripes = FXCollections.observableArrayList();
 
+    /**
+     * Constructor
+     *
+     * @param controller           The TimeLineController for this chart.
+     * @param detailsChartDateAxis The DateAxis to use in this chart.
+     * @param pinnedDateAxis       The DateAxis to use for the pinned lane. It
+     *                             will not be shown on screen, but must not be
+     *                             null or the same as the detailsChartDateAxis.
+     * @param verticalAxis         An Axis<EventStripe> to use as the vertical
+     *                             axis in the primary lane.
+     * @param selectedNodes        An ObservableList<EventNodeBase<?>>, that
+     *                             will be used to keep track of the nodes
+     *                             selected in this chart.
+     */
     DetailsChart(TimeLineController controller, DateAxis detailsChartDateAxis, DateAxis pinnedDateAxis, Axis<EventStripe> verticalAxis, ObservableList<EventNodeBase<?>> selectedNodes) {
         this.controller = controller;
         this.layoutSettings = new DetailsChartLayoutSettings(controller);
@@ -112,8 +130,9 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
         this.selectedNodes = selectedNodes;
 
         FilteredEventsModel eventsModel = getController().getEventsModel();
+
         /*
-         * if the time range is changed, clear the guide line and the interval
+         * If the time range is changed, clear the guide line and the interval
          * selector, since they may not be in view any more.
          */
         eventsModel.timeRangeProperty().addListener(o -> clearTimeBasedUIElements());
@@ -126,9 +145,9 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
      * Get the DateTime represented by the given x-position in this chart.
      *
      *
-     * @param xPos the x-position to get the DataTime for
+     * @param xPos The x-position to get the DataTime for.
      *
-     * @return the DateTime represented by the given x-position in this chart.
+     * @return The DateTime represented by the given x-position in this chart.
      */
     DateTime getDateTimeForPosition(double xPos) {
         return getXAxis().getValueForDisplay(getXAxis().parentToLocal(xPos, 0).getX());
@@ -137,7 +156,7 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
     /**
      * Add an EventStripe to the list of root stripes.
      *
-     * @param stripe the EventStripe to add.
+     * @param stripe The EventStripe to add.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     void addStripe(EventStripe stripe) {
@@ -146,10 +165,9 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
     }
 
     /**
-     *
      * Remove the given GuideLine from this chart.
      *
-     * @param guideLine the GuideLine to remove
+     * @param guideLine The GuideLine to remove.
      */
     void clearGuideLine(GuideLine guideLine) {
         guideLines.remove(guideLine);
@@ -161,23 +179,22 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
     }
 
     /**
-     * Get the DetailsCharLayoutSettings for this chart.
+     * Get the DetailsChartLayoutSettings for this chart.
      *
-     * @return the DetailsCharLayoutSettings for this chart.
+     * @return The DetailsChartLayoutSettings for this chart.
      */
     DetailsChartLayoutSettings getLayoutSettings() {
         return layoutSettings;
     }
 
     /**
-     *
      * Set the Predicate used to determine if a EventNode should be highlighted.
      * Can be a combination of conditions such as: be in the selectedNodes list
      * OR have a particular description, but it must include be in the
      * selectedNodes (selectedNodes::contains).
      *
-     * @param highlightPredicate the Predicate used to determine which nodes to
-     *                           highlight
+     * @param highlightPredicate The Predicate used to determine which nodes to
+     *                           highlight.
      */
     void setHighlightPredicate(Predicate<EventNodeBase<?>> highlightPredicate) {
         this.highlightPredicate.set(highlightPredicate);
@@ -208,14 +225,9 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
         clearIntervalSelector();
     }
 
-    /**
-     * ObservableSet of GuieLines displayed in this chart
-     */
-    private final ObservableSet<GuideLine> guideLines = FXCollections.observableSet();
-
     @Override
     public void clearIntervalSelector() {
-        intervalSelector.set(null);
+        intervalSelectorProp.set(null);
     }
 
     @Override
@@ -225,16 +237,12 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
 
     @Override
     public IntervalSelector<? extends DateTime> getIntervalSelector() {
-        return intervalSelector.get();
-    }
-
-    private SimpleObjectProperty<IntervalSelector<? extends DateTime>> intervalSelector() {
-        return intervalSelector;
+        return intervalSelectorProp.get();
     }
 
     @Override
     public void setIntervalSelector(IntervalSelector<? extends DateTime> newIntervalSelector) {
-        intervalSelector.set(newIntervalSelector);
+        intervalSelectorProp.set(newIntervalSelector);
     }
 
     @Override
@@ -277,7 +285,7 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
     /**
      * Get the ObservableList of root EventStripes.
      *
-     * @return the ObservableList of root EventStripes.
+     * @return The ObservableList of root EventStripes.
      */
     ObservableList<EventStripe> getRootEventStripes() {
         return rootEventStripes;
@@ -385,8 +393,9 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
         private final Pane rootPane;
 
         /**
-         * The divder position of masterDetailPane is saved when the pinned lane
-         * is hidden so it can be restored when the pinned lane is shown again.
+         * The divider position of masterDetailPane is saved when the pinned
+         * lane is hidden so it can be restored when the pinned lane is shown
+         * again.
          */
         private double dividerPosition = .1;
 
@@ -400,8 +409,7 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
             pinnedView = new ScrollingLaneWrapper(pinnedLane);
 
             pinnedLane.setMinHeight(MIN_PINNED_LANE_HEIGHT);
-            pinnedLane.maxVScrollProperty().addListener(maxVSCrollProp -> syncPinnedHeight());
-            syncPinnedHeight();
+            pinnedLane.maxVScrollProperty().addListener(maxVScroll -> syncPinnedHeight());
 
             //assemble scene graph
             masterDetailPane = new MasterDetailPane(Side.TOP, primaryView, pinnedView, false);
@@ -413,10 +421,8 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
 
             //maintain highlighted effect on correct nodes
             getSkinnable().highlightPredicate.addListener((observable, oldPredicate, newPredicate) -> {
-                primaryLane.getAllNodes().forEach(eNode ->
-                        eNode.applyHighlightEffect(newPredicate.test(eNode)));
-                pinnedLane.getAllNodes().forEach(eNode ->
-                        eNode.applyHighlightEffect(newPredicate.test(eNode)));
+                primaryLane.getAllNodes().forEach(primaryNode -> primaryNode.applyHighlightEffect(newPredicate.test(primaryNode)));
+                pinnedLane.getAllNodes().forEach(pinnedNode -> pinnedNode.applyHighlightEffect(newPredicate.test(pinnedNode)));
             });
 
             //configure mouse listeners
@@ -430,7 +436,7 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
             syncPinnedLaneShowing();
 
             //show and remove interval selector in sync with control state change
-            getSkinnable().intervalSelector().addListener((observable, oldIntervalSelector, newIntervalSelector) -> {
+            getSkinnable().intervalSelectorProp.addListener((observable, oldIntervalSelector, newIntervalSelector) -> {
                 rootPane.getChildren().remove(oldIntervalSelector);
                 if (null != newIntervalSelector) {
                     rootPane.getChildren().add(newIntervalSelector);
@@ -460,11 +466,11 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
         /**
          * Add the given listeners to the given chart lane
          *
-         * @param chartLane           the Chart lane to add the listeners to
-         * @param mouseClickedHandler the mouseClickedHandler to add to chart
-         * @param chartDragHandler1   the ChartDragHandler to add to the chart
+         * @param chartLane           The Chart lane to add the listeners to.
+         * @param mouseClickedHandler The MouseClickedHandler to add to chart.
+         * @param chartDragHandler1   The ChartDragHandler to add to the chart
          *                            as pressed, released, dragged, and clicked
-         *                            handler
+         *                            handler.
          */
         static private void configureMouseListeners(final DetailsChartLane<?> chartLane, final TimeLineChart.MouseClickedHandler<DateTime, DetailsChart> mouseClickedHandler, final TimeLineChart.ChartDragHandler<DateTime, DetailsChart> chartDragHandler) {
             chartLane.setOnMousePressed(chartDragHandler);
@@ -474,14 +480,22 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
             chartLane.addEventHandler(MouseEvent.MOUSE_CLICKED, mouseClickedHandler);
         }
 
+        /**
+         * Show the pinned lane if and only if the settings object says it
+         * should be.
+         */
         private void syncPinnedLaneShowing() {
-            boolean selected = getSkinnable().getLayoutSettings().isPinnedLaneShowing();
-            if (selected == false) {
+            boolean pinnedLaneShowing = getSkinnable().getLayoutSettings().isPinnedLaneShowing();
+            if (pinnedLaneShowing == false) {
+                //Save  the divider position for later.
                 dividerPosition = masterDetailPane.getDividerPosition();
             }
-            masterDetailPane.setShowDetailNode(selected);
-            if (selected) {
+
+            masterDetailPane.setShowDetailNode(pinnedLaneShowing);
+
+            if (pinnedLaneShowing) {
                 syncPinnedHeight();
+                //Restore the devider position.
                 masterDetailPane.setDividerPosition(dividerPosition);
             }
         }

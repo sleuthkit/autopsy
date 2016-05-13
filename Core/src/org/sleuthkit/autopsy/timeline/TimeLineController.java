@@ -676,9 +676,6 @@ public class TimeLineController {
         }
     }
 
-    @NbBundle.Messages({"# {0} - the number of events",
-        "Timeline.pushDescrLOD.confdlg.msg=You are about to show details for {0} events.  This might be very slow or even crash Autopsy.\n\nDo you want to continue?",
-        "Timeline.pushDescrLOD.confdlg.title=Change description level of detail?"})
     synchronized public void pushDescrLOD(DescriptionLoD newLOD) {
         ZoomParams currentZoom = filteredEvents.zoomParametersProperty().get();
         if (currentZoom == null) {

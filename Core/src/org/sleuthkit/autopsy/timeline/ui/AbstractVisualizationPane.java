@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui;
 
+import com.google.common.eventbus.Subscribe;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -68,6 +69,7 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
+import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 
 /**
  * Abstract base class for TimeLineChart based visualizations.
@@ -408,6 +410,17 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
             }
         });
         controller.monitorTask(updateTask);
+    }
+
+    /**
+     * Handle a RefreshRequestedEvent from the events model by updating the
+     * visualization.
+     *
+     * @param event The RefreshRequestedEvent to handle.
+     */
+    @Subscribe
+    public void handleRefreshRequested(RefreshRequestedEvent event) {
+        refresh();
     }
 
     /**
