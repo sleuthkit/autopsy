@@ -343,18 +343,19 @@ public class EventDB {
         return result;
     }
 
-    Set<Long> getEventIDs(Interval timeRange, RootFilter filter) {
+    List<Long> getEventIDs(Interval timeRange, RootFilter filter) {
         return getEventIDs(timeRange.getStartMillis() / 1000, timeRange.getEndMillis() / 1000, filter);
     }
 
-    Set<Long> getEventIDs(Long startTime, Long endTime, RootFilter filter) {
+    List<Long> getEventIDs(Long startTime, Long endTime, RootFilter filter) {
         if (Objects.equals(startTime, endTime)) {
             endTime++;
         }
-        Set<Long> resultIDs = new HashSet<>();
+        ArrayList<Long> resultIDs = new ArrayList<>();
 
         DBLock.lock();
-        final String query = "SELECT events.event_id AS event_id FROM events" + useHashHitTablesHelper(filter) + useTagTablesHelper(filter) + " WHERE time >=  " + startTime + " AND time <" + endTime + " AND " + SQLHelper.getSQLWhere(filter); // NON-NLS
+        final String query = "SELECT events.event_id AS event_id FROM events" + useHashHitTablesHelper(filter) + useTagTablesHelper(filter)
+                + " WHERE time >=  " + startTime + " AND time <" + endTime + " AND " + SQLHelper.getSQLWhere(filter) + " ORDER BY time ASC"; // NON-NLS
         try (Statement stmt = con.createStatement();
                 ResultSet rs = stmt.executeQuery(query)) {
             while (rs.next()) {
@@ -1167,7 +1168,6 @@ public class EventDB {
     private static String typeColumnHelper(final boolean useSubTypes) {
         return useSubTypes ? "sub_type" : "base_type"; //NON-NLS
     }
-
 
     private PreparedStatement prepareStatement(String queryString) throws SQLException {
         PreparedStatement prepareStatement = con.prepareStatement(queryString);

@@ -5,7 +5,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.listvew;
 
-import java.util.Set;
+import java.util.List;
 import javafx.concurrent.Task;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -116,7 +116,7 @@ public class ListViewPane extends AbstractVisualizationPane<Long, SingleEvent, N
 
 //            updateMessage(Bundle.DetailViewPane_loggedTask_queryDb());
             //get the event stripes to be displayed
-            Set<Long> eventIDs = eventsModel.getEventIDs();
+            List<Long> eventIDs = eventsModel.getEventIDs();
             getChart().getItems().setAll(eventIDs);
 
 //            updateMessage(Bundle.DetailViewPane_loggedTask_updateUI());

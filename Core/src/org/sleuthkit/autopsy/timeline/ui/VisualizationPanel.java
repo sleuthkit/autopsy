@@ -29,15 +29,12 @@ import java.util.function.Supplier;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.TitledPane;
-import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
 import javafx.scene.control.Tooltip;
@@ -60,8 +57,10 @@ import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import jfxtras.scene.control.LocalDateTimePicker;
 import jfxtras.scene.control.LocalDateTimeTextField;
+import jfxtras.scene.control.ToggleGroupValue;
 import org.controlsfx.control.NotificationPane;
 import org.controlsfx.control.RangeSlider;
+import org.controlsfx.control.SegmentedButton;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
@@ -162,6 +161,8 @@ final public class VisualizationPanel extends BorderPane {
     @FXML
     private Label visualizationModeLabel;
     @FXML
+    private SegmentedButton modeSegButton;
+    @FXML
     private ToggleButton countsToggle;
     @FXML
     private ToggleButton detailsToggle;
@@ -261,6 +262,7 @@ final public class VisualizationPanel extends BorderPane {
         "VisualizationPanel.endLabel.text=End:",
         "VisualizationPanel.countsToggle.text=Counts",
         "VisualizationPanel.detailsToggle.text=Details",
+        "VisualizationPanel.listToggle.text=List",
         "VisualizationPanel.zoomMenuButton.text=Zoom in/out to",
         "VisualizationPanel.tagsAddedOrDeleted=Tags have been created and/or deleted.  The visualization may not be up to date."
     })
@@ -280,25 +282,18 @@ final public class VisualizationPanel extends BorderPane {
         visualizationModeLabel.setText(Bundle.VisualizationPanel_visualizationModeLabel_text());
         countsToggle.setText(Bundle.VisualizationPanel_countsToggle_text());
         detailsToggle.setText(Bundle.VisualizationPanel_detailsToggle_text());
-        ChangeListener<Toggle> toggleListener = (ObservableValue<? extends Toggle> observable, Toggle oldValue, Toggle newValue) -> {
-            if (newValue == null) {
-                countsToggle.getToggleGroup().selectToggle(oldValue != null ? oldValue : countsToggle);
-            } else if (newValue == countsToggle && oldValue != null) {
-                controller.setVisualizationMode(VisualizationMode.COUNTS);
-            } else if (newValue == detailsToggle && oldValue != null) {
-                controller.setVisualizationMode(VisualizationMode.DETAIL);
-            } else if (newValue == listToggle && oldValue != null) {
-                controller.setVisualizationMode(VisualizationMode.LIST);
-            }
-        };
+        listToggle.setText(Bundle.VisualizationPanel_listToggle_text());
 
-        if (countsToggle.getToggleGroup() != null) {
-            countsToggle.getToggleGroup().selectedToggleProperty().addListener(toggleListener);
-        } else {
-            countsToggle.toggleGroupProperty().addListener((Observable toggleGroup) -> {
-                countsToggle.getToggleGroup().selectedToggleProperty().addListener(toggleListener);
-            });
-        }
+        ToggleGroupValue<VisualizationMode> visModeToggleGroup = new ToggleGroupValue<>();
+        visModeToggleGroup.add(listToggle, VisualizationMode.LIST);
+        visModeToggleGroup.add(detailsToggle, VisualizationMode.DETAIL);
+        visModeToggleGroup.add(countsToggle, VisualizationMode.COUNTS);
+
+        modeSegButton.setToggleGroup(visModeToggleGroup);
+
+        visModeToggleGroup.valueProperty().addListener((observable, oldVisMode, newValue) -> {
+            controller.setVisualizationMode(newValue != null ? newValue : (oldVisMode != null ? oldVisMode : VisualizationMode.COUNTS));
+        });
 
         controller.visualizationModeProperty().addListener(visualizationMode -> syncVisualizationMode());
         syncVisualizationMode();

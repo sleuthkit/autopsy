@@ -279,7 +279,7 @@ public final class FilteredEventsModel {
         return repo.getTagCountsByTagName(eventIDsWithTags);
     }
 
-    public Set<Long> getEventIDs(Interval timeRange, Filter filter) {
+    public List<Long> getEventIDs(Interval timeRange, Filter filter) {
         final Interval overlap;
         final RootFilter intersect;
         synchronized (this) {
@@ -290,7 +290,7 @@ public final class FilteredEventsModel {
         return repo.getEventIDs(overlap, intersect);
     }
 
-    public Set<Long> getEventIDs() {
+    public List<Long> getEventIDs() {
         return getEventIDs(requestedTimeRange.get(), requestedFilter.get());
     }
 
