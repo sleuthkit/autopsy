@@ -97,7 +97,7 @@ public class ListViewPane extends AbstractVisualizationPane<Long, SingleEvent, N
         }
     }
 
-    private class ListUpdateTask extends VisualizationUpdateTask<Interval> {
+    private class ListUpdateTask extends VisualizationRefreshTask<Interval> {
 
         ListUpdateTask() {
             super("List update task", true);
