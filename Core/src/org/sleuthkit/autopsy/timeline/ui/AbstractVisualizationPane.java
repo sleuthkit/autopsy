@@ -85,7 +85,7 @@ import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
  *
  * TODO: pull up common history context menu items out of derived classes? -jm
  */
-public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, ChartType extends Region & TimeLineChart<X>> extends BorderPane {
+public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, ChartType extends Region & TimeLineChart<X>> extends BorderPane implements TimeLineView {
 
     private static final Logger LOGGER = Logger.getLogger(AbstractVisualizationPane.class.getName());
 

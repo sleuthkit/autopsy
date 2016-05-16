@@ -6,6 +6,7 @@
 package org.sleuthkit.autopsy.timeline.ui.listvew;
 
 import java.util.List;
+import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -15,6 +16,7 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
+import org.sleuthkit.autopsy.timeline.ui.TimeLineView;
 
 /**
  * @param <X>         The type of data plotted along the x axis
@@ -31,7 +33,7 @@ import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
  * public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node,
  * ChartType extends Region & TimeLineChart<X>> extends BorderPane {
  */
-public class ListViewPane extends AbstractVisualizationPane<Long, SingleEvent, Node, ListChart> {
+public class ListViewPane extends AbstractVisualizationPane<Long, SingleEvent, Node, ListChart> implements TimeLineView {
 
     /**
      * Constructor
@@ -88,7 +90,7 @@ public class ListViewPane extends AbstractVisualizationPane<Long, SingleEvent, N
 
     @Override
     protected void clearChartData() {
-        getChart().getItems().clear();
+        getChart().clear();
     }
 
     private static class ListViewSettingsPane extends Parent {
@@ -114,12 +116,12 @@ public class ListViewPane extends AbstractVisualizationPane<Long, SingleEvent, N
             //clear the chart and set the horixontal axis
             resetChart(eventsModel.getTimeRange());
 
-//            updateMessage(Bundle.DetailViewPane_loggedTask_queryDb());
+            updateMessage("Querying db for events");
             //get the event stripes to be displayed
             List<Long> eventIDs = eventsModel.getEventIDs();
-            getChart().getItems().setAll(eventIDs);
+            Platform.runLater(() -> getChart().setEventIDs(eventIDs));
 
-//            updateMessage(Bundle.DetailViewPane_loggedTask_updateUI());
+            updateMessage("updating ui");
             return eventIDs.isEmpty() == false;
         }
 

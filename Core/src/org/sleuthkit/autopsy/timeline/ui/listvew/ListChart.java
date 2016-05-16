@@ -5,21 +5,27 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.listvew;
 
-import java.util.Arrays;
+import java.util.List;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.chart.Axis;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.BorderPane;
 import javafx.util.Callback;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
@@ -29,7 +35,13 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 /**
  *
  */
-class ListChart extends TableView<Long> implements TimeLineChart<Long> {
+class ListChart extends BorderPane implements TimeLineChart<Long> {
+
+    @FXML
+    private Label eventCountLabel;
+
+    @FXML
+    private TableView<Long> table;
 
     Callback<TableColumn.CellDataFeatures<Long, Long>, ObservableValue<Long>> cellValueFactory = param -> new SimpleObjectProperty<>(param.getValue());
 
@@ -44,37 +56,42 @@ class ListChart extends TableView<Long> implements TimeLineChart<Long> {
 
     ListChart(TimeLineController controller) {
         this.controller = controller;
-        setColumnResizePolicy(CONSTRAINED_RESIZE_POLICY);
-        getColumns().addAll(Arrays.asList(idColumn, millisColumn, iconColumn, descriptionColumn, baseTypeColumn, subTypeColumn, knownColumn));
+        FXMLConstructor.construct(this, ListChart.class, "ListViewChart.fxml");
+    }
 
-        setRowFactory(tableView -> new EventRow());
+    @FXML
+    void initialize() {
+        assert eventCountLabel != null : "fx:id=\"eventCountLabel\" was not injected: check your FXML file 'ListViewPane.fxml'.";
+        assert table != null : "fx:id=\"table\" was not injected: check your FXML file 'ListViewPane.fxml'.";
+        assert idColumn != null : "fx:id=\"idColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
+        assert millisColumn != null : "fx:id=\"millisColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
+        assert iconColumn != null : "fx:id=\"iconColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
+        assert descriptionColumn != null : "fx:id=\"descriptionColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
+        assert baseTypeColumn != null : "fx:id=\"baseTypeColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
+        assert subTypeColumn != null : "fx:id=\"subTypeColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
+        assert knownColumn != null : "fx:id=\"knownColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
 
+//        setRowFactory(tableView -> new EventRow());
         idColumn.setCellValueFactory(cellValueFactory);
-        idColumn.setSortable(false);
 
         millisColumn.setCellValueFactory(cellValueFactory);
         millisColumn.setCellFactory(col -> new EpochMillisCell());
-        millisColumn.setSortable(false);
 
         iconColumn.setCellValueFactory(cellValueFactory);
         iconColumn.setCellFactory(col -> new ImageCell());
-        iconColumn.setSortable(false);
 
         descriptionColumn.setCellValueFactory(cellValueFactory);
         descriptionColumn.setCellFactory(col -> new DescriptionCell());
-        descriptionColumn.setSortable(false);
 
         baseTypeColumn.setCellValueFactory(cellValueFactory);
         baseTypeColumn.setCellFactory(col -> new BaseTypeCell());
-        baseTypeColumn.setSortable(false);
 
         subTypeColumn.setCellValueFactory(cellValueFactory);
         subTypeColumn.setCellFactory(col -> new EventTypeCell());
-        subTypeColumn.setSortable(false);
 
         knownColumn.setCellValueFactory(cellValueFactory);
         knownColumn.setCellFactory(col -> new KnownCell());
-        knownColumn.setSortable(false);
+        eventCountLabel.textProperty().bind(Bindings.size(table.getItems()).asString().concat(" events"));
     }
 
     @Override
@@ -120,9 +137,20 @@ class ListChart extends TableView<Long> implements TimeLineChart<Long> {
     @Override
     public ContextMenu getContextMenu(MouseEvent m) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+
     }
 
-    private static class ImageCell extends TableCell<Long, Long> {
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    void clear() {
+        table.getItems().clear();
+    }
+
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    void setEventIDs(List<Long> eventIDs) {
+        table.getItems().setAll(eventIDs);
+    }
+
+    private class ImageCell extends EventTableCell {
 
         @Override
         protected void updateItem(Long item, boolean empty) {
@@ -130,15 +158,12 @@ class ListChart extends TableView<Long> implements TimeLineChart<Long> {
             if (empty || item == null) {
                 setGraphic(null);
             } else {
-                EventRow tableRow = (EventRow) getTableRow();
-                if (tableRow != null) {
-                    setGraphic(new ImageView(tableRow.getEvent().getEventType().getFXImage()));
-                }
+                setGraphic(new ImageView(getEvent().getEventType().getFXImage()));
             }
         }
     }
 
-    private static class DescriptionCell extends TableCell<Long, Long> {
+    private class DescriptionCell extends EventTableCell {
 
         @Override
         protected void updateItem(Long item, boolean empty) {
@@ -147,15 +172,12 @@ class ListChart extends TableView<Long> implements TimeLineChart<Long> {
             if (empty || item == null) {
                 setText("");
             } else {
-                EventRow tableRow = (EventRow) getTableRow();
-                if (tableRow != null) {
-                    setText(tableRow.getEvent().getDescription(DescriptionLoD.FULL));
-                }
+                setText(getEvent().getDescription(DescriptionLoD.FULL));
             }
         }
     }
 
-    private static class BaseTypeCell extends TableCell<Long, Long> {
+    private class BaseTypeCell extends EventTableCell {
 
         @Override
         protected void updateItem(Long item, boolean empty) {
@@ -164,15 +186,12 @@ class ListChart extends TableView<Long> implements TimeLineChart<Long> {
             if (empty || item == null) {
                 setText("");
             } else {
-                EventRow tableRow = (EventRow) getTableRow();
-                if (tableRow != null) {
-                    setText(tableRow.getEvent().getEventType().getBaseType().getDisplayName());
-                }
+                setText(getEvent().getEventType().getBaseType().getDisplayName());
             }
         }
     }
 
-    private static class EventTypeCell extends TableCell<Long, Long> {
+    private class EventTypeCell extends EventTableCell {
 
         @Override
         protected void updateItem(Long item, boolean empty) {
@@ -181,15 +200,12 @@ class ListChart extends TableView<Long> implements TimeLineChart<Long> {
             if (empty || item == null) {
                 setText("");
             } else {
-                EventRow tableRow = (EventRow) getTableRow();
-                if (tableRow != null) {
-                    setText(tableRow.getEvent().getEventType().getDisplayName());
-                }
+                setText(getEvent().getEventType().getDisplayName());
             }
         }
     }
 
-    private static class KnownCell extends TableCell<Long, Long> {
+    private class KnownCell extends EventTableCell {
 
         @Override
         protected void updateItem(Long item, boolean empty) {
@@ -198,15 +214,32 @@ class ListChart extends TableView<Long> implements TimeLineChart<Long> {
             if (empty || item == null) {
                 setText("");
             } else {
-                EventRow tableRow = (EventRow) getTableRow();
-                if (tableRow != null) {
-                    setText(tableRow.getEvent().getKnown().getName());
-                }
+                setText(getEvent().getKnown().getName());
             }
         }
     }
 
-    private class EpochMillisCell extends TableCell<Long, Long> {
+    private class EventTableCell extends TableCell<Long, Long> {
+
+        private SingleEvent event;
+
+        SingleEvent getEvent() {
+            return event;
+        }
+
+        @Override
+        protected void updateItem(Long item, boolean empty) {
+            super.updateItem(item, empty);
+
+            if (empty || item == null) {
+                event = null;
+            } else {
+                event = controller.getEventsModel().getEventById(item);
+            }
+        }
+    }
+
+    private class EpochMillisCell extends EventTableCell {
 
         @Override
         protected void updateItem(Long item, boolean empty) {
@@ -215,11 +248,7 @@ class ListChart extends TableView<Long> implements TimeLineChart<Long> {
             if (empty || item == null) {
                 setText("");
             } else {
-
-                EventRow tableRow = (EventRow) getTableRow();
-                if (tableRow != null) {
-                    setText(TimeLineController.getZonedFormatter().print(tableRow.getEvent().getStartMillis()));
-                }
+                setText(TimeLineController.getZonedFormatter().print(getEvent().getStartMillis()));
             }
         }
     }
