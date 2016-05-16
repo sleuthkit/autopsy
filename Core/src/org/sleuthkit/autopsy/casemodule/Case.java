@@ -1640,9 +1640,12 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
                 // delete from the disk.
                 File toDelete = new File(reportPath);
+                if (report.getReportName().equals("") && report.getSourceModuleName().equals("HTML Report")) {
+                    toDelete = toDelete.getParentFile();
+                }
                 if (toDelete.isDirectory()) {
                     try {
-                        FileUtils.deleteDirectory(new File(reportPath));
+                        FileUtils.deleteDirectory(toDelete);
                     } catch (IOException | SecurityException ex) {
                         logger.log(Level.WARNING, NbBundle.getMessage(Case.class, "Case.deleteReports.deleteFromDiskException.log.msg"), ex);
                         JOptionPane.showMessageDialog(null, NbBundle.getMessage(Case.class, "Case.deleteReports.deleteFromDiskException.msg", report.getReportName(), reportPath));
@@ -1655,7 +1658,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     }
                 }
 
-                
             }
             eventPublisher.publish(new AutopsyEvent(Events.REPORT_DELETED.toString(), null, null));
         }
