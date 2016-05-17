@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,10 +18,13 @@
  */
 package org.sleuthkit.autopsy.timeline;
 
+import com.google.common.collect.Iterables;
 import java.awt.BorderLayout;
 import java.util.Collections;
 import java.util.List;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.control.SplitPane;
@@ -46,6 +49,7 @@ import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.actions.Back;
 import org.sleuthkit.autopsy.timeline.actions.Forward;
+import org.sleuthkit.autopsy.timeline.explorernodes.EventNode;
 import org.sleuthkit.autopsy.timeline.ui.HistoryToolBar;
 import org.sleuthkit.autopsy.timeline.ui.StatusBar;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineResultView;
@@ -56,7 +60,7 @@ import org.sleuthkit.autopsy.timeline.ui.filtering.FilterSetPanel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomSettingsPane;
 
 /**
- * TopComponent for the timeline feature.
+ * TopComponent for the Timeline feature.
  */
 @TopComponent.Description(
         preferredID = "TimeLineTopComponent",
@@ -74,6 +78,21 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
     private final ExplorerManager em = new ExplorerManager();
 
     private final TimeLineController controller;
+
+    /**
+     * Listener that drives the ContentViewer when in List ViewMode.
+     */
+    private final InvalidationListener selectionListener = new InvalidationListener() {
+        @Override
+        public void invalidated(Observable observable) {
+            if (controller.getSelectedEventIDs().size() == 1) {
+                EventNode eventNode = EventNode.createEventNode(Iterables.getOnlyElement(controller.getSelectedEventIDs()), controller.getEventsModel());
+                SwingUtilities.invokeLater(() -> dataContentPanel.setNode(eventNode));
+            } else {
+                SwingUtilities.invokeLater(() -> dataContentPanel.setNode(null));
+            }
+        }
+    };
 
     public TimeLineTopComponent(TimeLineController controller) {
         initComponents();
@@ -108,6 +127,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
                             lowerSplitXPane.add(contentViewerContainerPanel);
                         }
                     });
+                    controller.getSelectedEventIDs().removeListener(selectionListener);
                     break;
                 case LIST:
                     /*
@@ -119,6 +139,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
                         splitYPane.add(contentViewerContainerPanel);
                         dataResultPanel.setNode(null);
                     });
+                    controller.getSelectedEventIDs().addListener(selectionListener);
                     break;
                 default:
                     throw new UnsupportedOperationException("Unknown ViewMode: " + controller.getViewMode());

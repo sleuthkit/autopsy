@@ -22,6 +22,7 @@ import java.util.Collection;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
@@ -126,6 +127,15 @@ class ListChart extends BorderPane {
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     void setEventIDs(Collection<Long> eventIDs) {
         table.getItems().setAll(eventIDs);
+    }
+
+    /**
+     * Get the List of IDs of events that are selected in this list.
+     *
+     * @return The List of IDs of events that are selected in this list.
+     */
+    ObservableList<Long> getSelectedEventIDs() {
+        return table.getSelectionModel().getSelectedItems();
     }
 
     private class ImageCell extends EventTableCell {

@@ -62,13 +62,9 @@ public class TimeLineResultView {
         dataResultPanel = DataResultPanel.createInstanceUninitialized("", "", Node.EMPTY, 0, dataContent);
 
         //set up listeners on relevant properties
-        TimeLineController.getTimeZone().addListener((Observable observable) -> {
-            dataResultPanel.setPath(getSummaryString());
-        });
+        TimeLineController.getTimeZone().addListener(timeZone -> dataResultPanel.setPath(getSummaryString()));
 
-        controller.getSelectedEventIDs().addListener((Observable o) -> {
-            refresh();
-        });
+        controller.getSelectedEventIDs().addListener((Observable selectedIDs) -> refresh());
         refresh();
     }
 
