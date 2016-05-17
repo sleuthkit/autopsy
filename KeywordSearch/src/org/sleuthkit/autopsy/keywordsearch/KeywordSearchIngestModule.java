@@ -206,14 +206,14 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         }
 
         //initialize extractors
-        stringExtractor = new StringsTextExtractor(this);
+        stringExtractor = new StringsTextExtractor();
         stringExtractor.setScripts(KeywordSearchSettings.getStringExtractScripts());
         stringExtractor.setOptions(KeywordSearchSettings.getStringExtractOptions());
 
         textExtractors = new ArrayList<>();
         //order matters, more specific extractors first
-        textExtractors.add(new HtmlTextExtractor(this));
-        textExtractors.add(new TikaTextExtractor(this));
+        textExtractors.add(new HtmlTextExtractor());
+        textExtractors.add(new TikaTextExtractor());
 
         indexer = new Indexer();
         initialized = true;
@@ -417,7 +417,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
             //logger.log(Level.INFO, "Extractor: " + fileExtract + ", file: " + aFile.getName());
             //divide into chunks and index
-            return fileExtract.index(aFile);
+            return fileExtract.index(aFile, context);
         }
 
         /**
@@ -496,9 +496,9 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 return;
             }
 
-            String detectedFormat;
+            String fileType;
             try {
-                detectedFormat = fileTypeDetector.getFileType(aFile);
+                fileType = fileTypeDetector.getFileType(aFile);
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, String.format("Could not detect format using fileTypeDetector for file: %s", aFile), ex); //NON-NLS
                 return;
@@ -506,7 +506,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
             // we skip archive formats that are opened by the archive module. 
             // @@@ We could have a check here to see if the archive module was enabled though...
-            if (TextExtractor.ARCHIVE_MIME_TYPES.contains(detectedFormat)) {
+            if (TextExtractor.ARCHIVE_MIME_TYPES.contains(fileType)) {
                 try {
                     ingester.ingest(aFile, false); //meta-data only
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.METADATA_INGESTED);
@@ -518,11 +518,11 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             }
 
             boolean wasTextAdded = false;
-            if (isTextExtractSupported(aFile, detectedFormat)) {
+            if (isTextExtractSupported(aFile, fileType)) {
                 //extract text with one of the extractors, divide into chunks and index with Solr
                 try {
                     //logger.log(Level.INFO, "indexing: " + aFile.getName());
-                    if (!extractTextAndIndex(aFile, detectedFormat)) {
+                    if (!extractTextAndIndex(aFile, fileType)) {
                         logger.log(Level.WARNING, "Failed to extract text and ingest, file ''{0}'' (id: {1}).", new Object[]{aFile.getName(), aFile.getId()}); //NON-NLS
                         putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
                     } else {

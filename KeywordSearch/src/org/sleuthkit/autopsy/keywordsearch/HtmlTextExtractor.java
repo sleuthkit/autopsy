@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
@@ -48,7 +49,6 @@ class HtmlTextExtractor implements TextExtractor {
     private static final int MAX_SIZE = 50000000;
     //private static final String UTF16BOM = "\uFEFF"; disabled prepending of BOM
     private final char[] textChunkBuf = new char[MAX_EXTR_TEXT_CHARS];
-    private KeywordSearchIngestModule module;
     private AbstractFile sourceFile;
     private int numChunks = 0;
 
@@ -63,8 +63,7 @@ class HtmlTextExtractor implements TextExtractor {
     //"application/xml-dtd",
     );
 
-    HtmlTextExtractor(KeywordSearchIngestModule module) {
-        this.module = module;
+    HtmlTextExtractor() {
         ingester = Server.getIngester();
     }
 
@@ -98,7 +97,7 @@ class HtmlTextExtractor implements TextExtractor {
     }
 
     @Override
-    public boolean index(AbstractFile sourceFile) throws IngesterException {
+    public boolean index(AbstractFile sourceFile, IngestJobContext context) throws IngesterException {
         this.sourceFile = sourceFile;
         numChunks = 0; //unknown until indexing is done
 
