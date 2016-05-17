@@ -1642,10 +1642,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                 File toDelete = new File(reportPath);
                 // Makes sure that html reports are properly deleted from disk, 
                 // as there are multiple files so the super directory should be 
-                // deleted.
-                if (report.getReportName().equals("") && report.getSourceModuleName().equals("HTML Report")) {
-                    toDelete = toDelete.getParentFile();
-                }
+                // deleted.  
                 if (toDelete.isDirectory()) {
                     try {
                         FileUtils.deleteDirectory(toDelete);
