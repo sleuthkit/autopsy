@@ -29,15 +29,12 @@ import java.util.function.Supplier;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.TitledPane;
-import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
 import javafx.scene.control.Tooltip;
@@ -60,8 +57,10 @@ import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import jfxtras.scene.control.LocalDateTimePicker;
 import jfxtras.scene.control.LocalDateTimeTextField;
+import jfxtras.scene.control.ToggleGroupValue;
 import org.controlsfx.control.NotificationPane;
 import org.controlsfx.control.RangeSlider;
+import org.controlsfx.control.SegmentedButton;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
@@ -73,7 +72,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.VisualizationMode;
+import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.actions.Back;
 import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
 import org.sleuthkit.autopsy.timeline.actions.SaveSnapshotAsReport;
@@ -88,11 +87,12 @@ import org.sleuthkit.autopsy.timeline.events.TagsUpdatedEvent;
 import org.sleuthkit.autopsy.timeline.ui.countsview.CountsViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.tree.EventsTree;
+import org.sleuthkit.autopsy.timeline.ui.listvew.ListViewPane;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 
 /**
- * A container for an AbstractVisualizationPane. Has a Toolbar on top to hold
- * settings widgets supplied by contained AbstractVisualizationPane, and the
+ * A container for an AbstractTimelineView. Has a Toolbar on top to hold
+ * settings widgets supplied by contained AbstractTimelineView, and the
  * histogram / time selection on bottom.
  *
  * TODO: Refactor common code out of histogram and CountsView? -jm
@@ -121,7 +121,7 @@ final public class VisualizationPanel extends BorderPane {
     private LoggedTask<Void> histogramTask;
 
     private final EventsTree eventsTree;
-    private AbstractVisualizationPane<?, ?, ?, ?> visualization;
+    private AbstractTimeLineView hostedView;
 
     /*
      * HBox that contains the histogram bars.
@@ -161,9 +161,13 @@ final public class VisualizationPanel extends BorderPane {
     @FXML
     private Label visualizationModeLabel;
     @FXML
+    private SegmentedButton modeSegButton;
+    @FXML
     private ToggleButton countsToggle;
     @FXML
     private ToggleButton detailsToggle;
+    @FXML
+    private ToggleButton listToggle;
     @FXML
     private Button snapShotButton;
     @FXML
@@ -258,6 +262,7 @@ final public class VisualizationPanel extends BorderPane {
         "VisualizationPanel.endLabel.text=End:",
         "VisualizationPanel.countsToggle.text=Counts",
         "VisualizationPanel.detailsToggle.text=Details",
+        "VisualizationPanel.listToggle.text=List",
         "VisualizationPanel.zoomMenuButton.text=Zoom in/out to",
         "VisualizationPanel.tagsAddedOrDeleted=Tags have been created and/or deleted.  The visualization may not be up to date."
     })
@@ -277,26 +282,21 @@ final public class VisualizationPanel extends BorderPane {
         visualizationModeLabel.setText(Bundle.VisualizationPanel_visualizationModeLabel_text());
         countsToggle.setText(Bundle.VisualizationPanel_countsToggle_text());
         detailsToggle.setText(Bundle.VisualizationPanel_detailsToggle_text());
-        ChangeListener<Toggle> toggleListener = (ObservableValue<? extends Toggle> observable, Toggle oldValue, Toggle newValue) -> {
-            if (newValue == null) {
-                countsToggle.getToggleGroup().selectToggle(oldValue != null ? oldValue : countsToggle);
-            } else if (newValue == countsToggle && oldValue != null) {
-                controller.setVisualizationMode(VisualizationMode.COUNTS);
-            } else if (newValue == detailsToggle && oldValue != null) {
-                controller.setVisualizationMode(VisualizationMode.DETAIL);
-            }
-        };
+        listToggle.setText(Bundle.VisualizationPanel_listToggle_text());
 
-        if (countsToggle.getToggleGroup() != null) {
-            countsToggle.getToggleGroup().selectedToggleProperty().addListener(toggleListener);
-        } else {
-            countsToggle.toggleGroupProperty().addListener((Observable toggleGroup) -> {
-                countsToggle.getToggleGroup().selectedToggleProperty().addListener(toggleListener);
-            });
-        }
+        ToggleGroupValue<ViewMode> visModeToggleGroup = new ToggleGroupValue<>();
+        visModeToggleGroup.add(listToggle, ViewMode.LIST);
+        visModeToggleGroup.add(detailsToggle, ViewMode.DETAIL);
+        visModeToggleGroup.add(countsToggle, ViewMode.COUNTS);
 
-        controller.visualizationModeProperty().addListener(visualizationMode -> syncVisualizationMode());
-        syncVisualizationMode();
+        modeSegButton.setToggleGroup(visModeToggleGroup);
+
+        visModeToggleGroup.valueProperty().addListener((observable, oldVisMode, newValue) -> {
+            controller.setViewMode(newValue != null ? newValue : (oldVisMode != null ? oldVisMode : ViewMode.COUNTS));
+        });
+
+        controller.viewModeProperty().addListener(viewMode -> syncViewMode());
+        syncViewMode();
 
         ActionUtils.configureButton(new SaveSnapshotAsReport(controller, notificationPane::getContent), snapShotButton);
         ActionUtils.configureButton(new UpdateDB(controller), updateDBButton);
@@ -326,7 +326,7 @@ final public class VisualizationPanel extends BorderPane {
         rangeHistogramStack.getChildren().add(rangeSlider);
 
         /*
-         * this padding attempts to compensates for the fact that the
+         * This padding attempts to compensates for the fact that the
          * rangeslider track doesn't extend to edge of node,and so the
          * histrogram doesn't quite line up with the rangeslider
          */
@@ -372,7 +372,7 @@ final public class VisualizationPanel extends BorderPane {
      */
     @Subscribe
     public void handleTimeLineTagUpdate(TagsUpdatedEvent event) {
-        visualization.setOutOfDate();
+        hostedView.setOutOfDate();
         Platform.runLater(() -> {
             if (notificationPane.isShowing() == false) {
                 notificationPane.getActions().setAll(new Refresh());
@@ -410,7 +410,7 @@ final public class VisualizationPanel extends BorderPane {
      */
     @Subscribe
     public void handleDBUpdated(DBUpdatedEvent event) {
-        visualization.refresh();
+        hostedView.refresh();
         refreshHistorgram();
         Platform.runLater(notificationPane::hide);
     }
@@ -576,18 +576,28 @@ final public class VisualizationPanel extends BorderPane {
     }
 
     /**
-     * Switch to the given VisualizationMode, by swapping out the hosted
-     * AbstractVislualization for one of the correct type.
+     * Switch to the given ViewMode, by swapping out the hosted
+     * AbstractTimelineView for one of the correct type.
      */
-    private void syncVisualizationMode() {
-        AbstractVisualizationPane<?, ?, ?, ?> vizPane;
-        VisualizationMode visMode = controller.visualizationModeProperty().get();
+    private void syncViewMode() {
+        AbstractTimeLineView view;
+        ViewMode viewMode = controller.viewModeProperty().get();
 
         //make new visualization.
-        switch (visMode) {
+        switch (viewMode) {
+            case LIST:
+                view = new ListViewPane(controller);
+                Platform.runLater(() -> {
+                    listToggle.setSelected(true);
+                    //TODO: should remove listeners from events tree
+                });
+                break;
             case COUNTS:
-                vizPane = new CountsViewPane(controller);
-                Platform.runLater(() -> countsToggle.setSelected(true));
+                view = new CountsViewPane(controller);
+                Platform.runLater(() -> {
+                    countsToggle.setSelected(true);
+                    //TODO: should remove listeners from events tree
+                });
                 break;
             case DETAIL:
                 DetailViewPane detailViewPane = new DetailViewPane(controller);
@@ -596,34 +606,34 @@ final public class VisualizationPanel extends BorderPane {
                     detailViewPane.setHighLightedEvents(eventsTree.getSelectedEvents());
                     eventsTree.setDetailViewPane(detailViewPane);
                 });
-                vizPane = detailViewPane;
+                view = detailViewPane;
                 break;
             default:
-                throw new IllegalArgumentException("Unknown VisualizationMode: " + visMode.toString());
+                throw new IllegalArgumentException("Unknown VisualizationMode: " + viewMode.toString());
         }
 
         //Set the new AbstractVisualizationPane as the one hosted by this VisualizationPanel.
         Platform.runLater(() -> {
             //clear out old vis.
-            if (visualization != null) {
-                toolBar.getItems().removeAll(visualization.getSettingsNodes());
-                visualization.dispose();
+            if (hostedView != null) {
+                toolBar.getItems().removeAll(hostedView.getSettingsNodes());
+                hostedView.dispose();
             }
 
-            visualization = vizPane;
+            hostedView = view;
             //setup new vis.
             ActionUtils.configureButton(new Refresh(), refreshButton);//configure new refresh action for new visualization
-            visualization.refresh();
-            toolBar.getItems().addAll(2, vizPane.getSettingsNodes());
-            notificationPane.setContent(visualization);
+            hostedView.refresh();
+            toolBar.getItems().addAll(2, view.getSettingsNodes());
+            notificationPane.setContent(hostedView);
 
             //listen to has events property and show "dialog" if it is false.
-            visualization.hasVisibleEventsProperty().addListener(hasEvents -> {
-                notificationPane.setContent(visualization.hasVisibleEvents()
-                        ? visualization
-                        : new StackPane(visualization,
+            hostedView.hasVisibleEventsProperty().addListener(hasEvents -> {
+                notificationPane.setContent(hostedView.hasVisibleEvents()
+                        ? hostedView
+                        : new StackPane(hostedView,
                                 NO_EVENTS_BACKGROUND,
-                                new NoEventsDialog(() -> notificationPane.setContent(visualization))
+                                new NoEventsDialog(() -> notificationPane.setContent(hostedView))
                         )
                 );
             });
@@ -769,7 +779,7 @@ final public class VisualizationPanel extends BorderPane {
             setLongText(Bundle.VisualizationPanel_refresh_longText());
             setGraphic(new ImageView(REFRESH));
             setEventHandler(actionEvent -> filteredEvents.postRefreshRequest());
-            disabledProperty().bind(visualization.outOfDateProperty().not());
+            disabledProperty().bind(hostedView.outOfDateProperty().not());
         }
     }
 }

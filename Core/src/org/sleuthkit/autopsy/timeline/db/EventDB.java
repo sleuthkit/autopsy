@@ -343,18 +343,19 @@ public class EventDB {
         return result;
     }
 
-    Set<Long> getEventIDs(Interval timeRange, RootFilter filter) {
+    List<Long> getEventIDs(Interval timeRange, RootFilter filter) {
         return getEventIDs(timeRange.getStartMillis() / 1000, timeRange.getEndMillis() / 1000, filter);
     }
 
-    Set<Long> getEventIDs(Long startTime, Long endTime, RootFilter filter) {
+    List<Long> getEventIDs(Long startTime, Long endTime, RootFilter filter) {
         if (Objects.equals(startTime, endTime)) {
             endTime++;
         }
-        Set<Long> resultIDs = new HashSet<>();
+        ArrayList<Long> resultIDs = new ArrayList<>();
 
         DBLock.lock();
-        final String query = "SELECT events.event_id AS event_id FROM events" + useHashHitTablesHelper(filter) + useTagTablesHelper(filter) + " WHERE time >=  " + startTime + " AND time <" + endTime + " AND " + SQLHelper.getSQLWhere(filter); // NON-NLS
+        final String query = "SELECT events.event_id AS event_id FROM events" + useHashHitTablesHelper(filter) + useTagTablesHelper(filter)
+                + " WHERE time >=  " + startTime + " AND time <" + endTime + " AND " + SQLHelper.getSQLWhere(filter) + " ORDER BY time ASC"; // NON-NLS
         try (Statement stmt = con.createStatement();
                 ResultSet rs = stmt.executeQuery(query)) {
             while (rs.next()) {
@@ -583,7 +584,14 @@ public class EventDB {
                 insertHashHitStmt = prepareStatement("INSERT OR IGNORE INTO hash_set_hits (hash_set_id, event_id) values (?,?)"); //NON-NLS
                 insertTagStmt = prepareStatement("INSERT OR IGNORE INTO tags (tag_id, tag_name_id,tag_name_display_name, event_id) values (?,?,?,?)"); //NON-NLS
                 deleteTagStmt = prepareStatement("DELETE FROM tags WHERE tag_id = ?"); //NON-NLS
-                countAllEventsStmt = prepareStatement("SELECT count(*) AS count FROM events"); //NON-NLS
+
+                /*
+                 * This SQL query is really just a select count(*), but that has
+                 * performance problems on very large tables unless you include
+                 * a where clause see http://stackoverflow.com/a/9338276/4004683
+                 * for more.
+                 */
+                countAllEventsStmt = prepareStatement("SELECT count(event_id) AS count FROM events WHERE event_id IS NOT null"); //NON-NLS
                 dropEventsTableStmt = prepareStatement("DROP TABLE IF EXISTS events"); //NON-NLS
                 dropHashSetHitsTableStmt = prepareStatement("DROP TABLE IF EXISTS hash_set_hits"); //NON-NLS
                 dropHashSetsTableStmt = prepareStatement("DROP TABLE IF EXISTS hash_sets"); //NON-NLS
@@ -1167,7 +1175,6 @@ public class EventDB {
     private static String typeColumnHelper(final boolean useSubTypes) {
         return useSubTypes ? "sub_type" : "base_type"; //NON-NLS
     }
-
 
     private PreparedStatement prepareStatement(String queryString) throws SQLException {
         PreparedStatement prepareStatement = con.prepareStatement(queryString);

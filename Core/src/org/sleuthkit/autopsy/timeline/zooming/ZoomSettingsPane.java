@@ -31,7 +31,7 @@ import javafx.util.StringConverter;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.VisualizationMode;
+import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 
@@ -92,6 +92,7 @@ public class ZoomSettingsPane extends TitledPane {
                 EventTypeZoomLevel::ordinal,
                 Function.identity());
         typeZoomLabel.setText(Bundle.ZoomSettingsPane_typeZoomLabel_text());
+        typeZoomSlider.disableProperty().bind(controller.viewModeProperty().isEqualTo(ViewMode.LIST));
 
         descrLODSlider.setMax(DescriptionLoD.values().length - 1);
         configureSliderListeners(descrLODSlider,
@@ -102,7 +103,7 @@ public class ZoomSettingsPane extends TitledPane {
                 Function.identity());
         descrLODLabel.setText(Bundle.ZoomSettingsPane_descrLODLabel_text());
         //the description slider is only usefull in the detail view
-        descrLODSlider.disableProperty().bind(controller.visualizationModeProperty().isEqualTo(VisualizationMode.COUNTS));
+        descrLODSlider.disableProperty().bind(controller.viewModeProperty().isNotEqualTo(ViewMode.DETAIL));
 
         /**
          * In order for the selected value in the time unit slider to correspond
@@ -121,6 +122,7 @@ public class ZoomSettingsPane extends TitledPane {
                 modelTimeRange -> RangeDivisionInfo.getRangeDivisionInfo(modelTimeRange).getPeriodSize().ordinal() - 1,
                 index -> index + 1);  //compensate for the -1 above when mapping to the Enum whose displayName will be shown at index
         timeUnitLabel.setText(Bundle.ZoomSettingsPane_timeUnitLabel_text());
+        timeUnitSlider.disableProperty().bind(controller.viewModeProperty().isEqualTo(ViewMode.LIST));
     }
 
     /**

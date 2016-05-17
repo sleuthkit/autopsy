@@ -22,7 +22,6 @@ import java.awt.BorderLayout;
 import java.util.Collections;
 import java.util.List;
 import javafx.application.Platform;
-import javafx.beans.Observable;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.control.SplitPane;
@@ -34,6 +33,7 @@ import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javax.swing.SwingUtilities;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.util.NbBundle;
@@ -69,7 +69,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
 
     private final DataContentPanel dataContentPanel;
 
-    private final TimeLineResultView tlrv;
+    private final TimeLineResultView tlResultView;
 
     private final ExplorerManager em = new ExplorerManager();
 
@@ -86,11 +86,44 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
 
         dataContentPanel = DataContentPanel.createInstance();
         this.contentViewerContainerPanel.add(dataContentPanel, BorderLayout.CENTER);
-        tlrv = new TimeLineResultView(controller, dataContentPanel);
-        DataResultPanel dataResultPanel = tlrv.getDataResultPanel();
+        tlResultView = new TimeLineResultView(controller, dataContentPanel);
+        final DataResultPanel dataResultPanel = tlResultView.getDataResultPanel();
         this.resultContainerPanel.add(dataResultPanel, BorderLayout.CENTER);
         dataResultPanel.open();
         customizeFXComponents();
+
+        //Listen to ViewMode and adjust GUI componenets as needed.
+        controller.viewModeProperty().addListener(viewMode -> {
+            switch (controller.getViewMode()) {
+                case COUNTS:
+                case DETAIL:
+                    /*
+                     * For counts and details mode, restore the result table at
+                     * the bottom left, if neccesary.
+                     */
+                    SwingUtilities.invokeLater(() -> {
+                        splitYPane.remove(contentViewerContainerPanel);
+                        if ((lowerSplitXPane.getParent() == splitYPane) == false) {
+                            splitYPane.add(lowerSplitXPane);
+                            lowerSplitXPane.add(contentViewerContainerPanel);
+                        }
+                    });
+                    break;
+                case LIST:
+                    /*
+                     * For list mode, remove the result table, and let the
+                     * content viewer expand across the bottom.
+                     */
+                    SwingUtilities.invokeLater(() -> {
+                        splitYPane.remove(lowerSplitXPane);
+                        splitYPane.add(contentViewerContainerPanel);
+                        dataResultPanel.setNode(null);
+                    });
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unknown ViewMode: " + controller.getViewMode());
+            }
+        });
     }
 
     @NbBundle.Messages({"TimeLineTopComponent.eventsTab.name=Events",
@@ -108,13 +141,13 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
             final Tab eventsTreeTab = new Tab(Bundle.TimeLineTopComponent_eventsTab_name(), eventsTree);
             eventsTreeTab.setClosable(false);
             eventsTreeTab.setGraphic(new ImageView("org/sleuthkit/autopsy/timeline/images/timeline_marker.png")); // NON-NLS
-            eventsTreeTab.disableProperty().bind(controller.visualizationModeProperty().isEqualTo(VisualizationMode.COUNTS));
+            eventsTreeTab.disableProperty().bind(controller.viewModeProperty().isNotEqualTo(ViewMode.DETAIL));
 
             final TabPane leftTabPane = new TabPane(filterTab, eventsTreeTab);
             VBox.setVgrow(leftTabPane, Priority.ALWAYS);
-            controller.visualizationModeProperty().addListener((Observable observable) -> {
-                if (controller.visualizationModeProperty().get().equals(VisualizationMode.COUNTS)) {
-                    //if view mode is counts, make sure events tabd is not active
+            controller.viewModeProperty().addListener(viewMode -> {
+                if (controller.getViewMode().equals(ViewMode.DETAIL) == false) {
+                    //if view mode is counts, make sure events tab is not active
                     leftTabPane.getSelectionModel().select(filterTab);
                 }
             });
@@ -125,7 +158,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
 
             final ZoomSettingsPane zoomSettingsPane = new ZoomSettingsPane(controller);
 
-            final VBox leftVBox = new VBox(5, timeZonePanel,historyToolBar, zoomSettingsPane, leftTabPane);
+            final VBox leftVBox = new VBox(5, timeZonePanel, historyToolBar, zoomSettingsPane, leftTabPane);
             SplitPane.setResizableWithParent(leftVBox, Boolean.FALSE);
 
             final SplitPane mainSplitPane = new SplitPane(leftVBox, visualizationPanel);
@@ -134,21 +167,20 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
             final Scene scene = new Scene(mainSplitPane);
             scene.addEventFilter(KeyEvent.KEY_PRESSED,
                     (KeyEvent event) -> {
-                        if (new KeyCodeCombination(KeyCode.LEFT, KeyCodeCombination.ALT_DOWN).match(event)) {
-                            new Back(controller).handle(null);
-                        } else if (new KeyCodeCombination(KeyCode.BACK_SPACE).match(event)) {
-                            new Back(controller).handle(null);
-                        } else if (new KeyCodeCombination(KeyCode.RIGHT, KeyCodeCombination.ALT_DOWN).match(event)) {
-                            new Forward(controller).handle(null);
-                        } else if (new KeyCodeCombination(KeyCode.BACK_SPACE, KeyCodeCombination.SHIFT_DOWN).match(event)) {
-                            new Forward(controller).handle(null);
-                        }
-                    });
+                if (new KeyCodeCombination(KeyCode.LEFT, KeyCodeCombination.ALT_DOWN).match(event)) {
+                    new Back(controller).handle(null);
+                } else if (new KeyCodeCombination(KeyCode.BACK_SPACE).match(event)) {
+                    new Back(controller).handle(null);
+                } else if (new KeyCodeCombination(KeyCode.RIGHT, KeyCodeCombination.ALT_DOWN).match(event)) {
+                    new Forward(controller).handle(null);
+                } else if (new KeyCodeCombination(KeyCode.BACK_SPACE, KeyCodeCombination.SHIFT_DOWN).match(event)) {
+                    new Forward(controller).handle(null);
+                }
+            });
 
             //add ui componenets to JFXPanels
             jFXVizPanel.setScene(scene);
             jFXstatusPanel.setScene(new Scene(new StatusBar(controller)));
-
         });
     }
 

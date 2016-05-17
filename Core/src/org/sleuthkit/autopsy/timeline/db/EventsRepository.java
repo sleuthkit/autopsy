@@ -214,7 +214,7 @@ public class EventsRepository {
         idToEventCache.invalidateAll();
     }
 
-    public Set<Long> getEventIDs(Interval timeRange, RootFilter filter) {
+    public List<Long> getEventIDs(Interval timeRange, RootFilter filter) {
         return eventDB.getEventIDs(timeRange, filter);
     }
 
