@@ -50,6 +50,7 @@ import org.mitre.stix.common_1.IndicatorBaseType;
 import org.mitre.stix.indicator_2.Indicator;
 import org.mitre.stix.stix_1.STIXPackage;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -96,6 +97,7 @@ public class STIXReportModule implements GeneralReportModule {
      * @param progressPanel panel to update the report's progress
      */
     @Override
+    @Messages({"STIXReportModule.srcModuleName.text=STIX Report"})
     public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
         // Start the progress bar and setup the report
         progressPanel.setIndeterminate(false);
@@ -191,7 +193,7 @@ public class STIXReportModule implements GeneralReportModule {
 
             // Set the progress bar to done. If any errors occurred along the way, modify
             // the "complete" message to indicate this.
-            Case.getCurrentCase().addReport(reportPath, stixFileName, "");
+            Case.getCurrentCase().addReport(reportPath, Bundle.STIXReportModule_srcModuleName_text(), "");
             if (hadErrors) {
                 progressPanel.complete(ReportStatus.ERROR);
                 progressPanel.updateStatusLabel(
