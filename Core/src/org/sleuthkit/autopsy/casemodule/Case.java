@@ -1635,25 +1635,21 @@ public class Case implements SleuthkitCase.ErrorObserver {
             this.db.deleteReport(report);
 
             if (deleteFromDisk) {
-                // traverse to the root directory of Report report.
                 String reportPath = report.getPath();
 
                 // delete from the disk.
-                File toDelete = new File(reportPath);
-                // Makes sure that html reports are properly deleted from disk, 
-                // as there are multiple files so the super directory should be 
-                // deleted.  
+                File toDelete = new File(reportPath);  
                 if (toDelete.isDirectory()) {
                     try {
                         FileUtils.deleteDirectory(toDelete);
                     } catch (IOException | SecurityException ex) {
-                        logger.log(Level.WARNING, NbBundle.getMessage(Case.class, "Case.deleteReports.deleteFromDiskException.log.msg"), ex);
+                        logger.log(Level.WARNING, "Unable to delete the report from the disk.", ex);
                         JOptionPane.showMessageDialog(null, NbBundle.getMessage(Case.class, "Case.deleteReports.deleteFromDiskException.msg", report.getReportName(), reportPath));
                     }
                 } else {
                     boolean deleted = toDelete.delete();
                     if (!deleted) {
-                        logger.log(Level.WARNING, NbBundle.getMessage(Case.class, "Case.deleteReports.deleteFromDiskException.log.msg"));
+                        logger.log(Level.WARNING, "Unable to delete the report from the disk.");
                         JOptionPane.showMessageDialog(null, NbBundle.getMessage(Case.class, "Case.deleteReports.deleteFromDiskException.msg", report.getReportName(), reportPath));
                     }
                 }
