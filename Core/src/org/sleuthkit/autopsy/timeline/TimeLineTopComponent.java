@@ -108,13 +108,13 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
             final Tab eventsTreeTab = new Tab(Bundle.TimeLineTopComponent_eventsTab_name(), eventsTree);
             eventsTreeTab.setClosable(false);
             eventsTreeTab.setGraphic(new ImageView("org/sleuthkit/autopsy/timeline/images/timeline_marker.png")); // NON-NLS
-            eventsTreeTab.disableProperty().bind(controller.visualizationModeProperty().isEqualTo(VisualizationMode.COUNTS));
+            eventsTreeTab.disableProperty().bind(controller.viewModeProperty().isNotEqualTo(ViewMode.DETAIL));
 
             final TabPane leftTabPane = new TabPane(filterTab, eventsTreeTab);
             VBox.setVgrow(leftTabPane, Priority.ALWAYS);
-            controller.visualizationModeProperty().addListener((Observable observable) -> {
-                if (controller.visualizationModeProperty().get().equals(VisualizationMode.COUNTS)) {
-                    //if view mode is counts, make sure events tabd is not active
+            controller.viewModeProperty().addListener((Observable observable) -> {
+                if (controller.viewModeProperty().get().equals(ViewMode.DETAIL) == false) {
+                    //if view mode is counts, make sure events tab is not active
                     leftTabPane.getSelectionModel().select(filterTab);
                 }
             });
@@ -125,7 +125,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
 
             final ZoomSettingsPane zoomSettingsPane = new ZoomSettingsPane(controller);
 
-            final VBox leftVBox = new VBox(5, timeZonePanel,historyToolBar, zoomSettingsPane, leftTabPane);
+            final VBox leftVBox = new VBox(5, timeZonePanel, historyToolBar, zoomSettingsPane, leftTabPane);
             SplitPane.setResizableWithParent(leftVBox, Boolean.FALSE);
 
             final SplitPane mainSplitPane = new SplitPane(leftVBox, visualizationPanel);
@@ -134,16 +134,16 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
             final Scene scene = new Scene(mainSplitPane);
             scene.addEventFilter(KeyEvent.KEY_PRESSED,
                     (KeyEvent event) -> {
-                        if (new KeyCodeCombination(KeyCode.LEFT, KeyCodeCombination.ALT_DOWN).match(event)) {
-                            new Back(controller).handle(null);
-                        } else if (new KeyCodeCombination(KeyCode.BACK_SPACE).match(event)) {
-                            new Back(controller).handle(null);
-                        } else if (new KeyCodeCombination(KeyCode.RIGHT, KeyCodeCombination.ALT_DOWN).match(event)) {
-                            new Forward(controller).handle(null);
-                        } else if (new KeyCodeCombination(KeyCode.BACK_SPACE, KeyCodeCombination.SHIFT_DOWN).match(event)) {
-                            new Forward(controller).handle(null);
-                        }
-                    });
+                if (new KeyCodeCombination(KeyCode.LEFT, KeyCodeCombination.ALT_DOWN).match(event)) {
+                    new Back(controller).handle(null);
+                } else if (new KeyCodeCombination(KeyCode.BACK_SPACE).match(event)) {
+                    new Back(controller).handle(null);
+                } else if (new KeyCodeCombination(KeyCode.RIGHT, KeyCodeCombination.ALT_DOWN).match(event)) {
+                    new Forward(controller).handle(null);
+                } else if (new KeyCodeCombination(KeyCode.BACK_SPACE, KeyCodeCombination.SHIFT_DOWN).match(event)) {
+                    new Forward(controller).handle(null);
+                }
+            });
 
             //add ui componenets to JFXPanels
             jFXVizPanel.setScene(scene);

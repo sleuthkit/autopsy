@@ -72,7 +72,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.VisualizationMode;
+import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.actions.Back;
 import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
 import org.sleuthkit.autopsy.timeline.actions.SaveSnapshotAsReport;
@@ -284,18 +284,18 @@ final public class VisualizationPanel extends BorderPane {
         detailsToggle.setText(Bundle.VisualizationPanel_detailsToggle_text());
         listToggle.setText(Bundle.VisualizationPanel_listToggle_text());
 
-        ToggleGroupValue<VisualizationMode> visModeToggleGroup = new ToggleGroupValue<>();
-        visModeToggleGroup.add(listToggle, VisualizationMode.LIST);
-        visModeToggleGroup.add(detailsToggle, VisualizationMode.DETAIL);
-        visModeToggleGroup.add(countsToggle, VisualizationMode.COUNTS);
+        ToggleGroupValue<ViewMode> visModeToggleGroup = new ToggleGroupValue<>();
+        visModeToggleGroup.add(listToggle, ViewMode.LIST);
+        visModeToggleGroup.add(detailsToggle, ViewMode.DETAIL);
+        visModeToggleGroup.add(countsToggle, ViewMode.COUNTS);
 
         modeSegButton.setToggleGroup(visModeToggleGroup);
 
         visModeToggleGroup.valueProperty().addListener((observable, oldVisMode, newValue) -> {
-            controller.setVisualizationMode(newValue != null ? newValue : (oldVisMode != null ? oldVisMode : VisualizationMode.COUNTS));
+            controller.setViewMode(newValue != null ? newValue : (oldVisMode != null ? oldVisMode : ViewMode.COUNTS));
         });
 
-        controller.visualizationModeProperty().addListener(visualizationMode -> syncVisualizationMode());
+        controller.viewModeProperty().addListener(visualizationMode -> syncVisualizationMode());
         syncVisualizationMode();
 
         ActionUtils.configureButton(new SaveSnapshotAsReport(controller, notificationPane::getContent), snapShotButton);
@@ -581,7 +581,7 @@ final public class VisualizationPanel extends BorderPane {
      */
     private void syncVisualizationMode() {
         AbstractTimeLineView vizPane;
-        VisualizationMode visMode = controller.visualizationModeProperty().get();
+        ViewMode visMode = controller.viewModeProperty().get();
 
         //make new visualization.
         switch (visMode) {

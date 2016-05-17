@@ -41,7 +41,7 @@ import org.controlsfx.control.action.ActionUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.VisualizationMode;
+import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
@@ -129,9 +129,9 @@ final public class FilterSetPanel extends BorderPane {
         hiddenDescriptionsListView.setItems(controller.getQuickHideFilters());
         hiddenDescriptionsListView.setCellFactory(listView -> getNewDiscriptionFilterListCell());
 
-        controller.visualizationModeProperty().addListener(observable -> {
+        controller.viewModeProperty().addListener(observable -> {
             applyFilters();
-            if (controller.visualizationModeProperty().get() == VisualizationMode.COUNTS) {
+            if (controller.viewModeProperty().get() == ViewMode.COUNTS) {
                 dividerPosition = splitPane.getDividerPositions()[0];
                 splitPane.setDividerPositions(1);
                 hiddenDescriptionsPane.setExpanded(false);

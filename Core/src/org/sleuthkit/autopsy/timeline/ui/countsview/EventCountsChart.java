@@ -47,7 +47,7 @@ import org.joda.time.Seconds;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ColorUtilities;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.VisualizationMode;
+import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
@@ -403,7 +403,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
                             Bundle.CountsViewPane_detailSwitchMessage(),
                             Bundle.CountsViewPane_detailSwitchTitle(), JOptionPane.YES_NO_OPTION);
                     if (showConfirmDialog == JOptionPane.YES_OPTION) {
-                        controller.setVisualizationMode(VisualizationMode.DETAIL);
+                        controller.setViewMode(ViewMode.DETAIL);
                     }
 
                     /*

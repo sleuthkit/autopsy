@@ -199,11 +199,7 @@ public class TimeLineController {
     private final PropertyChangeListener ingestModuleListener = new AutopsyIngestModuleListener();
 
     @GuardedBy("this")
-    private final ReadOnlyObjectWrapper<VisualizationMode> visualizationMode = new ReadOnlyObjectWrapper<>(VisualizationMode.COUNTS);
-
-    synchronized public ReadOnlyObjectProperty<VisualizationMode> visualizationModeProperty() {
-        return visualizationMode.getReadOnlyProperty();
-    }
+    private final ReadOnlyObjectWrapper<ViewMode> viewMode = new ReadOnlyObjectWrapper<>(ViewMode.COUNTS);
 
     @GuardedBy("filteredEvents")
     private final FilteredEventsModel filteredEvents;
@@ -223,15 +219,19 @@ public class TimeLineController {
     @GuardedBy("this")
     private final ObservableList<Long> selectedEventIDs = FXCollections.<Long>synchronizedObservableList(FXCollections.<Long>observableArrayList());
 
+    @GuardedBy("this")
+    private final ReadOnlyObjectWrapper<Interval> selectedTimeRange = new ReadOnlyObjectWrapper<>();
+
+    private final ReadOnlyBooleanWrapper eventsDBStale = new ReadOnlyBooleanWrapper(true);
+
+    private final PromptDialogManager promptDialogManager = new PromptDialogManager(this);
+
     /**
      * @return A list of the selected event ids
      */
     synchronized public ObservableList<Long> getSelectedEventIDs() {
         return selectedEventIDs;
     }
-
-    @GuardedBy("this")
-    private final ReadOnlyObjectWrapper<Interval> selectedTimeRange = new ReadOnlyObjectWrapper<>();
 
     /**
      * @return a read only view of the selected interval.
@@ -282,9 +282,25 @@ public class TimeLineController {
     synchronized public ReadOnlyBooleanProperty canRetreatProperty() {
         return historyManager.getCanRetreat();
     }
-    private final ReadOnlyBooleanWrapper eventsDBStale = new ReadOnlyBooleanWrapper(true);
 
-    private final PromptDialogManager promptDialogManager = new PromptDialogManager(this);
+    synchronized public ReadOnlyObjectProperty<ViewMode> viewModeProperty() {
+        return viewMode.getReadOnlyProperty();
+    }
+
+    /**
+     * Set a new ViewMode as the active one.
+     *
+     * @param viewMode The new ViewMode to set.
+     */
+    synchronized public void setViewMode(ViewMode viewMode) {
+        if (this.viewMode.get() != viewMode) {
+            this.viewMode.set(viewMode);
+        }
+    }
+
+    public ViewMode getViewMode() {
+        return viewMode.get();
+    }
 
     public TimeLineController(Case autoCase) throws IOException {
         this.autoCase = autoCase;
@@ -580,17 +596,6 @@ public class TimeLineController {
         DateTime start = timeRange.getStart().plus(toDurationMillis);
         DateTime end = timeRange.getEnd().minus(toDurationMillis);
         pushTimeRange(new Interval(start, end));
-    }
-
-    /**
-     * Set a new Visualization mode as the active one.
-     *
-     * @param visualizationMode The new VisaualizationMode to set.
-     */
-    synchronized public void setVisualizationMode(VisualizationMode visualizationMode) {
-        if (this.visualizationMode.get() != visualizationMode) {
-            this.visualizationMode.set(visualizationMode);
-        }
     }
 
     public void selectEventIDs(Collection<Long> events) {
