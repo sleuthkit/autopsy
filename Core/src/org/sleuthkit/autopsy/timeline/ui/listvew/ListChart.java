@@ -5,7 +5,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.listvew;
 
-import java.util.List;
+import java.util.Collection;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
@@ -43,16 +43,30 @@ class ListChart extends BorderPane implements TimeLineChart<Long> {
     @FXML
     private TableView<Long> table;
 
-    Callback<TableColumn.CellDataFeatures<Long, Long>, ObservableValue<Long>> cellValueFactory = param -> new SimpleObjectProperty<>(param.getValue());
+    private static final Callback<TableColumn.CellDataFeatures<Long, Long>, ObservableValue<Long>> CELL_VALUE_FACTORY = param -> new SimpleObjectProperty<>(param.getValue());
 
     private final TimeLineController controller;
-    private final TableColumn<Long, Long> idColumn = new TableColumn<>("Event ID");
-    private final TableColumn<Long, Long> millisColumn = new TableColumn<>("Date/Time");
-    private final TableColumn<Long, Long> iconColumn = new TableColumn<>("Icon");
-    private final TableColumn<Long, Long> descriptionColumn = new TableColumn<>("Description");
-    private final TableColumn<Long, Long> baseTypeColumn = new TableColumn<>("Base Type");
-    private final TableColumn<Long, Long> subTypeColumn = new TableColumn<>("Sub Type");
-    private final TableColumn<Long, Long> knownColumn = new TableColumn<>("Known");
+
+    @FXML
+    private TableColumn<Long, Long> idColumn;
+
+    @FXML
+    private TableColumn<Long, Long> millisColumn;
+
+    @FXML
+    private TableColumn<Long, Long> iconColumn;
+
+    @FXML
+    private TableColumn<Long, Long> descriptionColumn;
+
+    @FXML
+    private TableColumn<Long, Long> baseTypeColumn;
+
+    @FXML
+    private TableColumn<Long, Long> subTypeColumn;
+
+    @FXML
+    private TableColumn<Long, Long> knownColumn;
 
     ListChart(TimeLineController controller) {
         this.controller = controller;
@@ -71,26 +85,27 @@ class ListChart extends BorderPane implements TimeLineChart<Long> {
         assert subTypeColumn != null : "fx:id=\"subTypeColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
         assert knownColumn != null : "fx:id=\"knownColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
 
-//        setRowFactory(tableView -> new EventRow());
-        idColumn.setCellValueFactory(cellValueFactory);
+        table.setRowFactory(tableView -> new EventRow());
+        idColumn.setCellValueFactory(CELL_VALUE_FACTORY);
 
-        millisColumn.setCellValueFactory(cellValueFactory);
+        millisColumn.setCellValueFactory(CELL_VALUE_FACTORY);
         millisColumn.setCellFactory(col -> new EpochMillisCell());
 
-        iconColumn.setCellValueFactory(cellValueFactory);
+        iconColumn.setCellValueFactory(CELL_VALUE_FACTORY);
         iconColumn.setCellFactory(col -> new ImageCell());
 
-        descriptionColumn.setCellValueFactory(cellValueFactory);
+        descriptionColumn.setCellValueFactory(CELL_VALUE_FACTORY);
         descriptionColumn.setCellFactory(col -> new DescriptionCell());
 
-        baseTypeColumn.setCellValueFactory(cellValueFactory);
+        baseTypeColumn.setCellValueFactory(CELL_VALUE_FACTORY);
         baseTypeColumn.setCellFactory(col -> new BaseTypeCell());
 
-        subTypeColumn.setCellValueFactory(cellValueFactory);
+        subTypeColumn.setCellValueFactory(CELL_VALUE_FACTORY);
         subTypeColumn.setCellFactory(col -> new EventTypeCell());
 
-        knownColumn.setCellValueFactory(cellValueFactory);
+        knownColumn.setCellValueFactory(CELL_VALUE_FACTORY);
         knownColumn.setCellFactory(col -> new KnownCell());
+
         eventCountLabel.textProperty().bind(Bindings.size(table.getItems()).asString().concat(" events"));
     }
 
@@ -146,7 +161,7 @@ class ListChart extends BorderPane implements TimeLineChart<Long> {
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    void setEventIDs(List<Long> eventIDs) {
+    void setEventIDs(Collection<Long> eventIDs) {
         table.getItems().setAll(eventIDs);
     }
 

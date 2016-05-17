@@ -25,7 +25,6 @@ import javafx.scene.shape.Line;
 import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
 
 /**
  * Subclass of {@link Line} with appropriate behavior (mouse listeners) to act
@@ -35,7 +34,7 @@ import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
     "GuideLine.tooltip.text={0}\nRight-click to remove.\nDrag to reposition."})
 class GuideLine extends Line {
 
-    private static final Tooltip CHART_DEFAULT_TOOLTIP = AbstractVisualizationPane.getDefaultTooltip();
+    private  final Tooltip CHART_DEFAULT_TOOLTIP ;
 
     private final Tooltip tooltip = new Tooltip();
     private final DetailsChart chart;
@@ -49,6 +48,7 @@ class GuideLine extends Line {
      */
     GuideLine(DetailsChart chart) {
         super(0, 0, 0, 0);
+        CHART_DEFAULT_TOOLTIP = chart.getDefaultTooltip();
         this.chart = chart;
         Axis<DateTime> xAxis = chart.getXAxis();
         endYProperty().bind(chart.heightProperty().subtract(xAxis.heightProperty().subtract(xAxis.tickLengthProperty())));

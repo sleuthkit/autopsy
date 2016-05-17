@@ -8,15 +8,11 @@ package org.sleuthkit.autopsy.timeline.ui.listvew;
 import java.util.List;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
-import javafx.scene.Node;
 import javafx.scene.Parent;
-import javafx.scene.chart.Axis;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
-import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
-import org.sleuthkit.autopsy.timeline.ui.TimeLineView;
+import org.sleuthkit.autopsy.timeline.ui.AbstractTimeLineView;
 
 /**
  * @param <X>         The type of data plotted along the x axis
@@ -33,7 +29,9 @@ import org.sleuthkit.autopsy.timeline.ui.TimeLineView;
  * public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node,
  * ChartType extends Region & TimeLineChart<X>> extends BorderPane {
  */
-public class ListViewPane extends AbstractVisualizationPane<Long, SingleEvent, Node, ListChart> implements TimeLineView {
+public class ListViewPane extends AbstractTimeLineView {
+
+    private final ListChart listChart;
 
     /**
      * Constructor
@@ -42,20 +40,11 @@ public class ListViewPane extends AbstractVisualizationPane<Long, SingleEvent, N
      */
     public ListViewPane(TimeLineController controller) {
         super(controller);
+        listChart = new ListChart(controller);
 
         //initialize chart;
-        setChart(new ListChart(controller));
+        setCenter(listChart);
         setSettingsNodes(new ListViewPane.ListViewSettingsPane().getChildrenUnmodifiable());
-    }
-
-    @Override
-    protected Boolean isTickBold(Long value) {
-        return true;
-    }
-
-    @Override
-    protected void applySelectionEffect(Node node, Boolean applied) {
-//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
@@ -64,33 +53,8 @@ public class ListViewPane extends AbstractVisualizationPane<Long, SingleEvent, N
     }
 
     @Override
-    protected String getTickMarkLabel(Long tickValue) {
-        return "";
-    }
-
-    @Override
-    protected double getTickSpacing() {
-        return 0;
-    }
-
-    @Override
-    protected Axis<Long> getXAxis() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    protected Axis<SingleEvent> getYAxis() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    protected double getAxisMargin() {
-        return 0;
-    }
-
-    @Override
-    protected void clearChartData() {
-        getChart().clear();
+    protected void clearData() {
+        listChart.clear();
     }
 
     private static class ListViewSettingsPane extends Parent {
@@ -99,7 +63,7 @@ public class ListViewPane extends AbstractVisualizationPane<Long, SingleEvent, N
         }
     }
 
-    private class ListUpdateTask extends VisualizationRefreshTask<Interval> {
+    private class ListUpdateTask extends ViewRefreshTask<Interval> {
 
         ListUpdateTask() {
             super("List update task", true);
@@ -114,12 +78,12 @@ public class ListViewPane extends AbstractVisualizationPane<Long, SingleEvent, N
             FilteredEventsModel eventsModel = getEventsModel();
 
             //clear the chart and set the horixontal axis
-            resetChart(eventsModel.getTimeRange());
+            resetView(eventsModel.getTimeRange());
 
             updateMessage("Querying db for events");
             //get the event stripes to be displayed
             List<Long> eventIDs = eventsModel.getEventIDs();
-            Platform.runLater(() -> getChart().setEventIDs(eventIDs));
+            Platform.runLater(() -> listChart.setEventIDs(eventIDs));
 
             updateMessage("updating ui");
             return eventIDs.isEmpty() == false;
@@ -132,9 +96,8 @@ public class ListViewPane extends AbstractVisualizationPane<Long, SingleEvent, N
         }
 
         @Override
-        protected void setDateAxisValues(Interval timeRange) {
-//            detailsChartDateAxis.setRange(timeRange, true);
-//            pinnedDateAxis.setRange(timeRange, true);
+        protected void setDateValues(Interval timeRange) {
         }
+
     }
 }

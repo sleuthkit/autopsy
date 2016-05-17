@@ -56,7 +56,7 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
-import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
+import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
 import org.sleuthkit.autopsy.timeline.utils.MappedList;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
@@ -75,7 +75,7 @@ import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
  * grouped EventStripes, etc, etc. The leaves of the trees are EventClusters or
  * SingleEvents.
  */
-public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStripe, EventNodeBase<?>, DetailsChart> {
+public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe, EventNodeBase<?>, DetailsChart> {
 
     private final static Logger LOGGER = Logger.getLogger(DetailViewPane.class.getName());
 
@@ -218,7 +218,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     @Override
-    protected void clearChartData() {
+    protected void clearData() {
         getChart().reset();
     }
 
@@ -365,9 +365,8 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
         "DetailViewPane.loggedTask.continueButton=Continue",
         "DetailViewPane.loggedTask.backButton=Back (Cancel)",
         "# {0} - number of events",
-
         "DetailViewPane.loggedTask.prompt=You are about to show details for {0} events.  This might be very slow and could exhaust available memory.\n\nDo you want to continue?"})
-    private class DetailsUpdateTask extends VisualizationRefreshTask<Interval> {
+    private class DetailsUpdateTask extends ViewRefreshTask<Interval> {
 
         DetailsUpdateTask() {
             super(Bundle.DetailViewPane_loggedTask_name(), true);
@@ -423,7 +422,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
             currentZoomParams = newZoomParams;
 
             //clear the chart and set the horixontal axis
-            resetChart(eventsModel.getTimeRange());
+            resetView(eventsModel.getTimeRange());
 
             updateMessage(Bundle.DetailViewPane_loggedTask_updateUI());
 
@@ -447,7 +446,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
         }
 
         @Override
-        protected void setDateAxisValues(Interval timeRange) {
+        protected void setDateValues(Interval timeRange) {
             detailsChartDateAxis.setRange(timeRange, true);
             pinnedDateAxis.setRange(timeRange, true);
         }

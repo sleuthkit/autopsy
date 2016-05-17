@@ -121,7 +121,7 @@ final public class VisualizationPanel extends BorderPane {
     private LoggedTask<Void> histogramTask;
 
     private final EventsTree eventsTree;
-    private AbstractVisualizationPane<?, ?, ?, ?> visualization;
+    private AbstractTimeLineView visualization;
 
     /*
      * HBox that contains the histogram bars.
@@ -580,7 +580,7 @@ final public class VisualizationPanel extends BorderPane {
      * AbstractVislualization for one of the correct type.
      */
     private void syncVisualizationMode() {
-        AbstractVisualizationPane<?, ?, ?, ?> vizPane;
+        AbstractTimeLineView vizPane;
         VisualizationMode visMode = controller.visualizationModeProperty().get();
 
         //make new visualization.

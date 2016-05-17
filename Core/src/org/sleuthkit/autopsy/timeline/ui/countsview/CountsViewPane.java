@@ -60,7 +60,7 @@ import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
-import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
+import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 
 /**
@@ -79,7 +79,7 @@ import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
  * Platform.runLater(java.lang.Runnable). The FilteredEventsModel should
  * encapsulate all need synchronization internally.
  */
-public class CountsViewPane extends AbstractVisualizationPane<String, Number, Node, EventCountsChart> {
+public class CountsViewPane extends AbstractTimelineChart<String, Number, Node, EventCountsChart> {
 
     private static final Logger LOGGER = Logger.getLogger(CountsViewPane.class.getName());
 
@@ -170,7 +170,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     @Override
-    protected void clearChartData() {
+    protected void clearData() {
         for (XYChart.Series<String, Number> series : dataSeries) {
             series.getData().clear();
         }
@@ -349,7 +349,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
     @NbBundle.Messages({
         "CountsViewPane.loggedTask.name=Updating Counts View",
         "CountsViewPane.loggedTask.updatingCounts=Populating visualization"})
-    private class CountsUpdateTask extends VisualizationRefreshTask<List<String>> {
+    private class CountsUpdateTask extends ViewRefreshTask<List<String>> {
 
         CountsUpdateTask() {
             super(Bundle.CountsViewPane_loggedTask_name(), true);
@@ -374,7 +374,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
             List<Interval> intervals = rangeInfo.getIntervals();
 
             //clear old data, and reset ranges and series
-            resetChart(Lists.transform(intervals, rangeInfo::formatForTick));
+            resetView(Lists.transform(intervals, rangeInfo::formatForTick));
 
             updateMessage(Bundle.CountsViewPane_loggedTask_updatingCounts());
             int chartMax = 0;
@@ -432,7 +432,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
         }
 
         @Override
-        protected void setDateAxisValues(List<String> categories) {
+        protected void setDateValues(List<String> categories) {
             dateAxis.getCategories().setAll(categories);
         }
     }
