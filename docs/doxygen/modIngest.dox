@@ -207,13 +207,13 @@ artifacts in a loop, it is better to invoke org.sleuthkit.autopsy.ingest.IngestS
 only once after the bulk write, so as not to flood the system with events.
 
 Further, when modules create artifacts, they should be indexed for keyword search,
-using the method Blackboard.indexArtifact(BlackboardArtifact artifact). This can be done
+using the method org.sleuthkit.autopsy.casemodule.services.Blackboard.indexArtifact(BlackboardArtifact artifact). This can be done
 in the following way:
 
 \code
 Blackboard blackboard = Case.getCurrentCase().getServices().getBlackboard();
 try {
-	blackboard.indexArtifact(artifact); //Your artifact as the parameter.
+	blackboard.indexArtifact(artifact); //Your artifact as the argument.
 }
 catch (BlackboardException ex) {
 	//YOUR EXCEPTION BEHAVIOR HERE.
@@ -291,7 +291,7 @@ Autopsy allows you to provide a graphical panel that will be displayed when the 
 
 To provide options for each ingest job:
 - Update org.sleuthkit.autopsy.ingest.IngestModuleFactory.hasIngestJobSettingsPanel() in your factory class to return true.
-- Update org.sleuthkit.autopsy.ingest.IngestModuleFactory.getIngestJobSettingsPanel() in your factory class to return a IngestModuleIngestJobSettingsPanel that displays the needed configuration options. The recommended size for this panel is 300 x 300. The org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel.getSettings() method should return an instance of a org.sleutkit.autopsy.ingest.IngestModuleIngestJobSettings object based on the user-specified settings (see next bullet).
+- Update org.sleuthkit.autopsy.ingest.IngestModuleFactory.getIngestJobSettingsPanel() in your factory class to return a IngestModuleIngestJobSettingsPanel that displays the needed configuration options. The recommended size for this panel is 300 x 300 pixels. The org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel.getSettings() method should return an instance of a org.sleutkit.autopsy.ingest.IngestModuleIngestJobSettings object based on the user-specified settings (see next bullet).
 - Create a class that implements org.sleutkit.autopsy.ingest.IngestModuleIngestJobSettings. Your IngestModuleIngestJobSettingsPanel should store settings in here.  This class needs to be Serializable, so keep all data types simple or mark them as transient with some custom deserialization code. You should also set the serialVersionUID (see http://stackoverflow.com/questions/285793/what-is-a-serialversionuid-and-why-should-i-use-it). 
 - If you decide to store settings internal to the module (NOT RECOMMENDED), the getSettings() method can return an instance of NoIngestModuleIngestJobSettings.  
 - Your instance of IngestModuleIngestJobSettings will be saved and passed to your panel the next time so that you can pre-populate it accordingly. 
