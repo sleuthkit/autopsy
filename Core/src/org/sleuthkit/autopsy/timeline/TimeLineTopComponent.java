@@ -22,6 +22,7 @@ import java.awt.BorderLayout;
 import java.util.Collections;
 import java.util.List;
 import javafx.application.Platform;
+import javafx.beans.Observable;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.control.SplitPane;
@@ -33,6 +34,7 @@ import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javax.swing.SwingUtilities;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.util.NbBundle;
@@ -86,10 +88,34 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
         dataContentPanel = DataContentPanel.createInstance();
         this.contentViewerContainerPanel.add(dataContentPanel, BorderLayout.CENTER);
         tlrv = new TimeLineResultView(controller, dataContentPanel);
-        DataResultPanel dataResultPanel = tlrv.getDataResultPanel();
+        final DataResultPanel dataResultPanel = tlrv.getDataResultPanel();
         this.resultContainerPanel.add(dataResultPanel, BorderLayout.CENTER);
         dataResultPanel.open();
         customizeFXComponents();
+
+        controller.viewModeProperty().addListener((Observable observable) -> {
+            switch (controller.getViewMode()) {
+                case COUNTS:
+                case DETAIL:
+                    SwingUtilities.invokeLater(() -> {
+                        splitYPane.remove(contentViewerContainerPanel);
+                        if ((lowerSplitXPane.getParent() == splitYPane) == false) {
+                            splitYPane.add(lowerSplitXPane);
+                            lowerSplitXPane.add(contentViewerContainerPanel);
+                        }
+                    });
+                    break;
+                case LIST:
+                    SwingUtilities.invokeLater(() -> {
+                        splitYPane.remove(lowerSplitXPane);
+                        splitYPane.add(contentViewerContainerPanel);
+                        dataResultPanel.setNode(null);
+                    });
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unknown ViewMode: " + controller.getViewMode());
+            }
+        });
     }
 
     @NbBundle.Messages({"TimeLineTopComponent.eventsTab.name=Events",
@@ -147,7 +173,6 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
             //add ui componenets to JFXPanels
             jFXVizPanel.setScene(scene);
             jFXstatusPanel.setScene(new Scene(new StatusBar(controller)));
-
         });
     }
 
