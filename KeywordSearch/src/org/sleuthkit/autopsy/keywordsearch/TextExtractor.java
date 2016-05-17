@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -99,7 +100,7 @@ interface TextExtractor {
      *
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
-    boolean index(AbstractFile sourceFile) throws Ingester.IngesterException;
+    boolean index(AbstractFile sourceFile, IngestJobContext context) throws Ingester.IngesterException;
 
     /**
      * Sets the scripts to use for the extraction

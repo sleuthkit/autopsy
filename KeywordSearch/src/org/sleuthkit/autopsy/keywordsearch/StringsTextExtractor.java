@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -96,7 +97,7 @@ class StringsTextExtractor implements TextExtractor {
     }
 
     @Override
-    public boolean index(AbstractFile sourceFile) throws IngesterException {
+    public boolean index(AbstractFile sourceFile, IngestJobContext context) throws IngesterException {
         this.sourceFile = sourceFile;
         this.numChunks = 0; //unknown until indexing is done
         boolean success = false;
