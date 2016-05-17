@@ -48,32 +48,32 @@ public abstract class AbstractTimeLineView extends BorderPane {
     private static final Logger LOGGER = Logger.getLogger(AbstractTimeLineView.class.getName());
 
     /**
-     * Boolean property that holds true if the visualization does not show any
-     * events with the current zoom and filter settings.
+     * Boolean property that holds true if the view does not show any events
+     * with the current zoom and filter settings.
      */
     private final ReadOnlyBooleanWrapper hasVisibleEvents = new ReadOnlyBooleanWrapper(true);
 
     /**
-     * Boolean property that holds true if the visualization may not represent
-     * the current state of the DB, because, for example, tags have been updated
-     * but the vis. was not refreshed.
+     * Boolean property that holds true if the view may not represent the
+     * current state of the DB, because, for example, tags have been updated but
+     * the view. was not refreshed.
      */
     private final ReadOnlyBooleanWrapper outOfDate = new ReadOnlyBooleanWrapper(false);
 
     /**
      * List of Nodes to insert into the toolbar. This should be set in an
-     * implementations constructor.
+     * implementation's constructor.
      */
     private List<Node> settingsNodes;
 
     /**
-     * Listener that is attached to various properties that should trigger a vis
-     * update when they change.
+     * Listener that is attached to various properties that should trigger a
+     * view update when they change.
      */
     private InvalidationListener updateListener = (Observable any) -> refresh();
 
     /**
-     * task used to reload the content of this visualization
+     * Task used to reload the content of this view
      */
     private Task<Boolean> updateTask;
 
@@ -95,7 +95,7 @@ public abstract class AbstractTimeLineView extends BorderPane {
 
     /**
      * Handle a RefreshRequestedEvent from the events model by updating the
-     * visualization.
+     * view.
      *
      * @param event The RefreshRequestedEvent to handle.
      */
@@ -105,39 +105,38 @@ public abstract class AbstractTimeLineView extends BorderPane {
     }
 
     /**
-     * Does the visualization represent an out-of-date state of the DB. It might
-     * if, for example, tags have been updated but the vis. was not refreshed.
+     * Does the view represent an out-of-date state of the DB. It might if, for
+     * example, tags have been updated but the view was not refreshed.
      *
-     * @return True if the visualization does not represent the curent state of
-     *         the DB.
+     * @return True if the view does not represent the current state of the DB.
      */
     public boolean isOutOfDate() {
         return outOfDate.get();
     }
 
     /**
-     * Get a ReadOnlyBooleanProperty that holds true if this visualization does
-     * not represent the current state of the DB>
+     * Get a ReadOnlyBooleanProperty that holds true if this view does not
+     * represent the current state of the DB>
      *
      * @return A ReadOnlyBooleanProperty that holds the out-of-date state for
-     *         this visualization.
+     *         this view.
      */
     public ReadOnlyBooleanProperty outOfDateProperty() {
         return outOfDate.getReadOnlyProperty();
     }
 
     /**
-     * Get the TimelineController for this visualization.
+     * Get the TimelineController for this view.
      *
-     * @return The TimelineController for this visualization.
+     * @return The TimelineController for this view.
      */
     protected TimeLineController getController() {
         return controller;
     }
 
     /**
-     * Refresh this visualization based on current state of zoom / filters.
-     * Primarily this invokes the background VisualizationUpdateTask returned by
+     * Refresh this view based on current state of zoom / filters. Primarily
+     * this invokes the background VisualizationUpdateTask returned by
      * getUpdateTask(), which derived classes must implement.
      *
      * TODO: replace this logic with a javafx Service ? -jm
@@ -160,7 +159,7 @@ public abstract class AbstractTimeLineView extends BorderPane {
                     try {
                         this.hasVisibleEvents.set(updateTask.get());
                     } catch (InterruptedException | ExecutionException ex) {
-                        LOGGER.log(Level.SEVERE, "Unexpected exception updating visualization", ex); //NON-NLS
+                        LOGGER.log(Level.SEVERE, "Unexpected exception updating view", ex); //NON-NLS
                     }
                     break;
             }
@@ -169,9 +168,9 @@ public abstract class AbstractTimeLineView extends BorderPane {
     }
 
     /**
-     * Get the FilteredEventsModel for this visualization.
+     * Get the FilteredEventsModel for this view.
      *
-     * @return The FilteredEventsModel for this visualization.
+     * @return The FilteredEventsModel for this view.
      */
     protected FilteredEventsModel getEventsModel() {
         return filteredEvents;
@@ -179,16 +178,16 @@ public abstract class AbstractTimeLineView extends BorderPane {
 
     /**
      * Get a new background Task that fetches the appropriate data and loads it
-     * into this visualization.
+     * into this view.
      *
-     * @return A new task to execute on a background thread to reload this
-     *         visualization with different data.
+     * @return A new task to execute on a background thread to reload this view
+     *         with different data.
      */
     protected abstract Task<Boolean> getNewUpdateTask();
 
     /**
-     * Get a List of nodes containing settings widgets to insert into this
-     * visualization's header.
+     * Get a List of Nodes containing settings widgets to insert into this
+     * view's header.
      *
      * @return The List of settings Nodes.
      */
@@ -197,19 +196,19 @@ public abstract class AbstractTimeLineView extends BorderPane {
     }
 
     /**
-     * Set the List of nodes containing settings widgets to insert into this
-     * visualization's header.
+     * Set the List of Nodes containing settings widgets to insert into this
+     * view's header.
      *
      *
-     * @param settingsNodes The List of nodes containing settings widgets to
-     *                      insert into this visualization's header.
+     * @param settingsNodes The List of Nodes containing settings widgets to
+     *                      insert into this view's header.
      */
     final protected void setSettingsNodes(List<Node> settingsNodes) {
         this.settingsNodes = new ArrayList<>(settingsNodes);
     }
 
     /**
-     * Dispose of this visualization and any resources it holds onto.
+     * Dispose of this view and any resources it holds onto.
      */
     final synchronized void dispose() {
         //cancel and gc updateTask
@@ -225,11 +224,11 @@ public abstract class AbstractTimeLineView extends BorderPane {
     }
 
     /**
-     * Are there are any events visible in this visualization with the current
-     * view parameters?
+     * Are there are any events visible in this view with the current view
+     * parameters?
      *
-     * @return True if there are events visible in this visualization with the
-     *         current view parameters.
+     * @return True if there are events visible in this view with the current
+     *         view parameters.
      */
     boolean hasVisibleEvents() {
         return hasVisibleEventsProperty().get();
@@ -237,18 +236,18 @@ public abstract class AbstractTimeLineView extends BorderPane {
 
     /**
      * A property that indicates whether there are any events visible in this
-     * visualization with the current view parameters.
+     * view with the current view parameters.
      *
      * @return A property that indicates whether there are any events visible in
-     *         this visualization with the current view parameters.
+     *         this view with the current view parameters.
      */
     ReadOnlyBooleanProperty hasVisibleEventsProperty() {
         return hasVisibleEvents.getReadOnlyProperty();
     }
 
     /**
-     * Set this visualization out of date because, for example, tags have been
-     * updated but the vis. was not refreshed.
+     * Set this view out of date because, for example, tags have been updated
+     * but the view was not refreshed.
      */
     void setOutOfDate() {
         outOfDate.set(true);
@@ -284,8 +283,8 @@ public abstract class AbstractTimeLineView extends BorderPane {
 
         /**
          * Sets initial progress value and message and shows blocking progress
-         * indicator over the visualization. Derived Tasks should be sure to
-         * call this as part of their call() implementation.
+         * indicator over the view. Derived Tasks should be sure to call this as
+         * part of their call() implementation.
          *
          * @return True
          *

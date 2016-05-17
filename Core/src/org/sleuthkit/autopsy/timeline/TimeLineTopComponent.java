@@ -22,7 +22,6 @@ import java.awt.BorderLayout;
 import java.util.Collections;
 import java.util.List;
 import javafx.application.Platform;
-import javafx.beans.Observable;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.control.SplitPane;
@@ -70,7 +69,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
 
     private final DataContentPanel dataContentPanel;
 
-    private final TimeLineResultView tlrv;
+    private final TimeLineResultView tlResultView;
 
     private final ExplorerManager em = new ExplorerManager();
 
@@ -87,16 +86,21 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
 
         dataContentPanel = DataContentPanel.createInstance();
         this.contentViewerContainerPanel.add(dataContentPanel, BorderLayout.CENTER);
-        tlrv = new TimeLineResultView(controller, dataContentPanel);
-        final DataResultPanel dataResultPanel = tlrv.getDataResultPanel();
+        tlResultView = new TimeLineResultView(controller, dataContentPanel);
+        final DataResultPanel dataResultPanel = tlResultView.getDataResultPanel();
         this.resultContainerPanel.add(dataResultPanel, BorderLayout.CENTER);
         dataResultPanel.open();
         customizeFXComponents();
 
-        controller.viewModeProperty().addListener((Observable observable) -> {
+        //Listen to ViewMode and adjust GUI componenets as needed.
+        controller.viewModeProperty().addListener(viewMode -> {
             switch (controller.getViewMode()) {
                 case COUNTS:
                 case DETAIL:
+                    /*
+                     * For counts and details mode, restore the result table at
+                     * the bottom left, if neccesary.
+                     */
                     SwingUtilities.invokeLater(() -> {
                         splitYPane.remove(contentViewerContainerPanel);
                         if ((lowerSplitXPane.getParent() == splitYPane) == false) {
@@ -106,6 +110,10 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
                     });
                     break;
                 case LIST:
+                    /*
+                     * For list mode, remove the result table, and let the
+                     * content viewer expand across the bottom.
+                     */
                     SwingUtilities.invokeLater(() -> {
                         splitYPane.remove(lowerSplitXPane);
                         splitYPane.add(contentViewerContainerPanel);

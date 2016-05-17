@@ -32,7 +32,6 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
-import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
@@ -215,10 +214,6 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
      */
     public ObservableList<TimeLineEvent> getAllNestedEvents() {
         return nestedEvents;
-    }
-
-    Tooltip getDefaultTooltip() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     /**

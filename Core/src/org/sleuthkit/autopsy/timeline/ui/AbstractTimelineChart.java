@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.timeline.ui;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import javafx.application.Platform;
+import javafx.beans.binding.DoubleBinding;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -37,8 +39,10 @@ import javafx.scene.layout.BorderStroke;
 import javafx.scene.layout.BorderStrokeStyle;
 import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -252,6 +256,18 @@ public abstract class AbstractTimelineChart<X, Y, NodeType extends Node, ChartTy
      */
     protected AbstractTimelineChart(TimeLineController controller) {
         super(controller);
+        Platform.runLater(() -> {
+            VBox vBox = new VBox(getSpecificLabelPane(), getContextLabelPane());
+            vBox.setFillWidth(false);
+            HBox hBox = new HBox(getSpacer(), vBox);
+            hBox.setFillHeight(false);
+            setBottom(hBox);
+            DoubleBinding spacerSize = getYAxis().widthProperty().add(getYAxis().tickLengthProperty()).add(getAxisMargin());
+            getSpacer().minWidthProperty().bind(spacerSize);
+            getSpacer().prefWidthProperty().bind(spacerSize);
+            getSpacer().maxWidthProperty().bind(spacerSize);
+        });
+
         createSeries();
 
         selectedNodes.addListener((ListChangeListener.Change<? extends NodeType> change) -> {

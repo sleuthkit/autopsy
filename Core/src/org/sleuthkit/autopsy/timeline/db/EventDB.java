@@ -584,6 +584,13 @@ public class EventDB {
                 insertHashHitStmt = prepareStatement("INSERT OR IGNORE INTO hash_set_hits (hash_set_id, event_id) values (?,?)"); //NON-NLS
                 insertTagStmt = prepareStatement("INSERT OR IGNORE INTO tags (tag_id, tag_name_id,tag_name_display_name, event_id) values (?,?,?,?)"); //NON-NLS
                 deleteTagStmt = prepareStatement("DELETE FROM tags WHERE tag_id = ?"); //NON-NLS
+
+                /*
+                 * This SQL query is really just a select count(*), but that has
+                 * performance problems on very large tables unless you include
+                 * a where clause see http://stackoverflow.com/a/9338276/4004683
+                 * for more.
+                 */
                 countAllEventsStmt = prepareStatement("SELECT count(event_id) AS count FROM events WHERE event_id IS NOT null"); //NON-NLS
                 dropEventsTableStmt = prepareStatement("DROP TABLE IF EXISTS events"); //NON-NLS
                 dropHashSetHitsTableStmt = prepareStatement("DROP TABLE IF EXISTS hash_set_hits"); //NON-NLS

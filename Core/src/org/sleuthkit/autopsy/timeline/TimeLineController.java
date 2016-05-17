@@ -298,7 +298,12 @@ public class TimeLineController {
         }
     }
 
-    public ViewMode getViewMode() {
+    /**
+     * Get the currently active ViewMode.
+     *
+     * @return The currently active ViewMode.
+     */
+    synchronized public ViewMode getViewMode() {
         return viewMode.get();
     }
 
