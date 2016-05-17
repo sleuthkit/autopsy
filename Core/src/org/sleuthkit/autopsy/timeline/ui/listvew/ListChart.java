@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2016 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.timeline.ui.listvew;
 
@@ -9,33 +22,25 @@ import java.util.Collection;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.Node;
-import javafx.scene.chart.Axis;
-import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.util.Callback;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
-import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
-import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 /**
  *
  */
-class ListChart extends BorderPane implements TimeLineChart<Long> {
+class ListChart extends BorderPane {
 
     @FXML
     private Label eventCountLabel;
@@ -109,50 +114,8 @@ class ListChart extends BorderPane implements TimeLineChart<Long> {
         eventCountLabel.textProperty().bind(Bindings.size(table.getItems()).asString().concat(" events"));
     }
 
-    @Override
-    public ObservableList<? extends Node> getSelectedNodes() {
-        return FXCollections.observableArrayList();
-    }
-
-    @Override
-    public IntervalSelector<? extends Long> getIntervalSelector() {
-        return null;
-    }
-
-    @Override
-    public void setIntervalSelector(IntervalSelector<? extends Long> newIntervalSelector) {
-//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public IntervalSelector<Long> newIntervalSelector() {
-        return null;
-    }
-
-    @Override
-    public void clearIntervalSelector() {
-//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public Axis<Long> getXAxis() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
     public TimeLineController getController() {
         return controller;
-    }
-
-    @Override
-    public void clearContextMenu() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public ContextMenu getContextMenu(MouseEvent m) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
