@@ -131,18 +131,24 @@ final public class FilterSetPanel extends BorderPane {
 
         controller.viewModeProperty().addListener(observable -> {
             applyFilters();
-            if (controller.viewModeProperty().get() == ViewMode.COUNTS) {
-                dividerPosition = splitPane.getDividerPositions()[0];
-                splitPane.setDividerPositions(1);
-                hiddenDescriptionsPane.setExpanded(false);
-                hiddenDescriptionsPane.setCollapsible(false);
-                hiddenDescriptionsPane.setDisable(true);
-            } else {
-                splitPane.setDividerPositions(dividerPosition);
-                hiddenDescriptionsPane.setDisable(false);
-                hiddenDescriptionsPane.setCollapsible(true);
-                hiddenDescriptionsPane.setExpanded(true);
-                hiddenDescriptionsPane.setCollapsible(false);
+            switch (controller.getViewMode()) {
+                case COUNTS:
+                case LIST:
+                    dividerPosition = splitPane.getDividerPositions()[0];
+                    splitPane.setDividerPositions(1);
+                    hiddenDescriptionsPane.setExpanded(false);
+                    hiddenDescriptionsPane.setCollapsible(false);
+                    hiddenDescriptionsPane.setDisable(true);
+                    break;
+                case DETAIL:
+                    splitPane.setDividerPositions(dividerPosition);
+                    hiddenDescriptionsPane.setDisable(false);
+                    hiddenDescriptionsPane.setCollapsible(true);
+                    hiddenDescriptionsPane.setExpanded(true);
+                    hiddenDescriptionsPane.setCollapsible(false);
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unknown ViewMode: " + controller.getViewMode());
             }
         });
     }

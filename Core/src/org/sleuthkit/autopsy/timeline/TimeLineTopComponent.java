@@ -22,7 +22,6 @@ import java.awt.BorderLayout;
 import java.util.Collections;
 import java.util.List;
 import javafx.application.Platform;
-import javafx.beans.Observable;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.control.SplitPane;
@@ -112,8 +111,8 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
 
             final TabPane leftTabPane = new TabPane(filterTab, eventsTreeTab);
             VBox.setVgrow(leftTabPane, Priority.ALWAYS);
-            controller.viewModeProperty().addListener((Observable observable) -> {
-                if (controller.viewModeProperty().get().equals(ViewMode.DETAIL) == false) {
+            controller.viewModeProperty().addListener(viewMode -> {
+                if (controller.getViewMode().equals(ViewMode.DETAIL) == false) {
                     //if view mode is counts, make sure events tab is not active
                     leftTabPane.getSelectionModel().select(filterTab);
                 }

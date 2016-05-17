@@ -91,8 +91,8 @@ import org.sleuthkit.autopsy.timeline.ui.listvew.ListViewPane;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 
 /**
- * A container for an AbstractVisualizationPane. Has a Toolbar on top to hold
- * settings widgets supplied by contained AbstractVisualizationPane, and the
+ * A container for an AbstractTimelineView. Has a Toolbar on top to hold
+ * settings widgets supplied by contained AbstractTimelineView, and the
  * histogram / time selection on bottom.
  *
  * TODO: Refactor common code out of histogram and CountsView? -jm
@@ -121,7 +121,7 @@ final public class VisualizationPanel extends BorderPane {
     private LoggedTask<Void> histogramTask;
 
     private final EventsTree eventsTree;
-    private AbstractTimeLineView visualization;
+    private AbstractTimeLineView hostedView;
 
     /*
      * HBox that contains the histogram bars.
@@ -295,8 +295,8 @@ final public class VisualizationPanel extends BorderPane {
             controller.setViewMode(newValue != null ? newValue : (oldVisMode != null ? oldVisMode : ViewMode.COUNTS));
         });
 
-        controller.viewModeProperty().addListener(visualizationMode -> syncVisualizationMode());
-        syncVisualizationMode();
+        controller.viewModeProperty().addListener(viewMode -> syncViewMode());
+        syncViewMode();
 
         ActionUtils.configureButton(new SaveSnapshotAsReport(controller, notificationPane::getContent), snapShotButton);
         ActionUtils.configureButton(new UpdateDB(controller), updateDBButton);
@@ -326,7 +326,7 @@ final public class VisualizationPanel extends BorderPane {
         rangeHistogramStack.getChildren().add(rangeSlider);
 
         /*
-         * this padding attempts to compensates for the fact that the
+         * This padding attempts to compensates for the fact that the
          * rangeslider track doesn't extend to edge of node,and so the
          * histrogram doesn't quite line up with the rangeslider
          */
@@ -372,7 +372,7 @@ final public class VisualizationPanel extends BorderPane {
      */
     @Subscribe
     public void handleTimeLineTagUpdate(TagsUpdatedEvent event) {
-        visualization.setOutOfDate();
+        hostedView.setOutOfDate();
         Platform.runLater(() -> {
             if (notificationPane.isShowing() == false) {
                 notificationPane.getActions().setAll(new Refresh());
@@ -410,7 +410,7 @@ final public class VisualizationPanel extends BorderPane {
      */
     @Subscribe
     public void handleDBUpdated(DBUpdatedEvent event) {
-        visualization.refresh();
+        hostedView.refresh();
         refreshHistorgram();
         Platform.runLater(notificationPane::hide);
     }
@@ -576,22 +576,28 @@ final public class VisualizationPanel extends BorderPane {
     }
 
     /**
-     * Switch to the given VisualizationMode, by swapping out the hosted
-     * AbstractVislualization for one of the correct type.
+     * Switch to the given ViewMode, by swapping out the hosted
+     * AbstractTimelineView for one of the correct type.
      */
-    private void syncVisualizationMode() {
-        AbstractTimeLineView vizPane;
-        ViewMode visMode = controller.viewModeProperty().get();
+    private void syncViewMode() {
+        AbstractTimeLineView view;
+        ViewMode viewMode = controller.viewModeProperty().get();
 
         //make new visualization.
-        switch (visMode) {
+        switch (viewMode) {
             case LIST:
-                vizPane = new ListViewPane(controller);
-                Platform.runLater(() -> listToggle.setSelected(true));
+                view = new ListViewPane(controller);
+                Platform.runLater(() -> {
+                    listToggle.setSelected(true);
+                    //TODO: should remove listeners from events tree
+                });
                 break;
             case COUNTS:
-                vizPane = new CountsViewPane(controller);
-                Platform.runLater(() -> countsToggle.setSelected(true));
+                view = new CountsViewPane(controller);
+                Platform.runLater(() -> {
+                    countsToggle.setSelected(true);
+                    //TODO: should remove listeners from events tree
+                });
                 break;
             case DETAIL:
                 DetailViewPane detailViewPane = new DetailViewPane(controller);
@@ -600,34 +606,34 @@ final public class VisualizationPanel extends BorderPane {
                     detailViewPane.setHighLightedEvents(eventsTree.getSelectedEvents());
                     eventsTree.setDetailViewPane(detailViewPane);
                 });
-                vizPane = detailViewPane;
+                view = detailViewPane;
                 break;
             default:
-                throw new IllegalArgumentException("Unknown VisualizationMode: " + visMode.toString());
+                throw new IllegalArgumentException("Unknown VisualizationMode: " + viewMode.toString());
         }
 
         //Set the new AbstractVisualizationPane as the one hosted by this VisualizationPanel.
         Platform.runLater(() -> {
             //clear out old vis.
-            if (visualization != null) {
-                toolBar.getItems().removeAll(visualization.getSettingsNodes());
-                visualization.dispose();
+            if (hostedView != null) {
+                toolBar.getItems().removeAll(hostedView.getSettingsNodes());
+                hostedView.dispose();
             }
 
-            visualization = vizPane;
+            hostedView = view;
             //setup new vis.
             ActionUtils.configureButton(new Refresh(), refreshButton);//configure new refresh action for new visualization
-            visualization.refresh();
-            toolBar.getItems().addAll(2, vizPane.getSettingsNodes());
-            notificationPane.setContent(visualization);
+            hostedView.refresh();
+            toolBar.getItems().addAll(2, view.getSettingsNodes());
+            notificationPane.setContent(hostedView);
 
             //listen to has events property and show "dialog" if it is false.
-            visualization.hasVisibleEventsProperty().addListener(hasEvents -> {
-                notificationPane.setContent(visualization.hasVisibleEvents()
-                        ? visualization
-                        : new StackPane(visualization,
+            hostedView.hasVisibleEventsProperty().addListener(hasEvents -> {
+                notificationPane.setContent(hostedView.hasVisibleEvents()
+                        ? hostedView
+                        : new StackPane(hostedView,
                                 NO_EVENTS_BACKGROUND,
-                                new NoEventsDialog(() -> notificationPane.setContent(visualization))
+                                new NoEventsDialog(() -> notificationPane.setContent(hostedView))
                         )
                 );
             });
@@ -773,7 +779,7 @@ final public class VisualizationPanel extends BorderPane {
             setLongText(Bundle.VisualizationPanel_refresh_longText());
             setGraphic(new ImageView(REFRESH));
             setEventHandler(actionEvent -> filteredEvents.postRefreshRequest());
-            disabledProperty().bind(visualization.outOfDateProperty().not());
+            disabledProperty().bind(hostedView.outOfDateProperty().not());
         }
     }
 }
