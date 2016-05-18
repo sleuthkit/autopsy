@@ -31,9 +31,10 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.CarvedFileContainer;
+import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskFileRange;
 import org.w3c.dom.Document;
@@ -70,7 +71,7 @@ class PhotoRecCarverOutputParser {
      * @throws FileNotFoundException
      * @throws IOException
      */
-    List<LayoutFile> parse(File xmlInputFile, long id, AbstractFile af) throws FileNotFoundException, IOException {
+    List<LayoutFile> parse(File xmlInputFile, long id, AbstractFile af, IngestJobContext context) throws FileNotFoundException, IOException {
         try {
             final Document doc = XMLUtil.loadDoc(PhotoRecCarverOutputParser.class, xmlInputFile.toString());
             if (doc == null) {
@@ -102,6 +103,9 @@ class PhotoRecCarverOutputParser {
             List<CarvedFileContainer> carvedFileContainer = new ArrayList<>();
 
             for (int fileIndex = 0; fileIndex < numberOfFiles; ++fileIndex) {
+                if (context.fileIngestIsCancelled()) {
+                    return fileManager.addCarvedFiles(carvedFileContainer);
+                }
                 entry = (Element) fileObjects.item(fileIndex);
                 fileNames = entry.getElementsByTagName("filename"); //NON-NLS
                 fileSizes = entry.getElementsByTagName("filesize"); //NON-NLS

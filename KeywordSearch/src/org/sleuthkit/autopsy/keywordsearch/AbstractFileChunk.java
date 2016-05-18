@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.nio.charset.Charset;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 

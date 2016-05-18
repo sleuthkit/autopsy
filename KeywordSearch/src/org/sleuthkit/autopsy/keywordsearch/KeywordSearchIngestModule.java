@@ -244,6 +244,9 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
         // Start searching if it hasn't started already
         if (!startedSearching) {
+            if (context.fileIngestIsCancelled()) {
+                return ProcessResult.OK;
+            }
             List<String> keywordListNames = settings.getNamesOfEnabledKeyWordLists();
             SearchRunner.getInstance().startJob(jobId, dataSourceId, keywordListNames);
             startedSearching = true;
@@ -485,6 +488,9 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
             final long size = aFile.getSize();
             //if not to index content, or a dir, or 0 content, index meta data only
+            if (context.fileIngestIsCancelled()) {
+                return;
+            }
             if ((indexContent == false || aFile.isDir() || size == 0)) {
                 try {
                     ingester.ingest(aFile, false); //meta-data only
@@ -503,6 +509,9 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 logger.log(Level.SEVERE, String.format("Could not detect format using fileTypeDetector for file: %s", aFile), ex); //NON-NLS
                 return;
             }
+            if (context.fileIngestIsCancelled()) {
+                return;
+            }
 
             // we skip archive formats that are opened by the archive module. 
             // @@@ We could have a check here to see if the archive module was enabled though...
@@ -518,27 +527,26 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             }
 
             boolean wasTextAdded = false;
-            if (isTextExtractSupported(aFile, fileType)) {
-                //extract text with one of the extractors, divide into chunks and index with Solr
-                try {
-                    //logger.log(Level.INFO, "indexing: " + aFile.getName());
-                    if (!extractTextAndIndex(aFile, fileType)) {
-                        logger.log(Level.WARNING, "Failed to extract text and ingest, file ''{0}'' (id: {1}).", new Object[]{aFile.getName(), aFile.getId()}); //NON-NLS
-                        putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
-                    } else {
-                        putIngestStatus(jobId, aFile.getId(), IngestStatus.TEXT_INGESTED);
-                        wasTextAdded = true;
-                    }
 
-                } catch (IngesterException e) {
-                    logger.log(Level.INFO, "Could not extract text with Tika, " + aFile.getId() + ", " //NON-NLS
-                            + aFile.getName(), e);
-                    putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
-                } catch (Exception e) {
-                    logger.log(Level.WARNING, "Error extracting text with Tika, " + aFile.getId() + ", " //NON-NLS
-                            + aFile.getName(), e);
+            //extract text with one of the extractors, divide into chunks and index with Solr
+            try {
+                //logger.log(Level.INFO, "indexing: " + aFile.getName());
+                if (!extractTextAndIndex(aFile, fileType)) {
+                    logger.log(Level.WARNING, "Failed to extract text and ingest, file ''{0}'' (id: {1}).", new Object[]{aFile.getName(), aFile.getId()}); //NON-NLS
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
+                } else {
+                    putIngestStatus(jobId, aFile.getId(), IngestStatus.TEXT_INGESTED);
+                    wasTextAdded = true;
                 }
+
+            } catch (IngesterException e) {
+                logger.log(Level.INFO, "Could not extract text with Tika, " + aFile.getId() + ", " //NON-NLS
+                        + aFile.getName(), e);
+                putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
+            } catch (Exception e) {
+                logger.log(Level.WARNING, "Error extracting text with Tika, " + aFile.getId() + ", " //NON-NLS
+                        + aFile.getName(), e);
+                putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
             }
 
             // if it wasn't supported or had an error, default to strings

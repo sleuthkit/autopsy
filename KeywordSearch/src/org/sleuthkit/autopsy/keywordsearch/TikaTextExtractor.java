@@ -157,6 +157,20 @@ class TikaTextExtractor implements TextExtractor {
             boolean eof = false;
             //we read max 1024 chars at time, this seems to max what this Reader would return
             while (!eof) {
+                if (context.fileIngestIsCancelled()) {
+                    try {
+                        stream.close();
+                    } catch (IOException ex) {
+                        logger.log(Level.WARNING, "Unable to close Tika content stream from " + sourceFile.getId(), ex); //NON-NLS
+                    }
+                    try {
+                        if (reader != null) {
+                            reader.close();
+                        }
+                    } catch (IOException ex) {
+                        logger.log(Level.WARNING, "Unable to close content reader from " + sourceFile.getId(), ex); //NON-NLS
+                    }
+                }
                 readSize = reader.read(textChunkBuf, 0, SINGLE_READ_CHARS);
                 if (readSize == -1) {
                     eof = true;
@@ -248,7 +262,9 @@ class TikaTextExtractor implements TextExtractor {
         }
 
         //after all chunks, ingest the parent file without content itself, and store numChunks
-        ingester.ingest(this);
+        if (!context.fileIngestIsCancelled()) {
+            ingester.ingest(this);
+        }
 
         return success;
     }

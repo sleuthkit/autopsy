@@ -153,8 +153,10 @@ class StringsTextExtractor implements TextExtractor {
                 //debug.close();    
             }
 
-            //after all chunks, ingest the parent file without content itself, and store numChunks
-            ingester.ingest(this);
+            if (!context.fileIngestIsCancelled()) {
+                //after all chunks, ingest the parent file without content itself, and store numChunks
+                ingester.ingest(this);
+            }
 
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Unable to read input stream to divide and send to Solr, file: " + sourceFile.getName(), ex); //NON-NLS
