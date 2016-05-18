@@ -27,15 +27,10 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -132,29 +127,19 @@ public class EventRootNode extends DisplayableItemNode {
                  */
                 return new TooManyNode(eventIDs.size());
             } else {
-                /*
-                 * look up the event by id and creata an EventNode with the
-                 * appropriate data in the lookup.
-                 */
-                final SingleEvent eventById = filteredEvents.getEventById(eventID);
                 try {
-                    SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
-                    AbstractFile file = sleuthkitCase.getAbstractFileById(eventById.getFileID());
-                    if (file != null) {
-                        if (eventById.getArtifactID().isPresent()) {
-                            BlackboardArtifact blackboardArtifact = sleuthkitCase.getBlackboardArtifact(eventById.getArtifactID().get());
-                            return new EventNode(eventById, file, blackboardArtifact);
-                        } else {
-                            return new EventNode(eventById, file);
-                        }
-                    } else {
-                        //This should never happen in normal operations
-                        LOGGER.log(Level.WARNING, "Failed to lookup sleuthkit object backing TimeLineEvent."); // NON-NLS
-                        return null;
-                    }
-                } catch (IllegalStateException | TskCoreException ex) {
-                    //if some how the case was closed or ther is another unspecified exception, just bail out with a warning.
-                    LOGGER.log(Level.WARNING, "Failed to lookup sleuthkit object backing TimeLineEvent.", ex); // NON-NLS
+                    return EventNode.createEventNode(eventID, filteredEvents);
+                } catch (IllegalStateException ex) {
+                    //Since the case is closed, the user probably doesn't care about this, just log it as a precaution.
+                    LOGGER.log(Level.SEVERE, "There was no case open to lookup the Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
+                    return null;
+                } catch (TskCoreException ex) {
+                    /*
+                     * Just log it: There might be lots of these errors, and we
+                     * don't want to flood the user with notifications. It will
+                     * be obvious the UI is broken anyways
+                     */
+                    LOGGER.log(Level.SEVERE, "Failed to lookup Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
                     return null;
                 }
             }
