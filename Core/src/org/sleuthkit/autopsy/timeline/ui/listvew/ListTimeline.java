@@ -18,13 +18,19 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.listvew;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.logging.Level;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
@@ -32,16 +38,29 @@ import javafx.scene.control.TableView;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.util.Callback;
+import javax.swing.Action;
+import javax.swing.MenuElement;
+import org.controlsfx.control.Notifications;
+import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
+import org.openide.util.actions.Presenter;
+import org.sleuthkit.autopsy.corecomponentinterfaces.ContextMenuActionsProvider;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
+import org.sleuthkit.autopsy.timeline.SwingMenuItemAdapter;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
+import org.sleuthkit.autopsy.timeline.explorernodes.EventNode;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
  */
-class ListChart extends BorderPane {
+class ListTimeline extends BorderPane {
+
+    private static final Logger LOGGER = Logger.getLogger(ListTimeline.class.getName());
 
     @FXML
     private Label eventCountLabel;
@@ -74,9 +93,9 @@ class ListChart extends BorderPane {
     @FXML
     private TableColumn<Long, Long> knownColumn;
 
-    ListChart(TimeLineController controller) {
+    ListTimeline(TimeLineController controller) {
         this.controller = controller;
-        FXMLConstructor.construct(this, ListChart.class, "ListViewChart.fxml");
+        FXMLConstructor.construct(this, ListTimeline.class, "ListTimeline.fxml");
     }
 
     @FXML
@@ -145,9 +164,12 @@ class ListChart extends BorderPane {
             super.updateItem(item, empty);
             if (empty || item == null) {
                 setGraphic(null);
+                setContextMenu(null);
             } else {
                 setGraphic(new ImageView(getEvent().getEventType().getFXImage()));
+
             }
+
         }
     }
 
@@ -249,6 +271,8 @@ class ListChart extends BorderPane {
             return event;
         }
 
+        @NbBundle.Messages({
+            "ListChart.errorMsg=There was a problem getting the content for the selected event."})
         @Override
         protected void updateItem(Long item, boolean empty) {
             super.updateItem(item, empty);
@@ -257,6 +281,40 @@ class ListChart extends BorderPane {
                 event = null;
             } else {
                 event = controller.getEventsModel().getEventById(item);
+                try {
+                    EventNode node = EventNode.createEventNode(item, controller.getEventsModel());
+
+                    List<MenuItem> menuItems = new ArrayList<>();
+
+                    for (MenuElement element : node.getContextMenu().getSubElements()) {
+                        menuItems.add(SwingMenuItemAdapter.create(element));
+                    };
+
+                    Collection<? extends ContextMenuActionsProvider> menuProviders = Lookup.getDefault().lookupAll(ContextMenuActionsProvider.class);
+
+                    for (ContextMenuActionsProvider provider : menuProviders) {
+                        for (final Action action : provider.getActions()) {
+                            if (action instanceof Presenter.Popup) {
+                                Presenter.Popup popUpPresenter = (Presenter.Popup) action;
+                                menuItems.add(SwingMenuItemAdapter.create(popUpPresenter.getPopupPresenter()));
+                            }
+                        }
+                    }
+
+                    setContextMenu(new ContextMenu(menuItems.toArray(new MenuItem[menuItems.size()])));
+
+                } catch (IllegalStateException ex) {
+                    //Since the case is closed, the user probably doesn't care about this, just log it as a precaution.
+                    LOGGER.log(Level.SEVERE, "There was no case open to lookup the Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
+                } catch (TskCoreException ex) {
+                    LOGGER.log(Level.SEVERE, "Failed to lookup Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
+                    Platform.runLater(() -> {
+                        Notifications.create()
+                                .owner(getScene().getWindow())
+                                .text(Bundle.ListChart_errorMsg())
+                                .showError();
+                    });
+                }
             }
         }
     }

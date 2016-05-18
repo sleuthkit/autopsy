@@ -16,28 +16,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.imagegallery.actions;
+package org.sleuthkit.autopsy.timeline;
 
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.SeparatorMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.MenuElement;
+import javax.swing.SwingUtilities;
 
 //TODO: move this into CoreUtils? -jm
 public class SwingMenuItemAdapter extends MenuItem {
 
-    JMenuItem jMenuItem;
-
     SwingMenuItemAdapter(final JMenuItem jMenuItem) {
         super(jMenuItem.getText());
-        this.jMenuItem = jMenuItem;
-        setOnAction(actionEvent -> jMenuItem.doClick());
+        setOnAction(actionEvent -> SwingUtilities.invokeLater(jMenuItem::doClick));
     }
 
     public static MenuItem create(MenuElement jmenuItem) {
-        if (jmenuItem instanceof JMenu) {
+        if (jmenuItem == null) {
+            return new SeparatorMenuItem();
+        } else if (jmenuItem instanceof JMenu) {
             return new SwingMenuAdapter((JMenu) jmenuItem);
         } else if (jmenuItem instanceof JPopupMenu) {
             return new SwingMenuAdapter((JPopupMenu) jmenuItem);
@@ -46,40 +47,34 @@ public class SwingMenuItemAdapter extends MenuItem {
         }
 
     }
-}
 
-class SwingMenuAdapter extends Menu {
+    private static class SwingMenuAdapter extends Menu {
 
-    private final MenuElement jMenu;
+        SwingMenuAdapter(final JMenu jMenu) {
+            super(jMenu.getText());
+            buildChildren(jMenu);
+        }
 
-    SwingMenuAdapter(final JMenu jMenu) {
-        super(jMenu.getText());
-        this.jMenu = jMenu;
-        buildChildren(jMenu);
+        SwingMenuAdapter(JPopupMenu jPopupMenu) {
+            super(jPopupMenu.getLabel());
+            buildChildren(jPopupMenu);
+        }
 
-    }
+        private void buildChildren(MenuElement jMenu) {
 
-    SwingMenuAdapter(JPopupMenu jPopupMenu) {
-        super(jPopupMenu.getLabel());
-        this.jMenu = jPopupMenu;
-
-        buildChildren(jMenu);
-    }
-
-    private void buildChildren(MenuElement jMenu) {
-
-        for (MenuElement menuE : jMenu.getSubElements()) {
-            if (menuE instanceof JMenu) {
-                getItems().add(SwingMenuItemAdapter.create((JMenu) menuE));
-            } else if (menuE instanceof JMenuItem) {
-                getItems().add(SwingMenuItemAdapter.create((JMenuItem) menuE));
-            } else if (menuE instanceof JPopupMenu) {
-                buildChildren(menuE);
-            } else {
-
-                System.out.println(menuE.toString());
+            for (MenuElement menuE : jMenu.getSubElements()) {
+                if (menuE instanceof JMenu) {
+                    getItems().add(SwingMenuItemAdapter.create((JMenu) menuE));
+                } else if (menuE instanceof JMenuItem) {
+                    getItems().add(SwingMenuItemAdapter.create((JMenuItem) menuE));
+                } else if (menuE instanceof JPopupMenu) {
+                    buildChildren(menuE);
+                } else {
+                    System.out.println(menuE.toString());
 //                throw new UnsupportedOperationException();
+                }
             }
         }
     }
+
 }

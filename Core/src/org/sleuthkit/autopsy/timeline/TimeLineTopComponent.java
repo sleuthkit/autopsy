@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.timeline;
 
 import com.google.common.collect.Iterables;
 import java.awt.BorderLayout;
+import java.beans.PropertyVetoException;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
@@ -41,7 +42,11 @@ import javax.swing.SwingUtilities;
 import org.controlsfx.control.Notifications;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
+import org.openide.nodes.AbstractNode;
+import org.openide.nodes.Children;
+import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
+import org.openide.util.Utilities;
 import org.openide.windows.Mode;
 import org.openide.windows.TopComponent;
 import static org.openide.windows.TopComponent.PROP_UNDOCKING_DISABLED;
@@ -60,6 +65,7 @@ import org.sleuthkit.autopsy.timeline.ui.VisualizationPanel;
 import org.sleuthkit.autopsy.timeline.ui.detailview.tree.EventsTree;
 import org.sleuthkit.autopsy.timeline.ui.filtering.FilterSetPanel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomSettingsPane;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -79,7 +85,6 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
     private final TimeLineResultView tlResultView;
 
     private final ExplorerManager em = new ExplorerManager();
-
     private final TimeLineController controller;
 
     @NbBundle.Messages({
@@ -93,7 +98,23 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
             if (controller.getSelectedEventIDs().size() == 1) {
                 try {
                     EventNode eventNode = EventNode.createEventNode(Iterables.getOnlyElement(controller.getSelectedEventIDs()), controller.getEventsModel());
-                    SwingUtilities.invokeLater(() -> contentViewerPanel.setNode(eventNode));
+                    SwingUtilities.invokeLater(() -> {
+
+                        Node[] eventNodes = new Node[]{eventNode};
+                        Children.Array children = new Children.Array();
+                        children.add(eventNodes);
+
+                        em.setRootContext(new AbstractNode(children));
+                        try {
+                            em.setSelectedNodes(eventNodes);
+                            System.out.println(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+
+                        } catch (PropertyVetoException ex) {
+                            LOGGER.log(Level.SEVERE, "Explorer manager selection was vetoed.", ex); //NON-NLS
+                        }
+                        contentViewerPanel.setNode(eventNode);
+                    });
+
                 } catch (IllegalStateException ex) {
                     //Since the case is closed, the user probably doesn't care about this, just log it as a precaution.
                     LOGGER.log(Level.SEVERE, "There was no case open to lookup the Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
@@ -116,7 +137,6 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
         initComponents();
         this.controller = controller;
         associateLookup(ExplorerUtils.createLookup(em, getActionMap()));
-
         setName(NbBundle.getMessage(TimeLineTopComponent.class, "CTL_TimeLineTopComponent"));
         setToolTipText(NbBundle.getMessage(TimeLineTopComponent.class, "HINT_TimeLineTopComponent"));
         setIcon(WindowManager.getDefault().getMainWindow().getIconImage()); //use the same icon as main application
