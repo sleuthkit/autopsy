@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012-2015 Basis Technology Corp.
+ * Copyright 2012-2016 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -29,6 +29,7 @@ import java.util.List;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
  * A class to manage various services.
@@ -41,6 +42,20 @@ public class Services implements Closeable {
     private final KeywordSearchService keywordSearchService;
     private final Blackboard blackboard;
 
+    Services(Case currentCase, SleuthkitCase caseDb) {
+        fileManager = new FileManager(currentCase, caseDb);
+        services.add(fileManager);
+
+        tagsManager = new TagsManager(caseDb);
+        services.add(tagsManager);
+
+        keywordSearchService = Lookup.getDefault().lookup(KeywordSearchService.class);
+        services.add(keywordSearchService);
+        
+        blackboard = new Blackboard();
+        services.add(blackboard);        
+    }
+    
     public Services(SleuthkitCase tskCase) {
         fileManager = new FileManager(tskCase);
         services.add(fileManager);
