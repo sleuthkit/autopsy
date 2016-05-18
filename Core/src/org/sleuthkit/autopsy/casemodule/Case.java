@@ -1619,42 +1619,15 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     /**
-     * Deletes reports from the case - deletes it from the disk as well as the
-     * database.
+     * Deletes reports from the case.
      *
-     * @param reports        Collection of Report to be deleted from the case.
-     * @param deleteFromDisk Set true to perform reports file deletion from
-     *                       disk.
+     * @param reports Collection of Report to be deleted from the case.
      *
-     * @throws TskCoreException
+     * @throws TskCoreException If there is a problem deleting a report.
      */
-    public void deleteReports(Collection<? extends Report> reports, boolean deleteFromDisk) throws TskCoreException {
+    public void deleteReports(Collection<? extends Report> reports) throws TskCoreException {
         for (Report report : reports) {
-
-            // delete from the database.
             this.db.deleteReport(report);
-
-            if (deleteFromDisk) {
-                String reportPath = report.getPath();
-
-                // delete from the disk.
-                File toDelete = new File(reportPath);  
-                if (toDelete.isDirectory()) {
-                    try {
-                        FileUtils.deleteDirectory(toDelete);
-                    } catch (IOException | SecurityException ex) {
-                        logger.log(Level.WARNING, "Unable to delete the report from the disk.", ex);
-                        JOptionPane.showMessageDialog(null, NbBundle.getMessage(Case.class, "Case.deleteReports.deleteFromDiskException.msg", report.getReportName(), reportPath));
-                    }
-                } else {
-                    boolean deleted = toDelete.delete();
-                    if (!deleted) {
-                        logger.log(Level.WARNING, "Unable to delete the report from the disk.");
-                        JOptionPane.showMessageDialog(null, NbBundle.getMessage(Case.class, "Case.deleteReports.deleteFromDiskException.msg", report.getReportName(), reportPath));
-                    }
-                }
-
-            }
             eventPublisher.publish(new AutopsyEvent(Events.REPORT_DELETED.toString(), null, null));
         }
     }
@@ -1687,4 +1660,19 @@ public class Case implements SleuthkitCase.ErrorObserver {
         return getCaseMetadata().getFilePath().toString();
     }
 
+    /**
+     * Deletes reports from the case.
+     *
+     * @param reports        Collection of Report to be deleted from the case.
+     * @param deleteFromDisk No longer supported - ignored. 
+     *
+     * @throws TskCoreException
+     * @deprecated Use deleteReports(Collection<? extends Report> reports)
+     * instead.
+     */
+    @Deprecated
+    public void deleteReports(Collection<? extends Report> reports, boolean deleteFromDisk) throws TskCoreException {
+        deleteReports(reports);
+    }
+    
 }

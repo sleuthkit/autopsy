@@ -76,6 +76,8 @@ public class HashDbManager implements PropertyChangeListener {
 
     /**
      * Gets the singleton instance of this class.
+     *
+     * @return HashDbManager The manager
      */
     public static synchronized HashDbManager getInstance() {
         if (instance == null) {
@@ -139,6 +141,13 @@ public class HashDbManager implements PropertyChangeListener {
      */
     public synchronized HashDb addExistingHashDatabase(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType) throws HashDbManagerException {
         HashDb hashDb = null;
+        hashDb = this.addExistingHashDatabaseNoSave(hashSetName, path, searchDuringIngest, sendIngestMessages, knownFilesType);
+        this.save();
+        return hashDb;
+    }
+
+    synchronized HashDb addExistingHashDatabaseNoSave(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType) throws HashDbManagerException {
+        HashDb hashDb = null;
         try {
             if (!new File(path).exists()) {
                 throw new HashDbManagerException(NbBundle.getMessage(HashDbManager.class, "HashDbManager.hashDbDoesNotExistExceptionMsg", path));
@@ -156,16 +165,6 @@ public class HashDbManager implements PropertyChangeListener {
         } catch (TskCoreException ex) {
             throw new HashDbManagerException(ex.getMessage());
         }
-
-        try {
-            // Save the configuration
-            if (!HashLookupSettings.writeSettings(new HashLookupSettings(this.knownHashSets, this.knownBadHashSets))) {
-                throw new HashDbManagerException(NbBundle.getMessage(this.getClass(), "HashDbManager.saveErrorExceptionMsg"));
-            }
-        } catch (HashLookupSettings.HashLookupSettingsException ex) {
-            throw new HashDbManagerException(NbBundle.getMessage(this.getClass(), "HashDbManager.saveErrorExceptionMsg"));
-        }
-
         return hashDb;
     }
 
@@ -191,6 +190,16 @@ public class HashDbManager implements PropertyChangeListener {
             HashDb.KnownFilesType knownFilesType) throws HashDbManagerException {
 
         HashDb hashDb = null;
+        hashDb = this.addNewHashDatabaseNoSave(hashSetName, path, searchDuringIngest, sendIngestMessages, knownFilesType);
+
+        this.save();
+
+        return hashDb;
+    }
+
+    public synchronized HashDb addNewHashDatabaseNoSave(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages,
+            HashDb.KnownFilesType knownFilesType) throws HashDbManagerException {
+        HashDb hashDb = null;
         try {
             File file = new File(path);
             if (file.exists()) {
@@ -213,16 +222,6 @@ public class HashDbManager implements PropertyChangeListener {
         } catch (TskCoreException ex) {
             throw new HashDbManagerException(ex.getMessage());
         }
-
-        try {
-            // Save the configuration
-            if (!HashLookupSettings.writeSettings(new HashLookupSettings(this.knownHashSets, this.knownBadHashSets))) {
-                throw new HashDbManagerException(NbBundle.getMessage(this.getClass(), "HashDbManager.saveErrorExceptionMsg"));
-            }
-        } catch (HashLookupSettings.HashLookupSettingsException ex) {
-            throw new HashDbManagerException(NbBundle.getMessage(this.getClass(), "HashDbManager.saveErrorExceptionMsg"));
-        }
-
         return hashDb;
     }
 
@@ -297,6 +296,11 @@ public class HashDbManager implements PropertyChangeListener {
      * @throws HashDbManagerException
      */
     public synchronized void removeHashDatabase(HashDb hashDb) throws HashDbManagerException {
+        this.removeHashDatabaseNoSave(hashDb);
+        this.save();
+    }
+    
+    public synchronized void removeHashDatabaseNoSave(HashDb hashDb) throws HashDbManagerException {
         // Don't remove a database if ingest is running
         boolean ingestIsRunning = IngestManager.getInstance().isIngestRunning();
         if (ingestIsRunning) {
@@ -340,6 +344,9 @@ public class HashDbManager implements PropertyChangeListener {
                     NbBundle.getMessage(this.getClass(), "HashDbManager.moduleErrorListeningToUpdatesMsg"),
                     MessageNotifyUtil.MessageType.ERROR);
         }
+    }
+
+    void save() throws HashDbManagerException {
         try {
             if (!HashLookupSettings.writeSettings(new HashLookupSettings(this.knownHashSets, this.knownBadHashSets))) {
                 throw new HashDbManagerException(NbBundle.getMessage(this.getClass(), "HashDbManager.saveErrorExceptionMsg"));
@@ -408,7 +415,6 @@ public class HashDbManager implements PropertyChangeListener {
         }
         return updateableDbs;
     }
-
 
     /**
      * Restores the last saved hash sets configuration. This supports
