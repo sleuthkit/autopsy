@@ -22,6 +22,7 @@ import com.google.common.collect.Iterables;
 import java.awt.BorderLayout;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -37,6 +38,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javax.swing.SwingUtilities;
+import org.controlsfx.control.Notifications;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.util.NbBundle;
@@ -58,6 +60,7 @@ import org.sleuthkit.autopsy.timeline.ui.VisualizationPanel;
 import org.sleuthkit.autopsy.timeline.ui.detailview.tree.EventsTree;
 import org.sleuthkit.autopsy.timeline.ui.filtering.FilterSetPanel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomSettingsPane;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * TopComponent for the Timeline feature.
@@ -71,7 +74,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
 
     private static final Logger LOGGER = Logger.getLogger(TimeLineTopComponent.class.getName());
 
-    private final DataContentPanel dataContentPanel;
+    private final DataContentPanel contentViewerPanel;
 
     private final TimeLineResultView tlResultView;
 
@@ -79,17 +82,32 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
 
     private final TimeLineController controller;
 
+    @NbBundle.Messages({
+        "TimelineTopComponent.selectedEventListener.errorMsg=There was a problem getting the content for the selected event."})
     /**
      * Listener that drives the ContentViewer when in List ViewMode.
      */
-    private final InvalidationListener selectionListener = new InvalidationListener() {
+    private final InvalidationListener selectedEventListener = new InvalidationListener() {
         @Override
         public void invalidated(Observable observable) {
             if (controller.getSelectedEventIDs().size() == 1) {
-                EventNode eventNode = EventNode.createEventNode(Iterables.getOnlyElement(controller.getSelectedEventIDs()), controller.getEventsModel());
-                SwingUtilities.invokeLater(() -> dataContentPanel.setNode(eventNode));
+                try {
+                    EventNode eventNode = EventNode.createEventNode(Iterables.getOnlyElement(controller.getSelectedEventIDs()), controller.getEventsModel());
+                    SwingUtilities.invokeLater(() -> contentViewerPanel.setNode(eventNode));
+                } catch (IllegalStateException ex) {
+                    //Since the case is closed, the user probably doesn't care about this, just log it as a precaution.
+                    LOGGER.log(Level.SEVERE, "There was no case open to lookup the Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
+                } catch (TskCoreException ex) {
+                    LOGGER.log(Level.SEVERE, "Failed to lookup Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
+                    Platform.runLater(() -> {
+                        Notifications.create()
+                                .owner(jFXVizPanel.getScene().getWindow())
+                                .text(Bundle.TimelineTopComponent_selectedEventListener_errorMsg())
+                                .showError();
+                    });
+                }
             } else {
-                SwingUtilities.invokeLater(() -> dataContentPanel.setNode(null));
+                SwingUtilities.invokeLater(() -> contentViewerPanel.setNode(null));
             }
         }
     };
@@ -103,9 +121,9 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
         setToolTipText(NbBundle.getMessage(TimeLineTopComponent.class, "HINT_TimeLineTopComponent"));
         setIcon(WindowManager.getDefault().getMainWindow().getIconImage()); //use the same icon as main application
 
-        dataContentPanel = DataContentPanel.createInstance();
-        this.contentViewerContainerPanel.add(dataContentPanel, BorderLayout.CENTER);
-        tlResultView = new TimeLineResultView(controller, dataContentPanel);
+        contentViewerPanel = DataContentPanel.createInstance();
+        this.contentViewerContainerPanel.add(contentViewerPanel, BorderLayout.CENTER);
+        tlResultView = new TimeLineResultView(controller, contentViewerPanel);
         final DataResultPanel dataResultPanel = tlResultView.getDataResultPanel();
         this.resultContainerPanel.add(dataResultPanel, BorderLayout.CENTER);
         dataResultPanel.open();
@@ -127,7 +145,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
                             lowerSplitXPane.add(contentViewerContainerPanel);
                         }
                     });
-                    controller.getSelectedEventIDs().removeListener(selectionListener);
+                    controller.getSelectedEventIDs().removeListener(selectedEventListener);
                     break;
                 case LIST:
                     /*
@@ -139,7 +157,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
                         splitYPane.add(contentViewerContainerPanel);
                         dataResultPanel.setNode(null);
                     });
-                    controller.getSelectedEventIDs().addListener(selectionListener);
+                    controller.getSelectedEventIDs().addListener(selectedEventListener);
                     break;
                 default:
                     throw new UnsupportedOperationException("Unknown ViewMode: " + controller.getViewMode());

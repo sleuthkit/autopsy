@@ -167,7 +167,7 @@ public class EventNode extends DisplayableItemNode {
     }
 
     /**
-     * Factory method to create an EventNode form the event ID and the events
+     * Factory method to create an EventNode from the event ID and the events
      * model.
      *
      * @param eventID     The ID of the event this node is for.
@@ -176,31 +176,21 @@ public class EventNode extends DisplayableItemNode {
      * @return An EventNode with the file (and artifact) backing this event in
      *         its lookup.
      */
-    public static EventNode createEventNode(final Long eventID, FilteredEventsModel eventsModel) {
+    public static EventNode createEventNode(final Long eventID, FilteredEventsModel eventsModel) throws TskCoreException, IllegalStateException {
         /*
          * Look up the event by id and creata an EventNode with the appropriate
          * data in the lookup.
          */
         final SingleEvent eventById = eventsModel.getEventById(eventID);
-        try {
-            SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
-            AbstractFile file = sleuthkitCase.getAbstractFileById(eventById.getFileID());
-            if (file != null) {
-                if (eventById.getArtifactID().isPresent()) {
-                    BlackboardArtifact blackboardArtifact = sleuthkitCase.getBlackboardArtifact(eventById.getArtifactID().get());
-                    return new EventNode(eventById, file, blackboardArtifact);
-                } else {
-                    return new EventNode(eventById, file);
-                }
-            } else {
-                //This should never happen in normal operations
-                LOGGER.log(Level.WARNING, "Failed to lookup sleuthkit object backing TimeLineEvent."); // NON-NLS
-                return null;
-            }
-        } catch (IllegalStateException | TskCoreException ex) {
-            //if some how the case was closed or ther is another unspecified exception, just bail out with a warning.
-            LOGGER.log(Level.WARNING, "Failed to lookup sleuthkit object backing TimeLineEvent.", ex); // NON-NLS
-            return null;
+
+        SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
+        AbstractFile file = sleuthkitCase.getAbstractFileById(eventById.getFileID());
+
+        if (eventById.getArtifactID().isPresent()) {
+            BlackboardArtifact blackboardArtifact = sleuthkitCase.getBlackboardArtifact(eventById.getArtifactID().get());
+            return new EventNode(eventById, file, blackboardArtifact);
+        } else {
+            return new EventNode(eventById, file);
         }
     }
 }
