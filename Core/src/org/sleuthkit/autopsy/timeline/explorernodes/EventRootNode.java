@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.timeline.explorernodes;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.logging.Level;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -30,6 +31,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Root Explorer node to represent events.
@@ -125,7 +127,21 @@ public class EventRootNode extends DisplayableItemNode {
                  */
                 return new TooManyNode(eventIDs.size());
             } else {
-                return EventNode.createEventNode(eventID, filteredEvents);
+                try {
+                    return EventNode.createEventNode(eventID, filteredEvents);
+                } catch (IllegalStateException ex) {
+                    //Since the case is closed, the user probably doesn't care about this, just log it as a precaution.
+                    LOGGER.log(Level.SEVERE, "There was no case open to lookup the Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
+                    return null;
+                } catch (TskCoreException ex) {
+                    /*
+                     * Just log it: There might be lots of these errors, and we
+                     * don't want to flood the user with notifications. It will
+                     * be obvious the UI is broken anyways
+                     */
+                    LOGGER.log(Level.SEVERE, "Failed to lookup Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
+                    return null;
+                }
             }
         }
     }
