@@ -23,17 +23,16 @@ import java.awt.Toolkit;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
-
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.JFrame;
 import org.apache.commons.io.FilenameUtils;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDbManagerException;
 
 /**
@@ -332,7 +331,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                 "HashDbImportDatabaseDialog.errorMessage.failedToOpenHashDbMsg",
                 selectedFilePath);
         try {
-            selectedHashDb = HashDbManager.getInstance().addExistingHashDatabase(hashSetNameTextField.getText(), selectedFilePath, true, sendIngestMessagesCheckbox.isSelected(), type);
+            selectedHashDb = HashDbManager.getInstance().addExistingHashDatabaseNoSave(hashSetNameTextField.getText(), selectedFilePath, true, sendIngestMessagesCheckbox.isSelected(), type);
         } catch (HashDbManagerException ex) {
             Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
             JOptionPane.showMessageDialog(this,
