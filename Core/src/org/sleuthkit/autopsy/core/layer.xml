@@ -161,7 +161,7 @@
                 <file name="org-sleuthkit-autopsy-casemodule-RecentCasesAction.shadow">
                     <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-RecentCases.instance"/>
                 </file>
-            </folder>            
+            </folder>
             <file name="org-sleuthkit-autopsy-casemodule-CaseCloseAct.shadow">
                 <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-CaseCloseAction.instance"/>
                 <attr name="position" intvalue="103"/>
