@@ -21,9 +21,7 @@ package org.sleuthkit.autopsy.timeline;
 import com.google.common.collect.Iterables;
 import java.beans.PropertyVetoException;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -92,8 +90,6 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
     private final ExplorerManager em = new ExplorerManager();
 
     private final TimeLineController controller;
-
-    private Set<Long> selectedEventIDs = new HashSet<>();
 
     @NbBundle.Messages({
         "TimelineTopComponent.selectedEventListener.errorMsg=There was a problem getting the content for the selected event."})
@@ -351,22 +347,18 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
     }
 
     /**
-     * refresh this view with the events selected in the controller
+     * Update the DataResultPanel with the events selected in the controller.
      */
     private void updateResultView() {
-        Set<Long> newSelectedEventIDs = new HashSet<>(controller.getSelectedEventIDs());
-        if (selectedEventIDs.equals(newSelectedEventIDs) == false) {
-            selectedEventIDs = newSelectedEventIDs;
-            final EventRootNode root = new EventRootNode(
-                    NbBundle.getMessage(this.getClass(), "Timeline.node.root"), selectedEventIDs,
-                    controller.getEventsModel());
+        final EventRootNode root = new EventRootNode(
+                controller.getSelectedEventIDs(),
+                controller.getEventsModel());
 
-            //this must be in edt or exception is thrown
-            SwingUtilities.invokeLater(() -> {
-                dataResultPanel.setPath(getResultViewerSummaryString());
-                dataResultPanel.setNode(root);
-            });
-        }
+        //this must be in edt or exception is thrown
+        SwingUtilities.invokeLater(() -> {
+            dataResultPanel.setPath(getResultViewerSummaryString());
+            dataResultPanel.setNode(root);
+        });
     }
 
     private void updateContentViewer() {
