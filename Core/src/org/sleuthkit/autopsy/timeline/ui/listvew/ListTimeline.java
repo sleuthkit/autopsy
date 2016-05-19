@@ -50,7 +50,6 @@ import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
-import org.sleuthkit.autopsy.timeline.SwingMenuItemAdapter;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.autopsy.timeline.explorernodes.EventNode;
@@ -295,9 +294,9 @@ class ListTimeline extends BorderPane {
                             if (Arrays.asList("&Properties", "Tools").contains(actionName) == false) {
                                 if (element instanceof Presenter.Popup) {
                                     JMenuItem submenu = ((Presenter.Popup) element).getPopupPresenter();
-                                    menuItems.add(SwingMenuItemAdapter.create(submenu));
+                                    menuItems.add(SwingFXMenuUtils.createFXMenu(submenu));
                                 } else {
-                                    menuItems.add(SwingMenuItemAdapter.create(new Actions.MenuItem(element, false)));
+                                    menuItems.add(SwingFXMenuUtils.createFXMenu(new Actions.MenuItem(element, false)));
                                 }
                             }
                         }
