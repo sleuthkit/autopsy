@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 @ActionReference(path = "Menu/Case", position = 1000, separatorBefore = 999)
 @ActionID(id = "org.sleuthkit.autopsy.casemodule.ExitAction", category = "Case")
 
-public class ExitAction implements ActionListener {
+final public class ExitAction implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -42,7 +42,7 @@ public class ExitAction implements ActionListener {
                 currentCase.closeCase();
             }
         } catch (Exception ex) {
-            Logger.getLogger(ExitAction.class.getName()).log(Level.WARNING, "Had a problem closing the case.", ex); //NON-NLS
+            Logger.getLogger(ExitAction.class.getName()).log(Level.SEVERE, "Had a problem closing the case.", ex); //NON-NLS
         } finally {
             LifecycleManager.getDefault().exit();
         }
