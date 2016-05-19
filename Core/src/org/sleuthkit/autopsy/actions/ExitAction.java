@@ -20,11 +20,13 @@ package org.sleuthkit.autopsy.actions;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.logging.Level;
 import org.openide.LifecycleManager;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 @ActionRegistration(displayName = "Exit", iconInMenu = true)
 @ActionReference(path = "Menu/Case", position = 1000, separatorBefore = 999)
@@ -39,7 +41,8 @@ public class ExitAction implements ActionListener {
             if (currentCase != null) {
                 currentCase.closeCase();
             }
-        } catch (Exception ignore) {
+        } catch (Exception ex) {
+            Logger.getLogger(ExitAction.class.getName()).log(Level.WARNING, "Had a problem closing the case.", ex); //NON-NLS
         } finally {
             LifecycleManager.getDefault().exit();
         }
