@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.timeline.ui.listvew;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
@@ -31,6 +32,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
@@ -39,12 +41,11 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.util.Callback;
 import javax.swing.Action;
-import javax.swing.MenuElement;
+import javax.swing.JMenuItem;
 import org.controlsfx.control.Notifications;
-import org.openide.util.Lookup;
+import org.openide.awt.Actions;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter;
-import org.sleuthkit.autopsy.corecomponentinterfaces.ContextMenuActionsProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
@@ -167,9 +168,7 @@ class ListTimeline extends BorderPane {
                 setContextMenu(null);
             } else {
                 setGraphic(new ImageView(getEvent().getEventType().getFXImage()));
-
             }
-
         }
     }
 
@@ -281,28 +280,30 @@ class ListTimeline extends BorderPane {
                 event = null;
             } else {
                 event = controller.getEventsModel().getEventById(item);
+
                 try {
                     EventNode node = EventNode.createEventNode(item, controller.getEventsModel());
-
                     List<MenuItem> menuItems = new ArrayList<>();
 
-                    for (MenuElement element : node.getContextMenu().getSubElements()) {
-                        menuItems.add(SwingMenuItemAdapter.create(element));
-                    };
+                    for (Action element : node.getActions(false)) {
+                        if (element == null) {
+                            menuItems.add(new SeparatorMenuItem());
+                        } else {
+                            String actionName = element.getValue(Action.NAME).toString();
 
-                    Collection<? extends ContextMenuActionsProvider> menuProviders = Lookup.getDefault().lookupAll(ContextMenuActionsProvider.class);
+                            if (Arrays.asList("&Properties", "Tools").contains(actionName) == false) {
 
-                    for (ContextMenuActionsProvider provider : menuProviders) {
-                        for (final Action action : provider.getActions()) {
-                            if (action instanceof Presenter.Popup) {
-                                Presenter.Popup popUpPresenter = (Presenter.Popup) action;
-                                menuItems.add(SwingMenuItemAdapter.create(popUpPresenter.getPopupPresenter()));
+                                if (element instanceof Presenter.Popup) {
+                                    JMenuItem submenu = ((Presenter.Popup) element).getPopupPresenter();
+                                    menuItems.add(SwingMenuItemAdapter.create(submenu));
+                                } else {
+                                    menuItems.add(SwingMenuItemAdapter.create(new Actions.MenuItem(element, false)));
+                                }
                             }
                         }
-                    }
+                    };
 
                     setContextMenu(new ContextMenu(menuItems.toArray(new MenuItem[menuItems.size()])));
-
                 } catch (IllegalStateException ex) {
                     //Since the case is closed, the user probably doesn't care about this, just log it as a precaution.
                     LOGGER.log(Level.SEVERE, "There was no case open to lookup the Sleuthkit object backing a SingleEvent.", ex); // NON-NLS

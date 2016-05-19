@@ -63,15 +63,14 @@ public class SwingMenuItemAdapter extends MenuItem {
         private void buildChildren(MenuElement jMenu) {
 
             for (MenuElement menuE : jMenu.getSubElements()) {
-                if (menuE instanceof JMenu) {
-                    getItems().add(SwingMenuItemAdapter.create((JMenu) menuE));
+                if (menuE == null) {
+                    getItems().add(new SeparatorMenuItem());
                 } else if (menuE instanceof JMenuItem) {
-                    getItems().add(SwingMenuItemAdapter.create((JMenuItem) menuE));
+                    getItems().add(SwingMenuItemAdapter.create(menuE));
                 } else if (menuE instanceof JPopupMenu) {
                     buildChildren(menuE);
                 } else {
-                    System.out.println(menuE.toString());
-//                throw new UnsupportedOperationException();
+                    throw new UnsupportedOperationException();
                 }
             }
         }
