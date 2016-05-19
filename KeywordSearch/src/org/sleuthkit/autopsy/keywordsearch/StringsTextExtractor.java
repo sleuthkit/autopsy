@@ -129,12 +129,8 @@ class StringsTextExtractor implements TextExtractor {
             long readSize;
             while ((readSize = stringStream.read(stringChunkBuf, BOM_LEN, (int) MAX_STRING_CHUNK_SIZE - BOM_LEN)) != -1) {
                 if (context.fileIngestIsCancelled()) {
-                    try {
-                        stringStream.close();
-                    } catch (IOException ex) {
-                        logger.log(Level.WARNING, "Error closing input stream stream, file: " + sourceFile.getName(), ex); //NON-NLS
-                    }
-                    return false;
+                    ingester.ingest(this);
+                    return true;
                 }
                 //FileOutputStream debug = new FileOutputStream("c:\\temp\\" + sourceFile.getName() + Integer.toString(this.numChunks+1));
                 //debug.write(stringChunkBuf, 0, (int)readSize);
@@ -153,10 +149,8 @@ class StringsTextExtractor implements TextExtractor {
                 //debug.close();    
             }
 
-            if (!context.fileIngestIsCancelled()) {
-                //after all chunks, ingest the parent file without content itself, and store numChunks
-                ingester.ingest(this);
-            }
+            //after all chunks, ingest the parent file without content itself, and store numChunks
+            ingester.ingest(this);
 
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Unable to read input stream to divide and send to Solr, file: " + sourceFile.getName(), ex); //NON-NLS

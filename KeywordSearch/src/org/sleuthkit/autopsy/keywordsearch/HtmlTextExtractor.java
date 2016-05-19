@@ -125,19 +125,8 @@ class HtmlTextExtractor implements TextExtractor {
             //we read max 1024 chars at time, this seems to max what this Reader would return
             while (!eof && (readSize = reader.read(textChunkBuf, 0, SINGLE_READ_CHARS)) != -1) {
                 if (context.fileIngestIsCancelled()) {
-                    try {
-                        stream.close();
-                    } catch (IOException ex) {
-                        logger.log(Level.WARNING, "Unable to close content stream from " + sourceFile.getId(), ex); //NON-NLS
-                    }
-                    try {
-                        if (reader != null) {
-                            reader.close();
-                        }
-                    } catch (IOException ex) {
-                        logger.log(Level.WARNING, "Unable to close content reader from " + sourceFile.getId(), ex); //NON-NLS
-                    }
-                    return false;
+                    ingester.ingest(this);
+                    return true;
                 }
                 totalRead += readSize;
 
@@ -216,9 +205,7 @@ class HtmlTextExtractor implements TextExtractor {
         }
 
         //after all chunks, ingest the parent file without content itself, and store numChunks
-        if (!context.fileIngestIsCancelled()) {
-            ingester.ingest(this);
-        }
+        ingester.ingest(this);
         return success;
     }
 

@@ -205,6 +205,12 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                         NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.NotEnoughDiskSpace"));
                 return IngestModule.ProcessResult.ERROR;
             }
+            if (this.context.fileIngestIsCancelled() == true) {
+                // if it was cancelled by the user, result is OK
+                logger.log(Level.INFO, "PhotoRec cancelled by user"); // NON-NLS
+                MessageNotifyUtil.Notify.info(PhotoRecCarverIngestModuleFactory.getModuleName(), NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.cancelledByUser"));
+                return IngestModule.ProcessResult.OK;
+            }
 
             // Write the file to disk.
             long writestart = System.currentTimeMillis();
@@ -262,6 +268,12 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             java.io.File newAuditFile = new java.io.File(Paths.get(outputDirPath.toString(), PHOTOREC_REPORT).toString()); //NON-NLS
             oldAuditFile.renameTo(newAuditFile);
 
+            if (this.context.fileIngestIsCancelled() == true) {
+                // if it was cancelled by the user, result is OK
+                logger.log(Level.INFO, "PhotoRec cancelled by user"); // NON-NLS
+                MessageNotifyUtil.Notify.info(PhotoRecCarverIngestModuleFactory.getModuleName(), NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.cancelledByUser"));
+                return IngestModule.ProcessResult.OK;
+            }
             Path pathToRemove = Paths.get(outputDirPath.toAbsolutePath().toString());
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(pathToRemove)) {
                 for (Path entry : stream) {
@@ -276,6 +288,12 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             // Now that we've cleaned up the folders and data files, parse the xml output file to add carved items into the database
             long calcstart = System.currentTimeMillis();
             PhotoRecCarverOutputParser parser = new PhotoRecCarverOutputParser(outputDirPath);
+            if (this.context.fileIngestIsCancelled() == true) {
+                // if it was cancelled by the user, result is OK
+                logger.log(Level.INFO, "PhotoRec cancelled by user"); // NON-NLS
+                MessageNotifyUtil.Notify.info(PhotoRecCarverIngestModuleFactory.getModuleName(), NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.cancelledByUser"));
+                return IngestModule.ProcessResult.OK;
+            }
             List<LayoutFile> carvedItems = parser.parse(newAuditFile, id, file, this.context);
             long calcdelta = (System.currentTimeMillis() - calcstart);
             totals.totalParsetime.addAndGet(calcdelta);

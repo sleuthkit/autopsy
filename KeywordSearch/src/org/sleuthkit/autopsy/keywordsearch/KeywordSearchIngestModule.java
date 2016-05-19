@@ -235,11 +235,17 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
         if (KeywordSearchSettings.getSkipKnown() && abstractFile.getKnown().equals(FileKnown.KNOWN)) {
             //index meta-data only
+            if (context.fileIngestIsCancelled()) {
+                return ProcessResult.OK;
+            }
             indexer.indexFile(abstractFile, false);
             return ProcessResult.OK;
         }
 
         //index the file and content (if the content is supported)
+        if (context.fileIngestIsCancelled()) {
+            return ProcessResult.OK;
+        }
         indexer.indexFile(abstractFile, true);
 
         // Start searching if it hasn't started already
@@ -433,6 +439,9 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
          */
         private boolean extractStringsAndIndex(AbstractFile aFile) {
             try {
+                if (context.fileIngestIsCancelled()) {
+                    return true;
+                }
                 if (stringExtractor.index(aFile, KeywordSearchIngestModule.this.context)) {
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.STRINGS_INGESTED);
                     return true;
@@ -482,17 +491,21 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
             // unallocated and unused blocks can only have strings extracted from them. 
             if ((aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) || aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS))) {
+                if (context.fileIngestIsCancelled()) {
+                    return;
+                }
                 extractStringsAndIndex(aFile);
                 return;
             }
 
             final long size = aFile.getSize();
             //if not to index content, or a dir, or 0 content, index meta data only
-            if (context.fileIngestIsCancelled()) {
-                return;
-            }
+
             if ((indexContent == false || aFile.isDir() || size == 0)) {
                 try {
+                    if (context.fileIngestIsCancelled()) {
+                        return;
+                    }
                     ingester.ingest(aFile, false); //meta-data only
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.METADATA_INGESTED);
                 } catch (IngesterException ex) {
@@ -504,12 +517,12 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
             String fileType;
             try {
+                if (context.fileIngestIsCancelled()) {
+                    return;
+                }
                 fileType = fileTypeDetector.getFileType(aFile);
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, String.format("Could not detect format using fileTypeDetector for file: %s", aFile), ex); //NON-NLS
-                return;
-            }
-            if (context.fileIngestIsCancelled()) {
                 return;
             }
 
@@ -517,6 +530,9 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             // @@@ We could have a check here to see if the archive module was enabled though...
             if (TextExtractor.ARCHIVE_MIME_TYPES.contains(fileType)) {
                 try {
+                    if (context.fileIngestIsCancelled()) {
+                        return;
+                    }
                     ingester.ingest(aFile, false); //meta-data only
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.METADATA_INGESTED);
                 } catch (IngesterException ex) {
@@ -531,6 +547,9 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             //extract text with one of the extractors, divide into chunks and index with Solr
             try {
                 //logger.log(Level.INFO, "indexing: " + aFile.getName());
+                if (context.fileIngestIsCancelled()) {
+                    return;
+                }
                 if (!extractTextAndIndex(aFile, fileType)) {
                     logger.log(Level.WARNING, "Failed to extract text and ingest, file ''{0}'' (id: {1}).", new Object[]{aFile.getName(), aFile.getId()}); //NON-NLS
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
