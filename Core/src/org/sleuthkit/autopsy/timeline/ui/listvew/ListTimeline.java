@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -289,10 +290,9 @@ class ListTimeline extends BorderPane {
                         if (element == null) {
                             menuItems.add(new SeparatorMenuItem());
                         } else {
-                            String actionName = element.getValue(Action.NAME).toString();
+                            String actionName = Objects.toString(element.getValue(Action.NAME));
 
                             if (Arrays.asList("&Properties", "Tools").contains(actionName) == false) {
-
                                 if (element instanceof Presenter.Popup) {
                                     JMenuItem submenu = ((Presenter.Popup) element).getPopupPresenter();
                                     menuItems.add(SwingMenuItemAdapter.create(submenu));
