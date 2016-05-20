@@ -188,7 +188,7 @@ public class TimeLineController {
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private TimeLineTopComponent mainFrame;
+    private TimeLineTopComponent topComponent;
 
     //are the listeners currently attached
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
@@ -227,17 +227,30 @@ public class TimeLineController {
     private final PromptDialogManager promptDialogManager = new PromptDialogManager(this);
 
     /**
-     * @return A list of the selected event ids
+     * Get an ObservableList of selected event IDs
+     *
+     * @return A list of the selected event IDs
      */
     synchronized public ObservableList<Long> getSelectedEventIDs() {
         return selectedEventIDs;
     }
 
     /**
-     * @return a read only view of the selected interval.
+     * Get a read only observable view of the selected time range.
+     *
+     * @return A read only view of the selected time range.
      */
-    synchronized public ReadOnlyObjectProperty<Interval> getSelectedTimeRange() {
+    synchronized public ReadOnlyObjectProperty<Interval> selectedTimeRangeProperty() {
         return selectedTimeRange.getReadOnlyProperty();
+    }
+
+    /**
+     * Get the selected time range.
+     *
+     * @return The selected time range.
+     */
+    synchronized public Interval getSelectedTimeRange() {
+        return selectedTimeRange.get();
     }
 
     public ReadOnlyBooleanProperty eventsDBStaleProperty() {
@@ -470,9 +483,9 @@ public class TimeLineController {
         IngestManager.getInstance().removeIngestModuleEventListener(ingestModuleListener);
         IngestManager.getInstance().removeIngestJobEventListener(ingestJobListener);
         Case.removePropertyChangeListener(caseListener);
-        if (mainFrame != null) {
-            mainFrame.close();
-            mainFrame = null;
+        if (topComponent != null) {
+            topComponent.close();
+            topComponent = null;
         }
         OpenTimelineAction.invalidateController();
     }
@@ -634,16 +647,16 @@ public class TimeLineController {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     synchronized private void showWindow() {
-        if (mainFrame == null) {
-            mainFrame = new TimeLineTopComponent(this);
+        if (topComponent == null) {
+            topComponent = new TimeLineTopComponent(this);
         }
-        mainFrame.open();
-        mainFrame.toFront();
+        topComponent.open();
+        topComponent.toFront();
         /*
          * Make this top component active so its ExplorerManager's lookup gets
          * proxied in Utilities.actionsGlobalContext()
          */
-        mainFrame.requestActive();
+        topComponent.requestActive();
     }
 
     synchronized public void pushEventTypeZoom(EventTypeZoomLevel typeZoomeLevel) {
