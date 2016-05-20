@@ -18,13 +18,16 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.io.Serializable;
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
  * Representation of single keyword to search for
  */
-class Keyword {
+class Keyword implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private String keywordString;   // keyword to search for
     private boolean isLiteral;  // false if reg exp

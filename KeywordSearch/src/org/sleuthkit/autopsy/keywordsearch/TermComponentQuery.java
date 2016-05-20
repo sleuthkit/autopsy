@@ -25,14 +25,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.TermsResponse;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -209,7 +208,7 @@ class TermComponentQuery implements KeywordSearchQuery {
     }
 
     @Override
-    public QueryResults performQuery() throws NoOpenCoreException {
+    public QueryResults performQuery() throws NoOpenCoreException, KeywordSearchSettingsManager.KeywordSearchSettingsManagerException {
         /*
          * Execute the regex query to get a list of terms that match the regex.
          * Note that the field that is being searched is tokenized based on
@@ -248,12 +247,13 @@ class TermComponentQuery implements KeywordSearchQuery {
                     filesResults.addAll(keyRes);
                 }
                 results.addResult(new Keyword(term.getTerm(), false), new ArrayList<>(filesResults));
-            } catch (NoOpenCoreException e) {
+            } catch (NoOpenCoreException | RuntimeException | KeywordSearchSettingsManager.KeywordSearchSettingsManagerException e) {
                 logger.log(Level.WARNING, "Error executing Solr query,", e); //NON-NLS
                 throw e;
-            } catch (RuntimeException e) {
-                logger.log(Level.WARNING, "Error executing Solr query,", e); //NON-NLS
             }
+            //NON-NLS
+            //NON-NLS
+            
 
         }
 

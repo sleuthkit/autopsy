@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,9 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionListener;
@@ -31,6 +33,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.AbstractTableModel;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -41,12 +44,23 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
 
     private Logger logger = Logger.getLogger(GlobalListsManagementPanel.class.getName());
     private KeywordListTableModel tableModel;
+    private KeywordSearchSettingsManager manager;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
-    GlobalListsManagementPanel() {
+    @Messages({"GlobalListsManagementPanel.settingsLoadFail.message=Failed to load keyword settings, using defaults.",
+        "GlobalListsManagementPanel.settingsLoadFail.title=Load Failed"})
+    GlobalListsManagementPanel(KeywordSearchSettingsManager manager) {
         tableModel = new KeywordListTableModel();
+        this.manager = manager;
         initComponents();
         customizeComponents();
+        enableComponents();
+        if (this.manager == null) {
+            this.importButton.setEnabled(false);
+            this.jScrollPane1.setEnabled(false);
+            this.listsTable.setEnabled(false);
+            this.newListButton.setEnabled(false);
+        }
     }
 
     private void customizeComponents() {
@@ -62,23 +76,23 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         tableModel.resync();
 
         /*
-         * XmlKeywordSearchList.getCurrent().addPropertyChangeListener(new
+         * XmlKeywordListImportExport.getCurrent().addPropertyChangeListener(new
          * PropertyChangeListener() {
          *
          * @Override public void propertyChange(PropertyChangeEvent evt) { if
-         * (evt.getPropertyName().equals(XmlKeywordSearchList.ListsEvt.LIST_ADDED.toString()))
+         * (evt.getPropertyName().equals(XmlKeywordListImportExport.ListsEvt.LIST_ADDED.toString()))
          * { tableModel.resync(); for(int i = 0; i<listsTable.getRowCount();
          * i++) { String name = (String) listsTable.getValueAt(i, 0);
          * if(((String) evt.getNewValue()).equals(name)) {
          * listsTable.getSelectionModel().setSelectionInterval(i, i); } } } else
          * if
-         * (evt.getPropertyName().equals(XmlKeywordSearchList.ListsEvt.LIST_DELETED.toString()))
+         * (evt.getPropertyName().equals(XmlKeywordListImportExport.ListsEvt.LIST_DELETED.toString()))
          * { tableModel.resync(); if(listsTable.getRowCount() > 0) {
          * listsTable.getSelectionModel().setSelectionInterval(0, 0); } else {
          * listsTable.getSelectionModel().clearSelection(); } } } });
          */
     }
-    
+
     @Override
     public void addPropertyChangeListener(PropertyChangeListener l) {
         pcs.addPropertyChangeListener(l);
@@ -87,6 +101,19 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
     @Override
     public void removePropertyChangeListener(PropertyChangeListener l) {
         pcs.removePropertyChangeListener(l);
+    }
+
+    /**
+     * Enables the components of this panel based upon whether or not the
+     * settings could be loaded.
+     */
+    private void enableComponents() {
+        boolean enable = this.manager != null;
+        this.importButton.setEnabled(enable);
+        this.jScrollPane1.setEnabled(enable);
+        this.listsTable.setEnabled(enable);
+        this.newListButton.setEnabled(enable);
+
     }
 
     /**
@@ -168,50 +195,65 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
-
+ @Messages({"GlobalListsManagementPanel.newListFail.message=Failed to add the new list to the settings.",
+        "GlobalListsManagementPanel.newListFail.title=New List Failed"})
     private void newListButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newListButtonActionPerformed
-        XmlKeywordSearchList writer = XmlKeywordSearchList.getCurrent();
-        String listName = (String) JOptionPane.showInputDialog(null, NbBundle.getMessage(this.getClass(), "KeywordSearch.newKwListTitle"),
-                NbBundle.getMessage(this.getClass(), "KeywordSearch.newKeywordListMsg"), JOptionPane.PLAIN_MESSAGE, null, null, "");
-        if (listName == null || listName.trim().equals("")) {
-            return;
-        }
-        boolean shouldAdd = false;
-        if (writer.listExists(listName)) {
-            if (writer.getList(listName).isLocked()) {
-                boolean replace = KeywordSearchUtil.displayConfirmDialog(
-                        NbBundle.getMessage(this.getClass(), "KeywordSearch.newKeywordListMsg"),
-                        NbBundle.getMessage(this.getClass(), "KeywordSearchListsManagementPanel.newKeywordListDescription", listName),
-                        KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
-                if (replace) {
-                    shouldAdd = true;
-                }
-            } else {
-                boolean replace = KeywordSearchUtil.displayConfirmDialog(
-                        NbBundle.getMessage(this.getClass(), "KeywordSearch.newKeywordListMsg"),
-                        NbBundle.getMessage(this.getClass(), "KeywordSearchListsManagementPanel.newKeywordListDescription2", listName),
-                        KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
-                if (replace) {
-                    shouldAdd = true;
-                }
-            }
-        } else {
-            shouldAdd = true;
-        }
-        if (shouldAdd) {
-            writer.addList(listName, new ArrayList<Keyword>());
-        }
-        tableModel.resync();
+     String listName = (String) JOptionPane.showInputDialog(null, NbBundle.getMessage(this.getClass(), "KeywordSearch.newKwListTitle"),
+             NbBundle.getMessage(this.getClass(), "KeywordSearch.newKeywordListMsg"), JOptionPane.PLAIN_MESSAGE, null, null, "");
+     if (listName == null || listName.trim().equals("")) {
+         return;
+     }
+     boolean shouldAdd = false;
+     KeywordList listWithSameName = null;
+     List<KeywordList> keywordLists = manager.getKeywordLists();
+     for (int i = 0; i < keywordLists.size(); i++) {
+         KeywordList currList = keywordLists.get(i);
+         if (currList.getName().equals(listName)) {
+             listWithSameName = currList;
+             i = keywordLists.size();
+         }
+     }
+     if (listWithSameName != null) {
+         if (listWithSameName.isLocked()) {
+             boolean replace = KeywordSearchUtil.displayConfirmDialog(
+                     NbBundle.getMessage(this.getClass(), "KeywordSearch.newKeywordListMsg"),
+                     NbBundle.getMessage(this.getClass(), "KeywordSearchListsManagementPanel.newKeywordListDescription", listName),
+                     KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
+             if (replace) {
+                 shouldAdd = true;
+             }
+         } else {
+             boolean replace = KeywordSearchUtil.displayConfirmDialog(
+                     NbBundle.getMessage(this.getClass(), "KeywordSearch.newKeywordListMsg"),
+                     NbBundle.getMessage(this.getClass(), "KeywordSearchListsManagementPanel.newKeywordListDescription2", listName),
+                     KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
+             if (replace) {
+                 shouldAdd = true;
+             }
+         }
+     } else {
+         shouldAdd = true;
+     }
+     if (shouldAdd) {
+         try {
+             manager.addList(new KeywordList(listName, new Date(), new Date(), false, false, new ArrayList<Keyword>()));
+         } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+             JOptionPane.showMessageDialog(null, Bundle.GlobalListsManagementPanel_newListFail_message(), Bundle.GlobalListsManagementPanel_newListFail_title(), JOptionPane.ERROR_MESSAGE);
+             logger.log(Level.SEVERE, "Failed to add list to settings.", ex);
+         }
+     }
+     tableModel.resync();
 
-        //This loop selects the recently ADDED keywordslist in the JTable
-        for (int i = 0; i < listsTable.getRowCount(); i++) {
-            if (listsTable.getValueAt(i, 0).equals(listName)) {
-                listsTable.getSelectionModel().addSelectionInterval(i, i);
-            }
-        }
-        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+     //This loop selects the recently ADDED keywordslist in the JTable
+     for (int i = 0; i < listsTable.getRowCount(); i++) {
+         if (listsTable.getValueAt(i, 0).equals(listName)) {
+             listsTable.getSelectionModel().addSelectionInterval(i, i);
+         }
+     }
+     pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_newListButtonActionPerformed
-
+    @Messages({"GlobalListsManagementPanel.deleteListFail.message=Failed to delete list from settings.",
+        "GlobalListsManagementPanel.deleteListFail.title=Delete List Failed"})
     private void importButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importButtonActionPerformed
 
         JFileChooser chooser = new JFileChooser();
@@ -237,60 +279,121 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
             //force append extension if not given
             String fileAbs = selFile.getAbsolutePath();
 
-            final KeywordSearchList reader;
-
             if (KeywordSearchUtil.isXMLList(fileAbs)) {
-                reader = new XmlKeywordSearchList(fileAbs);
-            } else {
-                reader = new EnCaseKeywordSearchList(fileAbs);
-            }
+                XmlKeywordListImportExport reader = new XmlKeywordListImportExport(fileAbs);
+                List<KeywordList> toImport = reader.load();
+                if (toImport == null) {
+                    KeywordSearchUtil.displayDialog(
+                            NbBundle.getMessage(this.getClass(), "KeywordSearch.listImportFeatureTitle"), NbBundle.getMessage(this.getClass(), "KeywordSearch.importListFileDialogMsg", fileAbs), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+                    return;
+                }
+                for (KeywordList list : toImport) {
+                    //check name collisions
+                    listName = list.getName();
+                    List<KeywordList> keywordLists = manager.getKeywordLists();
+                    boolean listExists = false;
+                    for (int i = 0; i < keywordLists.size(); i++) {
+                        KeywordList currList = keywordLists.get(i);
+                        if (currList.getName().equals(listName)) {
+                            listExists = true;
+                            i = keywordLists.size();
+                        }
+                    }
+                    if (listExists) {
+                        Object[] options = {NbBundle.getMessage(this.getClass(), "KeywordSearch.yesOwMsg"),
+                            NbBundle.getMessage(this.getClass(), "KeywordSearch.noSkipMsg"),
+                            NbBundle.getMessage(this.getClass(), "KeywordSearch.cancelImportMsg")};
+                        int choice = JOptionPane.showOptionDialog(this,
+                                NbBundle.getMessage(this.getClass(), "KeywordSearch.overwriteListPrompt", listName),
+                                NbBundle.getMessage(this.getClass(), "KeywordSearch.importOwConflict"),
+                                JOptionPane.YES_NO_CANCEL_OPTION,
+                                JOptionPane.QUESTION_MESSAGE,
+                                null,
+                                options,
+                                options[0]);
+                        if (choice == JOptionPane.OK_OPTION) {
+                            try {
+                                manager.updateList(list);
+                            } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+                                KeywordSearchUtil.displayDialog(
+                                        NbBundle.getMessage(this.getClass(), "KeywordSearch.listImportFeatureTitle"), NbBundle.getMessage(this.getClass(), "KeywordSearch.kwListFailImportMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
 
-            if (!reader.load()) {
-                KeywordSearchUtil.displayDialog(
-                        NbBundle.getMessage(this.getClass(), "KeywordSearch.listImportFeatureTitle"), NbBundle.getMessage(this.getClass(), "KeywordSearch.importListFileDialogMsg", fileAbs), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
-                return;
-            }
+                            }
+                        } else if (choice == JOptionPane.CANCEL_OPTION) {
+                            break;
+                        }
 
-            List<KeywordList> toImport = reader.getListsL();
-            List<KeywordList> toImportConfirmed = new ArrayList<KeywordList>();
+                    } else {
+                        try {
+                            //no conflict
+                            manager.addList(list);
+                        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+                            KeywordSearchUtil.displayDialog(
+                                    NbBundle.getMessage(this.getClass(), "KeywordSearch.listImportFeatureTitle"), NbBundle.getMessage(this.getClass(), "KeywordSearch.kwListFailImportMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
 
-            final XmlKeywordSearchList writer = XmlKeywordSearchList.getCurrent();
-
-            for (KeywordList list : toImport) {
-                //check name collisions
-                listName = list.getName();
-                if (writer.listExists(listName)) {
-                    Object[] options = {NbBundle.getMessage(this.getClass(), "KeywordSearch.yesOwMsg"),
-                        NbBundle.getMessage(this.getClass(), "KeywordSearch.noSkipMsg"),
-                        NbBundle.getMessage(this.getClass(), "KeywordSearch.cancelImportMsg")};
-                    int choice = JOptionPane.showOptionDialog(this,
-                            NbBundle.getMessage(this.getClass(), "KeywordSearch.overwriteListPrompt", listName),
-                            NbBundle.getMessage(this.getClass(), "KeywordSearch.importOwConflict"),
-                            JOptionPane.YES_NO_CANCEL_OPTION,
-                            JOptionPane.QUESTION_MESSAGE,
-                            null,
-                            options,
-                            options[0]);
-                    if (choice == JOptionPane.OK_OPTION) {
-                        toImportConfirmed.add(list);
-                    } else if (choice == JOptionPane.CANCEL_OPTION) {
-                        break;
+                        }
                     }
 
-                } else {
-                    //no conflict
-                    toImportConfirmed.add(list);
+                }
+            } else {
+                EnCaseKeywordListImport reader = new EnCaseKeywordListImport();
+                KeywordList keywordList = reader.load(fileAbs);
+                if (keywordList == null) {
+                    KeywordSearchUtil.displayDialog(
+                            NbBundle.getMessage(this.getClass(), "KeywordSearch.listImportFeatureTitle"), NbBundle.getMessage(this.getClass(), "KeywordSearch.importListFileDialogMsg", fileAbs), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+                    return;
                 }
 
-            }
+                List<KeywordList> toImport = new ArrayList<>();
+                toImport.add(keywordList);
+                for (KeywordList list : toImport) {
+                    //check name collisions
+                    listName = list.getName();
+                    List<KeywordList> keywordLists = manager.getKeywordLists();
+                    boolean listExists = false;
+                    for (int i = 0; i < keywordLists.size(); i++) {
+                        KeywordList currList = keywordLists.get(i);
+                        if (currList.getName().equals(listName)) {
+                            listExists = true;
+                            i = keywordLists.size();
+                        }
+                    }
+                    if (listExists) {
+                        Object[] options = {NbBundle.getMessage(this.getClass(), "KeywordSearch.yesOwMsg"),
+                            NbBundle.getMessage(this.getClass(), "KeywordSearch.noSkipMsg"),
+                            NbBundle.getMessage(this.getClass(), "KeywordSearch.cancelImportMsg")};
+                        int choice = JOptionPane.showOptionDialog(this,
+                                NbBundle.getMessage(this.getClass(), "KeywordSearch.overwriteListPrompt", listName),
+                                NbBundle.getMessage(this.getClass(), "KeywordSearch.importOwConflict"),
+                                JOptionPane.YES_NO_CANCEL_OPTION,
+                                JOptionPane.QUESTION_MESSAGE,
+                                null,
+                                options,
+                                options[0]);
+                        if (choice == JOptionPane.OK_OPTION) {
+                            try {
+                                manager.updateList(list);
+                            } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+                                KeywordSearchUtil.displayDialog(
+                                        NbBundle.getMessage(this.getClass(), "KeywordSearch.listImportFeatureTitle"), NbBundle.getMessage(this.getClass(), "KeywordSearch.kwListFailImportMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
 
-            if (toImportConfirmed.isEmpty()) {
-                return;
-            }
+                            }
+                        } else if (choice == JOptionPane.CANCEL_OPTION) {
+                            break;
+                        }
 
-            if (!writer.writeLists(toImportConfirmed)) {
-                KeywordSearchUtil.displayDialog(
-                        NbBundle.getMessage(this.getClass(), "KeywordSearch.listImportFeatureTitle"), NbBundle.getMessage(this.getClass(), "KeywordSearch.kwListFailImportMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+                    } else {
+                        try {
+                            //no conflict
+                            manager.addList(list);
+                        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+                            KeywordSearchUtil.displayDialog(
+                                    NbBundle.getMessage(this.getClass(), "KeywordSearch.listImportFeatureTitle"), NbBundle.getMessage(this.getClass(), "KeywordSearch.kwListFailImportMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+
+                        }
+                    }
+
+                }
             }
 
         }
@@ -313,7 +416,22 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
                 return;
             } else if (KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.title"), NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.body"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
                 String listName = (String) listsTable.getModel().getValueAt(selected[0], 0);
-                XmlKeywordSearchList.getCurrent().deleteList(listName);
+                KeywordList listWithSameName = null;
+                List<KeywordList> keywordLists = manager.getKeywordLists();
+                for (int i = 0; i < keywordLists.size(); i++) {
+                    KeywordList currList = keywordLists.get(i);
+                    if (currList.getName().equals(listName)) {
+                        listWithSameName = currList;
+                        i = keywordLists.size();
+                    }
+                }
+                if (listWithSameName != null) {
+                    try {
+                        manager.removeList(listWithSameName);
+                    } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+                        JOptionPane.showMessageDialog(null, Bundle.GlobalListsManagementPanel_deleteListFail_message(), Bundle.GlobalListsManagementPanel_deleteListFail_title(), JOptionPane.ERROR_MESSAGE);
+                    }
+                }
                 pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             } else {
                 return;
@@ -346,8 +464,6 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
 
     private class KeywordListTableModel extends AbstractTableModel {
 
-        private XmlKeywordSearchList listsHandle = XmlKeywordSearchList.getCurrent();
-
         @Override
         public int getColumnCount() {
             return 1;
@@ -355,7 +471,15 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
 
         @Override
         public int getRowCount() {
-            return listsHandle.getNumberLists(false);
+            int count = 0;
+            if (manager != null) {
+                for (KeywordList list : manager.getKeywordLists()) {
+                    if (!list.isLocked()) {
+                        count++;
+                    }
+                }
+            }
+            return count;
         }
 
         @Override
@@ -365,7 +489,17 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            return listsHandle.getListNames(false).get(rowIndex);
+            if (manager != null) {
+                for (KeywordList list : manager.getKeywordLists()) {
+                    if (rowIndex == 0 && !list.isLocked()) {
+                        return list.getName();
+                    }
+                    if (!list.isLocked()) {
+                        rowIndex--;
+                    }
+                }
+            }
+            return "";
         }
 
         @Override
@@ -385,13 +519,27 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         }
 
         //delete selected from handle, events are fired from the handle
+        @Messages({"GlobalListsManagementPanel.KeywordListTableModel.failedDelete.message=Couldn't delete selected list.",
+            "GlobalListsManagementPanel.KeywordListTableModel.failedDelete.title=Error Deleting List"})
         void deleteSelected(int[] selected) {
             List<String> toDel = new ArrayList<>();
             for (int i = 0; i < selected.length; i++) {
                 toDel.add((String) getValueAt(0, selected[i]));
             }
+            List<KeywordList> keywordLists = manager.getKeywordLists();
             for (String del : toDel) {
-                listsHandle.deleteList(del);
+                for (KeywordList list : keywordLists) {
+                    if (list.getName().equals(del)) {
+                        try {
+                            manager.removeList(list);
+
+                        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+                            JOptionPane.showMessageDialog(null, Bundle.KeywordSearchGlobalLanguageSettingsPanel_failedReadSettings_message(),
+                                    Bundle.KeywordSearchGlobalLanguageSettingsPanel_failedReadSettings_title(), JOptionPane.ERROR_MESSAGE);
+                            logger.log(Level.SEVERE, "Failed to write keyword search settings.", ex);
+                        }
+                    }
+                }
             }
         }
 
