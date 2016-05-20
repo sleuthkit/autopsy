@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -56,6 +56,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 public class DataResultPanel extends javax.swing.JPanel implements DataResult, ChangeListener {
 
     private ExplorerManager explorerManager;
+    private ExplorerManagerNodeSelectionListener emNodeSelectionListener;
+    
     private Node rootNode;
     private PropertyChangeSupport pcs;
 
@@ -232,7 +234,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             // can push the selections both to its child DataResultViewers and to a DataContent object. 
             // The default DataContent object is a DataContentTopComponent in the data content mode (area),
             // and is the parent of a DataContentPanel that hosts a set of DataContentViewers. 
-            explorerManager.addPropertyChangeListener(new ExplorerManagerNodeSelectionListener());
+            emNodeSelectionListener = new ExplorerManagerNodeSelectionListener();
+            explorerManager.addPropertyChangeListener(emNodeSelectionListener);
         }
 
         // Add all the DataContentViewer to the tabbed pannel.
@@ -336,6 +339,10 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             pcs.removePropertyChangeListener(pcl[i]);
         }
 
+        if (null != explorerManager && null != emNodeSelectionListener) {
+            explorerManager.removePropertyChangeListener(emNodeSelectionListener);
+        }
+        
         // clear all set nodes
         for (UpdateWrapper drv : this.viewers) {
             drv.setNode(null);
