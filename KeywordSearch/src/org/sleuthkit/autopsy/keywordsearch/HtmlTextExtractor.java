@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
-import org.sleuthkit.autopsy.coreutils.TextUtil;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
@@ -162,13 +161,6 @@ class HtmlTextExtractor implements TextExtractor {
                     sb.append(textChunkBuf, 0, (int) totalRead);
                 } else {
                     sb.append(textChunkBuf);
-                }
-                
-                // Sanitize by replacing non-UTF-8 characters with caret '^' before adding to index
-                for (int i = 0; i < sb.length(); i++) {
-                    if (!TextUtil.isValidSolrUTF8(sb.charAt(i))) {
-                        sb.setCharAt(i, '^');
-                    }
                 }
 
                 //reset for next chunk

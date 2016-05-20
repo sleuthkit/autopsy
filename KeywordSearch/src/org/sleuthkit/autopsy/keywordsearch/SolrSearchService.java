@@ -36,7 +36,6 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.openide.util.NbBundle;
 import java.net.InetAddress;
 import java.util.MissingResourceException;
-import org.sleuthkit.autopsy.coreutils.TextUtil;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 
 /**
@@ -156,13 +155,6 @@ public class SolrSearchService implements KeywordSearchService {
 
         documentId += "_" + Long.toString(chunkId);
         solrFields.replace(Server.Schema.ID.toString(), documentId);
-        
-        // Sanitize by replacing non-UTF-8 characters with caret '^' before adding to index
-        for (int i = 0; i < artifactContents.length(); i++) {
-            if (!TextUtil.isValidSolrUTF8(artifactContents.charAt(i))) {
-                artifactContents.setCharAt(i, '^');
-            }
-        }
 
         StringStream contentStream = new StringStream(artifactContents.toString());
 
