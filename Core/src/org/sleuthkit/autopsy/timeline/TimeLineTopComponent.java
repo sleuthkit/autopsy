@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline;
 
+import java.beans.PropertyVetoException;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
@@ -104,7 +105,18 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
                         //if there is only one event selected, make a explorer node for it and push it to the content viewer.
                         try {
                             EventNode eventNode = EventNode.createEventNode(selectedEventIDs.get(0), controller.getEventsModel());
-                            SwingUtilities.invokeLater(() -> contentViewerPanel.setNode(eventNode));
+                            SwingUtilities.invokeLater(() -> {
+                                //set node as selected for actions
+                                em.setRootContext(eventNode);
+                                try {
+                                    em.setSelectedNodes(new Node[]{eventNode});
+                                } catch (PropertyVetoException ex) {
+                                    //I don't know why this would ever happen.
+                                    LOGGER.log(Level.SEVERE, "Selecting the event node was vetoed.", ex); // NON-NLS
+                                }
+                                //push into content viewer.
+                                contentViewerPanel.setNode(eventNode);
+                            });
                         } catch (IllegalStateException ex) {
                             //Since the case is closed, the user probably doesn't care about this, just log it as a precaution.
                             LOGGER.log(Level.SEVERE, "There was no case open to lookup the Sleuthkit object backing a SingleEvent.", ex); // NON-NLS

@@ -44,7 +44,7 @@ import javafx.util.Callback;
 import javax.swing.Action;
 import javax.swing.JMenuItem;
 import org.controlsfx.control.Notifications;
-import org.controlsfx.control.action.ActionUtils;
+import org.openide.awt.Actions;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -344,9 +344,7 @@ class ListTimeline extends BorderPane {
                                     JMenuItem submenu = ((Presenter.Popup) action).getPopupPresenter();
                                     menuItems.add(SwingFXMenuUtils.createFXMenu(submenu));
                                 } else {
-                                    //make a JavaFX menu item that invokes the action (wrapped in a ControlsFX Action
-                                    menuItems.add(ActionUtils.createMenuItem(
-                                            new org.controlsfx.control.action.Action(actionName, actionEvent -> action.actionPerformed(null))));
+                                    menuItems.add(SwingFXMenuUtils.createFXMenu(new Actions.MenuItem(action, false)));
                                 }
                             }
                         }
