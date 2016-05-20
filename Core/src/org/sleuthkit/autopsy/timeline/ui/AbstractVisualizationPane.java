@@ -98,18 +98,29 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
 
     /**
      * Get the tool tip to use for this visualization when no more specific
-     * tooltip is needed.
+     * Tooltip is needed.
      *
-     * @return The default tooltip.
+     * @return The default Tooltip.
      */
     public static Tooltip getDefaultTooltip() {
         return DEFAULT_TOOLTIP;
     }
 
+    /**
+     * Boolean property that holds true if the visualization may not represent
+     * the current state of the DB, because, for example, tags have been updated
+     * but the vis. was not refreshed.
+     */
+    private final ReadOnlyBooleanWrapper outOfDate = new ReadOnlyBooleanWrapper(false);
+
+    /**
+     * Boolean property that holds true if the visualization does not show any
+     * events with the current zoom and filter settings.
+     */
     private final ReadOnlyBooleanWrapper hasVisibleEvents = new ReadOnlyBooleanWrapper(true);
 
-    /*
-     * access to chart data via series
+    /**
+     * Access to chart data via series
      */
     protected final ObservableList<XYChart.Series<X, Y>> dataSeries = FXCollections.<XYChart.Series<X, Y>>observableArrayList();
     protected final Map<EventType, XYChart.Series<X, Y>> eventTypeToSeriesMap = new HashMap<>();
@@ -131,7 +142,41 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
 
     final private ObservableList<NodeType> selectedNodes = FXCollections.observableArrayList();
 
-    private InvalidationListener updateListener = any -> update();
+    /**
+     * Listener that is attached to various properties that should trigger a vis
+     * update when they change.
+     */
+    private InvalidationListener updateListener = any -> refresh();
+
+    /**
+     * Does the visualization represent an out-of-date state of the DB. It might
+     * if, for example, tags have been updated but the vis. was not refreshed.
+     *
+     * @return True if the visualization does not represent the curent state of
+     *         the DB.
+     */
+    public boolean isOutOfDate() {
+        return outOfDate.get();
+    }
+
+    /**
+     * Set this visualization out of date because, for example, tags have been
+     * updated but the vis. was not refreshed.
+     */
+    void setOutOfDate() {
+        outOfDate.set(true);
+    }
+
+    /**
+     * Get a ReadOnlyBooleanProperty that holds true if this visualization does
+     * not represent the current state of the DB>
+     *
+     * @return A ReadOnlyBooleanProperty that holds the out-of-date state for
+     *         this visualization.
+     */
+    public ReadOnlyBooleanProperty outOfDateProperty() {
+        return outOfDate.getReadOnlyProperty();
+    }
 
     /**
      * The visualization nodes that are selected.
@@ -218,6 +263,17 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
      */
     ReadOnlyBooleanProperty hasVisibleEventsProperty() {
         return hasVisibleEvents.getReadOnlyProperty();
+    }
+
+    /**
+     * Are there are any events visible in this visualization with the current
+     * view parameters?
+     *
+     * @return True if there are events visible in this visualization with the
+     *         current view parameters.
+     */
+    boolean hasVisibleEvents() {
+        return hasVisibleEventsProperty().get();
     }
 
     /**
@@ -315,13 +371,13 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
     abstract protected void clearChartData();
 
     /**
-     * Update this visualization based on current state of zoom / filters.
+     * Refresh this visualization based on current state of zoom / filters.
      * Primarily this invokes the background VisualizationUpdateTask returned by
      * getUpdateTask(), which derived classes must implement.
      *
      * TODO: replace this logic with a javafx Service ? -jm
      */
-    protected final synchronized void update() {
+    protected final synchronized void refresh() {
         if (updateTask != null) {
             updateTask.cancel(true);
             updateTask = null;
@@ -345,6 +401,17 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
             }
         });
         controller.monitorTask(updateTask);
+    }
+
+    /**
+     * Handle a RefreshRequestedEvent from the events model by updating the
+     * visualization.
+     *
+     * @param event The RefreshRequestedEvent to handle.
+     */
+    @Subscribe
+    public void handleRefreshRequested(RefreshRequestedEvent event) {
+        refresh();
     }
 
     /**
@@ -423,19 +490,8 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
         TimeLineController.getTimeZone().addListener(updateListener);
 
         //show tooltip text in status bar
-        hoverProperty().addListener(hoverProp -> controller.setStatus(isHover() ? DEFAULT_TOOLTIP.getText() : ""));
+        hoverProperty().addListener(hoverProp -> controller.setStatusMessage(isHover() ? DEFAULT_TOOLTIP.getText() : ""));
 
-    }
-
-    /**
-     * Handle a RefreshRequestedEvent from the events model by updating the
-     * visualization.
-     *
-     * @param event The RefreshRequestedEvent to handle.
-     */
-    @Subscribe
-    public void handleRefreshRequested(RefreshRequestedEvent event) {
-        update();
     }
 
     /**
@@ -626,13 +682,13 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
     }
 
     /**
-     * Base class for Tasks that update a visualization when the view settings
+     * Base class for Tasks that refresh a visualization when the view settings
      * change.
      *
      * @param <AxisValuesType> The type of a single object that can represent
      *                         the range of data displayed along the X-Axis.
      */
-    abstract protected class VisualizationUpdateTask<AxisValuesType> extends LoggedTask<Boolean> {
+    abstract protected class VisualizationRefreshTask<AxisValuesType> extends LoggedTask<Boolean> {
 
         private final Node center;
 
@@ -640,10 +696,10 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
          * Constructor
          *
          * @param taskName        The name of this task.
-         * @param logStateChanges Whether or not task state chanes should be
+         * @param logStateChanges Whether or not task state changes should be
          *                        logged.
          */
-        protected VisualizationUpdateTask(String taskName, boolean logStateChanges) {
+        protected VisualizationRefreshTask(String taskName, boolean logStateChanges) {
             super(taskName, logStateChanges);
             this.center = getCenter();
         }
@@ -682,6 +738,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
         @Override
         protected void succeeded() {
             super.succeeded();
+            outOfDate.set(false);
             layoutDateLabels();
             cleanup();
         }
