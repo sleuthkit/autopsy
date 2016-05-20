@@ -109,7 +109,7 @@ public class SwingFXMenuUtils extends MenuItem {
                     populateSubMenus(menuElement);
 
                 } else {
-                    throw new UnsupportedOperationException();
+                    throw new UnsupportedOperationException("Unown MenuElement subclass: " + menuElement.getClass().getName());
                 }
             }
         }
