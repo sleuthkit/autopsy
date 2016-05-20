@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,21 +31,25 @@ import org.openide.nodes.Children;
 import org.openide.nodes.PropertySupport;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.DataModelActionsFactory;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * * Explorer Node for {@link SingleEvent}s.
+ * * Explorer Node for SingleEvents.
  */
-class EventNode extends DisplayableItemNode {
+public class EventNode extends DisplayableItemNode {
 
     private static final Logger LOGGER = Logger.getLogger(EventNode.class.getName());
 
@@ -155,10 +159,38 @@ class EventNode extends DisplayableItemNode {
         }
 
         @Override
-        public void setValue(String t) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+        final public void setValue(String t) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
             String oldValue = getValue();
             value = t;
             firePropertyChange("time", oldValue, t); // NON-NLS
+        }
+    }
+
+    /**
+     * Factory method to create an EventNode from the event ID and the events
+     * model.
+     *
+     * @param eventID     The ID of the event this node is for.
+     * @param eventsModel The model that provides access to the events DB.
+     *
+     * @return An EventNode with the file (and artifact) backing this event in
+     *         its lookup.
+     */
+    public static EventNode createEventNode(final Long eventID, FilteredEventsModel eventsModel) throws TskCoreException, IllegalStateException {
+        /*
+         * Look up the event by id and creata an EventNode with the appropriate
+         * data in the lookup.
+         */
+        final SingleEvent eventById = eventsModel.getEventById(eventID);
+
+        SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
+        AbstractFile file = sleuthkitCase.getAbstractFileById(eventById.getFileID());
+
+        if (eventById.getArtifactID().isPresent()) {
+            BlackboardArtifact blackboardArtifact = sleuthkitCase.getBlackboardArtifact(eventById.getArtifactID().get());
+            return new EventNode(eventById, file, blackboardArtifact);
+        } else {
+            return new EventNode(eventById, file);
         }
     }
 }
