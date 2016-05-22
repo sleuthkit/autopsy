@@ -43,17 +43,14 @@ public class UpdateHashSetDialog extends javax.swing.JDialog {
     private void initHashSetGrid() {
         Collection<? extends HashSetPreparer> allPreparer = Lookup.getDefault().lookupAll(HashSetPreparer.class);
         this.providerList.setLayout(new GridBagLayout() {
-            //@Override
             public Dimension getMinimumSize() {
                 return new Dimension(400, 300);
             }
 
-            //@Override
             public Dimension getPreferredSize() {
                 return new Dimension(800, 600);
             }
 
-            //@Override
             public Dimension getMaximumSize() {
                 return new Dimension(800, 600);
             }
@@ -101,7 +98,7 @@ public class UpdateHashSetDialog extends javax.swing.JDialog {
         return label;
     }
 
-    private boolean isValidDirectory(String dataDirectoryPath) {
+    private boolean isExistingDirectory(String dataDirectoryPath) {
         File directory = new File(dataDirectoryPath);
         return directory.exists() && directory.isDirectory();
     }
@@ -269,7 +266,7 @@ public class UpdateHashSetDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void startButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startButtonActionPerformed
-        if (isValidDirectory(this.dataDirectoryPath)) {
+        if (isExistingDirectory(this.dataDirectoryPath)) {
             hashSetOptions.stream().forEach((hashSetOption) -> {
                 new HashSetUpdateWorker(hashSetOption, this.dataDirectoryPath).execute();
             });
