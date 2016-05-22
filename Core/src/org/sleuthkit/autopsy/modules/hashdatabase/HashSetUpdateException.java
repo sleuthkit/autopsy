@@ -7,8 +7,8 @@ package org.sleuthkit.autopsy.modules.hashdatabase;
 
 class HashSetUpdateException extends Exception {
 
-    HashSetUpdateException(String yey) {
-        super(yey);
+    HashSetUpdateException(String message) {
+        super(message);
     }
     
 }

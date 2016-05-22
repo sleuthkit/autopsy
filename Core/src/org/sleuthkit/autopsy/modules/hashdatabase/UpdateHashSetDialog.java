@@ -5,11 +5,16 @@
  */
 package org.sleuthkit.autopsy.modules.hashdatabase;
 
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.io.File;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import javax.swing.JCheckBox;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
@@ -22,7 +27,8 @@ import org.openide.util.Lookup;
  */
 public class UpdateHashSetDialog extends javax.swing.JDialog {
 
-    List<Kurt> kurts = new LinkedList<>();
+    List<HashSetUpdateOptions> hashSetOptions = new LinkedList<>();
+    private String dataDirectoryPath;
 
     /**
      * Creates new form UpdateHashSetDialog
@@ -31,28 +37,55 @@ public class UpdateHashSetDialog extends javax.swing.JDialog {
         super(parent, false);
         initComponents();
         initHashSetGrid();
+        this.dataDirectoryPath = this.dataDirectoryTextField.getText();
     }
 
     private void initHashSetGrid() {
         Collection<? extends HashSetPreparer> allPreparer = Lookup.getDefault().lookupAll(HashSetPreparer.class);
-        this.providerList.setLayout(new GridLayout(allPreparer.size() + 1, 5));
+        this.providerList.setLayout(new GridBagLayout() {
+            //@Override
+            public Dimension getMinimumSize() {
+                return new Dimension(400, 300);
+            }
+
+            //@Override
+            public Dimension getPreferredSize() {
+                return new Dimension(800, 600);
+            }
+
+            //@Override
+            public Dimension getMaximumSize() {
+                return new Dimension(800, 600);
+            }
+        });
+
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridx = 0;
+        c.gridy = 0;
+
         initGrid(this.providerList, allPreparer.size(), 5);
         for (HashSetPreparer hashSetPreparer : allPreparer) {
-            Kurt k = new Kurt(hashSetPreparer);
-            this.providerList.add(k.getUpdate());
-            this.providerList.add(k.getForceUpdate());
-            this.providerList.add(k.getNameLabel());
-            this.providerList.add(k.getProgressbar());
-            this.providerList.add(k.getSatusLabel());
-            kurts.add(k);
+
+            HashSetUpdateOptions option = new HashSetUpdateOptions(hashSetPreparer);
+            this.providerList.add(option.getUpdate(), c);
+            c.gridx++;
+            this.providerList.add(option.getDownloadFullHashSetCheckBox(), c);
+            c.gridx++;
+            this.providerList.add(option.getNameLabel(), c);
+            c.gridx++;
+            this.providerList.add(option.getProgressbar(), c);
+            c.gridx++;
+            this.providerList.add(option.getSatusLabel(), c);
+            hashSetOptions.add(option);
+            c.gridy++;
         }
     }
 
-    private void initGrid(JPanel panel, int amoutLines, int amoutColumes) {
-        panel.setLayout(new GridLayout(amoutLines + 1, amoutColumes));
+    private void initGrid(JPanel panel, int amoutLines, int amountColums) {
+        panel.setLayout(new GridLayout(amoutLines + 1, amountColums));
 
-        panel.add(createLabel("check for update"));
-        panel.add(createLabel("force Update"));
+        panel.add(createLabel("update hashset"));
+        panel.add(createLabel("full download"));
         panel.add(createLabel("Provider"));
         panel.add(createLabel("Progress"));
         panel.add(createLabel("state"));
@@ -68,22 +101,27 @@ public class UpdateHashSetDialog extends javax.swing.JDialog {
         return label;
     }
 
-    class Kurt {
+    private boolean isValidDirectory(String dataDirectoryPath) {
+        File directory = new File(dataDirectoryPath);
+        return directory.exists() && directory.isDirectory();
+    }
+
+    class HashSetUpdateOptions {
 
         private static final int MAGIC_NUMBER_1 = 9999;
         private static final int MAGIC_NUMBER_2 = 50;
 
         private JLabel nameLabel;
-        private JCheckBox update;
-        private JCheckBox forceUpdate;
+        private JCheckBox downloadDeltaHashSetCheckBox;
+        private JCheckBox downloadFullHashSetCheckBox;
         private JProgressBar progressbar;
         private JLabel satusLabel;
         private HashSetPreparer hashSetPreparer;
 
-        public Kurt(HashSetPreparer hashSetPreparer) {
+        public HashSetUpdateOptions(HashSetPreparer hashSetPreparer) {
             this.nameLabel = createLabel(hashSetPreparer.getName());
-            this.update = createCheckBox(true);
-            this.forceUpdate = createCheckBox(false);
+            this.downloadDeltaHashSetCheckBox = createCheckBox(true);
+            this.downloadFullHashSetCheckBox = createCheckBox(false);
             this.satusLabel = createLabel("initialized");
             this.progressbar = new JProgressBar(0, 100);
             this.hashSetPreparer = hashSetPreparer;
@@ -103,58 +141,39 @@ public class UpdateHashSetDialog extends javax.swing.JDialog {
         }
 
         /**
-         * @return the update
+         * @return the downloadDeltaHashSetCheckBox
          */
         public JCheckBox getUpdate() {
-            return update;
+            return downloadDeltaHashSetCheckBox;
         }
 
         /**
-         * @return the forceUpdate
+         * @return the isDownloadFullHashSetEnabled
          */
-        public JCheckBox getForceUpdate() {
-            return forceUpdate;
+        public JCheckBox getDownloadFullHashSetCheckBox() {
+            return downloadFullHashSetCheckBox;
         }
 
-        /**
-         * @param forceUpdate the forceUpdate to set
-         */
-        public void setForceUpdate(JCheckBox forceUpdate) {
-            this.forceUpdate = forceUpdate;
-        }
-
-        /**
-         * @return the label
-         */
         public JLabel getNameLabel() {
             return nameLabel;
         }
 
-        public boolean shouldUpdate() {
-            return update.isSelected();
+        public boolean isDownloadDeltaHashSetEnabled() {
+            return downloadDeltaHashSetCheckBox.isSelected();
         }
 
-        public boolean forceUpdate() {
-            return forceUpdate.isSelected();
+        public boolean isDownloadFullHashSetEnabled() {
+            return downloadFullHashSetCheckBox.isSelected();
         }
 
-        /**
-         * @return the progressbar
-         */
         public JProgressBar getProgressbar() {
             return progressbar;
         }
 
-        /**
-         * @return the satusLabel
-         */
         public JLabel getSatusLabel() {
             return satusLabel;
         }
 
-        /**
-         * @return the hashSetPreparer
-         */
         public HashSetPreparer getHashSetPreparer() {
             return hashSetPreparer;
         }
@@ -173,6 +192,8 @@ public class UpdateHashSetDialog extends javax.swing.JDialog {
         instructionLabel = new javax.swing.JLabel();
         providerList = new javax.swing.JPanel();
         startButton = new javax.swing.JButton();
+        dataDirectoryTextField = new javax.swing.JTextField();
+        dataDirectoryChooser = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -186,7 +207,7 @@ public class UpdateHashSetDialog extends javax.swing.JDialog {
         );
         providerListLayout.setVerticalGroup(
             providerListLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 163, Short.MAX_VALUE)
+            .addGap(0, 139, Short.MAX_VALUE)
         );
 
         org.openide.awt.Mnemonics.setLocalizedText(startButton, org.openide.util.NbBundle.getMessage(UpdateHashSetDialog.class, "UpdateHashSetDialog.startButton.text")); // NOI18N
@@ -196,18 +217,37 @@ public class UpdateHashSetDialog extends javax.swing.JDialog {
             }
         });
 
+        dataDirectoryTextField.setText(org.openide.util.NbBundle.getMessage(UpdateHashSetDialog.class, "UpdateHashSetDialog.dataDirectoryTextField.text")); // NOI18N
+        dataDirectoryTextField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                dataDirectoryTextFieldActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(dataDirectoryChooser, org.openide.util.NbBundle.getMessage(UpdateHashSetDialog.class, "UpdateHashSetDialog.dataDirectoryChooser.text")); // NOI18N
+        dataDirectoryChooser.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                dataDirectoryChooserActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(20, 20, 20)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(startButton)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(instructionLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 466, Short.MAX_VALUE)
-                        .addComponent(providerList, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                .addContainerGap(153, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(dataDirectoryTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 304, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(dataDirectoryChooser))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addComponent(startButton)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(instructionLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 466, Short.MAX_VALUE)
+                            .addComponent(providerList, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                .addContainerGap(147, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -215,64 +255,100 @@ public class UpdateHashSetDialog extends javax.swing.JDialog {
                 .addGap(21, 21, 21)
                 .addComponent(instructionLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(dataDirectoryTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(dataDirectoryChooser))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(providerList, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(startButton)
-                .addContainerGap(40, Short.MAX_VALUE))
+                .addContainerGap(27, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
     private void startButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startButtonActionPerformed
-        kurts.stream().forEach((k) -> {
-            new Whatever(k, "/media/disk/hashsets").execute();
-        });
+        if (isValidDirectory(this.dataDirectoryPath)) {
+            hashSetOptions.stream().forEach((hashSetOption) -> {
+                new HashSetUpdateWorker(hashSetOption, this.dataDirectoryPath).execute();
+            });
+        }
     }//GEN-LAST:event_startButtonActionPerformed
 
-    class Whatever extends SwingWorker<Object, String> {
+    private void dataDirectoryChooserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dataDirectoryChooserActionPerformed
+        final JFileChooser fileChooser = new JFileChooser();
+        //int returnVal = fc.showOpenDialog(aComponent);
+        fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        fileChooser.showOpenDialog(this);
+        String path = fileChooser.getSelectedFile().getAbsolutePath();
+        this.dataDirectoryTextField.setText(path);
+        this.dataDirectoryPath = path;
+    }//GEN-LAST:event_dataDirectoryChooserActionPerformed
 
-        private final Kurt k;
+    private void dataDirectoryTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dataDirectoryTextFieldActionPerformed
+        this.dataDirectoryPath = this.dataDirectoryTextField.getText();
+    }//GEN-LAST:event_dataDirectoryTextFieldActionPerformed
+
+    class HashSetUpdateWorker extends SwingWorker<Object, String> {
+
+        private final HashSetUpdateOptions options;
         private HashSetPreparer hashSetUpdater;
 
-        public Whatever(Kurt k, String Location) {
-            this.k = k;
-            this.hashSetUpdater = k.getHashSetPreparer().createInstance(k.getProgressbar(), Location);
+        public HashSetUpdateWorker(HashSetUpdateOptions hashSetUpdateOption, String Location) {
+            this.options = hashSetUpdateOption;
+            this.hashSetUpdater = hashSetUpdateOption.getHashSetPreparer().createInstance(hashSetUpdateOption.getProgressbar(), Location);
         }
 
         @Override
         protected Object doInBackground() throws Exception {
-            if (!k.forceUpdate()) {
-                if (!hashSetUpdater.newVersionAvailable()) {
-                    publish("No update available");
-                    return null;
-                }
-                updateHashSet();
+            if (!options.isDownloadFullHashSetEnabled()) {
+                downloadFullHashSet();
+            } else {
+                downloadDeltaHashSet();
             }
             return null;
         }
 
         @Override
         protected void process(List<String> chunks) {
-            k.getSatusLabel().setText(chunks.get(chunks.size()-1));
+            options.getSatusLabel().setText(chunks.get(chunks.size() - 1));
         }
 
-        private void updateHashSet() {
+        private void downloadDeltaHashSet() {
             try {
                 publish("downloading");
-                hashSetUpdater.download();
+                hashSetUpdater.downloadDeltaHashSet();
                 publish("extracting");
                 hashSetUpdater.extract();
                 publish("add HashSet to Autopsy DB");
                 hashSetUpdater.addHashSetToDatabase();
                 publish("indexing");
-                k.progressbar.setIndeterminate(true);
+                options.progressbar.setIndeterminate(true);
                 hashSetUpdater.index();
                 publish("finished");
-                k.progressbar.setVisible(false);
+                options.progressbar.setVisible(false);
             } catch (HashSetUpdateException ex) {
-                publish("Error while updating");
-                System.out.println(ex);
+                publish(ex.toString());
+            }
+
+        }
+
+        private void downloadFullHashSet() {
+            try {
+                publish("downloading");
+                hashSetUpdater.downloadFullHashSet();
+                publish("extracting");
+                hashSetUpdater.extract();
+                publish("add HashSet to Autopsy DB");
+                hashSetUpdater.addHashSetToDatabase();
+                publish("indexing");
+                options.progressbar.setIndeterminate(true);
+                hashSetUpdater.index();
+                publish("finished");
+                options.progressbar.setVisible(false);
+            } catch (HashSetUpdateException ex) {
+                publish(ex.toString());
             }
         }
     }
@@ -320,6 +396,8 @@ public class UpdateHashSetDialog extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton dataDirectoryChooser;
+    private javax.swing.JTextField dataDirectoryTextField;
     private javax.swing.JLabel instructionLabel;
     private javax.swing.JPanel providerList;
     private javax.swing.JButton startButton;

@@ -17,7 +17,7 @@ public class NSRLHashSetPreparer extends HashSetPreparer {
     public static final String NIST_DEFAULT_CHECK = "http://www.nsrl.nist.gov/RDS/rds_2.51/zip-hash.txt";
     public static final String NIST_DEFAULT = "http://www.nsrl.nist.gov/RDS/rds_2.51/rds_251m.zip";
     //public static final String NIST_DEFAULT = "http://mirror.switch.ch/ftp/mirror/centos/7/isos/x86_64/CentOS-7-x86_64-NetInstall-1511.iso";
-    private JProgressBar progressbar;
+    private final JProgressBar progressbar;
     private String downloadedfile;
 
     @Override
@@ -27,6 +27,7 @@ public class NSRLHashSetPreparer extends HashSetPreparer {
 
     public NSRLHashSetPreparer() {
         super("");
+        progressbar = null;
     }
 
     private NSRLHashSetPreparer(JProgressBar progressbar, String outputDirectory) {
@@ -40,7 +41,7 @@ public class NSRLHashSetPreparer extends HashSetPreparer {
     }
 
     @Override
-    public void download() throws HashSetUpdateException {
+    public void downloadFullHashSet() throws HashSetUpdateException {
         try {
             createTargetDircectoryIfNotExists(getDirectory());
             downloadedfile = getDirectory() + getFileNameFromURL(NIST_DEFAULT);
@@ -53,6 +54,7 @@ public class NSRLHashSetPreparer extends HashSetPreparer {
 
     @Override
     public void extract() throws HashSetUpdateException {
+
         try {
             ZipFile zipFile = new ZipFile(downloadedfile);
 
@@ -68,7 +70,7 @@ public class NSRLHashSetPreparer extends HashSetPreparer {
                 OutputStream outputStream = new FileOutputStream(out);
 
                 copyStreams(inputStream, outputStream);
-                progressbar.setValue(++counter);
+                updateProgressBar(counter++, progressbar);
             }
         } catch (Exception e) {
             throw new HashSetUpdateException("error while extracting NSRL HashSet");
@@ -77,18 +79,13 @@ public class NSRLHashSetPreparer extends HashSetPreparer {
     }
 
     @Override
-    public void index() throws HashSetUpdateException {
-        return;
-    }
-
-    @Override
-    public boolean newVersionAvailable() {
-        return true;
-    }
-
-    @Override
     public HashDbManager.HashDb.KnownFilesType getHashSetType() {
         return HashDbManager.HashDb.KnownFilesType.KNOWN;
+    }
+
+    @Override
+    public void downloadDeltaHashSet() throws HashSetUpdateException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
 }

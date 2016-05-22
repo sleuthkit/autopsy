@@ -49,7 +49,7 @@ public class VirusShareHashSetPreparer extends HashSetPreparer {
     }
 
     @Override
-    public void download() throws HashSetUpdateException {
+    public void downloadFullHashSet() throws HashSetUpdateException {
         List<URL> urls = getAllPartUrls(BASE_URL);
         createTargetDircectoryIfNotExists(getDirectory());
 
@@ -65,7 +65,7 @@ public class VirusShareHashSetPreparer extends HashSetPreparer {
             } catch (IOException ex) {
                 Exceptions.printStackTrace(ex);
             }
-            progressbar.setValue(counter++);
+            updateProgressBar(counter++, progressbar);
         }
 
     }
@@ -98,7 +98,7 @@ public class VirusShareHashSetPreparer extends HashSetPreparer {
 
             for (String fileName : downloadedFiles) {
                 writeValidMd5SumsToTargetFile(fileName, targetFile);
-                progressbar.setValue(counter++);
+                updateProgressBar(counter++, progressbar);
             }
 
         } catch (IOException ex) {
@@ -118,16 +118,6 @@ public class VirusShareHashSetPreparer extends HashSetPreparer {
         }
     }
 
-    @Override
-    public void index() {
-        return;
-    }
-
-    @Override
-    public boolean newVersionAvailable() {
-        return true;
-    }
-
     String reg = "<li><a href=\"VirusShare_[0-9]{5}.md5\"> VirusShare_[0-9]{5}.md5</a></li>";
 
     private List<URL> getLinks(String content) throws MalformedURLException {
@@ -144,6 +134,11 @@ public class VirusShareHashSetPreparer extends HashSetPreparer {
     @Override
     public HashDbManager.HashDb.KnownFilesType getHashSetType() {
         return HashDbManager.HashDb.KnownFilesType.KNOWN_BAD;
+    }
+
+    @Override
+    public void downloadDeltaHashSet() throws HashSetUpdateException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
 }

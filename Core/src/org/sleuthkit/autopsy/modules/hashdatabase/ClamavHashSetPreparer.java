@@ -47,7 +47,7 @@ public class ClamavHashSetPreparer extends HashSetPreparer {
     }
 
     @Override
-    public void download() throws HashSetUpdateException {
+    public void downloadFullHashSet() throws HashSetUpdateException {
         createTargetDircectoryIfNotExists(getDirectory());
         for (String url : SOURCES) {
             String fileName = getFileNameFromURL(url);
@@ -88,16 +88,6 @@ public class ClamavHashSetPreparer extends HashSetPreparer {
         }
     }
 
-    @Override
-    public void index() throws HashSetUpdateException {
-        return;
-    }
-
-    @Override
-    public boolean newVersionAvailable() {
-        return true;
-    }
-
     private void combineMdbFiles() throws HashSetUpdateException {
         progressbar.setMaximum(extractedFiles.size());
         int counter = 0;
@@ -107,7 +97,7 @@ public class ClamavHashSetPreparer extends HashSetPreparer {
 
             for (String fileName : extractedFiles) {
                 writeValidMd5SumsToTargetFile(fileName, targetFile);
-                progressbar.setValue(counter++);
+                updateProgressBar(counter++, progressbar);
             }
 
         } catch (IOException ex) {
@@ -132,5 +122,10 @@ public class ClamavHashSetPreparer extends HashSetPreparer {
     @Override
     public HashDbManager.HashDb.KnownFilesType getHashSetType() {
         return HashDbManager.HashDb.KnownFilesType.KNOWN_BAD;
+    }
+
+    @Override
+    public void downloadDeltaHashSet() throws HashSetUpdateException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

@@ -10,6 +10,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import javax.swing.JProgressBar;
+import javax.swing.SwingUtilities;
 import static org.sleuthkit.autopsy.modules.hashdatabase.NSRLHashSetPreparer.BUFFER_SIZE;
 
 public abstract class HashSetPreparer {
@@ -24,11 +25,13 @@ public abstract class HashSetPreparer {
 
     public abstract HashSetPreparer createInstance(JProgressBar progressbar, String outputDirectory);
 
-    public abstract void download() throws HashSetUpdateException;
+    public abstract void downloadFullHashSet() throws HashSetUpdateException;
+
+    public abstract void downloadDeltaHashSet() throws HashSetUpdateException;
 
     public abstract void extract() throws HashSetUpdateException;
 
-    public void index() throws HashSetUpdateException { 
+    public void index() throws HashSetUpdateException {
         HashDbManager.getInstance().indexHashDatabase(this.hashDatabase);
     }
 
@@ -40,13 +43,15 @@ public abstract class HashSetPreparer {
      */
     public abstract String getName();
 
-    public abstract boolean newVersionAvailable();
-
     public void addHashSetToDatabase() throws HashSetUpdateException {
+        
         try {
-            this.hashDatabase = HashDbManager.getInstance().addExistingHashDatabase(getName(), extractedFile, true, false, getHashSetType());
+            if (!HashDbManager.getInstance().getAllHashSets().stream().anyMatch(hashDb -> {
+                return hashDb.getHashSetName().equals(getName());
+            })) {
+                this.hashDatabase = HashDbManager.getInstance().addExistingHashDatabase(getName(), extractedFile, true, false, getHashSetType());
+            }
         } catch (HashDbManager.HashDbManagerException ex) {
-
             throw new HashSetUpdateException("Error while adding HashSet to Autopsy DB");
         }
 
@@ -69,11 +74,11 @@ public abstract class HashSetPreparer {
         }
     }
 
-    protected static void downloadFile(String source, String destination, JProgressBar progressbar) throws IOException {
+    protected void downloadFile(String source, String destination, JProgressBar progressbar) throws IOException, HashSetUpdateException {
         downloadFile(source, destination, progressbar, 0);
     }
 
-    protected static void downloadFile(String source, String destination, JProgressBar progressbar, int offset) throws MalformedURLException, IOException, FileNotFoundException {
+    protected void downloadFile(String source, String destination, JProgressBar progressbar, int offset) throws MalformedURLException, IOException, FileNotFoundException, HashSetUpdateException {
         URL sourceURL = new URL(source);
 
         HttpURLConnection conn = (HttpURLConnection) sourceURL.openConnection();
@@ -96,7 +101,7 @@ public abstract class HashSetPreparer {
         while ((bytesRead = inputStream.read(buffer)) != -1) {
             counter += bytesRead;
             b.write(buffer, 0, bytesRead);
-            progressbar.setValue(bytesToWorkUnits(counter));
+            updateProgressBar(bytesToWorkUnits(counter), progressbar);
         }
     }
 
@@ -114,10 +119,17 @@ public abstract class HashSetPreparer {
         return outputDirectory + "/" + getName() + "/";
     }
 
-    private static void skipOffset(InputStream inputStream, int offset) throws IOException {
+    private static void skipOffset(InputStream inputStream, int offset) throws IOException, HashSetUpdateException {
         byte[] buffer = new byte[offset];
         if (inputStream.read(buffer, 0, offset) != offset) {
-            System.out.println("org.sleuthkit.autopsy.modules.hashdatabase.HashSetPreparer.skipOffset()");
+            throw new HashSetUpdateException("was unable to ignore the offset");
         }
     }
+
+    protected void updateProgressBar(int progessValue, JProgressBar progressbar) {
+        SwingUtilities.invokeLater(() -> {
+            progressbar.setValue(progessValue);
+        });
+    }
+
 }
