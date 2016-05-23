@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.listvew;
 
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -29,7 +30,10 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
@@ -67,6 +71,21 @@ class ListTimeline extends BorderPane {
      * call-back used to wrap the event ID inn a ObservableValue<Long>
      */
     private static final Callback<TableColumn.CellDataFeatures<Long, Long>, ObservableValue<Long>> CELL_VALUE_FACTORY = param -> new SimpleObjectProperty<>(param.getValue());
+
+    @FXML
+    private ComboBox<ChronoUnit> scrollInrementComboBox;
+
+    @FXML
+    private Button firstButton;
+
+    @FXML
+    private Button previousButton;
+
+    @FXML
+    private Button nextButton;
+
+    @FXML
+    private Button lastButton;
 
     @FXML
     private Label eventCountLabel;
@@ -111,6 +130,25 @@ class ListTimeline extends BorderPane {
         assert subTypeColumn != null : "fx:id=\"subTypeColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
         assert knownColumn != null : "fx:id=\"knownColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
 
+        scrollInrementComboBox.getItems().setAll(
+                ChronoUnit.YEARS,
+                ChronoUnit.MONTHS,
+                ChronoUnit.DAYS,
+                ChronoUnit.HOURS,
+                ChronoUnit.MINUTES,
+                ChronoUnit.SECONDS,
+                ChronoUnit.MILLIS
+        );
+        scrollInrementComboBox.getSelectionModel().select(ChronoUnit.YEARS);
+
+        firstButton.setOnAction((ActionEvent event) -> table.scrollTo(0));
+        previousButton.setOnAction((ActionEvent event) -> {
+            table.scrollTo(0);
+
+        });
+//        nextButton.setOnAction((ActionEvent event) -> table.scrollTo(0));
+        lastButton.setOnAction((ActionEvent event) -> table.scrollTo(table.getItems().size()));
+
         //override default row with one that provides context menu.S
         table.setRowFactory(tableView -> new EventRow());
 
@@ -149,6 +187,10 @@ class ListTimeline extends BorderPane {
         table.getItems().clear();
     }
 
+    Long getSelectedEventID() {
+        return table.getSelectionModel().getSelectedItem();
+    }
+
     /**
      * Set the Collection of events (by ID) to show in the table.
      *
@@ -167,6 +209,13 @@ class ListTimeline extends BorderPane {
      */
     ObservableList<Long> getSelectedEventIDs() {
         return table.getSelectionModel().getSelectedItems();
+    }
+
+    void selectEventID(Long selectedEventID) {
+        //restore selection.
+        table.scrollTo(selectedEventID);
+        table.getSelectionModel().select(selectedEventID);
+        table.requestFocus();
     }
 
     /**
