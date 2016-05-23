@@ -149,6 +149,10 @@ class ListTimeline extends BorderPane {
         table.getItems().clear();
     }
 
+    Long getSelectedEventID() {
+        return table.getSelectionModel().getSelectedItem();
+    }
+
     /**
      * Set the Collection of events (by ID) to show in the table.
      *
@@ -167,6 +171,13 @@ class ListTimeline extends BorderPane {
      */
     ObservableList<Long> getSelectedEventIDs() {
         return table.getSelectionModel().getSelectedItems();
+    }
+
+    void selectEventID(Long selectedEventID) {
+        //restore selection.
+        table.scrollTo(selectedEventID);
+        table.getSelectionModel().select(selectedEventID);
+        table.requestFocus();
     }
 
     /**

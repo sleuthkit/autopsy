@@ -73,7 +73,7 @@ public class ListViewPane extends AbstractTimeLineView {
 
     @Override
     protected void clearData() {
-        listChart.clear();
+
     }
 
     private static class ListViewSettingsPane extends Parent {
@@ -96,13 +96,18 @@ public class ListViewPane extends AbstractTimeLineView {
             }
             FilteredEventsModel eventsModel = getEventsModel();
 
+            Long selectedEventID = listChart.getSelectedEventID();
+
             //clear the chart and set the horixontal axis
             resetView(eventsModel.getTimeRange());
 
             updateMessage("Querying db for events");
             //get the event stripes to be displayed
             List<Long> eventIDs = eventsModel.getEventIDs();
-            Platform.runLater(() -> listChart.setEventIDs(eventIDs));
+            Platform.runLater(() -> {
+                listChart.setEventIDs(eventIDs);
+                listChart.selectEventID(selectedEventID);
+            });
 
             updateMessage("updating ui");
             return eventIDs.isEmpty() == false;
