@@ -29,19 +29,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.ui.AbstractTimeLineView;
 
 /**
- * @param <X>         The type of data plotted along the x axis
- * @param <Y>         The type of data plotted along the y axis
- * @param <NodeType>  The type of nodes used to represent data items
- * @param <ChartType> The type of the TimeLineChart<X> this class uses to plot
- *                    the data. Must extend Region.
- *
- * TODO: this is becoming (too?) closely tied to the notion that there is a
- * XYChart doing the rendering. Is this a good idea? -jm
- *
- * TODO: pull up common history context menu items out of derived classes? -jm
- *
- * public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node,
- * ChartType extends Region & TimeLineChart<X>> extends BorderPane {
+ * An AbstractTimeLineView that uses a TableView to display events.
  */
 public class ListViewPane extends AbstractTimeLineView {
 

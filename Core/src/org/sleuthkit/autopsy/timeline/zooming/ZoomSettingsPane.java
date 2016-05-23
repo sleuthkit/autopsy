@@ -107,11 +107,10 @@ public class ZoomSettingsPane extends TitledPane {
 
         /**
          * In order for the selected value in the time unit slider to correspond
-         * to the amount of time used as units along the x-axis of the
-         * visualization, and since we don't want to show "forever" as a time
-         * unit, the range of the slider is restricted, and there is an offset
-         * of 1 between the "real" value, and what is shown in the slider
-         * labels.
+         * to the amount of time used as units along the x-axis of the view, and
+         * since we don't want to show "forever" as a time unit, the range of
+         * the slider is restricted, and there is an offset of 1 between the
+         * "real" value, and what is shown in the slider labels.
          */
         timeUnitSlider.setMax(TimeUnits.values().length - 2);
         configureSliderListeners(timeUnitSlider,
@@ -178,7 +177,7 @@ public class ZoomSettingsPane extends TitledPane {
         //set the tick labels to the enum displayNames
         slider.setLabelFormatter(new EnumSliderLabelFormatter<>(enumClass, labelIndexMapper));
 
-        //make a listener to responds to slider value changes (by updating the visualization)
+        //make a listener to responds to slider value changes (by updating the view)
         final InvalidationListener sliderListener = observable -> {
             //only process event if the slider value is not changing (user has released slider thumb)
             if (slider.isValueChanging() == false) {
