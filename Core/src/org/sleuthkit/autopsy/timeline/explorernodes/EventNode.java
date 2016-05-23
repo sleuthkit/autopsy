@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-16 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,13 +23,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
-import javafx.beans.Observable;
 import javax.swing.Action;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.openide.nodes.Children;
 import org.openide.nodes.PropertySupport;
 import org.openide.nodes.Sheet;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -47,27 +47,36 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * * Explorer Node for SingleEvents.
+ * * Explorer Node for a SingleEvent.
  */
 public class EventNode extends DisplayableItemNode {
 
+    private static final long serialVersionUID = 1L;
+
     private static final Logger LOGGER = Logger.getLogger(EventNode.class.getName());
 
-    private final SingleEvent e;
+    private final SingleEvent event;
 
-    EventNode(SingleEvent eventById, AbstractFile file, BlackboardArtifact artifact) {
-        super(Children.LEAF, Lookups.fixed(eventById, file, artifact));
-        this.e = eventById;
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/timeline/images/" + e.getEventType().getIconBase()); // NON-NLS
+    EventNode(SingleEvent event, AbstractFile file, BlackboardArtifact artifact) {
+        super(Children.LEAF, Lookups.fixed(event, file, artifact));
+        this.event = event;
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/timeline/images/" + event.getEventType().getIconBase()); // NON-NLS
     }
 
-    EventNode(SingleEvent eventById, AbstractFile file) {
-        super(Children.LEAF, Lookups.fixed(eventById, file));
-        this.e = eventById;
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/timeline/images/" + e.getEventType().getIconBase()); // NON-NLS
+    EventNode(SingleEvent event, AbstractFile file) {
+        super(Children.LEAF, Lookups.fixed(event, file));
+        this.event = event;
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/timeline/images/" + event.getEventType().getIconBase()); // NON-NLS
     }
 
     @Override
+    @NbBundle.Messages({
+        "NodeProperty.displayName.icon=Icon",
+        "NodeProperty.displayName.description=Description",
+        "NodeProperty.displayName.baseType=Base Type",
+        "NodeProperty.displayName.subType=Sub Type",
+        "NodeProperty.displayName.known=Known",
+        "NodeProperty.displayName.dateTime=Date/Time"})
     protected Sheet createSheet() {
         Sheet s = super.createSheet();
         Sheet.Set properties = s.get(Sheet.PROPERTIES);
@@ -76,28 +85,25 @@ public class EventNode extends DisplayableItemNode {
             s.put(properties);
         }
 
-        final TimeProperty timePropery = new TimeProperty("time", "Date/Time", "time ", getDateTimeString()); // NON-NLS
-
-        TimeLineController.getTimeZone().addListener((Observable observable) -> {
-            try {
-                timePropery.setValue(getDateTimeString());
-            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-                LOGGER.log(Level.SEVERE, "unexpected error setting date/time property on EventNode explorer node", ex); //NON-NLS
-            }
-        });
-
-        properties.put(new NodeProperty<>("icon", "Icon", "icon", true)); // NON-NLS //gets overridden with icon
-        properties.put(timePropery);
-        properties.put(new NodeProperty<>("description", "Description", "description", e.getFullDescription())); // NON-NLS
-        properties.put(new NodeProperty<>("eventBaseType", "Base Type", "base type", e.getEventType().getSuperType().getDisplayName())); // NON-NLS
-        properties.put(new NodeProperty<>("eventSubType", "Sub Type", "sub type", e.getEventType().getDisplayName())); // NON-NLS
-        properties.put(new NodeProperty<>("Known", "Known", "known", e.getKnown().toString())); // NON-NLS
+        properties.put(new NodeProperty<>("icon", Bundle.NodeProperty_displayName_icon(), "icon", true)); // NON-NLS //gets overridden with icon
+        properties.put(new TimeProperty("time", Bundle.NodeProperty_displayName_dateTime(), "time ", getDateTimeString()));// NON-NLS
+        properties.put(new NodeProperty<>("description", Bundle.NodeProperty_displayName_description(), "description", event.getFullDescription())); // NON-NLS
+        properties.put(new NodeProperty<>("eventBaseType", Bundle.NodeProperty_displayName_baseType(), "base type", event.getEventType().getSuperType().getDisplayName())); // NON-NLS
+        properties.put(new NodeProperty<>("eventSubType", Bundle.NodeProperty_displayName_subType(), "sub type", event.getEventType().getDisplayName())); // NON-NLS
+        properties.put(new NodeProperty<>("Known", Bundle.NodeProperty_displayName_known(), "known", event.getKnown().toString())); // NON-NLS
 
         return s;
     }
 
+    /**
+     * Get the time of this event as a String formated according to the
+     * controller's time zone setting.
+     *
+     * @return The time of this event as a String formated according to the
+     *         controller's time zone setting.
+     */
     private String getDateTimeString() {
-        return new DateTime(e.getStartMillis(), DateTimeZone.UTC).toString(TimeLineController.getZonedFormatter());
+        return new DateTime(event.getStartMillis(), DateTimeZone.UTC).toString(TimeLineController.getZonedFormatter());
     }
 
     @Override
@@ -122,7 +128,7 @@ public class EventNode extends DisplayableItemNode {
 
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> dinv) {
-        throw new UnsupportedOperationException("Not supported yet."); // NON-NLS //To change body of generated methods, choose Tools | Templates.
+        throw new UnsupportedOperationException("Not supported yet."); // NON-NLS 
     }
 
     /*
@@ -138,7 +144,7 @@ public class EventNode extends DisplayableItemNode {
      * We use TimeProperty instead of a normal NodeProperty to correctly display
      * the date/time when the user changes the timezone setting.
      */
-    private class TimeProperty extends PropertySupport.ReadWrite<String> {
+    final private class TimeProperty extends PropertySupport.ReadWrite<String> {
 
         private String value;
 
@@ -151,6 +157,14 @@ public class EventNode extends DisplayableItemNode {
             super(name, String.class, displayName, shortDescription);
             setValue("suppressCustomEditor", Boolean.TRUE); // remove the "..." (editing) button NON-NLS
             this.value = value;
+            TimeLineController.getTimeZone().addListener(timeZone -> {
+                try {
+                    setValue(getDateTimeString());
+                } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+                    LOGGER.log(Level.SEVERE, "Unexpected error setting date/time property on EventNode explorer node", ex); //NON-NLS
+                }
+            });
+
         }
 
         @Override
@@ -159,7 +173,7 @@ public class EventNode extends DisplayableItemNode {
         }
 
         @Override
-        final public void setValue(String t) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+        public void setValue(String t) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
             String oldValue = getValue();
             value = t;
             firePropertyChange("time", oldValue, t); // NON-NLS

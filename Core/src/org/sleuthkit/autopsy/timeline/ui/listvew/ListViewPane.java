@@ -45,7 +45,7 @@ import org.sleuthkit.autopsy.timeline.ui.AbstractTimeLineView;
  */
 public class ListViewPane extends AbstractTimeLineView {
 
-    private final ListChart listChart;
+    private final ListTimeline listChart;
 
     /**
      * Constructor
@@ -54,7 +54,7 @@ public class ListViewPane extends AbstractTimeLineView {
      */
     public ListViewPane(TimeLineController controller) {
         super(controller);
-        listChart = new ListChart(controller);
+        listChart = new ListTimeline(controller);
 
         //initialize chart;
         setCenter(listChart);
