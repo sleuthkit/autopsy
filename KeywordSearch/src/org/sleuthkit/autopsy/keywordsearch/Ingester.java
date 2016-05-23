@@ -300,13 +300,20 @@ class Ingester {
                 try {
                     s = new String(docChunkContentBuf, 0, read, docContentEncoding);
                     // Sanitize by replacing non-UTF-8 characters with caret '^' before adding to index
-                    char[] chars = s.toCharArray();
+                    char[] chars = null;
                     for (int i = 0; i < s.length(); i++) {
                         if (!TextUtil.isValidSolrUTF8(s.charAt(i))) {
+                            // only convert string to char[] if there is a non-UTF8 character
+                            if (chars == null) {
+                                chars = s.toCharArray();
+                            }
                             chars[i] = '^';
                         }
-                    }                    
-                    s = new String(chars);
+                    }
+                    // check if the string was modified (i.e. there was a non-UTF8 character found)
+                    if (chars != null) {
+                        s = new String(chars);
+                    }
                 } catch (UnsupportedEncodingException ex) {
                     logger.log(Level.SEVERE, "Unsupported encoding", ex); //NON-NLS
                 }
