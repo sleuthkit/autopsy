@@ -23,7 +23,7 @@
             <items>
                 <HBox alignment="CENTER_LEFT" BorderPane.alignment="CENTER" HBox.hgrow="NEVER">
                     <children>
-                        <Label fx:id="visualizationModeLabel" text="Visualisation Mode:" textAlignment="CENTER" wrapText="true" HBox.hgrow="NEVER">
+                        <Label fx:id="viewModeLabel" text="View Mode:" textAlignment="CENTER" wrapText="true" HBox.hgrow="NEVER">
                             <HBox.margin>
                                 <Insets right="5.0" />
                             </HBox.margin>

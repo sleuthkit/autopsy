@@ -59,7 +59,7 @@ import org.sleuthkit.autopsy.timeline.explorernodes.EventRootNode;
 import org.sleuthkit.autopsy.timeline.ui.HistoryToolBar;
 import org.sleuthkit.autopsy.timeline.ui.StatusBar;
 import org.sleuthkit.autopsy.timeline.ui.TimeZonePanel;
-import org.sleuthkit.autopsy.timeline.ui.VisualizationPanel;
+import org.sleuthkit.autopsy.timeline.ui.ViewFrame;
 import org.sleuthkit.autopsy.timeline.ui.detailview.tree.EventsTree;
 import org.sleuthkit.autopsy.timeline.ui.filtering.FilterSetPanel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomSettingsPane;
@@ -250,8 +250,8 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
         final VBox leftVBox = new VBox(5, timeZonePanel, historyToolBar, zoomSettingsPane, leftTabPane);
         SplitPane.setResizableWithParent(leftVBox, Boolean.FALSE);
 
-        final VisualizationPanel visualizationPanel = new VisualizationPanel(controller, eventsTree);
-        final SplitPane mainSplitPane = new SplitPane(leftVBox, visualizationPanel);
+        final ViewFrame viewFrame = new ViewFrame(controller, eventsTree);
+        final SplitPane mainSplitPane = new SplitPane(leftVBox, viewFrame);
         mainSplitPane.setDividerPositions(0);
 
         final Scene scene = new Scene(mainSplitPane);

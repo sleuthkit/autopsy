@@ -57,7 +57,7 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 
 /**
- * Abstract base class for TimeLineChart based visualizations.
+ * Abstract base class for TimeLineChart based views.
  *
  * @param <X>         The type of data plotted along the x axis
  * @param <Y>         The type of data plotted along the y axis
@@ -74,12 +74,12 @@ public abstract class AbstractTimelineChart<X, Y, NodeType extends Node, ChartTy
 
     private static final Logger LOGGER = Logger.getLogger(AbstractTimelineChart.class.getName());
 
-    @NbBundle.Messages("AbstractVisualization.Default_Tooltip.text=Drag the mouse to select a time interval to zoom into.\nRight-click for more actions.")
-    private static final Tooltip DEFAULT_TOOLTIP = new Tooltip(Bundle.AbstractVisualization_Default_Tooltip_text());
+    @NbBundle.Messages("AbstractTimelineChart.defaultTooltip.text=Drag the mouse to select a time interval to zoom into.\nRight-click for more actions.")
+    private static final Tooltip DEFAULT_TOOLTIP = new Tooltip(Bundle.AbstractTimelineChart_Default_Tooltip_text());
     private static final Border ONLY_LEFT_BORDER = new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(0, 0, 0, 1)));
 
     /**
-     * Get the tool tip to use for this visualization when no more specific
+     * Get the tool tip to use for this view when no more specific
      * Tooltip is needed.
      *
      * @return The default Tooltip.
@@ -89,10 +89,10 @@ public abstract class AbstractTimelineChart<X, Y, NodeType extends Node, ChartTy
     }
 
     /**
-     * The visualization nodes that are selected.
+     * The nodes that are selected.
      *
      * @return An ObservableList<NodeType> of the nodes that are selected in
-     *         this visualization.
+     *         this view.
      */
     protected ObservableList<NodeType> getSelectedNodes() {
         return selectedNodes;
@@ -127,18 +127,18 @@ public abstract class AbstractTimelineChart<X, Y, NodeType extends Node, ChartTy
     }
 
     /**
-     * Get the CharType that implements this visualization.
+     * Get the CharType that implements this view.
      *
-     * @return The CharType that implements this visualization.
+     * @return The CharType that implements this view.
      */
     protected ChartType getChart() {
         return chart;
     }
 
     /**
-     * Set the ChartType that implements this visualization.
+     * Set the ChartType that implements this view.
      *
-     * @param chart The ChartType that implements this visualization.
+     * @param chart The ChartType that implements this view.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     protected void setChart(ChartType chart) {
@@ -147,7 +147,7 @@ public abstract class AbstractTimelineChart<X, Y, NodeType extends Node, ChartTy
     }
 
     /**
-     * Apply this visualization's 'selection effect' to the given node.
+     * Apply this view's 'selection effect' to the given node.
      *
      * @param node The node to apply the 'effect' to.
      */
@@ -156,7 +156,7 @@ public abstract class AbstractTimelineChart<X, Y, NodeType extends Node, ChartTy
     }
 
     /**
-     * Remove this visualization's 'selection effect' from the given node.
+     * Remove this view's 'selection effect' from the given node.
      *
      * @param node The node to remvoe the 'effect' from.
      */
@@ -168,7 +168,7 @@ public abstract class AbstractTimelineChart<X, Y, NodeType extends Node, ChartTy
      * Should the tick mark at the given value be bold, because it has
      * interesting data associated with it?
      *
-     * @param value A value along this visualization's x axis
+     * @param value A value along this view's x axis
      *
      * @return True if the tick label for the given value should be bold ( has
      *         relevant data), false otherwise
@@ -176,7 +176,7 @@ public abstract class AbstractTimelineChart<X, Y, NodeType extends Node, ChartTy
     abstract protected Boolean isTickBold(X value);
 
     /**
-     * Apply this visualization's 'selection effect' to the given node, if
+     * Apply this view's 'selection effect' to the given node, if
      * applied is true. If applied is false, remove the affect
      *
      * @param node    The node to apply the 'effect' to
@@ -203,16 +203,16 @@ public abstract class AbstractTimelineChart<X, Y, NodeType extends Node, ChartTy
     abstract protected double getTickSpacing();
 
     /**
-     * Get the X-Axis of this Visualization's chart
+     * Get the X-Axis of this view's chart
      *
-     * @return The horizontal axis used by this Visualization's chart
+     * @return The horizontal axis used by this view's chart
      */
     abstract protected Axis<X> getXAxis();
 
     /**
-     * Get the Y-Axis of this Visualization's chart
+     * Get the Y-Axis of this view's chart
      *
-     * @return The vertical axis used by this Visualization's chart
+     * @return The vertical axis used by this view's chart
      */
     abstract protected Axis<Y> getYAxis();
 
@@ -252,7 +252,7 @@ public abstract class AbstractTimelineChart<X, Y, NodeType extends Node, ChartTy
     /**
      * Constructor
      *
-     * @param controller The TimelineController for this visualization.
+     * @param controller The TimelineController for this view.
      */
     protected AbstractTimelineChart(TimeLineController controller) {
         super(controller);
