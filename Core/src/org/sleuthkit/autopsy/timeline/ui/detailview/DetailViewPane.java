@@ -91,7 +91,7 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
 
     /**
      * Local copy of the zoomParams. Used to backout of a zoomParam change
-     * without needing to requery/redraw the vis.
+     * without needing to requery/redraw the view.
      */
     private ZoomParams currentZoomParams;
 
@@ -347,7 +347,7 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
     @NbBundle.Messages({
         "DetailViewPane.loggedTask.queryDb=Retreiving event data",
         "DetailViewPane.loggedTask.name=Updating Details View",
-        "DetailViewPane.loggedTask.updateUI=Populating visualization",
+        "DetailViewPane.loggedTask.updateUI=Populating view",
         "DetailViewPane.loggedTask.continueButton=Continue",
         "DetailViewPane.loggedTask.backButton=Back (Cancel)",
         "# {0} - number of events",

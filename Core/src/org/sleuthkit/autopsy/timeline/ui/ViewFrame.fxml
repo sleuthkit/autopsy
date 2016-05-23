@@ -93,7 +93,7 @@
                     </graphic>
                 </Button>
                 <Separator maxWidth="1.7976931348623157E308" orientation="VERTICAL" />
-                <Button fx:id="refreshButton" alignment="CENTER_RIGHT" mnemonicParsing="false" text="Refresh Vis.">
+                <Button fx:id="refreshButton" alignment="CENTER_RIGHT" mnemonicParsing="false" text="Refresh View">
                     <graphic>
                         <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
                             <image>

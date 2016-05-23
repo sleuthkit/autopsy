@@ -264,7 +264,7 @@ final public class ViewFrame extends BorderPane {
         "ViewFrame.detailsToggle.text=Details",
         "ViewFrame.listToggle.text=List",
         "ViewFrame.zoomMenuButton.text=Zoom in/out to",
-        "ViewFrame.tagsAddedOrDeleted=Tags have been created and/or deleted.  The visualization may not be up to date."
+        "ViewFrame.tagsAddedOrDeleted=Tags have been created and/or deleted.  The view may not be up to date."
     })
     void initialize() {
         assert endPicker != null : "fx:id=\"endPicker\" was not injected: check your FXML file 'ViewWrapper.fxml'."; // NON-NLS
@@ -278,7 +278,7 @@ final public class ViewFrame extends BorderPane {
         notificationPane.getStyleClass().add(NotificationPane.STYLE_CLASS_DARK);
         setCenter(notificationPane);
 
-        //configure visualization mode toggle
+        //configure view mode toggle
         viewModeLabel.setText(Bundle.ViewFrame_viewModeLabel_text());
         countsToggle.setText(Bundle.ViewFrame_countsToggle_text());
         detailsToggle.setText(Bundle.ViewFrame_detailsToggle_text());
@@ -355,14 +355,14 @@ final public class ViewFrame extends BorderPane {
         TimeLineController.getTimeZone().addListener(timeZoneProp -> refreshTimeUI());
         filteredEvents.timeRangeProperty().addListener(timeRangeProp -> refreshTimeUI());
         filteredEvents.zoomParametersProperty().addListener(zoomListener);
-        refreshTimeUI(); //populate the viz
+        refreshTimeUI(); //populate the view
 
         refreshHistorgram();
 
     }
 
     /**
-     * Handle TagsUpdatedEvents by marking that the visualization needs to be
+     * Handle TagsUpdatedEvents by marking that the view needs to be
      * refreshed.
      *
      * NOTE: This ViewFrame must be registered with the
@@ -401,7 +401,7 @@ final public class ViewFrame extends BorderPane {
 
     /**
      * Handle a DBUpdatedEvent from the events model by refreshing the
-     * visualization.
+     * view.
      *
      * NOTE: This ViewFrame must be registered with the
      * filteredEventsModel's EventBus in order for this handler to be invoked.
@@ -583,7 +583,7 @@ final public class ViewFrame extends BorderPane {
         AbstractTimeLineView view;
         ViewMode viewMode = controller.viewModeProperty().get();
 
-        //make new visualization.
+        //make new view.
         switch (viewMode) {
             case LIST:
                 view = new ListViewPane(controller);
@@ -609,20 +609,20 @@ final public class ViewFrame extends BorderPane {
                 view = detailViewPane;
                 break;
             default:
-                throw new IllegalArgumentException("Unknown VisualizationMode: " + viewMode.toString());
+                throw new IllegalArgumentException("Unknown ViewMode: " + viewMode.toString());
         }
 
         //Set the new AbstractTimeLineView as the one hosted by this ViewFrame.
         Platform.runLater(() -> {
-            //clear out old vis.
+            //clear out old view.
             if (hostedView != null) {
                 toolBar.getItems().removeAll(hostedView.getSettingsNodes());
                 hostedView.dispose();
             }
 
             hostedView = view;
-            //setup new vis.
-            ActionUtils.configureButton(new Refresh(), refreshButton);//configure new refresh action for new visualization
+            //setup new view.
+            ActionUtils.configureButton(new Refresh(), refreshButton);//configure new refresh action for new view
             hostedView.refresh();
             toolBar.getItems().addAll(2, view.getSettingsNodes());
             notificationPane.setContent(hostedView);
@@ -767,13 +767,13 @@ final public class ViewFrame extends BorderPane {
     }
 
     /**
-     * Action that refreshes the Visualization.
+     * Action that refreshes the View.
      */
     private class Refresh extends Action {
 
         @NbBundle.Messages({
-            "ViewFrame.refresh.text=Refresh Vis.",
-            "ViewFrame.refresh.longText=Refresh the visualization to include information that is in the DB but not visualized, such as newly updated tags."})
+            "ViewFrame.refresh.text=Refresh View",
+            "ViewFrame.refresh.longText=Refresh the view to include information that is in the DB but not displayed, such as newly updated tags."})
         Refresh() {
             super(Bundle.ViewFrame_refresh_text());
             setLongText(Bundle.ViewFrame_refresh_longText());
