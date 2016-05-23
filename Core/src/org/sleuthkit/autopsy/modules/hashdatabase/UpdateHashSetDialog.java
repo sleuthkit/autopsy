@@ -56,39 +56,38 @@ public class UpdateHashSetDialog extends javax.swing.JDialog {
             }
         });
 
-        GridBagConstraints c = new GridBagConstraints();
-        c.gridx = 0;
-        c.gridy = 0;
+        GridBagConstraints gridBagConstraints = new GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.weightx = 0;
+        gridBagConstraints.fill = GridBagConstraints.NONE;
 
-        initGrid(this.providerList, allPreparer.size(), 5);
+        initGrid(this.providerList, allPreparer.size(), 4);
         for (HashSetPreparer hashSetPreparer : allPreparer) {
 
             HashSetUpdateOptions option = new HashSetUpdateOptions(hashSetPreparer);
-            this.providerList.add(option.getUpdate(), c);
-            c.gridx++;
-            this.providerList.add(option.getDownloadFullHashSetCheckBox(), c);
-            c.gridx++;
-            this.providerList.add(option.getNameLabel(), c);
-            c.gridx++;
-            this.providerList.add(option.getProgressbar(), c);
-            c.gridx++;
-            this.providerList.add(option.getSatusLabel(), c);
+            this.providerList.add(option.getDownloadFullHashSetCheckBox(), gridBagConstraints.clone());
+            gridBagConstraints.gridx++;
+            this.providerList.add(option.getNameLabel(), gridBagConstraints.clone());
+            gridBagConstraints.gridx++;
+            this.providerList.add(option.getProgressbar(), gridBagConstraints.clone());
+            gridBagConstraints.gridx++;
+            this.providerList.add(option.getSatusLabel(), gridBagConstraints.clone());
             hashSetOptions.add(option);
-            c.gridy++;
+            gridBagConstraints.gridy++;
         }
     }
 
     private void initGrid(JPanel panel, int amoutLines, int amountColums) {
         panel.setLayout(new GridLayout(amoutLines + 1, amountColums));
 
-        panel.add(createLabel("update hashset"));
         panel.add(createLabel("full download"));
         panel.add(createLabel("Provider"));
         panel.add(createLabel("Progress"));
         panel.add(createLabel("state"));
 
     }
-    private static final int MAGIC_NUMBER_1 = 9999;
+    private static final int MAGIC_NUMBER_1 = 999;
     private static final int MAGIC_NUMBER_2 = 50;
 
     public JLabel createLabel(String message) {
@@ -105,7 +104,7 @@ public class UpdateHashSetDialog extends javax.swing.JDialog {
 
     class HashSetUpdateOptions {
 
-        private static final int MAGIC_NUMBER_1 = 9999;
+        private static final int MAGIC_NUMBER_1 = 999;
         private static final int MAGIC_NUMBER_2 = 50;
 
         private JLabel nameLabel;
@@ -191,6 +190,7 @@ public class UpdateHashSetDialog extends javax.swing.JDialog {
         startButton = new javax.swing.JButton();
         dataDirectoryTextField = new javax.swing.JTextField();
         dataDirectoryChooser = new javax.swing.JButton();
+        errorLabel = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -228,6 +228,9 @@ public class UpdateHashSetDialog extends javax.swing.JDialog {
             }
         });
 
+        errorLabel.setForeground(new java.awt.Color(255, 0, 0));
+        org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(UpdateHashSetDialog.class, "UpdateHashSetDialog.errorLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -239,11 +242,14 @@ public class UpdateHashSetDialog extends javax.swing.JDialog {
                         .addComponent(dataDirectoryTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 304, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(dataDirectoryChooser))
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                        .addComponent(startButton)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(instructionLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 466, Short.MAX_VALUE)
-                            .addComponent(providerList, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addGroup(layout.createSequentialGroup()
+                            .addGap(12, 12, 12)
+                            .addComponent(errorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addComponent(startButton))
+                        .addComponent(instructionLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 466, Short.MAX_VALUE)
+                        .addComponent(providerList, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap(147, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -258,7 +264,9 @@ public class UpdateHashSetDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(providerList, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(startButton)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(startButton)
+                    .addComponent(errorLabel))
                 .addContainerGap(27, Short.MAX_VALUE))
         );
 
@@ -266,10 +274,13 @@ public class UpdateHashSetDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void startButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startButtonActionPerformed
+        errorLabel.setText("");
         if (isExistingDirectory(this.dataDirectoryPath)) {
             hashSetOptions.stream().forEach((hashSetOption) -> {
                 new HashSetUpdateWorker(hashSetOption, this.dataDirectoryPath).execute();
             });
+        } else {
+            errorLabel.setText("Target directory does not exist. ");
         }
     }//GEN-LAST:event_startButtonActionPerformed
 
@@ -309,7 +320,11 @@ public class UpdateHashSetDialog extends javax.swing.JDialog {
 
         @Override
         protected void process(List<String> chunks) {
-            options.getSatusLabel().setText(chunks.get(chunks.size() - 1));
+            String lastChunk = chunks.get(chunks.size() - 1);
+            if (lastChunk.length() > 50) {
+                lastChunk = lastChunk.substring(0, 50);
+            }
+            options.getSatusLabel().setText(lastChunk);
         }
 
         private void downloadDeltaHashSet() {
@@ -345,7 +360,9 @@ public class UpdateHashSetDialog extends javax.swing.JDialog {
                 publish("finished");
                 options.progressbar.setVisible(false);
             } catch (HashSetUpdateException ex) {
-                publish(ex.toString());
+                publish(ex.getMessage());
+            } finally {
+                options.progressbar.setIndeterminate(false);
             }
         }
     }
@@ -395,6 +412,7 @@ public class UpdateHashSetDialog extends javax.swing.JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton dataDirectoryChooser;
     private javax.swing.JTextField dataDirectoryTextField;
+    private javax.swing.JLabel errorLabel;
     private javax.swing.JLabel instructionLabel;
     private javax.swing.JPanel providerList;
     private javax.swing.JButton startButton;
