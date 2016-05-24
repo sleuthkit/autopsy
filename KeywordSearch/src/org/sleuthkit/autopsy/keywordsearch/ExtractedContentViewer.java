@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.Node;
@@ -40,8 +39,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
- * Displays the indexed text associated with a file or a blackboard artifact,
- * possibly marked up with HTML to highlight keyword hits.
+ * A content viewer that displays the indexed text associated with a file or an
+ * artifact, possibly marked up with HTML to highlight keyword hits.
  */
 @ServiceProvider(service = DataContentViewer.class, position = 4)
 public class ExtractedContentViewer implements DataContentViewer {
@@ -51,17 +50,26 @@ public class ExtractedContentViewer implements DataContentViewer {
     private ExtractedContentPanel panel;
     private volatile Node currentNode = null;
     private IndexedText currentSource = null;
-    private final IsDirVisitor isDirVisitor = new IsDirVisitor();
 
+    /**
+     * Constructs a content viewer that displays the indexed text associated
+     * with a file or an artifact, possibly marked up with HTML to highlight
+     * keyword hits.
+     */
     public ExtractedContentViewer() {
     }
 
+    /**
+     * Sets the node displayed by the content viewer.
+     *
+     * @param node The node to display
+     */
     @Override
-    public void setNode(final Node selectedNode) {
+    public void setNode(final Node node) {
         /*
          * Clear the viewer.
          */
-        if (selectedNode == null) {
+        if (node == null) {
             currentNode = null;
             resetComponent();
             return;
@@ -71,51 +79,90 @@ public class ExtractedContentViewer implements DataContentViewer {
          * This deals with the known bug with an unknown cause where setNode is
          * sometimes called twice for the same node.
          */
-        if (selectedNode == currentNode) {
+        if (node == currentNode) {
             return;
         } else {
-            currentNode = selectedNode;
+            currentNode = node;
         }
 
         /*
-         * Assemble a collection of all of the "sources" of extracted and
-         * indexed text to present in a paged display. First look for the text
-         * marked up with HTML to highlight keyword hits that will be present if
-         * the node is a keyword hit blakcboard artifact.
+         * Assemble a collection of all of the indexed text "sources" associated
+         * with the node.
          */
-        final List<IndexedText> sources = new ArrayList<>();
-        sources.addAll(selectedNode.getLookup().lookupAll(IndexedText.class));
+        IndexedText highlightedHitText = null;
+        IndexedText rawContentText = null;
+        IndexedText rawArtifactText = null;
+        List<IndexedText> sources = new ArrayList<>();
 
         /*
-         * Now look for the "raw" extracted text if this is a node for another
-         * type of artifact or for content.
+         * First add the text marked up with HTML to highlight keyword hits that
+         * will be present in the selected node's lookup if the node is for a
+         * keyword hit artifact.
          */
-        long documentID = getDocumentId(currentNode);
-        if (INVALID_DOCUMENT_ID == documentID) {
-            setPanel(sources);
-            return;
+        sources.addAll(node.getLookup().lookupAll(IndexedText.class));
+        if (!sources.isEmpty()) {
+            highlightedHitText = sources.get(0);
         }
-        IndexedText rawSource;
-        if (documentID > INVALID_DOCUMENT_ID) {
-            // Add a content item
-            Content content = currentNode.getLookup().lookup(Content.class);
-            rawSource = new RawText(content, content.getId());
+
+        /*
+         * Next, add the "raw" (not highlighted) text, if any, for any content
+         * associated with the node.
+         */
+        Content content = currentNode.getLookup().lookup(Content.class);
+        if (null != content && solrHasContent(content.getId())) {
+            rawContentText = new RawText(content, content.getId());
+            sources.add(rawContentText);
+            int currentPage = rawContentText.getCurrentPage();
+            if (currentPage == 0 && rawContentText.hasNextPage()) {
+                rawContentText.nextPage();
+            }
+        }
+
+        /*
+         * Finally, add the "raw" (not highlighted) text, if any, for any
+         * artifact associated with the node.
+         */
+        BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
+        if (null != artifact) {
+            if (artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+                rawArtifactText = new RawText(artifact, artifact.getArtifactID());
+                sources.add(rawArtifactText);
+            } else {
+                try {
+                    // Get the associated artifact attribute and return its value as the ID
+                    BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
+                    if (attribute != null) {
+                        rawArtifactText = new RawText(artifact, attribute.getValueLong()); // RJCTODO: The artifact is just a flag for RawText, that's why this works
+                        sources.add(rawArtifactText);
+                    }
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Error getting associated artifact attributes", ex); //NON-NLS
+                }
+            }
+        }
+
+        /*
+         * Now set the default text to be displayed. RJCTODO: Correct this.
+         */
+        if (null != highlightedHitText) {
+            /*
+             * Default to highlight hit text, if present.
+             */
+            currentSource = highlightedHitText;
+        } else if (null != rawContentText) {
+            /*
+             * Default to the raw content text for content nodes and artifact
+             * nodes that are not keyword hits.
+             */
+            currentSource = rawContentText;
         } else {
-            // Add an artifact item
-            BlackboardArtifact blackboardArtifact = currentNode.getLookup().lookup(BlackboardArtifact.class);
-            rawSource = new RawText(blackboardArtifact, documentID);
+            /*
+             * Handle the artifacts associated with a data source, for which
+             * there is no content text.
+             */
+            currentSource = rawArtifactText;
         }
-        currentSource = rawSource;
-        sources.add(rawSource);
 
-        /*
-         * Initialize the pages for the sources. The first source in the list
-         * of sources will be displayed.
-         */
-        int currentPage = currentSource.getCurrentPage();
-        if (currentPage == 0 && currentSource.hasNextPage()) {
-            currentSource.nextPage();
-        }
         updatePageControls();
         setPanel(sources);
     }
@@ -288,8 +335,8 @@ public class ExtractedContentViewer implements DataContentViewer {
         /*
          * For keyword search hit artifact nodes and all other nodes, the
          * document ID for the extracted text is the ID of the associated
-         * content, if any, unless there is an associated artifact, which
-         * is handled above.
+         * content, if any, unless there is an associated artifact, which is
+         * handled above.
          */
         Content content = node.getLookup().lookup(Content.class);
         if (content != null) {
