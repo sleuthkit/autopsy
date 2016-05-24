@@ -22,6 +22,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
+import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -92,7 +93,6 @@ public class ZoomSettingsPane extends TitledPane {
                 EventTypeZoomLevel::ordinal,
                 Function.identity());
         typeZoomLabel.setText(Bundle.ZoomSettingsPane_typeZoomLabel_text());
-        typeZoomSlider.disableProperty().bind(controller.viewModeProperty().isEqualTo(ViewMode.LIST));
 
         descrLODSlider.setMax(DescriptionLoD.values().length - 1);
         configureSliderListeners(descrLODSlider,
@@ -103,7 +103,7 @@ public class ZoomSettingsPane extends TitledPane {
                 Function.identity());
         descrLODLabel.setText(Bundle.ZoomSettingsPane_descrLODLabel_text());
         //the description slider is only usefull in the detail view
-        descrLODSlider.disableProperty().bind(controller.viewModeProperty().isNotEqualTo(ViewMode.DETAIL));
+        descrLODSlider.disableProperty().bind(controller.viewModeProperty().isEqualTo(ViewMode.COUNTS));
 
         /**
          * In order for the selected value in the time unit slider to correspond
@@ -122,7 +122,12 @@ public class ZoomSettingsPane extends TitledPane {
                 modelTimeRange -> RangeDivisionInfo.getRangeDivisionInfo(modelTimeRange).getPeriodSize().ordinal() - 1,
                 index -> index + 1);  //compensate for the -1 above when mapping to the Enum whose displayName will be shown at index
         timeUnitLabel.setText(Bundle.ZoomSettingsPane_timeUnitLabel_text());
-        timeUnitSlider.disableProperty().bind(controller.viewModeProperty().isEqualTo(ViewMode.LIST));
+
+        //hide the whole panel in list mode
+        BooleanBinding notListMode = controller.viewModeProperty().isNotEqualTo(ViewMode.LIST);
+        visibleProperty().bind(notListMode);
+        managedProperty().bind(notListMode);
+
     }
 
     /**
