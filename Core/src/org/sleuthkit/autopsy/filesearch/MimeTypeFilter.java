@@ -29,7 +29,7 @@ class MimeTypeFilter extends AbstractFileSearchFilter<MimeTypePanel>  {
     public String getPredicate() throws FilterValidationException {
         String predicate = "";
         for(String mimeType : this.getComponent().getMimeTypesSelected()) {
-            predicate += "mime_type = '" + mimeType + "' OR ";
+            predicate += "mime_type ='" + mimeType + "' OR ";
         }
         if(predicate.length() > 3) {
             predicate = predicate.substring(0, predicate.length() - 3);
