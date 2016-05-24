@@ -74,6 +74,7 @@ class DateSearchPanel extends javax.swing.JPanel {
         copyMenuItem.addActionListener(actList);
         pasteMenuItem.addActionListener(actList);
         selectAllMenuItem.addActionListener(actList);
+        this.setComponentsEnabled();
     }
 
     JCheckBox getAccessedCheckBox() {
@@ -114,6 +115,23 @@ class DateSearchPanel extends javax.swing.JPanel {
         for (String tz : newTimeZones) {
             this.timeZoneComboBox.addItem(tz);
         }
+    }
+
+    private void setComponentsEnabled() {
+        boolean enable = this.dateCheckBox.isSelected();
+        this.dateFromTextField.setEnabled(enable);
+        this.dateFromButtonCalendar.setEnabled(enable);
+        this.jLabel1.setEnabled(enable);
+        this.dateToTextField.setEnabled(enable);
+        this.dateToButtonCalendar.setEnabled(enable);
+        this.jLabel2.setEnabled(enable);
+        this.jLabel3.setEnabled(enable);
+        this.jLabel4.setEnabled(enable);
+        this.timeZoneComboBox.setEnabled(enable);
+        this.modifiedCheckBox.setEnabled(enable);
+        this.accessedCheckBox.setEnabled(enable);
+        this.changedCheckBox.setEnabled(enable);
+        this.createdCheckBox.setEnabled(enable);
     }
 
     /**
@@ -170,6 +188,11 @@ class DateSearchPanel extends javax.swing.JPanel {
         jLabel4.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.jLabel4.text")); // NOI18N
 
         dateCheckBox.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.dateCheckBox.text")); // NOI18N
+        dateCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                dateCheckBoxActionPerformed(evt);
+            }
+        });
 
         jLabel3.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
         jLabel3.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.jLabel3.text")); // NOI18N
@@ -323,6 +346,10 @@ class DateSearchPanel extends javax.swing.JPanel {
             setToDate((Date) evt.getNewValue());
         }
     }//GEN-LAST:event_dateToPopupChanged
+
+    private void dateCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dateCheckBoxActionPerformed
+        this.setComponentsEnabled();
+    }//GEN-LAST:event_dateCheckBoxActionPerformed
 
     /**
      * Validate and set the datetime field on the screen given a datetime
