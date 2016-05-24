@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.timeline;
 
 import java.beans.PropertyVetoException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
@@ -42,6 +43,8 @@ import org.joda.time.Interval;
 import org.joda.time.format.DateTimeFormatter;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
+import org.openide.nodes.AbstractNode;
+import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.windows.Mode;
@@ -101,38 +104,47 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
             //depending on the active view mode, we either update the dataResultPanel, or update the contentViewerPanel directly.
             switch (controller.getViewMode()) {
                 case LIST:
-                    if (selectedEventIDs.size() == 1) {
-                        //if there is only one event selected, make a explorer node for it and push it to the content viewer.
-                        try {
-                            EventNode eventNode = EventNode.createEventNode(selectedEventIDs.get(0), controller.getEventsModel());
-                            SwingUtilities.invokeLater(() -> {
-                                //set node as selected for actions
-                                em.setRootContext(eventNode);
-                                try {
-                                    em.setSelectedNodes(new Node[]{eventNode});
-                                } catch (PropertyVetoException ex) {
-                                    //I don't know why this would ever happen.
-                                    LOGGER.log(Level.SEVERE, "Selecting the event node was vetoed.", ex); // NON-NLS
-                                }
-                                //push into content viewer.
-                                contentViewerPanel.setNode(eventNode);
-                            });
-                        } catch (IllegalStateException ex) {
-                            //Since the case is closed, the user probably doesn't care about this, just log it as a precaution.
-                            LOGGER.log(Level.SEVERE, "There was no case open to lookup the Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
-                        } catch (TskCoreException ex) {
-                            LOGGER.log(Level.SEVERE, "Failed to lookup Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
-                            Platform.runLater(() -> {
-                                Notifications.create()
-                                        .owner(jFXVizPanel.getScene().getWindow())
-                                        .text(Bundle.TimelineTopComponent_selectedEventListener_errorMsg())
-                                        .showError();
-                            });
+
+                    Children children = new Children.Array();
+                    ArrayList<EventNode> childList = new ArrayList<>();
+
+                    try {
+                        for (Long t : selectedEventIDs) {
+                            childList.add(EventNode.createEventNode(t, controller.getEventsModel()));
                         }
-                    } else {
-                        //There is more than one or no event selected, so clear the content viewer.
-                        SwingUtilities.invokeLater(() -> contentViewerPanel.setNode(null));
+                        EventNode[] toArray = childList.toArray(new EventNode[childList.size()]);
+
+                        children.add(toArray);
+
+                        SwingUtilities.invokeLater(() -> {
+                            //set node as selected for actions
+                            em.setRootContext(new AbstractNode(children));
+                            try {
+                                em.setSelectedNodes(toArray);
+                            } catch (PropertyVetoException ex) {
+                                //I don't know why this would ever happen.
+                                LOGGER.log(Level.SEVERE, "Selecting the event node was vetoed.", ex); // NON-NLS
+                            }
+                            //push into content viewer.
+                            if (selectedEventIDs.size() == 1) {
+                                contentViewerPanel.setNode(toArray[0]);
+                            } else {
+                                contentViewerPanel.setNode(null);
+                            }
+                        });
+                    } catch (IllegalStateException ex) {
+                        //Since the case is closed, the user probably doesn't care about this, just log it as a precaution.
+                        LOGGER.log(Level.SEVERE, "There was no case open to lookup the Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
+                    } catch (TskCoreException ex) {
+                        LOGGER.log(Level.SEVERE, "Failed to lookup Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
+                        Platform.runLater(() -> {
+                            Notifications.create()
+                                    .owner(jFXVizPanel.getScene().getWindow())
+                                    .text(Bundle.TimelineTopComponent_selectedEventListener_errorMsg())
+                                    .showError();
+                        });
                     }
+
                     break;
                 case COUNTS:
                 case DETAIL:
