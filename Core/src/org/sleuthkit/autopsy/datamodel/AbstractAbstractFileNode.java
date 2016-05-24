@@ -268,7 +268,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         map.put(AbstractFilePropertyType.USER_ID.toString(), content.getUid());
         map.put(AbstractFilePropertyType.GROUP_ID.toString(), content.getGid());
         map.put(AbstractFilePropertyType.META_ADDR.toString(), content.getMetaAddr());
-        map.put(AbstractFilePropertyType.ATTR_ADDR.toString(), Long.toString(content.getAttrType().getValue()) + "-" + Long.toString(content.getAttrId()));
+        map.put(AbstractFilePropertyType.ATTR_ADDR.toString(), Long.toString(content.getAttrType().getValue()) + "-" + content.getAttributeId());
         map.put(AbstractFilePropertyType.TYPE_DIR.toString(), content.getDirType().getLabel());
         map.put(AbstractFilePropertyType.TYPE_META.toString(), content.getMetaType().toString());
         map.put(AbstractFilePropertyType.KNOWN.toString(), content.getKnown().getName());
