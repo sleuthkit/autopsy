@@ -290,8 +290,8 @@ public final class FilteredEventsModel {
         return repo.getEventIDs(overlap, intersect);
     }
 
-    public List<Long> getEventIDs() {
-        return getEventIDs(requestedTimeRange.get(), requestedFilter.get());
+    public List<MergedEvent> getMergedEvents() {
+        return repo.getMergedEvents(requestedTimeRange.get(), requestedFilter.get());
     }
 
     /**
