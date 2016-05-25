@@ -282,7 +282,6 @@ class ReportKML implements GeneralReportModule {
             logger.log(Level.WARNING, "Could not get GPS Searches from database.", ex); //NON-NLS
         }
 
-        int x = 0;
         try {
             for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT)) {
                 Long timestamp = getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
