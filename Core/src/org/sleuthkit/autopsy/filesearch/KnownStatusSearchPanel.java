@@ -17,13 +17,15 @@
  * limitations under the License.
  */
 
-/*
+ /*
  * KnownStatusSearchPanel.java
  *
  * Created on Oct 19, 2011, 11:45:44 AM
  */
 package org.sleuthkit.autopsy.filesearch;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import javax.swing.JCheckBox;
 
 /**
@@ -31,6 +33,8 @@ import javax.swing.JCheckBox;
  * @author pmartel
  */
 class KnownStatusSearchPanel extends javax.swing.JPanel {
+
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     /**
      * Creates new form KnownStatusSearchPanel
@@ -55,12 +59,22 @@ class KnownStatusSearchPanel extends javax.swing.JPanel {
     JCheckBox getUnknownOptionCheckBox() {
         return unknownOptionCheckBox;
     }
-    
+
     private void setComponentsEnabled() {
         boolean enabled = this.knownCheckBox.isSelected();
         this.unknownOptionCheckBox.setEnabled(enabled);
         this.knownOptionCheckBox.setEnabled(enabled);
         this.knownBadOptionCheckBox.setEnabled(enabled);
+    }
+
+    @Override
+    public void addPropertyChangeListener(PropertyChangeListener pcl) {
+        pcs.addPropertyChangeListener(pcl);
+    }
+
+    @Override
+    public void removePropertyChangeListener(PropertyChangeListener pcl) {
+        pcs.removePropertyChangeListener(pcl);
     }
 
     /**
@@ -132,6 +146,7 @@ class KnownStatusSearchPanel extends javax.swing.JPanel {
 
     private void knownCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_knownCheckBoxActionPerformed
         setComponentsEnabled();
+        pcs.firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
     }//GEN-LAST:event_knownCheckBoxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

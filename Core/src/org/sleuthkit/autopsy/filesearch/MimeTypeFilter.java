@@ -40,5 +40,7 @@ class MimeTypeFilter extends AbstractFileSearchFilter<MimeTypePanel>  {
     @Override
     public void addActionListener(ActionListener l) {
     }
+
+    
     
 }
