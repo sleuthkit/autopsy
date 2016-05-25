@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
@@ -37,6 +39,7 @@ class DateSearchPanel extends javax.swing.JPanel {
 
     DateFormat dateFormat;
     List<String> timeZones;
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     DateSearchPanel(DateFormat dateFormat, List<String> timeZones) {
         this.dateFormat = dateFormat;
@@ -132,6 +135,16 @@ class DateSearchPanel extends javax.swing.JPanel {
         this.accessedCheckBox.setEnabled(enable);
         this.changedCheckBox.setEnabled(enable);
         this.createdCheckBox.setEnabled(enable);
+    }
+    
+    @Override
+    public void addPropertyChangeListener(PropertyChangeListener pcl) {
+        pcs.addPropertyChangeListener(pcl);
+    }
+
+    @Override
+    public void removePropertyChangeListener(PropertyChangeListener pcl) {
+        pcs.removePropertyChangeListener(pcl);
     }
 
     /**
@@ -349,6 +362,7 @@ class DateSearchPanel extends javax.swing.JPanel {
 
     private void dateCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dateCheckBoxActionPerformed
         this.setComponentsEnabled();
+        pcs.firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
     }//GEN-LAST:event_dateCheckBoxActionPerformed
 
     /**

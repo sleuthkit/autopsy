@@ -205,6 +205,11 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
         getComponent().addActionListener(l);
     }
 
+    @Override
+    public void addPropertyChangeListener(PropertyChangeListener listener) {
+        getComponent().addPropertyChangeListener(listener);
+    }
+
     /**
      * Inner class to put the separator inside the combo box.
      */

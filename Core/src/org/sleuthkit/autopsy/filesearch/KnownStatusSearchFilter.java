@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.event.ActionListener;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.TskData.FileKnown;
 

@@ -19,12 +19,13 @@
 package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeListener;
 import javax.swing.JComponent;
 
 /**
  * Provides a filter and the panel to display it to the FileSearchTopComponent
  */
-interface FileSearchFilter {
+ interface FileSearchFilter {
 
     /**
      * Gets the panel to put in the File Search pane.
@@ -55,6 +56,8 @@ interface FileSearchFilter {
      * Add an action listener to the fields of this panel
      */
     void addActionListener(ActionListener l);
+    
+    void addPropertyChangeListener(PropertyChangeListener listener);
 
     /**
      * Thrown if a filter's inputs are invalid
