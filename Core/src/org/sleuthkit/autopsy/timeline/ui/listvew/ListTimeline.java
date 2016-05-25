@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.listvew;
 
+import com.google.common.collect.FluentIterable;
+import com.google.common.collect.Iterables;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -25,14 +27,17 @@ import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
 import javafx.application.Platform;
-import javafx.beans.binding.Bindings;
+import javafx.beans.Observable;
+import javafx.beans.binding.StringBinding;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
@@ -51,13 +56,15 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.datamodel.CombinedEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.BaseTypes;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.FileSystemTypes;
 import org.sleuthkit.autopsy.timeline.explorernodes.EventNode;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * The inner component that makes up the Lsit view. Manages the table.
+ * The inner component that makes up the List view. Manages the table.
  */
 class ListTimeline extends BorderPane {
 
@@ -66,28 +73,29 @@ class ListTimeline extends BorderPane {
     /**
      * call-back used to wrap the event ID inn a ObservableValue<Long>
      */
-    private static final Callback<TableColumn.CellDataFeatures<Long, Long>, ObservableValue<Long>> CELL_VALUE_FACTORY = param -> new SimpleObjectProperty<>(param.getValue());
+    private static final Callback<TableColumn.CellDataFeatures<CombinedEvent, CombinedEvent>, ObservableValue<CombinedEvent>> CELL_VALUE_FACTORY = param -> new SimpleObjectProperty<>(param.getValue());
 
     @FXML
     private Label eventCountLabel;
     @FXML
-    private TableView<Long> table;
+    private TableView<CombinedEvent> table;
     @FXML
-    private TableColumn<Long, Long> idColumn;
+    private TableColumn<CombinedEvent, CombinedEvent> idColumn;
     @FXML
-    private TableColumn<Long, Long> millisColumn;
+    private TableColumn<CombinedEvent, CombinedEvent> dateTimeColumn;
     @FXML
-    private TableColumn<Long, Long> iconColumn;
+    private TableColumn<CombinedEvent, CombinedEvent> descriptionColumn;
     @FXML
-    private TableColumn<Long, Long> descriptionColumn;
+    private TableColumn<CombinedEvent, CombinedEvent> typeColumn;
     @FXML
-    private TableColumn<Long, Long> baseTypeColumn;
-    @FXML
-    private TableColumn<Long, Long> subTypeColumn;
-    @FXML
-    private TableColumn<Long, Long> knownColumn;
+    private TableColumn<CombinedEvent, CombinedEvent> knownColumn;
 
     private final TimeLineController controller;
+
+    /**
+     * observable list used to track selected events.
+     */
+    private final ObservableList<Long> selectedEventIDs = FXCollections.observableArrayList();
 
     /**
      * Constructor
@@ -100,15 +108,16 @@ class ListTimeline extends BorderPane {
     }
 
     @FXML
+    @NbBundle.Messages({
+        "# {0} - the number of events",
+        "ListTimeline.evetnCountLabel.text={0} events"})
     void initialize() {
         assert eventCountLabel != null : "fx:id=\"eventCountLabel\" was not injected: check your FXML file 'ListViewPane.fxml'.";
         assert table != null : "fx:id=\"table\" was not injected: check your FXML file 'ListViewPane.fxml'.";
         assert idColumn != null : "fx:id=\"idColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
-        assert millisColumn != null : "fx:id=\"millisColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
-        assert iconColumn != null : "fx:id=\"iconColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
+        assert dateTimeColumn != null : "fx:id=\"dateTimeColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
         assert descriptionColumn != null : "fx:id=\"descriptionColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
-        assert baseTypeColumn != null : "fx:id=\"baseTypeColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
-        assert subTypeColumn != null : "fx:id=\"subTypeColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
+        assert typeColumn != null : "fx:id=\"typeColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
         assert knownColumn != null : "fx:id=\"knownColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
 
         //override default row with one that provides context menu.S
@@ -117,28 +126,39 @@ class ListTimeline extends BorderPane {
         //remove idColumn (can be used for debugging).  
         table.getColumns().remove(idColumn);
 
-        // set up cell and cell-value factories for columns
-        //
-        millisColumn.setCellValueFactory(CELL_VALUE_FACTORY);
-        millisColumn.setCellFactory(col -> new EpochMillisCell());
-
-        iconColumn.setCellValueFactory(CELL_VALUE_FACTORY);
-        iconColumn.setCellFactory(col -> new ImageCell());
+        //// set up cell and cell-value factories for columns
+        dateTimeColumn.setCellValueFactory(CELL_VALUE_FACTORY);
+        dateTimeColumn.setCellFactory(col -> new EpochMillisCell());
 
         descriptionColumn.setCellValueFactory(CELL_VALUE_FACTORY);
         descriptionColumn.setCellFactory(col -> new DescriptionCell());
 
-        baseTypeColumn.setCellValueFactory(CELL_VALUE_FACTORY);
-        baseTypeColumn.setCellFactory(col -> new BaseTypeCell());
-
-        subTypeColumn.setCellValueFactory(CELL_VALUE_FACTORY);
-        subTypeColumn.setCellFactory(col -> new EventTypeCell());
+        typeColumn.setCellValueFactory(CELL_VALUE_FACTORY);
+        typeColumn.setCellFactory(col -> new EventTypeCell());
 
         knownColumn.setCellValueFactory(CELL_VALUE_FACTORY);
         knownColumn.setCellFactory(col -> new KnownCell());
 
-        //bind event count lable no number of items in table
-        eventCountLabel.textProperty().bind(Bindings.size(table.getItems()).asString().concat(" events"));
+        //bind event count label to number of items in the table
+        eventCountLabel.textProperty().bind(new StringBinding() {
+            {
+                bind(table.getItems());
+            }
+
+            @Override
+            protected String computeValue() {
+                return Bundle.ListTimeline_evetnCountLabel_text(table.getItems().size());
+            }
+        });
+
+        table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        table.getSelectionModel().getSelectedItems().addListener((Observable observable) -> {
+            //keep the selectedEventsIDs in sync with the table's selection model, via getRepresentitiveEventID(). 
+            selectedEventIDs.setAll(FluentIterable.from(table.getSelectionModel().getSelectedItems())
+                    .filter(Objects::nonNull)
+                    .transform(CombinedEvent::getRepresentitiveEventID)
+                    .toSet());
+        });
     }
 
     /**
@@ -152,11 +172,11 @@ class ListTimeline extends BorderPane {
     /**
      * Set the Collection of events (by ID) to show in the table.
      *
-     * @param eventIDs The Collection of event IDs to sho in the table.
+     * @param events The Collection of events to sho in the table.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    void setEventIDs(Collection<Long> eventIDs) {
-        table.getItems().setAll(eventIDs);
+    void setMergedEvents(Collection<CombinedEvent> events) {
+        table.getItems().setAll(events);
     }
 
     /**
@@ -166,24 +186,7 @@ class ListTimeline extends BorderPane {
      *         table.
      */
     ObservableList<Long> getSelectedEventIDs() {
-        return table.getSelectionModel().getSelectedItems();
-    }
-
-    /**
-     * TableCell to show the icon for the type of an event.
-     */
-    private class ImageCell extends EventTableCell {
-
-        @Override
-        protected void updateItem(Long item, boolean empty) {
-            super.updateItem(item, empty);
-            if (empty || item == null) {
-                setGraphic(null);
-                setContextMenu(null);
-            } else {
-                setGraphic(new ImageView(getEvent().getEventType().getFXImage()));
-            }
-        }
+        return selectedEventIDs;
     }
 
     /**
@@ -192,47 +195,59 @@ class ListTimeline extends BorderPane {
     private class DescriptionCell extends EventTableCell {
 
         @Override
-        protected void updateItem(Long item, boolean empty) {
+        protected void updateItem(CombinedEvent item, boolean empty) {
             super.updateItem(item, empty);
 
             if (empty || item == null) {
                 setText("");
             } else {
-                setText(getEvent().getDescription(DescriptionLoD.FULL));
+                setText(item.getDescription());
             }
         }
     }
 
     /**
-     * TableCell to show the base type of an event.
-     */
-    private class BaseTypeCell extends EventTableCell {
-
-        @Override
-        protected void updateItem(Long item, boolean empty) {
-            super.updateItem(item, empty);
-
-            if (empty || item == null) {
-                setText("");
-            } else {
-                setText(getEvent().getEventType().getBaseType().getDisplayName());
-            }
-        }
-    }
-
-    /**
-     * TableCell to show the sub type of an event.
+     * TableCell to show the (sub) type of an event.
      */
     private class EventTypeCell extends EventTableCell {
 
         @Override
-        protected void updateItem(Long item, boolean empty) {
+        protected void updateItem(CombinedEvent item, boolean empty) {
             super.updateItem(item, empty);
 
             if (empty || item == null) {
                 setText("");
             } else {
-                setText(getEvent().getEventType().getDisplayName());
+                if (item.getEventTypes().stream().allMatch(eventType -> eventType instanceof FileSystemTypes)) {
+                    String s = "";
+                    for (FileSystemTypes type : Arrays.asList(FileSystemTypes.FILE_MODIFIED, FileSystemTypes.FILE_ACCESSED, FileSystemTypes.FILE_CHANGED, FileSystemTypes.FILE_CREATED)) {
+                        if (item.getEventTypes().contains(type)) {
+                            switch (type) {
+                                case FILE_MODIFIED:
+                                    s += "M";
+                                    break;
+                                case FILE_ACCESSED:
+                                    s += "A";
+                                    break;
+                                case FILE_CREATED:
+                                    s += "B";
+                                    break;
+                                case FILE_CHANGED:
+                                    s += "C";
+                                    break;
+                                default:
+                                    throw new UnsupportedOperationException("Unknown FileSystemType: " + type.name());
+                            }
+                        } else {
+                            s += "_";
+                        }
+                    }
+                    setText(s);
+                    setGraphic(new ImageView(BaseTypes.FILE_SYSTEM.getFXImage()));
+                } else {
+                    setText(Iterables.getOnlyElement(item.getEventTypes()).getDisplayName());
+                    setGraphic(new ImageView(Iterables.getOnlyElement(item.getEventTypes()).getFXImage()));
+                };
             }
         }
     }
@@ -243,7 +258,7 @@ class ListTimeline extends BorderPane {
     private class KnownCell extends EventTableCell {
 
         @Override
-        protected void updateItem(Long item, boolean empty) {
+        protected void updateItem(CombinedEvent item, boolean empty) {
             super.updateItem(item, empty);
 
             if (empty || item == null) {
@@ -260,42 +275,43 @@ class ListTimeline extends BorderPane {
     private class EpochMillisCell extends EventTableCell {
 
         @Override
-        protected void updateItem(Long item, boolean empty) {
+        protected void updateItem(CombinedEvent item, boolean empty) {
             super.updateItem(item, empty);
 
             if (empty || item == null) {
                 setText("");
             } else {
-                setText(TimeLineController.getZonedFormatter().print(getEvent().getStartMillis()));
+                setText(TimeLineController.getZonedFormatter().print(item.getStartMillis()));
             }
         }
     }
 
     /**
-     * Base class for TableCells that represent a SingleEvent by its ID
+     * Base class for TableCells that represent a MergedEvent by way of a
+     * representative SingleEvent.
      */
-    private abstract class EventTableCell extends TableCell<Long, Long> {
+    private abstract class EventTableCell extends TableCell<CombinedEvent, CombinedEvent> {
 
         private SingleEvent event;
 
         /**
-         * Get the SingleEvent this cell represents.
+         * Get the representative SingleEvent for this cell.
          *
-         * @return The SingleEvent this cell represents.
+         * @return The representative SingleEvent for this cell.
          */
         SingleEvent getEvent() {
             return event;
         }
 
         @Override
-        protected void updateItem(Long item, boolean empty) {
+        protected void updateItem(CombinedEvent item, boolean empty) {
             super.updateItem(item, empty);
 
             if (empty || item == null) {
                 event = null;
             } else {
                 //stash the event in the cell for derived classed to use.
-                event = controller.getEventsModel().getEventById(item);
+                event = controller.getEventsModel().getEventById(item.getRepresentitiveEventID());
             }
         }
     }
@@ -303,10 +319,15 @@ class ListTimeline extends BorderPane {
     /**
      * TableRow that adds a right-click context menu.
      */
-    private class EventRow extends TableRow<Long> {
+    private class EventRow extends TableRow<CombinedEvent> {
 
         private SingleEvent event;
 
+        /**
+         * Get the representative SingleEvent for this row .
+         *
+         * @return The representative SingleEvent for this row .
+         */
         SingleEvent getEvent() {
             return event;
         }
@@ -314,16 +335,16 @@ class ListTimeline extends BorderPane {
         @NbBundle.Messages({
             "ListChart.errorMsg=There was a problem getting the content for the selected event."})
         @Override
-        protected void updateItem(Long item, boolean empty) {
+        protected void updateItem(CombinedEvent item, boolean empty) {
             super.updateItem(item, empty);
 
             if (empty || item == null) {
                 event = null;
             } else {
-                event = controller.getEventsModel().getEventById(item);
+                event = controller.getEventsModel().getEventById(item.getRepresentitiveEventID());
                 //make context menu
                 try {
-                    EventNode node = EventNode.createEventNode(item, controller.getEventsModel());
+                    EventNode node = EventNode.createEventNode(event.getEventID(), controller.getEventsModel());
                     List<MenuItem> menuItems = new ArrayList<>();
 
                     //for each actions avaialable on node, make a menu item.
