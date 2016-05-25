@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.timeline;
 
 import java.beans.PropertyVetoException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
@@ -105,29 +104,28 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
             switch (controller.getViewMode()) {
                 case LIST:
 
-                    Children children = new Children.Array();
-                    ArrayList<EventNode> childList = new ArrayList<>();
-
+                    //make an array of EventNodes for the selected events
+                    EventNode[] childArray = new EventNode[selectedEventIDs.size()];
                     try {
-                        for (Long t : selectedEventIDs) {
-                            childList.add(EventNode.createEventNode(t, controller.getEventsModel()));
+                        for (int i = 0; i < selectedEventIDs.size(); i++) {
+                            childArray[i] = EventNode.createEventNode(selectedEventIDs.get(i), controller.getEventsModel());
                         }
-                        EventNode[] toArray = childList.toArray(new EventNode[childList.size()]);
-
-                        children.add(toArray);
+                        Children children = new Children.Array();
+                        children.add(childArray);
 
                         SwingUtilities.invokeLater(() -> {
-                            //set node as selected for actions
+                            //set generic container node as root context 
                             em.setRootContext(new AbstractNode(children));
                             try {
-                                em.setSelectedNodes(toArray);
+                                //set selected nodes for actions
+                                em.setSelectedNodes(childArray);
                             } catch (PropertyVetoException ex) {
                                 //I don't know why this would ever happen.
                                 LOGGER.log(Level.SEVERE, "Selecting the event node was vetoed.", ex); // NON-NLS
                             }
-                            //push into content viewer.
+                            //if there is only one event selected push it into content viewer.
                             if (selectedEventIDs.size() == 1) {
-                                contentViewerPanel.setNode(toArray[0]);
+                                contentViewerPanel.setNode(childArray[0]);
                             } else {
                                 contentViewerPanel.setNode(null);
                             }

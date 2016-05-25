@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.listvew;
 
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Iterables;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,7 +26,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
@@ -140,14 +140,11 @@ class ListTimeline extends BorderPane {
         table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
         table.getSelectionModel().getSelectedItems().addListener((Observable observable) -> {
-            if (table.getSelectionModel().getSelectedItems().size() == 1) {
-                selectedEventIDs.setAll(Iterables.getFirst(table.getSelectionModel().getSelectedItem().getEventIDs(), 0L));
-            } else {
-                selectedEventIDs.setAll(table.getSelectionModel().getSelectedItems().stream()
-                        .filter(Objects::nonNull)
-                        .flatMap(mEvent -> mEvent.getEventIDs().stream())
-                        .collect(Collectors.toSet()));
-            }
+            selectedEventIDs.setAll(
+                    FluentIterable.from(table.getSelectionModel().getSelectedItems())
+                    .filter(Objects::nonNull)
+                    .transform(MergedEvent::getRepresentitiveEventID)
+                    .toSet());
         });
     }
 
