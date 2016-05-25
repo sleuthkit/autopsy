@@ -30,6 +30,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
@@ -112,10 +113,6 @@ public class ExtractedContentViewer implements DataContentViewer {
         if (null != content && solrHasContent(content.getId())) {
             rawContentText = new RawText(content, content.getId());
             sources.add(rawContentText);
-            int currentPage = rawContentText.getCurrentPage();
-            if (currentPage == 0 && rawContentText.hasNextPage()) {
-                rawContentText.nextPage();
-            }
         }
 
         /*
@@ -124,17 +121,22 @@ public class ExtractedContentViewer implements DataContentViewer {
          */
         BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
         if (null != artifact) {
+            /*
+             * For keyword hit artifacts, add the text of the artifact that hit,
+             * not the hit artifact; otherwise add the text for the artifact.
+             */
             if (artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
                 rawArtifactText = new RawText(artifact, artifact.getArtifactID());
                 sources.add(rawArtifactText);
             } else {
                 try {
-                    // Get the associated artifact attribute and return its value as the ID
                     BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
                     if (attribute != null) {
-                        rawArtifactText = new RawText(artifact, attribute.getValueLong()); // RJCTODO: The artifact is just a flag for RawText, that's why this works
+                        long artifactId = attribute.getValueLong();
+                        BlackboardArtifact associatedArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(artifactId);
+                        rawArtifactText = new RawText(associatedArtifact, associatedArtifact.getArtifactID());
                         sources.add(rawArtifactText);
-                    }
+                    } 
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error getting associated artifact attributes", ex); //NON-NLS
                 }
@@ -142,27 +144,25 @@ public class ExtractedContentViewer implements DataContentViewer {
         }
 
         /*
-         * Now set the default text to be displayed. RJCTODO: Correct this.
+         * Now set the default source to be displayed.
          */
         if (null != highlightedHitText) {
-            /*
-             * Default to highlight hit text, if present.
-             */
             currentSource = highlightedHitText;
         } else if (null != rawContentText) {
-            /*
-             * Default to the raw content text for content nodes and artifact
-             * nodes that are not keyword hits.
-             */
             currentSource = rawContentText;
         } else {
-            /*
-             * Handle the artifacts associated with a data source, for which
-             * there is no content text.
-             */
             currentSource = rawArtifactText;
         }
 
+        /*
+         * Push the text sources into the panel.
+         */
+        for (IndexedText source : sources) {
+            int currentPage = source.getCurrentPage();
+            if (currentPage == 0 && source.hasNextPage()) {
+                source.nextPage();
+            }            
+        }        
         updatePageControls();
         setPanel(sources);
     }
