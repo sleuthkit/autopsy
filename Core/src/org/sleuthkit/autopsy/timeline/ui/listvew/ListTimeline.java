@@ -45,6 +45,7 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.util.Callback;
@@ -92,6 +93,10 @@ class ListTimeline extends BorderPane {
     private TableColumn<CombinedEvent, CombinedEvent> typeColumn;
     @FXML
     private TableColumn<CombinedEvent, CombinedEvent> knownColumn;
+    @FXML
+    private TableColumn<CombinedEvent, CombinedEvent> taggedColumn;
+    @FXML
+    private TableColumn<CombinedEvent, CombinedEvent> hashHitColumn;
 
     private final TimeLineController controller;
 
@@ -145,6 +150,12 @@ class ListTimeline extends BorderPane {
         knownColumn.setCellFactory(col -> new TextEventTableCell(singleEvent ->
                 singleEvent.getKnown().getName()));
 
+        taggedColumn.setCellValueFactory(CELL_VALUE_FACTORY);
+        taggedColumn.setCellFactory(col -> new TaggedCell());
+
+        hashHitColumn.setCellValueFactory(CELL_VALUE_FACTORY);
+        hashHitColumn.setCellFactory(col -> new HashHitCell());
+
         //bind event count label to number of items in the table
         eventCountLabel.textProperty().bind(new StringBinding() {
             {
@@ -193,6 +204,37 @@ class ListTimeline extends BorderPane {
      */
     ObservableList<Long> getSelectedEventIDs() {
         return selectedEventIDs;
+    }
+    private static final Image HASH_HIT = new Image("/org/sleuthkit/autopsy/images/hashset_hits.png"); //NOI18N NON-NLS
+    private static final Image TAG = new Image("/org/sleuthkit/autopsy/images/green-tag-icon-16.png"); // NON-NLS //NOI18N
+    private static final Image PIN = new Image("/org/sleuthkit/autopsy/timeline/images/marker--plus.png"); // NON-NLS //NOI18N
+    private static final Image UNPIN = new Image("/org/sleuthkit/autopsy/timeline/images/marker--minus.png"); // NON-NLS //NOI18N
+
+    private  class TaggedCell extends EventTableCell {
+
+        @Override
+        protected void updateItem(CombinedEvent item, boolean empty) {
+            super.updateItem(item, empty);
+
+            if (empty || item == null) {
+                setGraphic(null);
+            } else {
+                setGraphic(getEvent().isTagged() ? new ImageView(TAG) : null);
+            }
+        }
+    }
+    private  class HashHitCell extends EventTableCell {
+
+        @Override
+        protected void updateItem(CombinedEvent item, boolean empty) {
+            super.updateItem(item, empty);
+
+            if (empty || item == null) {
+                setGraphic(null);
+            } else {
+                setGraphic(getEvent().isHashHit()? new ImageView(HASH_HIT) : null);
+            }
+        }
     }
 
     /**
