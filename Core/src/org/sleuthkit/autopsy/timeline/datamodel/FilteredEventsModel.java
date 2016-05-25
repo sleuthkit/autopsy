@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-15 Basis Technology Corp.
+ * Copyright 2011-2016Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -70,15 +70,15 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * This class acts as the model for a {@link TimeLineView}
+ * This class acts as the model for a TimelineView
  *
  * Views can register listeners on properties returned by methods.
  *
  * This class is implemented as a filtered view into an underlying
- * {@link EventsRepository}.
+ * EventsRepository.
  *
  * TODO: as many methods as possible should cache their results so as to avoid
- * unnecessary db calls through the {@link EventsRepository} -jm
+ * unnecessary db calls through the EventsRepository -jm
  *
  * Concurrency Policy: repo is internally synchronized, so methods that only
  * access the repo atomically do not need further synchronization
@@ -290,8 +290,8 @@ public final class FilteredEventsModel {
         return repo.getEventIDs(overlap, intersect);
     }
 
-    public List<MergedEvent> getMergedEvents() {
-        return repo.getMergedEvents(requestedTimeRange.get(), requestedFilter.get());
+    public List<CombinedEvent> getCombinedEvents() {
+        return repo.getCombinedEvents(requestedTimeRange.get(), requestedFilter.get());
     }
 
     /**

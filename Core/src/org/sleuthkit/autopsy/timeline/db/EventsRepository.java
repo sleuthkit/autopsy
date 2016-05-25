@@ -58,7 +58,7 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.CancellationProgressTask;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.MergedEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.CombinedEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.ArtifactEventType;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
@@ -219,8 +219,8 @@ public class EventsRepository {
         return eventDB.getEventIDs(timeRange, filter);
     }
 
-    public List<MergedEvent> getMergedEvents(Interval timeRange, RootFilter filter) {
-        return eventDB.getMergedEvents(timeRange, filter);
+    public List<CombinedEvent> getCombinedEvents(Interval timeRange, RootFilter filter) {
+        return eventDB.getCombinedEvents(timeRange, filter);
     }
 
     public Interval getSpanningInterval(Collection<Long> eventIDs) {

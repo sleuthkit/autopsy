@@ -56,9 +56,9 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.datamodel.CombinedEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
-import org.sleuthkit.autopsy.timeline.datamodel.MergedEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.BaseTypes;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
@@ -344,13 +344,24 @@ public class EventDB {
         return result;
     }
 
+    /**
+     * Get the IDs of all the events within the given time range that pass the
+     * given filter.
+     *
+     * @param timeRange The Interval that all returned events must be within.
+     * @param filter    The Filter that all returned events must pass.
+     *
+     * @return A List of event ids, sorted by timestamp of the corresponding
+     *         event..
+     */
     List<Long> getEventIDs(Interval timeRange, RootFilter filter) {
         Long startTime = timeRange.getStartMillis() / 1000;
         Long endTime = timeRange.getEndMillis() / 1000;
 
         if (Objects.equals(startTime, endTime)) {
-            endTime++;
+            endTime++; //make sure end is at least 1 millisecond after start
         }
+
         ArrayList<Long> resultIDs = new ArrayList<>();
 
         DBLock.lock();
@@ -371,38 +382,48 @@ public class EventDB {
         return resultIDs;
     }
 
-    List<MergedEvent> getMergedEvents(Interval timeRange, RootFilter filter) {
+    /**
+     * Get a representation of all the events, within the given time range, that
+     * pass the given filter, grouped by time and description such that file
+     * system events for the same file, with the same timestamp, are combined
+     * together.
+     *
+     * @param timeRange The Interval that all returned events must be within.
+     * @param filter    The Filter that all returned events must pass.
+     *
+     * @return A List of combined events, sorted by timestamp.
+     */
+    List<CombinedEvent> getCombinedEvents(Interval timeRange, RootFilter filter) {
         Long startTime = timeRange.getStartMillis() / 1000;
         Long endTime = timeRange.getEndMillis() / 1000;
 
         if (Objects.equals(startTime, endTime)) {
-            endTime++;
+            endTime++; //make sure end is at least 1 millisecond after start
         }
-        ArrayList<MergedEvent> results = new ArrayList<>();
+
+        ArrayList<CombinedEvent> results = new ArrayList<>();
 
         DBLock.lock();
         final String query = "SELECT full_description, time, file_id, GROUP_CONCAT(event_id), GROUP_CONCAT(sub_type)"
-                + "FROM events " + useHashHitTablesHelper(filter) + useTagTablesHelper(filter)
+                + " FROM events " + useHashHitTablesHelper(filter) + useTagTablesHelper(filter)
                 + " WHERE time >= " + startTime + " AND time <" + endTime + " AND " + SQLHelper.getSQLWhere(filter)
-                + " GROUP BY time, full_description, file_id ORDER BY time ASC, full_description, event_id";
-//        final String query = "SELECT events.event_id AS event_id FROM events" + useHashHitTablesHelper(filter) + useTagTablesHelper(filter)
-//                + " WHERE time >=  " + startTime + " AND time <" + endTime + " AND " + SQLHelper.getSQLWhere(filter) + " ORDER BY time ASC"; // NON-NLS
+                + " GROUP BY time,full_description, file_id ORDER BY time ASC, full_description, event_id";
         try (Statement stmt = con.createStatement();
                 ResultSet rs = stmt.executeQuery(query)) {
             while (rs.next()) {
 
+                //make a map from event type to event ID
                 List<Long> eventIDs = SQLHelper.unGroupConcat(rs.getString("GROUP_CONCAT(event_id)"), Long::valueOf);
                 List<EventType> eventTypes = SQLHelper.unGroupConcat(rs.getString("GROUP_CONCAT(sub_type)"), s -> RootEventType.allTypes.get(Integer.valueOf(s)));
-
                 Map<EventType, Long> eventMap = new HashMap<>();
                 for (int i = 0; i < eventIDs.size(); i++) {
                     eventMap.put(eventTypes.get(i), eventIDs.get(i));
                 }
-                results.add(new MergedEvent(rs.getLong("time")*1000, rs.getString("full_description"), rs.getLong("file_id"),eventMap));
+                results.add(new CombinedEvent(rs.getLong("time") * 1000, rs.getString("full_description"), rs.getLong("file_id"), eventMap));
             }
 
         } catch (SQLException sqlEx) {
-            LOGGER.log(Level.SEVERE, "failed to execute query for event ids in range", sqlEx); // NON-NLS
+            LOGGER.log(Level.SEVERE, "failed to execute query for combined events", sqlEx); // NON-NLS
         } finally {
             DBLock.unlock();
         }

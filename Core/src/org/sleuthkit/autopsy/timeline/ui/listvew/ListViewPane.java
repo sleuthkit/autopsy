@@ -26,7 +26,7 @@ import javafx.scene.Parent;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.MergedEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.CombinedEvent;
 import org.sleuthkit.autopsy.timeline.ui.AbstractTimeLineView;
 
 /**
@@ -102,7 +102,7 @@ public class ListViewPane extends AbstractTimeLineView {
 
             updateMessage("Querying db for events");
             //get the event stripes to be displayed
-            List<MergedEvent> mergedEvents = eventsModel.getMergedEvents();
+            List<CombinedEvent> mergedEvents = eventsModel.getCombinedEvents();
             Platform.runLater(() -> listChart.setMergedEvents(mergedEvents));
 
             updateMessage("updating ui");
