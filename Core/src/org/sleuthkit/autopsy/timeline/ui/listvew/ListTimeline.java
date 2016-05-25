@@ -33,6 +33,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
@@ -60,14 +61,14 @@ import org.sleuthkit.datamodel.TskCoreException;
  * The inner component that makes up the Lsit view. Manages the table.
  */
 class ListTimeline extends BorderPane {
-
+    
     private static final Logger LOGGER = Logger.getLogger(ListTimeline.class.getName());
 
     /**
      * call-back used to wrap the event ID inn a ObservableValue<Long>
      */
     private static final Callback<TableColumn.CellDataFeatures<Long, Long>, ObservableValue<Long>> CELL_VALUE_FACTORY = param -> new SimpleObjectProperty<>(param.getValue());
-
+    
     @FXML
     private Label eventCountLabel;
     @FXML
@@ -86,7 +87,7 @@ class ListTimeline extends BorderPane {
     private TableColumn<Long, Long> subTypeColumn;
     @FXML
     private TableColumn<Long, Long> knownColumn;
-
+    
     private final TimeLineController controller;
 
     /**
@@ -98,7 +99,7 @@ class ListTimeline extends BorderPane {
         this.controller = controller;
         FXMLConstructor.construct(this, ListTimeline.class, "ListTimeline.fxml");
     }
-
+    
     @FXML
     void initialize() {
         assert eventCountLabel != null : "fx:id=\"eventCountLabel\" was not injected: check your FXML file 'ListViewPane.fxml'.";
@@ -121,19 +122,19 @@ class ListTimeline extends BorderPane {
         //
         millisColumn.setCellValueFactory(CELL_VALUE_FACTORY);
         millisColumn.setCellFactory(col -> new EpochMillisCell());
-
+        
         iconColumn.setCellValueFactory(CELL_VALUE_FACTORY);
         iconColumn.setCellFactory(col -> new ImageCell());
-
+        
         descriptionColumn.setCellValueFactory(CELL_VALUE_FACTORY);
         descriptionColumn.setCellFactory(col -> new DescriptionCell());
-
+        
         baseTypeColumn.setCellValueFactory(CELL_VALUE_FACTORY);
         baseTypeColumn.setCellFactory(col -> new BaseTypeCell());
-
+        
         subTypeColumn.setCellValueFactory(CELL_VALUE_FACTORY);
         subTypeColumn.setCellFactory(col -> new EventTypeCell());
-
+        
         knownColumn.setCellValueFactory(CELL_VALUE_FACTORY);
         knownColumn.setCellFactory(col -> new KnownCell());
 
@@ -173,7 +174,7 @@ class ListTimeline extends BorderPane {
      * TableCell to show the icon for the type of an event.
      */
     private class ImageCell extends EventTableCell {
-
+        
         @Override
         protected void updateItem(Long item, boolean empty) {
             super.updateItem(item, empty);
@@ -190,11 +191,16 @@ class ListTimeline extends BorderPane {
      * TableCell to show the full description for an event.
      */
     private class DescriptionCell extends EventTableCell {
-
+        
+        DescriptionCell() {
+            setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
+            setEllipsisString(" ... ");
+        }
+        
         @Override
         protected void updateItem(Long item, boolean empty) {
             super.updateItem(item, empty);
-
+            
             if (empty || item == null) {
                 setText("");
             } else {
@@ -207,11 +213,11 @@ class ListTimeline extends BorderPane {
      * TableCell to show the base type of an event.
      */
     private class BaseTypeCell extends EventTableCell {
-
+        
         @Override
         protected void updateItem(Long item, boolean empty) {
             super.updateItem(item, empty);
-
+            
             if (empty || item == null) {
                 setText("");
             } else {
@@ -224,11 +230,11 @@ class ListTimeline extends BorderPane {
      * TableCell to show the sub type of an event.
      */
     private class EventTypeCell extends EventTableCell {
-
+        
         @Override
         protected void updateItem(Long item, boolean empty) {
             super.updateItem(item, empty);
-
+            
             if (empty || item == null) {
                 setText("");
             } else {
@@ -241,11 +247,11 @@ class ListTimeline extends BorderPane {
      * TableCell to show the known state of the file backing an event.
      */
     private class KnownCell extends EventTableCell {
-
+        
         @Override
         protected void updateItem(Long item, boolean empty) {
             super.updateItem(item, empty);
-
+            
             if (empty || item == null) {
                 setText("");
             } else {
@@ -258,11 +264,11 @@ class ListTimeline extends BorderPane {
      * TableCell to show the (start) time of an event.
      */
     private class EpochMillisCell extends EventTableCell {
-
+        
         @Override
         protected void updateItem(Long item, boolean empty) {
             super.updateItem(item, empty);
-
+            
             if (empty || item == null) {
                 setText("");
             } else {
@@ -275,7 +281,7 @@ class ListTimeline extends BorderPane {
      * Base class for TableCells that represent a SingleEvent by its ID
      */
     private abstract class EventTableCell extends TableCell<Long, Long> {
-
+        
         private SingleEvent event;
 
         /**
@@ -286,11 +292,11 @@ class ListTimeline extends BorderPane {
         SingleEvent getEvent() {
             return event;
         }
-
+        
         @Override
         protected void updateItem(Long item, boolean empty) {
             super.updateItem(item, empty);
-
+            
             if (empty || item == null) {
                 event = null;
             } else {
@@ -304,19 +310,19 @@ class ListTimeline extends BorderPane {
      * TableRow that adds a right-click context menu.
      */
     private class EventRow extends TableRow<Long> {
-
+        
         private SingleEvent event;
-
+        
         SingleEvent getEvent() {
             return event;
         }
-
+        
         @NbBundle.Messages({
             "ListChart.errorMsg=There was a problem getting the content for the selected event."})
         @Override
         protected void updateItem(Long item, boolean empty) {
             super.updateItem(item, empty);
-
+            
             if (empty || item == null) {
                 event = null;
             } else {
@@ -349,7 +355,7 @@ class ListTimeline extends BorderPane {
                             }
                         }
                     };
-
+                    
                     setContextMenu(new ContextMenu(menuItems.toArray(new MenuItem[menuItems.size()])));
                 } catch (IllegalStateException ex) {
                     //Since the case is closed, the user probably doesn't care about this, just log it as a precaution.
