@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2013-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,13 +19,13 @@
 package org.sleuthkit.autopsy.actions;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -40,7 +40,6 @@ public class AddContentTagAction extends AddTagAction {
     // This class is a singleton to support multi-selection of nodes, since 
     // org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick up an Action if every 
     // node in the array returns a reference to the same action object from Node.getActions(boolean).    
-
     private static AddContentTagAction instance;
 
     public static synchronized AddContentTagAction getInstance() {
@@ -63,7 +62,13 @@ public class AddContentTagAction extends AddTagAction {
 
     @Override
     protected void addTag(TagName tagName, String comment) {
-        final Collection<? extends AbstractFile> selectedFiles = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class);
+        /*
+         * The documentation for Lookup.lookupAll() explicitly says that the
+         * collection it returns may contain duplicates. Within this invocation
+         * of addTag(), we don't want to tag the same AbstractFile more than
+         * once, so we dedupe the AbstractFiles by stuffing them into a HashSet.
+         */
+        final Collection<AbstractFile> selectedFiles = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
 
         new Thread(() -> {
             for (AbstractFile file : selectedFiles) {
