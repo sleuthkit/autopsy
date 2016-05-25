@@ -48,4 +48,8 @@ public class MergedEvent {
     public Collection<Long> getEventIDs() {
         return eventTypeMap.values();
     }
+
+    public Long getRepresentitiveEventID() {
+        return eventTypeMap.values().stream().findFirst().get();
+    }
 }

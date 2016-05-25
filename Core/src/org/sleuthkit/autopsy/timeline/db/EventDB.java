@@ -398,7 +398,7 @@ public class EventDB {
                 for (int i = 0; i < eventIDs.size(); i++) {
                     eventMap.put(eventTypes.get(i), eventIDs.get(i));
                 }
-                results.add(new MergedEvent(rs.getLong("time"), rs.getString("full_description"), rs.getLong("file_id"),eventMap));
+                results.add(new MergedEvent(rs.getLong("time")*1000, rs.getString("full_description"), rs.getLong("file_id"),eventMap));
             }
 
         } catch (SQLException sqlEx) {

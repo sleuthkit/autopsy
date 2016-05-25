@@ -64,7 +64,7 @@ import org.sleuthkit.autopsy.timeline.explorernodes.EventNode;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * The inner component that makes up the Lsit view. Manages the table.
+ * The inner component that makes up the List view. Manages the table.
  */
 class ListTimeline extends BorderPane {
 
@@ -91,7 +91,8 @@ class ListTimeline extends BorderPane {
     private TableColumn<MergedEvent, MergedEvent> knownColumn;
 
     private final TimeLineController controller;
-    private ObservableList<Long> selectedEventIDs = FXCollections.observableArrayList();
+
+    private final ObservableList<Long> selectedEventIDs = FXCollections.observableArrayList();
 
     /**
      * Constructor
@@ -143,6 +144,7 @@ class ListTimeline extends BorderPane {
                 selectedEventIDs.setAll(Iterables.getFirst(table.getSelectionModel().getSelectedItem().getEventIDs(), 0L));
             } else {
                 selectedEventIDs.setAll(table.getSelectionModel().getSelectedItems().stream()
+                        .filter(Objects::nonNull)
                         .flatMap(mEvent -> mEvent.getEventIDs().stream())
                         .collect(Collectors.toSet()));
             }
@@ -195,7 +197,7 @@ class ListTimeline extends BorderPane {
     }
 
     /**
-     * TableCell to show the sub type of an event.
+     * TableCell to show the (sub) type of an event.
      */
     private class EventTypeCell extends EventTableCell {
 
@@ -224,8 +226,7 @@ class ListTimeline extends BorderPane {
                                     s += "C";
                                     break;
                                 default:
-                                    throw new AssertionError(type.name());
-
+                                    throw new UnsupportedOperationException("Unknown FileSystemType: " + type.name());
                             }
                         } else {
                             s += "_";
@@ -299,7 +300,7 @@ class ListTimeline extends BorderPane {
                 event = null;
             } else {
                 //stash the event in the cell for derived classed to use.
-                event = controller.getEventsModel().getEventById(item.getFileID());
+                event = controller.getEventsModel().getEventById(item.getRepresentitiveEventID());
             }
         }
     }
@@ -311,6 +312,11 @@ class ListTimeline extends BorderPane {
 
         private SingleEvent event;
 
+        /**
+         * Get the SingleEvent this row represents.
+         *
+         * @return The SingleEvent this row represents.
+         */
         SingleEvent getEvent() {
             return event;
         }
@@ -324,10 +330,10 @@ class ListTimeline extends BorderPane {
             if (empty || item == null) {
                 event = null;
             } else {
-                event = controller.getEventsModel().getEventById(item.getFileID());
+                event = controller.getEventsModel().getEventById(item.getRepresentitiveEventID());
                 //make context menu
                 try {
-                    EventNode node = EventNode.createEventNode(item.getFileID(), controller.getEventsModel());
+                    EventNode node = EventNode.createEventNode(event.getEventID(), controller.getEventsModel());
                     List<MenuItem> menuItems = new ArrayList<>();
 
                     //for each actions avaialable on node, make a menu item.
