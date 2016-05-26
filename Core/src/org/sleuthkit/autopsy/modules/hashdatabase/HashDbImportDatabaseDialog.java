@@ -251,11 +251,16 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void openButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openButtonActionPerformed
+        String lastBaseDirectory = Paths.get(PlatformUtil.getUserConfigDirectory(), "HashDatabases").toString();
         if (ModuleSettings.settingExists(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY)) {
-            fileChooser.setCurrentDirectory(new File(ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY)));
-        } else {
-            fileChooser.setCurrentDirectory(new File(Paths.get(PlatformUtil.getUserConfigDirectory(), "HashDatabases").toString()));
+            lastBaseDirectory = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY);
         }
+        File hashDbFolder = new File(lastBaseDirectory);
+        // create the folder if it doesn't exist
+        if (!hashDbFolder.exists()) {
+            hashDbFolder.mkdir();
+        }
+        fileChooser.setCurrentDirectory(hashDbFolder);
         if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             File databaseFile = fileChooser.getSelectedFile();
             try {
