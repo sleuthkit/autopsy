@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.ui.AbstractTimeLineView;
 
 /**
- * An AbstractTimeLineView that uses a TableView to represent the events.
+ * An AbstractTimeLineView that uses a TableView to display events.
  */
 public class ListViewPane extends AbstractTimeLineView {
 

@@ -61,7 +61,7 @@ import org.sleuthkit.autopsy.timeline.explorernodes.EventRootNode;
 import org.sleuthkit.autopsy.timeline.ui.HistoryToolBar;
 import org.sleuthkit.autopsy.timeline.ui.StatusBar;
 import org.sleuthkit.autopsy.timeline.ui.TimeZonePanel;
-import org.sleuthkit.autopsy.timeline.ui.VisualizationPanel;
+import org.sleuthkit.autopsy.timeline.ui.ViewFrame;
 import org.sleuthkit.autopsy.timeline.ui.detailview.tree.EventsTree;
 import org.sleuthkit.autopsy.timeline.ui.filtering.FilterSetPanel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomSettingsPane;
@@ -137,7 +137,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
                         LOGGER.log(Level.SEVERE, "Failed to lookup Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
                         Platform.runLater(() -> {
                             Notifications.create()
-                                    .owner(jFXVizPanel.getScene().getWindow())
+                                        .owner(jFXViewPanel.getScene().getWindow())
                                     .text(Bundle.TimelineTopComponent_selectedEventListener_errorMsg())
                                     .showError();
                         });
@@ -260,8 +260,8 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
         final VBox leftVBox = new VBox(5, timeZonePanel, historyToolBar, zoomSettingsPane, leftTabPane);
         SplitPane.setResizableWithParent(leftVBox, Boolean.FALSE);
 
-        final VisualizationPanel visualizationPanel = new VisualizationPanel(controller, eventsTree);
-        final SplitPane mainSplitPane = new SplitPane(leftVBox, visualizationPanel);
+        final ViewFrame viewFrame = new ViewFrame(controller, eventsTree);
+        final SplitPane mainSplitPane = new SplitPane(leftVBox, viewFrame);
         mainSplitPane.setDividerPositions(0);
 
         final Scene scene = new Scene(mainSplitPane);
@@ -278,7 +278,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
         });
 
         //add ui componenets to JFXPanels
-        jFXVizPanel.setScene(scene);
+        jFXViewPanel.setScene(scene);
         jFXstatusPanel.setScene(new Scene(new StatusBar(controller)));
     }
 
@@ -297,7 +297,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
 
         jFXstatusPanel = new javafx.embed.swing.JFXPanel();
         splitYPane = new javax.swing.JSplitPane();
-        jFXVizPanel = new javafx.embed.swing.JFXPanel();
+        jFXViewPanel = new javafx.embed.swing.JFXPanel();
         horizontalSplitPane = new javax.swing.JSplitPane();
         leftFillerPanel = new javax.swing.JPanel();
         rightfillerPanel = new javax.swing.JPanel();
@@ -308,7 +308,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
         splitYPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
         splitYPane.setResizeWeight(0.9);
         splitYPane.setPreferredSize(new java.awt.Dimension(1024, 400));
-        splitYPane.setLeftComponent(jFXVizPanel);
+        splitYPane.setLeftComponent(jFXViewPanel);
 
         horizontalSplitPane.setDividerLocation(600);
         horizontalSplitPane.setResizeWeight(0.5);
@@ -361,7 +361,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JSplitPane horizontalSplitPane;
-    private javafx.embed.swing.JFXPanel jFXVizPanel;
+    private javafx.embed.swing.JFXPanel jFXViewPanel;
     private javafx.embed.swing.JFXPanel jFXstatusPanel;
     private javax.swing.JPanel leftFillerPanel;
     private javax.swing.JPanel rightfillerPanel;

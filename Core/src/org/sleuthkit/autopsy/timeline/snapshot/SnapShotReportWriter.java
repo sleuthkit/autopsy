@@ -70,7 +70,7 @@ public class SnapShotReportWriter {
      * @param zoomParams       The ZoomParams in effect when the snapshot was
      *                         taken.
      * @param generationDate   The generation Date of the report.
-     * @param snapshot         A snapshot of the visualization to include in the
+     * @param snapshot         A snapshot of the view to include in the
      *                         report.
      */
     public SnapShotReportWriter(Case currentCase, Path reportFolderPath, String reportName, ZoomParams zoomParams, Date generationDate, BufferedImage snapshot) {
