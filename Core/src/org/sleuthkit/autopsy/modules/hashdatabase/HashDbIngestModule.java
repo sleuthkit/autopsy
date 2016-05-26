@@ -305,7 +305,7 @@ public class HashDbIngestModule implements FileIngestModule {
                 // index the artifact for keyword search
                 blackboard.indexArtifact(badFile);
             } catch (Blackboard.BlackboardException ex) {
-                logger.log(Level.SEVERE, "Unable to index blackboard artifact " + badFile.getDisplayName(), ex); //NON-NLS
+                logger.log(Level.SEVERE, "Unable to index blackboard artifact " + badFile.getArtifactID(), ex); //NON-NLS
                 MessageNotifyUtil.Notify.error(
                         Bundle.HashDbIngestModule_indexError_message(), badFile.getDisplayName());
             }

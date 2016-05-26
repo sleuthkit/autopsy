@@ -267,7 +267,7 @@ class SevenZipExtractor {
      *
      * @return list of unpacked derived files
      */
-    @Messages({"SevenZipExtractor.indexError.message=Failed to index encription detected artifact for keyword search."})
+    @Messages({"SevenZipExtractor.indexError.message=Failed to index encryption detected artifact for keyword search."})
     void unpack(AbstractFile archiveFile) {
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
         String archiveFilePath;
@@ -587,7 +587,7 @@ class SevenZipExtractor {
                     // index the artifact for keyword search
                     blackboard.indexArtifact(artifact);
                 } catch (Blackboard.BlackboardException ex) {
-                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getDisplayName(), ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(
                             Bundle.SevenZipExtractor_indexError_message(), artifact.getDisplayName());
                 }

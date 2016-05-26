@@ -69,7 +69,7 @@ class TangoMessageAnalyzer {
         }
     }
 
-    @Messages({"TangoMessageAnalyzer.indexError.message=Failed to index message artifact for keyword search."})
+    @Messages({"TangoMessageAnalyzer.indexError.message=Failed to index Tango message artifact for keyword search."})
     private static void findTangoMessagesInDB(String DatabasePath, AbstractFile f) {
         Connection connection = null;
         ResultSet resultSet = null;
@@ -119,7 +119,7 @@ class TangoMessageAnalyzer {
                 } catch (Blackboard.BlackboardException ex) {
                     MessageNotifyUtil.Notify.error(
                             Bundle.TangoMessageAnalyzer_indexError_message(), bba.getDisplayName());
-                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getDisplayName(), ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
                 }
             }
         } catch (Exception e) {

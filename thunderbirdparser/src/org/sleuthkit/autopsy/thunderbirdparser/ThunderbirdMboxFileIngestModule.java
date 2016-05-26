@@ -162,7 +162,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                     blackboard.indexArtifact(artifact);
                 } catch (Blackboard.BlackboardException ex) {
                     MessageNotifyUtil.Notify.error(Bundle.ThunderbirdMboxFileIngestModule_processPst_indexError_message(), artifact.getDisplayName());
-                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getDisplayName(), ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
                 }
 
                 services.fireModuleDataEvent(new ModuleDataEvent(EmailParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED));
@@ -415,7 +415,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                 // index the artifact for keyword search
                 blackboard.indexArtifact(bbart);
             } catch (Blackboard.BlackboardException ex) {
-                logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bbart.getDisplayName(), ex); //NON-NLS
+                logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bbart.getArtifactID(), ex); //NON-NLS
                 MessageNotifyUtil.Notify.error(Bundle.ThunderbirdMboxFileIngestModule_addArtifact_indexError_message(), bbart.getDisplayName());
             }
         } catch (TskCoreException ex) {

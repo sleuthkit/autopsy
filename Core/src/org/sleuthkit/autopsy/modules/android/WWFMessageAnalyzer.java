@@ -71,7 +71,7 @@ class WWFMessageAnalyzer {
         }
     }
 
-    @Messages({"WWFMessageAnalyzer.indexError.message=Failed to index message artifact for keyword search."})
+    @Messages({"WWFMessageAnalyzer.indexError.message=Failed to index WWF message artifact for keyword search."})
     private static void findWWFMessagesInDB(String DatabasePath, AbstractFile f) {
         Connection connection = null;
         ResultSet resultSet = null;
@@ -116,7 +116,7 @@ class WWFMessageAnalyzer {
                     // index the artifact for keyword search
                     blackboard.indexArtifact(bba);
                 } catch (Blackboard.BlackboardException ex) {
-                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getDisplayName(), ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(
                             Bundle.WWFMessageAnalyzer_indexError_message(), bba.getDisplayName());
                 }

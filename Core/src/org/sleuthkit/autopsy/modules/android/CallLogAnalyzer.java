@@ -114,7 +114,7 @@ class CallLogAnalyzer {
                                 // index the artifact for keyword search
                                 blackboard.indexArtifact(bba);
                             } catch (Blackboard.BlackboardException ex) {
-                                logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getDisplayName(), ex); //NON-NLS
+                                logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
                                 MessageNotifyUtil.Notify.error(
                                         Bundle.CallLogAnalyzer_indexError_message(), bba.getDisplayName());
                             }

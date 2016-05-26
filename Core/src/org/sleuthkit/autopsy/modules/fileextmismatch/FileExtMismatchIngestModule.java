@@ -106,7 +106,7 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
     }
 
     @Override
-    @Messages({"FileExtMismatchIngestModule.indexError.message=Failed to index extension mismatch artifact for keyword search."})
+    @Messages({"FileExtMismatchIngestModule.indexError.message=Failed to index file extension mismatch artifact for keyword search."})
     public ProcessResult process(AbstractFile abstractFile) {
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
         if (this.settings.skipKnownFiles() && (abstractFile.getKnown() == FileKnown.KNOWN)) {
@@ -141,7 +141,7 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
                     // index the artifact for keyword search
                     blackboard.indexArtifact(bart);
                 } catch (Blackboard.BlackboardException ex) {
-                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bart.getDisplayName(), ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bart.getArtifactID(), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(
                             Bundle.FileExtMismatchIngestModule_indexError_message(), bart.getDisplayName());
                 }

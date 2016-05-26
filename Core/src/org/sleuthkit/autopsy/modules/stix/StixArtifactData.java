@@ -58,7 +58,7 @@ class StixArtifactData {
         objType = a_objType;
     }
 
-    @Messages({"StixArtifactData.indexError.message=Failed to index interesting file hit artifact for keyword search."})
+    @Messages({"StixArtifactData.indexError.message=Failed to index STIX interesting file hit artifact for keyword search."})
     public void createArtifact(String a_title) throws TskCoreException {
         Blackboard blackboard = Case.getCurrentCase().getServices().getBlackboard();
 
@@ -78,7 +78,7 @@ class StixArtifactData {
             // index the artifact for keyword search
             blackboard.indexArtifact(bba);
         } catch (Blackboard.BlackboardException ex) {
-            logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getDisplayName(), ex); //NON-NLS
+            logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
             MessageNotifyUtil.Notify.error(Bundle.StixArtifactData_indexError_message(), bba.getDisplayName());
         }
     }

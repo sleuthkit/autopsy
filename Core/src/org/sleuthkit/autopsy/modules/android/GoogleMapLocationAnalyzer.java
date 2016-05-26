@@ -71,7 +71,7 @@ class GoogleMapLocationAnalyzer {
         }
     }
 
-    @Messages({"GoogleMapLocationAnalyzer.indexError.message=Failed to index gps route artifact for keyword search."})
+    @Messages({"GoogleMapLocationAnalyzer.indexError.message=Failed to index GPS route artifact for keyword search."})
     private static void findGeoLocationsInDB(String DatabasePath, AbstractFile f) {
         Connection connection = null;
         ResultSet resultSet = null;
@@ -137,7 +137,7 @@ class GoogleMapLocationAnalyzer {
                     // index the artifact for keyword search
                     blackboard.indexArtifact(bba);
                 } catch (Blackboard.BlackboardException ex) {
-                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getDisplayName(), ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(
                             Bundle.GoogleMapLocationAnalyzer_indexError_message(), bba.getDisplayName());
                 }

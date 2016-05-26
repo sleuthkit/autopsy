@@ -134,7 +134,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
         return processFile(content);
     }
 
-    @Messages({"ExifParserFileIngestModule.indexError.message=Failed to index Exif Metadata artifact for keyword search."})
+    @Messages({"ExifParserFileIngestModule.indexError.message=Failed to index EXIF Metadata artifact for keyword search."})
     ProcessResult processFile(AbstractFile f) {
         InputStream in = null;
         BufferedInputStream bin = null;
@@ -208,7 +208,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                     // index the artifact for keyword search
                     blackboard.indexArtifact(bba);
                 } catch (Blackboard.BlackboardException ex) {
-                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getDisplayName(), ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(
                             Bundle.ExifParserFileIngestModule_indexError_message(), bba.getDisplayName());
                 }

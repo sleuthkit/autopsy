@@ -71,7 +71,7 @@ class BrowserLocationAnalyzer {
         }
     }
 
-    @NbBundle.Messages({"BrowserLocationAnalyzer.indexError.message=Failed to index gps trackpoint artifact for keyword search."})
+    @NbBundle.Messages({"BrowserLocationAnalyzer.indexError.message=Failed to index GPS trackpoint artifact for keyword search."})
     private static void findGeoLocationsInDB(String DatabasePath, AbstractFile f) {
         Connection connection = null;
         ResultSet resultSet = null;
@@ -110,7 +110,7 @@ class BrowserLocationAnalyzer {
                     // index the artifact for keyword search
                     blackboard.indexArtifact(bba);
                 } catch (Blackboard.BlackboardException ex) {
-                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getDisplayName(), ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactTypeName(), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(
                             Bundle.BrowserLocationAnalyzer_indexError_message(), bba.getDisplayName());
                 }

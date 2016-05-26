@@ -78,7 +78,7 @@ class CacheLocationAnalyzer {
         }
     }
 
-    @Messages({"CacheLocationAnalyzer.indexError.message=Failed to index gps trackpoint artifact for keyword search."})
+    @Messages({"CacheLocationAnalyzer.indexError.message=Failed to index GPS trackpoint artifact for keyword search."})
     private static void findGeoLocationsInFile(File file, AbstractFile f) {
         byte[] bytes; // will temporarily hold bytes to be converted into the correct data types
 
@@ -145,7 +145,7 @@ class CacheLocationAnalyzer {
                     // index the artifact for keyword search
                     blackboard.indexArtifact(bba);
                 } catch (Blackboard.BlackboardException ex) {
-                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getDisplayName(), ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(
                             Bundle.CacheLocationAnalyzer_indexError_message(), bba.getDisplayName());
                 }
