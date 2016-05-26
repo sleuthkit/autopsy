@@ -81,8 +81,6 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         saveListButton.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.saveCurrentWIthNewNameToolTip"));
         deleteWordButton.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.removeSelectedMsg"));
 
-        keywordTable.setShowHorizontalLines(false);
-        keywordTable.setShowVerticalLines(false);
         keywordTable.getParent().setBackground(keywordTable.getBackground());
         final int width = jScrollPane1.getPreferredSize().width;
         keywordTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
@@ -248,9 +246,8 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
 
         keywordTable.setModel(tableModel);
         keywordTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
+        keywordTable.setGridColor(new java.awt.Color(153, 153, 153));
         keywordTable.setMaximumSize(new java.awt.Dimension(30000, 30000));
-        keywordTable.setShowHorizontalLines(false);
-        keywordTable.setShowVerticalLines(false);
         keywordTable.getTableHeader().setReorderingAllowed(false);
         jScrollPane1.setViewportView(keywordTable);
 
