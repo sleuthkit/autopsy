@@ -39,6 +39,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TableCell;
@@ -314,8 +315,16 @@ class ListTimeline extends BorderPane {
 
         private final Function<SingleEvent, String> textSupplier;
 
+        /**
+         * Constructor
+         *
+         * @param textSupplier Function that takes a SingleEvent and produces a
+         *                     String to show in this TableCell.
+         */
         TextEventTableCell(Function<SingleEvent, String> textSupplier) {
             this.textSupplier = textSupplier;
+            setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
+            setEllipsisString(" ... ");
         }
 
         @Override
