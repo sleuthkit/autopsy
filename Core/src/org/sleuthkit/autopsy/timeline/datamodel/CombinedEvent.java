@@ -44,8 +44,7 @@ public class CombinedEvent {
      *                    epoch.
      * @param description The full description shared by all the combined events
      * @param fileID      The ID of the file all the combined events are for.
-     * @param eventMap    A map from EventType to the ID of the event for the
-     *                    given file ID with that type.
+     * @param eventMap    A map from EventType to event ID.
      */
     public CombinedEvent(long epochMillis, String description, long fileID, Map<EventType, Long> eventMap) {
         this.epochMillis = epochMillis;
@@ -106,7 +105,7 @@ public class CombinedEvent {
      *
      * @return An arbitrary representative event ID for the combined events.
      */
-    public Long getRepresentitiveEventID() {
+    public Long getRepresentativeEventID() {
         return eventTypeMap.values().stream().findFirst().get();
     }
 
