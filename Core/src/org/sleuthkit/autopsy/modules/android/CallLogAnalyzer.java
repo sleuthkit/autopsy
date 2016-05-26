@@ -28,7 +28,7 @@ import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
-import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
@@ -58,7 +58,7 @@ class CallLogAnalyzer {
     private static final Iterable<String> tableNames = Arrays.asList("calls", "logs"); //NON-NLS
 
     public static void findCallLogs(Content dataSource, FileManager fileManager) {
-	blackboard = Case.getCurrentCase().getServices().getBlackboard();
+        blackboard = Case.getCurrentCase().getServices().getBlackboard();
         try {
             List<AbstractFile> absFiles = fileManager.findFiles(dataSource, "logs.db"); //NON-NLS
             absFiles.addAll(fileManager.findFiles(dataSource, "contacts.db")); //NON-NLS
@@ -77,6 +77,7 @@ class CallLogAnalyzer {
         }
     }
 
+    @Messages({"CallLogAnalyzer.indexError.message=Failed to index call log artifact for keyword search."})
     private static void findCallLogsInDB(String DatabasePath, AbstractFile f) {
 
         if (DatabasePath == null || DatabasePath.isEmpty()) {
@@ -113,16 +114,16 @@ class CallLogAnalyzer {
                                 // index the artifact for keyword search
                                 blackboard.indexArtifact(bba);
                             } catch (Blackboard.BlackboardException ex) {
-                                logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", bba.getDisplayName()), ex); //NON-NLS
+                                logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
                                 MessageNotifyUtil.Notify.error(
-                                        NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), bba.getDisplayName());
+                                        Bundle.CallLogAnalyzer_indexError_message(), bba.getDisplayName());
                             }
                         } catch (TskCoreException ex) {
                             logger.log(Level.SEVERE, "Error posting call log record to the Blackboard", ex); //NON-NLS
                         }
                     }
                 } catch (SQLException e) {
-                    logger.log(Level.WARNING, "Could not read table {0} in db {1}", new Object[]{tableName, DatabasePath}); //NON-NLS
+                    logger.log(Level.WARNING, String.format("Could not read table %s in db %s", tableName, DatabasePath), e); //NON-NLS
                 }
             }
         } catch (SQLException e) {
