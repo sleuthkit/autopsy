@@ -10,28 +10,28 @@ import java.awt.event.ActionListener;
 /**
  * Filter by mime type used in filter areas of file search by attribute.
  */
-class MimeTypeFilter extends AbstractFileSearchFilter<MimeTypePanel>  {
+class MimeTypeFilter extends AbstractFileSearchFilter<MimeTypePanel> {
 
     public MimeTypeFilter(MimeTypePanel component) {
         super(component);
     }
+
     public MimeTypeFilter() {
         this(new MimeTypePanel());
     }
 
     @Override
     public boolean isEnabled() {
-        return this.getComponent().isSelected() &&
-                !this.getComponent().getMimeTypesSelected().isEmpty();
+        return this.getComponent().isSelected();
     }
 
     @Override
     public String getPredicate() throws FilterValidationException {
         String predicate = "";
-        for(String mimeType : this.getComponent().getMimeTypesSelected()) {
+        for (String mimeType : this.getComponent().getMimeTypesSelected()) {
             predicate += "mime_type = '" + mimeType + "' OR ";
         }
-        if(predicate.length() > 3) {
+        if (predicate.length() > 3) {
             predicate = predicate.substring(0, predicate.length() - 3);
         }
         return predicate;
@@ -40,5 +40,13 @@ class MimeTypeFilter extends AbstractFileSearchFilter<MimeTypePanel>  {
     @Override
     public void addActionListener(ActionListener l) {
     }
-    
+
+    @Override
+    public boolean isValid() {
+        if (!isEnabled()) {
+            return true;
+        } else {
+            return !this.getComponent().getMimeTypesSelected().isEmpty();
+        }
+    }
 }

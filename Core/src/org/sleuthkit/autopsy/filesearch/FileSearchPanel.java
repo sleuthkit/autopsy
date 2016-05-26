@@ -17,38 +17,35 @@
  * limitations under the License.
  */
 
-/*
+ /*
  * FileSearchPanel.java
  *
  * Created on Mar 5, 2012, 1:51:50 PM
  */
 package org.sleuthkit.autopsy.filesearch;
 
-import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
-
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
+import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.filesearch.FileSearchFilter.FilterValidationException;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -63,6 +60,10 @@ class FileSearchPanel extends javax.swing.JPanel {
     private final List<FilterArea> filterAreas = new ArrayList<>();
     private static int resultWindowCount = 0; //keep track of result windows so they get unique names
     private static final String EMPTY_WHERE_CLAUSE = NbBundle.getMessage(DateSearchFilter.class, "FileSearchPanel.emptyWhereClause.text");
+
+    enum EVENT {
+        CHECKED
+    }
 
     /**
      * Creates new form FileSearchPanel
@@ -100,25 +101,39 @@ class FileSearchPanel extends javax.swing.JPanel {
             filterPanel.add(fa);
         }
 
+        for (FileSearchFilter filter : this.getFilters()) {
+            filter.addPropertyChangeListener(new PropertyChangeListener() {
+                @Override
+                public void propertyChange(PropertyChangeEvent evt) {
+                    searchButton.setEnabled(isSearchable());
+                }
+            });
+        }
+
         addListenerToAll(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 search();
             }
         });
+        searchButton.setEnabled(isSearchable());
     }
 
     /**
      * @return true if any of the filters in the panel are enabled (checked)
      */
-    private boolean anyFiltersEnabled() {
+    private boolean isSearchable() {
+        boolean enabled = false;
         for (FileSearchFilter filter : this.getFilters()) {
             if (filter.isEnabled()) {
-                return true;
+                enabled = true;
+                if (!filter.isValid()) {
+                    return false;
+                }
             }
         }
 
-        return false;
+        return enabled;
     }
 
     /**
@@ -129,7 +144,7 @@ class FileSearchPanel extends javax.swing.JPanel {
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
-            if (this.anyFiltersEnabled()) {
+            if (this.isSearchable()) {
                 String title = NbBundle.getMessage(this.getClass(), "FileSearchPanel.search.results.title", ++resultWindowCount);
                 String pathText = NbBundle.getMessage(this.getClass(), "FileSearchPanel.search.results.pathText");
 
@@ -290,6 +305,7 @@ class FileSearchPanel extends javax.swing.JPanel {
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel filterPanel;
     private javax.swing.JButton searchButton;

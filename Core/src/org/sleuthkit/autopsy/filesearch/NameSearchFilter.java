@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.event.ActionListener;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.filesearch.FileSearchFilter.FilterValidationException;
 
@@ -62,5 +61,14 @@ class NameSearchFilter extends AbstractFileSearchFilter<NameSearchPanel> {
     @Override
     public void addActionListener(ActionListener l) {
         getComponent().addActionListener(l);
+    }
+
+    @Override
+    public boolean isValid() {
+        if (!isEnabled()) {
+            return true;
+        } else {
+            return !this.getComponent().getSearchTextField().getText().isEmpty();
+        }
     }
 }
