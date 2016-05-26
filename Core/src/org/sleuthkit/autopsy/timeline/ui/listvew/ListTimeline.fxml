@@ -69,11 +69,9 @@
    <center>
       <TableView fx:id="table" tableMenuButtonVisible="true" BorderPane.alignment="CENTER">
         <columns>
-          <TableColumn fx:id="millisColumn" editable="false" maxWidth="200.0" minWidth="150.0" prefWidth="150.0" resizable="false" sortable="false" text="Date/Time" />
-            <TableColumn fx:id="iconColumn" editable="false" maxWidth="36.0" minWidth="36.0" prefWidth="36.0" resizable="false" sortable="false" text="Icon" />
+          <TableColumn fx:id="dateTimeColumn" editable="false" maxWidth="200.0" minWidth="150.0" prefWidth="150.0" resizable="false" sortable="false" text="Date/Time" />
+            <TableColumn fx:id="typeColumn" editable="false" maxWidth="100.0" minWidth="100.0" prefWidth="100.0" sortable="false" text="Event Type" />
             <TableColumn fx:id="descriptionColumn" editable="false" maxWidth="1000.0" minWidth="100.0" prefWidth="300.0" sortable="false" text="Description" />
-            <TableColumn fx:id="baseTypeColumn" editable="false" maxWidth="75.0" minWidth="75.0" prefWidth="75.0" sortable="false" text="BaseType" />
-            <TableColumn fx:id="subTypeColumn" editable="false" maxWidth="100.0" minWidth="100.0" prefWidth="100.0" sortable="false" text="SubType" />
             <TableColumn fx:id="knownColumn" editable="false" maxWidth="75.0" minWidth="75.0" prefWidth="75.0" sortable="false" text="Known" />
           <TableColumn fx:id="idColumn" editable="false" maxWidth="150.0" minWidth="50.0" prefWidth="75.0" sortable="false" text="ID" />
         </columns>

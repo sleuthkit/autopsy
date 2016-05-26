@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.listvew;
 
+import java.util.HashSet;
 import java.util.List;
 import javafx.application.Platform;
 import javafx.beans.Observable;
@@ -25,6 +26,7 @@ import javafx.concurrent.Task;
 import javafx.scene.Parent;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.datamodel.CombinedEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.ui.AbstractTimeLineView;
 
@@ -83,23 +85,25 @@ public class ListViewPane extends AbstractTimeLineView {
             FilteredEventsModel eventsModel = getEventsModel();
 
             //grab the currently selected event
-            Long selectedEventID = listTimeline.getSelectedEventID();
+            HashSet<CombinedEvent> selectedEvents = new HashSet<>(listTimeline.getSelectedEvents());
 
             //clear the chart and set the time range.
             resetView(eventsModel.getTimeRange());
 
+            //get the combined events to be displayed
             updateMessage("Querying DB for events");
-            //get the IDs of th events to be displayed
-            List<Long> eventIDs = eventsModel.getEventIDs();
+            List<CombinedEvent> combinedEvents = eventsModel.getCombinedEvents();
+
             updateMessage("Updating UI");
             Platform.runLater(() -> {
-                //put the event IDs into the table.
-                listTimeline.setEventIDs(eventIDs);
+                //put the combined events into the table.
+                listTimeline.setCombinedEvents(combinedEvents);
                 //restore the selected event
-                listTimeline.selectEventID(selectedEventID);
+                listTimeline.selectEvents(selectedEvents);
             });
 
-            return eventIDs.isEmpty() == false;
+            return combinedEvents.isEmpty() == false;
+
         }
 
         @Override

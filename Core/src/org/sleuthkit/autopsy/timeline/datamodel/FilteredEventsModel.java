@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-15 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -70,15 +70,15 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * This class acts as the model for a {@link TimeLineView}
+ * This class acts as the model for a TimelineView
  *
  * Views can register listeners on properties returned by methods.
  *
  * This class is implemented as a filtered view into an underlying
- * {@link EventsRepository}.
+ * EventsRepository.
  *
  * TODO: as many methods as possible should cache their results so as to avoid
- * unnecessary db calls through the {@link EventsRepository} -jm
+ * unnecessary db calls through the EventsRepository -jm
  *
  * Concurrency Policy: repo is internally synchronized, so methods that only
  * access the repo atomically do not need further synchronization
@@ -290,8 +290,19 @@ public final class FilteredEventsModel {
         return repo.getEventIDs(overlap, intersect);
     }
 
-    public List<Long> getEventIDs() {
-        return getEventIDs(requestedTimeRange.get(), requestedFilter.get());
+    /**
+     * Get a representation of all the events, within the given time range, that
+     * pass the given filter, grouped by time and description such that file
+     * system events for the same file, with the same timestamp, are combined
+     * together.
+     *
+     * @param timeRange The Interval that all returned events must be within.
+     * @param filter    The Filter that all returned events must pass.
+     *
+     * @return A List of combined events, sorted by timestamp.
+     */
+    public List<CombinedEvent> getCombinedEvents() {
+        return repo.getCombinedEvents(requestedTimeRange.get(), requestedFilter.get());
     }
 
     /**
