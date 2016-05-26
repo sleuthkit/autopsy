@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-16 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,10 +21,10 @@ package org.sleuthkit.autopsy.timeline.datamodel;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Sets;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.SortedSet;
 import javax.annotation.concurrent.Immutable;
 import org.joda.time.Interval;
@@ -108,8 +108,8 @@ public class EventCluster implements MultiEvent<EventStripe> {
      */
     private final ImmutableSet<Long> hashHits;
 
-    private EventCluster(Interval spanningInterval, EventType type, Set<Long> eventIDs,
-            Set<Long> hashHits, Set<Long> tagged, String description, DescriptionLoD lod,
+    private EventCluster(Interval spanningInterval, EventType type, Collection<Long> eventIDs,
+            Collection<Long> hashHits, Collection<Long> tagged, String description, DescriptionLoD lod,
             EventStripe parent) {
 
         this.span = spanningInterval;
@@ -122,8 +122,8 @@ public class EventCluster implements MultiEvent<EventStripe> {
         this.parent = parent;
     }
 
-    public EventCluster(Interval spanningInterval, EventType type, Set<Long> eventIDs,
-            Set<Long> hashHits, Set<Long> tagged, String description, DescriptionLoD lod) {
+    public EventCluster(Interval spanningInterval, EventType type, Collection<Long> eventIDs,
+            Collection<Long> hashHits, Collection<Long> tagged, String description, DescriptionLoD lod) {
         this(spanningInterval, type, eventIDs, hashHits, tagged, description, lod, null);
     }
 

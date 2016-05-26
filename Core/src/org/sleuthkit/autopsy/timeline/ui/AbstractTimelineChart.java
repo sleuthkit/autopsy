@@ -75,7 +75,7 @@ public abstract class AbstractTimelineChart<X, Y, NodeType extends Node, ChartTy
     private static final Logger LOGGER = Logger.getLogger(AbstractTimelineChart.class.getName());
 
     @NbBundle.Messages("AbstractTimelineChart.defaultTooltip.text=Drag the mouse to select a time interval to zoom into.\nRight-click for more actions.")
-    private static final Tooltip DEFAULT_TOOLTIP = new Tooltip(Bundle.AbstractTimelineChart_Default_Tooltip_text());
+    private static final Tooltip DEFAULT_TOOLTIP = new Tooltip(Bundle.AbstractTimelineChart_defaultTooltip_text());
     private static final Border ONLY_LEFT_BORDER = new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(0, 0, 0, 1)));
 
     /**
