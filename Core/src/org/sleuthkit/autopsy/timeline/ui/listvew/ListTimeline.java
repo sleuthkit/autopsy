@@ -74,7 +74,7 @@ class ListTimeline extends BorderPane {
     private static final Logger LOGGER = Logger.getLogger(ListTimeline.class.getName());
 
     /**
-     * call-back used to wrap the event ID inn a ObservableValue<Long>
+     * call-back used to wrap the CombinedEvent in a ObservableValue
      */
     private static final Callback<TableColumn.CellDataFeatures<CombinedEvent, CombinedEvent>, ObservableValue<CombinedEvent>> CELL_VALUE_FACTORY = param -> new SimpleObjectProperty<>(param.getValue());
 
@@ -123,7 +123,7 @@ class ListTimeline extends BorderPane {
         assert typeColumn != null : "fx:id=\"typeColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
         assert knownColumn != null : "fx:id=\"knownColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
 
-        //override default row with one that provides context menu.S
+        //override default row with one that provides context menus
         table.setRowFactory(tableView -> new EventRow());
 
         //remove idColumn (can be restored for debugging).  
@@ -162,7 +162,7 @@ class ListTimeline extends BorderPane {
             //keep the selectedEventsIDs in sync with the table's selection model, via getRepresentitiveEventID(). 
             selectedEventIDs.setAll(FluentIterable.from(table.getSelectionModel().getSelectedItems())
                     .filter(Objects::nonNull)
-                    .transform(CombinedEvent::getRepresentitiveEventID)
+                    .transform(CombinedEvent::getRepresentativeEventID)
                     .toSet());
         });
     }
@@ -176,7 +176,7 @@ class ListTimeline extends BorderPane {
     }
 
     /**
-     * Set the Collection of events (by ID) to show in the table.
+     * Set the Collection of CombinedEvents to show in the table.
      *
      * @param events The Collection of events to sho in the table.
      */
@@ -206,7 +206,7 @@ class ListTimeline extends BorderPane {
     }
 
     /**
-     * Set the combineded events that are selected in this view.
+     * Set the combined events that are selected in this view.
      *
      * @param selectedEvents The events that should be selected.
      */
@@ -265,7 +265,7 @@ class ListTimeline extends BorderPane {
     }
 
     /**
-     * TableCell to show text derived from a SingleEvent by the given Funtion.
+     * TableCell to show text derived from a SingleEvent by the given Function.
      */
     private class TextEventTableCell extends EventTableCell {
 
@@ -311,7 +311,7 @@ class ListTimeline extends BorderPane {
                 event = null;
             } else {
                 //stash the event in the cell for derived classed to use.
-                event = controller.getEventsModel().getEventById(item.getRepresentitiveEventID());
+                event = controller.getEventsModel().getEventById(item.getRepresentativeEventID());
             }
         }
     }
@@ -341,49 +341,56 @@ class ListTimeline extends BorderPane {
             if (empty || item == null) {
                 event = null;
             } else {
-                event = controller.getEventsModel().getEventById(item.getRepresentitiveEventID());
-                //make context menu
-                try {
-                    EventNode node = EventNode.createEventNode(event.getEventID(), controller.getEventsModel());
-                    List<MenuItem> menuItems = new ArrayList<>();
+                event = controller.getEventsModel().getEventById(item);
 
-                    //for each actions avaialable on node, make a menu item.
-                    for (Action action : node.getActions(false)) {
-                        if (action == null) {
-                            // swing/netbeans uses null action to represent separator in menu
-                            menuItems.add(new SeparatorMenuItem());
-                        } else {
-                            String actionName = Objects.toString(action.getValue(Action.NAME));
-                            //for now, suppress properties and tools actions, by ignoring them  
-                            if (Arrays.asList("&Properties", "Tools").contains(actionName) == false) {
-                                if (action instanceof Presenter.Popup) {
-                                    /*
-                                     * If the action is really the root of a set
-                                     * of actions (eg, tagging). Make a menu
-                                     * that parallels the action's menu.
-                                     */
-                                    JMenuItem submenu = ((Presenter.Popup) action).getPopupPresenter();
-                                    menuItems.add(SwingFXMenuUtils.createFXMenu(submenu));
-                                } else {
-                                    menuItems.add(SwingFXMenuUtils.createFXMenu(new Actions.MenuItem(action, false)));
+                setOnContextMenuRequested(contextMenuEvent -> {
+                    //make a new context menu on each request in order to include uptodate tag names and hash sets
+                    try {
+                        EventNode node = EventNode.createEventNode(item, controller.getEventsModel());
+                        List<MenuItem> menuItems = new ArrayList<>();
+
+                        //for each actions avaialable on node, make a menu item.
+                        for (Action action : node.getActions(false)) {
+                            if (action == null) {
+                                // swing/netbeans uses null action to represent separator in menu
+                                menuItems.add(new SeparatorMenuItem());
+                            } else {
+                                String actionName = Objects.toString(action.getValue(Action.NAME));
+                                //for now, suppress properties and tools actions, by ignoring them
+                                if (Arrays.asList("&Properties", "Tools").contains(actionName) == false) {
+                                    if (action instanceof Presenter.Popup) {
+                                        /*
+                                         * If the action is really the root of a
+                                         * set of actions (eg, tagging). Make a
+                                         * menu that parallels the action's
+                                         * menu.
+                                         */
+                                        JMenuItem submenu = ((Presenter.Popup) action).getPopupPresenter();
+                                        menuItems.add(SwingFXMenuUtils.createFXMenu(submenu));
+                                    } else {
+                                        menuItems.add(SwingFXMenuUtils.createFXMenu(new Actions.MenuItem(action, false)));
+                                    }
                                 }
                             }
-                        }
-                    };
+                        };
 
-                    setContextMenu(new ContextMenu(menuItems.toArray(new MenuItem[menuItems.size()])));
-                } catch (IllegalStateException ex) {
-                    //Since the case is closed, the user probably doesn't care about this, just log it as a precaution.
-                    LOGGER.log(Level.SEVERE, "There was no case open to lookup the Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
-                } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to lookup Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
-                    Platform.runLater(() -> {
-                        Notifications.create()
-                                .owner(getScene().getWindow())
-                                .text(Bundle.ListChart_errorMsg())
-                                .showError();
-                    });
-                }
+                        //show new context menu.
+                        new ContextMenu(menuItems.toArray(new MenuItem[menuItems.size()]))
+                                .show(this, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
+                    } catch (IllegalStateException ex) {
+                        //Since the case is closed, the user probably doesn't care about this, just log it as a precaution.
+                        LOGGER.log(Level.SEVERE, "There was no case open to lookup the Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
+                    } catch (TskCoreException ex) {
+                        LOGGER.log(Level.SEVERE, "Failed to lookup Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
+                        Platform.runLater(() -> {
+                            Notifications.create()
+                                    .owner(getScene().getWindow())
+                                    .text(Bundle.ListChart_errorMsg())
+                                    .showError();
+                        });
+                    }
+                });
+
             }
         }
     }
