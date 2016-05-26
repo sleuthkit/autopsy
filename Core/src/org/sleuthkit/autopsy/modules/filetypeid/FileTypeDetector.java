@@ -24,9 +24,7 @@ import java.util.SortedSet;
 import org.apache.tika.Tika;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MimeTypes;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -34,24 +32,22 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * Detects the MIME type of a file by an inspection of its contents, using both
- * user-defined type definitions and Tika.
+ * Detects the MIME type of a file by an inspection of its contents, using
+ * custom file type definitions by users, custom file type definitions by
+ * Autopsy, and Tika.
  */
-@NbBundle.Messages({
-    "CouldNotInitializeFileTypeDetector=Error loading user-defined file types."
-})
 public class FileTypeDetector {
 
     private static final Tika tika = new Tika();
     private static final int BUFFER_SIZE = 64 * 1024;
     private final byte buffer[] = new byte[BUFFER_SIZE];
     private final List<FileType> userDefinedFileTypes;
-    private static final Logger logger = Logger.getLogger(FileTypeDetector.class.getName());
+    private final List<FileType> autopsyDefinedFileTypes;
 
     /**
      * Constructs an object that detects the MIME type of a file by an
-     * inspection of its contents, using both user-defined type definitions and
-     * Tika.
+     * inspection of its contents, using custom file type definitions by users,
+     * custom file type definitions by Autopsy, and Tika.
      *
      * @throws FileTypeDetectorInitException if an initialization error occurs,
      *                                       e.g., user-defined file type
@@ -61,24 +57,27 @@ public class FileTypeDetector {
     public FileTypeDetector() throws FileTypeDetectorInitException {
         try {
             userDefinedFileTypes = CustomFileTypesManager.getInstance().getFileTypes();
+            autopsyDefinedFileTypes = CustomFileTypesManager.getInstance().getFileTypes();
         } catch (CustomFileTypesManager.CustomFileTypesException ex) {
-            throw new FileTypeDetectorInitException(Bundle.CouldNotInitializeFileTypeDetector(), ex);
+            throw new FileTypeDetectorInitException("Error loading custom file types", ex); //NON-NLS
         }
     }
 
     /**
-     * Gets the names of the user-defined MIME types.
+     * Gets the names of the custom file types defined by the user or by
+     * Autopsy.
      *
      * @return A list of the user-defined MIME types.
      */
     public List<String> getUserDefinedTypes() {
-        List<String> list = new ArrayList<>();
-        if (userDefinedFileTypes != null) {
-            for (FileType fileType : userDefinedFileTypes) {
-                list.add(fileType.getMimeType());
-            }
+        List<String> customFileTypes = new ArrayList<>();
+        for (FileType fileType : userDefinedFileTypes) {
+            customFileTypes.add(fileType.getMimeType());
         }
-        return list;
+        for (FileType fileType : autopsyDefinedFileTypes) {
+            customFileTypes.add(fileType.getMimeType());
+        }
+        return customFileTypes;
     }
 
     /**
@@ -90,7 +89,9 @@ public class FileTypeDetector {
      * @return True or false.
      */
     public boolean isDetectable(String mimeType) {
-        return isDetectableAsUserDefinedType(mimeType) || isDetectableByTika(mimeType);
+        return isDetectableAsCustomType(userDefinedFileTypes, mimeType) 
+                || isDetectableAsCustomType(autopsyDefinedFileTypes, mimeType)
+                || isDetectableByTika(mimeType);
     }
 
     /**
@@ -101,8 +102,8 @@ public class FileTypeDetector {
      *
      * @return True or false.
      */
-    private boolean isDetectableAsUserDefinedType(String mimeType) {
-        for (FileType fileType : userDefinedFileTypes) {
+    private boolean isDetectableAsCustomType(List<FileType> customTypes, String mimeType) {
+        for (FileType fileType : customTypes) {
             if (fileType.getMimeType().equals(mimeType)) {
                 return true;
             }
@@ -204,10 +205,19 @@ public class FileTypeDetector {
         }
 
         /*
-         * If the file is a regular file, give precedence to user-defined types.
+         * If the file is a regular file, give precedence to user-defined custom
+         * file types.
          */
         if (null == mimeType) {
             mimeType = detectUserDefinedType(file);
+        }
+
+        /*
+         * If the file does not match a user-defined type, give precedence to
+         * custom file types defined by Autopsy.
+         */
+        if (null == mimeType) {
+            mimeType = detectAutopsyDefinedType(file);
         }
 
         /*
@@ -282,8 +292,8 @@ public class FileTypeDetector {
     }
 
     /**
-     * Determines whether or not the a file matches a user-defined or Autopsy
-     * predefined file type.
+     * Determines whether or not the a file matches a user-defined custom file
+     * type.
      *
      * @param file The file to test.
      *
@@ -293,6 +303,25 @@ public class FileTypeDetector {
      */
     private String detectUserDefinedType(AbstractFile file) throws TskCoreException {
         for (FileType fileType : userDefinedFileTypes) {
+            if (fileType.matches(file)) {
+                return fileType.getMimeType();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Determines whether or not the a file matches a custom file type defined
+     * by Autopsy.
+     *
+     * @param file The file to test.
+     *
+     * @return The file type name string or null, if no match is detected.
+     *
+     * @throws TskCoreException
+     */
+    private String detectAutopsyDefinedType(AbstractFile file) throws TskCoreException {
+        for (FileType fileType : autopsyDefinedFileTypes) {
             if (fileType.matches(file)) {
                 return fileType.getMimeType();
             }
@@ -345,7 +374,6 @@ public class FileTypeDetector {
      * instead of querying the blackboard.
      */
     @Deprecated
-    @SuppressWarnings("deprecation")
     public String detectAndPostToBlackboard(AbstractFile file) throws TskCoreException {
         return getFileType(file);
     }

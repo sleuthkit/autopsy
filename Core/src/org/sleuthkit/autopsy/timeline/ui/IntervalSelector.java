@@ -336,8 +336,8 @@ public abstract class IntervalSelector<X> extends BorderPane {
         IntervalSelector<X> newIntervalSelector();
 
         /**
-         * clear any references to previous interval selectors , including
-         * removing the interval selector from the ui / scene-graph
+         * Clear any references to previous interval selectors , including
+         * removing the interval selector from the UI / scene-graph.
          */
         void clearIntervalSelector();
 

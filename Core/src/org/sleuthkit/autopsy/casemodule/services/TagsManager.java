@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-16 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -222,6 +222,10 @@ public class TagsManager implements Closeable {
         synchronized (this) {
             lazyLoadExistingTagNames();
 
+            if (null == comment) {
+                throw new IllegalArgumentException("Passed null comment argument");
+            }
+
             if (beginByteOffset >= 0 && endByteOffset >= 1) {
                 if (beginByteOffset > content.getSize() - 1) {
                     throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(),
@@ -381,6 +385,9 @@ public class TagsManager implements Closeable {
         BlackboardArtifactTag tag;
         synchronized (this) {
             lazyLoadExistingTagNames();
+            if (null == comment) {
+                throw new IllegalArgumentException("Passed null comment argument");
+            }            
             tag = caseDb.addBlackboardArtifactTag(artifact, tagName, comment);
         }
 

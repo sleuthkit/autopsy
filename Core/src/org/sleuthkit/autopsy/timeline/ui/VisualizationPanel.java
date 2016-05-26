@@ -382,8 +382,8 @@ final public class VisualizationPanel extends BorderPane {
     }
 
     /**
-     * Handle a RefreshRequestedEvent from the events model by refreshing the
-     * visualization.
+     * Handle a RefreshRequestedEvent from the events model by clearing the
+     * refresh notification.
      *
      * NOTE: This VisualizationPanel must be registered with the
      * filteredEventsModel's EventBus in order for this handler to be invoked.
@@ -392,7 +392,6 @@ final public class VisualizationPanel extends BorderPane {
      */
     @Subscribe
     public void handleRefreshRequested(RefreshRequestedEvent event) {
-        visualization.refresh();
         Platform.runLater(() -> {
             if (Bundle.VisualizationPanel_tagsAddedOrDeleted().equals(notificationPane.getText())) {
                 notificationPane.hide();
@@ -543,22 +542,18 @@ final public class VisualizationPanel extends BorderPane {
         controller.monitorTask(histogramTask);
     }
 
+    /**
+     * Refresh the time selection UI to match the current zoome paramaters.
+     */
     private void refreshTimeUI() {
-        refreshTimeUI(filteredEvents.timeRangeProperty().get());
-    }
-
-    private void refreshTimeUI(Interval interval) {
-
         RangeDivisionInfo rangeDivisionInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval());
-
         final long minTime = rangeDivisionInfo.getLowerBound();
         final long maxTime = rangeDivisionInfo.getUpperBound();
 
-        long startMillis = interval.getStartMillis();
-        long endMillis = interval.getEndMillis();
+        long startMillis = filteredEvents.getTimeRange().getStartMillis();
+        long endMillis = filteredEvents.getTimeRange().getEndMillis();
 
         if (minTime > 0 && maxTime > minTime) {
-
             Platform.runLater(() -> {
                 startPicker.localDateTimeProperty().removeListener(startListener);
                 endPicker.localDateTimeProperty().removeListener(endListener);
