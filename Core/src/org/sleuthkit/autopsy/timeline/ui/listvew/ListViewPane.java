@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.listvew;
 
+import java.util.HashSet;
 import java.util.List;
 import javafx.application.Platform;
 import javafx.beans.Observable;
@@ -25,28 +26,16 @@ import javafx.concurrent.Task;
 import javafx.scene.Parent;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.CombinedEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.ui.AbstractTimeLineView;
 
 /**
- * @param <X>         The type of data plotted along the x axis
- * @param <Y>         The type of data plotted along the y axis
- * @param <NodeType>  The type of nodes used to represent data items
- * @param <ChartType> The type of the TimeLineChart<X> this class uses to plot
- *                    the data. Must extend Region.
- *
- * TODO: this is becoming (too?) closely tied to the notion that there is a
- * XYChart doing the rendering. Is this a good idea? -jm
- *
- * TODO: pull up common history context menu items out of derived classes? -jm
- *
- * public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node,
- * ChartType extends Region & TimeLineChart<X>> extends BorderPane {
+ * An AbstractTimeLineView that uses a TableView to represent the events.
  */
 public class ListViewPane extends AbstractTimeLineView {
 
-    private final ListTimeline listChart;
+    private final ListTimeline listTimeline;
 
     /**
      * Constructor
@@ -55,15 +44,15 @@ public class ListViewPane extends AbstractTimeLineView {
      */
     public ListViewPane(TimeLineController controller) {
         super(controller);
-        listChart = new ListTimeline(controller);
+        listTimeline = new ListTimeline(controller);
 
         //initialize chart;
-        setCenter(listChart);
+        setCenter(listTimeline);
         setSettingsNodes(new ListViewPane.ListViewSettingsPane().getChildrenUnmodifiable());
 
         //keep controller's list of selected event IDs in sync with this list's
-        listChart.getSelectedEventIDs().addListener((Observable selectedIDs) -> {
-            controller.selectEventIDs(listChart.getSelectedEventIDs());
+        listTimeline.getSelectedEventIDs().addListener((Observable selectedIDs) -> {
+            controller.selectEventIDs(listTimeline.getSelectedEventIDs());
         });
     }
 
@@ -74,13 +63,10 @@ public class ListViewPane extends AbstractTimeLineView {
 
     @Override
     protected void clearData() {
-        listChart.clear();
+        listTimeline.clear();
     }
 
     private static class ListViewSettingsPane extends Parent {
-
-        ListViewSettingsPane() {
-        }
     }
 
     private class ListUpdateTask extends ViewRefreshTask<Interval> {
@@ -91,22 +77,33 @@ public class ListViewPane extends AbstractTimeLineView {
 
         @Override
         protected Boolean call() throws Exception {
-            super.call(); //To change body of generated methods, choose Tools | Templates.
+            super.call();
             if (isCancelled()) {
                 return null;
             }
+
             FilteredEventsModel eventsModel = getEventsModel();
 
-            //clear the chart and set the horixontal axis
+            //grab the currently selected event
+            HashSet<CombinedEvent> selectedEvents = new HashSet<>(listTimeline.getSelectedEvents());
+
+            //clear the chart and set the time range.
             resetView(eventsModel.getTimeRange());
 
-            updateMessage("Querying db for events");
-            //get the event stripes to be displayed
-            List<CombinedEvent> mergedEvents = eventsModel.getCombinedEvents();
-            Platform.runLater(() -> listChart.setMergedEvents(mergedEvents));
+            //get the combined events to be displayed
+            updateMessage("Querying DB for events");
+            List<CombinedEvent> combinedEvents = eventsModel.getCombinedEvents();
 
-            updateMessage("updating ui");
-            return mergedEvents.isEmpty() == false;
+            updateMessage("Updating UI");
+            Platform.runLater(() -> {
+                //put the combined events into the table.
+                listTimeline.setCombinedEvents(combinedEvents);
+                //restore the selected event
+                listTimeline.selectEvents(selectedEvents);
+            });
+
+            return combinedEvents.isEmpty() == false;
+
         }
 
         @Override
@@ -118,6 +115,5 @@ public class ListViewPane extends AbstractTimeLineView {
         @Override
         protected void setDateValues(Interval timeRange) {
         }
-
     }
 }

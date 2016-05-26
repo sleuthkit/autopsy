@@ -838,7 +838,8 @@ class ReportHTML implements TableReportModule {
         try {
             indexOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(indexFilePath), "UTF-8")); //NON-NLS
             StringBuilder index = new StringBuilder();
-            index.append("<head>\n<title>").append( //NON-NLS
+            final String reportTitle = reportBranding.getReportTitle();
+            index.append("<head>\n<title>").append(reportTitle).append(" ").append(
                     NbBundle.getMessage(this.getClass(), "ReportHTML.writeIndex.title", currentCase.getName())).append(
                             "</title>\n"); //NON-NLS
             index.append("<link rel=\"icon\" type=\"image/ico\" href=\"favicon.ico\" />\n"); //NON-NLS

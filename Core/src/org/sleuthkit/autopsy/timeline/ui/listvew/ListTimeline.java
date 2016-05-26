@@ -23,8 +23,10 @@ import com.google.common.collect.Iterables;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.Observable;
@@ -61,10 +63,11 @@ import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.BaseTypes;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.FileSystemTypes;
 import org.sleuthkit.autopsy.timeline.explorernodes.EventNode;
+import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * The inner component that makes up the List view. Manages the table.
+ * The inner component that makes up the List view. Manages the TableView.
  */
 class ListTimeline extends BorderPane {
 
@@ -123,21 +126,24 @@ class ListTimeline extends BorderPane {
         //override default row with one that provides context menu.S
         table.setRowFactory(tableView -> new EventRow());
 
-        //remove idColumn (can be used for debugging).  
+        //remove idColumn (can be restored for debugging).  
         table.getColumns().remove(idColumn);
 
         //// set up cell and cell-value factories for columns
         dateTimeColumn.setCellValueFactory(CELL_VALUE_FACTORY);
-        dateTimeColumn.setCellFactory(col -> new EpochMillisCell());
+        dateTimeColumn.setCellFactory(col -> new TextEventTableCell(singleEvent ->
+                TimeLineController.getZonedFormatter().print(singleEvent.getStartMillis())));
 
         descriptionColumn.setCellValueFactory(CELL_VALUE_FACTORY);
-        descriptionColumn.setCellFactory(col -> new DescriptionCell());
+        descriptionColumn.setCellFactory(col -> new TextEventTableCell(singleEvent ->
+                singleEvent.getDescription(DescriptionLoD.FULL)));
 
         typeColumn.setCellValueFactory(CELL_VALUE_FACTORY);
         typeColumn.setCellFactory(col -> new EventTypeCell());
 
         knownColumn.setCellValueFactory(CELL_VALUE_FACTORY);
-        knownColumn.setCellFactory(col -> new KnownCell());
+        knownColumn.setCellFactory(col -> new TextEventTableCell(singleEvent ->
+                singleEvent.getKnown().getName()));
 
         //bind event count label to number of items in the table
         eventCountLabel.textProperty().bind(new StringBinding() {
@@ -175,7 +181,7 @@ class ListTimeline extends BorderPane {
      * @param events The Collection of events to sho in the table.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    void setMergedEvents(Collection<CombinedEvent> events) {
+    void setCombinedEvents(Collection<CombinedEvent> events) {
         table.getItems().setAll(events);
     }
 
@@ -190,20 +196,26 @@ class ListTimeline extends BorderPane {
     }
 
     /**
-     * TableCell to show the full description for an event.
+     * Get an ObservableList of combined events that are selected in this table.
+     *
+     * @return An ObservableList of combined events that are selected in this
+     *         table.
      */
-    private class DescriptionCell extends EventTableCell {
+    ObservableList<CombinedEvent> getSelectedEvents() {
+        return table.getSelectionModel().getSelectedItems();
+    }
 
-        @Override
-        protected void updateItem(CombinedEvent item, boolean empty) {
-            super.updateItem(item, empty);
-
-            if (empty || item == null) {
-                setText("");
-            } else {
-                setText(item.getDescription());
-            }
-        }
+    /**
+     * Set the ID of the event that is selected.
+     *
+     * @param selectedEventID The ID of the event that should be selected.
+     */
+    void selectEvents(Collection<CombinedEvent> selectedEvents) {
+        CombinedEvent firstSelected = selectedEvents.stream().min(Comparator.comparing(CombinedEvent::getStartMillis)).orElseGet(null);
+        table.getSelectionModel().clearSelection();
+        table.scrollTo(firstSelected);
+        selectedEvents.forEach(table.getSelectionModel()::select);
+        table.requestFocus();
     }
 
     /**
@@ -253,35 +265,23 @@ class ListTimeline extends BorderPane {
     }
 
     /**
-     * TableCell to show the known state of the file backing an event.
+     * TableCell to show text derived from a SingleEvent by the given Funtion.
      */
-    private class KnownCell extends EventTableCell {
+    private class TextEventTableCell extends EventTableCell {
 
-        @Override
-        protected void updateItem(CombinedEvent item, boolean empty) {
-            super.updateItem(item, empty);
+        private final Function<SingleEvent, String> textSupplier;
 
-            if (empty || item == null) {
-                setText("");
-            } else {
-                setText(getEvent().getKnown().getName());
-            }
+        TextEventTableCell(Function<SingleEvent, String> textSupplier) {
+            this.textSupplier = textSupplier;
         }
-    }
-
-    /**
-     * TableCell to show the (start) time of an event.
-     */
-    private class EpochMillisCell extends EventTableCell {
 
         @Override
         protected void updateItem(CombinedEvent item, boolean empty) {
             super.updateItem(item, empty);
-
             if (empty || item == null) {
-                setText("");
+                setText(null);
             } else {
-                setText(TimeLineController.getZonedFormatter().print(item.getStartMillis()));
+                setText(textSupplier.apply(getEvent()));
             }
         }
     }
