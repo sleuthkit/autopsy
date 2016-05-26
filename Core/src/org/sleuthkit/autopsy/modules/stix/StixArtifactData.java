@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.modules.stix;
 
 import java.util.logging.Level;
-import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -58,6 +58,7 @@ class StixArtifactData {
         objType = a_objType;
     }
 
+    @Messages({"StixArtifactData.indexError.message=Failed to index interesting file hit artifact for keyword search."})
     public void createArtifact(String a_title) throws TskCoreException {
         Blackboard blackboard = Case.getCurrentCase().getServices().getBlackboard();
 
@@ -72,14 +73,13 @@ class StixArtifactData {
         bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, "Stix", setName)); //NON-NLS
         bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE, "Stix", observableId)); //NON-NLS
         bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, "Stix", objType)); //NON-NLS
-        
+
         try {
             // index the artifact for keyword search
             blackboard.indexArtifact(bba);
         } catch (Blackboard.BlackboardException ex) {
-            logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", bba.getDisplayName()), ex); //NON-NLS
-            MessageNotifyUtil.Notify.error(
-                    NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), bba.getDisplayName());
+            logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getDisplayName(), ex); //NON-NLS
+            MessageNotifyUtil.Notify.error(Bundle.StixArtifactData_indexError_message(), bba.getDisplayName());
         }
     }
 

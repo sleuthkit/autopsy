@@ -26,27 +26,28 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
+import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.HashHitInfo;
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
-import org.sleuthkit.autopsy.ingest.FileIngestModule;
-import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
-import org.sleuthkit.datamodel.HashHitInfo;
 
 @NbBundle.Messages({
     "HashDbIngestModule.noKnownBadHashDbSetMsg=No known bad hash database set.",
@@ -285,6 +286,7 @@ public class HashDbIngestModule implements FileIngestModule {
         return ret;
     }
 
+    @Messages({"HashDbIngestModule.indexError.message=Failed to index hashset hit artifact for keyword search."})
     private void postHashSetHitToBlackboard(AbstractFile abstractFile, String md5Hash, String hashSetName, String comment, boolean showInboxMessage) {
         try {
             String MODULE_NAME = NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.moduleName");
@@ -303,9 +305,9 @@ public class HashDbIngestModule implements FileIngestModule {
                 // index the artifact for keyword search
                 blackboard.indexArtifact(badFile);
             } catch (Blackboard.BlackboardException ex) {
-                logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", badFile.getDisplayName()), ex); //NON-NLS
+                logger.log(Level.SEVERE, "Unable to index blackboard artifact " + badFile.getDisplayName(), ex); //NON-NLS
                 MessageNotifyUtil.Notify.error(
-                        NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), badFile.getDisplayName());
+                        Bundle.HashDbIngestModule_indexError_message(), badFile.getDisplayName());
             }
 
             if (showInboxMessage) {

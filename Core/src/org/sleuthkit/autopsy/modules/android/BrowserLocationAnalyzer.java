@@ -26,7 +26,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 import java.util.logging.Level;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
@@ -72,6 +71,7 @@ class BrowserLocationAnalyzer {
         }
     }
 
+    @NbBundle.Messages({"BrowserLocationAnalyzer.indexError.message=Failed to index gps trackpoint artifact for keyword search."})
     private static void findGeoLocationsInDB(String DatabasePath, AbstractFile f) {
         Connection connection = null;
         ResultSet resultSet = null;
@@ -110,9 +110,9 @@ class BrowserLocationAnalyzer {
                     // index the artifact for keyword search
                     blackboard.indexArtifact(bba);
                 } catch (Blackboard.BlackboardException ex) {
-                    logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", bba.getDisplayName()), ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getDisplayName(), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(
-                            NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), bba.getDisplayName());
+                            Bundle.BrowserLocationAnalyzer_indexError_message(), bba.getDisplayName());
                 }
             }
         } catch (Exception e) {

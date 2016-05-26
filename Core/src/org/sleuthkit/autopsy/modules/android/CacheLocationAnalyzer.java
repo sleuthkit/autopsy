@@ -25,8 +25,8 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.logging.Level;
-
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
@@ -78,6 +78,7 @@ class CacheLocationAnalyzer {
         }
     }
 
+    @Messages({"CacheLocationAnalyzer.indexError.message=Failed to index gps trackpoint artifact for keyword search."})
     private static void findGeoLocationsInFile(File file, AbstractFile f) {
         byte[] bytes; // will temporarily hold bytes to be converted into the correct data types
 
@@ -140,14 +141,13 @@ class CacheLocationAnalyzer {
                 //Not storing these for now.
                 //    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(),moduleName, accuracy));       
                 //    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT.getTypeID(),moduleName, confidence));
-                
                 try {
                     // index the artifact for keyword search
                     blackboard.indexArtifact(bba);
                 } catch (Blackboard.BlackboardException ex) {
-                    logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", bba.getDisplayName()), ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getDisplayName(), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(
-                            NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), bba.getDisplayName());
+                            Bundle.CacheLocationAnalyzer_indexError_message(), bba.getDisplayName());
                 }
             }
 
