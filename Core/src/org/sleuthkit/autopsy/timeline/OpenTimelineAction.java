@@ -18,8 +18,11 @@
  */
 package org.sleuthkit.autopsy.timeline;
 
+import java.awt.Component;
 import java.io.IOException;
 import java.util.logging.Level;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
@@ -27,6 +30,7 @@ import org.openide.awt.ActionRegistration;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
+import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.Installer;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -37,13 +41,15 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 @ActionRegistration(displayName = "#CTL_MakeTimeline", lazy = false)
 @ActionReferences(value = {
     @ActionReference(path = "Menu/Tools", position = 100)})
-public class OpenTimelineAction extends CallableSystemAction {
+public class OpenTimelineAction extends CallableSystemAction implements Presenter.Toolbar {
 
     private static final Logger LOGGER = Logger.getLogger(OpenTimelineAction.class.getName());
 
     private static final boolean fxInited = Installer.isJavaFxInited();
 
     private static TimeLineController timeLineController = null;
+    
+    private JButton toolbarButton = new JButton();
 
     synchronized static void invalidateController() {
         timeLineController = null;
@@ -101,5 +107,18 @@ public class OpenTimelineAction extends CallableSystemAction {
     @Override
     public boolean asynchronous() {
         return false; // run on edt
+    }
+    
+    /**
+     * Returns the toolbar component of this action
+     *
+     * @return component the toolbar button
+     */
+    @Override
+    public Component getToolbarPresenter() {
+        ImageIcon icon = new ImageIcon("images//20140521121247760_easyicon_net_32_colorized.png"); //NON-NLS
+        toolbarButton.setIcon(icon);
+        toolbarButton.setText(this.getName());
+        return toolbarButton;
     }
 }

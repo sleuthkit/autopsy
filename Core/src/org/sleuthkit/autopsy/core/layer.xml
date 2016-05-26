@@ -387,6 +387,11 @@
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-report-ReportWizardAction.instance"/>
                 <attr name="position" intvalue="102"/>
             </file>
+            <file name="org-sleuthkit-autopsy-timeline-OpenTimelineAction.instance">
+                <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.report.Bundle#CTL_MakeTimeline"/>
+                <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-timeline-OpenTimelineAction.instance"/>
+                <attr name="position" intvalue="103"/>
+            </file>
         </folder>
         <folder name="Ingest">
             <attr intvalue="103" name="position"/>
