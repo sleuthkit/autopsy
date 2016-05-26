@@ -31,6 +31,8 @@ import java.beans.PropertyChangeSupport;
 import javax.swing.JCheckBox;
 import javax.swing.JMenuItem;
 import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 /**
  *
@@ -71,6 +73,22 @@ class NameSearchPanel extends javax.swing.JPanel {
         copyMenuItem.addActionListener(actList);
         pasteMenuItem.addActionListener(actList);
         selectAllMenuItem.addActionListener(actList);
+        this.searchTextField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                pcs.firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                pcs.firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                pcs.firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+            }
+        });
 
     }
 

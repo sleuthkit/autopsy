@@ -40,7 +40,8 @@ class KnownStatusSearchFilter extends AbstractFileSearchFilter<KnownStatusSearch
 
     @Override
     public boolean isEnabled() {
-        return this.getComponent().getKnownCheckBox().isSelected();
+        return this.getComponent().getKnownCheckBox().isSelected() &&
+                this.getComponent().isSearchable();
     }
 
     @Override

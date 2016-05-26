@@ -222,15 +222,35 @@ class DateSearchPanel extends javax.swing.JPanel {
 
         modifiedCheckBox.setSelected(true);
         modifiedCheckBox.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.modifiedCheckBox.text")); // NOI18N
+        modifiedCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                modifiedCheckBoxActionPerformed(evt);
+            }
+        });
 
         changedCheckBox.setSelected(true);
         changedCheckBox.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.changedCheckBox.text")); // NOI18N
+        changedCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                changedCheckBoxActionPerformed(evt);
+            }
+        });
 
         accessedCheckBox.setSelected(true);
         accessedCheckBox.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.accessedCheckBox.text")); // NOI18N
+        accessedCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                accessedCheckBoxActionPerformed(evt);
+            }
+        });
 
         createdCheckBox.setSelected(true);
         createdCheckBox.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.createdCheckBox.text")); // NOI18N
+        createdCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                createdCheckBoxActionPerformed(evt);
+            }
+        });
 
         dateFromButtonCalendar.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.dateFromButtonCalendar.text")); // NOI18N
         dateFromButtonCalendar.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
@@ -365,6 +385,22 @@ class DateSearchPanel extends javax.swing.JPanel {
         pcs.firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
     }//GEN-LAST:event_dateCheckBoxActionPerformed
 
+    private void modifiedCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_modifiedCheckBoxActionPerformed
+        pcs.firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+    }//GEN-LAST:event_modifiedCheckBoxActionPerformed
+
+    private void accessedCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_accessedCheckBoxActionPerformed
+        pcs.firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+    }//GEN-LAST:event_accessedCheckBoxActionPerformed
+
+    private void createdCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createdCheckBoxActionPerformed
+        pcs.firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+    }//GEN-LAST:event_createdCheckBoxActionPerformed
+
+    private void changedCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_changedCheckBoxActionPerformed
+        pcs.firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+    }//GEN-LAST:event_changedCheckBoxActionPerformed
+
     /**
      * Validate and set the datetime field on the screen given a datetime
      * string.
@@ -392,6 +428,13 @@ class DateSearchPanel extends javax.swing.JPanel {
         }
         dateToTextField.setText(dateStringResult);
         dateToButtonCalendar.setTargetDate(date);
+    }
+    
+    boolean isSearchable() {
+        return this.accessedCheckBox.isSelected() ||
+                this.changedCheckBox.isSelected() ||
+                this.createdCheckBox.isSelected() ||
+                this.modifiedCheckBox.isSelected();
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox accessedCheckBox;
