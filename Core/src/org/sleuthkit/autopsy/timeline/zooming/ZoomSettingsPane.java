@@ -22,6 +22,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
+import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -92,7 +93,6 @@ public class ZoomSettingsPane extends TitledPane {
                 EventTypeZoomLevel::ordinal,
                 Function.identity());
         typeZoomLabel.setText(Bundle.ZoomSettingsPane_typeZoomLabel_text());
-        typeZoomSlider.disableProperty().bind(controller.viewModeProperty().isEqualTo(ViewMode.LIST));
 
         descrLODSlider.setMax(DescriptionLoD.values().length - 1);
         configureSliderListeners(descrLODSlider,
@@ -103,15 +103,14 @@ public class ZoomSettingsPane extends TitledPane {
                 Function.identity());
         descrLODLabel.setText(Bundle.ZoomSettingsPane_descrLODLabel_text());
         //the description slider is only usefull in the detail view
-        descrLODSlider.disableProperty().bind(controller.viewModeProperty().isNotEqualTo(ViewMode.DETAIL));
+        descrLODSlider.disableProperty().bind(controller.viewModeProperty().isEqualTo(ViewMode.COUNTS));
 
         /**
          * In order for the selected value in the time unit slider to correspond
-         * to the amount of time used as units along the x-axis of the
-         * visualization, and since we don't want to show "forever" as a time
-         * unit, the range of the slider is restricted, and there is an offset
-         * of 1 between the "real" value, and what is shown in the slider
-         * labels.
+         * to the amount of time used as units along the x-axis of the view, and
+         * since we don't want to show "forever" as a time unit, the range of
+         * the slider is restricted, and there is an offset of 1 between the
+         * "real" value, and what is shown in the slider labels.
          */
         timeUnitSlider.setMax(TimeUnits.values().length - 2);
         configureSliderListeners(timeUnitSlider,
@@ -122,7 +121,12 @@ public class ZoomSettingsPane extends TitledPane {
                 modelTimeRange -> RangeDivisionInfo.getRangeDivisionInfo(modelTimeRange).getPeriodSize().ordinal() - 1,
                 index -> index + 1);  //compensate for the -1 above when mapping to the Enum whose displayName will be shown at index
         timeUnitLabel.setText(Bundle.ZoomSettingsPane_timeUnitLabel_text());
-        timeUnitSlider.disableProperty().bind(controller.viewModeProperty().isEqualTo(ViewMode.LIST));
+
+        //hide the whole panel in list mode
+        BooleanBinding notListMode = controller.viewModeProperty().isNotEqualTo(ViewMode.LIST);
+        visibleProperty().bind(notListMode);
+        managedProperty().bind(notListMode);
+
     }
 
     /**
@@ -178,7 +182,7 @@ public class ZoomSettingsPane extends TitledPane {
         //set the tick labels to the enum displayNames
         slider.setLabelFormatter(new EnumSliderLabelFormatter<>(enumClass, labelIndexMapper));
 
-        //make a listener to responds to slider value changes (by updating the visualization)
+        //make a listener to responds to slider value changes (by updating the view)
         final InvalidationListener sliderListener = observable -> {
             //only process event if the slider value is not changing (user has released slider thumb)
             if (slider.isValueChanging() == false) {
