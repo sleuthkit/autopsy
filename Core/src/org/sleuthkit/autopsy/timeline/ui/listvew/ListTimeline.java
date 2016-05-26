@@ -341,12 +341,12 @@ class ListTimeline extends BorderPane {
             if (empty || item == null) {
                 event = null;
             } else {
-                event = controller.getEventsModel().getEventById(item);
+                event = controller.getEventsModel().getEventById(item.getRepresentativeEventID());
 
                 setOnContextMenuRequested(contextMenuEvent -> {
                     //make a new context menu on each request in order to include uptodate tag names and hash sets
                     try {
-                        EventNode node = EventNode.createEventNode(item, controller.getEventsModel());
+                        EventNode node = EventNode.createEventNode(item.getRepresentativeEventID(), controller.getEventsModel());
                         List<MenuItem> menuItems = new ArrayList<>();
 
                         //for each actions avaialable on node, make a menu item.
