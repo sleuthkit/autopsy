@@ -180,6 +180,16 @@ class ReportKML implements GeneralReportModule {
         document.addContent(gpsSearchesFolder);
         document.addContent(gpsTrackpointsFolder);
 
+        /**
+         * In the following code, nulls are okay, and are handled when we go to
+         * write out the KML feature. Nulls are expected to be returned from any
+         * method where the artifact is not found and is handled in the
+         * individual feature creation methods. This is done because we don't
+         * know beforehand which attributes will be included for which artifact,
+         * as anyone could write a module that adds additional attributes to an
+         * artifact.
+         *
+         */
         try {
             for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF)) {
                 Long timestamp = getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED);
@@ -200,7 +210,7 @@ class ReportKML implements GeneralReportModule {
 
             }
         } catch (TskCoreException | IOException ex) {
-            logger.log(Level.WARNING, "Could not extract photos with EXIF metadata.", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Could not extract photos with EXIF metadata.", ex); //NON-NLS
         }
 
         try {
@@ -215,7 +225,7 @@ class ReportKML implements GeneralReportModule {
                 gpsBookmarksFolder.addContent(makePlacemark(bookmarkName, FeatureColor.BLUE, desc, timestamp, point, formattedCoordinates));
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Could not get GPS Bookmarks from database.", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Could not get GPS Bookmarks from database.", ex); //NON-NLS
         }
 
         try {
@@ -230,7 +240,7 @@ class ReportKML implements GeneralReportModule {
                 gpsLastKnownLocationFolder.addContent(makePlacemark("Last Known Location", FeatureColor.PURPLE, desc, timestamp, point, formattedCoordinates)); //NON-NLS
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Could not get GPS Last Known Location from database.", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Could not get GPS Last Known Location from database.", ex); //NON-NLS
         }
 
         try {
@@ -257,7 +267,7 @@ class ReportKML implements GeneralReportModule {
                 gpsRouteFolder.addContent(makePlacemark("End", FeatureColor.GREEN, desc, timestamp, endingPoint, formattedCoordinates)); //NON-NLS
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Could not get GPS Routes from database.", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Could not get GPS Routes from database.", ex); //NON-NLS
         }
 
         try {
@@ -279,7 +289,7 @@ class ReportKML implements GeneralReportModule {
                 gpsSearchesFolder.addContent(makePlacemark(searchName, FeatureColor.WHITE, desc, timestamp, point, formattedCoordinates)); //NON-NLS
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Could not get GPS Searches from database.", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Could not get GPS Searches from database.", ex); //NON-NLS
         }
 
         try {
@@ -304,7 +314,7 @@ class ReportKML implements GeneralReportModule {
                 gpsTrackpointsFolder.addContent(makePlacemark(trackName, FeatureColor.YELLOW, desc, timestamp, point, formattedCoordinates));
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Could not get GPS Trackpoints from database.", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Could not get GPS Trackpoints from database.", ex); //NON-NLS
         }
 
         progressPanel.increment();
@@ -316,7 +326,7 @@ class ReportKML implements GeneralReportModule {
                     NbBundle.getMessage(this.getClass(), "ReportKML.genReport.srcModuleName.text"),
                     NbBundle.getMessage(this.getClass(), "ReportKML.genReport.reportName"));
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "Could not write the KML file.", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Could not write the KML file.", ex); //NON-NLS
             progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
         } catch (TskCoreException ex) {
             String errorMessage = String.format("Error adding %s to case as a report", kmlFileFullPath); //NON-NLS
@@ -355,7 +365,8 @@ class ReportKML implements GeneralReportModule {
                     returnValue = value;
                 }
             }
-        } catch (TskCoreException ignoreAndContinue) {
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error getting Double value: " + type.toString(), ex); //NON-NLS
         }
         return returnValue;
     }
@@ -378,7 +389,8 @@ class ReportKML implements GeneralReportModule {
                     returnValue = value;
                 }
             }
-        } catch (TskCoreException ignoreAndContinue) {
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error getting Long value: " + type.toString(), ex); //NON-NLS
         }
         return returnValue;
     }
@@ -401,7 +413,8 @@ class ReportKML implements GeneralReportModule {
                     returnValue = value;
                 }
             }
-        } catch (TskCoreException ignoreAndContinue) {
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error getting Integer value: " + type.toString(), ex); //NON-NLS
         }
         return returnValue;
     }
@@ -424,7 +437,8 @@ class ReportKML implements GeneralReportModule {
                     returnValue = value;
                 }
             }
-        } catch (TskCoreException ignoreAndContinue) {
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error getting String value: " + type.toString(), ex); //NON-NLS
         }
         return returnValue;
     }
