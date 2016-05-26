@@ -77,7 +77,7 @@ class KnownStatusSearchPanel extends javax.swing.JPanel {
         pcs.removePropertyChangeListener(pcl);
     }
 
-    boolean isSearchable() {
+    boolean isValidSearch() {
         return this.unknownOptionCheckBox.isSelected() || this.knownBadOptionCheckBox.isSelected() || this.knownOptionCheckBox.isSelected();
     }
 

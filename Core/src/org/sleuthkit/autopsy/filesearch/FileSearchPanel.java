@@ -105,7 +105,7 @@ class FileSearchPanel extends javax.swing.JPanel {
             filter.addPropertyChangeListener(new PropertyChangeListener() {
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {
-                    searchButton.setEnabled(isSearchable());
+                    searchButton.setEnabled(isValidSearch());
                 }
             });
         }
@@ -116,13 +116,13 @@ class FileSearchPanel extends javax.swing.JPanel {
                 search();
             }
         });
-        searchButton.setEnabled(isSearchable());
+        searchButton.setEnabled(isValidSearch());
     }
 
     /**
      * @return true if any of the filters in the panel are enabled (checked)
      */
-    private boolean isSearchable() {
+    private boolean isValidSearch() {
         boolean enabled = false;
         for (FileSearchFilter filter : this.getFilters()) {
             if (filter.isEnabled()) {
@@ -144,7 +144,7 @@ class FileSearchPanel extends javax.swing.JPanel {
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
-            if (this.isSearchable()) {
+            if (this.isValidSearch()) {
                 String title = NbBundle.getMessage(this.getClass(), "FileSearchPanel.search.results.title", ++resultWindowCount);
                 String pathText = NbBundle.getMessage(this.getClass(), "FileSearchPanel.search.results.pathText");
 

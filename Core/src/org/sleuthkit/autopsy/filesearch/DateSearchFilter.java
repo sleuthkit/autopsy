@@ -206,18 +206,8 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
     }
 
     @Override
-    public void addPropertyChangeListener(PropertyChangeListener listener) {
-        getComponent().addPropertyChangeListener(listener);
-    }
-
-    @Override
     public boolean isValid() {
-        if (!isEnabled()) {
-            return true;
-        }
-        else {
-            return this.getComponent().isSearchable();
-        }
+            return this.getComponent().isValidSearch();
     }
 
     /**

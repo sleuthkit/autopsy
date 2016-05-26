@@ -25,7 +25,7 @@ import javax.swing.JComponent;
 /**
  * Provides a filter and the panel to display it to the FileSearchTopComponent
  */
- interface FileSearchFilter {
+interface FileSearchFilter {
 
     /**
      * Gets the panel to put in the File Search pane.
@@ -40,7 +40,12 @@ import javax.swing.JComponent;
      * @return true if it should be included in the search
      */
     boolean isEnabled();
-    
+
+    /**
+     * Checks if the panel has valid input for search.
+     *
+     * @return Whether the panel has valid input for search.
+     */
     boolean isValid();
 
     /**
@@ -58,7 +63,12 @@ import javax.swing.JComponent;
      * Add an action listener to the fields of this panel
      */
     void addActionListener(ActionListener l);
-    
+
+    /**
+     * Adds the property change listener to the panel
+     *
+     * @param listener the listener to add.
+     */
     void addPropertyChangeListener(PropertyChangeListener listener);
 
     /**

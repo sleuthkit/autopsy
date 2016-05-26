@@ -86,10 +86,6 @@ class KnownStatusSearchFilter extends AbstractFileSearchFilter<KnownStatusSearch
 
     @Override
     public boolean isValid() {
-        if (!isEnabled()) {
-            return true;
-        } else {
-            return this.getComponent().isSearchable();
-        }
+            return this.getComponent().isValidSearch();
     }
 }

@@ -65,10 +65,6 @@ class NameSearchFilter extends AbstractFileSearchFilter<NameSearchPanel> {
 
     @Override
     public boolean isValid() {
-        if (!isEnabled()) {
-            return true;
-        } else {
-            return !this.getComponent().getSearchTextField().getText().isEmpty();
-        }
+        return !this.getComponent().getSearchTextField().getText().isEmpty();
     }
 }

@@ -430,7 +430,7 @@ class DateSearchPanel extends javax.swing.JPanel {
         dateToButtonCalendar.setTargetDate(date);
     }
     
-    boolean isSearchable() {
+    boolean isValidSearch() {
         return this.accessedCheckBox.isSelected() ||
                 this.changedCheckBox.isSelected() ||
                 this.createdCheckBox.isSelected() ||
