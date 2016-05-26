@@ -206,12 +206,12 @@ class ListTimeline extends BorderPane {
     }
 
     /**
-     * Set the ID of the event that is selected.
+     * Set the combineded events that are selected in this view.
      *
-     * @param selectedEventID The ID of the event that should be selected.
+     * @param selectedEvents The events that should be selected.
      */
     void selectEvents(Collection<CombinedEvent> selectedEvents) {
-        CombinedEvent firstSelected = selectedEvents.stream().min(Comparator.comparing(CombinedEvent::getStartMillis)).orElseGet(null);
+        CombinedEvent firstSelected = selectedEvents.stream().min(Comparator.comparing(CombinedEvent::getStartMillis)).orElse(null);
         table.getSelectionModel().clearSelection();
         table.scrollTo(firstSelected);
         selectedEvents.forEach(table.getSelectionModel()::select);
