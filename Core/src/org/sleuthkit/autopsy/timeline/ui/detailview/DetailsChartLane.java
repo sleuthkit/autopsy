@@ -62,7 +62,7 @@ import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
 import org.sleuthkit.autopsy.timeline.ui.ContextMenuProvider;
 
 /**
- * One "lane" of a the details visualization, contains all the core logic and
+ * One "lane" of a the details view, contains all the core logic and
  * layout code.
  *
  * NOTE: It was too hard to control the threading of this chart via the
