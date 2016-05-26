@@ -67,8 +67,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
 
     @Override
     public boolean isEnabled() {
-        return this.getComponent().getDateCheckBox().isSelected() &&
-                this.getComponent().isSearchable();
+        return this.getComponent().getDateCheckBox().isSelected();
     }
 
     @Override
@@ -209,6 +208,16 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
     @Override
     public void addPropertyChangeListener(PropertyChangeListener listener) {
         getComponent().addPropertyChangeListener(listener);
+    }
+
+    @Override
+    public boolean isValid() {
+        if (!isEnabled()) {
+            return true;
+        }
+        else {
+            return this.getComponent().isSearchable();
+        }
     }
 
     /**

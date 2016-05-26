@@ -41,8 +41,7 @@ class NameSearchFilter extends AbstractFileSearchFilter<NameSearchPanel> {
 
     @Override
     public boolean isEnabled() {
-        return this.getComponent().getNameCheckBox().isSelected() &&
-                !this.getComponent().getSearchTextField().getText().isEmpty();
+        return this.getComponent().getNameCheckBox().isSelected();
     }
 
     @Override
@@ -62,5 +61,14 @@ class NameSearchFilter extends AbstractFileSearchFilter<NameSearchPanel> {
     @Override
     public void addActionListener(ActionListener l) {
         getComponent().addActionListener(l);
+    }
+
+    @Override
+    public boolean isValid() {
+        if (!isEnabled()) {
+            return true;
+        } else {
+            return !this.getComponent().getSearchTextField().getText().isEmpty();
+        }
     }
 }

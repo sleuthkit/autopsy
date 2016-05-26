@@ -40,6 +40,8 @@ import javax.swing.JComponent;
      * @return true if it should be included in the search
      */
     boolean isEnabled();
+    
+    boolean isValid();
 
     /**
      * Gets predicate expression to include in the SQL filter expression
