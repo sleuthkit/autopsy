@@ -839,10 +839,16 @@ class ReportHTML implements TableReportModule {
             indexOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(indexFilePath), "UTF-8")); //NON-NLS
             StringBuilder index = new StringBuilder();
             final String reportTitle = reportBranding.getReportTitle();
+            String iconPath = reportBranding.getAgencyLogoPath();
+            if (iconPath == null){
+                // use default Autopsy icon if custom icon is not set
+                iconPath = "favicon.ico";
+            }
             index.append("<head>\n<title>").append(reportTitle).append(" ").append(
                     NbBundle.getMessage(this.getClass(), "ReportHTML.writeIndex.title", currentCase.getName())).append(
                             "</title>\n"); //NON-NLS
-            index.append("<link rel=\"icon\" type=\"image/ico\" href=\"favicon.ico\" />\n"); //NON-NLS
+            index.append("<link rel=\"icon\" type=\"image/ico\" href=\"")
+                    .append(iconPath).append("\" />\n"); //NON-NLS
             index.append("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n"); //NON-NLS
             index.append("</head>\n"); //NON-NLS
             index.append("<frameset cols=\"350px,*\">\n"); //NON-NLS

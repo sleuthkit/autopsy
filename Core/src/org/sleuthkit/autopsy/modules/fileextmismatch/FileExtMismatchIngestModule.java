@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -105,6 +106,7 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
     }
 
     @Override
+    @Messages({"FileExtMismatchIngestModule.indexError.message=Failed to index file extension mismatch artifact for keyword search."})
     public ProcessResult process(AbstractFile abstractFile) {
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
         if (this.settings.skipKnownFiles() && (abstractFile.getKnown() == FileKnown.KNOWN)) {
@@ -139,9 +141,9 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
                     // index the artifact for keyword search
                     blackboard.indexArtifact(bart);
                 } catch (Blackboard.BlackboardException ex) {
-                    logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", bart.getDisplayName()), ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bart.getArtifactID(), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(
-                            NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), bart.getDisplayName());
+                            Bundle.FileExtMismatchIngestModule_indexError_message(), bart.getDisplayName());
                 }
 
                 services.fireModuleDataEvent(new ModuleDataEvent(FileExtMismatchDetectorModuleFactory.getModuleName(), ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED, Collections.singletonList(bart)));
