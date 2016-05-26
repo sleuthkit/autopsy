@@ -31,6 +31,7 @@ import org.apache.solr.common.util.ContentStream;
 import org.apache.solr.common.SolrInputDocument;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.TextUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -298,6 +299,21 @@ class Ingester {
                 String s = "";
                 try {
                     s = new String(docChunkContentBuf, 0, read, docContentEncoding);
+                    // Sanitize by replacing non-UTF-8 characters with caret '^' before adding to index
+                    char[] chars = null;
+                    for (int i = 0; i < s.length(); i++) {
+                        if (!TextUtil.isValidSolrUTF8(s.charAt(i))) {
+                            // only convert string to char[] if there is a non-UTF8 character
+                            if (chars == null) {
+                                chars = s.toCharArray();
+                            }
+                            chars[i] = '^';
+                        }
+                    }
+                    // check if the string was modified (i.e. there was a non-UTF8 character found)
+                    if (chars != null) {
+                        s = new String(chars);
+                    }
                 } catch (UnsupportedEncodingException ex) {
                     logger.log(Level.SEVERE, "Unsupported encoding", ex); //NON-NLS
                 }
