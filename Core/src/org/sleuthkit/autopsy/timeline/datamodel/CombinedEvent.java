@@ -35,6 +35,10 @@ public class CombinedEvent {
     private final long fileID;
     private final long epochMillis;
     private final String description;
+
+    /**
+     * A map from EventType to event ID.
+     */
     private final Map<EventType, Long> eventTypeMap = new HashMap<>();
 
     /**
@@ -43,7 +47,7 @@ public class CombinedEvent {
      * @param epochMillis The timestamp for this event, in millis from the Unix
      *                    epoch.
      * @param description The full description shared by all the combined events
-     * @param fileID      The ID of the file all the combined events are for.
+     * @param fileID      The ID of the file shared by all the combined events.
      * @param eventMap    A map from EventType to event ID.
      */
     public CombinedEvent(long epochMillis, String description, long fileID, Map<EventType, Long> eventMap) {
@@ -145,5 +149,4 @@ public class CombinedEvent {
         }
         return true;
     }
-
 }

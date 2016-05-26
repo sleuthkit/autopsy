@@ -79,8 +79,8 @@ public abstract class AbstractTimelineChart<X, Y, NodeType extends Node, ChartTy
     private static final Border ONLY_LEFT_BORDER = new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(0, 0, 0, 1)));
 
     /**
-     * Get the tool tip to use for this view when no more specific
-     * Tooltip is needed.
+     * Get the tool tip to use for this view when no more specific Tooltip is
+     * needed.
      *
      * @return The default Tooltip.
      */
@@ -176,8 +176,8 @@ public abstract class AbstractTimelineChart<X, Y, NodeType extends Node, ChartTy
     abstract protected Boolean isTickBold(X value);
 
     /**
-     * Apply this view's 'selection effect' to the given node, if
-     * applied is true. If applied is false, remove the affect
+     * Apply this view's 'selection effect' to the given node, if applied is
+     * true. If applied is false, remove the affect
      *
      * @param node    The node to apply the 'effect' to
      * @param applied True if the effect should be applied, false if the effect
