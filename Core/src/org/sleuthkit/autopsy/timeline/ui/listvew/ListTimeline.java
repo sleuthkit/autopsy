@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.logging.Level;
 import javafx.application.Platform;
@@ -46,6 +47,7 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
@@ -119,7 +121,7 @@ class ListTimeline extends BorderPane {
     @FXML
     @NbBundle.Messages({
         "# {0} - the number of events",
-        "ListTimeline.evetnCountLabel.text={0} events"})
+        "ListTimeline.eventCountLabel.text={0} events"})
     void initialize() {
         assert eventCountLabel != null : "fx:id=\"eventCountLabel\" was not injected: check your FXML file 'ListViewPane.fxml'.";
         assert table != null : "fx:id=\"table\" was not injected: check your FXML file 'ListViewPane.fxml'.";
@@ -165,7 +167,7 @@ class ListTimeline extends BorderPane {
 
             @Override
             protected String computeValue() {
-                return Bundle.ListTimeline_evetnCountLabel_text(table.getItems().size());
+                return Bundle.ListTimeline_eventCountLabel_text(table.getItems().size());
             }
         });
 
@@ -217,24 +219,44 @@ class ListTimeline extends BorderPane {
         protected void updateItem(CombinedEvent item, boolean empty) {
             super.updateItem(item, empty);
 
-            if (empty || item == null) {
+            if (empty || item == null || (getEvent().isTagged() == false)) {
                 setGraphic(null);
+                setTooltip(null);
             } else {
-                setGraphic(getEvent().isTagged() ? new ImageView(TAG) : null);
+                setGraphic(new ImageView(TAG));
             }
         }
     }
 
+    /**
+     * TableCell to show the hash hits if any associated with the file backing
+     * an event.
+     */
     private class HashHitCell extends EventTableCell {
 
+        @NbBundle.Messages({
+            "ListTimeline.hashHitTooltip.error=There was a problem getting the hash set names for the selected event."})
         @Override
         protected void updateItem(CombinedEvent item, boolean empty) {
             super.updateItem(item, empty);
 
-            if (empty || item == null) {
+            if (empty || item == null || (getEvent().isHashHit() == false)) {
                 setGraphic(null);
+                setTooltip(null);
             } else {
-                setGraphic(getEvent().isHashHit() ? new ImageView(HASH_HIT) : null);
+                setGraphic(new ImageView(HASH_HIT));
+                try {
+                    Set<String> hashSetNames = controller.getAutopsyCase().getSleuthkitCase().getAbstractFileById(getEvent().getFileID()).getHashSetNames();
+                    setTooltip(new Tooltip("Hash Sets: \n" + String.join("\n", hashSetNames)));
+                } catch (TskCoreException ex) {
+                    LOGGER.log(Level.SEVERE, "Failed to lookup hash set names for obj id " + getEvent().getFileID(), ex);
+                    Platform.runLater(() -> {
+                        Notifications.create()
+                                .owner(getScene().getWindow())
+                                .text(Bundle.ListTimeline_hashHitTooltip_error())
+                                .showError();
+                    });
+                }
             }
         }
     }
@@ -272,7 +294,8 @@ class ListTimeline extends BorderPane {
             super.updateItem(item, empty);
 
             if (empty || item == null) {
-                setText("");
+                setText(null);
+                setGraphic(null);
             } else {
                 if (item.getEventTypes().stream().allMatch(eventType -> eventType instanceof FileSystemTypes)) {
                     String s = "";
