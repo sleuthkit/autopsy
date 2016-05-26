@@ -703,7 +703,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
     private class CheckBoxRenderer extends DefaultTableCellRenderer {
 
         private static final long serialVersionUID = 1L;
-        final ImageIcon theCheck = new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/tick.png")); // NON-NLS
+        final ImageIcon theCheck = new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/checkmark.png")); // NON-NLS
 
         CheckBoxRenderer() {
             setHorizontalAlignment(CENTER);
