@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.timeline.datamodel;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 
@@ -43,8 +44,7 @@ public class CombinedEvent {
      *                    epoch.
      * @param description The full description shared by all the combined events
      * @param fileID      The ID of the file all the combined events are for.
-     * @param eventMap    A map from EventType to the ID of the event for the
-     *                    given file ID with that type.
+     * @param eventMap    A map from EventType to event ID.
      */
     public CombinedEvent(long epochMillis, String description, long fileID, Map<EventType, Long> eventMap) {
         this.epochMillis = epochMillis;
@@ -105,7 +105,45 @@ public class CombinedEvent {
      *
      * @return An arbitrary representative event ID for the combined events.
      */
-    public Long getRepresentitiveEventID() {
+    public Long getRepresentativeEventID() {
         return eventTypeMap.values().stream().findFirst().get();
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 53 * hash + (int) (this.fileID ^ (this.fileID >>> 32));
+        hash = 53 * hash + (int) (this.epochMillis ^ (this.epochMillis >>> 32));
+        hash = 53 * hash + Objects.hashCode(this.description);
+        hash = 53 * hash + Objects.hashCode(this.eventTypeMap);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final CombinedEvent other = (CombinedEvent) obj;
+        if (this.fileID != other.fileID) {
+            return false;
+        }
+        if (this.epochMillis != other.epochMillis) {
+            return false;
+        }
+        if (!Objects.equals(this.description, other.description)) {
+            return false;
+        }
+        if (!Objects.equals(this.eventTypeMap, other.eventTypeMap)) {
+            return false;
+        }
+        return true;
+    }
+
 }

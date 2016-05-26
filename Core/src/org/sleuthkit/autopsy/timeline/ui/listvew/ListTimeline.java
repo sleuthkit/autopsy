@@ -75,7 +75,7 @@ class ListTimeline extends BorderPane {
     private static final Logger LOGGER = Logger.getLogger(ListTimeline.class.getName());
 
     /**
-     * call-back used to wrap the event ID inn a ObservableValue<Long>
+     * call-back used to wrap the CombinedEvent in a ObservableValue
      */
     private static final Callback<TableColumn.CellDataFeatures<CombinedEvent, CombinedEvent>, ObservableValue<CombinedEvent>> CELL_VALUE_FACTORY = param -> new SimpleObjectProperty<>(param.getValue());
 
@@ -101,7 +101,7 @@ class ListTimeline extends BorderPane {
     private final TimeLineController controller;
 
     /**
-     * observable list used to track selected events.
+     * Observable list used to track selected events.
      */
     private final ObservableList<Long> selectedEventIDs = FXCollections.observableArrayList();
 
@@ -128,7 +128,7 @@ class ListTimeline extends BorderPane {
         assert typeColumn != null : "fx:id=\"typeColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
         assert knownColumn != null : "fx:id=\"knownColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
 
-        //override default row with one that provides context menu.S
+        //override default row with one that provides context menus
         table.setRowFactory(tableView -> new EventRow());
 
         //remove idColumn (can be restored for debugging).  
@@ -173,7 +173,7 @@ class ListTimeline extends BorderPane {
             //keep the selectedEventsIDs in sync with the table's selection model, via getRepresentitiveEventID(). 
             selectedEventIDs.setAll(FluentIterable.from(table.getSelectionModel().getSelectedItems())
                     .filter(Objects::nonNull)
-                    .transform(CombinedEvent::getRepresentitiveEventID)
+                    .transform(CombinedEvent::getRepresentativeEventID)
                     .toSet());
         });
     }
@@ -205,12 +205,12 @@ class ListTimeline extends BorderPane {
     ObservableList<Long> getSelectedEventIDs() {
         return selectedEventIDs;
     }
-    private static final Image HASH_HIT = new Image("/org/sleuthkit/autopsy/images/hashset_hits.png"); //NOI18N NON-NLS
-    private static final Image TAG = new Image("/org/sleuthkit/autopsy/images/green-tag-icon-16.png"); // NON-NLS //NOI18N
-    private static final Image PIN = new Image("/org/sleuthkit/autopsy/timeline/images/marker--plus.png"); // NON-NLS //NOI18N
-    private static final Image UNPIN = new Image("/org/sleuthkit/autopsy/timeline/images/marker--minus.png"); // NON-NLS //NOI18N
+    private static final Image HASH_HIT = new Image("/org/sleuthkit/autopsy/images/hashset_hits.png");  // NON-NLS 
+    private static final Image TAG = new Image("/org/sleuthkit/autopsy/images/green-tag-icon-16.png");  // NON-NLS
+    private static final Image PIN = new Image("/org/sleuthkit/autopsy/timeline/images/marker--plus.png");  // NON-NLS
+    private static final Image UNPIN = new Image("/org/sleuthkit/autopsy/timeline/images/marker--minus.png");  // NON-NLS
 
-    private  class TaggedCell extends EventTableCell {
+    private class TaggedCell extends EventTableCell {
 
         @Override
         protected void updateItem(CombinedEvent item, boolean empty) {
@@ -223,7 +223,8 @@ class ListTimeline extends BorderPane {
             }
         }
     }
-    private  class HashHitCell extends EventTableCell {
+
+    private class HashHitCell extends EventTableCell {
 
         @Override
         protected void updateItem(CombinedEvent item, boolean empty) {
@@ -232,7 +233,7 @@ class ListTimeline extends BorderPane {
             if (empty || item == null) {
                 setGraphic(null);
             } else {
-                setGraphic(getEvent().isHashHit()? new ImageView(HASH_HIT) : null);
+                setGraphic(getEvent().isHashHit() ? new ImageView(HASH_HIT) : null);
             }
         }
     }
@@ -248,12 +249,12 @@ class ListTimeline extends BorderPane {
     }
 
     /**
-     * Set the ID of the event that is selected.
+     * Set the combineded events that are selected in this view.
      *
-     * @param selectedEventID The ID of the event that should be selected.
+     * @param selectedEvents The events that should be selected.
      */
     void selectEvents(Collection<CombinedEvent> selectedEvents) {
-        CombinedEvent firstSelected = selectedEvents.stream().min(Comparator.comparing(CombinedEvent::getStartMillis)).orElseGet(null);
+        CombinedEvent firstSelected = selectedEvents.stream().min(Comparator.comparing(CombinedEvent::getStartMillis)).orElse(null);
         table.getSelectionModel().clearSelection();
         table.scrollTo(firstSelected);
         selectedEvents.forEach(table.getSelectionModel()::select);
@@ -353,7 +354,7 @@ class ListTimeline extends BorderPane {
                 event = null;
             } else {
                 //stash the event in the cell for derived classed to use.
-                event = controller.getEventsModel().getEventById(item.getRepresentitiveEventID());
+                event = controller.getEventsModel().getEventById(item.getRepresentativeEventID());
             }
         }
     }
@@ -383,7 +384,7 @@ class ListTimeline extends BorderPane {
             if (empty || item == null) {
                 event = null;
             } else {
-                event = controller.getEventsModel().getEventById(item.getRepresentitiveEventID());
+                event = controller.getEventsModel().getEventById(item.getRepresentativeEventID());
                 //make context menu
                 try {
                     EventNode node = EventNode.createEventNode(event.getEventID(), controller.getEventsModel());
