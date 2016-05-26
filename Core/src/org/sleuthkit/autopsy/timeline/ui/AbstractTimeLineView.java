@@ -136,7 +136,7 @@ public abstract class AbstractTimeLineView extends BorderPane {
 
     /**
      * Refresh this view based on current state of zoom / filters. Primarily
-     * this invokes the background VisualizationUpdateTask returned by
+     * this invokes the background ViewRefreshTask returned by
      * getUpdateTask(), which derived classes must implement.
      *
      * TODO: replace this logic with a javafx Service ? -jm
@@ -291,11 +291,11 @@ public abstract class AbstractTimeLineView extends BorderPane {
          * @throws Exception If there is an unhandled exception during the
          *                   background operation
          */
-        @NbBundle.Messages(value = {"VisualizationUpdateTask.preparing=Analyzing zoom and filter settings"})
+        @NbBundle.Messages(value = {"ViewRefreshTask.preparing=Analyzing zoom and filter settings"})
         @Override
         protected Boolean call() throws Exception {
             updateProgress(-1, 1);
-            updateMessage(Bundle.VisualizationUpdateTask_preparing());
+            updateMessage(Bundle.ViewRefreshTask_preparing());
             Platform.runLater(() -> {
                 MaskerPane maskerPane = new MaskerPane();
                 maskerPane.textProperty().bind(messageProperty());
