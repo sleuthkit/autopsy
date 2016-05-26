@@ -46,7 +46,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import org.apache.commons.io.FileUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
@@ -76,6 +75,7 @@ import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.RunIngestAction;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
@@ -1523,6 +1523,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                 CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
                 CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
                 CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true); // Delete Case menu
+                CallableSystemAction.get(RunIngestAction.class).setEnabled(true);
 
                 if (toChangeTo.hasData()) {
                     // open all top components
@@ -1560,6 +1561,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     CallableSystemAction.get(CaseCloseAction.class).setEnabled(false); // Case Close menu
                     CallableSystemAction.get(CasePropertiesAction.class).setEnabled(false); // Case Properties menu
                     CallableSystemAction.get(CaseDeleteAction.class).setEnabled(false); // Delete Case menu
+                    CallableSystemAction.get(RunIngestAction.class).setEnabled(false);
                 });
             }
 
