@@ -33,7 +33,7 @@ import org.sleuthkit.autopsy.timeline.ui.AbstractTimeLineView;
  */
 public class ListViewPane extends AbstractTimeLineView {
 
-    private final ListTimeline listChart;
+    private final ListTimeline listTimeline;
 
     /**
      * Constructor
@@ -42,15 +42,15 @@ public class ListViewPane extends AbstractTimeLineView {
      */
     public ListViewPane(TimeLineController controller) {
         super(controller);
-        listChart = new ListTimeline(controller);
+        listTimeline = new ListTimeline(controller);
 
         //initialize chart;
-        setCenter(listChart);
+        setCenter(listTimeline);
         setSettingsNodes(new ListViewPane.ListViewSettingsPane().getChildrenUnmodifiable());
 
         //keep controller's list of selected event IDs in sync with this list's
-        listChart.getSelectedEventIDs().addListener((Observable selectedIDs) -> {
-            controller.selectEventIDs(listChart.getSelectedEventIDs());
+        listTimeline.getSelectedEventIDs().addListener((Observable selectedIDs) -> {
+            controller.selectEventIDs(listTimeline.getSelectedEventIDs());
         });
     }
 
@@ -61,13 +61,10 @@ public class ListViewPane extends AbstractTimeLineView {
 
     @Override
     protected void clearData() {
-        listChart.clear();
+        listTimeline.clear();
     }
 
     private static class ListViewSettingsPane extends Parent {
-
-        ListViewSettingsPane() {
-        }
     }
 
     private class ListUpdateTask extends ViewRefreshTask<Interval> {
@@ -78,21 +75,30 @@ public class ListViewPane extends AbstractTimeLineView {
 
         @Override
         protected Boolean call() throws Exception {
-            super.call(); //To change body of generated methods, choose Tools | Templates.
+            super.call();
             if (isCancelled()) {
                 return null;
             }
+
             FilteredEventsModel eventsModel = getEventsModel();
 
-            //clear the chart and set the horixontal axis
+            //grab the currently selected event
+            Long selectedEventID = listTimeline.getSelectedEventID();
+
+            //clear the chart and set the time range.
             resetView(eventsModel.getTimeRange());
 
-            updateMessage("Querying db for events");
-            //get the event stripes to be displayed
+            updateMessage("Querying DB for events");
+            //get the IDs of th events to be displayed
             List<Long> eventIDs = eventsModel.getEventIDs();
-            Platform.runLater(() -> listChart.setEventIDs(eventIDs));
+            updateMessage("Updating UI");
+            Platform.runLater(() -> {
+                //put the event IDs into the table.
+                listTimeline.setEventIDs(eventIDs);
+                //restore the selected event
+                listTimeline.selectEventID(selectedEventID);
+            });
 
-            updateMessage("updating ui");
             return eventIDs.isEmpty() == false;
         }
 
@@ -105,6 +111,5 @@ public class ListViewPane extends AbstractTimeLineView {
         @Override
         protected void setDateValues(Interval timeRange) {
         }
-
     }
 }
