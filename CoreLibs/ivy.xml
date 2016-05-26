@@ -65,7 +65,8 @@
         <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-core" rev="3.2" />
         <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-metadata" rev="3.2" />
 
-      
+        <!-- compress libary to extract updatable HashSets --> 	
+        <dependency conf="autopsy_core->*" org="org.apache.commons" name="commons-compress" rev="1.11"/>
 
     </dependencies>
 </ivy-module>
