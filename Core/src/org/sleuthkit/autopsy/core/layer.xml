@@ -387,11 +387,11 @@
             <file name="org-sleuthkit-autopsy-report-ReportWizardAction.shadow">
                 <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.report.Bundle#Toolbars/Reports/org-sleuthkit-autopsy-report-ReportWizardAction.shadow"/>
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-report-ReportWizardAction.instance"/>
-                <attr name="position" intvalue="102"/>
+                <attr name="position" intvalue="104"/>
             </file>
         </folder>
         <folder name="Ingest">
-            <attr intvalue="103" name="position"/>
+            <attr intvalue="104" name="position"/>
             <file name="org-sleuthkit-autopsy-ingest-IngestMessagesAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-ingest-IngestMessagesAction.instance"/>
             </file>

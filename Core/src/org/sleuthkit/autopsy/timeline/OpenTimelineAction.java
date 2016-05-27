@@ -18,8 +18,13 @@
  */
 package org.sleuthkit.autopsy.timeline;
 
+import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.logging.Level;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
@@ -27,6 +32,7 @@ import org.openide.awt.ActionRegistration;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
+import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.Installer;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -36,8 +42,9 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.timeline.Timeline")
 @ActionRegistration(displayName = "#CTL_MakeTimeline", lazy = false)
 @ActionReferences(value = {
-    @ActionReference(path = "Menu/Tools", position = 100)})
-public class OpenTimelineAction extends CallableSystemAction {
+    @ActionReference(path = "Menu/Tools", position = 100),
+    @ActionReference(path = "Toolbars/Case", position = 102)})
+public class OpenTimelineAction extends CallableSystemAction implements Presenter.Toolbar {
 
     private static final Logger LOGGER = Logger.getLogger(OpenTimelineAction.class.getName());
 
@@ -45,8 +52,20 @@ public class OpenTimelineAction extends CallableSystemAction {
 
     private static TimeLineController timeLineController = null;
 
+    private JButton toolbarButton = new JButton();
+
     synchronized static void invalidateController() {
         timeLineController = null;
+    }
+
+    public OpenTimelineAction() {
+        toolbarButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                performAction();
+            }
+        });
+        this.setEnabled(false);
     }
 
     @Override
@@ -101,5 +120,30 @@ public class OpenTimelineAction extends CallableSystemAction {
     @Override
     public boolean asynchronous() {
         return false; // run on edt
+    }
+
+    /**
+     * Set this action to be enabled/disabled
+     *
+     * @param value whether to enable this action or not
+     */
+    @Override
+    public void setEnabled(boolean value) {
+        super.setEnabled(value);
+        toolbarButton.setEnabled(value);
+    }
+
+    /**
+     * Returns the toolbar component of this action
+     *
+     * @return component the toolbar button
+     */
+    @Override
+    public Component getToolbarPresenter() {
+        ImageIcon icon = new ImageIcon("Core\\src\\org\\sleuthkit\\autopsy\\timeline\\images\\btn_icon_timeline.png"); //NON-NLS
+        toolbarButton.setIcon(icon);
+        toolbarButton.setText(this.getName());
+
+        return toolbarButton;
     }
 }
