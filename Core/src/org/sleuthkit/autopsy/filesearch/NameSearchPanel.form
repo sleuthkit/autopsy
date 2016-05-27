@@ -94,6 +94,9 @@
           <ResourceString bundle="org/sleuthkit/autopsy/filesearch/Bundle.properties" key="NameSearchPanel.nameCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="nameCheckBoxActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JTextField" name="searchTextField">
       <Properties>

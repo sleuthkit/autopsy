@@ -543,7 +543,9 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
             this.mimeCheck.setSelected(false);
 
         } else {
-            this.extensionRadioButton.setEnabled(true);
+            if (this.nameCheck.isSelected()) {
+                this.extensionRadioButton.setEnabled(true);
+            }
             this.fileSizeCheck.setEnabled(true);
             this.mimeCheck.setEnabled(true);
         }
@@ -814,7 +816,9 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         } else {
             this.nameTextField.setEnabled(true);
             this.fullNameRadioButton.setEnabled(true);
-            this.extensionRadioButton.setEnabled(true);
+            if (this.filesRadioButton.isSelected()) {
+                this.extensionRadioButton.setEnabled(true);
+            }
             this.nameRegexCheckbox.setEnabled(true);
         }
         this.setOkButton();
