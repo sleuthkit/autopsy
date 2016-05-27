@@ -1,19 +1,18 @@
 /*
  *
  * Autopsy Forensic Browser
- * 
- * Copyright 2012-2016 Basis Technology Corp.
- * 
+ *
+ * Copyright 2011-2016 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
- * Project Contact/Architect: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,10 +28,10 @@ import java.util.List;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
- * A class to manage various services.
+ * A collection of case-level services (e.g., file manager, tags manager,
+ * keyword search, blackboard).
  */
 public class Services implements Closeable {
 
@@ -42,51 +41,76 @@ public class Services implements Closeable {
     private final KeywordSearchService keywordSearchService;
     private final Blackboard blackboard;
 
-    Services(Case currentCase, SleuthkitCase caseDb) {
-        fileManager = new FileManager(currentCase, caseDb);
+    /**
+     * Constructs a collection of case-level services (e.g., file manager, tags
+     * manager, keyword search, blackboard).
+     *
+     * @param caseDb The case database for the current case.
+     *
+     * @deprecated Use Case.getCurrentCase().getServices() instead.
+     *
+     * TODO (AUT-2158): Prevent public construction of the Services class.
+     */
+    @Deprecated
+    public Services(SleuthkitCase caseDb) {
+        fileManager = new FileManager();
         services.add(fileManager);
 
-        tagsManager = new TagsManager(caseDb);
+        tagsManager = new TagsManager();
         services.add(tagsManager);
 
         keywordSearchService = Lookup.getDefault().lookup(KeywordSearchService.class);
         services.add(keywordSearchService);
-        
-        blackboard = new Blackboard();
-        services.add(blackboard);        
-    }
-    
-    public Services(SleuthkitCase tskCase) {
-        fileManager = new FileManager(tskCase);
-        services.add(fileManager);
 
-        tagsManager = new TagsManager(tskCase);
-        services.add(tagsManager);
-
-        keywordSearchService = Lookup.getDefault().lookup(KeywordSearchService.class);
-        services.add(keywordSearchService);
-        
         blackboard = new Blackboard();
         services.add(blackboard);
     }
 
+    /**
+     * Gets the file manager service for the current case.
+     *
+     * @return The file manager service for the current case.
+     */
     public FileManager getFileManager() {
         return fileManager;
     }
 
+    /**
+     * Gets the tags manager service for the current case.
+     *
+     * @return The tags manager service for the current case.
+     */
     public TagsManager getTagsManager() {
         return tagsManager;
     }
 
+    /**
+     * Gets the keyword search service for the current case.
+     *
+     * @return The keyword search service for the current case.
+     */
     public KeywordSearchService getKeywordSearchService() {
         return keywordSearchService;
     }
-    
+
+    /**
+     * Gets the blackboard service for the current case.
+     *
+     * @return The blackboard service for the current case.
+     */
     public Blackboard getBlackboard() {
         return blackboard;
     }
 
+    /**
+     * Closes the services for the current case.
+     *
+     * @throws IOException if there is a problem closing the services.
+     * @deprecated Services clients other than the case should not close the
+     * services.
+     */
     @Override
+    @Deprecated
     public void close() throws IOException {
         for (Closeable service : services) {
             service.close();

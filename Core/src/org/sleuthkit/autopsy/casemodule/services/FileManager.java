@@ -26,10 +26,8 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
@@ -37,7 +35,6 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.LayoutFile;
-import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -48,55 +45,19 @@ import org.sleuthkit.datamodel.LocalFilesDataSource;
 import org.sleuthkit.datamodel.TskDataException;
 
 /**
- * A case-level service that provides methods for retrieving files associated
- * with the case and for adding local files, carved files, and derived files to
- * the case.
+ * A manager that provides methods for retrieving files from the current case
+ * and for adding local files, carved files, and derived files to the current
+ * case.
  */
 public class FileManager implements Closeable {
 
-    private static final Logger logger = Logger.getLogger(FileManager.class.getName());
-    private SleuthkitCase caseDb;
-
-    /*
-     * TODO (AUT-1905): Although this counter is guarded by the monitor of the
-     * FileManager, this does not guarantee unique default file set names for
-     * multi-user cases where multiple nodes can be running FileManagers for the
-     * same case.
-     */
-    private int localFileDataSourcesCounter;
-
     /**
-     * Constructs a case-level service that provides methods for retrieving
-     * files associated with the case and for adding local files, carved files,
-     * and derived files to the case.
+     * Constructs a manager that provides methods for retrieving files from the
+     * current case and for adding local files, carved files, and derived files
+     * to the current case.
+     *
      */
-    FileManager(Case currentCase, SleuthkitCase caseDb) throws TskCoreException {
-        this.caseDb = caseDb;
-        initializeLocalFileDataSourcesCounter();
-    }
-
-    /**
-     * Initialize the counter for the number of logical/local file sets that is
-     * used to generate the default logical/local file data source names.
-     */
-    private void initializeLocalFileDataSourcesCounter() {
-        /*
-         * TODO (AUT-1905): Although the counter is guarded by the monitor of
-         * the FileManager, this does not guarantee unique default file set
-         * names for multi-user cases where multiple nodes can be running
-         * FileManagers for the same case.
-         */
-        localFileDataSourcesCounter = 0;
-        try {
-            List<VirtualDirectory> localFileDataSources = caseDb.getVirtualDirectoryRoots();
-            for (VirtualDirectory vd : localFileDataSources) {
-                if (vd.getName().startsWith(VirtualDirectoryNode.LOGICAL_FILE_SET_PREFIX)) {
-                    ++localFileDataSourcesCounter;
-                }
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error initializing logical files counter", ex); //NON-NLS
-        }
+    FileManager() {
     }
 
     /**
@@ -111,12 +72,9 @@ public class FileManager implements Closeable {
      * @throws TskCoreException if there is a problem querying the case
      *                          database.
      */
-    public synchronized List<AbstractFile> findFiles(String fileName) throws TskCoreException {
-        if (null == caseDb) {
-            throw new TskCoreException("FileManager closed");
-        }
+    public List<AbstractFile> findFiles(String fileName) throws TskCoreException {
         List<AbstractFile> result = new ArrayList<>();
-        List<Content> dataSources = caseDb.getRootObjects();
+        List<Content> dataSources = Case.getCurrentCase().getSleuthkitCase().getRootObjects();
         for (Content dataSource : dataSources) {
             result.addAll(findFiles(dataSource, fileName));
         }
@@ -137,12 +95,9 @@ public class FileManager implements Closeable {
      * @throws TskCoreException if there is a problem querying the case
      *                          database.
      */
-    public synchronized List<AbstractFile> findFiles(String fileName, String parentName) throws TskCoreException {
-        if (null == caseDb) {
-            throw new TskCoreException("FileManager closed");
-        }
+    public List<AbstractFile> findFiles(String fileName, String parentName) throws TskCoreException {
         List<AbstractFile> result = new ArrayList<>();
-        List<Content> dataSources = caseDb.getRootObjects();
+        List<Content> dataSources = Case.getCurrentCase().getSleuthkitCase().getRootObjects();
         for (Content dataSource : dataSources) {
             result.addAll(findFiles(dataSource, fileName, parentName));
         }
@@ -163,12 +118,9 @@ public class FileManager implements Closeable {
      * @throws TskCoreException if there is a problem querying the case
      *                          database.
      */
-    public synchronized List<AbstractFile> findFiles(String fileName, AbstractFile parent) throws TskCoreException {
-        if (null == caseDb) {
-            throw new TskCoreException("FileManager closed");
-        }
+    public List<AbstractFile> findFiles(String fileName, AbstractFile parent) throws TskCoreException {
         List<AbstractFile> result = new ArrayList<>();
-        List<Content> dataSources = caseDb.getRootObjects();
+        List<Content> dataSources = Case.getCurrentCase().getSleuthkitCase().getRootObjects();
         for (Content dataSource : dataSources) {
             result.addAll(findFiles(dataSource, fileName, parent));
         }
@@ -189,8 +141,8 @@ public class FileManager implements Closeable {
      * @throws TskCoreException if there is a problem querying the case
      *                          database.
      */
-    public synchronized List<AbstractFile> findFiles(Content dataSource, String fileName) throws TskCoreException {
-        return caseDb.findFiles(dataSource, fileName);
+    public List<AbstractFile> findFiles(Content dataSource, String fileName) throws TskCoreException {
+        return Case.getCurrentCase().getSleuthkitCase().findFiles(dataSource, fileName);
     }
 
     /**
@@ -209,8 +161,8 @@ public class FileManager implements Closeable {
      * @throws TskCoreException if there is a problem querying the case
      *                          database.
      */
-    public synchronized List<AbstractFile> findFiles(Content dataSource, String fileName, String parentName) throws TskCoreException {
-        return caseDb.findFiles(dataSource, fileName, parentName);
+    public List<AbstractFile> findFiles(Content dataSource, String fileName, String parentName) throws TskCoreException {
+        return Case.getCurrentCase().getSleuthkitCase().findFiles(dataSource, fileName, parentName);
     }
 
     /**
@@ -229,7 +181,7 @@ public class FileManager implements Closeable {
      * @throws TskCoreException if there is a problem querying the case
      *                          database.
      */
-    public synchronized List<AbstractFile> findFiles(Content dataSource, String fileName, AbstractFile parent) throws TskCoreException {
+    public List<AbstractFile> findFiles(Content dataSource, String fileName, AbstractFile parent) throws TskCoreException {
         return findFiles(dataSource, fileName, parent.getName());
     }
 
@@ -258,11 +210,8 @@ public class FileManager implements Closeable {
      * @throws TskCoreException if there is a problem querying the case
      *                          database.
      */
-    public synchronized List<AbstractFile> openFiles(Content dataSource, String filePath) throws TskCoreException {
-        if (null == caseDb) {
-            throw new TskCoreException("FileManager closed");
-        }
-        return caseDb.openFiles(dataSource, filePath);
+    public List<AbstractFile> openFiles(Content dataSource, String filePath) throws TskCoreException {
+        return Case.getCurrentCase().getSleuthkitCase().openFiles(dataSource, filePath);
     }
 
     /**
@@ -293,14 +242,15 @@ public class FileManager implements Closeable {
      * @throws TskCoreException if there is a problem adding the file to the
      *                          case database.
      */
-    public synchronized DerivedFile addDerivedFile(String fileName,
+    public DerivedFile addDerivedFile(String fileName,
             String localPath,
             long size,
             long ctime, long crtime, long atime, long mtime,
             boolean isFile,
             AbstractFile parentFile,
             String rederiveDetails, String toolName, String toolVersion, String otherDetails) throws TskCoreException {
-        return caseDb.addDerivedFile(fileName, localPath, size,
+
+        return Case.getCurrentCase().getSleuthkitCase().addDerivedFile(fileName, localPath, size,
                 ctime, crtime, atime, mtime,
                 isFile, parentFile, rederiveDetails, toolName, toolVersion, otherDetails);
     }
@@ -322,7 +272,7 @@ public class FileManager implements Closeable {
      *                          case database.
      */
     public synchronized LayoutFile addCarvedFile(String fileName, long fileSize, long parentObjId, List<TskFileRange> layout) throws TskCoreException {
-        return caseDb.addCarvedFile(fileName, fileSize, parentObjId, layout);
+        return Case.getCurrentCase().getSleuthkitCase().addCarvedFile(fileName, fileSize, parentObjId, layout);
     }
 
     /**
@@ -338,7 +288,7 @@ public class FileManager implements Closeable {
      *                          case database.
      */
     public List<LayoutFile> addCarvedFiles(List<CarvedFileContainer> filesToAdd) throws TskCoreException {
-        return caseDb.addCarvedFiles(filesToAdd);
+        return Case.getCurrentCase().getSleuthkitCase().addCarvedFiles(filesToAdd);
     }
 
     /**
@@ -352,7 +302,7 @@ public class FileManager implements Closeable {
          *
          * @param An AbstractFile represeting the added file or directory.
          */
-        public void fileAdded(AbstractFile newFile);
+        void fileAdded(AbstractFile newFile);
     }
 
     /**
@@ -384,27 +334,19 @@ public class FileManager implements Closeable {
      *                          directory that does not exist or cannot be read.
      */
     public synchronized LocalFilesDataSource addLocalFilesDataSource(String deviceId, String rootVirtualDirectoryName, String timeZone, List<String> localFilePaths, FileAddProgressUpdater progressUpdater) throws TskCoreException, TskDataException {
-        /*
-         * Convert the local/logical file paths into File objects.
-         */
         List<java.io.File> localFiles = getFilesAndDirectories(localFilePaths);
         CaseDbTransaction trans = null;
         try {
-            /*
-             * Generate a name for the root virtual directory for the data
-             * source, if a name was not supplied, and increment the counter
-             * used to generate the default names.
-             */
-            int newLocalFilesSetCount = localFileDataSourcesCounter + 1;
             String rootDirectoryName = rootVirtualDirectoryName;
-            if (rootVirtualDirectoryName.isEmpty()) {
-                rootDirectoryName = VirtualDirectoryNode.LOGICAL_FILE_SET_PREFIX + newLocalFilesSetCount;
+            if (rootDirectoryName.isEmpty()) {
+                rootDirectoryName = generateFilesDataSourceName();
             }
 
             /*
              * Add the root virtual directory and its local/logical file
-             * chioldren to the case database.
+             * children to the case database.
              */
+            SleuthkitCase caseDb = Case.getCurrentCase().getSleuthkitCase();
             trans = caseDb.beginTransaction();
             LocalFilesDataSource dataSource = caseDb.addLocalFilesDataSource(deviceId, rootDirectoryName, timeZone, trans);
             VirtualDirectory rootDirectory = dataSource.getRootDirectory();
@@ -420,18 +362,6 @@ public class FileManager implements Closeable {
             trans.commit();
 
             /*
-             * Update the counter used to generate the default names.
-             *
-             * TODO (AUT-1905): Although the counter is guarded by the monitor
-             * of the FileManager, this does not guarantee unique default file
-             * set names for multi-user cases where multiple nodes can be
-             * running FileManagers for the same case.
-             */
-            if (rootVirtualDirectoryName.isEmpty()) {
-                localFileDataSourcesCounter = newLocalFilesSetCount;
-            }
-
-            /*
              * Publish content added events for the added files and directories.
              */
             for (AbstractFile fileAdded : filesAdded) {
@@ -445,6 +375,34 @@ public class FileManager implements Closeable {
                 trans.rollback();
             }
             throw ex;
+        }
+    }
+
+    /**
+     * Generates a name for the root virtual directory for the data source.
+     *
+     * NOTE: Although this method is guarded by the file manager's monitor,
+     * there is currently a minimal chance of default name duplication for
+     * multi-user cases with multiple FileManagers running on different nodes.
+     *
+     * @return A default name for a local/logical files data source of the form:
+     *         LogicalFileSet[N].
+     *
+     * @throws TskCoreException If there is a problem querying the case
+     *                          database.
+     */
+    private synchronized String generateFilesDataSourceName() throws TskCoreException {
+        int localFileDataSourcesCounter = 0;
+        try {
+            List<VirtualDirectory> localFileDataSources = Case.getCurrentCase().getSleuthkitCase().getVirtualDirectoryRoots();
+            for (VirtualDirectory vd : localFileDataSources) {
+                if (vd.getName().startsWith(VirtualDirectoryNode.LOGICAL_FILE_SET_PREFIX)) {
+                    ++localFileDataSourcesCounter;
+                }
+            }
+            return VirtualDirectoryNode.LOGICAL_FILE_SET_PREFIX + (localFileDataSourcesCounter + 1);
+        } catch (TskCoreException ex) {
+            throw new TskCoreException("Error querying for existing local file data sources with defualt names", ex);
         }
     }
 
@@ -497,7 +455,7 @@ public class FileManager implements Closeable {
             /*
              * Add the directory as a virtual directory.
              */
-            VirtualDirectory virtualDirectory = caseDb.addVirtualDirectory(parentDirectory.getId(), localFile.getName(), trans);
+            VirtualDirectory virtualDirectory = Case.getCurrentCase().getSleuthkitCase().addVirtualDirectory(parentDirectory.getId(), localFile.getName(), trans);
             progressUpdater.fileAdded(virtualDirectory);
 
             /*
@@ -512,30 +470,10 @@ public class FileManager implements Closeable {
 
             return virtualDirectory;
         } else {
-            return caseDb.addLocalFile(localFile.getName(), localFile.getAbsolutePath(), localFile.length(),
+            return Case.getCurrentCase().getSleuthkitCase().addLocalFile(localFile.getName(), localFile.getAbsolutePath(), localFile.length(),
                     0, 0, 0, 0,
                     localFile.isFile(), parentDirectory, trans);
         }
-    }
-
-    @Override
-    public synchronized void close() throws IOException {
-        caseDb = null;
-    }
-
-    /**
-     * Contructs a case-level service that provides management of files within
-     * the data sources added to a case and the local files associated with a
-     * case.
-     *
-     * @param tskCase The case database.
-     *
-     * @deprecated Use Case.getCurrentCase().getServices().getFileManager()
-     * instead.
-     */
-    @Deprecated
-    public FileManager(SleuthkitCase tskCase) {
-        this();
     }
 
     /**
@@ -557,12 +495,37 @@ public class FileManager implements Closeable {
      * @deprecated Use addLocalFilesDataSource instead.
      */
     @Deprecated
-    public synchronized VirtualDirectory addLocalFilesDirs(List<String> localFilePaths, FileAddProgressUpdater progressUpdater) throws TskCoreException {
+    public VirtualDirectory addLocalFilesDirs(List<String> localFilePaths, FileAddProgressUpdater progressUpdater) throws TskCoreException {
         try {
             return addLocalFilesDataSource("", "", "", localFilePaths, progressUpdater).getRootDirectory();
         } catch (TskDataException ex) {
             throw new TskCoreException(ex.getLocalizedMessage(), ex);
         }
+    }
+
+    /**
+     * Constructs a manager that provides methods for retrieving files from the
+     * current case and for adding local files, carved files, and derived files
+     * to the current case.
+     *
+     * @param caseDb The case database.
+     *
+     * @deprecated Use Case.getCurrentCase().getServices().getFileManager()
+     * instead.
+     */
+    @Deprecated
+    public FileManager(SleuthkitCase caseDb) {
+    }
+
+    /**
+     * Closes the file manager.
+     *
+     * @throws IOException If there is a problem closing the file manager.
+     * @deprecated File manager clients should not close the file manager.
+     */
+    @Override
+    @Deprecated
+    public void close() throws IOException {
     }
 
 }

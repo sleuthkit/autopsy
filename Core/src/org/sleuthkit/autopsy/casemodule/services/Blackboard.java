@@ -109,10 +109,13 @@ public final class Blackboard implements Closeable {
     }
 
     /**
-     * Cloese this blackboard and releases any resources associated with it. 
-     * @throws IOException 
+     * Closes the blackboard.
+     *
+     * @throws IOException If there is a problem closing the blackboard.
+     * @deprecated File manager clients should not close the blackboard.
      */
     @Override
+    @Deprecated
     public void close() throws IOException {
     }
 
