@@ -25,16 +25,29 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
 
 /**
- * Represents the blackboard, a place where artifacts and their attributes are
- * posted.
+ * A representation of the blackboard, a place where artifacts and their
+ * attributes are posted.
  *
  * NOTE: This API of this class is under development.
  */
 public final class Blackboard implements Closeable {
+
+    private SleuthkitCase caseDb;
+    
+    /**
+     * Constructs a representation of the blackboard, a place where artifacts
+     * and their attributes are posted.
+     *
+     * @param casedb The case database.
+     */
+    Blackboard(SleuthkitCase casedb) {
+        this.caseDb = casedb;
+    }
 
     /**
      * Indexes the text associated with the an artifact.
@@ -44,6 +57,9 @@ public final class Blackboard implements Closeable {
      * @throws BlackboardException If there is a problem indexing the artifact.
      */
     public void indexArtifact(BlackboardArtifact artifact) throws BlackboardException {
+        if (null == caseDb) {
+            throw new BlackboardException("Blackboard has been closed");
+        }
         KeywordSearchService searchService = Lookup.getDefault().lookup(KeywordSearchService.class);
         if (null == searchService) {
             throw new BlackboardException("Keyword search service not found");
@@ -68,6 +84,9 @@ public final class Blackboard implements Closeable {
      *                                       adding the artifact type.
      */
     public BlackboardArtifact.Type getOrAddArtifactType(String typeName, String displayName) throws BlackboardException {
+        if (null == caseDb) {
+            throw new BlackboardException("Blackboard has been closed");
+        }
         try {
             return Case.getCurrentCase().getSleuthkitCase().addBlackboardArtifactType(typeName, displayName);
         } catch (TskDataException typeExistsEx) {
@@ -95,6 +114,9 @@ public final class Blackboard implements Closeable {
      *                                       adding the attribute type.
      */
     public BlackboardAttribute.Type getOrAddAttributeType(String typeName, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE valueType, String displayName) throws BlackboardException {
+        if (null == caseDb) {
+            throw new BlackboardException("Blackboard has been closed");
+        }
         try {
             return Case.getCurrentCase().getSleuthkitCase().addArtifactAttributeType(typeName, valueType, displayName);
         } catch (TskDataException typeExistsEx) {
@@ -112,12 +134,12 @@ public final class Blackboard implements Closeable {
      * Closes the blackboard.
      *
      * @throws IOException If there is a problem closing the blackboard.
-     * @deprecated blackboard clients should not close the blackboard.
      */
     @Override
-    @Deprecated
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
+        caseDb = null;
     }
+
 
     /**
      * A blackboard exception.
