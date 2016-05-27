@@ -66,54 +66,6 @@ public class FileManager implements Closeable {
     }
 
     /**
-     * Finds all files with types that match one of a collection of MIME types.
-     *
-     * @param mimeTypes The MIME types.
-     *
-     * @return The files.
-     *
-     * @throws TskCoreException If there is a problem querying the case
-     *                          database.
-     */
-    public synchronized List<AbstractFile> findFilesByMimeType(Collection<String> mimeTypes) throws TskCoreException {
-        if (null == caseDb) {
-            throw new TskCoreException("File manager has been closed");
-        }
-        return caseDb.findAllFilesWhere(createFileTypeInCondition(mimeTypes));
-    }
-
-    /**
-     * Finds all files in a given data source (image, local/logical files set,
-     * etc.) with types that match one of a collection of MIME types.
-     *
-     * @param dataSource The data source.
-     * @param mimeTypes  The MIME types.
-     *
-     * @return The files.
-     *
-     * @throws TskCoreException If there is a problem querying the case
-     *                          database.
-     */
-    public synchronized List<AbstractFile> findFilesByMimeType(Content dataSource, Collection<String> mimeTypes) throws TskCoreException {
-        if (null == caseDb) {
-            throw new TskCoreException("File manager has been closed");
-        }
-        return caseDb.findAllFilesWhere("data_source_obj_id = " + dataSource.getId() + " AND " + createFileTypeInCondition(mimeTypes));
-    }
-
-    /**
-     * Converts a list of MIME types into an SQL "mime_type IN" condition.
-     *
-     * @param mimeTypes The MIIME types.
-     *
-     * @return The condition string.
-     */
-    private static String createFileTypeInCondition(Collection<String> mimeTypes) {
-        String types = StringUtils.join(mimeTypes, "',");
-        return "mime_type IN ('" + types + "')";
-    }
-
-    /**
      * Finds all files and directories with a given file name. The name search
      * is for full or partial matches and is case insensitive (a case
      * insensitive SQL LIKE clause is used to query the case database).
