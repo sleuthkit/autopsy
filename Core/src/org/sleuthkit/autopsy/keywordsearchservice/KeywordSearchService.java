@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,9 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
+ * An implementation of a keyword search service.
+ * 
+ * TODO (AUT-2158: This interface should not extend Closeable.
  */
 public interface KeywordSearchService extends Closeable {
 
@@ -49,4 +51,4 @@ public interface KeywordSearchService extends Closeable {
      */
     public void tryConnect(String host, int port) throws KeywordSearchServiceException;
 
-    }
+}
