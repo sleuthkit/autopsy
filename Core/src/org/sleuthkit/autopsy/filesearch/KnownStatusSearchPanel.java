@@ -37,6 +37,7 @@ class KnownStatusSearchPanel extends javax.swing.JPanel {
      */
     KnownStatusSearchPanel() {
         initComponents();
+        setComponentsEnabled();
     }
 
     JCheckBox getKnownCheckBox() {
@@ -54,6 +55,13 @@ class KnownStatusSearchPanel extends javax.swing.JPanel {
     JCheckBox getUnknownOptionCheckBox() {
         return unknownOptionCheckBox;
     }
+    
+    private void setComponentsEnabled() {
+        boolean enabled = this.knownCheckBox.isSelected();
+        this.unknownOptionCheckBox.setEnabled(enabled);
+        this.knownOptionCheckBox.setEnabled(enabled);
+        this.knownBadOptionCheckBox.setEnabled(enabled);
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -70,6 +78,11 @@ class KnownStatusSearchPanel extends javax.swing.JPanel {
         knownBadOptionCheckBox = new javax.swing.JCheckBox();
 
         knownCheckBox.setText(org.openide.util.NbBundle.getMessage(KnownStatusSearchPanel.class, "KnownStatusSearchPanel.knownCheckBox.text")); // NOI18N
+        knownCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                knownCheckBoxActionPerformed(evt);
+            }
+        });
 
         unknownOptionCheckBox.setSelected(true);
         unknownOptionCheckBox.setText(org.openide.util.NbBundle.getMessage(KnownStatusSearchPanel.class, "KnownStatusSearchPanel.unknownOptionCheckBox.text")); // NOI18N
@@ -116,6 +129,10 @@ class KnownStatusSearchPanel extends javax.swing.JPanel {
     private void knownOptionCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_knownOptionCheckBoxActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_knownOptionCheckBoxActionPerformed
+
+    private void knownCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_knownCheckBoxActionPerformed
+        setComponentsEnabled();
+    }//GEN-LAST:event_knownCheckBoxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox knownBadOptionCheckBox;
