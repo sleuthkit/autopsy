@@ -32,6 +32,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -44,6 +45,7 @@ public class TagsManager implements Closeable {
     private static final Logger logger = Logger.getLogger(TagsManager.class.getName());
     private static final String TAGS_SETTINGS_NAME = "Tags"; //NON-NLS
     private static final String TAG_NAMES_SETTING_KEY = "TagNames"; //NON-NLS
+    private SleuthkitCase caseDb;
     private final HashMap<String, TagName> uniqueTagNames = new HashMap<>();
     private boolean tagNamesLoaded = false;
 
@@ -51,8 +53,11 @@ public class TagsManager implements Closeable {
      * Constructs a per case Autopsy service that manages the creation,
      * updating, and deletion of tags applied to content and blackboard
      * artifacts by users.
+     * 
+     * @param caseDb The case database.
      */
-    TagsManager() {
+    TagsManager(SleuthkitCase caseDb) {
+        this.caseDb = caseDb;
     }
 
     /**
@@ -65,8 +70,11 @@ public class TagsManager implements Closeable {
      *                          database.
      */
     public synchronized List<TagName> getAllTagNames() throws TskCoreException {
+        if (null == caseDb) {
+            throw new TskCoreException("Tags manager has been closed");
+        }
         lazyLoadExistingTagNames();
-        return Case.getCurrentCase().getSleuthkitCase().getAllTagNames();
+        return caseDb.getAllTagNames();
     }
 
     /**
@@ -79,8 +87,11 @@ public class TagsManager implements Closeable {
      *                          database.
      */
     public synchronized List<TagName> getTagNamesInUse() throws TskCoreException {
+        if (null == caseDb) {
+            throw new TskCoreException("Tags manager has been closed");
+        }
         lazyLoadExistingTagNames();
-        return Case.getCurrentCase().getSleuthkitCase().getTagNamesInUse();
+        return caseDb.getTagNamesInUse();
     }
 
     /**
@@ -109,6 +120,9 @@ public class TagsManager implements Closeable {
      *                                       to the case database.
      */
     public TagName addTagName(String displayName) throws TagNameAlreadyExistsException, TskCoreException {
+        if (null == caseDb) {
+            throw new TskCoreException("Tags manager has been closed");
+        }
         return addTagName(displayName, "", TagName.HTML_COLOR.NONE);
     }
 
@@ -127,6 +141,9 @@ public class TagsManager implements Closeable {
      *                                       to the case database.
      */
     public TagName addTagName(String displayName, String description) throws TagNameAlreadyExistsException, TskCoreException {
+        if (null == caseDb) {
+            throw new TskCoreException("Tags manager has been closed");
+        }
         return addTagName(displayName, description, TagName.HTML_COLOR.NONE);
     }
 
@@ -146,6 +163,9 @@ public class TagsManager implements Closeable {
      *                                       to the case database.
      */
     public synchronized TagName addTagName(String displayName, String description, TagName.HTML_COLOR color) throws TagNameAlreadyExistsException, TskCoreException {
+        if (null == caseDb) {
+            throw new TskCoreException("Tags manager has been closed");
+        }
         lazyLoadExistingTagNames();
         if (uniqueTagNames.containsKey(displayName)) {
             throw new TagNameAlreadyExistsException();
@@ -154,7 +174,7 @@ public class TagsManager implements Closeable {
         /*
          * Add the tag name to the case.
          */
-        TagName newTagName = Case.getCurrentCase().getSleuthkitCase().addTagName(displayName, description, color);
+        TagName newTagName = caseDb.addTagName(displayName, description, color);
 
         /*
          * Add the tag name to the tags settings.
@@ -177,6 +197,9 @@ public class TagsManager implements Closeable {
      *                          database.
      */
     public ContentTag addContentTag(Content content, TagName tagName) throws TskCoreException {
+        if (null == caseDb) {
+            throw new TskCoreException("Tags manager has been closed");
+        }
         return addContentTag(content, tagName, "", -1, -1);
     }
 
@@ -193,6 +216,9 @@ public class TagsManager implements Closeable {
      *                          database.
      */
     public ContentTag addContentTag(Content content, TagName tagName, String comment) throws TskCoreException {
+        if (null == caseDb) {
+            throw new TskCoreException("Tags manager has been closed");
+        }
         return addContentTag(content, tagName, comment, -1, -1);
     }
 
@@ -213,6 +239,9 @@ public class TagsManager implements Closeable {
      *                                  the case database.
      */
     public ContentTag addContentTag(Content content, TagName tagName, String comment, long beginByteOffset, long endByteOffset) throws IllegalArgumentException, TskCoreException {
+        if (null == caseDb) {
+            throw new TskCoreException("Tags manager has been closed");
+        }
         ContentTag tag;
         synchronized (this) {
             lazyLoadExistingTagNames();
@@ -240,7 +269,7 @@ public class TagsManager implements Closeable {
                 }
             }
 
-            tag = Case.getCurrentCase().getSleuthkitCase().addContentTag(content, tagName, comment, beginByteOffset, endByteOffset);
+            tag = caseDb.addContentTag(content, tagName, comment, beginByteOffset, endByteOffset);
         }
 
         try {
@@ -260,9 +289,12 @@ public class TagsManager implements Closeable {
      *                          case database.
      */
     public void deleteContentTag(ContentTag tag) throws TskCoreException {
+        if (null == caseDb) {
+            throw new TskCoreException("Tags manager has been closed");
+        }
         synchronized (this) {
             lazyLoadExistingTagNames();
-            Case.getCurrentCase().getSleuthkitCase().deleteContentTag(tag);
+            caseDb.deleteContentTag(tag);
         }
 
         try {
@@ -281,8 +313,11 @@ public class TagsManager implements Closeable {
      *                          case database.
      */
     public synchronized List<ContentTag> getAllContentTags() throws TskCoreException {
+        if (null == caseDb) {
+            throw new TskCoreException("Tags manager has been closed");
+        }
         lazyLoadExistingTagNames();
-        return Case.getCurrentCase().getSleuthkitCase().getAllContentTags();
+        return caseDb.getAllContentTags();
     }
 
     /**
@@ -296,8 +331,11 @@ public class TagsManager implements Closeable {
      *                          the case database.
      */
     public synchronized long getContentTagsCountByTagName(TagName tagName) throws TskCoreException {
+        if (null == caseDb) {
+            throw new TskCoreException("Tags manager has been closed");
+        }
         lazyLoadExistingTagNames();
-        return Case.getCurrentCase().getSleuthkitCase().getContentTagsCountByTagName(tagName);
+        return caseDb.getContentTagsCountByTagName(tagName);
     }
 
     /**
@@ -311,8 +349,11 @@ public class TagsManager implements Closeable {
      *                          case database.
      */
     public synchronized ContentTag getContentTagByTagID(long tagID) throws TskCoreException {
+        if (null == caseDb) {
+            throw new TskCoreException("Tags manager has been closed");
+        }
         lazyLoadExistingTagNames();
-        return Case.getCurrentCase().getSleuthkitCase().getContentTagByID(tagID);
+        return caseDb.getContentTagByID(tagID);
     }
 
     /**
@@ -327,8 +368,11 @@ public class TagsManager implements Closeable {
      *                          case database.
      */
     public synchronized List<ContentTag> getContentTagsByTagName(TagName tagName) throws TskCoreException {
+        if (null == caseDb) {
+            throw new TskCoreException("Tags manager has been closed");
+        }
         lazyLoadExistingTagNames();
-        return Case.getCurrentCase().getSleuthkitCase().getContentTagsByTagName(tagName);
+        return caseDb.getContentTagsByTagName(tagName);
     }
 
     /**
@@ -343,8 +387,11 @@ public class TagsManager implements Closeable {
      *                          case database.
      */
     public synchronized List<ContentTag> getContentTagsByContent(Content content) throws TskCoreException {
+        if (null == caseDb) {
+            throw new TskCoreException("Tags manager has been closed");
+        }
         lazyLoadExistingTagNames();
-        return Case.getCurrentCase().getSleuthkitCase().getContentTagsByContent(content);
+        return caseDb.getContentTagsByContent(content);
     }
 
     /**
@@ -360,6 +407,9 @@ public class TagsManager implements Closeable {
      *                          database.
      */
     public BlackboardArtifactTag addBlackboardArtifactTag(BlackboardArtifact artifact, TagName tagName) throws TskCoreException {
+        if (null == caseDb) {
+            throw new TskCoreException("Tags manager has been closed");
+        }
         return addBlackboardArtifactTag(artifact, tagName, "");
     }
 
@@ -377,13 +427,16 @@ public class TagsManager implements Closeable {
      *                          database.
      */
     public BlackboardArtifactTag addBlackboardArtifactTag(BlackboardArtifact artifact, TagName tagName, String comment) throws TskCoreException {
+        if (null == caseDb) {
+            throw new TskCoreException("Tags manager has been closed");
+        }
         BlackboardArtifactTag tag;
         synchronized (this) {
             lazyLoadExistingTagNames();
             if (null == comment) {
                 throw new IllegalArgumentException("Passed null comment argument");
             }
-            tag = Case.getCurrentCase().getSleuthkitCase().addBlackboardArtifactTag(artifact, tagName, comment);
+            tag = caseDb.addBlackboardArtifactTag(artifact, tagName, comment);
         }
 
         try {
@@ -403,9 +456,12 @@ public class TagsManager implements Closeable {
      *                          case database.
      */
     public void deleteBlackboardArtifactTag(BlackboardArtifactTag tag) throws TskCoreException {
+        if (null == caseDb) {
+            throw new TskCoreException("Tags manager has been closed");
+        }
         synchronized (this) {
             lazyLoadExistingTagNames();
-            Case.getCurrentCase().getSleuthkitCase().deleteBlackboardArtifactTag(tag);
+            caseDb.deleteBlackboardArtifactTag(tag);
         }
 
         try {
@@ -424,8 +480,11 @@ public class TagsManager implements Closeable {
      *                          case database.
      */
     public synchronized List<BlackboardArtifactTag> getAllBlackboardArtifactTags() throws TskCoreException {
+        if (null == caseDb) {
+            throw new TskCoreException("Tags manager has been closed");
+        }
         lazyLoadExistingTagNames();
-        return Case.getCurrentCase().getSleuthkitCase().getAllBlackboardArtifactTags();
+        return caseDb.getAllBlackboardArtifactTags();
     }
 
     /**
@@ -440,8 +499,11 @@ public class TagsManager implements Closeable {
      *                          the case database.
      */
     public synchronized long getBlackboardArtifactTagsCountByTagName(TagName tagName) throws TskCoreException {
+        if (null == caseDb) {
+            throw new TskCoreException("Tags manager has been closed");
+        }
         lazyLoadExistingTagNames();
-        return Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifactTagsCountByTagName(tagName);
+        return caseDb.getBlackboardArtifactTagsCountByTagName(tagName);
     }
 
     /**
@@ -455,8 +517,11 @@ public class TagsManager implements Closeable {
      *                          case database.
      */
     public synchronized BlackboardArtifactTag getBlackboardArtifactTagByTagID(long tagID) throws TskCoreException {
+        if (null == caseDb) {
+            throw new TskCoreException("Tags manager has been closed");
+        }
         lazyLoadExistingTagNames();
-        return Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifactTagByID(tagID);
+        return caseDb.getBlackboardArtifactTagByID(tagID);
     }
 
     /**
@@ -471,8 +536,11 @@ public class TagsManager implements Closeable {
      *                          case database.
      */
     public synchronized List<BlackboardArtifactTag> getBlackboardArtifactTagsByTagName(TagName tagName) throws TskCoreException {
+        if (null == caseDb) {
+            throw new TskCoreException("Tags manager has been closed");
+        }
         lazyLoadExistingTagNames();
-        return Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifactTagsByTagName(tagName);
+        return caseDb.getBlackboardArtifactTagsByTagName(tagName);
     }
 
     /**
@@ -487,8 +555,11 @@ public class TagsManager implements Closeable {
      *                          case database.
      */
     public synchronized List<BlackboardArtifactTag> getBlackboardArtifactTagsByArtifact(BlackboardArtifact artifact) throws TskCoreException {
+        if (null == caseDb) {
+            throw new TskCoreException("Tags manager has been closed");
+        }
         lazyLoadExistingTagNames();
-        return Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifactTagsByArtifact(artifact);
+        return caseDb.getBlackboardArtifactTagsByArtifact(artifact);
     }
 
     /**
@@ -502,6 +573,7 @@ public class TagsManager implements Closeable {
     @Deprecated
     public synchronized void close() throws IOException {
         saveTagNamesToTagsSettings();
+        caseDb = null;
     }
 
     /**
@@ -524,7 +596,7 @@ public class TagsManager implements Closeable {
      */
     private void addTagNamesFromCurrentCase() {
         try {
-            List<TagName> currentTagNames = Case.getCurrentCase().getSleuthkitCase().getAllTagNames();
+            List<TagName> currentTagNames = caseDb.getAllTagNames();
             for (TagName tagName : currentTagNames) {
                 uniqueTagNames.put(tagName.getDisplayName(), tagName);
             }
@@ -550,7 +622,7 @@ public class TagsManager implements Closeable {
                 String[] tagNameAttributes = tagNameTuple.split(",");
                 if (!uniqueTagNames.containsKey(tagNameAttributes[0])) {
                     try {
-                        TagName tagName = Case.getCurrentCase().getSleuthkitCase().addTagName(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.getColorByName(tagNameAttributes[2]));
+                        TagName tagName = caseDb.addTagName(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.getColorByName(tagNameAttributes[2]));
                         uniqueTagNames.put(tagName.getDisplayName(), tagName);
                     } catch (TskCoreException ex) {
                         Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to add saved tag name " + tagNameAttributes[0], ex); //NON-NLS
@@ -566,7 +638,7 @@ public class TagsManager implements Closeable {
     private void addPredefinedTagNames() {
         if (!uniqueTagNames.containsKey(NbBundle.getMessage(this.getClass(), "TagsManager.predefTagNames.bookmark.text"))) {
             try {
-                TagName tagName = Case.getCurrentCase().getSleuthkitCase().addTagName(
+                TagName tagName = caseDb.addTagName(
                         NbBundle.getMessage(this.getClass(), "TagsManager.predefTagNames.bookmark.text"), "", TagName.HTML_COLOR.NONE);
                 uniqueTagNames.put(tagName.getDisplayName(), tagName);
             } catch (TskCoreException ex) {
