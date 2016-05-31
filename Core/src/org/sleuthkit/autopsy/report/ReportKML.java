@@ -100,7 +100,7 @@ class ReportKML implements GeneralReportModule {
     public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
 
         // Start the progress bar and setup the report
-        progressPanel.setIndeterminate(false);
+        progressPanel.setIndeterminate(true);
         progressPanel.start();
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportKML.progress.querying"));
         String kmlFileFullPath = baseReportDir + REPORT_KML; //NON-NLS
@@ -108,9 +108,6 @@ class ReportKML implements GeneralReportModule {
         skCase = currentCase.getSleuthkitCase();
 
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportKML.progress.loading"));
-
-        progressPanel.setMaximumProgress(5);
-        progressPanel.increment();
 
         ns = Namespace.getNamespace("", "http://www.opengis.net/kml/2.2"); //NON-NLS
 
@@ -197,17 +194,24 @@ class ReportKML implements GeneralReportModule {
                 Double lat = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE);
                 Double lon = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE);
                 Element point = makePoint(lat, lon, getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE));
-                Path destination = null;
+
                 if (lat != null && lat != 0.0 && lon != null && lon != 0.0) {
                     AbstractFile abstractFile = artifact.getSleuthkitCase().getAbstractFileById(artifact.getObjectID());
+                    Path path = null;
                     if (abstractFile != null) {
-                        destination = Paths.get(baseReportDir, abstractFile.getName());
-                        copyFileUsingStream(abstractFile, destination.toFile());
+                        copyFileUsingStream(abstractFile, Paths.get(baseReportDir, abstractFile.getName()).toFile());
+                        try {
+                            path = Paths.get(removeLeadingImgAndVol(abstractFile.getUniquePath()));
+                        } catch (TskCoreException ex) {
+                            path = Paths.get(abstractFile.getParentPath(), abstractFile.getName());
+                        }
                     }
                     String formattedCoordinates = String.format("%.2f, %.2f", lat, lon);
-                    gpsExifMetadataFolder.addContent(makePlacemarkWithPicture(abstractFile.getName(), FeatureColor.RED, desc, timestamp, point, destination, formattedCoordinates));
+                    if (path == null) {
+                        path = Paths.get(abstractFile.getName());
+                    }
+                    gpsExifMetadataFolder.addContent(makePlacemarkWithPicture(abstractFile.getName(), FeatureColor.RED, desc, timestamp, point, path, formattedCoordinates));
                 }
-
             }
         } catch (TskCoreException | IOException ex) {
             logger.log(Level.SEVERE, "Could not extract photos with EXIF metadata.", ex); //NON-NLS
@@ -317,8 +321,6 @@ class ReportKML implements GeneralReportModule {
             logger.log(Level.SEVERE, "Could not get GPS Trackpoints from database.", ex); //NON-NLS
         }
 
-        progressPanel.increment();
-
         try (FileOutputStream writer = new FileOutputStream(kmlFileFullPath)) {
             XMLOutputter outputter = new XMLOutputter(Format.getPrettyFormat());
             outputter.output(kmlDocument, writer);
@@ -343,7 +345,6 @@ class ReportKML implements GeneralReportModule {
             logger.log(Level.SEVERE, "Error placing KML stylesheet. The .KML file will not function properly.", ex); //NON-NLS
         }
 
-        progressPanel.increment();
         progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE);
     }
 
@@ -723,35 +724,33 @@ class ReportKML implements GeneralReportModule {
      * coordinate-bearing feature (Point, LineString, etc) and places it in the
      * Placemark element.
      *
-     * @param name        Placemark name
+     * @param name        Placemark file name
      * @param color       Placemark color
      * @param description Description for the info bubble on the map
      * @param timestamp   Placemark timestamp
      * @param feature     The feature to show. Could be Point, LineString, etc.
-     * @param path        The path to the file on disk
+     * @param path        The path to the file in the source image
      * @param coordinates The coordinates to display in the list view snippet
      *
      * @return the entire KML Placemark, including a picture.
      */
     private Element makePlacemarkWithPicture(String name, FeatureColor color, String description, Long timestamp, Element feature, Path path, String coordinates) {
         Element placemark = new Element("Placemark", ns); //NON-NLS
+        Element desc = new Element("description", ns); //NON-NLS
         if (name != null && !name.isEmpty()) {
             placemark.addContent(new Element("name", ns).addContent(name)); //NON-NLS
+            String image = "<img src='" + name + "' width='400'/>"; //NON-NLS
+            desc.addContent(image);
         }
-
         placemark.addContent(new Element("styleUrl", ns).addContent(color.getColor())); //NON-NLS
-        Element desc = new Element("description", ns); //NON-NLS
-
         if (path != null) {
             String pathAsString = path.toString();
             if (pathAsString != null && !pathAsString.isEmpty()) {
-                String image = "<img src='file:///" + pathAsString + "' width='400'/>"; //NON-NLS
-                desc.addContent(image);
+                desc.addContent(description + "<b>Source Path:</b> " + pathAsString);
             }
         }
-
-        desc.addContent(description + "<b>File Path:</b> " + path.toString());
         placemark.addContent(desc);
+
         if (timestamp != null) {
             Element time = new Element("TimeStamp", ns); //NON-NLS
             time.addContent(new Element("when", ns).addContent(getTimeStamp(timestamp))); //NON-NLS
@@ -804,5 +803,37 @@ class ReportKML implements GeneralReportModule {
     @Override
     public JPanel getConfigurationPanel() {
         return null; // No configuration panel
+    }
+
+    /**
+     * This is a smash-n-grab from AbstractFile.createNonUniquePath(String).
+     * This method is intended to be removed when img_ and vol_ are no longer
+     * added to images and volumes respectively, OR when AbstractFile is sorted
+     * out with respect to this.
+     *
+     * @param uniquePath The path to sanitize.
+     *
+     * @return path without leading img_/vol_ in position 0 or 1 respectively.
+     */
+    private static String removeLeadingImgAndVol(String uniquePath) {
+        // split the path into parts
+        String[] pathSegments = uniquePath.replaceFirst("^/*", "").split("/"); //NON-NLS
+
+        // Replace image/volume name if they exist in specific entries
+        if (pathSegments.length > 0) {
+            pathSegments[0] = pathSegments[0].replaceFirst("^img_", ""); //NON-NLS
+        }
+        if (pathSegments.length > 1) {
+            pathSegments[1] = pathSegments[1].replaceFirst("^vol_", ""); //NON-NLS
+        }
+
+        // Assemble the path
+        StringBuilder strbuf = new StringBuilder();
+        for (String segment : pathSegments) {
+            if (!segment.isEmpty()) {
+                strbuf.append("/").append(segment);
+            }
+        }
+        return strbuf.toString();
     }
 }
