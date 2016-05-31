@@ -19,11 +19,11 @@
          <children>
             <Label fx:id="eventCountLabel" text=" # of events" />
             <Region HBox.hgrow="ALWAYS" />
-            <HBox fx:id="navControls" alignment="CENTER_LEFT" minHeight="32.0" spacing="5.0">
+            <HBox fx:id="navControls" alignment="CENTER_LEFT" minHeight="38.0" spacing="5.0">
                <children>
-                  <Label text="Scroll By: " />
-                  <ComboBox fx:id="scrollInrementComboBox" />
-                  <Button fx:id="firstButton" maxHeight="24.0" maxWidth="24.0" minHeight="24.0" minWidth="24.0" mnemonicParsing="false" prefHeight="24.0" prefWidth="24.0">
+                  <Label text="Jump By: " />
+                  <ComboBox fx:id="scrollInrementComboBox" prefHeight="32.0" />
+                  <Button fx:id="firstButton" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" prefHeight="32.0" prefWidth="32.0">
                      <graphic>
                         <ImageView>
                            <image>
@@ -32,7 +32,7 @@
                         </ImageView>
                      </graphic>
                   </Button>
-                  <Button fx:id="previousButton" maxHeight="24.0" maxWidth="24.0" minHeight="24.0" minWidth="24.0" mnemonicParsing="false" prefHeight="24.0" prefWidth="24.0">
+                  <Button fx:id="previousButton" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" prefHeight="32.0" prefWidth="32.0">
                      <graphic>
                         <ImageView>
                            <image>
@@ -41,7 +41,7 @@
                         </ImageView>
                      </graphic>
                   </Button>
-                  <Button fx:id="nextButton" maxHeight="24.0" maxWidth="24.0" minHeight="24.0" minWidth="24.0" mnemonicParsing="false" prefHeight="24.0" prefWidth="24.0">
+                  <Button fx:id="nextButton" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" prefHeight="32.0" prefWidth="32.0">
                      <cursor>
                         <Cursor fx:constant="HAND" />
                      </cursor>
@@ -53,7 +53,7 @@
                         </ImageView>
                      </graphic>
                   </Button>
-                  <Button fx:id="lastButton" maxHeight="24.0" maxWidth="24.0" minHeight="24.0" minWidth="24.0" mnemonicParsing="false" prefHeight="24.0" prefWidth="24.0">
+                  <Button fx:id="lastButton" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" prefHeight="32.0" prefWidth="32.0">
                      <graphic>
                         <ImageView>
                            <image>

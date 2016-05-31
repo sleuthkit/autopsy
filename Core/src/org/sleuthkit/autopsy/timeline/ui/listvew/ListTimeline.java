@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.timeline.ui.listvew;
 
 import com.google.common.collect.Iterables;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,6 +43,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -183,13 +186,37 @@ class ListTimeline extends BorderPane {
         );
         scrollInrementComboBox.getSelectionModel().select(ChronoUnit.YEARS);
 
-        firstButton.setOnAction((ActionEvent event) -> table.scrollTo(0));
-        previousButton.setOnAction((ActionEvent event) -> {
-            table.scrollTo(0);
+        firstButton.setOnAction(actionEvent -> table.scrollTo(0));
+        previousButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                LocalDateTime selectedDateTime = LocalDateTime.ofInstant(
+                        Instant.ofEpochMilli(table.getSelectionModel().getSelectedItem().getStartMillis()),
+                        TimeLineController.getTimeZone().get().toZoneId());
+                LocalDateTime nextDateTime = scrollInrementComboBox.getSelectionModel().getSelectedItem().addTo(selectedDateTime, -1);
 
+                table.getItems().stream().filter(combinedEvent -> {
+                    LocalDateTime eventDateTime = LocalDateTime.ofInstant(
+                            Instant.ofEpochMilli(combinedEvent.getStartMillis()), TimeLineController.getTimeZone().get().toZoneId());
+                    return eventDateTime.isBefore(nextDateTime);
+                }).findFirst().ifPresent(table::scrollTo);
+            }
         });
-//        nextButton.setOnAction((ActionEvent event) -> table.scrollTo(0));
-        lastButton.setOnAction((ActionEvent event) -> table.scrollTo(table.getItems().size()));
+
+        nextButton.setOnAction(actionEvent -> {
+            LocalDateTime selectedDateTime = LocalDateTime.ofInstant(
+                    Instant.ofEpochMilli(table.getSelectionModel().getSelectedItem().getStartMillis()),
+                    TimeLineController.getTimeZone().get().toZoneId());
+            LocalDateTime nextDateTime = scrollInrementComboBox.getSelectionModel().getSelectedItem().addTo(selectedDateTime, 1);
+
+            table.getItems().stream().filter(combinedEvent -> {
+                LocalDateTime eventDateTime = LocalDateTime.ofInstant(
+                        Instant.ofEpochMilli(combinedEvent.getStartMillis()), TimeLineController.getTimeZone().get().toZoneId());
+                return eventDateTime.isAfter(nextDateTime);
+            }).findFirst().ifPresent(table::scrollTo);
+        });
+
+        lastButton.setOnAction(actionEvent -> table.scrollTo(table.getItems().size()));
 
         //override default row with one that provides context menus
         table.setRowFactory(tableView -> new EventRow());

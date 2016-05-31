@@ -587,8 +587,7 @@ final public class ViewFrame extends BorderPane {
      * AbstractTimelineView for one of the correct type.
      */
     private void syncViewMode() {
-        AbstractTimeLineView view;
-        ViewMode viewMode = controller.viewModeProperty().get();
+        ViewMode newViewMode = controller.getViewMode();
 
         Platform.runLater(() -> {
             //clear out old view.
@@ -607,60 +606,38 @@ final public class ViewFrame extends BorderPane {
                 }
                 hostedView.dispose();
             }
-        });
 
-        //make new view.
-        switch (viewMode) {
-            case LIST:
-                view = new ListViewPane(controller);
-                Platform.runLater(() -> {
+            //Set a new AbstractTimeLineView as the one hosted by this ViewFrame.
+            switch (newViewMode) {
+                case LIST:
+                    hostedView = new ListViewPane(controller);
                     listToggle.setSelected(true);
+                    timeRangeToolBar.getItems().removeAll(zoomInOutHBox, zoomMenuButton);
+                    timeRangeToolBar.getItems().addAll(2, hostedView.getSettingsNodes());
                     //TODO: should remove listeners from events tree
-                });
-                break;
-            case COUNTS:
-                view = new CountsViewPane(controller);
-                Platform.runLater(() -> {
+                    break;
+                case COUNTS:
+                    hostedView = new CountsViewPane(controller);
                     countsToggle.setSelected(true);
+                    toolBar.getItems().addAll(2, hostedView.getSettingsNodes());
                     //TODO: should remove listeners from events tree
-                });
-                break;
-            case DETAIL:
-                DetailViewPane detailViewPane = new DetailViewPane(controller);
-                Platform.runLater(() -> {
+                    break;
+                case DETAIL:
+                    DetailViewPane detailViewPane = new DetailViewPane(controller);
+                    hostedView = detailViewPane;
                     detailsToggle.setSelected(true);
+                    toolBar.getItems().addAll(2, hostedView.getSettingsNodes());
+
                     detailViewPane.setHighLightedEvents(eventsTree.getSelectedEvents());
                     eventsTree.setDetailViewPane(detailViewPane);
-                });
-                view = detailViewPane;
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown ViewMode: " + viewMode.toString());
-        }
-
-        //Set the new AbstractTimeLineView as the one hosted by this ViewFrame.
-        Platform.runLater(() -> {
-
-            hostedView = view;
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown ViewMode: " + newViewMode.toString());
+            }
             //setup new view.
             ActionUtils.configureButton(new Refresh(), refreshButton);//configure new refresh action for new view
             hostedView.refresh();
-
-            switch (hostedView.getViewMode()) {
-                case COUNTS:
-                case DETAIL:
-                    toolBar.getItems().addAll(2, hostedView.getSettingsNodes());
-                    break;
-                case LIST:
-                    timeRangeToolBar.getItems().removeAll(zoomInOutHBox, zoomMenuButton);
-                    timeRangeToolBar.getItems().addAll(2, hostedView.getSettingsNodes());
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Unknown ViewMode: " + hostedView.getViewMode());
-            }
-
             notificationPane.setContent(hostedView);
-
             //listen to has events property and show "dialog" if it is false.
             hostedView.hasVisibleEventsProperty().addListener(hasEvents -> {
                 notificationPane.setContent(hostedView.hasVisibleEvents()
