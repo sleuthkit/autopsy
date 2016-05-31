@@ -40,6 +40,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.IngestJobInfo;
 import org.sleuthkit.datamodel.IngestModuleInfo;
 import org.sleuthkit.datamodel.IngestModuleType;
+import org.sleuthkit.datamodel.IngestStatusType;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
@@ -676,14 +677,27 @@ final class DataSourceIngestJob {
                 }
             }
         }
-        if (!this.cancelled) {
+        if (this.cancelled) {
             try {
-                this.ingestJob.setEndDate(new Date().toInstant().toEpochMilli());
+                ingestJob.setIngestStatus(IngestStatusType.CANCELLED);
             } catch (TskCoreException | TskDataException ex) {
-                logger.log(Level.SEVERE, "Failed to set end date for ingest job in database.", ex);
+                logger.log(Level.SEVERE, "Failed to set ingest status for ingest job in database.", ex);
             }
-            this.parentJob.dataSourceJobFinished(this);
         }
+        else {
+            try {
+                ingestJob.setIngestStatus(IngestStatusType.COMPLETED);
+            } catch (TskCoreException | TskDataException ex) {
+                logger.log(Level.SEVERE, "Failed to set ingest status for ingest job in database.", ex);
+            }
+        }
+        try {
+            this.ingestJob.setEndDate(new Date().toInstant().toEpochMilli());
+        } catch (TskCoreException | TskDataException ex) {
+            logger.log(Level.SEVERE, "Failed to set end date for ingest job in database.", ex);
+        }
+        this.parentJob.dataSourceJobFinished(this);
+
     }
 
     /**

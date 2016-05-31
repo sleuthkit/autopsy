@@ -19,7 +19,7 @@ class FactoryClassNameNormalizer {
         if (isPythonModuleSettingsFile(canonicalClassName)) {
             // compiled python modules have variable instance number as a part of their file name.
             // This block of code gets rid of that variable instance number and helps maitains constant module name over multiple runs.
-            String moduleClassName = canonicalClassName.replaceAll("[$][\\d]", "\\"); //NON-NLS NON-NLS
+            String moduleClassName = canonicalClassName.replaceAll("[$][\\d]", ""); //NON-NLS NON-NLS
             return moduleClassName;
         }
         return canonicalClassName;
