@@ -25,16 +25,29 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
 
 /**
- * Represents the blackboard, a place where artifacts and their attributes are
- * posted.
+ * A representation of the blackboard, a place where artifacts and their
+ * attributes are posted.
  *
  * NOTE: This API of this class is under development.
  */
 public final class Blackboard implements Closeable {
+
+    private SleuthkitCase caseDb;
+    
+    /**
+     * Constructs a representation of the blackboard, a place where artifacts
+     * and their attributes are posted.
+     *
+     * @param casedb The case database.
+     */
+    Blackboard(SleuthkitCase casedb) {
+        this.caseDb = casedb;
+    }
 
     /**
      * Indexes the text associated with the an artifact.
@@ -43,7 +56,10 @@ public final class Blackboard implements Closeable {
      *
      * @throws BlackboardException If there is a problem indexing the artifact.
      */
-    public void indexArtifact(BlackboardArtifact artifact) throws BlackboardException {
+    public synchronized void indexArtifact(BlackboardArtifact artifact) throws BlackboardException {
+        if (null == caseDb) {
+            throw new BlackboardException("Blackboard has been closed");
+        }
         KeywordSearchService searchService = Lookup.getDefault().lookup(KeywordSearchService.class);
         if (null == searchService) {
             throw new BlackboardException("Keyword search service not found");
@@ -67,12 +83,15 @@ public final class Blackboard implements Closeable {
      * @throws BlackboardBlackboardException If there is a problem getting or
      *                                       adding the artifact type.
      */
-    public BlackboardArtifact.Type getOrAddArtifactType(String typeName, String displayName) throws BlackboardException {
+    public synchronized BlackboardArtifact.Type getOrAddArtifactType(String typeName, String displayName) throws BlackboardException {
+        if (null == caseDb) {
+            throw new BlackboardException("Blackboard has been closed");
+        }
         try {
-            return Case.getCurrentCase().getSleuthkitCase().addBlackboardArtifactType(typeName, displayName);
+            return caseDb.addBlackboardArtifactType(typeName, displayName);
         } catch (TskDataException typeExistsEx) {
             try {
-                return Case.getCurrentCase().getSleuthkitCase().getArtifactType(typeName);
+                return caseDb.getArtifactType(typeName);
             } catch (TskCoreException ex) {
                 throw new BlackboardException("Failed to get or add artifact type", ex);
             }
@@ -94,12 +113,15 @@ public final class Blackboard implements Closeable {
      * @throws BlackboardBlackboardException If there is a problem getting or
      *                                       adding the attribute type.
      */
-    public BlackboardAttribute.Type getOrAddAttributeType(String typeName, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE valueType, String displayName) throws BlackboardException {
+    public synchronized BlackboardAttribute.Type getOrAddAttributeType(String typeName, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE valueType, String displayName) throws BlackboardException {
+        if (null == caseDb) {
+            throw new BlackboardException("Blackboard has been closed");
+        }
         try {
-            return Case.getCurrentCase().getSleuthkitCase().addArtifactAttributeType(typeName, valueType, displayName);
+            return caseDb.addArtifactAttributeType(typeName, valueType, displayName);
         } catch (TskDataException typeExistsEx) {
             try {
-                return Case.getCurrentCase().getSleuthkitCase().getAttributeType(typeName);
+                return caseDb.getAttributeType(typeName);
             } catch (TskCoreException ex) {
                 throw new BlackboardException("Failed to get or add attribute type", ex);
             }
@@ -109,12 +131,15 @@ public final class Blackboard implements Closeable {
     }
 
     /**
-     * Cloese this blackboard and releases any resources associated with it. 
-     * @throws IOException 
+     * Closes the blackboard.
+     *
+     * @throws IOException If there is a problem closing the blackboard.
      */
     @Override
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
+        caseDb = null;
     }
+
 
     /**
      * A blackboard exception.

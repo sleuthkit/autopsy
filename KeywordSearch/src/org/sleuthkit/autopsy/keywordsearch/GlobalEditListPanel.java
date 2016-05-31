@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,6 +45,13 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import java.awt.Component;
+import javax.swing.ImageIcon;
+import javax.swing.JLabel;
+import static javax.swing.SwingConstants.CENTER;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
+import org.openide.util.NbBundle.Messages;
 
 /**
  * GlobalEditListPanel widget to manage keywords in lists
@@ -52,7 +59,8 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionListener, OptionsPanel {
 
     private static final Logger logger = Logger.getLogger(GlobalEditListPanel.class.getName());
-    private KeywordTableModel tableModel;
+    private static final long serialVersionUID = 1L;
+    private final KeywordTableModel tableModel;
     private KeywordList currentKeywordList;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
@@ -73,8 +81,6 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         saveListButton.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.saveCurrentWIthNewNameToolTip"));
         deleteWordButton.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.removeSelectedMsg"));
 
-        keywordTable.setShowHorizontalLines(false);
-        keywordTable.setShowVerticalLines(false);
         keywordTable.getParent().setBackground(keywordTable.getBackground());
         final int width = jScrollPane1.getPreferredSize().width;
         keywordTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
@@ -85,7 +91,8 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                 column.setPreferredWidth(((int) (width * 0.90)));
             } else {
                 column.setPreferredWidth(((int) (width * 0.10)));
-                //column.setCellRenderer(new CheckBoxRenderer());
+                column.setCellRenderer(new CheckBoxRenderer());
+                column.setHeaderRenderer(new HeaderRenderer(keywordTable));
             }
         }
         keywordTable.setCellSelectionEnabled(false);
@@ -239,9 +246,8 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
 
         keywordTable.setModel(tableModel);
         keywordTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
+        keywordTable.setGridColor(new java.awt.Color(153, 153, 153));
         keywordTable.setMaximumSize(new java.awt.Dimension(30000, 30000));
-        keywordTable.setShowHorizontalLines(false);
-        keywordTable.setShowVerticalLines(false);
         keywordTable.getTableHeader().setReorderingAllowed(false);
         jScrollPane1.setViewportView(keywordTable);
 
@@ -684,6 +690,57 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                 words.remove(selected[arrayi]);
             }
             resync();
+        }
+    }
+
+    /**
+     * A cell renderer for boolean cells that shows a center-aligned green check
+     * mark if true, nothing if false.
+     */
+    private class CheckBoxRenderer extends DefaultTableCellRenderer {
+
+        private static final long serialVersionUID = 1L;
+        final ImageIcon theCheck = new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/checkmark.png")); // NON-NLS
+
+        CheckBoxRenderer() {
+            setHorizontalAlignment(CENTER);
+        }
+
+        @Override
+        @Messages("IsRegularExpression=Keyword is a regular expression")
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+
+            if ((value instanceof Boolean)) {
+                if ((Boolean) value) {
+                    setIcon(theCheck);
+                    setToolTipText(Bundle.IsRegularExpression());
+                } else {
+                    setIcon(null);
+                    setToolTipText(null);
+                }
+            }
+            return this;
+        }
+    }
+
+    /**
+     * A cell renderer for header cells that center-aligns the header text.
+     */
+    private static class HeaderRenderer implements TableCellRenderer {
+
+        private DefaultTableCellRenderer renderer;
+
+        public HeaderRenderer(JTable table) {
+            renderer = (DefaultTableCellRenderer) table.getTableHeader().getDefaultRenderer();
+            renderer.setHorizontalAlignment(JLabel.CENTER);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(
+                JTable table, Object value, boolean isSelected,
+                boolean hasFocus, int row, int col) {
+            return renderer.getTableCellRendererComponent(
+                    table, value, isSelected, hasFocus, row, col);
         }
     }
 }

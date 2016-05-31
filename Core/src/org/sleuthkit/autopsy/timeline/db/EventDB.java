@@ -404,16 +404,16 @@ public class EventDB {
         ArrayList<CombinedEvent> results = new ArrayList<>();
 
         DBLock.lock();
-        final String query = "SELECT full_description, time, file_id, GROUP_CONCAT(event_id), GROUP_CONCAT(sub_type)"
+        final String query = "SELECT full_description, time, file_id, GROUP_CONCAT(events.event_id), GROUP_CONCAT(sub_type)"
                 + " FROM events " + useHashHitTablesHelper(filter) + useTagTablesHelper(filter)
                 + " WHERE time >= " + startTime + " AND time <" + endTime + " AND " + SQLHelper.getSQLWhere(filter)
-                + " GROUP BY time,full_description, file_id ORDER BY time ASC, full_description, event_id";
+                + " GROUP BY time,full_description, file_id ORDER BY time ASC, full_description";
         try (Statement stmt = con.createStatement();
                 ResultSet rs = stmt.executeQuery(query)) {
             while (rs.next()) {
 
                 //make a map from event type to event ID
-                List<Long> eventIDs = SQLHelper.unGroupConcat(rs.getString("GROUP_CONCAT(event_id)"), Long::valueOf);
+                List<Long> eventIDs = SQLHelper.unGroupConcat(rs.getString("GROUP_CONCAT(events.event_id)"), Long::valueOf);
                 List<EventType> eventTypes = SQLHelper.unGroupConcat(rs.getString("GROUP_CONCAT(sub_type)"), s -> RootEventType.allTypes.get(Integer.valueOf(s)));
                 Map<EventType, Long> eventMap = new HashMap<>();
                 for (int i = 0; i < eventIDs.size(); i++) {
