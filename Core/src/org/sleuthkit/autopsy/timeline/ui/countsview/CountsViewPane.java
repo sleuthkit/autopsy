@@ -56,6 +56,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
@@ -112,7 +113,6 @@ public class CountsViewPane extends AbstractTimelineChart<String, Number, Node, 
         "CountsViewPane.numberOfEvents=Number of Events ({0})"})
     public CountsViewPane(TimeLineController controller) {
         super(controller);
-      
 
         setChart(new EventCountsChart(controller, dateAxis, countAxis, getSelectedNodes()));
         getChart().setData(dataSeries);
@@ -165,6 +165,11 @@ public class CountsViewPane extends AbstractTimelineChart<String, Number, Node, 
         dataSeries.clear();
         eventTypeToSeriesMap.clear();
         createSeries();
+    }
+
+    @Override
+    final protected ViewMode getViewMode() {
+        return ViewMode.COUNTS;
     }
 
     /**

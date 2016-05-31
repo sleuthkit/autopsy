@@ -19,47 +19,51 @@
          <children>
             <Label fx:id="eventCountLabel" text=" # of events" />
             <Region HBox.hgrow="ALWAYS" />
-            <Label text="Scroll By: " />
-            <ComboBox fx:id="scrollInrementComboBox" />
-            <Button fx:id="firstButton" maxHeight="24.0" maxWidth="24.0" minHeight="24.0" minWidth="24.0" mnemonicParsing="false" prefHeight="24.0" prefWidth="24.0">
-               <graphic>
-                  <ImageView>
-                     <image>
-                        <Image url="@../../images/resultset_first.png" />
-                     </image>
-                  </ImageView>
-               </graphic>
-            </Button>
-            <Button fx:id="previousButton" maxHeight="24.0" maxWidth="24.0" minHeight="24.0" minWidth="24.0" mnemonicParsing="false" prefHeight="24.0" prefWidth="24.0">
-               <graphic>
-                  <ImageView>
-                     <image>
-                        <Image url="@../../images/resultset_previous.png" />
-                     </image>
-                  </ImageView>
-               </graphic>
-            </Button>
-            <Button fx:id="nextButton" maxHeight="24.0" maxWidth="24.0" minHeight="24.0" minWidth="24.0" mnemonicParsing="false" prefHeight="24.0" prefWidth="24.0">
-               <cursor>
-                  <Cursor fx:constant="HAND" />
-               </cursor>
-               <graphic>
-                  <ImageView>
-                     <image>
-                        <Image url="@../../images/resultset_next.png" />
-                     </image>
-                  </ImageView>
-               </graphic>
-            </Button>
-            <Button fx:id="lastButton" maxHeight="24.0" maxWidth="24.0" minHeight="24.0" minWidth="24.0" mnemonicParsing="false" prefHeight="24.0" prefWidth="24.0">
-               <graphic>
-                  <ImageView>
-                     <image>
-                        <Image url="@../../images/resultset_last.png" />
-                     </image>
-                  </ImageView>
-               </graphic>
-            </Button>
+            <HBox fx:id="navControls" alignment="CENTER_LEFT" minHeight="32.0" spacing="5.0">
+               <children>
+                  <Label text="Scroll By: " />
+                  <ComboBox fx:id="scrollInrementComboBox" />
+                  <Button fx:id="firstButton" maxHeight="24.0" maxWidth="24.0" minHeight="24.0" minWidth="24.0" mnemonicParsing="false" prefHeight="24.0" prefWidth="24.0">
+                     <graphic>
+                        <ImageView>
+                           <image>
+                              <Image url="@../../images/resultset_first.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </Button>
+                  <Button fx:id="previousButton" maxHeight="24.0" maxWidth="24.0" minHeight="24.0" minWidth="24.0" mnemonicParsing="false" prefHeight="24.0" prefWidth="24.0">
+                     <graphic>
+                        <ImageView>
+                           <image>
+                              <Image url="@../../images/resultset_previous.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </Button>
+                  <Button fx:id="nextButton" maxHeight="24.0" maxWidth="24.0" minHeight="24.0" minWidth="24.0" mnemonicParsing="false" prefHeight="24.0" prefWidth="24.0">
+                     <cursor>
+                        <Cursor fx:constant="HAND" />
+                     </cursor>
+                     <graphic>
+                        <ImageView>
+                           <image>
+                              <Image url="@../../images/resultset_next.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </Button>
+                  <Button fx:id="lastButton" maxHeight="24.0" maxWidth="24.0" minHeight="24.0" minWidth="24.0" mnemonicParsing="false" prefHeight="24.0" prefWidth="24.0">
+                     <graphic>
+                        <ImageView>
+                           <image>
+                              <Image url="@../../images/resultset_last.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </Button>
+               </children>
+            </HBox>
          </children>
          <BorderPane.margin>
             <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />

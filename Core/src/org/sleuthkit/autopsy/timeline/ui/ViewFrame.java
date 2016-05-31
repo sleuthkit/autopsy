@@ -24,6 +24,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import javafx.application.Platform;
@@ -108,7 +109,8 @@ final public class ViewFrame extends BorderPane {
 
     /**
      * Region that will be stacked in between the no-events "dialog" and the
-     * hosted AbstractTimelineView in order to gray out the AbstractTimelineView.
+     * hosted AbstractTimelineView in order to gray out the
+     * AbstractTimelineView.
      */
     private final static Region NO_EVENTS_BACKGROUND = new Region() {
         {
@@ -138,6 +140,12 @@ final public class ViewFrame extends BorderPane {
     private StackPane rangeHistogramStack;
 
     private final RangeSlider rangeSlider = new RangeSlider(0, 1.0, .25, .75);
+
+    @FXML
+    private ToolBar timeRangeToolBar;
+
+    @FXML
+    private HBox zoomInOutHBox;
 
     //// time range selection components
     @FXML
@@ -176,7 +184,8 @@ final public class ViewFrame extends BorderPane {
     private Button updateDBButton;
 
     /*
-     * Wraps contained AbstractTimelineView so that we can show notifications over it.
+     * Wraps contained AbstractTimelineView so that we can show notifications
+     * over it.
      */
     private final NotificationPane notificationPane = new NotificationPane();
 
@@ -362,11 +371,10 @@ final public class ViewFrame extends BorderPane {
     }
 
     /**
-     * Handle TagsUpdatedEvents by marking that the view needs to be
-     * refreshed.
+     * Handle TagsUpdatedEvents by marking that the view needs to be refreshed.
      *
-     * NOTE: This ViewFrame must be registered with the
-     * filteredEventsModel's EventBus in order for this handler to be invoked.
+     * NOTE: This ViewFrame must be registered with the filteredEventsModel's
+     * EventBus in order for this handler to be invoked.
      *
      * @param event The TagsUpdatedEvent to handle.
      */
@@ -385,8 +393,8 @@ final public class ViewFrame extends BorderPane {
      * Handle a RefreshRequestedEvent from the events model by clearing the
      * refresh notification.
      *
-     * NOTE: This ViewFrame must be registered with the
-     * filteredEventsModel's EventBus in order for this handler to be invoked.
+     * NOTE: This ViewFrame must be registered with the filteredEventsModel's
+     * EventBus in order for this handler to be invoked.
      *
      * @param event The RefreshRequestedEvent to handle.
      */
@@ -400,11 +408,10 @@ final public class ViewFrame extends BorderPane {
     }
 
     /**
-     * Handle a DBUpdatedEvent from the events model by refreshing the
-     * view.
+     * Handle a DBUpdatedEvent from the events model by refreshing the view.
      *
-     * NOTE: This ViewFrame must be registered with the
-     * filteredEventsModel's EventBus in order for this handler to be invoked.
+     * NOTE: This ViewFrame must be registered with the filteredEventsModel's
+     * EventBus in order for this handler to be invoked.
      *
      * @param event The DBUpdatedEvent to handle.
      */
@@ -419,8 +426,8 @@ final public class ViewFrame extends BorderPane {
      * Handle a DataSourceAddedEvent from the events model by showing a
      * notification.
      *
-     * NOTE: This ViewFrame must be registered with the
-     * filteredEventsModel's EventBus in order for this handler to be invoked.
+     * NOTE: This ViewFrame must be registered with the filteredEventsModel's
+     * EventBus in order for this handler to be invoked.
      *
      * @param event The DataSourceAddedEvent to handle.
      */
@@ -439,8 +446,8 @@ final public class ViewFrame extends BorderPane {
      * Handle a DataSourceAnalysisCompletedEvent from the events modelby showing
      * a notification.
      *
-     * NOTE: This ViewFrame must be registered with the
-     * filteredEventsModel's EventBus in order for this handler to be invoked.
+     * NOTE: This ViewFrame must be registered with the filteredEventsModel's
+     * EventBus in order for this handler to be invoked.
      *
      * @param event The DataSourceAnalysisCompletedEvent to handle.
      */
@@ -583,6 +590,25 @@ final public class ViewFrame extends BorderPane {
         AbstractTimeLineView view;
         ViewMode viewMode = controller.viewModeProperty().get();
 
+        Platform.runLater(() -> {
+            //clear out old view.
+            if (hostedView != null) {
+                switch (hostedView.getViewMode()) {
+                    case COUNTS:
+                    case DETAIL:
+                        toolBar.getItems().removeAll(hostedView.getSettingsNodes());
+                        break;
+                    case LIST:
+                        timeRangeToolBar.getItems().removeAll(hostedView.getSettingsNodes());
+                        timeRangeToolBar.getItems().addAll(2, Arrays.asList(zoomInOutHBox, zoomMenuButton));
+                        break;
+                    default:
+                        throw new UnsupportedOperationException("Unknown ViewMode: " + hostedView.getViewMode());
+                }
+                hostedView.dispose();
+            }
+        });
+
         //make new view.
         switch (viewMode) {
             case LIST:
@@ -614,17 +640,25 @@ final public class ViewFrame extends BorderPane {
 
         //Set the new AbstractTimeLineView as the one hosted by this ViewFrame.
         Platform.runLater(() -> {
-            //clear out old view.
-            if (hostedView != null) {
-                toolBar.getItems().removeAll(hostedView.getSettingsNodes());
-                hostedView.dispose();
-            }
 
             hostedView = view;
             //setup new view.
             ActionUtils.configureButton(new Refresh(), refreshButton);//configure new refresh action for new view
             hostedView.refresh();
-            toolBar.getItems().addAll(2, view.getSettingsNodes());
+
+            switch (hostedView.getViewMode()) {
+                case COUNTS:
+                case DETAIL:
+                    toolBar.getItems().addAll(2, hostedView.getSettingsNodes());
+                    break;
+                case LIST:
+                    timeRangeToolBar.getItems().removeAll(zoomInOutHBox, zoomMenuButton);
+                    timeRangeToolBar.getItems().addAll(2, hostedView.getSettingsNodes());
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unknown ViewMode: " + hostedView.getViewMode());
+            }
+
             notificationPane.setContent(hostedView);
 
             //listen to has events property and show "dialog" if it is false.

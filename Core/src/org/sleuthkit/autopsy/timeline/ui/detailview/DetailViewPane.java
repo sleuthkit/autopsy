@@ -51,6 +51,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
@@ -241,6 +242,11 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
     @Override
     protected double getAxisMargin() {
         return 0;
+    }
+
+    @Override
+    final protected ViewMode getViewMode() {
+        return ViewMode.DETAIL;
     }
 
     /**

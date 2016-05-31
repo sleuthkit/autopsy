@@ -40,6 +40,7 @@ import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 
@@ -136,8 +137,8 @@ public abstract class AbstractTimeLineView extends BorderPane {
 
     /**
      * Refresh this view based on current state of zoom / filters. Primarily
-     * this invokes the background ViewRefreshTask returned by
-     * getUpdateTask(), which derived classes must implement.
+     * this invokes the background ViewRefreshTask returned by getUpdateTask(),
+     * which derived classes must implement.
      *
      * TODO: replace this logic with a javafx Service ? -jm
      */
@@ -185,9 +186,10 @@ public abstract class AbstractTimeLineView extends BorderPane {
      */
     protected abstract Task<Boolean> getNewUpdateTask();
 
+    protected abstract ViewMode getViewMode();
+
     /**
-     * Get a List of Nodes containing settings widgets to insert into this
-     * view's header.
+     * Get a List of Nodes containing settings widgets to insert into this view.
      *
      * @return The List of settings Nodes.
      */

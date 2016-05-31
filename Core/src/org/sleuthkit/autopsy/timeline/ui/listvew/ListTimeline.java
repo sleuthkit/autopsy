@@ -23,6 +23,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -42,6 +43,7 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContextMenu;
@@ -58,6 +60,7 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
 import javax.swing.Action;
@@ -97,6 +100,9 @@ class ListTimeline extends BorderPane {
      * call-back used to wrap the CombinedEvent in a ObservableValue
      */
     private static final Callback<TableColumn.CellDataFeatures<CombinedEvent, CombinedEvent>, ObservableValue<CombinedEvent>> CELL_VALUE_FACTORY = param -> new SimpleObjectProperty<>(param.getValue());
+
+    @FXML
+    private HBox navControls;
 
     @FXML
     private ComboBox<ChronoUnit> scrollInrementComboBox;
@@ -284,6 +290,10 @@ class ListTimeline extends BorderPane {
         table.scrollTo(firstSelected);
         selectedEvents.forEach(table.getSelectionModel()::select);
         table.requestFocus();
+    }
+
+    List<Node> getNavControls() {
+        return Collections.singletonList(navControls);
     }
 
     /**
