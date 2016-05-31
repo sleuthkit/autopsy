@@ -54,6 +54,7 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
 import javafx.util.Callback;
 import javax.swing.Action;
 import javax.swing.JMenuItem;
@@ -224,103 +225,6 @@ class ListTimeline extends BorderPane {
         return selectedEventIDs;
     }
 
-    private class TaggedCell extends EventTableCell {
-
-        TaggedCell() {
-            setAlignment(Pos.CENTER);
-        }
-
-        @NbBundle.Messages({
-            "ListTimeline.taggedTooltip.error=There was a problem getting the tag names for the selected event.",
-            "# {0} - tag names",
-            "ListTimeline.taggedTooltip.text=Tags:\n{0}"})
-        @Override
-        protected void updateItem(CombinedEvent item, boolean empty) {
-            super.updateItem(item, empty);
-
-            if (empty || item == null || (getEvent().isTagged() == false)) {
-                setGraphic(null);
-                setTooltip(null);
-            } else {
-                setGraphic(new ImageView(TAG));
-                SortedSet<String> tagNames = new TreeSet<>();
-                try {
-                    AbstractFile abstractFileById = sleuthkitCase.getAbstractFileById(getEvent().getFileID());
-                    tagsManager.getContentTagsByContent(abstractFileById).stream()
-                            .map(tag -> tag.getName().getDisplayName())
-                            .forEach(tagNames::add);
-
-                } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to lookup tags for obj id " + getEvent().getFileID(), ex); //NON-NLS
-                    Platform.runLater(() -> {
-                        Notifications.create()
-                                .owner(getScene().getWindow())
-                                .text(Bundle.ListTimeline_taggedTooltip_error())
-                                .showError();
-                    });
-                }
-                getEvent().getArtifactID().ifPresent(artifactID -> {
-                    try {
-                        BlackboardArtifact artifact = sleuthkitCase.getBlackboardArtifact(artifactID);
-                        tagsManager.getBlackboardArtifactTagsByArtifact(artifact).stream()
-                                .map(tag -> tag.getName().getDisplayName())
-                                .forEach(tagNames::add);
-                    } catch (TskCoreException ex) {
-                        LOGGER.log(Level.SEVERE, "Failed to lookup tags for artifact id " + artifactID, ex); //NON-NLS
-                        Platform.runLater(() -> {
-                            Notifications.create()
-                                    .owner(getScene().getWindow())
-                                    .text(Bundle.ListTimeline_taggedTooltip_error())
-                                    .showError();
-                        });
-                    }
-                });
-
-                setTooltip(new Tooltip(Bundle.ListTimeline_taggedTooltip_text(String.join("\n", tagNames)))); //NON-NLS
-            }
-        }
-    }
-
-    /**
-     * TableCell to show the hash hits if any associated with the file backing
-     * an event.
-     */
-    private class HashHitCell extends EventTableCell {
-
-        HashHitCell() {
-            setAlignment(Pos.CENTER);
-        }
-
-        @NbBundle.Messages({
-            "ListTimeline.hashHitTooltip.error=There was a problem getting the hash set names for the selected event.",
-            "# {0} - hash set names",
-            "ListTimeline.hashHitTooltip.text=Hash Sets:\n{0}"})
-        @Override
-        protected void updateItem(CombinedEvent item, boolean empty) {
-            super.updateItem(item, empty);
-
-            if (empty || item == null || (getEvent().isHashHit() == false)) {
-                setGraphic(null);
-                setTooltip(null);
-            } else {
-                setGraphic(new ImageView(HASH_HIT));
-                try {
-                    Set<String> hashSetNames = new TreeSet<>(sleuthkitCase.getAbstractFileById(getEvent().getFileID()).getHashSetNames());
-
-                    setTooltip(new Tooltip(Bundle.ListTimeline_hashHitTooltip_text(String.join("\n", hashSetNames)))); //NON-NLS
-                } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to lookup hash set names for obj id " + getEvent().getFileID(), ex); //NON-NLS
-                    Platform.runLater(() -> {
-                        Notifications.create()
-                                .owner(getScene().getWindow())
-                                .text(Bundle.ListTimeline_hashHitTooltip_error())
-                                .showError();
-                    });
-                }
-            }
-        }
-    }
-
     /**
      * Get an ObservableList of combined events that are selected in this table.
      *
@@ -350,10 +254,10 @@ class ListTimeline extends BorderPane {
     private class EventTypeCell extends EventTableCell {
 
         @NbBundle.Messages({
-            "ListView.EventTypeCell.modifiedTooltip=File Modified (M)",
-            "ListView.EventTypeCell.accessedTooltip=File Accessed (A)",
-            "ListView.EventTypeCell.createdTooltip=File Created (B, for Born)",
-            "ListView.EventTypeCell.changedTooltip=File Changed (C)"
+            "ListView.EventTypeCell.modifiedTooltip=File Modified ( M )",
+            "ListView.EventTypeCell.accessedTooltip=File Accessed ( A )",
+            "ListView.EventTypeCell.createdTooltip=File Created ( B, for Born )",
+            "ListView.EventTypeCell.changedTooltip=File Changed ( C )"
         })
         @Override
         protected void updateItem(CombinedEvent item, boolean empty) {
@@ -366,27 +270,26 @@ class ListTimeline extends BorderPane {
             } else {
                 if (item.getEventTypes().stream().allMatch(eventType -> eventType instanceof FileSystemTypes)) {
                     String typeString = ""; //NON-NLS
-                    String toolTipString = "";//NON-NLS
+                    VBox toolTipVbox = new VBox(5);
 
                     for (FileSystemTypes type : Arrays.asList(FileSystemTypes.FILE_MODIFIED, FileSystemTypes.FILE_ACCESSED, FileSystemTypes.FILE_CHANGED, FileSystemTypes.FILE_CREATED)) {
                         if (item.getEventTypes().contains(type)) {
                             switch (type) {
                                 case FILE_MODIFIED:
                                     typeString += "M"; //NON-NLS
-
-                                    toolTipString += Bundle.ListView_EventTypeCell_modifiedTooltip() + "\n"; //NON-NLS
+                                    toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_modifiedTooltip(), new ImageView(type.getFXImage())));
                                     break;
                                 case FILE_ACCESSED:
                                     typeString += "A"; //NON-NLS
-                                    toolTipString += Bundle.ListView_EventTypeCell_accessedTooltip() + "\n"; //NON-NLS
+                                    toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_accessedTooltip(), new ImageView(type.getFXImage())));
                                     break;
                                 case FILE_CREATED:
                                     typeString += "B"; //NON-NLS
-                                    toolTipString += Bundle.ListView_EventTypeCell_createdTooltip() + "\n"; //NON-NLS
+                                    toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_createdTooltip(), new ImageView(type.getFXImage())));
                                     break;
                                 case FILE_CHANGED:
                                     typeString += "C"; //NON-NLS
-                                    toolTipString += Bundle.ListView_EventTypeCell_changedTooltip() + "\n"; //NON-NLS
+                                    toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_changedTooltip(), new ImageView(type.getFXImage())));
                                     break;
                                 default:
                                     throw new UnsupportedOperationException("Unknown FileSystemType: " + type.name()); //NON-NLS
@@ -397,7 +300,9 @@ class ListTimeline extends BorderPane {
                     }
                     setText(typeString);
                     setGraphic(new ImageView(BaseTypes.FILE_SYSTEM.getFXImage()));
-                    setTooltip(new Tooltip(toolTipString));
+                    Tooltip tooltip = new Tooltip();
+                    tooltip.setGraphic(toolTipVbox);
+                    setTooltip(tooltip);
 
                 } else {
                     EventType eventType = Iterables.getOnlyElement(item.getEventTypes());
@@ -405,6 +310,126 @@ class ListTimeline extends BorderPane {
                     setGraphic(new ImageView(eventType.getFXImage()));
                     setTooltip(new Tooltip(eventType.getDisplayName()));
                 };
+            }
+        }
+    }
+
+    /**
+     * A TableCell that shows information about the tags applied to a event.
+     */
+    private class TaggedCell extends EventTableCell {
+
+        /**
+         * Constructor
+         */
+        TaggedCell() {
+            setAlignment(Pos.CENTER);
+        }
+
+        @NbBundle.Messages({
+            "ListTimeline.taggedTooltip.error=There was a problem getting the tag names for the selected event.",
+            "# {0} - tag names",
+            "ListTimeline.taggedTooltip.text=Tags:\n{0}"})
+        @Override
+        protected void updateItem(CombinedEvent item, boolean empty) {
+            super.updateItem(item, empty);
+
+            if (empty || item == null || (getEvent().isTagged() == false)) {
+                setGraphic(null);
+                setTooltip(null);
+            } else {
+                /*
+                 * if the cell is not empty and the event is tagged, show the
+                 * tagged icon, and show a list of tag names in the tooltip
+                 */
+                setGraphic(new ImageView(TAG));
+
+                SortedSet<String> tagNames = new TreeSet<>();
+                try {
+                    //get file tags
+                    AbstractFile abstractFileById = sleuthkitCase.getAbstractFileById(getEvent().getFileID());
+                    tagsManager.getContentTagsByContent(abstractFileById).stream()
+                            .map(tag -> tag.getName().getDisplayName())
+                            .forEach(tagNames::add);
+
+                } catch (TskCoreException ex) {
+                    LOGGER.log(Level.SEVERE, "Failed to lookup tags for obj id " + getEvent().getFileID(), ex); //NON-NLS
+                    Platform.runLater(() -> {
+                        Notifications.create()
+                                .owner(getScene().getWindow())
+                                .text(Bundle.ListTimeline_taggedTooltip_error())
+                                .showError();
+                    });
+                }
+                getEvent().getArtifactID().ifPresent(artifactID -> {
+                    //get artifact tags, if there is an artifact associated with the event.
+                    try {
+                        BlackboardArtifact artifact = sleuthkitCase.getBlackboardArtifact(artifactID);
+                        tagsManager.getBlackboardArtifactTagsByArtifact(artifact).stream()
+                                .map(tag -> tag.getName().getDisplayName())
+                                .forEach(tagNames::add);
+                    } catch (TskCoreException ex) {
+                        LOGGER.log(Level.SEVERE, "Failed to lookup tags for artifact id " + artifactID, ex); //NON-NLS
+                        Platform.runLater(() -> {
+                            Notifications.create()
+                                    .owner(getScene().getWindow())
+                                    .text(Bundle.ListTimeline_taggedTooltip_error())
+                                    .showError();
+                        });
+                    }
+                });
+                Tooltip tooltip = new Tooltip(Bundle.ListTimeline_taggedTooltip_text(String.join("\n", tagNames))); //NON-NLS
+                tooltip.setGraphic(new ImageView(TAG));
+                setTooltip(tooltip);
+            }
+        }
+    }
+
+    /**
+     * TableCell to show the hash hits if any associated with the file backing
+     * an event.
+     */
+    private class HashHitCell extends EventTableCell {
+
+        /**
+         * Constructor
+         */
+        HashHitCell() {
+            setAlignment(Pos.CENTER);
+        }
+
+        @NbBundle.Messages({
+            "ListTimeline.hashHitTooltip.error=There was a problem getting the hash set names for the selected event.",
+            "# {0} - hash set names",
+            "ListTimeline.hashHitTooltip.text=Hash Sets:\n{0}"})
+        @Override
+        protected void updateItem(CombinedEvent item, boolean empty) {
+            super.updateItem(item, empty);
+
+            if (empty || item == null || (getEvent().isHashHit() == false)) {
+                setGraphic(null);
+                setTooltip(null);
+            } else {
+                /*
+                 * if the cell is not empty and the event's file is a hash hit,
+                 * show the hash hit icon, and show a list of hash set names in
+                 * the tooltip
+                 */
+                setGraphic(new ImageView(HASH_HIT));
+                try {
+                    Set<String> hashSetNames = new TreeSet<>(sleuthkitCase.getAbstractFileById(getEvent().getFileID()).getHashSetNames());
+                    Tooltip tooltip = new Tooltip(Bundle.ListTimeline_hashHitTooltip_text(String.join("\n", hashSetNames))); //NON-NLS
+                    tooltip.setGraphic(new ImageView(HASH_HIT));
+                    setTooltip(tooltip);
+                } catch (TskCoreException ex) {
+                    LOGGER.log(Level.SEVERE, "Failed to lookup hash set names for obj id " + getEvent().getFileID(), ex); //NON-NLS
+                    Platform.runLater(() -> {
+                        Notifications.create()
+                                .owner(getScene().getWindow())
+                                .text(Bundle.ListTimeline_hashHitTooltip_error())
+                                .showError();
+                    });
+                }
             }
         }
     }
