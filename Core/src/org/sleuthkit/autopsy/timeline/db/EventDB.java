@@ -404,10 +404,10 @@ public class EventDB {
         ArrayList<CombinedEvent> results = new ArrayList<>();
 
         DBLock.lock();
-        final String query = "SELECT events.event_id AS event_id, full_description, time, file_id, GROUP_CONCAT(events.event_id), GROUP_CONCAT(sub_type)"
+        final String query = "SELECT full_description, time, file_id, GROUP_CONCAT(events.event_id), GROUP_CONCAT(sub_type)"
                 + " FROM events " + useHashHitTablesHelper(filter) + useTagTablesHelper(filter)
                 + " WHERE time >= " + startTime + " AND time <" + endTime + " AND " + SQLHelper.getSQLWhere(filter)
-                + " GROUP BY time,full_description, file_id ORDER BY time ASC, full_description, events.event_id";
+                + " GROUP BY time,full_description, file_id ORDER BY time ASC, full_description";
         try (Statement stmt = con.createStatement();
                 ResultSet rs = stmt.executeQuery(query)) {
             while (rs.next()) {
