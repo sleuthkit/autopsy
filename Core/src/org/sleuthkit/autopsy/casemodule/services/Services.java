@@ -46,23 +46,18 @@ public class Services implements Closeable {
      * manager, keyword search, blackboard).
      *
      * @param caseDb The case database for the current case.
-     *
-     * @deprecated Use Case.getCurrentCase().getServices() instead.
-     *
-     * TODO (AUT-2158): Prevent public construction of the Services class.
      */
-    @Deprecated
     public Services(SleuthkitCase caseDb) {
-        fileManager = new FileManager();
+        fileManager = new FileManager(caseDb);
         services.add(fileManager);
 
-        tagsManager = new TagsManager();
+        tagsManager = new TagsManager(caseDb);
         services.add(tagsManager);
 
         keywordSearchService = Lookup.getDefault().lookup(KeywordSearchService.class);
         services.add(keywordSearchService);
 
-        blackboard = new Blackboard();
+        blackboard = new Blackboard(caseDb);
         services.add(blackboard);
     }
 
@@ -106,11 +101,8 @@ public class Services implements Closeable {
      * Closes the services for the current case.
      *
      * @throws IOException if there is a problem closing the services.
-     * @deprecated Services clients other than the case should not close the
-     * services.
      */
     @Override
-    @Deprecated
     public void close() throws IOException {
         for (Closeable service : services) {
             service.close();

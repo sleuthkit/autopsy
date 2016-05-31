@@ -282,7 +282,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
     /**
      * Constructor for the Case class
      */
-    @SuppressWarnings("deprecation")    
     private Case(CaseMetadata caseMetadata, SleuthkitCase db) {
         this.caseMetadata = caseMetadata;
         this.db = db;
@@ -836,7 +835,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
     /**
      * Closes this case. This methods close the xml and clear all the fields.
      */
-    @SuppressWarnings("deprecation")
     public void closeCase() throws CaseActionException {
         changeCase(null);
         try {
