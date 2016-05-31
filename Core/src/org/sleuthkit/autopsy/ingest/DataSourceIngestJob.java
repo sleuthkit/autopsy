@@ -31,10 +31,19 @@ import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.IngestJobInfo;
+import org.sleuthkit.datamodel.IngestModuleInfo;
+import org.sleuthkit.datamodel.IngestModuleType;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * Encapsulates a data source and the ingest module pipelines used to process
@@ -151,6 +160,8 @@ final class DataSourceIngestJob {
     private ProgressHandle fileIngestProgress;
     private String currentFileIngestModule = "";
     private String currentFileIngestTask = "";
+    private List<IngestModuleInfo> ingestModules = new ArrayList<>();
+    private IngestJobInfo ingestJob;
 
     /**
      * A data source ingest job uses this field to report its creation time.
@@ -242,6 +253,23 @@ final class DataSourceIngestJob {
              * interrupted flag rather than just swallowing the exception.
              */
             Thread.currentThread().interrupt();
+        }
+        SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+        try {
+            for (IngestModuleTemplate module : firstStageDataSourceModuleTemplates) {
+                IngestModuleType type = module.isDataSourceIngestModuleTemplate() ? IngestModuleType.DATA_SOURCE_LEVEL : IngestModuleType.FILE_LEVEL;
+                ingestModules.add(skCase.addIngestModule(module.getModuleName(), currentFileIngestTask, type, module.getModuleFactory().getModuleVersionNumber()));
+            }
+            for (IngestModuleTemplate module : fileIngestModuleTemplates) {
+                IngestModuleType type = module.isDataSourceIngestModuleTemplate() ? IngestModuleType.DATA_SOURCE_LEVEL : IngestModuleType.FILE_LEVEL;
+                ingestModules.add(skCase.addIngestModule(module.getModuleName(), currentFileIngestTask, type, module.getModuleFactory().getModuleVersionNumber()));
+            }
+            for (IngestModuleTemplate module : secondStageDataSourceModuleTemplates) {
+                IngestModuleType type = module.isDataSourceIngestModuleTemplate() ? IngestModuleType.DATA_SOURCE_LEVEL : IngestModuleType.FILE_LEVEL;
+                ingestModules.add(skCase.addIngestModule(module.getModuleName(), currentFileIngestTask, type, module.getModuleFactory().getModuleVersionNumber()));
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Failed to add ingest modules to database.", ex);
         }
     }
 
@@ -364,6 +392,11 @@ final class DataSourceIngestJob {
             } else if (this.hasSecondStageDataSourceIngestPipeline()) {
                 logger.log(Level.INFO, "Starting second stage analysis for {0} (jobId={1}), no first stage configured", new Object[]{dataSource.getName(), this.id}); //NON-NLS
                 this.startSecondStage();
+            }
+            try {
+                this.ingestJob = Case.getCurrentCase().getSleuthkitCase().addIngestJob(dataSource, NetworkUtils.getLocalHostName(), ingestModules, this.createTime);
+            } catch (TskCoreException ex) {
+               logger.log(Level.SEVERE, "Failed to add ingest job to database.", ex);
             }
         }
         return errors;
@@ -641,7 +674,13 @@ final class DataSourceIngestJob {
                 }
             }
         }
-
+        try {
+            this.ingestJob.setEndDate(new Date().toInstant().toEpochMilli());
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Failed to set end date for ingest job in database.", ex);
+        } catch (TskDataException ex) {
+            Exceptions.printStackTrace(ex);
+        }
         this.parentJob.dataSourceJobFinished(this);
     }
 
