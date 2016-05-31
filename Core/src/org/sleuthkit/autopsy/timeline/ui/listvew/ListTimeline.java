@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.listvew;
 
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Iterables;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,8 +26,11 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.binding.StringBinding;
@@ -37,6 +39,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
@@ -58,6 +61,7 @@ import org.controlsfx.control.Notifications;
 import org.openide.awt.Actions;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
@@ -68,6 +72,9 @@ import org.sleuthkit.autopsy.timeline.datamodel.eventtype.BaseTypes;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.FileSystemTypes;
 import org.sleuthkit.autopsy.timeline.explorernodes.EventNode;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -107,6 +114,8 @@ class ListTimeline extends BorderPane {
      * Observable list used to track selected events.
      */
     private final ObservableList<Long> selectedEventIDs = FXCollections.observableArrayList();
+    private final SleuthkitCase sleuthkitCase;
+    private final TagsManager tagsManager;
 
     /**
      * Constructor
@@ -115,6 +124,8 @@ class ListTimeline extends BorderPane {
      */
     ListTimeline(TimeLineController controller) {
         this.controller = controller;
+        sleuthkitCase = controller.getAutopsyCase().getSleuthkitCase();
+        tagsManager = controller.getAutopsyCase().getServices().getTagsManager();
         FXMLConstructor.construct(this, ListTimeline.class, "ListTimeline.fxml");
     }
 
@@ -174,10 +185,10 @@ class ListTimeline extends BorderPane {
         table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         table.getSelectionModel().getSelectedItems().addListener((Observable observable) -> {
             //keep the selectedEventsIDs in sync with the table's selection model, via getRepresentitiveEventID(). 
-            selectedEventIDs.setAll(FluentIterable.from(table.getSelectionModel().getSelectedItems())
+            selectedEventIDs.setAll(table.getSelectionModel().getSelectedItems().stream()
                     .filter(Objects::nonNull)
-                    .transform(CombinedEvent::getRepresentativeEventID)
-                    .toSet());
+                    .map(CombinedEvent::getRepresentativeEventID)
+                    .collect(Collectors.toSet()));
         });
     }
 
@@ -215,6 +226,12 @@ class ListTimeline extends BorderPane {
 
     private class TaggedCell extends EventTableCell {
 
+        TaggedCell() {
+            setAlignment(Pos.CENTER);
+        }
+
+        @NbBundle.Messages({
+            "ListTimeline.taggedTooltip.error=There was a problem getting the tag names for the selected event."})
         @Override
         protected void updateItem(CombinedEvent item, boolean empty) {
             super.updateItem(item, empty);
@@ -224,6 +241,40 @@ class ListTimeline extends BorderPane {
                 setTooltip(null);
             } else {
                 setGraphic(new ImageView(TAG));
+                SortedSet<String> tagNames = new TreeSet<>();
+                try {
+                    AbstractFile abstractFileById = sleuthkitCase.getAbstractFileById(getEvent().getFileID());
+                    tagsManager.getContentTagsByContent(abstractFileById).stream()
+                            .map(tag -> tag.getName().getDisplayName())
+                            .forEach(tagNames::add);
+
+                } catch (TskCoreException ex) {
+                    LOGGER.log(Level.SEVERE, "Failed to lookup tags for obj id " + getEvent().getFileID(), ex);
+                    Platform.runLater(() -> {
+                        Notifications.create()
+                                .owner(getScene().getWindow())
+                                .text(Bundle.ListTimeline_taggedTooltip_error())
+                                .showError();
+                    });
+                }
+                getEvent().getArtifactID().ifPresent(artifactID -> {
+                    try {
+                        BlackboardArtifact artifact = sleuthkitCase.getBlackboardArtifact(artifactID);
+                        tagsManager.getBlackboardArtifactTagsByArtifact(artifact).stream()
+                                .map(tag -> tag.getName().getDisplayName())
+                                .forEach(tagNames::add);
+                    } catch (TskCoreException ex) {
+                        LOGGER.log(Level.SEVERE, "Failed to lookup tags for artifact id " + artifactID, ex);
+                        Platform.runLater(() -> {
+                            Notifications.create()
+                                    .owner(getScene().getWindow())
+                                    .text(Bundle.ListTimeline_taggedTooltip_error())
+                                    .showError();
+                        });
+                    }
+                });
+
+                setTooltip(new Tooltip("Tags: \n" + String.join("\n", tagNames)));
             }
         }
     }
@@ -233,6 +284,10 @@ class ListTimeline extends BorderPane {
      * an event.
      */
     private class HashHitCell extends EventTableCell {
+
+        HashHitCell() {
+            setAlignment(Pos.CENTER);
+        }
 
         @NbBundle.Messages({
             "ListTimeline.hashHitTooltip.error=There was a problem getting the hash set names for the selected event."})
@@ -246,7 +301,8 @@ class ListTimeline extends BorderPane {
             } else {
                 setGraphic(new ImageView(HASH_HIT));
                 try {
-                    Set<String> hashSetNames = controller.getAutopsyCase().getSleuthkitCase().getAbstractFileById(getEvent().getFileID()).getHashSetNames();
+                    Set<String> hashSetNames = new TreeSet<>(sleuthkitCase.getAbstractFileById(getEvent().getFileID()).getHashSetNames());
+
                     setTooltip(new Tooltip("Hash Sets: \n" + String.join("\n", hashSetNames)));
                 } catch (TskCoreException ex) {
                     LOGGER.log(Level.SEVERE, "Failed to lookup hash set names for obj id " + getEvent().getFileID(), ex);
