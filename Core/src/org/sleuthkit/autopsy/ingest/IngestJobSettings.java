@@ -33,10 +33,10 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.openide.util.io.NbObjectInputStream;
 import org.openide.util.io.NbObjectOutputStream;
+import org.python.util.PythonObjectInputStream;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.python.util.PythonObjectInputStream;
 
 /**
  * Encapsulates the ingest job settings for a particular execution context.
@@ -467,17 +467,9 @@ public class IngestJobSettings {
      * @param settings The ingest job settings for the ingest module
      */
     private void saveModuleSettings(IngestModuleFactory factory, IngestModuleIngestJobSettings settings) {
-        try {
-            String moduleSettingsFilePath = getModuleSettingsFilePath(factory);
-            // compiled python modules have substring org.python.proxies. It can be used to identify them.
-            if (isPythonModuleSettingsFile(moduleSettingsFilePath)) {
-                // compiled python modules have variable instance number as a part of their file name.
-                // This block of code gets rid of that variable instance number and helps maitains constant module name over multiple runs.
-                moduleSettingsFilePath = moduleSettingsFilePath.replaceAll("[$][\\d]+.settings$", "\\$.settings"); //NON-NLS NON-NLS
-            }
-            try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(moduleSettingsFilePath))) {
-                out.writeObject(settings);
-            }
+        String moduleSettingsFilePath = FactoryClassNameNormalizer.normalize(factory.getClass().getCanonicalName()) + MODULE_SETTINGS_FILE_EXT;
+        try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(moduleSettingsFilePath))) {
+            out.writeObject(settings);
         } catch (IOException ex) {
             String warning = NbBundle.getMessage(IngestJobSettings.class, "IngestJobSettings.moduleSettingsSave.warning", factory.getModuleDisplayName(), this.executionContext); //NON-NLS
             logger.log(Level.SEVERE, warning, ex);

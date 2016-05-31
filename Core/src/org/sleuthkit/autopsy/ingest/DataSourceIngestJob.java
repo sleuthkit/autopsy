@@ -31,7 +31,6 @@ import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -258,15 +257,18 @@ final class DataSourceIngestJob {
         try {
             for (IngestModuleTemplate module : firstStageDataSourceModuleTemplates) {
                 IngestModuleType type = module.isDataSourceIngestModuleTemplate() ? IngestModuleType.DATA_SOURCE_LEVEL : IngestModuleType.FILE_LEVEL;
-                ingestModules.add(skCase.addIngestModule(module.getModuleName(), currentFileIngestTask, type, module.getModuleFactory().getModuleVersionNumber()));
+                String uniqueName = FactoryClassNameNormalizer.normalize(module.getModuleFactory().getClass().getCanonicalName()) + "-" + module.getModuleFactory().getModuleDisplayName() + "-" + type.getTypeName() + "-" + module.getModuleFactory().getModuleVersionNumber();
+                ingestModules.add(skCase.addIngestModule(module.getModuleName(), uniqueName, type, module.getModuleFactory().getModuleVersionNumber()));
             }
             for (IngestModuleTemplate module : fileIngestModuleTemplates) {
                 IngestModuleType type = module.isDataSourceIngestModuleTemplate() ? IngestModuleType.DATA_SOURCE_LEVEL : IngestModuleType.FILE_LEVEL;
-                ingestModules.add(skCase.addIngestModule(module.getModuleName(), currentFileIngestTask, type, module.getModuleFactory().getModuleVersionNumber()));
+                String uniqueName = FactoryClassNameNormalizer.normalize(module.getModuleFactory().getClass().getCanonicalName()) + "-" + module.getModuleFactory().getModuleDisplayName() + "-" + type.getTypeName() + "-" + module.getModuleFactory().getModuleVersionNumber();
+                ingestModules.add(skCase.addIngestModule(module.getModuleName(), uniqueName, type, module.getModuleFactory().getModuleVersionNumber()));
             }
             for (IngestModuleTemplate module : secondStageDataSourceModuleTemplates) {
                 IngestModuleType type = module.isDataSourceIngestModuleTemplate() ? IngestModuleType.DATA_SOURCE_LEVEL : IngestModuleType.FILE_LEVEL;
-                ingestModules.add(skCase.addIngestModule(module.getModuleName(), currentFileIngestTask, type, module.getModuleFactory().getModuleVersionNumber()));
+                String uniqueName = FactoryClassNameNormalizer.normalize(module.getModuleFactory().getClass().getCanonicalName()) + "-" + module.getModuleFactory().getModuleDisplayName() + "-" + type.getTypeName() + "-" + module.getModuleFactory().getModuleVersionNumber();
+                ingestModules.add(skCase.addIngestModule(module.getModuleName(), uniqueName, type, module.getModuleFactory().getModuleVersionNumber()));
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed to add ingest modules to database.", ex);
@@ -396,7 +398,7 @@ final class DataSourceIngestJob {
             try {
                 this.ingestJob = Case.getCurrentCase().getSleuthkitCase().addIngestJob(dataSource, NetworkUtils.getLocalHostName(), ingestModules, this.createTime);
             } catch (TskCoreException ex) {
-               logger.log(Level.SEVERE, "Failed to add ingest job to database.", ex);
+                logger.log(Level.SEVERE, "Failed to add ingest job to database.", ex);
             }
         }
         return errors;
@@ -674,14 +676,14 @@ final class DataSourceIngestJob {
                 }
             }
         }
-        try {
-            this.ingestJob.setEndDate(new Date().toInstant().toEpochMilli());
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to set end date for ingest job in database.", ex);
-        } catch (TskDataException ex) {
-            Exceptions.printStackTrace(ex);
+        if (!this.cancelled) {
+            try {
+                this.ingestJob.setEndDate(new Date().toInstant().toEpochMilli());
+            } catch (TskCoreException | TskDataException ex) {
+                logger.log(Level.SEVERE, "Failed to set end date for ingest job in database.", ex);
+            }
+            this.parentJob.dataSourceJobFinished(this);
         }
-        this.parentJob.dataSourceJobFinished(this);
     }
 
     /**
