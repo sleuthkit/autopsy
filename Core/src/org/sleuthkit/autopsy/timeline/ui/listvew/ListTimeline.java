@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.listvew;
 
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Iterables;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,8 +25,12 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.binding.StringBinding;
@@ -36,6 +39,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
@@ -46,8 +50,11 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
+import javafx.scene.control.Tooltip;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
 import javafx.util.Callback;
 import javax.swing.Action;
 import javax.swing.JMenuItem;
@@ -55,6 +62,7 @@ import org.controlsfx.control.Notifications;
 import org.openide.awt.Actions;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
@@ -62,9 +70,13 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.CombinedEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.BaseTypes;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.FileSystemTypes;
 import org.sleuthkit.autopsy.timeline.explorernodes.EventNode;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -73,6 +85,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 class ListTimeline extends BorderPane {
 
     private static final Logger LOGGER = Logger.getLogger(ListTimeline.class.getName());
+
+    private static final Image HASH_HIT = new Image("/org/sleuthkit/autopsy/images/hashset_hits.png");  //NON-NLS 
+    private static final Image TAG = new Image("/org/sleuthkit/autopsy/images/green-tag-icon-16.png");  //NON-NLS
 
     /**
      * call-back used to wrap the CombinedEvent in a ObservableValue
@@ -93,13 +108,19 @@ class ListTimeline extends BorderPane {
     private TableColumn<CombinedEvent, CombinedEvent> typeColumn;
     @FXML
     private TableColumn<CombinedEvent, CombinedEvent> knownColumn;
-
-    private final TimeLineController controller;
+    @FXML
+    private TableColumn<CombinedEvent, CombinedEvent> taggedColumn;
+    @FXML
+    private TableColumn<CombinedEvent, CombinedEvent> hashHitColumn;
 
     /**
      * Observable list used to track selected events.
      */
     private final ObservableList<Long> selectedEventIDs = FXCollections.observableArrayList();
+
+    private final TimeLineController controller;
+    private final SleuthkitCase sleuthkitCase;
+    private final TagsManager tagsManager;
 
     /**
      * Constructor
@@ -108,21 +129,23 @@ class ListTimeline extends BorderPane {
      */
     ListTimeline(TimeLineController controller) {
         this.controller = controller;
-        FXMLConstructor.construct(this, ListTimeline.class, "ListTimeline.fxml");
+        sleuthkitCase = controller.getAutopsyCase().getSleuthkitCase();
+        tagsManager = controller.getAutopsyCase().getServices().getTagsManager();
+        FXMLConstructor.construct(this, ListTimeline.class, "ListTimeline.fxml"); //NON-NLS
     }
 
     @FXML
     @NbBundle.Messages({
         "# {0} - the number of events",
-        "ListTimeline.evetnCountLabel.text={0} events"})
+        "ListTimeline.eventCountLabel.text={0} events"})
     void initialize() {
-        assert eventCountLabel != null : "fx:id=\"eventCountLabel\" was not injected: check your FXML file 'ListViewPane.fxml'.";
-        assert table != null : "fx:id=\"table\" was not injected: check your FXML file 'ListViewPane.fxml'.";
-        assert idColumn != null : "fx:id=\"idColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
-        assert dateTimeColumn != null : "fx:id=\"dateTimeColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
-        assert descriptionColumn != null : "fx:id=\"descriptionColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
-        assert typeColumn != null : "fx:id=\"typeColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
-        assert knownColumn != null : "fx:id=\"knownColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
+        assert eventCountLabel != null : "fx:id=\"eventCountLabel\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
+        assert table != null : "fx:id=\"table\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
+        assert idColumn != null : "fx:id=\"idColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
+        assert dateTimeColumn != null : "fx:id=\"dateTimeColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
+        assert descriptionColumn != null : "fx:id=\"descriptionColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
+        assert typeColumn != null : "fx:id=\"typeColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
+        assert knownColumn != null : "fx:id=\"knownColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
 
         //override default row with one that provides context menus
         table.setRowFactory(tableView -> new EventRow());
@@ -146,6 +169,12 @@ class ListTimeline extends BorderPane {
         knownColumn.setCellFactory(col -> new TextEventTableCell(singleEvent ->
                 singleEvent.getKnown().getName()));
 
+        taggedColumn.setCellValueFactory(CELL_VALUE_FACTORY);
+        taggedColumn.setCellFactory(col -> new TaggedCell());
+
+        hashHitColumn.setCellValueFactory(CELL_VALUE_FACTORY);
+        hashHitColumn.setCellFactory(col -> new HashHitCell());
+
         //bind event count label to number of items in the table
         eventCountLabel.textProperty().bind(new StringBinding() {
             {
@@ -154,17 +183,17 @@ class ListTimeline extends BorderPane {
 
             @Override
             protected String computeValue() {
-                return Bundle.ListTimeline_evetnCountLabel_text(table.getItems().size());
+                return Bundle.ListTimeline_eventCountLabel_text(table.getItems().size());
             }
         });
 
         table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         table.getSelectionModel().getSelectedItems().addListener((Observable observable) -> {
             //keep the selectedEventsIDs in sync with the table's selection model, via getRepresentitiveEventID(). 
-            selectedEventIDs.setAll(FluentIterable.from(table.getSelectionModel().getSelectedItems())
+            selectedEventIDs.setAll(table.getSelectionModel().getSelectedItems().stream()
                     .filter(Objects::nonNull)
-                    .transform(CombinedEvent::getRepresentativeEventID)
-                    .toSet());
+                    .map(CombinedEvent::getRepresentativeEventID)
+                    .collect(Collectors.toSet()));
         });
     }
 
@@ -224,43 +253,183 @@ class ListTimeline extends BorderPane {
      */
     private class EventTypeCell extends EventTableCell {
 
+        @NbBundle.Messages({
+            "ListView.EventTypeCell.modifiedTooltip=File Modified ( M )",
+            "ListView.EventTypeCell.accessedTooltip=File Accessed ( A )",
+            "ListView.EventTypeCell.createdTooltip=File Created ( B, for Born )",
+            "ListView.EventTypeCell.changedTooltip=File Changed ( C )"
+        })
         @Override
         protected void updateItem(CombinedEvent item, boolean empty) {
             super.updateItem(item, empty);
 
             if (empty || item == null) {
-                setText("");
+                setText(null);
+                setGraphic(null);
+                setTooltip(null);
             } else {
                 if (item.getEventTypes().stream().allMatch(eventType -> eventType instanceof FileSystemTypes)) {
-                    String s = "";
+                    String typeString = ""; //NON-NLS
+                    VBox toolTipVbox = new VBox(5);
+
                     for (FileSystemTypes type : Arrays.asList(FileSystemTypes.FILE_MODIFIED, FileSystemTypes.FILE_ACCESSED, FileSystemTypes.FILE_CHANGED, FileSystemTypes.FILE_CREATED)) {
                         if (item.getEventTypes().contains(type)) {
                             switch (type) {
                                 case FILE_MODIFIED:
-                                    s += "M";
+                                    typeString += "M"; //NON-NLS
+                                    toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_modifiedTooltip(), new ImageView(type.getFXImage())));
                                     break;
                                 case FILE_ACCESSED:
-                                    s += "A";
+                                    typeString += "A"; //NON-NLS
+                                    toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_accessedTooltip(), new ImageView(type.getFXImage())));
                                     break;
                                 case FILE_CREATED:
-                                    s += "B";
+                                    typeString += "B"; //NON-NLS
+                                    toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_createdTooltip(), new ImageView(type.getFXImage())));
                                     break;
                                 case FILE_CHANGED:
-                                    s += "C";
+                                    typeString += "C"; //NON-NLS
+                                    toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_changedTooltip(), new ImageView(type.getFXImage())));
                                     break;
                                 default:
-                                    throw new UnsupportedOperationException("Unknown FileSystemType: " + type.name());
+                                    throw new UnsupportedOperationException("Unknown FileSystemType: " + type.name()); //NON-NLS
                             }
                         } else {
-                            s += "_";
+                            typeString += "_"; //NON-NLS
                         }
                     }
-                    setText(s);
+                    setText(typeString);
                     setGraphic(new ImageView(BaseTypes.FILE_SYSTEM.getFXImage()));
+                    Tooltip tooltip = new Tooltip();
+                    tooltip.setGraphic(toolTipVbox);
+                    setTooltip(tooltip);
+
                 } else {
-                    setText(Iterables.getOnlyElement(item.getEventTypes()).getDisplayName());
-                    setGraphic(new ImageView(Iterables.getOnlyElement(item.getEventTypes()).getFXImage()));
+                    EventType eventType = Iterables.getOnlyElement(item.getEventTypes());
+                    setText(eventType.getDisplayName());
+                    setGraphic(new ImageView(eventType.getFXImage()));
+                    setTooltip(new Tooltip(eventType.getDisplayName()));
                 };
+            }
+        }
+    }
+
+    /**
+     * A TableCell that shows information about the tags applied to a event.
+     */
+    private class TaggedCell extends EventTableCell {
+
+        /**
+         * Constructor
+         */
+        TaggedCell() {
+            setAlignment(Pos.CENTER);
+        }
+
+        @NbBundle.Messages({
+            "ListTimeline.taggedTooltip.error=There was a problem getting the tag names for the selected event.",
+            "# {0} - tag names",
+            "ListTimeline.taggedTooltip.text=Tags:\n{0}"})
+        @Override
+        protected void updateItem(CombinedEvent item, boolean empty) {
+            super.updateItem(item, empty);
+
+            if (empty || item == null || (getEvent().isTagged() == false)) {
+                setGraphic(null);
+                setTooltip(null);
+            } else {
+                /*
+                 * if the cell is not empty and the event is tagged, show the
+                 * tagged icon, and show a list of tag names in the tooltip
+                 */
+                setGraphic(new ImageView(TAG));
+
+                SortedSet<String> tagNames = new TreeSet<>();
+                try {
+                    //get file tags
+                    AbstractFile abstractFileById = sleuthkitCase.getAbstractFileById(getEvent().getFileID());
+                    tagsManager.getContentTagsByContent(abstractFileById).stream()
+                            .map(tag -> tag.getName().getDisplayName())
+                            .forEach(tagNames::add);
+
+                } catch (TskCoreException ex) {
+                    LOGGER.log(Level.SEVERE, "Failed to lookup tags for obj id " + getEvent().getFileID(), ex); //NON-NLS
+                    Platform.runLater(() -> {
+                        Notifications.create()
+                                .owner(getScene().getWindow())
+                                .text(Bundle.ListTimeline_taggedTooltip_error())
+                                .showError();
+                    });
+                }
+                getEvent().getArtifactID().ifPresent(artifactID -> {
+                    //get artifact tags, if there is an artifact associated with the event.
+                    try {
+                        BlackboardArtifact artifact = sleuthkitCase.getBlackboardArtifact(artifactID);
+                        tagsManager.getBlackboardArtifactTagsByArtifact(artifact).stream()
+                                .map(tag -> tag.getName().getDisplayName())
+                                .forEach(tagNames::add);
+                    } catch (TskCoreException ex) {
+                        LOGGER.log(Level.SEVERE, "Failed to lookup tags for artifact id " + artifactID, ex); //NON-NLS
+                        Platform.runLater(() -> {
+                            Notifications.create()
+                                    .owner(getScene().getWindow())
+                                    .text(Bundle.ListTimeline_taggedTooltip_error())
+                                    .showError();
+                        });
+                    }
+                });
+                Tooltip tooltip = new Tooltip(Bundle.ListTimeline_taggedTooltip_text(String.join("\n", tagNames))); //NON-NLS
+                tooltip.setGraphic(new ImageView(TAG));
+                setTooltip(tooltip);
+            }
+        }
+    }
+
+    /**
+     * TableCell to show the hash hits if any associated with the file backing
+     * an event.
+     */
+    private class HashHitCell extends EventTableCell {
+
+        /**
+         * Constructor
+         */
+        HashHitCell() {
+            setAlignment(Pos.CENTER);
+        }
+
+        @NbBundle.Messages({
+            "ListTimeline.hashHitTooltip.error=There was a problem getting the hash set names for the selected event.",
+            "# {0} - hash set names",
+            "ListTimeline.hashHitTooltip.text=Hash Sets:\n{0}"})
+        @Override
+        protected void updateItem(CombinedEvent item, boolean empty) {
+            super.updateItem(item, empty);
+
+            if (empty || item == null || (getEvent().isHashHit() == false)) {
+                setGraphic(null);
+                setTooltip(null);
+            } else {
+                /*
+                 * if the cell is not empty and the event's file is a hash hit,
+                 * show the hash hit icon, and show a list of hash set names in
+                 * the tooltip
+                 */
+                setGraphic(new ImageView(HASH_HIT));
+                try {
+                    Set<String> hashSetNames = new TreeSet<>(sleuthkitCase.getAbstractFileById(getEvent().getFileID()).getHashSetNames());
+                    Tooltip tooltip = new Tooltip(Bundle.ListTimeline_hashHitTooltip_text(String.join("\n", hashSetNames))); //NON-NLS
+                    tooltip.setGraphic(new ImageView(HASH_HIT));
+                    setTooltip(tooltip);
+                } catch (TskCoreException ex) {
+                    LOGGER.log(Level.SEVERE, "Failed to lookup hash set names for obj id " + getEvent().getFileID(), ex); //NON-NLS
+                    Platform.runLater(() -> {
+                        Notifications.create()
+                                .owner(getScene().getWindow())
+                                .text(Bundle.ListTimeline_hashHitTooltip_error())
+                                .showError();
+                    });
+                }
             }
         }
     }
@@ -281,7 +450,7 @@ class ListTimeline extends BorderPane {
         TextEventTableCell(Function<SingleEvent, String> textSupplier) {
             this.textSupplier = textSupplier;
             setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
-            setEllipsisString(" ... ");
+            setEllipsisString(" ... "); //NON-NLS
         }
 
         @Override
@@ -366,7 +535,7 @@ class ListTimeline extends BorderPane {
                             } else {
                                 String actionName = Objects.toString(action.getValue(Action.NAME));
                                 //for now, suppress properties and tools actions, by ignoring them
-                                if (Arrays.asList("&Properties", "Tools").contains(actionName) == false) {
+                                if (Arrays.asList("&Properties", "Tools").contains(actionName) == false) { //NON-NLS
                                     if (action instanceof Presenter.Popup) {
                                         /*
                                          * If the action is really the root of a
@@ -388,9 +557,9 @@ class ListTimeline extends BorderPane {
                                 .show(this, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
                     } catch (IllegalStateException ex) {
                         //Since the case is closed, the user probably doesn't care about this, just log it as a precaution.
-                        LOGGER.log(Level.SEVERE, "There was no case open to lookup the Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
+                        LOGGER.log(Level.SEVERE, "There was no case open to lookup the Sleuthkit object backing a SingleEvent.", ex); //NON-NLS
                     } catch (TskCoreException ex) {
-                        LOGGER.log(Level.SEVERE, "Failed to lookup Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
+                        LOGGER.log(Level.SEVERE, "Failed to lookup Sleuthkit object backing a SingleEvent.", ex); //NON-NLS
                         Platform.runLater(() -> {
                             Notifications.create()
                                     .owner(getScene().getWindow())
