@@ -69,6 +69,7 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.CombinedEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.BaseTypes;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.FileSystemTypes;
 import org.sleuthkit.autopsy.timeline.explorernodes.EventNode;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
@@ -83,6 +84,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 class ListTimeline extends BorderPane {
 
     private static final Logger LOGGER = Logger.getLogger(ListTimeline.class.getName());
+
+    private static final Image HASH_HIT = new Image("/org/sleuthkit/autopsy/images/hashset_hits.png");  //NON-NLS 
+    private static final Image TAG = new Image("/org/sleuthkit/autopsy/images/green-tag-icon-16.png");  //NON-NLS
 
     /**
      * call-back used to wrap the CombinedEvent in a ObservableValue
@@ -108,12 +112,12 @@ class ListTimeline extends BorderPane {
     @FXML
     private TableColumn<CombinedEvent, CombinedEvent> hashHitColumn;
 
-    private final TimeLineController controller;
-
     /**
      * Observable list used to track selected events.
      */
     private final ObservableList<Long> selectedEventIDs = FXCollections.observableArrayList();
+
+    private final TimeLineController controller;
     private final SleuthkitCase sleuthkitCase;
     private final TagsManager tagsManager;
 
@@ -126,7 +130,7 @@ class ListTimeline extends BorderPane {
         this.controller = controller;
         sleuthkitCase = controller.getAutopsyCase().getSleuthkitCase();
         tagsManager = controller.getAutopsyCase().getServices().getTagsManager();
-        FXMLConstructor.construct(this, ListTimeline.class, "ListTimeline.fxml");
+        FXMLConstructor.construct(this, ListTimeline.class, "ListTimeline.fxml"); //NON-NLS
     }
 
     @FXML
@@ -134,13 +138,13 @@ class ListTimeline extends BorderPane {
         "# {0} - the number of events",
         "ListTimeline.eventCountLabel.text={0} events"})
     void initialize() {
-        assert eventCountLabel != null : "fx:id=\"eventCountLabel\" was not injected: check your FXML file 'ListViewPane.fxml'.";
-        assert table != null : "fx:id=\"table\" was not injected: check your FXML file 'ListViewPane.fxml'.";
-        assert idColumn != null : "fx:id=\"idColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
-        assert dateTimeColumn != null : "fx:id=\"dateTimeColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
-        assert descriptionColumn != null : "fx:id=\"descriptionColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
-        assert typeColumn != null : "fx:id=\"typeColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
-        assert knownColumn != null : "fx:id=\"knownColumn\" was not injected: check your FXML file 'ListViewPane.fxml'.";
+        assert eventCountLabel != null : "fx:id=\"eventCountLabel\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
+        assert table != null : "fx:id=\"table\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
+        assert idColumn != null : "fx:id=\"idColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
+        assert dateTimeColumn != null : "fx:id=\"dateTimeColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
+        assert descriptionColumn != null : "fx:id=\"descriptionColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
+        assert typeColumn != null : "fx:id=\"typeColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
+        assert knownColumn != null : "fx:id=\"knownColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
 
         //override default row with one that provides context menus
         table.setRowFactory(tableView -> new EventRow());
@@ -219,10 +223,6 @@ class ListTimeline extends BorderPane {
     ObservableList<Long> getSelectedEventIDs() {
         return selectedEventIDs;
     }
-    private static final Image HASH_HIT = new Image("/org/sleuthkit/autopsy/images/hashset_hits.png");  // NON-NLS 
-    private static final Image TAG = new Image("/org/sleuthkit/autopsy/images/green-tag-icon-16.png");  // NON-NLS
-    private static final Image PIN = new Image("/org/sleuthkit/autopsy/timeline/images/marker--plus.png");  // NON-NLS
-    private static final Image UNPIN = new Image("/org/sleuthkit/autopsy/timeline/images/marker--minus.png");  // NON-NLS
 
     private class TaggedCell extends EventTableCell {
 
@@ -231,7 +231,9 @@ class ListTimeline extends BorderPane {
         }
 
         @NbBundle.Messages({
-            "ListTimeline.taggedTooltip.error=There was a problem getting the tag names for the selected event."})
+            "ListTimeline.taggedTooltip.error=There was a problem getting the tag names for the selected event.",
+            "# {0} - tag names",
+            "ListTimeline.taggedTooltip.text=Tags:\n{0}"})
         @Override
         protected void updateItem(CombinedEvent item, boolean empty) {
             super.updateItem(item, empty);
@@ -249,7 +251,7 @@ class ListTimeline extends BorderPane {
                             .forEach(tagNames::add);
 
                 } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to lookup tags for obj id " + getEvent().getFileID(), ex);
+                    LOGGER.log(Level.SEVERE, "Failed to lookup tags for obj id " + getEvent().getFileID(), ex); //NON-NLS
                     Platform.runLater(() -> {
                         Notifications.create()
                                 .owner(getScene().getWindow())
@@ -264,7 +266,7 @@ class ListTimeline extends BorderPane {
                                 .map(tag -> tag.getName().getDisplayName())
                                 .forEach(tagNames::add);
                     } catch (TskCoreException ex) {
-                        LOGGER.log(Level.SEVERE, "Failed to lookup tags for artifact id " + artifactID, ex);
+                        LOGGER.log(Level.SEVERE, "Failed to lookup tags for artifact id " + artifactID, ex); //NON-NLS
                         Platform.runLater(() -> {
                             Notifications.create()
                                     .owner(getScene().getWindow())
@@ -274,7 +276,7 @@ class ListTimeline extends BorderPane {
                     }
                 });
 
-                setTooltip(new Tooltip("Tags: \n" + String.join("\n", tagNames)));
+                setTooltip(new Tooltip(Bundle.ListTimeline_taggedTooltip_text(String.join("\n", tagNames)))); //NON-NLS
             }
         }
     }
@@ -290,7 +292,9 @@ class ListTimeline extends BorderPane {
         }
 
         @NbBundle.Messages({
-            "ListTimeline.hashHitTooltip.error=There was a problem getting the hash set names for the selected event."})
+            "ListTimeline.hashHitTooltip.error=There was a problem getting the hash set names for the selected event.",
+            "# {0} - hash set names",
+            "ListTimeline.hashHitTooltip.text=Hash Sets:\n{0}"})
         @Override
         protected void updateItem(CombinedEvent item, boolean empty) {
             super.updateItem(item, empty);
@@ -303,9 +307,9 @@ class ListTimeline extends BorderPane {
                 try {
                     Set<String> hashSetNames = new TreeSet<>(sleuthkitCase.getAbstractFileById(getEvent().getFileID()).getHashSetNames());
 
-                    setTooltip(new Tooltip("Hash Sets: \n" + String.join("\n", hashSetNames)));
+                    setTooltip(new Tooltip(Bundle.ListTimeline_hashHitTooltip_text(String.join("\n", hashSetNames)))); //NON-NLS
                 } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to lookup hash set names for obj id " + getEvent().getFileID(), ex);
+                    LOGGER.log(Level.SEVERE, "Failed to lookup hash set names for obj id " + getEvent().getFileID(), ex); //NON-NLS
                     Platform.runLater(() -> {
                         Notifications.create()
                                 .owner(getScene().getWindow())
@@ -345,6 +349,12 @@ class ListTimeline extends BorderPane {
      */
     private class EventTypeCell extends EventTableCell {
 
+        @NbBundle.Messages({
+            "ListView.EventTypeCell.modifiedTooltip=File Modified (M)",
+            "ListView.EventTypeCell.accessedTooltip=File Accessed (A)",
+            "ListView.EventTypeCell.createdTooltip=File Created (B, for Born)",
+            "ListView.EventTypeCell.changedTooltip=File Changed (C)"
+        })
         @Override
         protected void updateItem(CombinedEvent item, boolean empty) {
             super.updateItem(item, empty);
@@ -352,36 +362,48 @@ class ListTimeline extends BorderPane {
             if (empty || item == null) {
                 setText(null);
                 setGraphic(null);
+                setTooltip(null);
             } else {
                 if (item.getEventTypes().stream().allMatch(eventType -> eventType instanceof FileSystemTypes)) {
-                    String s = "";
+                    String typeString = ""; //NON-NLS
+                    String toolTipString = "";//NON-NLS
+
                     for (FileSystemTypes type : Arrays.asList(FileSystemTypes.FILE_MODIFIED, FileSystemTypes.FILE_ACCESSED, FileSystemTypes.FILE_CHANGED, FileSystemTypes.FILE_CREATED)) {
                         if (item.getEventTypes().contains(type)) {
                             switch (type) {
                                 case FILE_MODIFIED:
-                                    s += "M";
+                                    typeString += "M"; //NON-NLS
+
+                                    toolTipString += Bundle.ListView_EventTypeCell_modifiedTooltip() + "\n"; //NON-NLS
                                     break;
                                 case FILE_ACCESSED:
-                                    s += "A";
+                                    typeString += "A"; //NON-NLS
+                                    toolTipString += Bundle.ListView_EventTypeCell_accessedTooltip() + "\n"; //NON-NLS
                                     break;
                                 case FILE_CREATED:
-                                    s += "B";
+                                    typeString += "B"; //NON-NLS
+                                    toolTipString += Bundle.ListView_EventTypeCell_createdTooltip() + "\n"; //NON-NLS
                                     break;
                                 case FILE_CHANGED:
-                                    s += "C";
+                                    typeString += "C"; //NON-NLS
+                                    toolTipString += Bundle.ListView_EventTypeCell_changedTooltip() + "\n"; //NON-NLS
                                     break;
                                 default:
-                                    throw new UnsupportedOperationException("Unknown FileSystemType: " + type.name());
+                                    throw new UnsupportedOperationException("Unknown FileSystemType: " + type.name()); //NON-NLS
                             }
                         } else {
-                            s += "_";
+                            typeString += "_"; //NON-NLS
                         }
                     }
-                    setText(s);
+                    setText(typeString);
                     setGraphic(new ImageView(BaseTypes.FILE_SYSTEM.getFXImage()));
+                    setTooltip(new Tooltip(toolTipString));
+
                 } else {
-                    setText(Iterables.getOnlyElement(item.getEventTypes()).getDisplayName());
-                    setGraphic(new ImageView(Iterables.getOnlyElement(item.getEventTypes()).getFXImage()));
+                    EventType eventType = Iterables.getOnlyElement(item.getEventTypes());
+                    setText(eventType.getDisplayName());
+                    setGraphic(new ImageView(eventType.getFXImage()));
+                    setTooltip(new Tooltip(eventType.getDisplayName()));
                 };
             }
         }
@@ -403,7 +425,7 @@ class ListTimeline extends BorderPane {
         TextEventTableCell(Function<SingleEvent, String> textSupplier) {
             this.textSupplier = textSupplier;
             setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
-            setEllipsisString(" ... ");
+            setEllipsisString(" ... "); //NON-NLS
         }
 
         @Override
@@ -488,7 +510,7 @@ class ListTimeline extends BorderPane {
                             } else {
                                 String actionName = Objects.toString(action.getValue(Action.NAME));
                                 //for now, suppress properties and tools actions, by ignoring them
-                                if (Arrays.asList("&Properties", "Tools").contains(actionName) == false) {
+                                if (Arrays.asList("&Properties", "Tools").contains(actionName) == false) { //NON-NLS
                                     if (action instanceof Presenter.Popup) {
                                         /*
                                          * If the action is really the root of a
@@ -510,9 +532,9 @@ class ListTimeline extends BorderPane {
                                 .show(this, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
                     } catch (IllegalStateException ex) {
                         //Since the case is closed, the user probably doesn't care about this, just log it as a precaution.
-                        LOGGER.log(Level.SEVERE, "There was no case open to lookup the Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
+                        LOGGER.log(Level.SEVERE, "There was no case open to lookup the Sleuthkit object backing a SingleEvent.", ex); //NON-NLS
                     } catch (TskCoreException ex) {
-                        LOGGER.log(Level.SEVERE, "Failed to lookup Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
+                        LOGGER.log(Level.SEVERE, "Failed to lookup Sleuthkit object backing a SingleEvent.", ex); //NON-NLS
                         Platform.runLater(() -> {
                             Notifications.create()
                                     .owner(getScene().getWindow())
