@@ -29,10 +29,12 @@ import javax.swing.Action;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.VirtualDirectory;
@@ -134,7 +136,8 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
                     Bundle.VirtualDirectoryNode_createSheet_size_displayName(),
                     Bundle.VirtualDirectoryNode_createSheet_size_desc(),
                     this.content.getSize()));
-            try (ResultSet timeZoneSet = this.content.getSleuthkitCase().executeQuery("SELECT time_zone FROM data_source_info WHERE obj_id = " + this.content.getId()).getResultSet()) {
+            try (SleuthkitCase.CaseDbQuery query = Case.getCurrentCase().getSleuthkitCase().executeQuery("SELECT time_zone FROM data_source_info WHERE obj_id = " + this.content.getId())) {
+                ResultSet timeZoneSet = query.getResultSet();
                 if (timeZoneSet.next()) {
                     ss.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_timezone_name(),
                             Bundle.VirtualDirectoryNode_createSheet_timezone_displayName(),
@@ -144,7 +147,8 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
             } catch (SQLException | TskCoreException ex) {
                 logger.log(Level.SEVERE, "Failed to get time zone for the following image: " + this.content.getId(), ex);
             }
-            try (ResultSet deviceIdSet = this.content.getSleuthkitCase().executeQuery("SELECT device_id FROM data_source_info WHERE obj_id = " + this.content.getId()).getResultSet()) {
+            try (SleuthkitCase.CaseDbQuery query = Case.getCurrentCase().getSleuthkitCase().executeQuery("SELECT device_id FROM data_source_info WHERE obj_id = " + this.content.getId());) {
+                ResultSet deviceIdSet = query.getResultSet();
                 if (deviceIdSet.next()) {
                     ss.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_deviceId_name(),
                             Bundle.VirtualDirectoryNode_createSheet_deviceId_displayName(),

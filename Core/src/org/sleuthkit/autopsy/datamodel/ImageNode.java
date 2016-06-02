@@ -27,11 +27,13 @@ import javax.swing.Action;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExplorerNodeActionVisitor;
 import org.sleuthkit.autopsy.directorytree.FileSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -143,7 +145,8 @@ public class ImageNode extends AbstractContentNode<Image> {
                 Bundle.ImageNode_createSheet_timezone_desc(),
                 this.content.getTimeZone()));
 
-        try (ResultSet deviceIdSet = this.content.getSleuthkitCase().executeQuery("SELECT device_id FROM data_source_info WHERE obj_id = " + this.content.getId()).getResultSet();) {
+        try (CaseDbQuery query = Case.getCurrentCase().getSleuthkitCase().executeQuery("SELECT device_id FROM data_source_info WHERE obj_id = " + this.content.getId());) {
+            ResultSet deviceIdSet = query.getResultSet();
             if (deviceIdSet.next()) {
                 ss.put(new NodeProperty<>(Bundle.ImageNode_createSheet_deviceId_name(),
                         Bundle.ImageNode_createSheet_deviceId_displayName(),
