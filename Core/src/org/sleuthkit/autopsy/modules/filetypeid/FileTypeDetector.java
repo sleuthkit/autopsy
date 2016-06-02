@@ -56,7 +56,7 @@ public class FileTypeDetector {
      */
     public FileTypeDetector() throws FileTypeDetectorInitException {
         try {
-            userDefinedFileTypes = CustomFileTypesManager.getInstance().getFileTypes();
+            userDefinedFileTypes = CustomFileTypesManager.getInstance().getUserDefinedFileTypes();
             autopsyDefinedFileTypes = CustomFileTypesManager.getInstance().getFileTypes();
         } catch (CustomFileTypesManager.CustomFileTypesException ex) {
             throw new FileTypeDetectorInitException("Error loading custom file types", ex); //NON-NLS
@@ -168,7 +168,7 @@ public class FileTypeDetector {
 
     /**
      * Detects the MIME type of a file. The result is saved to the case database
-     * only if the add to case dastabase flag is set.
+     * only if the add to case database flag is set.
      *
      * @param file        The file to test.
      * @param addToCaseDb Whether the MIME type should be added to the case
