@@ -143,8 +143,7 @@ public class ImageNode extends AbstractContentNode<Image> {
                 Bundle.ImageNode_createSheet_timezone_desc(),
                 this.content.getTimeZone()));
 
-        try {
-            ResultSet deviceIdSet = this.content.getSleuthkitCase().executeQuery("SELECT device_id FROM data_source_info WHERE obj_id = " + this.content.getId()).getResultSet();
+        try (ResultSet deviceIdSet = this.content.getSleuthkitCase().executeQuery("SELECT device_id FROM data_source_info WHERE obj_id = " + this.content.getId()).getResultSet();) {
             if (deviceIdSet.next()) {
                 ss.put(new NodeProperty<>(Bundle.ImageNode_createSheet_deviceId_name(),
                         Bundle.ImageNode_createSheet_deviceId_displayName(),
