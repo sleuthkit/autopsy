@@ -327,7 +327,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         signatureList = new javax.swing.JList<>();
 
         setMaximumSize(null);
-        setPreferredSize(new java.awt.Dimension(752, 307));
+        setPreferredSize(new java.awt.Dimension(752, 507));
 
         jPanel3.setPreferredSize(new java.awt.Dimension(781, 339));
 
@@ -491,9 +491,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, 345, Short.MAX_VALUE)
-                .addGap(0, 0, 0))
+            .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, 345, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
