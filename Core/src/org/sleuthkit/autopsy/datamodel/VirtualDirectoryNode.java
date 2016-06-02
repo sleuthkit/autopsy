@@ -96,7 +96,7 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
         "VirtualDirectoryNode.createSheet.type.name=Type",
         "VirtualDirectoryNode.createSheet.type.displayName=Type",
         "VirtualDirectoryNode.createSheet.type.desc=Type of the image.",
-        "VirtualDirectoryNode.createSheet.type.text=Logical File Set.",
+        "VirtualDirectoryNode.createSheet.type.text=Logical File Set",
         "VirtualDirectoryNode.createSheet.timezone.name=Timezone",
         "VirtualDirectoryNode.createSheet.timezone.displayName=Timezone",
         "VirtualDirectoryNode.createSheet.timezone.desc=Timezone of the image",
@@ -129,16 +129,16 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
             ss.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_type_name(),
                     Bundle.VirtualDirectoryNode_createSheet_type_displayName(),
                     Bundle.VirtualDirectoryNode_createSheet_type_desc(),
-                    Bundle.ImageNode_createSheet_type_text()));
+                    Bundle.VirtualDirectoryNode_createSheet_type_text()));
             ss.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_size_name(),
                     Bundle.VirtualDirectoryNode_createSheet_size_displayName(),
                     Bundle.VirtualDirectoryNode_createSheet_size_desc(),
                     this.content.getSize()));
             try (ResultSet timeZoneSet = this.content.getSleuthkitCase().executeQuery("SELECT time_zone FROM data_source_info WHERE obj_id = " + this.content.getId()).getResultSet()) {
                 if (timeZoneSet.next()) {
-                    ss.put(new NodeProperty<>(Bundle.ImageNode_createSheet_timezone_name(),
-                            Bundle.ImageNode_createSheet_timezone_displayName(),
-                            Bundle.ImageNode_createSheet_timezone_desc(),
+                    ss.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_timezone_name(),
+                            Bundle.VirtualDirectoryNode_createSheet_timezone_displayName(),
+                            Bundle.VirtualDirectoryNode_createSheet_timezone_desc(),
                             timeZoneSet.getString("time_zone")));
                 }
             } catch (SQLException | TskCoreException ex) {
@@ -146,9 +146,9 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
             }
             try (ResultSet deviceIdSet = this.content.getSleuthkitCase().executeQuery("SELECT device_id FROM data_source_info WHERE obj_id = " + this.content.getId()).getResultSet()) {
                 if (deviceIdSet.next()) {
-                    ss.put(new NodeProperty<>(Bundle.ImageNode_createSheet_deviceId_name(),
-                            Bundle.ImageNode_createSheet_deviceId_displayName(),
-                            Bundle.ImageNode_createSheet_deviceId_desc(),
+                    ss.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_deviceId_name(),
+                            Bundle.VirtualDirectoryNode_createSheet_deviceId_displayName(),
+                            Bundle.VirtualDirectoryNode_createSheet_deviceId_desc(),
                             deviceIdSet.getString("device_id")));
                 }
             } catch (SQLException | TskCoreException ex) {
