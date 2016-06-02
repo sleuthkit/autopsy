@@ -36,8 +36,8 @@ import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
-import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
 import org.sleuthkit.autopsy.modules.filetypeid.CustomFileTypesManager.CustomFileTypesException;
+import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
 
 /**
  * A panel to allow a user to make custom file type definitions. In addition to
@@ -327,7 +327,9 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         signatureList = new javax.swing.JList<>();
 
         setMaximumSize(null);
-        setPreferredSize(new java.awt.Dimension(752, 507));
+        setPreferredSize(new java.awt.Dimension(752, 307));
+
+        jPanel3.setPreferredSize(new java.awt.Dimension(781, 339));
 
         ingestRunningWarningLabel.setFont(ingestRunningWarningLabel.getFont().deriveFont(ingestRunningWarningLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         ingestRunningWarningLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/filetypeid/warning16.png"))); // NOI18N
@@ -336,11 +338,13 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         jLabel3.setFont(jLabel3.getFont().deriveFont(jLabel3.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.jLabel3.text")); // NOI18N
 
-        jScrollPane2.setMinimumSize(new java.awt.Dimension(300, 100));
+        jScrollPane2.setMinimumSize(new java.awt.Dimension(300, 0));
+        jScrollPane2.setPreferredSize(new java.awt.Dimension(550, 275));
 
-        jSplitPane1.setMinimumSize(new java.awt.Dimension(558, 285));
+        jSplitPane1.setMinimumSize(new java.awt.Dimension(0, 0));
 
-        jPanel1.setMinimumSize(new java.awt.Dimension(362, 283));
+        jPanel1.setMinimumSize(new java.awt.Dimension(362, 0));
+        jPanel1.setPreferredSize(new java.awt.Dimension(362, 0));
 
         jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.jLabel2.text")); // NOI18N
@@ -399,20 +403,20 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
                 .addGap(12, 12, 12)
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(typesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 397, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(typesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 203, Short.MAX_VALUE)
+                .addGap(10, 10, 10)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(newTypeButton)
                     .addComponent(editTypeButton)
                     .addComponent(deleteTypeButton))
-                .addContainerGap())
+                .addGap(7, 7, 7))
         );
 
         jPanel1Layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {deleteTypeButton, newTypeButton});
 
         jSplitPane1.setLeftComponent(jPanel1);
 
-        jPanel2.setMinimumSize(new java.awt.Dimension(79, 283));
+        jPanel2.setMinimumSize(new java.awt.Dimension(79, 0));
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.jLabel1.text")); // NOI18N
 
@@ -421,6 +425,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
             public int getSize() { return signatures.length; }
             public Signature getElementAt(int i) { return signatures[i]; }
         });
+        signatureList.setEnabled(false);
         signatureList.setMaximumSize(new java.awt.Dimension(32767, 32767));
         signatureList.setPreferredSize(null);
         jScrollPane1.setViewportView(signatureList);
@@ -444,8 +449,8 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
                 .addContainerGap()
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
-                .addGap(40, 40, 40))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 235, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         jSplitPane1.setRightComponent(jPanel2);
@@ -470,7 +475,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
                 .addContainerGap()
                 .addComponent(jLabel3)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 281, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(ingestRunningWarningLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
@@ -481,13 +486,13 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, 752, Short.MAX_VALUE)
                 .addGap(0, 0, 0))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, 345, Short.MAX_VALUE)
                 .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents
