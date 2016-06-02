@@ -56,8 +56,8 @@ public class FileTypeDetector {
      */
     public FileTypeDetector() throws FileTypeDetectorInitException {
         try {
-            userDefinedFileTypes = CustomFileTypesManager.getInstance().getFileTypes();
-            autopsyDefinedFileTypes = CustomFileTypesManager.getInstance().getFileTypes();
+            userDefinedFileTypes = CustomFileTypesManager.getInstance().getUserDefinedFileTypes();
+            autopsyDefinedFileTypes = CustomFileTypesManager.getInstance().getAutopsyDefinedFileTypes();
         } catch (CustomFileTypesManager.CustomFileTypesException ex) {
             throw new FileTypeDetectorInitException("Error loading custom file types", ex); //NON-NLS
         }
