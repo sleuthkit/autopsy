@@ -19,19 +19,24 @@
 package org.sleuthkit.autopsy.timeline.ui.listvew;
 
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoField;
+import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -42,8 +47,6 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -51,6 +54,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.SelectionMode;
@@ -68,6 +72,8 @@ import javafx.scene.layout.VBox;
 import javafx.util.Callback;
 import javax.swing.Action;
 import javax.swing.JMenuItem;
+import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
+import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.control.Notifications;
 import org.openide.awt.Actions;
 import org.openide.util.NbBundle;
@@ -103,12 +109,23 @@ class ListTimeline extends BorderPane {
      * call-back used to wrap the CombinedEvent in a ObservableValue
      */
     private static final Callback<TableColumn.CellDataFeatures<CombinedEvent, CombinedEvent>, ObservableValue<CombinedEvent>> CELL_VALUE_FACTORY = param -> new SimpleObjectProperty<>(param.getValue());
+    private static final List<ChronoField> SCROLL_BY_UNITS = Arrays.asList(
+            ChronoField.YEAR,
+            ChronoField.MONTH_OF_YEAR,
+            ChronoField.DAY_OF_MONTH,
+            ChronoField.HOUR_OF_DAY,
+            ChronoField.MINUTE_OF_HOUR,
+            ChronoField.SECOND_OF_MINUTE);
+
+    private static ZonedDateTime getZonedDateTimeFromEvent(CombinedEvent combinedEvent, ZoneId timeZoneID) {
+        return Instant.ofEpochMilli(combinedEvent.getStartMillis()).atZone(timeZoneID);
+    }
 
     @FXML
     private HBox navControls;
 
     @FXML
-    private ComboBox<ChronoUnit> scrollInrementComboBox;
+    private ComboBox<ChronoField> scrollInrementComboBox;
 
     @FXML
     private Button firstButton;
@@ -146,6 +163,8 @@ class ListTimeline extends BorderPane {
      */
     private final ObservableList<Long> selectedEventIDs = FXCollections.observableArrayList();
 
+    private final ConcurrentSkipListSet<CombinedEvent> visibleEvents;
+
     private final TimeLineController controller;
     private final SleuthkitCase sleuthkitCase;
     private final TagsManager tagsManager;
@@ -156,10 +175,12 @@ class ListTimeline extends BorderPane {
      * @param controller The controller for this timeline
      */
     ListTimeline(TimeLineController controller) {
+
         this.controller = controller;
         sleuthkitCase = controller.getAutopsyCase().getSleuthkitCase();
         tagsManager = controller.getAutopsyCase().getServices().getTagsManager();
         FXMLConstructor.construct(this, ListTimeline.class, "ListTimeline.fxml"); //NON-NLS
+        this.visibleEvents = new ConcurrentSkipListSet<>(Comparator.comparing(table.getItems()::indexOf));
     }
 
     @FXML
@@ -175,48 +196,63 @@ class ListTimeline extends BorderPane {
         assert typeColumn != null : "fx:id=\"typeColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
         assert knownColumn != null : "fx:id=\"knownColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
 
-        scrollInrementComboBox.getItems().setAll(
-                ChronoUnit.YEARS,
-                ChronoUnit.MONTHS,
-                ChronoUnit.DAYS,
-                ChronoUnit.HOURS,
-                ChronoUnit.MINUTES,
-                ChronoUnit.SECONDS,
-                ChronoUnit.MILLIS
-        );
-        scrollInrementComboBox.getSelectionModel().select(ChronoUnit.YEARS);
+        scrollInrementComboBox.setButtonCell(new ChronoFieldListCell());
+        scrollInrementComboBox.setCellFactory(comboBox -> new ChronoFieldListCell());
+        scrollInrementComboBox.getItems().setAll(SCROLL_BY_UNITS);
+        scrollInrementComboBox.getSelectionModel().select(ChronoField.YEAR);
 
-        firstButton.setOnAction(actionEvent -> table.scrollTo(0));
-        previousButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
-                LocalDateTime selectedDateTime = LocalDateTime.ofInstant(
-                        Instant.ofEpochMilli(table.getSelectionModel().getSelectedItem().getStartMillis()),
-                        TimeLineController.getTimeZone().get().toZoneId());
-                LocalDateTime nextDateTime = scrollInrementComboBox.getSelectionModel().getSelectedItem().addTo(selectedDateTime, -1);
+        firstButton.setOnAction(actionEvent -> scrollToAndFocus(0));
 
-                table.getItems().stream().filter(combinedEvent -> {
-                    LocalDateTime eventDateTime = LocalDateTime.ofInstant(
-                            Instant.ofEpochMilli(combinedEvent.getStartMillis()), TimeLineController.getTimeZone().get().toZoneId());
-                    return eventDateTime.isBefore(nextDateTime);
-                }).findFirst().ifPresent(table::scrollTo);
+        previousButton.setOnAction(actionEvent -> {
+            ZoneId timeZoneID = TimeLineController.getTimeZoneID();
+            ChronoField selectedChronoField = scrollInrementComboBox.getSelectionModel().getSelectedItem();
+            TemporalUnit selectedUnit = selectedChronoField.getBaseUnit();
+
+            CombinedEvent focusedItem = table.getFocusModel().getFocusedItem();
+
+            ZonedDateTime previousDateTime = getZonedDateTimeFromEvent(defaultIfNull(focusedItem, visibleEvents.last()), timeZoneID).minus(1, selectedUnit);//
+
+            for (ChronoField field : SCROLL_BY_UNITS) {
+                if (field.getBaseUnit().getDuration().compareTo(selectedUnit.getDuration()) < 0) {
+                    previousDateTime = previousDateTime.with(field, field.rangeRefinedBy(previousDateTime).getMaximum());//
+                }
             }
+
+            final ZonedDateTime fzdt = previousDateTime;
+
+            Lists.reverse(table.getItems())//
+                    .stream()
+                    .filter(combinedEvent -> getZonedDateTimeFromEvent(combinedEvent, timeZoneID).isBefore(fzdt))//
+                    .findFirst()
+                    .map(table.getItems()::indexOf)
+                    .ifPresent(this::scrollToAndFocus);
         });
 
         nextButton.setOnAction(actionEvent -> {
-            LocalDateTime selectedDateTime = LocalDateTime.ofInstant(
-                    Instant.ofEpochMilli(table.getSelectionModel().getSelectedItem().getStartMillis()),
-                    TimeLineController.getTimeZone().get().toZoneId());
-            LocalDateTime nextDateTime = scrollInrementComboBox.getSelectionModel().getSelectedItem().addTo(selectedDateTime, 1);
+            ChronoField selectedChronoField = scrollInrementComboBox.getSelectionModel().getSelectedItem();
+            ZoneId timeZoneID = TimeLineController.getTimeZoneID();
+            TemporalUnit selectedUnit = selectedChronoField.getBaseUnit();
 
-            table.getItems().stream().filter(combinedEvent -> {
-                LocalDateTime eventDateTime = LocalDateTime.ofInstant(
-                        Instant.ofEpochMilli(combinedEvent.getStartMillis()), TimeLineController.getTimeZone().get().toZoneId());
-                return eventDateTime.isAfter(nextDateTime);
-            }).findFirst().ifPresent(table::scrollTo);
+            CombinedEvent focusedItem = table.getFocusModel().getFocusedItem();
+
+            ZonedDateTime nextDateTime = getZonedDateTimeFromEvent(defaultIfNull(focusedItem, visibleEvents.first()), timeZoneID).plus(1, selectedUnit);//
+            for (ChronoField field : SCROLL_BY_UNITS) {
+                if (field.getBaseUnit().getDuration().compareTo(selectedUnit.getDuration()) < 0) {
+                    nextDateTime = nextDateTime.with(field, field.rangeRefinedBy(nextDateTime).getMinimum());//
+                }
+            }
+
+            final ZonedDateTime fzdt = nextDateTime;
+
+            table.getItems()//
+                    .stream()
+                    .filter(combinedEvent -> getZonedDateTimeFromEvent(combinedEvent, timeZoneID).isAfter(fzdt))//
+                    .findFirst()
+                    .map(table.getItems()::indexOf)
+                    .ifPresent(this::scrollToAndFocus);
         });
 
-        lastButton.setOnAction(actionEvent -> table.scrollTo(table.getItems().size()));
+        lastButton.setOnAction(actionEvent -> scrollToAndFocus(table.getItems().size() - 1));
 
         //override default row with one that provides context menus
         table.setRowFactory(tableView -> new EventRow());
@@ -321,6 +357,16 @@ class ListTimeline extends BorderPane {
 
     List<Node> getNavControls() {
         return Collections.singletonList(navControls);
+    }
+
+    private void scrollToAndFocus(Integer index) {
+        table.requestFocus();
+
+        if (visibleEvents.contains(table.getItems().get(index)) == false) {
+            table.scrollTo(index);
+        }
+
+        table.getFocusModel().focus(index);
     }
 
     /**
@@ -589,11 +635,16 @@ class ListTimeline extends BorderPane {
             "ListChart.errorMsg=There was a problem getting the content for the selected event."})
         @Override
         protected void updateItem(CombinedEvent item, boolean empty) {
+            CombinedEvent oldItem = getItem();
+            if (oldItem != null) {
+                visibleEvents.remove(oldItem);
+            }
             super.updateItem(item, empty);
 
             if (empty || item == null) {
                 event = null;
             } else {
+                visibleEvents.add(item);
                 event = controller.getEventsModel().getEventById(item.getRepresentativeEventID());
 
                 setOnContextMenuRequested(contextMenuEvent -> {
@@ -644,6 +695,21 @@ class ListTimeline extends BorderPane {
                     }
                 });
 
+            }
+        }
+    }
+
+    private class ChronoFieldListCell extends ListCell<ChronoField> {
+
+        @Override
+        protected void updateItem(ChronoField item, boolean empty) {
+            super.updateItem(item, empty);
+
+            if (empty || item == null) {
+                setText(null);
+            } else {
+                String displayName = item.getDisplayName(Locale.getDefault());
+                setText(String.join(" ", StringUtils.splitByCharacterTypeCamelCase(displayName)));
             }
         }
     }

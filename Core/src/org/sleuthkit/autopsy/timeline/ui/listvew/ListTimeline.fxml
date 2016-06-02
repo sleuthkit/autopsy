@@ -11,18 +11,19 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Region?>
 
 <fx:root type="BorderPane" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1">
    <top>
-      <HBox alignment="CENTER" spacing="5.0" BorderPane.alignment="CENTER">
+      <HBox alignment="CENTER_RIGHT" spacing="5.0" BorderPane.alignment="CENTER">
          <children>
             <Label fx:id="eventCountLabel" text=" # of events" />
-            <Region HBox.hgrow="ALWAYS" />
             <HBox fx:id="navControls" alignment="CENTER_LEFT" minHeight="38.0" spacing="5.0">
                <children>
                   <Label text="Jump By: " />
-                  <ComboBox fx:id="scrollInrementComboBox" prefHeight="32.0" />
+                  <ComboBox fx:id="scrollInrementComboBox" prefHeight="32.0">
+                     <HBox.margin>
+                        <Insets right="10.0" />
+                     </HBox.margin></ComboBox>
                   <Button fx:id="firstButton" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" prefHeight="32.0" prefWidth="32.0">
                      <graphic>
                         <ImageView>
