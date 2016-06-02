@@ -105,6 +105,19 @@ final class CustomFileTypesManager {
     }
 
     /**
+     * Gets the custom file types defined by Autopsy.
+     *
+     * @return A list of custom file types, possibly empty.
+     */
+    synchronized List<FileType> getAutopsyDefinedFileTypes() {
+        /**
+         * It is safe to return references instead of copies in this snapshot
+         * because FileType objects are immutable.
+         */
+        return new ArrayList<>(autopsyDefinedFileTypes);
+    }
+
+    /**
      * Gets the user-defined custom file types.
      *
      * @return A list of file types, possibly empty.
