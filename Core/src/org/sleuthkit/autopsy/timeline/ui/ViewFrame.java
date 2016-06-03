@@ -90,6 +90,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.DBUpdatedEvent;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsUpdatedEvent;
+import static org.sleuthkit.autopsy.timeline.ui.Bundle.*;
 import org.sleuthkit.autopsy.timeline.ui.countsview.CountsViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.tree.EventsTree;
@@ -500,19 +501,23 @@ final public class ViewFrame extends BorderPane {
     /**
      * Refresh the Histogram to represent the current state of the DB.
      */
+    @NbBundle.Messages({"ViewFrame.histogramTask.title=Rebuilding Histogram",
+        "ViewFrame.histogramTask.preparing=Preparing",
+        "ViewFrame.histogramTask.resetUI=Resetting UI",
+        "ViewFrame.histogramTask.queryDb=Querying FB",
+        "ViewFrame.histogramTask.updateUI2=Updating UI"})
     synchronized private void refreshHistorgram() {
         if (histogramTask != null) {
             histogramTask.cancel(true);
         }
 
-        histogramTask = new LoggedTask<Void>(
-                NbBundle.getMessage(ViewFrame.class, "ViewFrame.histogramTask.title"), true) { //NON-NLS
+        histogramTask = new LoggedTask<Void>(Bundle.ViewFrame_histogramTask_title(), true) {
             private final Lighting lighting = new Lighting();
 
             @Override
             protected Void call() throws Exception {
 
-                updateMessage(NbBundle.getMessage(ViewFrame.class, "ViewFrame.histogramTask.preparing")); //NON-NLS
+                updateMessage(ViewFrame_histogramTask_preparing());
 
                 long max = 0;
                 final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval());
@@ -525,7 +530,7 @@ final public class ViewFrame extends BorderPane {
 
                 //clear old data, and reset ranges and series
                 Platform.runLater(() -> {
-                    updateMessage(NbBundle.getMessage(ViewFrame.class, "ViewFrame.histogramTask.resetUI")); //NON-NLS
+                    updateMessage(ViewFrame_histogramTask_resetUI());
 
                 });
 
@@ -542,7 +547,7 @@ final public class ViewFrame extends BorderPane {
 
                     start = end;
 
-                    updateMessage(NbBundle.getMessage(ViewFrame.class, "ViewFrame.histogramTask.queryDb")); //NON-NLS
+                    updateMessage(ViewFrame_histogramTask_queryDb());
                     //query for current range
                     long count = filteredEvents.getEventCounts(interval).values().stream().mapToLong(Long::valueOf).sum();
                     bins.add(count);
@@ -552,7 +557,7 @@ final public class ViewFrame extends BorderPane {
                     final double fMax = Math.log(max);
                     final ArrayList<Long> fbins = new ArrayList<>(bins);
                     Platform.runLater(() -> {
-                        updateMessage(NbBundle.getMessage(ViewFrame.class, "ViewFrame.histogramTask.updateUI2")); //NON-NLS
+                        updateMessage(ViewFrame_histogramTask_updateUI2());
 
                         histogramBox.getChildren().clear();
 
@@ -585,7 +590,7 @@ final public class ViewFrame extends BorderPane {
     }
 
     /**
-     * Refresh the time selection UI to match the current zoome paramaters.
+     * Refresh the time selection UI to match the current zoom parameters.
      */
     private void refreshTimeUI() {
         RangeDivisionInfo rangeDivisionInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval());
