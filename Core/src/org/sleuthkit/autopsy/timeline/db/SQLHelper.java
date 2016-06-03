@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.timeline.db;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -82,11 +81,11 @@ class SQLHelper {
      * @return a Set of X, each element mapped from one element of the original
      *         comma delimited string
      */
-    static <X> Set<X> unGroupConcat(String groupConcat, Function<String, X> mapper) {
-        return StringUtils.isBlank(groupConcat) ? Collections.emptySet()
+    static <X> List<X> unGroupConcat(String groupConcat, Function<String, X> mapper) {
+        return StringUtils.isBlank(groupConcat) ? Collections.emptyList()
                 : Stream.of(groupConcat.split(","))
                 .map(mapper::apply)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toList());
     }
 
     /**

@@ -18,28 +18,16 @@
  */
 package org.sleuthkit.autopsy.timeline.ui;
 
-import com.google.common.eventbus.Subscribe;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
 import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
 import javafx.beans.binding.DoubleBinding;
-import javafx.beans.property.ReadOnlyBooleanProperty;
-import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.SortedList;
-import javafx.concurrent.Task;
 import javafx.geometry.Pos;
-import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.chart.Axis;
 import javafx.scene.chart.XYChart;
@@ -47,7 +35,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.Border;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.BorderStroke;
 import javafx.scene.layout.BorderStrokeStyle;
 import javafx.scene.layout.BorderWidths;
@@ -55,7 +42,6 @@ import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -64,18 +50,14 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javax.annotation.concurrent.Immutable;
 import org.apache.commons.lang3.StringUtils;
-import org.controlsfx.control.MaskerPane;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
-import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 
 /**
- * Abstract base class for TimeLineChart based visualizations.
+ * Abstract base class for TimeLineChart based views.
  *
  * @param <X>         The type of data plotted along the x axis
  * @param <Y>         The type of data plotted along the y axis
@@ -88,36 +70,33 @@ import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
  *
  * TODO: pull up common history context menu items out of derived classes? -jm
  */
-public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, ChartType extends Region & TimeLineChart<X>> extends BorderPane {
+public abstract class AbstractTimelineChart<X, Y, NodeType extends Node, ChartType extends Region & TimeLineChart<X>> extends AbstractTimeLineView {
 
-    private static final Logger LOGGER = Logger.getLogger(AbstractVisualizationPane.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(AbstractTimelineChart.class.getName());
 
-    @NbBundle.Messages("AbstractVisualization.Default_Tooltip.text=Drag the mouse to select a time interval to zoom into.\nRight-click for more actions.")
-    private static final Tooltip DEFAULT_TOOLTIP = new Tooltip(Bundle.AbstractVisualization_Default_Tooltip_text());
+    @NbBundle.Messages("AbstractTimelineChart.defaultTooltip.text=Drag the mouse to select a time interval to zoom into.\nRight-click for more actions.")
+    private static final Tooltip DEFAULT_TOOLTIP = new Tooltip(Bundle.AbstractTimelineChart_defaultTooltip_text());
     private static final Border ONLY_LEFT_BORDER = new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(0, 0, 0, 1)));
 
     /**
-     * Get the tool tip to use for this visualization when no more specific
-     * Tooltip is needed.
+     * Get the tool tip to use for this view when no more specific Tooltip is
+     * needed.
      *
      * @return The default Tooltip.
      */
-    public static Tooltip getDefaultTooltip() {
+    static public Tooltip getDefaultTooltip() {
         return DEFAULT_TOOLTIP;
     }
 
     /**
-     * Boolean property that holds true if the visualization may not represent
-     * the current state of the DB, because, for example, tags have been updated
-     * but the vis. was not refreshed.
+     * The nodes that are selected.
+     *
+     * @return An ObservableList<NodeType> of the nodes that are selected in
+     *         this view.
      */
-    private final ReadOnlyBooleanWrapper outOfDate = new ReadOnlyBooleanWrapper(false);
-
-    /**
-     * Boolean property that holds true if the visualization does not show any
-     * events with the current zoom and filter settings.
-     */
-    private final ReadOnlyBooleanWrapper hasVisibleEvents = new ReadOnlyBooleanWrapper(true);
+    protected ObservableList<NodeType> getSelectedNodes() {
+        return selectedNodes;
+    }
 
     /**
      * Access to chart data via series
@@ -130,123 +109,36 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
     //// replacement axis label componenets
     private final Pane specificLabelPane = new Pane(); // container for the specfic labels in the decluttered axis
     private final Pane contextLabelPane = new Pane();// container for the contextual labels in the decluttered axis
+// container for the contextual labels in the decluttered axis
     private final Region spacer = new Region();
-
-    /**
-     * task used to reload the content of this visualization
-     */
-    private Task<Boolean> updateTask;
-
-    final private TimeLineController controller;
-    final private FilteredEventsModel filteredEvents;
 
     final private ObservableList<NodeType> selectedNodes = FXCollections.observableArrayList();
 
-    /**
-     * Listener that is attached to various properties that should trigger a vis
-     * update when they change.
-     */
-    private InvalidationListener updateListener = any -> refresh();
+    public Pane getSpecificLabelPane() {
+        return specificLabelPane;
+    }
 
-    /**
-     * Does the visualization represent an out-of-date state of the DB. It might
-     * if, for example, tags have been updated but the vis. was not refreshed.
-     *
-     * @return True if the visualization does not represent the curent state of
-     *         the DB.
-     */
-    public boolean isOutOfDate() {
-        return outOfDate.get();
+    public Pane getContextLabelPane() {
+        return contextLabelPane;
+    }
+
+    public Region getSpacer() {
+        return spacer;
     }
 
     /**
-     * Set this visualization out of date because, for example, tags have been
-     * updated but the vis. was not refreshed.
-     */
-    void setOutOfDate() {
-        outOfDate.set(true);
-    }
-
-    /**
-     * Get a ReadOnlyBooleanProperty that holds true if this visualization does
-     * not represent the current state of the DB>
+     * Get the CharType that implements this view.
      *
-     * @return A ReadOnlyBooleanProperty that holds the out-of-date state for
-     *         this visualization.
-     */
-    public ReadOnlyBooleanProperty outOfDateProperty() {
-        return outOfDate.getReadOnlyProperty();
-    }
-
-    /**
-     * The visualization nodes that are selected.
-     *
-     * @return An ObservableList<NodeType> of the nodes that are selected in
-     *         this visualization.
-     */
-    protected ObservableList<NodeType> getSelectedNodes() {
-        return selectedNodes;
-    }
-
-    /**
-     * List of Nodes to insert into the toolbar. This should be set in an
-     * implementations constructor.
-     */
-    private List<Node> settingsNodes;
-
-    /**
-     * Get a List of nodes containing settings widgets to insert into this
-     * visualization's header.
-     *
-     * @return The List of settings Nodes.
-     */
-    protected List<Node> getSettingsNodes() {
-        return Collections.unmodifiableList(settingsNodes);
-    }
-
-    /**
-     * Set the List of nodes containing settings widgets to insert into this
-     * visualization's header.
-     *
-     *
-     * @param settingsNodes The List of nodes containing settings widgets to
-     *                      insert into this visualization's header.
-     */
-    protected void setSettingsNodes(List<Node> settingsNodes) {
-        this.settingsNodes = new ArrayList<>(settingsNodes);
-    }
-
-    /**
-     * Get the TimelineController for this visualization.
-     *
-     * @return The TimelineController for this visualization.
-     */
-    protected TimeLineController getController() {
-        return controller;
-    }
-
-    /**
-     * Get the CharType that implements this visualization.
-     *
-     * @return The CharType that implements this visualization.
+     * @return The CharType that implements this view.
      */
     protected ChartType getChart() {
         return chart;
     }
 
     /**
-     * Get the FilteredEventsModel for this visualization.
+     * Set the ChartType that implements this view.
      *
-     * @return The FilteredEventsModel for this visualization.
-     */
-    protected FilteredEventsModel getEventsModel() {
-        return filteredEvents;
-    }
-
-    /**
-     * Set the ChartType that implements this visualization.
-     *
-     * @param chart The ChartType that implements this visualization.
+     * @param chart The ChartType that implements this view.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     protected void setChart(ChartType chart) {
@@ -255,29 +147,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
     }
 
     /**
-     * A property that indicates whether there are any events visible in this
-     * visualization with the current view parameters.
-     *
-     * @return A property that indicates whether there are any events visible in
-     *         this visualization with the current view parameters.
-     */
-    ReadOnlyBooleanProperty hasVisibleEventsProperty() {
-        return hasVisibleEvents.getReadOnlyProperty();
-    }
-
-    /**
-     * Are there are any events visible in this visualization with the current
-     * view parameters?
-     *
-     * @return True if there are events visible in this visualization with the
-     *         current view parameters.
-     */
-    boolean hasVisibleEvents() {
-        return hasVisibleEventsProperty().get();
-    }
-
-    /**
-     * Apply this visualization's 'selection effect' to the given node.
+     * Apply this view's 'selection effect' to the given node.
      *
      * @param node The node to apply the 'effect' to.
      */
@@ -286,7 +156,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
     }
 
     /**
-     * Remove this visualization's 'selection effect' from the given node.
+     * Remove this view's 'selection effect' from the given node.
      *
      * @param node The node to remvoe the 'effect' from.
      */
@@ -298,7 +168,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
      * Should the tick mark at the given value be bold, because it has
      * interesting data associated with it?
      *
-     * @param value A value along this visualization's x axis
+     * @param value A value along this view's x axis
      *
      * @return True if the tick label for the given value should be bold ( has
      *         relevant data), false otherwise
@@ -306,23 +176,14 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
     abstract protected Boolean isTickBold(X value);
 
     /**
-     * Apply this visualization's 'selection effect' to the given node, if
-     * applied is true. If applied is false, remove the affect
+     * Apply this view's 'selection effect' to the given node, if applied is
+     * true. If applied is false, remove the affect
      *
      * @param node    The node to apply the 'effect' to
      * @param applied True if the effect should be applied, false if the effect
      *                should not
      */
     abstract protected void applySelectionEffect(NodeType node, Boolean applied);
-
-    /**
-     * Get a new background Task that fetches the appropriate data and loads it
-     * into this visualization.
-     *
-     * @return A new task to execute on a background thread to reload this
-     *         visualization with different data.
-     */
-    abstract protected Task<Boolean> getNewUpdateTask();
 
     /**
      * Get the label that should be used for a tick mark at the given value.
@@ -342,16 +203,16 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
     abstract protected double getTickSpacing();
 
     /**
-     * Get the X-Axis of this Visualization's chart
+     * Get the X-Axis of this view's chart
      *
-     * @return The horizontal axis used by this Visualization's chart
+     * @return The horizontal axis used by this view's chart
      */
     abstract protected Axis<X> getXAxis();
 
     /**
-     * Get the Y-Axis of this Visualization's chart
+     * Get the Y-Axis of this view's chart
      *
-     * @return The vertical axis used by this Visualization's chart
+     * @return The vertical axis used by this view's chart
      */
     abstract protected Axis<Y> getYAxis();
 
@@ -363,74 +224,6 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
      * @return The x-axis margin (in pixels)
      */
     abstract protected double getAxisMargin();
-
-    /**
-     * Clear all data items from this chart.
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    abstract protected void clearChartData();
-
-    /**
-     * Refresh this visualization based on current state of zoom / filters.
-     * Primarily this invokes the background VisualizationUpdateTask returned by
-     * getUpdateTask(), which derived classes must implement.
-     *
-     * TODO: replace this logic with a javafx Service ? -jm
-     */
-    protected final synchronized void refresh() {
-        if (updateTask != null) {
-            updateTask.cancel(true);
-            updateTask = null;
-        }
-        updateTask = getNewUpdateTask();
-        updateTask.stateProperty().addListener((Observable observable) -> {
-            switch (updateTask.getState()) {
-                case CANCELLED:
-                case FAILED:
-                case READY:
-                case RUNNING:
-                case SCHEDULED:
-                    break;
-                case SUCCEEDED:
-                    try {
-                        this.hasVisibleEvents.set(updateTask.get());
-                    } catch (InterruptedException | ExecutionException ex) {
-                        LOGGER.log(Level.SEVERE, "Unexpected exception updating visualization", ex); //NON-NLS
-                    }
-                    break;
-            }
-        });
-        controller.monitorTask(updateTask);
-    }
-
-    /**
-     * Handle a RefreshRequestedEvent from the events model by updating the
-     * visualization.
-     *
-     * @param event The RefreshRequestedEvent to handle.
-     */
-    @Subscribe
-    public void handleRefreshRequested(RefreshRequestedEvent event) {
-        refresh();
-    }
-
-    /**
-     * Dispose of this visualization and any resources it holds onto.
-     */
-    final synchronized void dispose() {
-
-        //cancel and gc updateTask
-        if (updateTask != null) {
-            updateTask.cancel(true);
-            updateTask = null;
-        }
-        //remvoe and gc updateListener
-        this.filteredEvents.zoomParametersProperty().removeListener(updateListener);
-        TimeLineController.getTimeZone().removeListener(updateListener);
-        updateListener = null;
-
-        filteredEvents.unRegisterForEvents(this);
-    }
 
     /**
      * Make a series for each event type in a consistent order.
@@ -459,23 +252,20 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
     /**
      * Constructor
      *
-     * @param controller The TimelineController for this visualization.
+     * @param controller The TimelineController for this view.
      */
-    protected AbstractVisualizationPane(TimeLineController controller) {
-        this.controller = controller;
-        this.filteredEvents = controller.getEventsModel();
-        this.filteredEvents.registerForEvents(this);
-        this.filteredEvents.zoomParametersProperty().addListener(updateListener);
+    protected AbstractTimelineChart(TimeLineController controller) {
+        super(controller);
         Platform.runLater(() -> {
-            VBox vBox = new VBox(specificLabelPane, contextLabelPane);
+            VBox vBox = new VBox(getSpecificLabelPane(), getContextLabelPane());
             vBox.setFillWidth(false);
-            HBox hBox = new HBox(spacer, vBox);
+            HBox hBox = new HBox(getSpacer(), vBox);
             hBox.setFillHeight(false);
             setBottom(hBox);
             DoubleBinding spacerSize = getYAxis().widthProperty().add(getYAxis().tickLengthProperty()).add(getAxisMargin());
-            spacer.minWidthProperty().bind(spacerSize);
-            spacer.prefWidthProperty().bind(spacerSize);
-            spacer.maxWidthProperty().bind(spacerSize);
+            getSpacer().minWidthProperty().bind(spacerSize);
+            getSpacer().prefWidthProperty().bind(spacerSize);
+            getSpacer().maxWidthProperty().bind(spacerSize);
         });
 
         createSeries();
@@ -487,10 +277,8 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
             }
         });
 
-        TimeLineController.getTimeZone().addListener(updateListener);
-
         //show tooltip text in status bar
-        hoverProperty().addListener(hoverProp -> controller.setStatusMessage(isHover() ? DEFAULT_TOOLTIP.getText() : ""));
+        hoverProperty().addListener(hoverProp -> controller.setStatusMessage(isHover() ? getDefaultTooltip().getText() : ""));
 
     }
 
@@ -681,117 +469,4 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
         }
     }
 
-    /**
-     * Base class for Tasks that refresh a visualization when the view settings
-     * change.
-     *
-     * @param <AxisValuesType> The type of a single object that can represent
-     *                         the range of data displayed along the X-Axis.
-     */
-    abstract protected class VisualizationRefreshTask<AxisValuesType> extends LoggedTask<Boolean> {
-
-        private final Node center;
-
-        /**
-         * Constructor
-         *
-         * @param taskName        The name of this task.
-         * @param logStateChanges Whether or not task state changes should be
-         *                        logged.
-         */
-        protected VisualizationRefreshTask(String taskName, boolean logStateChanges) {
-            super(taskName, logStateChanges);
-            this.center = getCenter();
-        }
-
-        /**
-         * Sets initial progress value and message and shows blocking progress
-         * indicator over the visualization. Derived Tasks should be sure to
-         * call this as part of their call() implementation.
-         *
-         * @return True
-         *
-         * @throws Exception If there is an unhandled exception during the
-         *                   background operation
-         */
-        @NbBundle.Messages({"VisualizationUpdateTask.preparing=Analyzing zoom and filter settings"})
-        @Override
-        protected Boolean call() throws Exception {
-            updateProgress(-1, 1);
-            updateMessage(Bundle.VisualizationUpdateTask_preparing());
-            Platform.runLater(() -> {
-                MaskerPane maskerPane = new MaskerPane();
-                maskerPane.textProperty().bind(messageProperty());
-                maskerPane.progressProperty().bind(progressProperty());
-                setCenter(new StackPane(center, maskerPane));
-                setCursor(Cursor.WAIT);
-            });
-
-            return true;
-        }
-
-        /**
-         * Updates the horizontal axis and removes the blocking progress
-         * indicator. Derived Tasks should be sure to call this as part of their
-         * succeeded() implementation.
-         */
-        @Override
-        protected void succeeded() {
-            super.succeeded();
-            outOfDate.set(false);
-            layoutDateLabels();
-            cleanup();
-        }
-
-        /**
-         * Removes the blocking progress indicator. Derived Tasks should be sure
-         * to call this as part of their cancelled() implementation.
-         */
-        @Override
-        protected void cancelled() {
-            super.cancelled();
-            cleanup();
-        }
-
-        /**
-         * Removes the blocking progress indicator. Derived Tasks should be sure
-         * to call this as part of their failed() implementation.
-         */
-        @Override
-        protected void failed() {
-            super.failed();
-            cleanup();
-        }
-
-        /**
-         * Removes the blocking progress indicator and reset the cursor to the
-         * default.
-         */
-        private void cleanup() {
-            setCenter(center); //clear masker pane installed in call()
-            setCursor(Cursor.DEFAULT);
-        }
-
-        /**
-         * Clears the chart data and sets the horizontal axis range. For use
-         * within the derived implementation of the call() method.
-         *
-         * @param axisValues
-         */
-        @ThreadConfined(type = ThreadConfined.ThreadType.NOT_UI)
-        protected void resetChart(AxisValuesType axisValues) {
-            Platform.runLater(() -> {
-                clearChartData();
-                setDateAxisValues(axisValues);
-            });
-        }
-
-        /**
-         * Set the horizontal range that this chart will show.
-         *
-         * @param values A single object representing the range that this chart
-         *               will show.
-         */
-        abstract protected void setDateAxisValues(AxisValuesType values);
-    }
 }

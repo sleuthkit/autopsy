@@ -47,7 +47,7 @@ import org.joda.time.Seconds;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ColorUtilities;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.VisualizationMode;
+import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
@@ -403,27 +403,8 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
                             Bundle.CountsViewPane_detailSwitchMessage(),
                             Bundle.CountsViewPane_detailSwitchTitle(), JOptionPane.YES_NO_OPTION);
                     if (showConfirmDialog == JOptionPane.YES_OPTION) {
-                        controller.setVisualizationMode(VisualizationMode.DETAIL);
+                        controller.setViewMode(ViewMode.DETAIL);
                     }
-
-                    /*
-                     * //I would like to use the JAvafx dialog, but it doesn't
-                     * block the ui (because it is embeded in a TopComponent)
-                     * -jm
-                     *
-                     * final Dialogs.CommandLink yes = new
-                     * Dialogs.CommandLink("Yes", "switch to Details view");
-                     * final Dialogs.CommandLink no = new
-                     * Dialogs.CommandLink("No", "return to Counts view with a
-                     * resolution of Seconds"); Action choice = Dialogs.create()
-                     * .title("Switch to Details View?") .masthead("There is no
-                     * temporal resolution smaller than Seconds.")
-                     * .message("Would you like to switch to the Details view
-                     * instead?") .showCommandLinks(Arrays.asList(yes, no));
-                     *
-                     * if (choice == yes) {
-                     * controller.setViewMode(VisualizationMode.DETAIL); }
-                     */
                 }
             }
         }

@@ -58,11 +58,11 @@ import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
 import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
-import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
+import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
 import org.sleuthkit.autopsy.timeline.ui.ContextMenuProvider;
 
 /**
- * One "lane" of a the details visualization, contains all the core logic and
+ * One "lane" of a the details view, contains all the core logic and
  * layout code.
  *
  * NOTE: It was too hard to control the threading of this chart via the
@@ -178,7 +178,7 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
         //add a dummy series or the chart is never rendered
         setData(FXCollections.observableList(Arrays.asList(new Series<DateTime, Y>())));
 
-        Tooltip.install(this, AbstractVisualizationPane.getDefaultTooltip());
+        Tooltip.install(this, AbstractTimelineChart.getDefaultTooltip());
 
         dateAxis.setAutoRanging(false);
         setLegendVisible(false);
