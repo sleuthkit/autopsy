@@ -125,7 +125,7 @@
                     </children>
                 </StackPane>
                 <Separator />
-                <ToolBar>
+                <ToolBar fx:id="timeRangeToolBar">
                     <items>
                         <Label fx:id="startLabel" contentDisplay="RIGHT" minWidth="-Infinity">
                             <graphic>
@@ -141,7 +141,7 @@
                                 <Insets left="10.0" right="10.0" />
                             </HBox.margin>
                         </Separator>
-                        <HBox>
+                        <HBox fx:id="zoomInOutHBox">
                             <children>
                                 <Button fx:id="zoomOutButton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false">
                                     <graphic>
