@@ -257,14 +257,6 @@ public class FileManager implements Closeable {
     }
 
     /**
-     * @param dataSource data source Content (Image, parent-less
-     *                   VirtualDirectory) where to find localFiles
-     * @param filePath   The full path to the file(s) of interest. This can
-     *                   optionally include the image and volume names.
-     *
-     * @return a list of AbstractFile that have the given file path.
-     */
-    /**
      * Finds all files and directories with a given file name and path in a
      * given data source (image, local/logical files set, etc.). The name search
      * is for full or partial matches and is case insensitive (a case
