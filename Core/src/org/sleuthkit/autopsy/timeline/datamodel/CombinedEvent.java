@@ -18,11 +18,11 @@
  */
 package org.sleuthkit.autopsy.timeline.datamodel;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import org.python.google.common.collect.ImmutableSet;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 
 /**
@@ -98,8 +98,8 @@ public class CombinedEvent {
      *
      * @return The event IDs of the combined events.
      */
-    public Collection<Long> getEventIDs() {
-        return eventTypeMap.values();
+    public ImmutableSet<Long> getEventIDs() {
+        return ImmutableSet.copyOf(eventTypeMap.values());
     }
 
     /**

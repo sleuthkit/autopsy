@@ -7,20 +7,14 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.awt.event.ActionEvent;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.swing.AbstractAction;
-import org.joda.time.Interval;
-import org.openide.util.Exceptions;
 import org.openide.util.Utilities;
 import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.timeline.OpenTimelineAction;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.ArtifactEventType;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
@@ -47,31 +41,20 @@ public class ViewInTimeLineAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        TreeSet<Long> timestamps = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class).stream()
-                .flatMap(file -> Stream.of(file.getAtime(), file.getCrtime(), file.getCtime(), file.getMtime()))
-                .collect(Collectors.toCollection(TreeSet::new));
+        Set<Long> fileIDs = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class).stream()
+                .map(AbstractFile::getId)
+                .collect(Collectors.toSet());
+
+        final Set<Integer> artifactEventTypeIDs = ArtifactEventType.getAllArtifactEventTypes().stream()
+                .map(ArtifactEventType::getArtifactTypeID)
+                .collect(Collectors.toSet());
 
         //for each artifact, get all datetime attributes for that artifact type
-        for (BlackboardArtifact bbart : Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class)) {
-            Set<BlackboardAttribute.Type> attributeTypes = ArtifactEventType.getAllArtifactEventTypes().stream()
-                    .filter(artEventType -> bbart.getArtifactTypeID() == artEventType.getArtifactType().getTypeID())
-                    .map(ArtifactEventType::getDateTimeAttrubuteType)
-                    .collect(Collectors.toSet());
+        Set<Long> artifactIDs = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class).stream()
+                .filter(artifact -> artifactEventTypeIDs.contains(artifact.getArtifactTypeID()))
+                .map(BlackboardArtifact::getArtifactID)
+                .collect(Collectors.toSet());
 
-            for (BlackboardAttribute.Type type : attributeTypes) {
-                try {
-                    BlackboardAttribute attribute = bbart.getAttribute(type);
-                    if (attribute != null) {
-                        timestamps.add(attribute.getValueLong());
-                    }
-                } catch (TskCoreException ex) {
-                    Exceptions.printStackTrace(ex);
-                }
-            }
-        }
-
-        Interval interval = new Interval(timestamps.first() * 1000, (1 + timestamps.last()) * 1000);
-
-        SystemAction.get(OpenTimelineAction.class).showTimeline(interval);
+        SystemAction.get(OpenTimelineAction.class).showTimeline(fileIDs, artifactIDs);
     }
 }

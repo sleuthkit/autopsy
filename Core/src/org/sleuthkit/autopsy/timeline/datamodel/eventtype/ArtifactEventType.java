@@ -52,6 +52,10 @@ public interface ArtifactEventType extends EventType {
 
     public BlackboardAttribute.Type getDateTimeAttrubuteType();
 
+    public default int getArtifactTypeID(){
+        return getArtifactType().getTypeID();
+    };
+
     /**
      * given an artifact, pull out the time stamp, and compose the descriptions.
      * Each implementation of {@link ArtifactEventType} needs to implement

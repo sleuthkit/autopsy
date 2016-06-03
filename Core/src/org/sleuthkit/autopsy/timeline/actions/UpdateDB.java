@@ -44,7 +44,7 @@ public class UpdateDB extends Action {
         super(Bundle.RebuildDataBase_text());
         setLongText(Bundle.RebuildDataBase_longText());
         setGraphic(new ImageView(DB_REFRESH));
-        setEventHandler(actionEvent -> controller.rebuildRepo());
+        setEventHandler(actionEvent -> controller.rebuildRepo(null, null));
         disabledProperty().bind(controller.eventsDBStaleProperty().not());
     }
 }

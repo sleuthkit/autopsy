@@ -429,6 +429,10 @@ public final class FilteredEventsModel {
         return false;
     }
 
+    public List<Long> getDerivedEventIDs(Set<Long> fileIDs, Set<Long> artifactIDS) {
+        return repo.getDerivedEventIDs(fileIDs, artifactIDS);
+    }
+
     /**
      * Post a TagsAddedEvent to all registered subscribers, if the given set of
      * updated event IDs is not empty.

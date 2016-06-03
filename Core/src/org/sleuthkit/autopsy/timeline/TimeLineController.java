@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -400,7 +401,7 @@ public class TimeLineController {
     @NbBundle.Messages({
         "TimeLineController.setIngestRunning.errMsgRunning=Failed to mark the timeline db as populated while ingest was running. Some results may be out of date or missing.",
         "TimeLinecontroller.setIngestRunning.errMsgNotRunning=Failed to mark the timeline db as populated while ingest was not running. Some results may be out of date or missing."})
-    private void rebuildRepoHelper(Function<Consumer<Worker.State>, CancellationProgressTask<?>> repoBuilder, Boolean markDBNotStale, Interval interval) {
+    private void rebuildRepoHelper(Function<Consumer<Worker.State>, CancellationProgressTask<?>> repoBuilder, Boolean markDBNotStale, Set<Long> fileIDs, Set<Long> artifactIDS) {
 
         boolean ingestRunning = IngestManager.getInstance().isIngestRunning();
         //if there is an existing prompt or progressdialog, just show that
@@ -435,7 +436,7 @@ public class TimeLineController {
                         filteredEvents.postDBUpdated();
                     }
                     SwingUtilities.invokeLater(this::showWindow);
-                    TimeLineController.this.showRange(interval);
+                    TimeLineController.this.showEvents(fileIDs, artifactIDS);
                     break;
 
                 case FAILED:
@@ -457,8 +458,8 @@ public class TimeLineController {
      * done.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    void rebuildRepo(Interval interval) {
-        rebuildRepoHelper(eventsRepository::rebuildRepository, true, interval);
+    public void rebuildRepo(Set<Long> fileIDs, Set<Long> artifactIDS) {
+        rebuildRepoHelper(eventsRepository::rebuildRepository, true, fileIDs, artifactIDS);
     }
 
     /**
@@ -466,16 +467,8 @@ public class TimeLineController {
      * timeline when done.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-
-    void rebuildTagsTable(Interval interval) {
-        rebuildRepoHelper(eventsRepository::rebuildTags, false, interval);
-    }
-
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private void closeTimelineWindow() {
-        if (isWindowOpen()) {
-            mainFrame.close();
-        }
+    void rebuildTagsTable(Set<Long> fileIDs, Set<Long> artifactIDS) {
+        rebuildRepoHelper(eventsRepository::rebuildTags, false, fileIDs, artifactIDS);
     }
 
     /**
@@ -487,13 +480,21 @@ public class TimeLineController {
         }
     }
 
-    public void showRange(Interval interval) {
-        if (interval == null) {
+    public void showEvents(Set<Long> fileIDs, Set<Long> artifactIDS) {
+        if (fileIDs.isEmpty() && artifactIDS.isEmpty()) {
             showFullRange();
         } else {
+
+            setViewMode(ViewMode.LIST);
+            List<Long> eventIDs = filteredEvents.getDerivedEventIDs(fileIDs, artifactIDS);
+
+            Interval interval = filteredEvents.getSpanningInterval(eventIDs);
+
             synchronized (filteredEvents) {
                 pushTimeRange(interval);
             }
+
+            selectedEventIDs.setAll(eventIDs);
         }
     }
 
@@ -519,7 +520,7 @@ public class TimeLineController {
      * necessary, and show the timeline window.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    void openTimeLine(Interval interval) {
+    void openTimeLine(Set<Long> fileIDs, Set<Long> artifactIDS) {
         // listen for case changes (specifically images being added, and case changes).
         if (Case.isCaseOpen() && !listeningToAutopsy) {
             IngestManager.getInstance().addIngestModuleEventListener(ingestModuleListener);
@@ -528,7 +529,7 @@ public class TimeLineController {
             listeningToAutopsy = true;
         }
 
-        Platform.runLater(() -> promptForRebuild( interval));
+        Platform.runLater(() -> promptForRebuild(fileIDs, artifactIDS));
     }
 
     /**
@@ -538,7 +539,7 @@ public class TimeLineController {
      * rebuild is done, or immediately if the rebuild is not confirmed. F
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private void promptForRebuild(@Nullable String dataSourceName, Interval interval) {
+    private void promptForRebuild(Set<Long> fileIDs, Set<Long> artifactIDS) {
         //if there is an existing prompt or progressdialog, just show that
         if (promptDialogManager.bringCurrentDialogToFront()) {
             return;
@@ -546,7 +547,7 @@ public class TimeLineController {
 
         //if the repo is empty just (re)build it with out asking, the user can always cancel part way through
         if (eventsRepository.countAllEvents() == 0) {
-            rebuildRepo(interval);
+            rebuildRepo(fileIDs, artifactIDS);
             return;
         }
 
@@ -554,7 +555,7 @@ public class TimeLineController {
         List<String> rebuildReasons = getRebuildReasons();
         if (false == rebuildReasons.isEmpty()) {
             if (promptDialogManager.confirmRebuild(rebuildReasons)) {
-                rebuildRepo(interval);
+                rebuildRepo(fileIDs, artifactIDS);
                 return;
             }
         }
@@ -566,7 +567,7 @@ public class TimeLineController {
          *
          * //TODO: can we check the tags to see if we need to do this?
          */
-        rebuildTagsTable(interval);
+        rebuildTagsTable(fileIDs, artifactIDS);
     }
 
     /**

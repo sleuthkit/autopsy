@@ -19,8 +19,9 @@
 package org.sleuthkit.autopsy.timeline;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Set;
 import java.util.logging.Level;
-import org.joda.time.Interval;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
@@ -62,13 +63,13 @@ public class OpenTimelineAction extends CallableSystemAction {
     @Override
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void performAction() {
-        showTimeline(null);
+        showTimeline(Collections.emptySet(), Collections.emptySet());
     }
 
     @NbBundle.Messages({
         "OpenTimelineAction.settingsErrorMessage=Failed to initialize timeline settings.",
         "OpenTimeLineAction.msgdlg.text=Could not create timeline, there are no data sources."})
-    public void showTimeline(Interval interval) {
+    public void showTimeline(Set<Long> fileIDs, Set<Long> artifactIDS) {
         //check case
         if (!Case.isCaseOpen()) {
             return;
@@ -87,7 +88,7 @@ public class OpenTimelineAction extends CallableSystemAction {
                     timeLineController.shutDownTimeLine();
                     timeLineController = new TimeLineController(currentCase);
                 }
-                timeLineController.openTimeLine(interval);
+                timeLineController.openTimeLine(fileIDs, artifactIDS);
             } catch (IOException iOException) {
                 MessageNotifyUtil.Message.error(Bundle.OpenTimelineAction_settingsErrorMessage());
                 LOGGER.log(Level.SEVERE, "Failed to initialize per case timeline settings.", iOException);

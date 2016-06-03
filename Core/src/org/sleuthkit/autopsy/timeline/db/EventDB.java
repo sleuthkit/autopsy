@@ -667,6 +667,25 @@ public class EventDB {
         }
     }
 
+    List<Long> getDerivedEventIDs(Set<Long> fileIDs, Set<Long> artifactIDS) {
+        DBLock.lock();
+        String query = "SELECT Group_Concat(event_id) FROM events"
+                + " WHERE file_id IN (" + StringUtils.join(fileIDs, ", ") + ")"
+                + " OR artifact_id IN (" + StringUtils.join(artifactIDS, ", ") + ")";
+
+        try (Statement stmt = con.createStatement();
+                ResultSet rs = stmt.executeQuery(query);) { // NON-NLS
+            while (rs.next()) {
+                return SQLHelper.unGroupConcat(rs.getString("Group_Concat(event_id)"), Long::valueOf);
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error executing get spanning interval query.", ex); // NON-NLS
+        } finally {
+            DBLock.unlock();
+        }
+        return null;
+    }
+
     /**
      * create the tags table if it doesn't already exist. This is broken out as
      * a separate method so it can be used by {@link #reInitializeTags() }

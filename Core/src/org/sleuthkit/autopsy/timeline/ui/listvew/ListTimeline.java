@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.listvew;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,6 +63,7 @@ import org.controlsfx.control.Notifications;
 import org.openide.awt.Actions;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter;
+import org.python.google.common.collect.Sets;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -193,6 +195,14 @@ class ListTimeline extends BorderPane {
             selectedEventIDs.setAll(table.getSelectionModel().getSelectedItems().stream()
                     .filter(Objects::nonNull)
                     .map(CombinedEvent::getRepresentativeEventID)
+                    .collect(Collectors.toSet()));
+        });
+
+        controller.getSelectedEventIDs().addListener((Observable observable) -> {
+            ImmutableSet<Long> selectedIDs = ImmutableSet.copyOf(controller.getSelectedEventIDs());
+
+            selectEvents(table.getItems().stream()
+                    .filter(combinedEvent -> Sets.intersection(combinedEvent.getEventIDs(), selectedIDs).isEmpty() == false)
                     .collect(Collectors.toSet()));
         });
     }

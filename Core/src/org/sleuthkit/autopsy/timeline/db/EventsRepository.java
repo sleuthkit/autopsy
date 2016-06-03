@@ -207,6 +207,10 @@ public class EventsRepository {
         return eventDB.countAllEvents();
     }
 
+    public List<Long> getDerivedEventIDs(Set<Long> fileIDs, Set<Long> artifactIDS) {
+    return     eventDB.getDerivedEventIDs(fileIDs, artifactIDS);
+    }
+
     private void invalidateCaches() {
         minCache.invalidateAll();
         maxCache.invalidateAll();
