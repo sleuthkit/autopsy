@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-16 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.countsview;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.Map;
@@ -118,8 +119,6 @@ public class CountsViewPane extends AbstractTimelineChart<String, Number, Node, 
         getChart().setData(dataSeries);
         Tooltip.install(getChart(), getDefaultTooltip());
 
-        setSettingsNodes(new CountsViewSettingsPane().getChildrenUnmodifiable());
-
         dateAxis.getTickMarks().addListener((Observable tickMarks) -> layoutDateLabels());
         dateAxis.categorySpacingProperty().addListener((Observable spacing) -> layoutDateLabels());
         dateAxis.getCategories().addListener((Observable categories) -> layoutDateLabels());
@@ -170,6 +169,21 @@ public class CountsViewPane extends AbstractTimelineChart<String, Number, Node, 
     @Override
     final protected ViewMode getViewMode() {
         return ViewMode.COUNTS;
+    }
+
+    @Override
+    protected ImmutableList<Node> getSettingsControls() {
+        return ImmutableList.copyOf(new CountsViewSettingsPane().getChildrenUnmodifiable());
+    }
+
+    @Override
+    protected boolean hasCustomTimeNavigationControls() {
+      return false;
+    }
+
+    @Override
+    protected ImmutableList<Node> getTimeNavigationControls() {
+        return ImmutableList.of();
     }
 
     /**
