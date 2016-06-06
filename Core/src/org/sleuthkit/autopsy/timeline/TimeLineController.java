@@ -493,8 +493,8 @@ public class TimeLineController {
             synchronized (filteredEvents) {
                 pushTimeRange(interval);
             }
+            Platform.runLater(() -> selectEventIDs(eventIDs));
 
-            selectedEventIDs.setAll(eventIDs);
         }
     }
 

@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.timeline.ui.listvew;
 import java.util.HashSet;
 import java.util.List;
 import javafx.application.Platform;
-import javafx.beans.Observable;
 import javafx.concurrent.Task;
 import javafx.scene.Parent;
 import org.joda.time.Interval;
@@ -50,10 +49,7 @@ public class ListViewPane extends AbstractTimeLineView {
         setCenter(listTimeline);
         setSettingsNodes(new ListViewPane.ListViewSettingsPane().getChildrenUnmodifiable());
 
-        //keep controller's list of selected event IDs in sync with this list's
-        listTimeline.getSelectedEventIDs().addListener((Observable selectedIDs) -> {
-            controller.selectEventIDs(listTimeline.getSelectedEventIDs());
-        });
+       
     }
 
     @Override

@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.listvew;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,7 +36,6 @@ import javafx.beans.Observable;
 import javafx.beans.binding.StringBinding;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
@@ -59,11 +57,11 @@ import javafx.scene.layout.VBox;
 import javafx.util.Callback;
 import javax.swing.Action;
 import javax.swing.JMenuItem;
+import org.apache.commons.lang3.ArrayUtils;
 import org.controlsfx.control.Notifications;
 import org.openide.awt.Actions;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter;
-import org.python.google.common.collect.Sets;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -114,11 +112,6 @@ class ListTimeline extends BorderPane {
     private TableColumn<CombinedEvent, CombinedEvent> taggedColumn;
     @FXML
     private TableColumn<CombinedEvent, CombinedEvent> hashHitColumn;
-
-    /**
-     * Observable list used to track selected events.
-     */
-    private final ObservableList<Long> selectedEventIDs = FXCollections.observableArrayList();
 
     private final TimeLineController controller;
     private final SleuthkitCase sleuthkitCase;
@@ -189,21 +182,23 @@ class ListTimeline extends BorderPane {
             }
         });
 
+
         table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        table.getSelectionModel().getSelectedItems().addListener((Observable observable) -> {
-            //keep the selectedEventsIDs in sync with the table's selection model, via getRepresentitiveEventID(). 
-            selectedEventIDs.setAll(table.getSelectionModel().getSelectedItems().stream()
+        //keep controller's list of selected event IDs in sync with this list's
+        table.getSelectionModel().getSelectedItems().addListener((Observable change) -> {
+//            keep the selectedEventsIDs in sync with the table's selection model, via getRepresentitiveEventID().
+            controller.selectEventIDs(table.getSelectionModel().getSelectedItems().stream()
                     .filter(Objects::nonNull)
                     .map(CombinedEvent::getRepresentativeEventID)
                     .collect(Collectors.toSet()));
+
         });
 
-        controller.getSelectedEventIDs().addListener((Observable observable) -> {
-            ImmutableSet<Long> selectedIDs = ImmutableSet.copyOf(controller.getSelectedEventIDs());
-
-            selectEvents(table.getItems().stream()
-                    .filter(combinedEvent -> Sets.intersection(combinedEvent.getEventIDs(), selectedIDs).isEmpty() == false)
-                    .collect(Collectors.toSet()));
+        controller.getSelectedEventIDs().addListener((Observable change) -> {
+            Set<CombinedEvent> selectedCombinedEvents = table.getItems().stream()
+                    .filter(combinedEvent -> combinedEvent.getEventIDs().stream().anyMatch(controller.getSelectedEventIDs()::contains))
+                    .collect(Collectors.toSet());
+            selectEvents(selectedCombinedEvents);
         });
     }
 
@@ -226,16 +221,6 @@ class ListTimeline extends BorderPane {
     }
 
     /**
-     * Get an ObservableList of IDs of events that are selected in this table.
-     *
-     * @return An ObservableList of IDs of events that are selected in this
-     *         table.
-     */
-    ObservableList<Long> getSelectedEventIDs() {
-        return selectedEventIDs;
-    }
-
-    /**
      * Get an ObservableList of combined events that are selected in this table.
      *
      * @return An ObservableList of combined events that are selected in this
@@ -251,11 +236,20 @@ class ListTimeline extends BorderPane {
      * @param selectedEvents The events that should be selected.
      */
     void selectEvents(Collection<CombinedEvent> selectedEvents) {
-        CombinedEvent firstSelected = selectedEvents.stream().min(Comparator.comparing(CombinedEvent::getStartMillis)).orElse(null);
         table.getSelectionModel().clearSelection();
-        table.scrollTo(firstSelected);
-        selectedEvents.forEach(table.getSelectionModel()::select);
-        table.requestFocus();
+        if (selectedEvents.isEmpty() == false) {
+            CombinedEvent firstSelected = selectedEvents.stream().filter(Objects::nonNull).min(Comparator.comparing(CombinedEvent::getStartMillis)).orElse(null);
+            table.scrollTo(firstSelected);
+            Set<Integer> selectedIndices = selectedEvents.stream()
+                    .map(table.getItems()::indexOf)
+                    .filter(index -> index >= 0)
+                    .collect(Collectors.toSet());
+            Integer[] indices = selectedIndices.toArray(new Integer[selectedIndices.size()]);
+            if (indices.length >= 1) {
+                table.getSelectionModel().selectIndices(indices[0], ArrayUtils.toPrimitive(indices));
+                table.requestFocus();
+            }
+        }
     }
 
     /**
