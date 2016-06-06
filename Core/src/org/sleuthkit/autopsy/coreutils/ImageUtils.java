@@ -1,4 +1,4 @@
- /*
+/*
  * Autopsy Forensic Browser
  * 
  * Copyright 2012-16 Basis Technology Corp.
@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -89,7 +90,7 @@ public class ImageUtils {
     private static final List<String> GIF_EXTENSION_LIST = Arrays.asList("gif");
     private static final SortedSet<String> GIF_MIME_SET = ImmutableSortedSet.copyOf(new String[]{"image/gif"});
 
-    private static final List<String> SUPPORTED_IMAGE_EXTENSIONS;
+    private static final List<String> SUPPORTED_IMAGE_EXTENSIONS = new ArrayList<>();
     private static final SortedSet<String> SUPPORTED_IMAGE_MIME_TYPES;
 
     private static final boolean openCVLoaded;
@@ -124,7 +125,8 @@ public class ImageUtils {
         }
 
         openCVLoaded = openCVLoadedTemp;
-        SUPPORTED_IMAGE_EXTENSIONS = Arrays.asList(ImageIO.getReaderFileSuffixes());
+        SUPPORTED_IMAGE_EXTENSIONS.addAll(Arrays.asList(ImageIO.getReaderFileSuffixes()));
+        SUPPORTED_IMAGE_EXTENSIONS.add("tec"); // Add JFIF .tec files
         SUPPORTED_IMAGE_MIME_TYPES = new TreeSet<>(Arrays.asList(ImageIO.getReaderMIMETypes()));
         /*
          * special cases and variants that we support, but don't get registered
@@ -370,6 +372,31 @@ public class ImageUtils {
              * them to an int first.
              */
             return (((fileHeaderBuffer[0] & 0xff) == 0xff) && ((fileHeaderBuffer[1] & 0xff) == 0xd8));
+        } catch (TskCoreException ex) {
+            //ignore if can't read the first few bytes, not a JPEG
+            return false;
+        }
+    }
+
+    /**
+     * Check if the given file is a JFIF based on header, but has a leading End
+     * Of Image marker (0xFFD9)
+     *
+     * @param file the AbstractFile to check
+     *
+     * @return true if JFIF file, false otherwise
+     */
+    public static boolean isJfifFileHeaderWithLeadingEOIMarker(AbstractFile file) {
+        if (file.getSize() < 100) {
+            return false;
+        }
+        try {
+            byte[] fileHeaderBuffer = readHeader(file, 4);
+            // Check for the JFIF header with leading EOI marker: 0xFFD9 followed by SOI marker: 0xFFD8
+            return (fileHeaderBuffer[0] == (byte) 0xFF
+                    && fileHeaderBuffer[1] == (byte) 0xD9
+                    && fileHeaderBuffer[2] == (byte) 0xFF
+                    && fileHeaderBuffer[3] == (byte) 0xD8);
         } catch (TskCoreException ex) {
             //ignore if can't read the first few bytes, not a JPEG
             return false;
@@ -711,7 +738,7 @@ public class ImageUtils {
      */
     static private abstract class ReadImageTaskBase extends Task<javafx.scene.image.Image> implements IIOReadProgressListener {
 
-        private static final String IMAGEIO_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT = "ImageIO could not read {0}.  It may be unsupported or corrupt"; //NON-NLS
+        private static final String IMAGEIO_COULD_NOT_READ_UNSUPPORTED_OR_CORRUPT = "ImageIO could not read {0}.  It may be unsupported or corrupt"; //NON-NLS
         final AbstractFile file;
 //        private ImageReader reader;
 
@@ -726,13 +753,26 @@ public class ImageUtils {
                 if (image.isError() == false) {
                     return image;
                 }
-                //fall through to default image reading code if there was an error
+            } else if (file.getNameExtension().equalsIgnoreCase("tec")) { //NON-NLS
+                int offset = 0;
+                if (isJfifFileHeaderWithLeadingEOIMarker(file)) {
+                    offset = 2;
+                } else if (isJpegFileHeader(file)) {
+                    offset = 0;
+                }
+                //use JavaFX to directly read .tec files, skipping any leading EOI markers
+                javafx.scene.image.Image image = new javafx.scene.image.Image(new BufferedInputStream(new ReadContentInputStream(file, offset)));
+                if (image.isError() == false) {
+                    return image;
+                }
             }
+            //fall through to default image reading code if there was an error
             if (isCancelled()) {
                 return null;
             }
 
-            return getImageProperty(file, "ImageIO could not read {0}: ",
+            return getImageProperty(file,
+                    "ImageIO could not read {0}: ",
                     imageReader -> {
                         imageReader.addIIOReadProgressListener(ReadImageTaskBase.this);
                         /*
@@ -747,7 +787,7 @@ public class ImageUtils {
                         try {
                             bufferedImage = imageReader.read(0, param); //should always be same bufferedImage object
                         } catch (IOException iOException) {
-                            LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT + ": " + iOException.toString(), ImageUtils.getContentPathSafe(file)); //NON-NLS
+                            LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTED_OR_CORRUPT + ": " + iOException.toString(), ImageUtils.getContentPathSafe(file)); //NON-NLS
                         } finally {
                             imageReader.removeIIOReadProgressListener(ReadImageTaskBase.this);
                         }
@@ -755,7 +795,8 @@ public class ImageUtils {
                             return null;
                         }
                         return SwingFXUtils.toFXImage(bufferedImage, null);
-                    });
+                    }
+            );
         }
 
         @Override
@@ -775,12 +816,10 @@ public class ImageUtils {
             try {
                 javafx.scene.image.Image fxImage = get();
                 if (fxImage == null) {
-                    LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT, ImageUtils.getContentPathSafe(file));
-                } else {
-                    if (fxImage.isError()) {
-                        //if there was somekind of error, log it
-                        LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT + ": " + ObjectUtils.toString(fxImage.getException()), ImageUtils.getContentPathSafe(file));
-                    }
+                    LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTED_OR_CORRUPT, ImageUtils.getContentPathSafe(file));
+                } else if (fxImage.isError()) {
+                    //if there was somekind of error, log it
+                    LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTED_OR_CORRUPT + ": " + ObjectUtils.toString(fxImage.getException()), ImageUtils.getContentPathSafe(file));
                 }
             } catch (InterruptedException | ExecutionException ex) {
                 failed();
@@ -790,7 +829,7 @@ public class ImageUtils {
         @Override
         protected void failed() {
             super.failed();
-            LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT + ": " + ObjectUtils.toString(getException()), ImageUtils.getContentPathSafe(file));
+            LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTED_OR_CORRUPT + ": " + ObjectUtils.toString(getException()), ImageUtils.getContentPathSafe(file));
         }
 
         @Override
