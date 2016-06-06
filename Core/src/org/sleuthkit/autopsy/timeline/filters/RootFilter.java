@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,11 +20,12 @@ package org.sleuthkit.autopsy.timeline.filters;
 
 import java.util.Set;
 import java.util.stream.Collectors;
+import javafx.beans.binding.BooleanBinding;
 import javafx.collections.FXCollections;
 
 /**
- * an implementation of (@link IntersectionFilter} designed to be used as the
- * root of a filter tree. provides named access to specific subfilters.
+ * An implementation of IntersectionFilter designed to be used as the root of a
+ * filter tree. provides named access to specific subfilters.
  */
 public class RootFilter extends IntersectionFilter<Filter> {
 
@@ -45,6 +46,18 @@ public class RootFilter extends IntersectionFilter<Filter> {
 
     public HashHitsFilter getHashHitsFilter() {
         return hashFilter;
+    }
+
+    public TypeFilter getTypeFilter() {
+        return typeFilter;
+    }
+
+    public HideKnownFilter getKnownFilter() {
+        return knownFilter;
+    }
+
+    public TextFilter getTextFilter() {
+        return textFilter;
     }
 
     public RootFilter(HideKnownFilter knownFilter, TagsFilter tagsFilter, HashHitsFilter hashFilter, TextFilter textFilter, TypeFilter typeFilter, DataSourcesFilter dataSourceFilter, Set<Filter> annonymousSubFilters) {
@@ -70,7 +83,7 @@ public class RootFilter extends IntersectionFilter<Filter> {
     public RootFilter copyOf() {
         Set<Filter> annonymousSubFilters = getSubFilters().stream()
                 .filter(subFilter ->
-                         !(subFilter.equals(knownFilter)
+                        !(subFilter.equals(knownFilter)
                         || subFilter.equals(tagsFilter)
                         || subFilter.equals(hashFilter)
                         || subFilter.equals(typeFilter)
@@ -107,5 +120,21 @@ public class RootFilter extends IntersectionFilter<Filter> {
             return false;
         }
         return areSubFiltersEqual(this, (CompoundFilter<Filter>) obj);
+    }
+
+    @Override
+    public boolean isActive() {
+        return true;
+    }
+
+    @Override
+    public BooleanBinding activeProperty() {
+
+        return new BooleanBinding() {
+            @Override
+            protected boolean computeValue() {
+                return true;
+            }
+        };
     }
 }

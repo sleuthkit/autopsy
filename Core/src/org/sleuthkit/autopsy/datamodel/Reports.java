@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2011-2015 Basis Technology Corp.
+ *
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,8 +42,8 @@ import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -65,6 +65,7 @@ public final class Reports implements AutopsyVisitableItem {
      */
     public static final class ReportsListNode extends DisplayableItemNode {
 
+        private static final long serialVersionUID = 1L;
         private static final String DISPLAY_NAME = NbBundle.getMessage(ReportsListNode.class, "ReportsListNode.displayName");
         private static final String ICON_PATH = "org/sleuthkit/autopsy/images/report_16.png"; //NON-NLS
 
@@ -107,25 +108,22 @@ public final class Reports implements AutopsyVisitableItem {
     private static final class ReportNodeFactory extends ChildFactory<Report> {
 
         ReportNodeFactory() {
-            Case.addPropertyChangeListener(new PropertyChangeListener() {
-                @Override
-                public void propertyChange(PropertyChangeEvent evt) {
-                    String eventType = evt.getPropertyName();
-                    if (eventType.equals(Case.Events.REPORT_ADDED.toString())) {
+            Case.addPropertyChangeListener((PropertyChangeEvent evt) -> {
+                String eventType = evt.getPropertyName();
+                if (eventType.equals(Case.Events.REPORT_ADDED.toString()) || eventType.equals(Case.Events.REPORT_DELETED.toString())) {
+                    /**
+                     * Checking for a current case is a stop gap measure until a
+                     * different way of handling the closing of cases is worked
+                     * out. Currently, remote events may be received for a case
+                     * that is already closed.
+                     */
+                    try {
+                        Case.getCurrentCase();
+                        ReportNodeFactory.this.refresh(true);
+                    } catch (IllegalStateException notUsed) {
                         /**
-                         * Checking for a current case is a stop gap measure
-                         * until a different way of handling the closing of
-                         * cases is worked out. Currently, remote events may be
-                         * received for a case that is already closed.
+                         * Case is closed, do nothing.
                          */
-                        try {
-                            Case.getCurrentCase();
-                            ReportNodeFactory.this.refresh(true);
-                        } catch (IllegalStateException notUsed) {
-                            /**
-                             * Case is closed, do nothing.
-                             */
-                        }
                     }
                 }
             });
@@ -153,6 +151,7 @@ public final class Reports implements AutopsyVisitableItem {
      */
     public static final class ReportNode extends DisplayableItemNode {
 
+        private static final long serialVersionUID = 1L;
         private static final String ICON_PATH = "org/sleuthkit/autopsy/images/report_16.png"; //NON-NLS
         private final Report report;
 
@@ -230,6 +229,7 @@ public final class Reports implements AutopsyVisitableItem {
 //        }
         private static class DeleteReportAction extends AbstractAction {
 
+            private static final long serialVersionUID = 1L;
             private static DeleteReportAction instance;
 
             // This class is a singleton to support multi-selection of nodes,
@@ -255,32 +255,36 @@ public final class Reports implements AutopsyVisitableItem {
             private DeleteReportAction() {
             }
 
+            @NbBundle.Messages({
+                "DeleteReportAction.showConfirmDialog.single.explanation=The report will remain on disk.",
+                "DeleteReportAction.showConfirmDialog.multiple.explanation=The reports will remain on disk.",
+                "DeleteReportAction.showConfirmDialog.errorMsg=An error occurred while deleting the reports."})
             @Override
             public void actionPerformed(ActionEvent e) {
                 Collection<? extends Report> selectedReportsCollection = Utilities.actionsGlobalContext().lookupAll(Report.class);
-
-                String jOptionPaneMessage = selectedReportsCollection.size() > 1
+                String message = selectedReportsCollection.size() > 1
                         ? NbBundle.getMessage(Reports.class, "DeleteReportAction.actionPerformed.showConfirmDialog.multiple.msg", selectedReportsCollection.size())
                         : NbBundle.getMessage(Reports.class, "DeleteReportAction.actionPerformed.showConfirmDialog.single.msg");
-                JCheckBox checkbox = new JCheckBox(NbBundle.getMessage(Reports.class, "DeleteReportAction.actionPerformed.showConfirmDialog.checkbox.msg"));
-                checkbox.setSelected(false);
-
-                Object[] jOptionPaneContent = {jOptionPaneMessage, checkbox};
-
-                if (JOptionPane.showConfirmDialog(null, jOptionPaneContent,
+                String explanation = selectedReportsCollection.size() > 1
+                        ? Bundle.DeleteReportAction_showConfirmDialog_multiple_explanation()
+                        : Bundle.DeleteReportAction_showConfirmDialog_single_explanation();
+                Object[] jOptionPaneContent = {message, explanation};
+                if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(null, jOptionPaneContent,
                         NbBundle.getMessage(Reports.class, "DeleteReportAction.actionPerformed.showConfirmDialog.title"),
-                        JOptionPane.YES_NO_OPTION) == 0) {
+                        JOptionPane.YES_NO_OPTION)) {
                     try {
-                        Case.getCurrentCase().deleteReports(selectedReportsCollection, checkbox.isSelected());
-                        DataContentTopComponent.findInstance().repaint();
+                        Case.getCurrentCase().deleteReports(selectedReportsCollection);
                     } catch (TskCoreException | IllegalStateException ex) {
-                        Logger.getLogger(DeleteReportAction.class.getName()).log(Level.INFO, "Error deleting the reports. ", ex); // NON-NLS - Provide solution to the user?
+                        Logger.getLogger(DeleteReportAction.class.getName()).log(Level.SEVERE, "Error deleting reports", ex); // NON-NLS
+                        MessageNotifyUtil.Message.error(Bundle.DeleteReportAction_showConfirmDialog_errorMsg());
                     }
                 }
             }
         }
 
         private final class OpenReportAction extends AbstractAction {
+
+            private static final long serialVersionUID = 1L;
 
             private OpenReportAction() {
                 super(NbBundle.getMessage(OpenReportAction.class, "OpenReportAction.actionDisplayName"));

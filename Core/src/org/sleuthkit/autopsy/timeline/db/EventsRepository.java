@@ -35,6 +35,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
@@ -44,22 +45,20 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
+import javafx.concurrent.Worker;
 import javax.swing.JOptionPane;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.Interval;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.timeline.CancellationProgressTask;
-import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.ArtifactEventType;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.FileSystemTypes;
@@ -105,7 +104,7 @@ public class EventsRepository {
 
     private final LoadingCache<Object, Long> maxCache;
     private final LoadingCache<Object, Long> minCache;
-    private final LoadingCache<Long, TimeLineEvent> idToEventCache;
+    private final LoadingCache<Long, SingleEvent> idToEventCache;
     private final LoadingCache<ZoomParams, Map<EventType, Long>> eventCountsCache;
     private final LoadingCache<ZoomParams, List<EventStripe>> eventStripeCache;
 
@@ -168,7 +167,7 @@ public class EventsRepository {
      */
     public Long getMaxTime() {
         return maxCache.getUnchecked("max"); // NON-NLS
-//        return eventDB.getMaxTime();
+
     }
 
     /**
@@ -176,38 +175,14 @@ public class EventsRepository {
      */
     public Long getMinTime() {
         return minCache.getUnchecked("min"); // NON-NLS
-//        return eventDB.getMinTime();
+
     }
 
-    private void recordLastArtifactID(long lastArtfID) {
-        eventDB.recordLastArtifactID(lastArtfID);
-    }
-
-    private void recordWasIngestRunning(Boolean wasIngestRunning) {
-        eventDB.recordWasIngestRunning(wasIngestRunning);
-    }
-
-    private void recordLastObjID(Long lastObjID) {
-        eventDB.recordLastObjID(lastObjID);
-    }
-
-    public boolean getWasIngestRunning() {
-        return eventDB.getWasIngestRunning();
-    }
-
-    public Long getLastObjID() {
-        return eventDB.getLastObjID();
-    }
-
-    public long getLastArtfactID() {
-        return eventDB.getLastArtfactID();
-    }
-
-    public TimeLineEvent getEventById(Long eventID) {
+    public SingleEvent getEventById(Long eventID) {
         return idToEventCache.getUnchecked(eventID);
     }
 
-    synchronized public Set<TimeLineEvent> getEventsById(Collection<Long> eventIDs) {
+    synchronized public Set<SingleEvent> getEventsById(Collection<Long> eventIDs) {
         return eventIDs.stream()
                 .map(idToEventCache::getUnchecked)
                 .collect(Collectors.toSet());
@@ -225,6 +200,10 @@ public class EventsRepository {
 
     synchronized public Map<EventType, Long> countEvents(ZoomParams params) {
         return eventCountsCache.getUnchecked(params);
+    }
+
+    synchronized public int countAllEvents() {
+        return eventDB.countAllEvents();
     }
 
     private void invalidateCaches() {
@@ -331,48 +310,60 @@ public class EventsRepository {
         }
     }
 
-    /**
-     *
-     * @param lastObjId     the value of lastObjId
-     * @param lastArtfID    the value of lastArtfID
-     * @param injestRunning the value of injestRunning
-     */
-    public void recordDBPopulationState(final long lastObjId, final long lastArtfID, final Boolean injestRunning) {
-        recordLastObjID(lastObjId);
-        recordLastArtifactID(lastArtfID);
-        recordWasIngestRunning(injestRunning);
-    }
-
     public boolean areFiltersEquivalent(RootFilter f1, RootFilter f2) {
         return SQLHelper.getSQLWhere(f1).equals(SQLHelper.getSQLWhere(f2));
     }
 
+    /**
+     *
+     * rebuild the entire repo.
+     *
+     * @param onStateChange called when he background task changes state.
+     *                      Clients can use this to handle failure, or cleanup
+     *                      operations for example.
+     *
+     * @return the task that will rebuild the repo in a background thread. The
+     *         task has already been started.
+     */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    public boolean isRebuilding() {
-        return dbWorker.isRunning();
-    }
-
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    public CancellationProgressTask<Void> rebuildRepository() {
-        return rebuildRepository(DBPopulationMode.FULL);
-    }
-
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    public CancellationProgressTask<Void> rebuildTags() {
-        return rebuildRepository(DBPopulationMode.TAGS_ONLY);
+    public CancellationProgressTask<Void> rebuildRepository(Consumer<Worker.State> onStateChange) {
+        return rebuildRepository(DBPopulationMode.FULL, onStateChange);
     }
 
     /**
      *
-     * @param mode the value of mode
+     * drop and rebuild the tags in the repo.
+     *
+     * @param onStateChange called when he background task changes state.
+     *                      Clients can use this to handle failure, or cleanup
+     *                      operations for example.
+     *
+     * @return the task that will rebuild the repo in a background thread. The
+     *         task has already been started.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private CancellationProgressTask<Void> rebuildRepository(final DBPopulationMode mode) {
+    public CancellationProgressTask<Void> rebuildTags(Consumer<Worker.State> onStateChange) {
+        return rebuildRepository(DBPopulationMode.TAGS_ONLY, onStateChange);
+    }
+
+    /**
+     * rebuild the repo.
+     *
+     * @param mode          the rebuild mode to use.
+     * @param onStateChange called when he background task changes state.
+     *                      Clients can use this to handle failure, or cleanup
+     *                      operations for example.
+     *
+     * @return the task that will rebuild the repo in a background thread. The
+     *         task has already been started.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private CancellationProgressTask<Void> rebuildRepository(final DBPopulationMode mode, Consumer<Worker.State> onStateChange) {
         LOGGER.log(Level.INFO, "(re)starting {0} db population task", mode); //NON-NLS
         if (dbWorker != null) {
             dbWorker.cancel();
         }
-        dbWorker = new DBPopulationWorker(mode);
+        dbWorker = new DBPopulationWorker(mode, onStateChange);
         workerExecutor.execute(dbWorker);
         return dbWorker;
     }
@@ -437,10 +428,11 @@ public class EventsRepository {
             }
         }
 
-        DBPopulationWorker(DBPopulationMode mode) {
+        DBPopulationWorker(DBPopulationMode mode, Consumer<Worker.State> onStateChange) {
             skCase = autoCase.getSleuthkitCase();
             tagsManager = autoCase.getServices().getTagsManager();
             this.dbPopulationMode = mode;
+            this.stateProperty().addListener(stateObservable -> onStateChange.accept(getState()));
         }
 
         void restartProgressHandle(String title, String message, Double workDone, double total, Boolean cancellable) {
@@ -448,8 +440,8 @@ public class EventsRepository {
                 progressHandle.finish();
             }
             progressHandle = cancellable
-                    ? ProgressHandleFactory.createHandle(title, this::requestCancel)
-                    : ProgressHandleFactory.createHandle(title);
+                    ? ProgressHandle.createHandle(title, this::requestCancel)
+                    : ProgressHandle.createHandle(title);
 
             if (workDone < 0) {
                 progressHandle.start();
@@ -461,6 +453,7 @@ public class EventsRepository {
             updateProgress(workDone, total);
         }
 
+        @SuppressWarnings("deprecation") // TODO (EUR-733): Do not use SleuthkitCase.getLastObjectId         
         @Override
         @NbBundle.Messages({"progressWindow.msg.refreshingFileTags=Refreshing file tags",
             "progressWindow.msg.refreshingResultTags=Refreshing result tags",
@@ -468,11 +461,6 @@ public class EventsRepository {
             "progressWindow.msg.commitingDb=Committing events database"})
         protected Void call() throws Exception {
             EventDB.EventTransaction trans = null;
-
-            //save paramaters for recording later
-            long lastObjId = skCase.getLastObjectId();
-            long lastArtfID = TimeLineController.getCaseLastArtifactID(skCase);
-            boolean injestRunning = IngestManager.getInstance().isIngestRunning();
 
             if (dbPopulationMode == DBPopulationMode.FULL) {
                 //drop old db, and add back MAC and artifact events
@@ -512,9 +500,6 @@ public class EventsRepository {
             Platform.runLater(() -> cancellable.set(false));
             restartProgressHandle(Bundle.progressWindow_msg_commitingDb(), "", -1D, 1, false);
             eventDB.commitTransaction(trans);
-            if (isCancelRequested() == false) {
-                recordDBPopulationState(lastObjId, lastArtfID, injestRunning);
-            }
 
             eventDB.analyze();
             populateFilterData(skCase);
@@ -654,7 +639,7 @@ public class EventsRepository {
         private void populateEventType(final ArtifactEventType type, EventDB.EventTransaction trans) {
             try {
                 //get all the blackboard artifacts corresponding to the given event sub_type
-                final ArrayList<BlackboardArtifact> blackboardArtifacts = skCase.getBlackboardArtifacts(type.getArtifactType());
+                final ArrayList<BlackboardArtifact> blackboardArtifacts = skCase.getBlackboardArtifacts(type.getArtifactType().getTypeID());
                 final int numArtifacts = blackboardArtifacts.size();
                 restartProgressHandle(Bundle.progressWindow_populatingXevents(type.getDisplayName()), "", 0D, numArtifacts, true);
                 for (int i = 0; i < numArtifacts; i++) {

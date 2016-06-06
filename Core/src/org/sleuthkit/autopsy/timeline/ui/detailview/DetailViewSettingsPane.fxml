@@ -1,12 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import javafx.geometry.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.CustomMenuItem?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.MenuButton?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.SeparatorMenuItem?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
 
-<fx:root alignment="CENTER_LEFT" spacing="5.0" type="javafx.scene.layout.HBox" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+<fx:root alignment="CENTER_LEFT" spacing="5.0" type="javafx.scene.layout.HBox" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1">
     <children>
+      <ToggleButton fx:id="pinnedEventsToggle" mnemonicParsing="false" text="Pinned Events">
+         <graphic>
+            <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../../images/marker--pin.png" />
+               </image>
+            </ImageView>
+         </graphic>
+      </ToggleButton>
         <MenuButton fx:id="advancedLayoutOptionsButtonLabel" mnemonicParsing="false">
             <items>
                 <CustomMenuItem fx:id="bandByTypeBoxMenuItem" hideOnClick="false" mnemonicParsing="false">

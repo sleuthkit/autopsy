@@ -262,7 +262,6 @@ class ReportHTML implements TableReportModule {
                     break;
             }
         } else {  // no defined artifact found for this dataType 
-            logger.log(Level.WARNING, "useDataTypeIcon: no artifact found for data type = " + dataType); //NON-NLS
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png"); //NON-NLS
             iconFileName = "star.png"; //NON-NLS
             iconFilePath = path + File.separator + iconFileName;
@@ -561,15 +560,6 @@ class ReportHTML implements TableReportModule {
             return;
         }
         AbstractFile file = (AbstractFile) content;
-
-        // Add metadata about the file to HTML output
-        row.add(file.getMtimeAsDate());
-        row.add(file.getCtimeAsDate());
-        row.add(file.getAtimeAsDate());
-        row.add(file.getCrtimeAsDate());
-        row.add(Long.toString(file.getSize()));
-        row.add(file.getMd5Hash());
-
         // Add the hyperlink to the row. A column header for it was created in startTable().
         StringBuilder localFileLink = new StringBuilder();
         // Don't make a local copy of the file if it is a directory or unallocated space.
@@ -848,10 +838,18 @@ class ReportHTML implements TableReportModule {
         try {
             indexOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(indexFilePath), "UTF-8")); //NON-NLS
             StringBuilder index = new StringBuilder();
-            index.append("<head>\n<title>").append( //NON-NLS
+            final String reportTitle = reportBranding.getReportTitle();
+            String iconPath = reportBranding.getAgencyLogoPath();
+            if (iconPath == null){
+                // use default Autopsy icon if custom icon is not set
+                iconPath = "favicon.ico";
+            }
+            index.append("<head>\n<title>").append(reportTitle).append(" ").append(
                     NbBundle.getMessage(this.getClass(), "ReportHTML.writeIndex.title", currentCase.getName())).append(
                             "</title>\n"); //NON-NLS
-            index.append("<link rel=\"icon\" type=\"image/ico\" href=\"favicon.ico\" />\n"); //NON-NLS
+            index.append("<link rel=\"icon\" type=\"image/ico\" href=\"")
+                    .append(iconPath).append("\" />\n"); //NON-NLS
+            index.append("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n"); //NON-NLS
             index.append("</head>\n"); //NON-NLS
             index.append("<frameset cols=\"350px,*\">\n"); //NON-NLS
             index.append("<frame src=\"nav.html\" name=\"nav\">\n"); //NON-NLS
@@ -890,7 +888,8 @@ class ReportHTML implements TableReportModule {
             StringBuilder nav = new StringBuilder();
             nav.append("<html>\n<head>\n\t<title>").append( //NON-NLS
                     NbBundle.getMessage(this.getClass(), "ReportHTML.writeNav.title"))
-                    .append("</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\" />\n</head>\n<body>\n"); //NON-NLS
+                    .append("</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\" />\n"); //NON-NLS
+            nav.append("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n</head>\n<body>\n"); //NON-NLS
             nav.append("<div id=\"content\">\n<h1>").append( //NON-NLS
                     NbBundle.getMessage(this.getClass(), "ReportHTML.writeNav.h1")).append("</h1>\n"); //NON-NLS
             nav.append("<ul class=\"nav\">\n"); //NON-NLS
@@ -982,6 +981,7 @@ class ReportHTML implements TableReportModule {
             StringBuilder head = new StringBuilder();
             head.append("<html>\n<head>\n<title>").append( //NON-NLS
                     NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.title")).append("</title>\n"); //NON-NLS
+            head.append("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n"); //NON-NLS
             head.append("<style type=\"text/css\">\n"); //NON-NLS
             head.append("body { padding: 0px; margin: 0px; font: 13px/20px Arial, Helvetica, sans-serif; color: #535353; }\n"); //NON-NLS
             head.append("#wrapper { width: 90%; margin: 0px auto; margin-top: 35px; }\n"); //NON-NLS

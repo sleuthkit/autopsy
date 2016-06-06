@@ -19,24 +19,54 @@
 package org.sleuthkit.autopsy.ingest;
 
 /**
- * Encapsulates an exception thrown by an ingest module during an operation such
- * as startup or shut down with an exception object for the error that occurred.
+ * Encapsulates a Throwable thrown by an ingest module with the display name of
+ * the module for logging purposes.
  */
-final class IngestModuleError {
+public final class IngestModuleError {
 
     private final String moduleDisplayName;
-    private final Throwable error;
+    private final Throwable throwable;
 
-    IngestModuleError(String moduleDisplayName, Throwable error) {
+    /**
+     * Constructs an object that encapsulates a Throwable thrown by an ingest
+     * module with the display name of the module for logging purposes.
+     *
+     * @param moduleDisplayName The display name of the module.
+     * @param throwable         The throwable.
+     */
+    IngestModuleError(String moduleDisplayName, Throwable throwable) {
         this.moduleDisplayName = moduleDisplayName;
-        this.error = error;
+        this.throwable = throwable;
     }
 
-    String getModuleDisplayName() {
+    /**
+     * Gets the module display name.
+     *
+     * @return The module display name.
+     */
+    public String getModuleDisplayName() {
         return this.moduleDisplayName;
     }
 
-    Throwable getModuleError() {
-        return this.error;
+    /**
+     * Gets the throwable.
+     *
+     * @return The Throwable
+     */
+    public Throwable getThrowable() {
+        return this.throwable;
+    }
+
+    /**
+     * Gets the throwable.
+     *
+     * @return The Throwable
+     *
+     * @deprecated Use getThrowable instead.
+     *
+     */
+    @Deprecated
+    public Throwable getModuleError() {
+        return this.throwable;
     }
 }

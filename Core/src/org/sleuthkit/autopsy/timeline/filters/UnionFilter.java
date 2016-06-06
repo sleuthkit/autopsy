@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-15 Basis Technology Corp.
+ * Copyright 2014-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.timeline.filters;
 
+import java.util.Comparator;
+import java.util.function.Predicate;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
@@ -34,5 +36,17 @@ abstract public class UnionFilter<SubFilterType extends Filter> extends Compound
         super(FXCollections.<SubFilterType>observableArrayList());
     }
 
- 
+    abstract Predicate<SubFilterType> getDuplicatePredicate(SubFilterType subfilter);
+
+    public void addSubFilter(SubFilterType subfilter) {
+        addSubFilter(subfilter, Comparator.comparing(SubFilterType::getDisplayName));
+    }
+
+    protected void addSubFilter(SubFilterType subfilter, Comparator<SubFilterType> comparator) {
+        Predicate<SubFilterType> duplicatePredicate = getDuplicatePredicate(subfilter);
+        if (getSubFilters().stream().anyMatch(duplicatePredicate) == false) {
+            getSubFilters().add(subfilter);
+        }
+        getSubFilters().sort(comparator);
+    }
 }

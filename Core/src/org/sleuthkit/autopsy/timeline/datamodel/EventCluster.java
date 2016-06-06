@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,12 +33,12 @@ import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 /**
- * Represents a set of other (TimeLineEvent) events clustered together. All the
- * sub events should have the same type and matching descriptions at the
- * designated 'zoom level', and be 'close together' in time.
+ * Represents a set of other events clustered together. All the sub events
+ * should have the same type and matching descriptions at the designated "zoom
+ * level", and be "close together" in time.
  */
 @Immutable
-public class EventCluster implements EventBundle<EventStripe> {
+public class EventCluster implements MultiEvent<EventStripe> {
 
     /**
      * merge two event clusters into one new event cluster.
@@ -57,11 +57,16 @@ public class EventCluster implements EventBundle<EventStripe> {
         if (!cluster1.getDescription().equals(cluster2.getDescription())) {
             throw new IllegalArgumentException("event clusters are not compatible: they have different descriptions");
         }
-        Sets.SetView<Long> idsUnion = Sets.union(cluster1.getEventIDs(), cluster2.getEventIDs());
-        Sets.SetView<Long> hashHitsUnion = Sets.union(cluster1.getEventIDsWithHashHits(), cluster2.getEventIDsWithHashHits());
-        Sets.SetView<Long> taggedUnion = Sets.union(cluster1.getEventIDsWithTags(), cluster2.getEventIDsWithTags());
+        Sets.SetView<Long> idsUnion =
+                Sets.union(cluster1.getEventIDs(), cluster2.getEventIDs());
+        Sets.SetView<Long> hashHitsUnion =
+                Sets.union(cluster1.getEventIDsWithHashHits(), cluster2.getEventIDsWithHashHits());
+        Sets.SetView<Long> taggedUnion =
+                Sets.union(cluster1.getEventIDsWithTags(), cluster2.getEventIDsWithTags());
 
-        return new EventCluster(IntervalUtils.span(cluster1.span, cluster2.span), cluster1.getEventType(), idsUnion, hashHitsUnion, taggedUnion, cluster1.getDescription(), cluster1.lod);
+        return new EventCluster(IntervalUtils.span(cluster1.span, cluster2.span),
+                cluster1.getEventType(), idsUnion, hashHitsUnion, taggedUnion,
+                cluster1.getDescription(), cluster1.lod);
     }
 
     final private EventStripe parent;
@@ -103,7 +108,9 @@ public class EventCluster implements EventBundle<EventStripe> {
      */
     private final ImmutableSet<Long> hashHits;
 
-    private EventCluster(Interval spanningInterval, EventType type, Set<Long> eventIDs, Set<Long> hashHits, Set<Long> tagged, String description, DescriptionLoD lod, EventStripe parent) {
+    private EventCluster(Interval spanningInterval, EventType type, Set<Long> eventIDs,
+            Set<Long> hashHits, Set<Long> tagged, String description, DescriptionLoD lod,
+            EventStripe parent) {
 
         this.span = spanningInterval;
         this.type = type;
@@ -115,13 +122,32 @@ public class EventCluster implements EventBundle<EventStripe> {
         this.parent = parent;
     }
 
-    public EventCluster(Interval spanningInterval, EventType type, Set<Long> eventIDs, Set<Long> hashHits, Set<Long> tagged, String description, DescriptionLoD lod) {
+    public EventCluster(Interval spanningInterval, EventType type, Set<Long> eventIDs,
+            Set<Long> hashHits, Set<Long> tagged, String description, DescriptionLoD lod) {
         this(spanningInterval, type, eventIDs, hashHits, tagged, description, lod, null);
     }
 
+    /**
+     * get the EventStripe (if any) that contains this cluster
+     *
+     * @return an Optional containg the parent stripe of this cluster, or is
+     *         empty if the cluster has no parent set.
+     */
     @Override
-    public Optional<EventStripe> getParentBundle() {
+    public Optional<EventStripe> getParent() {
         return Optional.ofNullable(parent);
+    }
+
+    /**
+     * get the EventStripe (if any) that contains this cluster
+     *
+     * @return an Optional containg the parent stripe of this cluster, or is
+     *         empty if the cluster has no parent set.
+     */
+    @Override
+    public Optional<EventStripe> getParentStripe() {
+        //since this clusters parent must be an event stripe just delegate to getParent();
+        return getParent();
     }
 
     public Interval getSpan() {
@@ -139,19 +165,16 @@ public class EventCluster implements EventBundle<EventStripe> {
     }
 
     @Override
-    @SuppressWarnings("ReturnOfCollectionOrArrayField")
     public ImmutableSet<Long> getEventIDs() {
         return eventIDs;
     }
 
     @Override
-    @SuppressWarnings("ReturnOfCollectionOrArrayField")
     public ImmutableSet<Long> getEventIDsWithHashHits() {
         return hashHits;
     }
 
     @Override
-    @SuppressWarnings("ReturnOfCollectionOrArrayField")
     public ImmutableSet<Long> getEventIDsWithTags() {
         return tagged;
     }
@@ -181,15 +204,53 @@ public class EventCluster implements EventBundle<EventStripe> {
      *         EventBundle as the parent.
      */
     public EventCluster withParent(EventStripe parent) {
-        if (Objects.nonNull(this.parent)) {
-            throw new IllegalStateException("Event Cluster already has a parent!");
-        }
         return new EventCluster(span, type, eventIDs, hashHits, tagged, description, lod, parent);
     }
 
     @Override
-    public SortedSet< EventCluster> getClusters() {
+    public SortedSet<EventCluster> getClusters() {
         return ImmutableSortedSet.orderedBy(Comparator.comparing(EventCluster::getStartMillis)).add(this).build();
     }
 
+    @Override
+    public String toString() {
+        return "EventCluster{" + "description=" + description + ", eventIDs=" + eventIDs.size() + '}';
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 23 * hash + Objects.hashCode(this.type);
+        hash = 23 * hash + Objects.hashCode(this.description);
+        hash = 23 * hash + Objects.hashCode(this.lod);
+        hash = 23 * hash + Objects.hashCode(this.eventIDs);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final EventCluster other = (EventCluster) obj;
+        if (!Objects.equals(this.description, other.description)) {
+            return false;
+        }
+        if (!Objects.equals(this.type, other.type)) {
+            return false;
+        }
+        if (this.lod != other.lod) {
+            return false;
+        }
+        if (!Objects.equals(this.eventIDs, other.eventIDs)) {
+            return false;
+        }
+        return true;
+    }
 }

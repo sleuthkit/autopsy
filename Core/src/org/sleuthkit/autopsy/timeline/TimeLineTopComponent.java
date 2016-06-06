@@ -46,6 +46,7 @@ import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.actions.Back;
 import org.sleuthkit.autopsy.timeline.actions.Forward;
+import org.sleuthkit.autopsy.timeline.ui.HistoryToolBar;
 import org.sleuthkit.autopsy.timeline.ui.StatusBar;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineResultView;
 import org.sleuthkit.autopsy.timeline.ui.TimeZonePanel;
@@ -107,23 +108,24 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
             final Tab eventsTreeTab = new Tab(Bundle.TimeLineTopComponent_eventsTab_name(), eventsTree);
             eventsTreeTab.setClosable(false);
             eventsTreeTab.setGraphic(new ImageView("org/sleuthkit/autopsy/timeline/images/timeline_marker.png")); // NON-NLS
-            eventsTreeTab.disableProperty().bind(controller.viewModeProperty().isEqualTo(VisualizationMode.COUNTS));
+            eventsTreeTab.disableProperty().bind(controller.visualizationModeProperty().isEqualTo(VisualizationMode.COUNTS));
 
             final TabPane leftTabPane = new TabPane(filterTab, eventsTreeTab);
             VBox.setVgrow(leftTabPane, Priority.ALWAYS);
-            controller.viewModeProperty().addListener((Observable observable) -> {
-                if (controller.viewModeProperty().get().equals(VisualizationMode.COUNTS)) {
+            controller.visualizationModeProperty().addListener((Observable observable) -> {
+                if (controller.visualizationModeProperty().get().equals(VisualizationMode.COUNTS)) {
                     //if view mode is counts, make sure events tabd is not active
                     leftTabPane.getSelectionModel().select(filterTab);
                 }
             });
 
+            HistoryToolBar historyToolBar = new HistoryToolBar(controller);
             final TimeZonePanel timeZonePanel = new TimeZonePanel();
             VBox.setVgrow(timeZonePanel, Priority.SOMETIMES);
 
             final ZoomSettingsPane zoomSettingsPane = new ZoomSettingsPane(controller);
 
-            final VBox leftVBox = new VBox(5, timeZonePanel, zoomSettingsPane, leftTabPane);
+            final VBox leftVBox = new VBox(5, timeZonePanel,historyToolBar, zoomSettingsPane, leftTabPane);
             SplitPane.setResizableWithParent(leftVBox, Boolean.FALSE);
 
             final SplitPane mainSplitPane = new SplitPane(leftVBox, visualizationPanel);

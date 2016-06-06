@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -43,6 +44,9 @@ import org.sleuthkit.datamodel.TskCoreException;
  * A file ingest module that generates interesting files set hit artifacts for
  * files that match interesting files set definitions.
  */
+@NbBundle.Messages({
+    "FilesIdentifierIngestModule.getFilesError=Error getting interesting files sets from file."
+})
 final class FilesIdentifierIngestModule implements FileIngestModule {
 
     private static final Object sharedResourcesLock = new Object();
@@ -77,10 +81,14 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
                 // synchronized definitions manager method eliminates the need 
                 // to disable the interesting files set definition UI during ingest.
                 List<FilesSet> filesSets = new ArrayList<>();
-                for (FilesSet set : InterestingItemDefsManager.getInstance().getInterestingFilesSets().values()) {
-                    if (settings.interestingFilesSetIsEnabled(set.getName())) {
-                        filesSets.add(set);
+                try {
+                    for (FilesSet set : InterestingItemDefsManager.getInstance().getInterestingFilesSets().values()) {
+                        if (settings.interestingFilesSetIsEnabled(set.getName())) {
+                            filesSets.add(set);
+                        }
                     }
+                } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
+                    throw new IngestModuleException(Bundle.FilesIdentifierIngestModule_getFilesError(), ex);
                 }
                 FilesIdentifierIngestModule.interestingFileSetsByJob.put(context.getJobId(), filesSets);
             }
@@ -91,9 +99,10 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
      * @inheritDoc
      */
     @Override
+    @Messages({"FilesIdentifierIngestModule.indexError.message=Failed to index interesting file hit artifact for keyword search."})
     public ProcessResult process(AbstractFile file) {
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
-        
+
         // See if the file belongs to any defined interesting files set.
         List<FilesSet> filesSets = FilesIdentifierIngestModule.interestingFileSetsByJob.get(this.context.getJobId());
         for (FilesSet filesSet : filesSets) {
@@ -117,16 +126,15 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
                     // interesting files set membership rule that was satisfied.
                     BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, moduleName, ruleSatisfied);
                     artifact.addAttribute(ruleNameAttribute);
-                    
+
                     try {
                         // index the artifact for keyword search
                         blackboard.indexArtifact(artifact);
                     } catch (Blackboard.BlackboardException ex) {
-                        logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", artifact.getDisplayName()), ex); //NON-NLS
-                        MessageNotifyUtil.Notify.error(
-                                NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), artifact.getDisplayName());
+                        logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
+                        MessageNotifyUtil.Notify.error(Bundle.FilesIdentifierIngestModule_indexError_message(), artifact.getDisplayName());
                     }
-                    
+
                     IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, Collections.singletonList(artifact)));
 
                 } catch (TskCoreException ex) {

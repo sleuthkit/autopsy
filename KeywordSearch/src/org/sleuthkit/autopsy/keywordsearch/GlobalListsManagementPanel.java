@@ -19,17 +19,20 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.event.KeyEvent;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.AbstractTableModel;
+import org.netbeans.spi.options.OptionsPanelController;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * A panel to manage all keyword lists created/imported in Autopsy.
@@ -38,6 +41,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
 
     private Logger logger = Logger.getLogger(GlobalListsManagementPanel.class.getName());
     private KeywordListTableModel tableModel;
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     GlobalListsManagementPanel() {
         tableModel = new KeywordListTableModel();
@@ -74,6 +78,16 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
          * listsTable.getSelectionModel().clearSelection(); } } } });
          */
     }
+    
+    @Override
+    public void addPropertyChangeListener(PropertyChangeListener l) {
+        pcs.addPropertyChangeListener(l);
+    }
+
+    @Override
+    public void removePropertyChangeListener(PropertyChangeListener l) {
+        pcs.removePropertyChangeListener(l);
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -91,11 +105,9 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         keywordListsLabel = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(250, 0));
-        setPreferredSize(new java.awt.Dimension(250, 492));
-
-        jScrollPane1.setPreferredSize(new java.awt.Dimension(200, 402));
 
         listsTable.setModel(tableModel);
+        listsTable.setMaximumSize(new java.awt.Dimension(30000, 30000));
         listsTable.setShowHorizontalLines(false);
         listsTable.setShowVerticalLines(false);
         listsTable.getTableHeader().setReorderingAllowed(false);
@@ -106,23 +118,23 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         });
         jScrollPane1.setViewportView(listsTable);
 
-        newListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/new16.png"))); // NOI18N NON-NLS
-        newListButton.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "KeywordSearchListsManagementPanel.newListButton.text")); // NOI18N
+        newListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/new16.png"))); // NOI18N
+        newListButton.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "GlobalListsManagementPanel.newListButton.text")); // NOI18N
         newListButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 newListButtonActionPerformed(evt);
             }
         });
 
-        importButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/import16.png"))); // NOI18N NON-NLS
-        importButton.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "KeywordSearchListsManagementPanel.importButton.text")); // NOI18N
+        importButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/import16.png"))); // NOI18N
+        importButton.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "GlobalListsManagementPanel.importButton.text")); // NOI18N
         importButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 importButtonActionPerformed(evt);
             }
         });
 
-        keywordListsLabel.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "KeywordSearchListsManagementPanel.keywordListsLabel.text")); // NOI18N
+        keywordListsLabel.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "GlobalListsManagementPanel.keywordListsLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -131,7 +143,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(keywordListsLabel)
@@ -148,8 +160,8 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
                 .addContainerGap()
                 .addComponent(keywordListsLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 414, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 355, Short.MAX_VALUE)
+                .addGap(5, 5, 5)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(newListButton)
                     .addComponent(importButton))
@@ -197,6 +209,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
                 listsTable.getSelectionModel().addSelectionInterval(i, i);
             }
         }
+        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_newListButtonActionPerformed
 
     private void importButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importButtonActionPerformed
@@ -291,6 +304,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
                 }
             }
         }
+        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_importButtonActionPerformed
     private void listsTableKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_listsTableKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_DELETE) {
@@ -300,6 +314,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
             } else if (KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.title"), NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.body"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
                 String listName = (String) listsTable.getModel().getValueAt(selected[0], 0);
                 XmlKeywordSearchList.getCurrent().deleteList(listName);
+                pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             } else {
                 return;
             }

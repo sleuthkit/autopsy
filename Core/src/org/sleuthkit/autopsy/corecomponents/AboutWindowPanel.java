@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,13 +19,13 @@
 package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Cursor;
+import java.awt.Image;
 import java.awt.Window;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.util.Locale;
-import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -36,6 +36,7 @@ import javax.swing.event.HyperlinkListener;
 import org.netbeans.core.actions.HTMLViewAction;
 import org.openide.awt.HtmlBrowser;
 import org.openide.modules.Places;
+import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
@@ -46,20 +47,22 @@ import org.sleuthkit.datamodel.SleuthkitJNI;
  */
 public final class AboutWindowPanel extends JPanel implements HyperlinkListener {
 
-    private static final Logger Logger = org.sleuthkit.autopsy.coreutils.Logger.getLogger(AboutWindowPanel.class.getName());
-
+    private static final long serialVersionUID = 1L;
     private URL url = null;
-
-    private Icon about;
-
+    private final Icon about;
     private boolean verboseLogging;
 
     public AboutWindowPanel() {
-        try {
-            about = new ImageIcon(new URL("nbdocs:/org/netbeans/core/startup/splash.gif"));
-        } catch (MalformedURLException ex) {
-            Logger.log(Level.INFO, "failed to load about window image", ex); //NON-NLS
-        }
+        about = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/splash.png"));
+        init();
+    }
+        
+    public AboutWindowPanel(String pathToBrandingImage) {
+        about = new ImageIcon(ImageUtilities.loadImage(pathToBrandingImage));
+        init();
+    }
+
+    private void init() {
         initComponents();
         logoLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         description.setText(org.openide.util.NbBundle.getMessage(AboutWindowPanel.class,
@@ -70,8 +73,7 @@ public final class AboutWindowPanel extends JPanel implements HyperlinkListener 
         copyright.setBackground(getBackground());
         if (verboseLoggingIsSet()) {
             disableVerboseLoggingButton();
-        }
-
+        }        
     }
 
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents

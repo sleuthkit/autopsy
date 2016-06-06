@@ -22,15 +22,16 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.logging.Level;
-
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
-import javax.swing.JFrame;
-import org.apache.commons.io.FilenameUtils;
-import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDbManagerException;
@@ -46,6 +47,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
             .getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.defaultFileName");
     private JFileChooser fileChooser = null;
     private HashDb newHashDb = null;
+    private final static String LAST_FILE_PATH_KEY = "HashDbCreate_Path";
 
     /**
      * Displays a dialog that allows a user to create a new hash database and
@@ -273,17 +275,28 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
 
     private void saveAsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveAsButtonActionPerformed
         try {
+            String lastBaseDirectory = Paths.get(PlatformUtil.getUserConfigDirectory(), "HashDatabases").toString();
+            if (ModuleSettings.settingExists(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY)) {
+                lastBaseDirectory = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY);
+            }
             StringBuilder path = new StringBuilder();
+            path.append(lastBaseDirectory);
+            File hashDbFolder = new File(path.toString());
+            // create the folder if it doesn't exist
+            if (!hashDbFolder.exists()){
+                hashDbFolder.mkdir();
+            }
             if (!hashSetNameTextField.getText().isEmpty()) {
-                path.append(hashSetNameTextField.getText());
+                path.append(File.separator).append(hashSetNameTextField.getText());
             } else {
-                path.append(DEFAULT_FILE_NAME);
+                path.append(File.separator).append(DEFAULT_FILE_NAME);
             }
             path.append(".").append(HashDbManager.getHashDatabaseFileExtension());
             fileChooser.setSelectedFile(new File(path.toString()));
             if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
                 File databaseFile = fileChooser.getSelectedFile();
                 databasePathTextField.setText(databaseFile.getCanonicalPath());
+                ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY, databaseFile.getParent());
             }
         } catch (IOException ex) {
             Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.WARNING, "Couldn't get selected file path.", ex); //NON-NLS
@@ -324,7 +337,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
         String errorMessage = NbBundle
                 .getMessage(this.getClass(), "HashDbCreateDatabaseDialog.errMsg.hashDbCreationErr");
         try {
-            newHashDb = HashDbManager.getInstance().addNewHashDatabaseInternal(hashSetNameTextField.getText(), fileChooser.getSelectedFile().getCanonicalPath(), true, sendIngestMessagesCheckbox.isSelected(), type);
+            newHashDb = HashDbManager.getInstance().addNewHashDatabaseNoSave(hashSetNameTextField.getText(), fileChooser.getSelectedFile().getCanonicalPath(), true, sendIngestMessagesCheckbox.isSelected(), type);
         } catch (IOException ex) {
             Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
             JOptionPane.showMessageDialog(this,
@@ -338,15 +351,6 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
             Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
             JOptionPane.showMessageDialog(this,
                     ex.getMessage(),
-                    NbBundle.getMessage(this.getClass(),
-                            "HashDbCreateDatabaseDialog.createHashDbErr"),
-                    JOptionPane.ERROR_MESSAGE);
-            return;
-        } catch (TskCoreException ex) {
-            Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.SEVERE, errorMessage, ex);
-            JOptionPane.showMessageDialog(this,
-                    NbBundle.getMessage(this.getClass(),
-                            "HashDbCreateDatabaseDialog.failedToCreateHashDbMsg"),
                     NbBundle.getMessage(this.getClass(),
                             "HashDbCreateDatabaseDialog.createHashDbErr"),
                     JOptionPane.ERROR_MESSAGE);

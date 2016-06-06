@@ -23,7 +23,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import javafx.beans.Observable;
@@ -41,11 +40,14 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent.DeletedContentTagInfo;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
 import org.sleuthkit.autopsy.timeline.db.EventsRepository;
+import org.sleuthkit.autopsy.timeline.events.DBUpdatedEvent;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
-import org.sleuthkit.autopsy.timeline.events.TagsUpdatedEvent;
+import org.sleuthkit.autopsy.timeline.events.TagsAddedEvent;
+import org.sleuthkit.autopsy.timeline.events.TagsDeletedEvent;
 import org.sleuthkit.autopsy.timeline.filters.DataSourceFilter;
 import org.sleuthkit.autopsy.timeline.filters.DataSourcesFilter;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
@@ -150,11 +152,7 @@ public final class FilteredEventsModel {
             final ZoomParams zoomParams = requestedZoomParamters.get();
 
             if (zoomParams != null) {
-                if (zoomParams.getTypeZoomLevel().equals(requestedTypeZoom.get()) == false
-                        || zoomParams.getDescriptionLOD().equals(requestedLOD.get()) == false
-                        || zoomParams.getFilter().equals(requestedFilter.get()) == false
-                        || Objects.equals(zoomParams.getTimeRange(), requestedTimeRange.get()) == false) {
-
+                synchronized (FilteredEventsModel.this) {
                     requestedTypeZoom.set(zoomParams.getTypeZoomLevel());
                     requestedFilter.set(zoomParams.getFilter());
                     requestedTimeRange.set(zoomParams.getTimeRange());
@@ -166,13 +164,28 @@ public final class FilteredEventsModel {
         requestedZoomParamters.bind(currentStateProperty);
     }
 
+    /**
+     * Readonly observable property for the current ZoomParams
+     *
+     * @return A readonly observable property for the current ZoomParams.
+     */
     synchronized public ReadOnlyObjectProperty<ZoomParams> zoomParametersProperty() {
         return requestedZoomParamters.getReadOnlyProperty();
     }
 
     /**
-     * @return a read only view of the time range requested via
-     *         {@link #requestTimeRange(org.joda.time.Interval)}
+     * Get the current ZoomParams
+     *
+     * @return The current ZoomParams
+     */
+    synchronized public ZoomParams getZoomParamaters() {
+        return requestedZoomParamters.get();
+    }
+
+    /**
+     * Get a read only view of the time range currently in view.
+     *
+     * @return A read only view of the time range currently in view.
      */
     synchronized public ReadOnlyObjectProperty<Interval> timeRangeProperty() {
         if (requestedTimeRange.get() == null) {
@@ -191,6 +204,15 @@ public final class FilteredEventsModel {
 
     synchronized public ReadOnlyObjectProperty<EventTypeZoomLevel> eventTypeZoomProperty() {
         return requestedTypeZoom.getReadOnlyProperty();
+    }
+
+    /**
+     * The time range currently in view.
+     *
+     * @return The time range currently in view.
+     */
+    synchronized public Interval getTimeRange() {
+        return timeRangeProperty().get();
     }
 
     synchronized public DescriptionLoD getDescriptionLOD() {
@@ -237,11 +259,11 @@ public final class FilteredEventsModel {
         return repo.getBoundingEventsInterval(zoomParametersProperty().get().getTimeRange(), zoomParametersProperty().get().getFilter());
     }
 
-    public TimeLineEvent getEventById(Long eventID) {
+    public SingleEvent getEventById(Long eventID) {
         return repo.getEventById(eventID);
     }
 
-    public Set<TimeLineEvent> getEventsById(Collection<Long> eventIDs) {
+    public Set<SingleEvent> getEventsById(Collection<Long> eventIDs) {
         return repo.getEventsById(eventIDs);
     }
 
@@ -356,14 +378,14 @@ public final class FilteredEventsModel {
         ContentTag contentTag = evt.getAddedTag();
         Content content = contentTag.getContent();
         Set<Long> updatedEventIDs = repo.addTag(content.getId(), null, contentTag, null);
-        return postTagsUpdated(updatedEventIDs);
+        return postTagsAdded(updatedEventIDs);
     }
 
     synchronized public boolean handleArtifactTagAdded(BlackBoardArtifactTagAddedEvent evt) {
         BlackboardArtifactTag artifactTag = evt.getAddedTag();
         BlackboardArtifact artifact = artifactTag.getArtifact();
         Set<Long> updatedEventIDs = repo.addTag(artifact.getObjectID(), artifact.getArtifactID(), artifactTag, null);
-        return postTagsUpdated(updatedEventIDs);
+        return postTagsAdded(updatedEventIDs);
     }
 
     synchronized public boolean handleContentTagDeleted(ContentTagDeletedEvent evt) {
@@ -372,7 +394,7 @@ public final class FilteredEventsModel {
             Content content = autoCase.getSleuthkitCase().getContentById(deletedTagInfo.getContentID());
             boolean tagged = autoCase.getServices().getTagsManager().getContentTagsByContent(content).isEmpty() == false;
             Set<Long> updatedEventIDs = repo.deleteTag(content.getId(), null, deletedTagInfo.getTagID(), tagged);
-            return postTagsUpdated(updatedEventIDs);
+            return postTagsDeleted(updatedEventIDs);
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "unable to determine tagged status of content.", ex); //NON-NLS
         }
@@ -385,31 +407,86 @@ public final class FilteredEventsModel {
             BlackboardArtifact artifact = autoCase.getSleuthkitCase().getBlackboardArtifact(deletedTagInfo.getArtifactID());
             boolean tagged = autoCase.getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact).isEmpty() == false;
             Set<Long> updatedEventIDs = repo.deleteTag(artifact.getObjectID(), artifact.getArtifactID(), deletedTagInfo.getTagID(), tagged);
-            return postTagsUpdated(updatedEventIDs);
+            return postTagsDeleted(updatedEventIDs);
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "unable to determine tagged status of artifact.", ex); //NON-NLS
         }
         return false;
     }
 
-    private boolean postTagsUpdated(Set<Long> updatedEventIDs) {
+    /**
+     * Post a TagsAddedEvent to all registered subscribers, if the given set of
+     * updated event IDs is not empty.
+     *
+     * @param updatedEventIDs The set of event ids to be included in the
+     *                        TagsAddedEvent.
+     *
+     * @return True if an event was posted.
+     */
+    private boolean postTagsAdded(Set<Long> updatedEventIDs) {
         boolean tagsUpdated = !updatedEventIDs.isEmpty();
         if (tagsUpdated) {
-            eventbus.post(new TagsUpdatedEvent(updatedEventIDs));
+            eventbus.post(new TagsAddedEvent(updatedEventIDs));
         }
         return tagsUpdated;
     }
 
+    /**
+     * Post a TagsDeletedEvent to all registered subscribers, if the given set
+     * of updated event IDs is not empty.
+     *
+     * @param updatedEventIDs The set of event ids to be included in the
+     *                        TagsDeletedEvent.
+     *
+     * @return True if an event was posted.
+     */
+    private boolean postTagsDeleted(Set<Long> updatedEventIDs) {
+        boolean tagsUpdated = !updatedEventIDs.isEmpty();
+        if (tagsUpdated) {
+            eventbus.post(new TagsDeletedEvent(updatedEventIDs));
+        }
+        return tagsUpdated;
+    }
+
+    /**
+     * Register the given object to receive events.
+     *
+     * @param o The object to register. Must implement public methods annotated
+     *          with Subscribe.
+     */
     synchronized public void registerForEvents(Object o) {
         eventbus.register(o);
     }
 
+    /**
+     * Un-register the given object, so it no longer receives events.
+     *
+     * @param o The object to un-register.
+     */
     synchronized public void unRegisterForEvents(Object o) {
         eventbus.unregister(0);
     }
 
-    public void refresh() {
+    /**
+     * Post a DBUpdatedEvent to all registered subscribers.
+     */
+    public void postDBUpdated() {
+        eventbus.post(new DBUpdatedEvent());
+    }
+
+    /**
+     * Post a RefreshRequestedEvent to all registered subscribers.
+     */
+    public void postRefreshRequest() {
         eventbus.post(new RefreshRequestedEvent());
+    }
+
+    /**
+     * (Re)Post an AutopsyEvent received from another event distribution system
+     * locally to all registered subscribers.
+     */
+    public void postAutopsyEventLocally(AutopsyEvent event) {
+        eventbus.post(event);
     }
 
 }

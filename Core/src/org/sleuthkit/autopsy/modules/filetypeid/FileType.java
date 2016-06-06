@@ -18,42 +18,46 @@
  */
 package org.sleuthkit.autopsy.modules.filetypeid;
 
+import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
+import javax.swing.JOptionPane;
+import javax.xml.bind.DatatypeConverter;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Represents a file type characterized by a file signature.
+ * Represents a file type characterized by file signatures.
  * <p>
  * Thread-safe (immutable).
  */
-class FileType {
+class FileType implements Serializable {
 
+    private static final long serialVersionUID = 1L;
     private final String mimeType;
-    private final Signature signature;
-    private final String interestingFilesSetName;
-    private final boolean alert;
+    private final List<Signature> signatures;
 
     /**
-     * Creates a representation of a file type characterized by a file
-     * signature.
+     * Creates a representation of a file type characterized by file signatures.
      *
-     * @param mimeType     The mime type to associate with this file type.
-     * @param signature    The signature that characterizes this file type.
-     * @param filesSetName The name of an interesting files set that includes
-     *                     files of this type, may be the empty string.
-     * @param alert        Whether the user wishes to be alerted when a file
-     *                     matching this type is encountered.
+     * @param mimeType   The mime type to associate with this file type.
+     * @param signatures The signatures that characterize this file type.
+     *
+     * @throws IllegalArgumentException If an empty list of signatures is given.
      */
-    FileType(String mimeType, final Signature signature, String filesSetName, boolean alert) {
+    FileType(String mimeType, List<Signature> signatures) throws IllegalArgumentException {
+        if (signatures.isEmpty()) {
+            throw new IllegalArgumentException("Must have at least one signature.");
+        }
         this.mimeType = mimeType;
-        this.signature = new Signature(signature.getSignatureBytes(), signature.getOffset(), signature.getType(), signature.isRelativeToStart());
-        this.interestingFilesSetName = filesSetName;
-        this.alert = alert;
+        this.signatures = new ArrayList<>(signatures);
     }
 
     /**
@@ -66,12 +70,21 @@ class FileType {
     }
 
     /**
-     * Gets the signature associated with this file type.
+     * Gets the signatures associated with this file type.
      *
-     * @return The signature.
+     * @return The signatures.
      */
-    Signature getSignature() {
-        return new Signature(signature.getSignatureBytes(), signature.getOffset(), signature.getType(), signature.isRelativeToStart());
+    List<Signature> getSignatures() {
+        return Collections.unmodifiableList(this.signatures);
+    }
+
+    /**
+     * Adds a signature to the file type
+     *
+     * @param sig The signature to add
+     */
+    void addSignature(Signature sig) {
+        this.signatures.add(sig);
     }
 
     /**
@@ -82,41 +95,27 @@ class FileType {
      * @return True or false.
      */
     boolean matches(final AbstractFile file) {
-        return signature.containedIn(file);
+        for (Signature sig : this.signatures) {
+            if (!sig.containedIn(file)) {
+                return false;
+            }
+        }
+        return true;
     }
 
-    /**
-     * Indicates whether or not an alert is desired if a file of this type is
-     * encountered.
-     *
-     * @return True or false.
-     */
-    boolean alertOnMatch() {
-        return alert;
-    }
-
-    /**
-     * Gets the name of an interesting files set that includes files of this
-     * type.
-     *
-     * @return The interesting files set name, possibly empty.
-     */
-    String getFilesSetName() {
-        return interestingFilesSetName;
-    }
-    
     @Override
     public String toString() {
         return this.mimeType;
     }
-    
+
     @Override
     public boolean equals(Object other) {
-        if(other != null && other instanceof FileType) {
+        if (other != null && other instanceof FileType) {
             FileType that = (FileType) other;
-            if(this.getMimeType().equals(that.getMimeType()) && this.getSignature().equals(that.getSignature()))
+            if (this.getMimeType().equals(that.getMimeType()) && this.getSignatures().equals(that.getSignatures())) {
                 return true;
-        }        
+            }
+        }
         return false;
     }
 
@@ -124,7 +123,7 @@ class FileType {
     public int hashCode() {
         int hash = 7;
         hash = 67 * hash + Objects.hashCode(this.mimeType);
-        hash = 67 * hash + Objects.hashCode(this.signature);
+        hash = 67 * hash + Objects.hashCode(this.signatures);
         return hash;
     }
 
@@ -134,14 +133,16 @@ class FileType {
      * <p>
      * Thread-safe (immutable).
      */
-    static class Signature {
+    static class Signature implements Serializable {
 
+        private static final long serialVersionUID = 1L;
         private static final Logger logger = Logger.getLogger(Signature.class.getName());
 
         /**
          * The way the signature byte sequence should be interpreted.
          */
         enum Type {
+
             RAW, ASCII
         };
 
@@ -156,8 +157,8 @@ class FileType {
          *
          * @param signatureBytes The signature bytes.
          * @param offset         The offset of the signature bytes.
-         * @param type           The type of data in the byte array. Impacts
-         *                       how it is displayed to the user in the UI. 
+         * @param type           The type of data in the byte array. Impacts how
+         *                       it is displayed to the user in the UI.
          */
         Signature(final byte[] signatureBytes, long offset, Type type) {
             this.signatureBytes = Arrays.copyOf(signatureBytes, signatureBytes.length);
@@ -165,13 +166,13 @@ class FileType {
             this.type = type;
             this.isRelativeToStart = true;
         }
-        
+
         /**
-         * Creates a file signature consisting of an ASCII string at a
-         * specific offset within a file.
+         * Creates a file signature consisting of an ASCII string at a specific
+         * offset within a file.
          *
          * @param signatureString The ASCII string
-         * @param offset         The offset of the signature bytes.
+         * @param offset          The offset of the signature bytes.
          */
         Signature(String signatureString, long offset) {
             this.signatureBytes = signatureString.getBytes(StandardCharsets.US_ASCII);
@@ -179,15 +180,15 @@ class FileType {
             this.type = Type.ASCII;
             this.isRelativeToStart = true;
         }
-        
+
         /**
          * Creates a file signature consisting of a sequence of bytes at a
-         * specific offset within a file.  If bytes correspond to an ASCII
-         * string, use one of the other constructors so that the string is 
-         * displayed to the user instead of the raw bytes. 
+         * specific offset within a file. If bytes correspond to an ASCII
+         * string, use one of the other constructors so that the string is
+         * displayed to the user instead of the raw bytes.
          *
-         * @param signatureBytes The signature bytes.
-         * @param offset         The offset of the signature bytes.
+         * @param signatureBytes The signatures bytes.
+         * @param offset         The offset of the signatures bytes.
          */
         Signature(final byte[] signatureBytes, long offset) {
             this.signatureBytes = Arrays.copyOf(signatureBytes, signatureBytes.length);
@@ -195,16 +196,17 @@ class FileType {
             this.type = Type.RAW;
             this.isRelativeToStart = true;
         }
-        
+
         /**
          * Creates a file signature consisting of a sequence of bytes at a
          * specific offset within a file.
          *
-         * @param signatureBytes        The signature bytes.
-         * @param offset                The offset of the signature bytes.
-         * @param type                  The type of data in the byte array. Impacts
-         *                              how it is displayed to the user in the UI.
-         * @param isRelativeToStart     Determines whether this signature is relative to start.
+         * @param signatureBytes    The signature bytes.
+         * @param offset            The offset of the signature bytes.
+         * @param type              The type of data in the byte array. Impacts
+         *                          how it is displayed to the user in the UI.
+         * @param isRelativeToStart Determines whether this signature is
+         *                          relative to start.
          */
         Signature(final byte[] signatureBytes, long offset, Type type, boolean isRelativeToStart) {
             this.signatureBytes = Arrays.copyOf(signatureBytes, signatureBytes.length);
@@ -212,14 +214,15 @@ class FileType {
             this.type = type;
             this.isRelativeToStart = isRelativeToStart;
         }
-        
+
         /**
-         * Creates a file signature consisting of an ASCII string at a
-         * specific offset within a file.
+         * Creates a file signature consisting of an ASCII string at a specific
+         * offset within a file.
          *
-         * @param signatureString       The ASCII string
-         * @param offset                The offset of the signature bytes.
-         * @param isRelativeToStart     Determines whether this signature is relative to start.
+         * @param signatureString   The ASCII string
+         * @param offset            The offset of the signature bytes.
+         * @param isRelativeToStart Determines whether this signature is
+         *                          relative to start.
          */
         Signature(String signatureString, long offset, boolean isRelativeToStart) {
             this.signatureBytes = signatureString.getBytes(StandardCharsets.US_ASCII);
@@ -227,16 +230,17 @@ class FileType {
             this.type = Type.ASCII;
             this.isRelativeToStart = isRelativeToStart;
         }
-        
+
         /**
          * Creates a file signature consisting of a sequence of bytes at a
-         * specific offset within a file.  If bytes correspond to an ASCII
-         * string, use one of the other constructors so that the string is 
-         * displayed to the user instead of the raw bytes. 
+         * specific offset within a file. If bytes correspond to an ASCII
+         * string, use one of the other constructors so that the string is
+         * displayed to the user instead of the raw bytes.
          *
-         * @param signatureBytes        The signature bytes.
-         * @param offset                The offset of the signature bytes.
-         * @param isRelativeToStart     Determines whether this signature is relative to start.
+         * @param signatureBytes    The signature bytes.
+         * @param offset            The offset of the signature bytes.
+         * @param isRelativeToStart Determines whether this signature is
+         *                          relative to start.
          */
         Signature(final byte[] signatureBytes, long offset, boolean isRelativeToStart) {
             this.signatureBytes = Arrays.copyOf(signatureBytes, signatureBytes.length);
@@ -271,7 +275,7 @@ class FileType {
         Type getType() {
             return type;
         }
-        
+
         boolean isRelativeToStart() {
             return isRelativeToStart;
         }
@@ -285,12 +289,13 @@ class FileType {
          * @return True or false.
          */
         boolean containedIn(final AbstractFile file) {
-            if(offset >= file.getSize()) {
+            if (offset >= file.getSize()) {
                 return false; // File is too small, offset lies outside file.
             }
             long actualOffset = offset;
-            if(!isRelativeToStart)
+            if (!isRelativeToStart) {
                 actualOffset = file.getSize() - 1 - offset;
+            }
             if (file.getSize() < (actualOffset + signatureBytes.length)) {
                 return false; /// too small, can't contain this signature
             }
@@ -308,15 +313,16 @@ class FileType {
                 return false;
             }
         }
-        
+
         @Override
         public boolean equals(Object other) {
             if (other != null && other instanceof Signature) {
                 Signature that = (Signature) other;
-                if(Arrays.equals(this.getSignatureBytes(), that.getSignatureBytes()) 
+                if (Arrays.equals(this.getSignatureBytes(), that.getSignatureBytes())
                         && this.getOffset() == that.getOffset()
-                        && this.getType().equals(that.getType()))
+                        && this.getType().equals(that.getType())) {
                     return true;
+                }
             }
             return false;
         }
@@ -328,6 +334,33 @@ class FileType {
             hash = 97 * hash + (int) (this.offset ^ (this.offset >>> 32));
             hash = 97 * hash + Objects.hashCode(this.type);
             return hash;
+        }
+
+        @Override
+        public String toString() {
+            String signatureBytesString;
+            if (Signature.Type.RAW == this.getType()) {
+                signatureBytesString = DatatypeConverter.printHexBinary(this.getSignatureBytes());
+                signatureBytesString = "0x" + signatureBytesString;
+            } else {
+                try {
+                    signatureBytesString = new String(this.getSignatureBytes(), "UTF-8");
+                } catch (UnsupportedEncodingException ex) {
+                    JOptionPane.showMessageDialog(null,
+                            ex.getLocalizedMessage(),
+                            Bundle.AddFileTypeSignaturePanel_signatureStringFail_text(),
+                            JOptionPane.ERROR_MESSAGE);
+                    signatureBytesString = "";
+                }
+            }
+            String startOrEnd;
+            if (this.isRelativeToStart) {
+                startOrEnd = "start";
+            } else {
+                startOrEnd = "end";
+            }
+            return signatureBytesString + ", " + offset + " bytes from " + startOrEnd;
+
         }
     }
 

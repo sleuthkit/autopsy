@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
 import java.util.Objects;
-import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.WeakChangeListener;
@@ -29,13 +28,13 @@ import javafx.scene.CacheHint;
 import javafx.scene.control.Control;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
-import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
-import org.sleuthkit.datamodel.AbstractContent;
 
 /**
  * GUI component that represents a single image as a tile with an icon, a label,
@@ -51,11 +50,7 @@ public class DrawableTile extends DrawableTileBase {
 
     private static final Logger LOGGER = Logger.getLogger(DrawableTile.class.getName());
     private final ChangeListener<? super Long> lastSelectionListener = (observable, oldValue, newValue) -> {
-        try {
-            setEffect(Objects.equals(newValue, getFileID()) ? LAST_SELECTED_EFFECT : null);
-        } catch (java.lang.IllegalStateException ex) {
-            Logger.getLogger(DrawableTile.class.getName()).log(Level.WARNING, "Error displaying tile"); //NON-NLS
-        }
+        updateSelectionState();
     };
 
     @FXML
@@ -68,16 +63,32 @@ public class DrawableTile extends DrawableTileBase {
         setCache(true);
         setCacheHint(CacheHint.SPEED);
         nameLabel.prefWidthProperty().bind(imageView.fitWidthProperty());
-
-        imageView.fitHeightProperty().bind(Toolbar.getDefault(getController()).sizeSliderValue());
-        imageView.fitWidthProperty().bind(Toolbar.getDefault(getController()).sizeSliderValue());
+        imageView.fitHeightProperty().bind(getController().thumbnailSizeProperty());
+        imageView.fitWidthProperty().bind(getController().thumbnailSizeProperty());
 
         selectionModel.lastSelectedProperty().addListener(new WeakChangeListener<>(lastSelectionListener));
+
+        //set up mouse listener
+        addEventHandler(MouseEvent.MOUSE_CLICKED, clickEvent -> {
+            if (clickEvent.getButton() == MouseButton.PRIMARY) {
+                getFile().ifPresent(file -> {
+                    final long fileID = file.getId();
+                    if (clickEvent.isControlDown()) {
+                        selectionModel.toggleSelection(fileID);
+                    } else {
+                        getGroupPane().makeSelection(clickEvent.isShiftDown(), fileID);
+                    }
+                    if (clickEvent.getClickCount() > 1) {
+                        getGroupPane().activateSlideShowViewer(fileID);
+                    }
+                });
+                clickEvent.consume();
+            }
+        });
     }
 
     public DrawableTile(GroupPane gp, ImageGalleryController controller) {
         super(gp, controller);
-
         FXMLConstructor.construct(this, "DrawableTile.fxml"); //NON-NLS
     }
 
@@ -87,20 +98,19 @@ public class DrawableTile extends DrawableTileBase {
     @Override
     protected void updateSelectionState() {
         super.updateSelectionState();
-        final boolean lastSelected = Objects.equals(selectionModel.lastSelectedProperty().get(), getFileID());
-        Platform.runLater(() -> {
-            setEffect(lastSelected ? LAST_SELECTED_EFFECT : null);
+        getFileID().ifPresent(fileID -> {
+            final boolean lastSelected = Objects.equals(selectionModel.lastSelectedProperty().get(), fileID);
+            Platform.runLater(() -> setEffect(lastSelected ? LAST_SELECTED_EFFECT : null));
         });
     }
 
     @Override
-    Task<Image> newReadImageTask(DrawableFile<?> file) {
+    Task<Image> newReadImageTask(DrawableFile file) {
         return file.getThumbnailTask();
     }
 
     @Override
     protected String getTextForLabel() {
-        return getFile().map(AbstractContent::getName).orElse("");
+        return getFile().map(DrawableFile::getName).orElse("");
     }
-
 }

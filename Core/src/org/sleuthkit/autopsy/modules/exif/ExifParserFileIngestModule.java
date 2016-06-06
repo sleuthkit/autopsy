@@ -38,15 +38,16 @@ import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
+import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -64,6 +65,9 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
  * files. Ingests an image file and, if available, adds it's date, latitude,
  * longitude, altitude, device model, and device make to a blackboard artifact.
  */
+@NbBundle.Messages({
+    "CannotRunFileTypeDetection=Cannot run file type detection."
+})
 public final class ExifParserFileIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(ExifParserFileIngestModule.class.getName());
@@ -91,14 +95,14 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            throw new IngestModuleException(NbBundle.getMessage(this.getClass(), "ExifParserFileIngestModule.startUp.fileTypeDetectorInitializationException.msg"));
+            throw new IngestModuleException(Bundle.CannotRunFileTypeDetection(), ex);
         }
     }
 
     @Override
     public ProcessResult process(AbstractFile content) {
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
-        
+
         //skip unalloc
         if (content.getType().equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
             return ProcessResult.OK;
@@ -130,6 +134,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
         return processFile(content);
     }
 
+    @Messages({"ExifParserFileIngestModule.indexError.message=Failed to index EXIF Metadata artifact for keyword search."})
     ProcessResult processFile(AbstractFile f) {
         InputStream in = null;
         BufferedInputStream bin = null;
@@ -198,14 +203,14 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             if (!attributes.isEmpty()) {
                 BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF);
                 bba.addAttributes(attributes);
-                
+
                 try {
                     // index the artifact for keyword search
                     blackboard.indexArtifact(bba);
                 } catch (Blackboard.BlackboardException ex) {
-                    logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", bba.getDisplayName()), ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(
-                        NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), bba.getDisplayName());
+                            Bundle.ExifParserFileIngestModule_indexError_message(), bba.getDisplayName());
                 }
                 filesToFire = true;
             }

@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.timeline.ui.filtering;
 
 import java.util.function.Supplier;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.value.ObservableBooleanValue;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.IndexedCell;
 import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
@@ -29,7 +30,7 @@ class FilterCheckBoxCellFactory<X extends AbstractFilter> extends AbstractFXCell
 
     private final CheckBox checkBox = new CheckBox();
     private SimpleBooleanProperty selectedProperty;
-    private SimpleBooleanProperty disabledProperty;
+    private ObservableBooleanValue disabledProperty;
 
     @Override
     protected void configureCell(IndexedCell<? extends X> cell, X item, boolean empty, Supplier<X> supplier) {
@@ -37,18 +38,18 @@ class FilterCheckBoxCellFactory<X extends AbstractFilter> extends AbstractFXCell
             checkBox.selectedProperty().unbindBidirectional(selectedProperty);
         }
         if (disabledProperty != null) {
-            checkBox.disableProperty().unbindBidirectional(disabledProperty);
+            checkBox.disableProperty().unbind();
         }
 
         if (item == null) {
-            cell.setText(null);
             cell.setGraphic(null);
         } else {
-            cell.setText(item.getDisplayName());
+            checkBox.setText(item.getDisplayName());
+//            cell.setText(item.getDisplayName());
             selectedProperty = item.selectedProperty();
             checkBox.selectedProperty().bindBidirectional(selectedProperty);
-            disabledProperty = item.getDisabledProperty();
-            checkBox.disableProperty().bindBidirectional(disabledProperty);
+            disabledProperty = item.disabledProperty();
+            checkBox.disableProperty().bind(disabledProperty);
             cell.setGraphic(checkBox);
         }
     }

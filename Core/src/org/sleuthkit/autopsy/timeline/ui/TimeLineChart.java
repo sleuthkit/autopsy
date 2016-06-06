@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-15 Basis Technology Corp.
+ * Copyright 2014-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,30 +18,36 @@
  */
 package org.sleuthkit.autopsy.timeline.ui;
 
+import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.scene.Cursor;
+import javafx.scene.Node;
 import javafx.scene.chart.Axis;
-import javafx.scene.chart.Chart;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Region;
 import org.controlsfx.control.action.ActionGroup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.actions.Back;
 import org.sleuthkit.autopsy.timeline.actions.Forward;
+import org.sleuthkit.autopsy.timeline.ui.IntervalSelector.IntervalSelectorProvider;
 
 /**
  * Interface for TimeLineViews that are 'charts'.
  *
  * @param <X> the type of values along the horizontal axis
  */
-public interface TimeLineChart<X> {
+public interface TimeLineChart<X> extends ContextMenuProvider, IntervalSelectorProvider<X> {
 
-//    void setController(TimeLineController controller);
+    ObservableList<? extends Node> getSelectedNodes();
+
+    @Override
     IntervalSelector<? extends X> getIntervalSelector();
 
+    @Override
     void setIntervalSelector(IntervalSelector<? extends X> newIntervalSelector);
 
     /**
@@ -50,34 +56,29 @@ public interface TimeLineChart<X> {
      *
      * @return a new interval selector
      */
+    @Override
     IntervalSelector<X> newIntervalSelector();
 
-    /**
-     * clear any references to previous interval selectors , including removing
-     * the interval selector from the ui / scene-graph
-     */
+    @Override
     void clearIntervalSelector();
 
+    @Override
     public Axis<X> getXAxis();
 
+    @Override
     public TimeLineController getController();
 
-    ContextMenu getChartContextMenu();
-
-    ContextMenu getChartContextMenu(MouseEvent m);
-
     /**
-     * drag handler class used by {@link TimeLineChart}s to create
-     * {@link IntervalSelector}s
+     * Drag handler class used by TimeLineCharts to create IntervalSelectors
      *
-     * @param <X> the type of values along the horizontal axis
-     * @param <Y> the type of chart this is a drag handler for
+     * @param <X> The type of values along the horizontal axis.
+     * @param <Y> The type of chart this is a drag handler for.
      */
-    static class ChartDragHandler<X, Y extends Chart & TimeLineChart<X>> implements EventHandler<MouseEvent> {
+    public static class ChartDragHandler<X, Y extends Region & IntervalSelectorProvider<X>> implements EventHandler<MouseEvent> {
 
         private final Y chart;
 
-        private double startX;  //hanlder mainstains position of drag start
+        private double startX;  //hanlder maintains position of drag start
 
         public ChartDragHandler(Y chart) {
             this.chart = chart;
@@ -97,15 +98,13 @@ public interface TimeLineChart<X> {
                     chart.getIntervalSelector().prefHeightProperty().bind(chart.heightProperty());
                     startX = mouseEvent.getX();
                     chart.getIntervalSelector().relocate(startX, 0);
-                } else {
+                } else if (mouseEvent.getX() > startX) {
                     //resize/position existing selector
-                    if (mouseEvent.getX() > startX) {
-                        chart.getIntervalSelector().relocate(startX, 0);
-                        chart.getIntervalSelector().setPrefWidth(mouseEvent.getX() - startX);
-                    } else {
-                        chart.getIntervalSelector().relocate(mouseEvent.getX(), 0);
-                        chart.getIntervalSelector().setPrefWidth(startX - mouseEvent.getX());
-                    }
+                    chart.getIntervalSelector().relocate(startX, 0);
+                    chart.getIntervalSelector().setPrefWidth(mouseEvent.getX() - startX);
+                } else {
+                    chart.getIntervalSelector().relocate(mouseEvent.getX(), 0);
+                    chart.getIntervalSelector().setPrefWidth(startX - mouseEvent.getX());
                 }
                 chart.getIntervalSelector().autosize();
             } else if (mouseEventType == MouseEvent.MOUSE_RELEASED) {
@@ -114,10 +113,9 @@ public interface TimeLineChart<X> {
                 chart.setCursor(Cursor.DEFAULT);
             }
         }
-
     }
 
-    static class MouseClickedHandler<X, C extends Chart & TimeLineChart<X>> implements EventHandler<MouseEvent> {
+    static class MouseClickedHandler<X, C extends Region & TimeLineChart<X>> implements EventHandler<MouseEvent> {
 
         private final C chart;
 
@@ -126,28 +124,16 @@ public interface TimeLineChart<X> {
         }
 
         @Override
-        public void handle(MouseEvent clickEvent) {
-            if (chart.getChartContextMenu() != null) {
-                chart.getChartContextMenu().hide();
+        public void handle(MouseEvent mouseEvent) {
+            if (MouseEvent.MOUSE_CLICKED == mouseEvent.getEventType() && mouseEvent.isPopupTrigger() && mouseEvent.isStillSincePress()) {
+                ContextMenu chartContextMenu = chart.getContextMenu(mouseEvent);
+                chartContextMenu.show(chart, mouseEvent.getScreenX(), mouseEvent.getScreenY());
+                chart.clearContextMenu();
+            } else if (mouseEvent.getButton() == MouseButton.PRIMARY && mouseEvent.isStillSincePress()) {
+                chart.getSelectedNodes().clear();
             }
-            if (clickEvent.getButton() == MouseButton.SECONDARY && clickEvent.isStillSincePress()) {
-                chart.getChartContextMenu(clickEvent);
-                chart.setOnMouseMoved(this);
-                chart.getChartContextMenu().show(chart, clickEvent.getScreenX(), clickEvent.getScreenY());
-                clickEvent.consume();
-            }
+            mouseEvent.consume();
         }
-    }
-
-    /**
-     * enum to represent whether the drag is a left/right-edge modification or a
-     * horizontal slide triggered by dragging the center
-     */
-    enum DragPosition {
-
-        LEFT,
-        CENTER,
-        RIGHT
     }
 
     @NbBundle.Messages({"TimeLineChart.zoomHistoryActionGroup.name=Zoom History"})

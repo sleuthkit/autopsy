@@ -18,99 +18,93 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
-import java.util.ArrayDeque;
 import java.util.Comparator;
-import java.util.Deque;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
+import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 
 /**
- *
+ * TreeItem for the root of all the events in the EventsTree.
  */
-class RootItem extends NavTreeItem {
+class RootItem extends EventsTreeItem {
 
     /**
-     * maps a description to the child item of this item with that description
+     * A map of the children BaseTypeTreeItems, keyed by EventType.
      */
-    private final Map<EventType, EventTypeTreeItem> childMap = new HashMap<>();
+    private final Map<EventType, BaseTypeTreeItem> childMap = new HashMap<>();
 
     /**
-     * the comparator if any used to sort the children of this item
+     * Constructor
+     *
+     * @param comparator the initial comparator used to sort the children of
+     *                   this tree item
      */
-    private Comparator<TreeItem<EventBundle<?>>> comparator = TreeComparator.Type.reversed();
+    RootItem(Comparator<TreeItem<TimeLineEvent>> comparator) {
+        super(comparator);
+    }
 
-    RootItem(Comparator<TreeItem<EventBundle<?>>> comp) {
-        comp = comp;
+    /**
+     * Insert the given event into the tree
+     *
+     * @param event event to add
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    public void insert(TimeLineEvent event) {
+        insert(getTreePath(event));
+    }
+
+    /**
+     * Remove the given event from the tree
+     *
+     * @param event the event to remove
+     */
+    void remove(TimeLineEvent event) {
+        remove(getTreePath(event));
     }
 
     @Override
-    public long getCount() {
-        return getValue().getCount();
+    void sort(Comparator<TreeItem<TimeLineEvent>> comp, Boolean recursive) {
+        setComparator(comp);
+        childMap.values().forEach(ti -> ti.sort(comp, true));
     }
 
-    /**
-     * Recursive method to add a grouping at a given path.
-     *
-     * @param bundle bundle to add
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    public void insert(EventBundle<?> bundle) {
-
-        EventTypeTreeItem treeItem = childMap.computeIfAbsent(bundle.getEventType().getBaseType(),
-                baseType -> {
-                    EventTypeTreeItem newTreeItem = new EventTypeTreeItem(bundle, comparator);
-                    newTreeItem.setExpanded(true);
-                    getChildren().add(newTreeItem);
-                    return newTreeItem;
-                });
-        treeItem.insert(getTreePath(bundle));
-
+    @Override
+    String getDisplayText() {
+        return "";
     }
 
-    void remove(EventBundle<?> bundle) {
-        EventTypeTreeItem typeTreeItem = childMap.get(bundle.getEventType().getBaseType());
+    @Override
+    EventType getEventType() {
+        return null;
+    }
+
+    @Override
+    void remove(List<TimeLineEvent> path) {
+        TimeLineEvent event = path.get(0);
+        BaseTypeTreeItem typeTreeItem = childMap.get(event.getEventType().getBaseType());
+
+        //remove the path from the child
         if (typeTreeItem != null) {
-            typeTreeItem.remove(getTreePath(bundle));
+            typeTreeItem.remove(path);
 
+            //if the child has no children remove it also
             if (typeTreeItem.getChildren().isEmpty()) {
-                childMap.remove(bundle.getEventType().getBaseType());
+                childMap.remove(event.getEventType().getBaseType());
                 getChildren().remove(typeTreeItem);
             }
         }
     }
 
-    static Deque< EventBundle<?>> getTreePath(EventBundle<?> g) {
-        Deque<EventBundle<?>> path = new ArrayDeque<>();
-        Optional<? extends EventBundle<?>> p = Optional.of(g);
-
-        while (p.isPresent()) {
-            EventBundle<?> parent = p.get();
-            path.addFirst(parent);
-            p = parent.getParentBundle();
-        }
-
-        return path;
-    }
-
     @Override
-    void resort(Comparator<TreeItem<EventBundle<?>>> comp, Boolean recursive) {
-        comparator = comp;
-        childMap.values().forEach(ti -> ti.resort(comp, true));
-    }
-
-    @Override
-    public NavTreeItem findTreeItemForEvent(EventBundle<?> t) {
-        for (EventTypeTreeItem child : childMap.values()) {
-            final NavTreeItem findTreeItemForEvent = child.findTreeItemForEvent(t);
-            if (findTreeItemForEvent != null) {
-                return findTreeItemForEvent;
-            }
-        }
-        return null;
+    void insert(List<TimeLineEvent> path) {
+        TimeLineEvent event = path.get(0);
+        BaseTypeTreeItem treeItem = childMap.computeIfAbsent(event.getEventType().getBaseType(),
+                baseType -> configureNewTreeItem(new BaseTypeTreeItem(event, getComparator()))
+        );
+        treeItem.insert(path);
     }
 }

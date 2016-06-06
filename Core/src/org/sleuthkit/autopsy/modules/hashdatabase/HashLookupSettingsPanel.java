@@ -22,6 +22,7 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,20 +31,22 @@ import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
-
+import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
-import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Instances of this class provide a comprehensive UI for managing the hash sets
@@ -59,6 +62,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             .getMessage(HashLookupSettingsPanel.class, "HashDbConfigPanel.errorGettingIndexStatusText");
     private final HashDbManager hashSetManager = HashDbManager.getInstance();
     private final HashSetTableModel hashSetTableModel = new HashSetTableModel();
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     public HashLookupSettingsPanel() {
         initComponents();
@@ -82,8 +86,9 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         });
     }
 
+    @NbBundle.Messages({"HashLookupSettingsPanel.Title=Global Hash Lookup Settings"})
     private void customizeComponents() {
-        setName(NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.setName.hashSetConfig"));
+        setName(Bundle.HashLookupSettingsPanel_Title());
         this.ingestWarningLabel.setVisible(false);
         this.hashSetTable.setModel(hashSetTableModel);
         this.hashSetTable.setTableHeader(null);
@@ -97,6 +102,16 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                 }
             }
         });
+    }
+
+    @Override
+    public void addPropertyChangeListener(PropertyChangeListener l) {
+        pcs.addPropertyChangeListener(l);
+    }
+
+    @Override
+    public void removePropertyChangeListener(PropertyChangeListener l) {
+        pcs.removePropertyChangeListener(l);
     }
 
     private void updateComponents() {
@@ -250,6 +265,8 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     }
 
     @Override
+    @Messages({"HashLookupSettingsPanel.saveFail.message=Couldn't save hash db settings.",
+        "HashLookupSettingsPanel.saveFail.title=Save Fail"})
     public void saveSettings() {
         //Checking for for any unindexed databases
         List<HashDb> unindexed = new ArrayList<>();
@@ -269,8 +286,13 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         } else if (unindexed.size() > 1) {
             showInvalidIndex(true, unindexed);
         }
-
-        hashSetManager.save();
+        try {
+            hashSetManager.save();
+        } catch (HashDbManager.HashDbManagerException ex) {
+            SwingUtilities.invokeLater(() -> {
+                JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_saveFail_message(), Bundle.HashLookupSettingsPanel_saveFail_title(), JOptionPane.ERROR_MESSAGE);
+            });
+        }
     }
 
     @Override
@@ -295,9 +317,14 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         }
     }
 
+    @Messages({"# {0} - hash lookup name", "HashLookupSettingsPanel.removeDatabaseFailure.message=Failed to remove hash lookup: {0}"})
     void removeThese(List<HashDb> toRemove) {
         for (HashDb hashDb : toRemove) {
-            hashSetManager.removeHashDatabaseInternal(hashDb);
+            try {
+                hashSetManager.removeHashDatabaseNoSave(hashDb);
+            } catch (HashDbManager.HashDbManagerException ex) {
+                JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_removeDatabaseFailure_message(hashDb.getHashSetName()));
+            }
         }
         hashSetTableModel.refreshModel();
     }
@@ -500,23 +527,28 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         indexPathLabel = new javax.swing.JLabel();
         addHashesToDatabaseButton = new javax.swing.JButton();
 
+        jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.jLabel2.text")); // NOI18N
 
+        jLabel4.setFont(jLabel4.getFont().deriveFont(jLabel4.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(jLabel4, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.jLabel4.text")); // NOI18N
 
+        jLabel6.setFont(jLabel6.getFont().deriveFont(jLabel6.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(jLabel6, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.jLabel6.text")); // NOI18N
 
-        jButton3.setFont(jButton3.getFont().deriveFont(Font.PLAIN, 14));
+        jButton3.setFont(jButton3.getFont().deriveFont(jButton3.getFont().getStyle() & ~java.awt.Font.BOLD, 14));
         org.openide.awt.Mnemonics.setLocalizedText(jButton3, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.jButton3.text")); // NOI18N
 
-        setMinimumSize(new java.awt.Dimension(700, 430));
-        setPreferredSize(new java.awt.Dimension(700, 430));
+        setMinimumSize(new java.awt.Dimension(700, 500));
+        setPreferredSize(new java.awt.Dimension(700, 500));
 
-        jPanel1.setPreferredSize(new java.awt.Dimension(671, 430));
+        jPanel1.setPreferredSize(new java.awt.Dimension(671, 400));
 
-        ingestWarningLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/hashdatabase/warning16.png"))); // NOI18N NON-NLS
+        ingestWarningLabel.setFont(ingestWarningLabel.getFont().deriveFont(ingestWarningLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        ingestWarningLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/hashdatabase/warning16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(ingestWarningLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.ingestWarningLabel.text")); // NOI18N
 
+        hashSetTable.setFont(hashSetTable.getFont().deriveFont(hashSetTable.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         hashSetTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
@@ -534,7 +566,8 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         });
         jScrollPane1.setViewportView(hashSetTable);
 
-        deleteDatabaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/hashdatabase/delete16.png"))); // NOI18N NON-NLS
+        deleteDatabaseButton.setFont(deleteDatabaseButton.getFont().deriveFont(deleteDatabaseButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        deleteDatabaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/hashdatabase/delete16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(deleteDatabaseButton, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.deleteDatabaseButton.text")); // NOI18N
         deleteDatabaseButton.setMaximumSize(new java.awt.Dimension(140, 25));
         deleteDatabaseButton.setMinimumSize(new java.awt.Dimension(140, 25));
@@ -545,7 +578,8 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             }
         });
 
-        importDatabaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/hashdatabase/import16.png"))); // NOI18N NON-NLS
+        importDatabaseButton.setFont(importDatabaseButton.getFont().deriveFont(importDatabaseButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        importDatabaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/hashdatabase/import16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(importDatabaseButton, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.importDatabaseButton.text")); // NOI18N
         importDatabaseButton.setMaximumSize(new java.awt.Dimension(140, 25));
         importDatabaseButton.setMinimumSize(new java.awt.Dimension(140, 25));
@@ -556,24 +590,34 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             }
         });
 
+        hashDatabasesLabel.setFont(hashDatabasesLabel.getFont().deriveFont(hashDatabasesLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(hashDatabasesLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.hashDatabasesLabel.text")); // NOI18N
 
+        nameLabel.setFont(nameLabel.getFont().deriveFont(nameLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(nameLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.nameLabel.text")); // NOI18N
 
+        hashDbNameLabel.setFont(hashDbNameLabel.getFont().deriveFont(hashDbNameLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(hashDbNameLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.hashDbNameLabel.text")); // NOI18N
 
+        hashDbLocationLabel.setFont(hashDbLocationLabel.getFont().deriveFont(hashDbLocationLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(hashDbLocationLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.hashDbLocationLabel.text")); // NOI18N
 
+        locationLabel.setFont(locationLabel.getFont().deriveFont(locationLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(locationLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.locationLabel.text")); // NOI18N
 
+        typeLabel.setFont(typeLabel.getFont().deriveFont(typeLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(typeLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.typeLabel.text")); // NOI18N
 
+        hashDbTypeLabel.setFont(hashDbTypeLabel.getFont().deriveFont(hashDbTypeLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(hashDbTypeLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.hashDbTypeLabel.text")); // NOI18N
 
+        hashDbIndexStatusLabel.setFont(hashDbIndexStatusLabel.getFont().deriveFont(hashDbIndexStatusLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(hashDbIndexStatusLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.hashDbIndexStatusLabel.text")); // NOI18N
 
+        indexLabel.setFont(indexLabel.getFont().deriveFont(indexLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(indexLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.indexLabel.text")); // NOI18N
 
+        indexButton.setFont(indexButton.getFont().deriveFont(indexButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(indexButton, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.indexButton.text")); // NOI18N
         indexButton.setEnabled(false);
         indexButton.addActionListener(new java.awt.event.ActionListener() {
@@ -582,6 +626,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             }
         });
 
+        sendIngestMessagesCheckBox.setFont(sendIngestMessagesCheckBox.getFont().deriveFont(sendIngestMessagesCheckBox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(sendIngestMessagesCheckBox, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.sendIngestMessagesCheckBox.text")); // NOI18N
         sendIngestMessagesCheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -589,11 +634,14 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             }
         });
 
+        informationLabel.setFont(informationLabel.getFont().deriveFont(informationLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(informationLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.informationLabel.text")); // NOI18N
 
+        optionsLabel.setFont(optionsLabel.getFont().deriveFont(optionsLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(optionsLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.optionsLabel.text")); // NOI18N
 
-        createDatabaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/hashdatabase/new16.png"))); // NOI18N NON-NLS
+        createDatabaseButton.setFont(createDatabaseButton.getFont().deriveFont(createDatabaseButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        createDatabaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/hashdatabase/new16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(createDatabaseButton, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.createDatabaseButton.text")); // NOI18N
         createDatabaseButton.setMaximumSize(new java.awt.Dimension(140, 25));
         createDatabaseButton.setMinimumSize(new java.awt.Dimension(140, 25));
@@ -604,10 +652,13 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             }
         });
 
+        indexPathLabelLabel.setFont(indexPathLabelLabel.getFont().deriveFont(indexPathLabelLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(indexPathLabelLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.indexPathLabelLabel.text")); // NOI18N
 
+        indexPathLabel.setFont(indexPathLabel.getFont().deriveFont(indexPathLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(indexPathLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.indexPathLabel.text")); // NOI18N
 
+        addHashesToDatabaseButton.setFont(addHashesToDatabaseButton.getFont().deriveFont(addHashesToDatabaseButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(addHashesToDatabaseButton, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.addHashesToDatabaseButton.text")); // NOI18N
         addHashesToDatabaseButton.setEnabled(false);
         addHashesToDatabaseButton.addActionListener(new java.awt.event.ActionListener() {
@@ -624,12 +675,17 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(createDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 137, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(importDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 133, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(createDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(importDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 103, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(deleteDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(0, 84, Short.MAX_VALUE))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGap(1, 1, 1)
+                                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)))
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGap(10, 10, 10)
@@ -637,7 +693,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                                     .addGroup(jPanel1Layout.createSequentialGroup()
                                         .addComponent(informationLabel)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(informationSeparator))
+                                        .addComponent(informationSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 305, javax.swing.GroupLayout.PREFERRED_SIZE))
                                     .addComponent(ingestWarningLabel)
                                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                                         .addGap(10, 10, 10)
@@ -651,30 +707,24 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                                                     .addComponent(indexPathLabelLabel))
                                                 .addGap(10, 10, 10)
                                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                                    .addComponent(hashDbTypeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                                    .addComponent(hashDbLocationLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                                    .addComponent(indexPathLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                                    .addComponent(hashDbIndexStatusLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                                    .addGroup(jPanel1Layout.createSequentialGroup()
-                                                        .addComponent(addHashesToDatabaseButton)
-                                                        .addGap(0, 0, Short.MAX_VALUE))))
+                                                    .addComponent(hashDbTypeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 225, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                    .addComponent(hashDbLocationLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 225, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                    .addComponent(indexPathLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 225, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                    .addComponent(hashDbIndexStatusLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 225, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                    .addComponent(addHashesToDatabaseButton)))
                                             .addGroup(jPanel1Layout.createSequentialGroup()
                                                 .addComponent(nameLabel)
                                                 .addGap(53, 53, 53)
-                                                .addComponent(hashDbNameLabel)
-                                                .addGap(0, 0, Short.MAX_VALUE))))
+                                                .addComponent(hashDbNameLabel))))
                                     .addGroup(jPanel1Layout.createSequentialGroup()
                                         .addComponent(optionsLabel)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(optionsSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 324, javax.swing.GroupLayout.PREFERRED_SIZE))))
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGap(23, 23, 23)
-                                .addComponent(sendIngestMessagesCheckBox)
-                                .addGap(0, 0, Short.MAX_VALUE))))
+                                .addComponent(sendIngestMessagesCheckBox))))
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(hashDatabasesLabel)
-                            .addComponent(deleteDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 137, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(hashDatabasesLabel)
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -723,14 +773,13 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                         .addComponent(sendIngestMessagesCheckBox)
                         .addGap(18, 18, 18)
                         .addComponent(ingestWarningLabel))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 304, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 425, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(importDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(createDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(deleteDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(33, Short.MAX_VALUE))
+                    .addComponent(createDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(deleteDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(48, 48, 48))
         );
 
         jScrollPane2.setViewportView(jPanel1);
@@ -739,16 +788,13 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 690, Short.MAX_VALUE))
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 800, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 410, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 537, Short.MAX_VALUE)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -782,6 +828,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         indexDialog.setModal(true);
     }//GEN-LAST:event_indexButtonActionPerformed
 
+    @Messages({})
     private void deleteDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteDatabaseButtonActionPerformed
         if (JOptionPane.showConfirmDialog(null,
                 NbBundle.getMessage(this.getClass(),
@@ -791,8 +838,13 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                 JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
             HashDb hashDb = ((HashSetTable) hashSetTable).getSelection();
             if (hashDb != null) {
-                hashSetManager.removeHashDatabaseInternal(hashDb);
+                try {
+                    hashSetManager.removeHashDatabaseNoSave(hashDb);
+                } catch (HashDbManager.HashDbManagerException ex) {
+                    JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_removeDatabaseFailure_message(hashDb.getHashSetName()));
+                }
                 hashSetTableModel.refreshModel();
+                pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             }
         }
     }//GEN-LAST:event_deleteDatabaseButtonActionPerformed
@@ -801,8 +853,13 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         if (evt.getKeyCode() == KeyEvent.VK_DELETE) {
             HashDb hashDb = ((HashSetTable) hashSetTable).getSelection();
             if (hashDb != null) {
-                hashSetManager.removeHashDatabaseInternal(hashDb);
+                try {
+                    hashSetManager.removeHashDatabaseNoSave(hashDb);
+                } catch (HashDbManager.HashDbManagerException ex) {
+                    JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_removeDatabaseFailure_message(hashDb.getHashSetName()));
+                }
                 hashSetTableModel.refreshModel();
+                pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             }
         }
     }//GEN-LAST:event_hashSetTableKeyPressed
@@ -811,6 +868,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         HashDb hashDb = ((HashSetTable) hashSetTable).getSelection();
         if (hashDb != null) {
             hashDb.setSendIngestMessages(sendIngestMessagesCheckBox.isSelected());
+            pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
     }//GEN-LAST:event_sendIngestMessagesCheckBoxActionPerformed
 
@@ -819,6 +877,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         if (null != hashDb) {
             hashSetTableModel.refreshModel();
             ((HashSetTable) hashSetTable).selectRowByName(hashDb.getHashSetName());
+            pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
     }//GEN-LAST:event_importDatabaseButtonActionPerformed
 
@@ -827,13 +886,14 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         if (null != hashDb) {
             hashSetTableModel.refreshModel();
             ((HashSetTable) hashSetTable).selectRowByName(hashDb.getHashSetName());
+            pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
     }//GEN-LAST:event_createDatabaseButtonActionPerformed
 
     private void addHashesToDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addHashesToDatabaseButtonActionPerformed
 
         HashDb hashDb = ((HashSetTable) hashSetTable).getSelection();
-        new AddHashValuesToDatabaseDialog(hashDb);
+        AddHashValuesToDatabaseDialog dialog = new AddHashValuesToDatabaseDialog(hashDb);
     }//GEN-LAST:event_addHashesToDatabaseButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

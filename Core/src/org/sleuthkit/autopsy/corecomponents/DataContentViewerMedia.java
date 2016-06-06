@@ -22,8 +22,6 @@ import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.util.List;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.logging.Level;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
@@ -47,7 +45,6 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     //UI
     private final MediaViewVideoPanel videoPanel;
     private final boolean videoPanelInited;
-    private final SortedSet<String> videoExtensions; // get them from the panel
     private final MediaViewImagePanel imagePanel;
     private final boolean imagePanelInited;
 
@@ -64,7 +61,6 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         // get the right panel for our platform
         videoPanel = MediaViewVideoPanel.createVideoPanel();
         videoPanelInited = videoPanel.isInited();
-        videoExtensions = new TreeSet<>(videoPanel.getExtensionsList());
 
         imagePanel = new MediaViewImagePanel();
         imagePanelInited = imagePanel.isInited();

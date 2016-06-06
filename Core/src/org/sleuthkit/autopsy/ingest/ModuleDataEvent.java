@@ -58,7 +58,7 @@ public class ModuleDataEvent extends ChangeEvent {
      */
     public ModuleDataEvent(String moduleName, ARTIFACT_TYPE artifactType) {
         super(artifactType);
-        this.blackboardArtifactType = new BlackboardArtifact.Type(artifactType.getTypeID(), artifactType.getLabel(), artifactType.getDisplayName());
+        this.blackboardArtifactType = new BlackboardArtifact.Type(artifactType);
         this.moduleName = moduleName;
     }
 

@@ -1,13 +1,26 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2015-16 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.timeline.filters;
 
-import java.util.Comparator;
-import java.util.stream.Collectors;
+import java.util.function.Predicate;
 import javafx.beans.binding.Bindings;
+import javafx.beans.value.ObservableBooleanValue;
 import org.openide.util.NbBundle;
 
 /**
@@ -16,40 +29,28 @@ import org.openide.util.NbBundle;
 public class HashHitsFilter extends UnionFilter<HashSetFilter> {
 
     @Override
-    @NbBundle.Messages("hashHitsFilter.displayName.text=Only Hash Set Hits")
+    @NbBundle.Messages("hashHitsFilter.displayName.text=Hash Sets")
     public String getDisplayName() {
         return Bundle.hashHitsFilter_displayName_text();
     }
 
     public HashHitsFilter() {
-        getDisabledProperty().bind(Bindings.size(getSubFilters()).lessThan(1));
         setSelected(false);
     }
 
     @Override
     public HashHitsFilter copyOf() {
         HashHitsFilter filterCopy = new HashHitsFilter();
-        filterCopy.setSelected(isSelected());
         //add a copy of each subfilter
-        this.getSubFilters().forEach((HashSetFilter t) -> {
-            filterCopy.addSubFilter(t.copyOf());
-        });
+        this.getSubFilters().forEach(hashSetFilter -> filterCopy.addSubFilter(hashSetFilter.copyOf()));
+        //these need to happen after the listeners fired by adding the subfilters 
+        filterCopy.setSelected(isSelected());
+        filterCopy.setDisabled(isDisabled());
+
         return filterCopy;
     }
 
-    @Override
-    public String getHTMLReportString() {
-        //move this logic into SaveSnapshot
-        String string = getDisplayName() + getStringCheckBox();
-        if (getSubFilters().isEmpty() == false) {
-            string = string + " : " + getSubFilters().stream()
-                    .filter(Filter::isSelected)
-                    .map(Filter::getHTMLReportString)
-                    .collect(Collectors.joining("</li><li>", "<ul><li>", "</li></ul>")); // NON-NLS
-        }
-        return string;
-    }
-
+   
     @Override
     public int hashCode() {
         return 7;
@@ -65,20 +66,20 @@ public class HashHitsFilter extends UnionFilter<HashSetFilter> {
         }
         final HashHitsFilter other = (HashHitsFilter) obj;
 
-        if (isSelected() != other.isSelected()) {
+        if (isActive() != other.isActive()) {
             return false;
         }
 
         return areSubFiltersEqual(this, other);
     }
 
-    public void addSubFilter(HashSetFilter hashSetFilter) {
-        if (getSubFilters().stream()
-                .map(HashSetFilter::getHashSetID)
-                .filter(t -> t == hashSetFilter.getHashSetID())
-                .findAny().isPresent() == false) {
-            getSubFilters().add(hashSetFilter);
-            getSubFilters().sort(Comparator.comparing(HashSetFilter::getDisplayName));
-        }
+    @Override
+    public ObservableBooleanValue disabledProperty() {
+        return Bindings.or(super.disabledProperty(), Bindings.isEmpty(getSubFilters()));
+    }
+
+    @Override
+    Predicate<HashSetFilter> getDuplicatePredicate(HashSetFilter subfilter) {
+        return hashSetFilter -> subfilter.getHashSetID() == hashSetFilter.getHashSetID();
     }
 }

@@ -22,18 +22,17 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyDoubleProperty;
+import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -54,9 +53,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javax.annotation.Nullable;
 import javax.swing.SwingUtilities;
-import org.apache.commons.lang3.StringUtils;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -78,10 +75,9 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 import org.sleuthkit.autopsy.imagegallery.gui.NoGroupsDialog;
 import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.FileSystem;
-import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -94,6 +90,7 @@ public final class ImageGalleryController implements Executor {
 
     private final Executor execDelegate = Executors.newSingleThreadExecutor();
     private Runnable showTree;
+    private Toolbar toolbar;
 
     @Override
     public void execute(Runnable command) {
@@ -127,14 +124,13 @@ public final class ImageGalleryController implements Executor {
      */
     private final SimpleBooleanProperty listeningEnabled = new SimpleBooleanProperty(false);
 
-    private final ReadOnlyIntegerWrapper queueSizeProperty = new ReadOnlyIntegerWrapper(0);
-
     private final ReadOnlyBooleanWrapper regroupDisabled = new ReadOnlyBooleanWrapper(false);
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private final ReadOnlyBooleanWrapper stale = new ReadOnlyBooleanWrapper(false);
 
     private final ReadOnlyBooleanWrapper metaDataCollapsed = new ReadOnlyBooleanWrapper(false);
+    private final ReadOnlyDoubleWrapper thumbnailSize = new ReadOnlyDoubleWrapper(100);
 
     private final FileIDSelectionModel selectionModel = new FileIDSelectionModel(this);
 
@@ -153,7 +149,6 @@ public final class ImageGalleryController implements Executor {
 
     private Node infoOverlay;
     private SleuthkitCase sleuthKitCase;
-//    private NavPanel navPanel;
 
     public ReadOnlyBooleanProperty getMetaDataCollapsed() {
         return metaDataCollapsed.getReadOnlyProperty();
@@ -161,6 +156,10 @@ public final class ImageGalleryController implements Executor {
 
     public void setMetaDataCollapsed(Boolean metaDataCollapsed) {
         this.metaDataCollapsed.set(metaDataCollapsed);
+    }
+
+    public ReadOnlyDoubleProperty thumbnailSizeProperty() {
+        return thumbnailSize.getReadOnlyProperty();
     }
 
     private GroupViewState getViewState() {
@@ -175,7 +174,7 @@ public final class ImageGalleryController implements Executor {
         return historyManager.currentState();
     }
 
-    public synchronized FileIDSelectionModel getSelectionModel() {
+    public FileIDSelectionModel getSelectionModel() {
         return selectionModel;
     }
 
@@ -187,12 +186,16 @@ public final class ImageGalleryController implements Executor {
         return db;
     }
 
-    synchronized public void setListeningEnabled(boolean enabled) {
-        listeningEnabled.set(enabled);
+    public void setListeningEnabled(boolean enabled) {
+        synchronized (listeningEnabled) {
+            listeningEnabled.set(enabled);
+        }
     }
 
-    synchronized boolean isListeningEnabled() {
-        return listeningEnabled.get();
+    boolean isListeningEnabled() {
+        synchronized (listeningEnabled) {
+            return listeningEnabled.get();
+        }
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
@@ -248,12 +251,14 @@ public final class ImageGalleryController implements Executor {
             checkForGroups();
         });
 
-        IngestManager.getInstance().addIngestModuleEventListener((PropertyChangeEvent evt) -> {
-            Platform.runLater(this::updateRegroupDisabled);
-        });
-        IngestManager.getInstance().addIngestJobEventListener((PropertyChangeEvent evt) -> {
-            Platform.runLater(this::updateRegroupDisabled);
-        });
+        IngestManager ingestManager = IngestManager.getInstance();
+        PropertyChangeListener ingestEventHandler =
+                propertyChangeEvent -> Platform.runLater(this::updateRegroupDisabled);
+
+        ingestManager.addIngestModuleEventListener(ingestEventHandler);
+        ingestManager.addIngestJobEventListener(ingestEventHandler);
+
+        queueSizeProperty.addListener(obs -> this.updateRegroupDisabled());
     }
 
     public ReadOnlyBooleanProperty getCanAdvance() {
@@ -280,8 +285,9 @@ public final class ImageGalleryController implements Executor {
         return historyManager.retreat();
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void updateRegroupDisabled() {
-        regroupDisabled.set(getFileUpdateQueueSizeProperty().get() > 0 || IngestManager.getInstance().isIngestRunning());
+        regroupDisabled.set((queueSizeProperty.get() > 0) || IngestManager.getInstance().isIngestRunning());
     }
 
     /**
@@ -290,16 +296,16 @@ public final class ImageGalleryController implements Executor {
      * aren't, add a blocking progress spinner with appropriate message.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    @NbBundle.Messages({"ImageGalleryController.noGroupsDlg.msg1=No groups are fully analyzed; but listening to ingest is disabled. " +
-                " No groups will be available until ingest is finished and listening is re-enabled.",
-            "ImageGalleryController.noGroupsDlg.msg2=No groups are fully analyzed yet, but ingest is still ongoing.  Please Wait.",
-            "ImageGalleryController.noGroupsDlg.msg3=No groups are fully analyzed yet, but image / video data is still being populated.  Please Wait.",
-            "ImageGalleryController.noGroupsDlg.msg4=There are no images/videos available from the added datasources;  but listening to ingest is disabled. " +
-                    " No groups will be available until ingest is finished and listening is re-enabled.",
-            "ImageGalleryController.noGroupsDlg.msg5=There are no images/videos in the added datasources.",
-            "ImageGalleryController.noGroupsDlg.msg6=There are no fully analyzed groups to display:" +
-                    "  the current Group By setting resulted in no groups, " +
-                    "or no groups are fully analyzed but ingest is not running."})
+    @NbBundle.Messages({"ImageGalleryController.noGroupsDlg.msg1=No groups are fully analyzed; but listening to ingest is disabled. "
+        + " No groups will be available until ingest is finished and listening is re-enabled.",
+        "ImageGalleryController.noGroupsDlg.msg2=No groups are fully analyzed yet, but ingest is still ongoing.  Please Wait.",
+        "ImageGalleryController.noGroupsDlg.msg3=No groups are fully analyzed yet, but image / video data is still being populated.  Please Wait.",
+        "ImageGalleryController.noGroupsDlg.msg4=There are no images/videos available from the added datasources;  but listening to ingest is disabled. "
+        + " No groups will be available until ingest is finished and listening is re-enabled.",
+        "ImageGalleryController.noGroupsDlg.msg5=There are no images/videos in the added datasources.",
+        "ImageGalleryController.noGroupsDlg.msg6=There are no fully analyzed groups to display:"
+        + "  the current Group By setting resulted in no groups, "
+        + "or no groups are fully analyzed but ingest is not running."})
     public void checkForGroups() {
         if (groupManager.getAnalyzedGroups().isEmpty()) {
             if (IngestManager.getInstance().isIngestRunning()) {
@@ -312,7 +318,7 @@ public final class ImageGalleryController implements Executor {
                                     new ProgressIndicator()));
                 }
 
-            } else if (getFileUpdateQueueSizeProperty().get() > 0) {
+            } else if (queueSizeProperty.get() > 0) {
                 replaceNotification(fullUIStackPane,
                         new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg3(),
                                 new ProgressIndicator()));
@@ -357,20 +363,14 @@ public final class ImageGalleryController implements Executor {
         }
     }
 
-    private void restartWorker() {
-        if (dbWorkerThread != null) {
+    synchronized private DBWorkerThread restartWorker() {
+        if (dbWorkerThread == null) {
+            dbWorkerThread = new DBWorkerThread(this);
+            dbWorkerThread.start();
+        } else {
             // Keep using the same worker thread if one exists
-            return;
         }
-        dbWorkerThread = new DBWorkerThread();
-
-        getFileUpdateQueueSizeProperty().addListener((Observable o) -> {
-            Platform.runLater(this::updateRegroupDisabled);
-        });
-
-        Thread th = new Thread(dbWorkerThread, "DB-Worker-Thread");
-        th.setDaemon(false); // we want it to go away when it is done
-        th.start();
+        return dbWorkerThread;
     }
 
     /**
@@ -411,15 +411,18 @@ public final class ImageGalleryController implements Executor {
         setListeningEnabled(false);
         ThumbnailCache.getDefault().clearCache();
         historyManager.clear();
+        groupManager.clear();
         tagsManager.clearFollowUpTagName();
         tagsManager.unregisterListener(groupManager);
         tagsManager.unregisterListener(categoryManager);
-        dbWorkerThread.cancelAllTasks();
+        dbWorkerThread.cancel();
         dbWorkerThread = null;
-        restartWorker();
+        dbWorkerThread = restartWorker();
 
-        Toolbar.getDefault(this).reset();
-        groupManager.clear();
+        if (toolbar != null) {
+            toolbar.reset();
+        }
+
         if (db != null) {
             db.closeDBCon();
         }
@@ -431,17 +434,15 @@ public final class ImageGalleryController implements Executor {
      *
      * @param innerTask
      */
-    public void queueDBWorkerTask(InnerTask innerTask) {
-
-        // @@@ We could make a lock for the worker thread
+    public synchronized void queueDBWorkerTask(BackgroundTask innerTask) {
         if (dbWorkerThread == null) {
-            restartWorker();
+            dbWorkerThread = restartWorker();
         }
         dbWorkerThread.addTask(innerTask);
     }
 
     @Nullable
-    synchronized public DrawableFile<?> getFileFromId(Long fileID) throws TskCoreException {
+    synchronized public DrawableFile getFileFromId(Long fileID) throws TskCoreException {
         if (Objects.isNull(db)) {
             LOGGER.log(Level.WARNING, "Could not get file from id, no DB set.  The case is probably closed."); //NON-NLS
             return null;
@@ -455,8 +456,12 @@ public final class ImageGalleryController implements Executor {
         Platform.runLater(this::checkForGroups);
     }
 
-    public ReadOnlyIntegerProperty getFileUpdateQueueSizeProperty() {
-        return queueSizeProperty.getReadOnlyProperty();
+    public synchronized void setToolbar(Toolbar toolbar) {
+        if (this.toolbar != null) {
+            throw new IllegalStateException("Can not set the toolbar a second time!");
+        }
+        this.toolbar = toolbar;
+        thumbnailSize.bind(toolbar.thumbnailSizeProperty());
     }
 
     public ReadOnlyDoubleProperty regroupProgress() {
@@ -496,29 +501,43 @@ public final class ImageGalleryController implements Executor {
         return undoManager;
     }
 
-    // @@@ REVIEW IF THIS SHOLD BE STATIC...
-    //TODO: concept seems like  the controller deal with how much work to do at a given time
+    public ReadOnlyIntegerProperty getDBTasksQueueSizeProperty() {
+        return queueSizeProperty.getReadOnlyProperty();
+    }
+    private final ReadOnlyIntegerWrapper queueSizeProperty = new ReadOnlyIntegerWrapper(0);
+
     // @@@ review this class for synchronization issues (i.e. reset and cancel being called, add, etc.)
-    private class DBWorkerThread implements Runnable {
+    static private class DBWorkerThread extends Thread implements Cancellable {
+
+        private final ImageGalleryController controller;
+
+        DBWorkerThread(ImageGalleryController controller) {
+            super("DB-Worker-Thread");
+            setDaemon(false);
+            this.controller = controller;
+        }
 
         // true if the process was requested to stop.  Currently no way to reset it
         private volatile boolean cancelled = false;
 
         // list of tasks to run
-        private final BlockingQueue<InnerTask> workQueue = new LinkedBlockingQueue<>();
+        private final BlockingQueue<BackgroundTask> workQueue = new LinkedBlockingQueue<>();
 
         /**
          * Cancel all of the queued up tasks and the currently scheduled task.
          * Note that after you cancel, you cannot submit new jobs to this
          * thread.
          */
-        public void cancelAllTasks() {
+        @Override
+        public boolean cancel() {
             cancelled = true;
-            for (InnerTask it : workQueue) {
+            for (BackgroundTask it : workQueue) {
                 it.cancel();
             }
             workQueue.clear();
-            queueSizeProperty.set(workQueue.size());
+            int size = workQueue.size();
+            Platform.runLater(() -> controller.queueSizeProperty.set(size));
+            return true;
         }
 
         /**
@@ -526,11 +545,10 @@ public final class ImageGalleryController implements Executor {
          *
          * @param it
          */
-        public void addTask(InnerTask it) {
+        public void addTask(BackgroundTask it) {
             workQueue.add(it);
-            Platform.runLater(() -> {
-                queueSizeProperty.set(workQueue.size());
-            });
+            int size = workQueue.size();
+            Platform.runLater(() -> controller.queueSizeProperty.set(size));
         }
 
         @Override
@@ -538,19 +556,17 @@ public final class ImageGalleryController implements Executor {
 
             // nearly infinite loop waiting for tasks
             while (true) {
-                if (cancelled) {
+                if (cancelled || isInterrupted()) {
                     return;
                 }
                 try {
-                    InnerTask it = workQueue.take();
+                    BackgroundTask it = workQueue.take();
 
                     if (it.isCancelled() == false) {
                         it.run();
                     }
-
-                    Platform.runLater(() -> {
-                        queueSizeProperty.set(workQueue.size());
-                    });
+                    int size = workQueue.size();
+                    Platform.runLater(() -> controller.queueSizeProperty.set(size));
 
                 } catch (InterruptedException ex) {
                     LOGGER.log(Level.SEVERE, "Failed to run DB worker thread", ex); //NON-NLS
@@ -567,8 +583,15 @@ public final class ImageGalleryController implements Executor {
      * Abstract base class for task to be done on {@link DBWorkerThread}
      */
     @NbBundle.Messages({"ImageGalleryController.InnerTask.progress.name=progress",
-            "ImageGalleryController.InnerTask.message.name=status"})
-    static public abstract class InnerTask implements Runnable, Cancellable {
+        "ImageGalleryController.InnerTask.message.name=status"})
+    static public abstract class BackgroundTask implements Runnable, Cancellable {
+
+        private final SimpleObjectProperty<Worker.State> state = new SimpleObjectProperty<>(Worker.State.READY);
+        private final SimpleDoubleProperty progress = new SimpleDoubleProperty(this, Bundle.ImageGalleryController_InnerTask_progress_name());
+        private final SimpleStringProperty message = new SimpleStringProperty(this, Bundle.ImageGalleryController_InnerTask_message_name());
+
+        protected BackgroundTask() {
+        }
 
         public double getProgress() {
             return progress.get();
@@ -585,9 +608,6 @@ public final class ImageGalleryController implements Executor {
         public final void updateMessage(String Status) {
             this.message.set(Status);
         }
-        SimpleObjectProperty<Worker.State> state = new SimpleObjectProperty<>(Worker.State.READY);
-        SimpleDoubleProperty progress = new SimpleDoubleProperty(this, Bundle.ImageGalleryController_InnerTask_progress_name());
-        SimpleStringProperty message = new SimpleStringProperty(this, Bundle.ImageGalleryController_InnerTask_message_name());
 
         public SimpleDoubleProperty progressProperty() {
             return progress;
@@ -601,24 +621,21 @@ public final class ImageGalleryController implements Executor {
             return state.get();
         }
 
-        protected void updateState(Worker.State newState) {
-            state.set(newState);
-        }
-
         public ReadOnlyObjectProperty<Worker.State> stateProperty() {
             return new ReadOnlyObjectWrapper<>(state.get());
         }
 
-        protected InnerTask() {
-        }
-
         @Override
-        synchronized public boolean cancel() {
+        public synchronized boolean cancel() {
             updateState(Worker.State.CANCELLED);
             return true;
         }
 
-        synchronized protected boolean isCancelled() {
+        protected void updateState(Worker.State newState) {
+            state.set(newState);
+        }
+
+        protected synchronized boolean isCancelled() {
             return getState() == Worker.State.CANCELLED;
         }
     }
@@ -626,7 +643,7 @@ public final class ImageGalleryController implements Executor {
     /**
      * Abstract base class for tasks associated with a file in the database
      */
-    static public abstract class FileTask extends InnerTask {
+    static public abstract class FileTask extends BackgroundTask {
 
         private final AbstractFile file;
         private final DrawableDB taskDB;
@@ -644,7 +661,6 @@ public final class ImageGalleryController implements Executor {
             this.file = f;
             this.taskDB = taskDB;
         }
-
     }
 
     /**
@@ -662,7 +678,7 @@ public final class ImageGalleryController implements Executor {
         @Override
         public void run() {
             try {
-                DrawableFile<?> drawableFile = DrawableFile.create(getFile(), true, getTaskDB().isVideoFile(getFile()));
+                DrawableFile drawableFile = DrawableFile.create(getFile(), true, false);
                 getTaskDB().updateFile(drawableFile);
             } catch (NullPointerException ex) {
                 // This is one of the places where we get many errors if the case is closed during processing.
@@ -701,63 +717,63 @@ public final class ImageGalleryController implements Executor {
         }
     }
 
-    /**
-     * Task that runs when image gallery listening is (re) enabled.
-     *
-     * Grabs all files with supported image/video mime types or extensions, and
-     * adds them to the Drawable DB. Uses the presence of a mimetype as an
-     * approximation to 'analyzed'.
-     */
-    @NbBundle.Messages({"CopyAnalyzedFiles.populatingDb.status=populating analyzed image/video database",
-            "CopyAnalyzedFiles.committingDb.status=commiting image/video database",
-            "CopyAnalyzedFiles.stopCopy.status=Stopping copy to drawable db task.",
-            "CopyAnalyzedFiles.errPopulating.errMsg=There was an error populating Image Gallery database."})
-    static private class CopyAnalyzedFiles extends InnerTask {
+    @NbBundle.Messages({"BulkTask.committingDb.status=commiting image/video database",
+        "BulkTask.stopCopy.status=Stopping copy to drawable db task.",
+        "BulkTask.errPopulating.errMsg=There was an error populating Image Gallery database."})
+    abstract static private class BulkTransferTask extends BackgroundTask {
 
-        private final ImageGalleryController controller;
-        private final DrawableDB taskDB;
-        private final SleuthkitCase tskCase;
+        static private final String FILE_EXTENSION_CLAUSE =
+                "(name LIKE '%." //NON-NLS
+                + String.join("' OR name LIKE '%.", FileTypeUtils.getAllSupportedExtensions()) //NON-NLS
+                + "')";
 
-        CopyAnalyzedFiles(ImageGalleryController controller, DrawableDB taskDB, SleuthkitCase tskCase) {
+        static private final String MIMETYPE_CLAUSE =
+                "(mime_type LIKE '" //NON-NLS
+                + String.join("' OR mime_type LIKE '", FileTypeUtils.getAllSupportedMimeTypes()) //NON-NLS
+                + "') ";
+
+        static final String DRAWABLE_QUERY =
+                //grab files with supported extension
+                "(" + FILE_EXTENSION_CLAUSE
+                //grab files with supported mime-types
+                + " OR " + MIMETYPE_CLAUSE //NON-NLS
+                //grab files with image or video mime-types even if we don't officially support them
+                + " OR mime_type LIKE 'video/%' OR mime_type LIKE 'image/%' )"; //NON-NLS
+
+        final ImageGalleryController controller;
+        final DrawableDB taskDB;
+        final SleuthkitCase tskCase;
+
+        ProgressHandle progressHandle;
+
+        BulkTransferTask(ImageGalleryController controller, DrawableDB taskDB, SleuthkitCase tskCase) {
             this.controller = controller;
             this.taskDB = taskDB;
             this.tskCase = tskCase;
         }
 
-        static private final String FILE_EXTENSION_CLAUSE =
-                "(name LIKE '%." //NON-NLS
-                + StringUtils.join(FileTypeUtils.getAllSupportedExtensions(), "' OR name LIKE '%.") //NON-NLS
-                + "')";
+        abstract void cleanup(boolean success);
 
-        static private final String MIMETYPE_CLAUSE =
-                "(mime_type LIKE '" //NON-NLS
-                + StringUtils.join(FileTypeUtils.getAllSupportedMimeTypes(), "' OR mime_type LIKE '") //NON-NLS
-                + "') ";
+        abstract List<AbstractFile> getFiles() throws TskCoreException;
 
-        static private final String DRAWABLE_QUERY =
-                //grab files with supported extension
-                FILE_EXTENSION_CLAUSE
-                //grab files with supported mime-types
-                + " OR " + MIMETYPE_CLAUSE //NON-NLS
-                //grab files with image or video mime-types even if we don't officially support them
-                + " OR mime_type LIKE 'video/%' OR mime_type LIKE 'image/%'"; //NON-NLS
-        private ProgressHandle progressHandle = ProgressHandleFactory.createHandle(Bundle.CopyAnalyzedFiles_populatingDb_status());
+        abstract void processFile(final AbstractFile f, DrawableDB.DrawableTransaction tr) throws TskCoreException;
 
         @Override
         public void run() {
+            progressHandle = getInitialProgressHandle();
             progressHandle.start();
             updateMessage(Bundle.CopyAnalyzedFiles_populatingDb_status());
 
             try {
                 //grab all files with supported extension or detected mime types
-                final List<AbstractFile> files = tskCase.findAllFilesWhere(DRAWABLE_QUERY);
+                final List<AbstractFile> files = getFiles();
                 progressHandle.switchToDeterminate(files.size());
 
                 updateProgress(0.0);
 
                 //do in transaction
                 DrawableDB.DrawableTransaction tr = taskDB.beginTransaction();
-                int units = 0;
+                int workDone = 0;
                 for (final AbstractFile f : files) {
                     if (isCancelled()) {
                         LOGGER.log(Level.WARNING, "Task cancelled: not all contents may be transfered to drawable database."); //NON-NLS
@@ -765,161 +781,135 @@ public final class ImageGalleryController implements Executor {
                         break;
                     }
 
-                    final boolean known = f.getKnown() == TskData.FileKnown.KNOWN;
+                    processFile(f, tr);
 
-                    if (known) {
-                        taskDB.removeFile(f.getId(), tr);  //remove known files
-                    } else {
-                        Optional<String> mimeType = FileTypeUtils.getMimeType(f);
-                        if (mimeType.isPresent()) {
-                            //mime type
-                            if (FileTypeUtils.isDrawableMimeType(mimeType.get())) {  //supported mimetype => analyzed
-                                taskDB.updateFile(DrawableFile.create(f, true, false), tr);
-                            } else { //unsupported mimtype => analyzed but shouldn't include
-                                taskDB.removeFile(f.getId(), tr);
-                            }
-                        } else {
-                            //no mime tyoe
-                            if (FileTypeUtils.isDrawable(f)) {
-                                //no mime type but supported =>  add as not analyzed
-                                taskDB.insertFile(DrawableFile.create(f, false, false), tr);
-                            } else {
-                                //no mime type, not supported  => remove ( should never get here)
-                                taskDB.removeFile(f.getId(), tr);
-                            }
-                        }
-                    }
-
-                    units++;
-                    final int prog = units;
-                    progressHandle.progress(f.getName(), units);
-                    updateProgress(prog - 1 / (double) files.size());
+                    workDone++;
+                    progressHandle.progress(f.getName(), workDone);
+                    updateProgress(workDone - 1 / (double) files.size());
                     updateMessage(f.getName());
                 }
 
                 progressHandle.finish();
-
-                progressHandle = ProgressHandleFactory.createHandle(Bundle.CopyAnalyzedFiles_committingDb_status());
-                updateMessage(Bundle.CopyAnalyzedFiles_committingDb_status());
+                progressHandle = ProgressHandle.createHandle(Bundle.BulkTask_committingDb_status());
+                updateMessage(Bundle.BulkTask_committingDb_status());
                 updateProgress(1.0);
 
                 progressHandle.start();
                 taskDB.commitTransaction(tr, true);
 
             } catch (TskCoreException ex) {
-                progressHandle.progress(Bundle.CopyAnalyzedFiles_stopCopy_status());
-                Logger.getLogger(CopyAnalyzedFiles.class.getName()).log(Level.WARNING, "Stopping copy to drawable db task.  Failed to transfer all database contents: " + ex.getMessage()); //NON-NLS
-                MessageNotifyUtil.Notify.warn(Bundle.CopyAnalyzedFiles_errPopulating_errMsg(), ex.getMessage());
+                progressHandle.progress(Bundle.BulkTask_stopCopy_status());
+                LOGGER.log(Level.WARNING, "Stopping copy to drawable db task.  Failed to transfer all database contents", ex); //NON-NLS
+                MessageNotifyUtil.Notify.warn(Bundle.BulkTask_errPopulating_errMsg(), ex.getMessage());
+                cleanup(false);
+                return;
+            } finally {
                 progressHandle.finish();
                 updateMessage("");
                 updateProgress(-1.0);
-                controller.setStale(true);
-                return;
             }
+            cleanup(true);
+        }
 
-            progressHandle.finish();
-            updateMessage("");
-            updateProgress(-1.0);
-            controller.setStale(false);
+        abstract ProgressHandle getInitialProgressHandle();
+    }
+
+    /**
+     * Task that runs when image gallery listening is (re) enabled.
+     *
+     * Grabs all files with supported image/video mime types or extensions, and
+     * adds them to the Drawable DB. Uses the presence of a mimetype as an
+     * approximation to 'analyzed'.
+     */
+    @NbBundle.Messages({"CopyAnalyzedFiles.committingDb.status=commiting image/video database",
+        "CopyAnalyzedFiles.stopCopy.status=Stopping copy to drawable db task.",
+        "CopyAnalyzedFiles.errPopulating.errMsg=There was an error populating Image Gallery database."})
+    static private class CopyAnalyzedFiles extends BulkTransferTask {
+
+        CopyAnalyzedFiles(ImageGalleryController controller, DrawableDB taskDB, SleuthkitCase tskCase) {
+            super(controller, taskDB, tskCase);
+        }
+
+        @Override
+        protected void cleanup(boolean success) {
+            controller.setStale(!success);
+        }
+
+        @Override
+        List<AbstractFile> getFiles() throws TskCoreException {
+            return tskCase.findAllFilesWhere(DRAWABLE_QUERY);
+        }
+
+        @Override
+        void processFile(AbstractFile f, DrawableDB.DrawableTransaction tr) throws TskCoreException {
+            final boolean known = f.getKnown() == TskData.FileKnown.KNOWN;
+
+            if (known) {
+                taskDB.removeFile(f.getId(), tr);  //remove known files
+            } else {
+
+                try {
+                    if (FileTypeUtils.hasDrawableMIMEType(f)) {  //supported mimetype => analyzed
+                        taskDB.updateFile(DrawableFile.create(f, true, false), tr);
+                    } else { //unsupported mimtype => analyzed but shouldn't include
+                        taskDB.removeFile(f.getId(), tr);
+                    }
+                } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+        }
+
+        @Override
+        @NbBundle.Messages({"CopyAnalyzedFiles.populatingDb.status=populating analyzed image/video database",})
+        ProgressHandle getInitialProgressHandle() {
+            return ProgressHandle.createHandle(Bundle.CopyAnalyzedFiles_populatingDb_status(), this);
         }
     }
 
     /**
-     * task that does pre-ingest copy over of files from a new datasource (uses
-     * fs_obj_id to identify files from new datasources)
+     * Copy files from a newly added data source into the DB. Get all "drawable"
+     * files, based on extension and mime-type. After ingest we use file type id
+     * module and if necessary jpeg/png signature matching to add/remove files
      *
      * TODO: create methods to simplify progress value/text updates to both
      * netbeans and ImageGallery progress/status
      */
-    @NbBundle.Messages({"PrePopulateDataSourceFiles.prepopulatingDb.status=prepopulating image/video database",
-            "PrePopulateDataSourceFiles.committingDb.status=commiting image/video database"})
-    private class PrePopulateDataSourceFiles extends InnerTask {
+    @NbBundle.Messages({"PrePopulateDataSourceFiles.committingDb.status=commiting image/video database"})
+    static private class PrePopulateDataSourceFiles extends BulkTransferTask {
+
+        private static final Logger LOGGER = Logger.getLogger(PrePopulateDataSourceFiles.class.getName());
 
         private final Content dataSource;
-
-        /**
-         * here we grab by extension but in file_done listener we look at file
-         * type id attributes but fall back on jpeg signatures and extensions to
-         * check for supported images
-         */
-        // (name like '.jpg' or name like '.png' ...)
-        private final String DRAWABLE_QUERY = "(name LIKE '%." + StringUtils.join(FileTypeUtils.getAllSupportedExtensions(), "' OR name LIKE '%.") + "') "; //NON-NLS
-
-        private ProgressHandle progressHandle = ProgressHandleFactory.createHandle(Bundle.PrePopulateDataSourceFiles_prepopulatingDb_status(), this);
 
         /**
          *
          * @param dataSourceId Data source object ID
          */
-        PrePopulateDataSourceFiles(Content dataSource) {
-            super();
+        PrePopulateDataSourceFiles(Content dataSource, ImageGalleryController controller, DrawableDB taskDB, SleuthkitCase tskCase) {
+            super(controller, taskDB, tskCase);
             this.dataSource = dataSource;
         }
 
-        /**
-         * Copy files from a newly added data source into the DB. Get all
-         * "drawable" files, based on extension. After ingest we use file type
-         * id module and if necessary jpeg/png signature matching to add/remove
-         * files
-         */
         @Override
-        public void run() {
-            progressHandle.start();
-            updateMessage(Bundle.PrePopulateDataSourceFiles_prepopulatingDb_status());
+        protected void cleanup(boolean success) {
+        }
 
-            try {
-                String fsQuery = "(fs_obj_id IS NULL) "; //default clause NON-NLS
-                /*
-                 * NOTE: Logical files currently (Apr '15) have a null value for
-                 * fs_obj_id in DB. for them, we will not specify a fs_obj_id,
-                 * which means we will grab files from another data source, but
-                 * the drawable DB is smart enough to de-dupe them. For Images
-                 * we can do better.
-                 */
-                if (dataSource instanceof Image) {
-                    List<FileSystem> fileSystems = ((Image) dataSource).getFileSystems();
-                    if (fileSystems.isEmpty()) {
-                        /*
-                         * no filesystems, don't bother with the initial
-                         * population, just sort things out on file_done events
-                         */
-                        progressHandle.finish();
-                        return;
-                    }
-                    //use this clause to only grab files from the newly added filesystems.
-                    fsQuery = fileSystems.stream()
-                            .map(fileSystem -> String.valueOf(fileSystem.getId()))
-                            .collect(Collectors.joining(" OR fs_obj_id = ", "(fs_obj_id = ", ") ")); //NON-NLS
-                }
+        @Override
+        void processFile(final AbstractFile f, DrawableDB.DrawableTransaction tr) {
+            taskDB.insertFile(DrawableFile.create(f, false, false), tr);
+        }
 
-                final List<AbstractFile> files = getSleuthKitCase().findAllFilesWhere(fsQuery + " AND " + DRAWABLE_QUERY); //NON-NLS
-                progressHandle.switchToDeterminate(files.size());
+        @Override
+        List<AbstractFile> getFiles() throws TskCoreException {
+            long datasourceID = dataSource.getDataSource().getId();
+            return tskCase.findAllFilesWhere("data_source_obj_id = " + datasourceID + " AND " + DRAWABLE_QUERY);
+        }
 
-                //do in transaction
-                DrawableDB.DrawableTransaction tr = db.beginTransaction();
-                int units = 0;
-                for (final AbstractFile f : files) {
-                    if (isCancelled()) {
-                        LOGGER.log(Level.WARNING, "task cancelled: not all contents may be transfered to database"); //NON-NLS
-                        progressHandle.finish();
-                        break;
-                    }
-                    db.insertFile(DrawableFile.create(f, false, false), tr);
-                    units++;
-                    progressHandle.progress(f.getName(), units);
-                }
-
-                progressHandle.finish();
-                progressHandle = ProgressHandleFactory.createHandle(Bundle.PrePopulateDataSourceFiles_committingDb_status());
-
-                progressHandle.start();
-                db.commitTransaction(tr, false);
-
-            } catch (TskCoreException ex) {
-                Logger.getLogger(PrePopulateDataSourceFiles.class.getName()).log(Level.WARNING, "failed to transfer all database contents", ex); //NON-NLS
-            }
-
-            progressHandle.finish();
+        @Override
+        @NbBundle.Messages({"PrePopulateDataSourceFiles.prepopulatingDb.status=prepopulating image/video database",})
+        ProgressHandle getInitialProgressHandle() {
+            return ProgressHandle.createHandle(Bundle.PrePopulateDataSourceFiles_prepopulatingDb_status(), this);
         }
     }
 
@@ -969,10 +959,11 @@ public final class ImageGalleryController implements Executor {
                                     //this file would have gotten scooped up in initial grab, but actually we don't need it
                                     queueDBWorkerTask(new RemoveFileTask(file, db));
                                 }
-                            } catch (TskCoreException ex) {
+                            } catch (TskCoreException | FileTypeDetector.FileTypeDetectorInitException ex) {
                                 //TODO: What to do here?
-                                LOGGER.log(Level.WARNING, "Unable to determine if file is drawable and not known.  Not making any changes to DB", ex); //NON-NLS
-                                throw new RuntimeException(ex);
+                                LOGGER.log(Level.SEVERE, "Unable to determine if file is drawable and not known.  Not making any changes to DB", ex); //NON-NLS
+                                MessageNotifyUtil.Notify.error("Image Gallery Error",
+                                        "Unable to determine if file is drawable and not known.  Not making any changes to DB.  See the logs for details.");
                             }
                         }
                     } else {   //TODO: keep track of what we missed for later
@@ -1011,7 +1002,7 @@ public final class ImageGalleryController implements Executor {
                     //copy all file data to drawable databse
                     Content newDataSource = (Content) evt.getNewValue();
                     if (isListeningEnabled()) {
-                        queueDBWorkerTask(new PrePopulateDataSourceFiles(newDataSource));
+                        queueDBWorkerTask(new PrePopulateDataSourceFiles(newDataSource, ImageGalleryController.this, getDatabase(), getSleuthKitCase()));
                     } else {//TODO: keep track of what we missed for later
                         setStale(true);
                     }
@@ -1028,7 +1019,6 @@ public final class ImageGalleryController implements Executor {
                         getTagsManager().fireTagDeletedEvent(tagDeletedEvent);
                     }
                     break;
-
             }
         }
     }

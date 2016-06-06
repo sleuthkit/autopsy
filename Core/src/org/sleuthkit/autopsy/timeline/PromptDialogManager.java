@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.timeline;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import javafx.collections.FXCollections;
 import javafx.scene.Node;
@@ -40,41 +40,57 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 
 /**
- * Manager for the various prompts Timeline shows the user related to rebuilding
- * the database.
+ * Manager for the various prompts and dialogs Timeline shows the user related
+ * to rebuilding the database. Methods must only be called on the JFX thread.
  */
-public class PromptDialogManager {
+class PromptDialogManager {
 
     private static final Logger LOGGER = Logger.getLogger(PromptDialogManager.class.getName());
 
-    @NbBundle.Messages("PrompDialogManager.buttonType.showTimeline=Show Timeline")
-    private static final ButtonType SHOW_TIMELINE = new ButtonType(Bundle.PrompDialogManager_buttonType_showTimeline(), ButtonBar.ButtonData.OK_DONE);
+    @NbBundle.Messages("PrompDialogManager.buttonType.showTimeline=Continue")
+    private static final ButtonType CONTINUE = new ButtonType(Bundle.PrompDialogManager_buttonType_showTimeline(), ButtonBar.ButtonData.OK_DONE);
 
     @NbBundle.Messages("PrompDialogManager.buttonType.continueNoUpdate=Continue Without Updating")
     private static final ButtonType CONTINUE_NO_UPDATE = new ButtonType(Bundle.PrompDialogManager_buttonType_continueNoUpdate(), ButtonBar.ButtonData.CANCEL_CLOSE);
 
-    @NbBundle.Messages("PrompDialogManager.buttonType.update=Update")
+    @NbBundle.Messages("PrompDialogManager.buttonType.update=Update DB")
     private static final ButtonType UPDATE = new ButtonType(Bundle.PrompDialogManager_buttonType_update(), ButtonBar.ButtonData.OK_DONE);
 
-    private static final Image LOGO;
+    /**
+     * Image to use as title bar icon in dialogs
+     */
+    private static final Image AUTOPSY_ICON;
 
     static {
-        Image x = null;
+        Image tempImg = null;
         try {
-            x = new Image(new URL("nbresloc:/org/netbeans/core/startup/frame.gif").openStream()); //NOI18N
+            tempImg = new Image(new URL("nbresloc:/org/netbeans/core/startup/frame.gif").openStream()); //NON-NLS
         } catch (IOException ex) {
-            LOGGER.log(Level.WARNING, "Failed to load branded icon for progress dialog.", ex); //NOI18N NON-NLS
+            LOGGER.log(Level.WARNING, "Failed to load branded icon for progress dialog.", ex); //NON-NLS
         }
-        LOGO = x;
+        AUTOPSY_ICON = tempImg;
     }
+
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private Dialog<?> currentDialog;
 
     private final TimeLineController controller;
 
+    /**
+     * Constructor
+     *
+     * @param controller The TimeLineController this manager belongs to.
+     */
     PromptDialogManager(TimeLineController controller) {
         this.controller = controller;
     }
 
+    /**
+     * Bring the currently managed dialog (if there is one) to the front.
+     *
+     * @return True if a dialog was brought to the front, or false of there is
+     *         no currently managed open dialog
+     */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     boolean bringCurrentDialogToFront() {
         if (currentDialog != null && currentDialog.isShowing()) {
@@ -84,13 +100,19 @@ public class PromptDialogManager {
         return false;
     }
 
+    /**
+     * Show a progress dialog for the given db population task
+     *
+     * @param task The task to show progress for.
+     */
     @NbBundle.Messages({"PromptDialogManager.progressDialog.title=Populating Timeline Data"})
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    public void showProgressDialog(CancellationProgressTask<?> task) {
+    void showDBPopulationProgressDialog(CancellationProgressTask<?> task) {
         currentDialog = new ProgressDialog(task);
-        currentDialog.headerTextProperty().bind(task.titleProperty());
-        setDialogIcons(currentDialog);
+        currentDialog.initModality(Modality.NONE);
         currentDialog.setTitle(Bundle.PromptDialogManager_progressDialog_title());
+        setDialogIcons(currentDialog);
+        currentDialog.headerTextProperty().bind(task.titleProperty());
 
         DialogPane dialogPane = currentDialog.getDialogPane();
         dialogPane.setPrefSize(400, 200); //override autosizing which fails for some reason
@@ -98,6 +120,8 @@ public class PromptDialogManager {
         //co-ordinate task cancelation and dialog hiding.
         task.setOnCancelled(cancelled -> currentDialog.close());
         task.setOnSucceeded(succeeded -> currentDialog.close());
+        task.setOnFailed(failed -> currentDialog.close());
+
         dialogPane.getButtonTypes().setAll(ButtonType.CANCEL);
         final Node cancelButton = dialogPane.lookupButton(ButtonType.CANCEL);
         cancelButton.disableProperty().bind(task.cancellableProperty().not());
@@ -113,54 +137,73 @@ public class PromptDialogManager {
         currentDialog.show();
     }
 
+    /**
+     * Set the title bar icon for the given dialog to be the autopsy logo icon.
+     *
+     * @param dialog The dialog to set the title bar icon for.
+     */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     static private void setDialogIcons(Dialog<?> dialog) {
-        Stage stage = (Stage) dialog.getDialogPane().getScene().getWindow();
-        stage.getIcons().setAll(LOGO);
-    }
-
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    static private void setDialogTitle(Dialog<?> dialog) {
-        Stage stage = (Stage) dialog.getDialogPane().getScene().getWindow();
-        stage.setTitle(Bundle.Timeline_confirmation_dialogs_title());
+        ((Stage) dialog.getDialogPane().getScene().getWindow()).getIcons().setAll(AUTOPSY_ICON);
     }
 
     /**
-     * prompt the user that ingest is running and the db may not end up
+     * Prompt the user that ingest is running and the DB may not end up
      * complete.
      *
-     * @return true if they want to continue anyways
+     * @return True if they want to continue anyways.
      */
-    @NbBundle.Messages({"PromptDialogManager.confirmDuringIngest.headerText=You are trying to show a timeline before ingest has been completed.\nThe timeline may be incomplete.",
+    @NbBundle.Messages({
+        "PromptDialogManager.confirmDuringIngest.headerText=You are trying to update the Timeline DB before ingest has been completed.  The Timeline DB may be incomplete.",
         "PromptDialogManager.confirmDuringIngest.contentText=Do you want to continue?"})
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     boolean confirmDuringIngest() {
-        currentDialog = new Alert(Alert.AlertType.CONFIRMATION, Bundle.PromptDialogManager_confirmDuringIngest_contentText(), SHOW_TIMELINE, ButtonType.CANCEL);
+        currentDialog = new Alert(Alert.AlertType.CONFIRMATION, Bundle.PromptDialogManager_confirmDuringIngest_contentText(), CONTINUE, ButtonType.CANCEL);
         currentDialog.initModality(Modality.APPLICATION_MODAL);
-        currentDialog.setHeaderText(Bundle.PromptDialogManager_confirmDuringIngest_headerText());
+        currentDialog.setTitle(Bundle.Timeline_dialogs_title());
         setDialogIcons(currentDialog);
-        setDialogTitle(currentDialog);
+        currentDialog.setHeaderText(Bundle.PromptDialogManager_confirmDuringIngest_headerText());
 
-        return currentDialog.showAndWait().map(SHOW_TIMELINE::equals).orElse(false);
+        //show dialog and map all results except "continue" to false.
+        return currentDialog.showAndWait().map(CONTINUE::equals).orElse(false);
     }
 
-    @NbBundle.Messages({"PromptDialogManager.rebuildPrompt.headerText=The Timeline database is incomplete and/or out of date.\nSome events may be missing or inaccurate and some features may be unavailable.",
-        "PromptDialogManager.rebuildPrompt.details=Details:"})
+    /**
+     * Prompt the user to confirm rebuilding the database for the given list of
+     * reasons.
+     *
+     * @param rebuildReasons A List of reasons why the database is out of date.
+     *
+     * @return True if the user a confirms rebuilding the database.
+     */
+    @NbBundle.Messages({
+        "PromptDialogManager.rebuildPrompt.headerText=The Timeline DB is incomplete and/or out of date.  Some events may be missing or inaccurate and some features may be unavailable.",
+        "PromptDialogManager.rebuildPrompt.details=Details"})
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    boolean confirmRebuild(ArrayList<String> rebuildReasons) {
+    boolean confirmRebuild(List<String> rebuildReasons) {
         currentDialog = new Alert(Alert.AlertType.CONFIRMATION, Bundle.TimeLinecontroller_updateNowQuestion(), UPDATE, CONTINUE_NO_UPDATE);
         currentDialog.initModality(Modality.APPLICATION_MODAL);
-        currentDialog.setHeaderText(Bundle.PromptDialogManager_rebuildPrompt_headerText());
+        currentDialog.setTitle(Bundle.Timeline_dialogs_title());
         setDialogIcons(currentDialog);
-        setDialogTitle(currentDialog);
 
-        DialogPane dialogPane = currentDialog.getDialogPane();
+        currentDialog.setHeaderText(Bundle.PromptDialogManager_rebuildPrompt_headerText());
+
+        //set up listview of reasons to rebuild
         ListView<String> listView = new ListView<>(FXCollections.observableArrayList(rebuildReasons));
         listView.setCellFactory(lstView -> new WrappingListCell());
         listView.setMaxHeight(75);
-        Node wrappedListView = Borders.wrap(listView).lineBorder().title(Bundle.PromptDialogManager_rebuildPrompt_details()).buildAll();
-        dialogPane.setExpandableContent(wrappedListView);
 
+        //wrap listview in title border.
+        Node wrappedListView = Borders.wrap(listView)
+                .lineBorder()
+                .title(Bundle.PromptDialogManager_rebuildPrompt_details())
+                .buildAll();
+
+        DialogPane dialogPane = currentDialog.getDialogPane();
+        dialogPane.setExpandableContent(wrappedListView);
+        dialogPane.setMaxWidth(500);
+
+        //show dialog and map all results except "update" to false.
         return currentDialog.showAndWait().map(UPDATE::equals).orElse(false);
     }
 }

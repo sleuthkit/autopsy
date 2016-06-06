@@ -1,30 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.text.*?>
-<?import java.lang.*?>
-<?import javafx.geometry.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.image.*?>
-<?import javafx.scene.layout.*?>
-<?import jfxtras.scene.control.*?>
-<?import org.controlsfx.control.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.MenuButton?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+<?import jfxtras.scene.control.LocalDateTimeTextField?>
+<?import org.controlsfx.control.SegmentedButton?>
 
-<fx:root prefHeight="-1.0" prefWidth="-1.0" type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1">
+<fx:root prefHeight="-1.0" prefWidth="-1.0" type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1">
     <top>
-        <ToolBar fx:id="toolBar" prefWidth="200.0" BorderPane.alignment="CENTER">
+        <ToolBar fx:id="toolBar" HBox.hgrow="ALWAYS">
             <items>
-                <HBox alignment="CENTER" BorderPane.alignment="CENTER">
+                <HBox alignment="CENTER_LEFT" BorderPane.alignment="CENTER" HBox.hgrow="NEVER">
                     <children>
-                        <Label fx:id="visualizationModeLabel">
+                        <Label fx:id="visualizationModeLabel" text="Visualisation Mode:" textAlignment="CENTER" wrapText="true" HBox.hgrow="NEVER">
                             <HBox.margin>
                                 <Insets right="5.0" />
                             </HBox.margin>
-                     <font>
-                        <Font name="System Bold" size="14.0" />
-                     </font>
+                            <font>
+                                <Font name="System Bold" size="14.0" />
+                            </font>
                         </Label>
-                             
-                        <org.controlsfx.control.SegmentedButton maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity">
+                                   
+                        <SegmentedButton maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" HBox.hgrow="NEVER">
                             <buttons>   
                                 <ToggleButton fx:id="countsToggle" alignment="TOP_LEFT" mnemonicParsing="false" selected="true">
                                     <graphic>
@@ -34,9 +42,9 @@
                                             </image>
                                         </ImageView>
                                     </graphic>
-                           <font>
-                              <Font name="System Bold" size="16.0" />
-                           </font>
+                                    <font>
+                                        <Font name="System Bold" size="16.0" />
+                                    </font>
                                 </ToggleButton>
                                 <ToggleButton fx:id="detailsToggle" alignment="CENTER_RIGHT" layoutX="74.0" mnemonicParsing="false" selected="false">
                                     <graphic>
@@ -46,13 +54,13 @@
                                             </image>
                                         </ImageView>
                                     </graphic>
-                           <font>
-                              <Font name="System Bold" size="16.0" />
-                           </font>
+                                    <font>
+                                        <Font name="System Bold" size="16.0" />
+                                    </font>
                                 </ToggleButton>
                             </buttons>
-                                    
-                        </org.controlsfx.control.SegmentedButton>
+                                          
+                        </SegmentedButton>
                     </children>
                     <padding>
                         <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
@@ -61,8 +69,9 @@
                         <Insets left="10.0" />
                     </BorderPane.margin>
                 </HBox>
-                <Separator orientation="VERTICAL" />
-                <Button fx:id="snapShotButton" mnemonicParsing="false">
+                <Separator halignment="LEFT" maxWidth="1.7976931348623157E308" orientation="VERTICAL" />
+                <Separator halignment="LEFT" maxWidth="1.7976931348623157E308" orientation="VERTICAL" HBox.hgrow="ALWAYS" />
+                <Button fx:id="snapShotButton" mnemonicParsing="false" text="Snapshot Report">
                     <graphic>
                         <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
                             <image>
@@ -71,24 +80,31 @@
                         </ImageView>
                     </graphic>
                 </Button>
-                <Separator orientation="VERTICAL" />
+                <Separator maxWidth="1.7976931348623157E308" orientation="VERTICAL" />
+                <Button fx:id="refreshButton" alignment="CENTER_RIGHT" mnemonicParsing="false" text="Refresh Vis.">
+                    <graphic>
+                        <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                            <image>
+                                <Image url="@../images/arrow-circle-double-135.png" />
+                            </image>
+                        </ImageView>
+                    </graphic>
+                </Button>
+                <Button fx:id="updateDBButton" mnemonicParsing="false" text="Update DB">
+                    <graphic>
+                        <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                            <image>
+                                <Image url="@../images/database_refresh.png" />
+                            </image>
+                        </ImageView>
+                    </graphic>
+                </Button>
             </items>
         </ToolBar>
     </top> 
     <bottom>
         <VBox maxHeight="-Infinity">
             <children>
-                <HBox fillHeight="false" BorderPane.alignment="CENTER">
-                    <children>
-                        <Region fx:id="spacer" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="5.0" prefWidth="20.0" />
-                        <VBox fillWidth="false">
-                            <children>
-                                <Pane fx:id="partPane" />
-                                <Pane fx:id="contextPane" />
-                            </children>
-                        </VBox>
-                    </children>
-                </HBox>
                 <Separator />
                 <Separator />
                 <StackPane fx:id="rangeHistogramStack" maxHeight="-Infinity" BorderPane.alignment="CENTER">
@@ -172,4 +188,4 @@
             </children>
         </VBox>
     </bottom>
-   </fx:root>
+</fx:root>

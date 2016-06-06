@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.beans.PropertyChangeListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
@@ -36,8 +37,9 @@ final class KeywordSearchGlobalSettingsPanel extends IngestModuleGlobalSettingsP
         customizeComponents();
     }
 
+    @NbBundle.Messages({"KeywordSearchGlobalSettingsPanel.Title=Global Keyword Search Settings"})
     private void customizeComponents() {
-        setName(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.title"));
+        setName(Bundle.KeywordSearchGlobalSettingsPanel_Title());
         listsPanel = new GlobalListSettingsPanel();
         languagesPanel = new KeywordSearchGlobalLanguageSettingsPanel();
         generalPanel = new KeywordSearchGlobalSearchSettingsPanel();
@@ -47,6 +49,20 @@ final class KeywordSearchGlobalSettingsPanel extends IngestModuleGlobalSettingsP
                 languagesPanel, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.stringExtToolTip"), 1);
         tabbedPane.insertTab(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.genTabTitle"), null,
                 generalPanel, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.genTabToolTip"), 2);
+    }
+
+    @Override
+    public void addPropertyChangeListener(PropertyChangeListener l) {
+        listsPanel.addPropertyChangeListener(l);
+        languagesPanel.addPropertyChangeListener(l);
+        generalPanel.addPropertyChangeListener(l);
+    }
+
+    @Override
+    public void removePropertyChangeListener(PropertyChangeListener l) {
+        listsPanel.removePropertyChangeListener(l);
+        languagesPanel.removePropertyChangeListener(l);
+        generalPanel.removePropertyChangeListener(l);
     }
 
     /**
@@ -63,11 +79,15 @@ final class KeywordSearchGlobalSettingsPanel extends IngestModuleGlobalSettingsP
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 670, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 824, Short.MAX_VALUE)
+                .addGap(0, 0, 0))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 310, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 543, Short.MAX_VALUE)
+                .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents
 

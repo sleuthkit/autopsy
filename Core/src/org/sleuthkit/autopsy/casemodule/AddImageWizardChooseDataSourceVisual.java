@@ -146,6 +146,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
      *
      * @param panel instance of ImageTypePanel to change to
      */
+    @SuppressWarnings("deprecation")
     private void updateCurrentPanel(JPanel panel) {
         currentPanel = panel;
         typePanel.removeAll();
@@ -204,7 +205,6 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
 
         buttonGroup1 = new javax.swing.ButtonGroup();
         jLabel2 = new javax.swing.JLabel();
-        nextLabel = new javax.swing.JLabel();
         inputPanel = new javax.swing.JPanel();
         typeTabel = new javax.swing.JLabel();
         typePanel = new javax.swing.JPanel();
@@ -213,12 +213,6 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.jLabel2.text")); // NOI18N
 
         setPreferredSize(new java.awt.Dimension(588, 328));
-
-        org.openide.awt.Mnemonics.setLocalizedText(nextLabel, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.nextLabel.text")); // NOI18N
-        nextLabel.setPreferredSize(new java.awt.Dimension(514, 35));
-        nextLabel.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-
-        inputPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         org.openide.awt.Mnemonics.setLocalizedText(typeTabel, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.typeTabel.text")); // NOI18N
 
@@ -229,11 +223,11 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
         typePanel.setLayout(typePanelLayout);
         typePanelLayout.setHorizontalGroup(
             typePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 544, Short.MAX_VALUE)
+            .addGap(0, 548, Short.MAX_VALUE)
         );
         typePanelLayout.setVerticalGroup(
             typePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 173, Short.MAX_VALUE)
+            .addGap(0, 225, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout inputPanelLayout = new javax.swing.GroupLayout(inputPanel);
@@ -247,8 +241,8 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
                         .addComponent(typeTabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(typeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 292, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 115, Short.MAX_VALUE))
-                    .addComponent(typePanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 544, Short.MAX_VALUE))
+                        .addGap(0, 119, Short.MAX_VALUE))
+                    .addComponent(typePanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 548, Short.MAX_VALUE))
                 .addContainerGap())
         );
         inputPanelLayout.setVerticalGroup(
@@ -259,8 +253,8 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
                     .addComponent(typeTabel)
                     .addComponent(typeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(typePanel, javax.swing.GroupLayout.DEFAULT_SIZE, 173, Short.MAX_VALUE)
-                .addContainerGap())
+                .addComponent(typePanel, javax.swing.GroupLayout.PREFERRED_SIZE, 225, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -269,28 +263,21 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(inputPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(nextLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 54, Short.MAX_VALUE)))
+                .addComponent(inputPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(39, 39, 39)
+                .addGap(6, 6, 6)
                 .addComponent(inputPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 24, Short.MAX_VALUE)
-                .addComponent(nextLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0))
+                .addContainerGap(44, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JPanel inputPanel;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel nextLabel;
     private javax.swing.JComboBox<String> typeComboBox;
     private javax.swing.JPanel typePanel;
     private javax.swing.JLabel typeTabel;

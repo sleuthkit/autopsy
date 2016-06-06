@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.modules.embeddedfileextractor;
 
 import java.io.File;
 import java.util.logging.Level;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -32,12 +33,18 @@ import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.ImageExtractor.SupportedImageExtractionFormats;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
+import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
 
 /**
  * Embedded File Extractor ingest module extracts embedded files from supported
  * archives and documents, adds extracted embedded DerivedFiles, reschedules
  * extracted DerivedFiles for ingest.
  */
+@NbBundle.Messages({
+    "CannotCreateOutputFolder=Unable to create output folder.",
+    "CannotRunFileTypeDetection=Unable to run file type detection.",
+    "UnableToInitializeLibraries=Unable to initialize 7Zip libraries."
+})
 public final class EmbeddedFileExtractorIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(EmbeddedFileExtractorIngestModule.class.getName());
@@ -77,9 +84,7 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
             try {
                 extractionDirectory.mkdirs();
             } catch (SecurityException ex) {
-                logger.log(Level.SEVERE, "Error initializing output dir: " + moduleDirAbsolute, ex); //NON-NLS
-                services.postMessage(IngestMessage.createErrorMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), "Error initializing", "Error initializing output dir: " + moduleDirAbsolute)); //NON-NLS
-                throw new IngestModuleException(ex.getMessage());
+                throw new IngestModuleException(Bundle.CannotCreateOutputFolder(), ex);
             }
         }
 
@@ -87,11 +92,16 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            throw new IngestModuleException(ex.getMessage());
+            throw new IngestModuleException(Bundle.CannotRunFileTypeDetection(), ex);
         }
 
         // initialize the extraction modules.
-        this.archiveExtractor = new SevenZipExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
+        try {
+            this.archiveExtractor = new SevenZipExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
+        } catch (SevenZipNativeInitializationException ex) {
+            throw new IngestModuleException(Bundle.UnableToInitializeLibraries(), ex);
+        }
+
         this.imageExtractor = new ImageExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
     }
 

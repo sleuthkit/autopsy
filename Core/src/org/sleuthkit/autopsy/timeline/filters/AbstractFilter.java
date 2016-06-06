@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.timeline.filters;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.value.ObservableBooleanValue;
 
 /**
  * Base implementation of a {@link Filter}. Implements active property.
@@ -38,7 +39,7 @@ public abstract class AbstractFilter implements Filter {
     }
 
     @Override
-    public SimpleBooleanProperty getDisabledProperty() {
+    public ObservableBooleanValue disabledProperty() {
         return disabled;
     }
 
@@ -59,19 +60,18 @@ public abstract class AbstractFilter implements Filter {
 
     @Override
     public boolean isDisabled() {
-        return disabled.get();
+        return disabledProperty().get();
+    }
+
+    
+
+    @Override
+    public boolean isActive() {
+        return activeProperty().get();
     }
 
     @Override
-    public String getStringCheckBox() {
-        return "[" + (isSelected() ? "x" : " ") + "]"; // NON-NLS
-    }
-
-    public final boolean isActive() {
-        return activeProperty.get();
-    }
-
-    public final BooleanBinding activeProperty() {
+    public BooleanBinding activeProperty() {
         return activeProperty;
     }
 }

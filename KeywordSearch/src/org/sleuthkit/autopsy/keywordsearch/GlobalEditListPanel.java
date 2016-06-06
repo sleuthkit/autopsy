@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,13 +23,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import javax.swing.JFileChooser;
@@ -41,8 +40,18 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
+import org.netbeans.spi.options.OptionsPanelController;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import java.awt.Component;
+import javax.swing.ImageIcon;
+import javax.swing.JLabel;
+import static javax.swing.SwingConstants.CENTER;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
+import org.openide.util.NbBundle.Messages;
 
 /**
  * GlobalEditListPanel widget to manage keywords in lists
@@ -50,8 +59,10 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionListener, OptionsPanel {
 
     private static final Logger logger = Logger.getLogger(GlobalEditListPanel.class.getName());
-    private KeywordTableModel tableModel;
+    private static final long serialVersionUID = 1L;
+    private final KeywordTableModel tableModel;
     private KeywordList currentKeywordList;
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     /**
      * Creates new form GlobalEditListPanel
@@ -70,8 +81,6 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         saveListButton.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.saveCurrentWIthNewNameToolTip"));
         deleteWordButton.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.removeSelectedMsg"));
 
-        keywordTable.setShowHorizontalLines(false);
-        keywordTable.setShowVerticalLines(false);
         keywordTable.getParent().setBackground(keywordTable.getBackground());
         final int width = jScrollPane1.getPreferredSize().width;
         keywordTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
@@ -82,7 +91,8 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                 column.setPreferredWidth(((int) (width * 0.90)));
             } else {
                 column.setPreferredWidth(((int) (width * 0.10)));
-                //column.setCellRenderer(new CheckBoxRenderer());
+                column.setCellRenderer(new CheckBoxRenderer());
+                column.setHeaderRenderer(new HeaderRenderer(keywordTable));
             }
         }
         keywordTable.setCellSelectionEnabled(false);
@@ -139,6 +149,16 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                 }
             }
         });
+    }
+
+    @Override
+    public void addPropertyChangeListener(PropertyChangeListener l) {
+        pcs.addPropertyChangeListener(l);
+    }
+
+    @Override
+    public void removePropertyChangeListener(PropertyChangeListener l) {
+        pcs.removePropertyChangeListener(l);
     }
 
     void setButtonStates() {
@@ -218,15 +238,20 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(GlobalEditListPanel.class, "KeywordSearchEditListPanel.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
 
+        setMinimumSize(new java.awt.Dimension(0, 0));
+
+        listEditorPanel.setMinimumSize(new java.awt.Dimension(0, 0));
+
         jScrollPane1.setPreferredSize(new java.awt.Dimension(340, 300));
 
         keywordTable.setModel(tableModel);
         keywordTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
-        keywordTable.setShowHorizontalLines(false);
-        keywordTable.setShowVerticalLines(false);
+        keywordTable.setGridColor(new java.awt.Color(153, 153, 153));
+        keywordTable.setMaximumSize(new java.awt.Dimension(30000, 30000));
         keywordTable.getTableHeader().setReorderingAllowed(false);
         jScrollPane1.setViewportView(keywordTable);
 
+        addWordButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/new16.png"))); // NOI18N
         addWordButton.setText(org.openide.util.NbBundle.getMessage(GlobalEditListPanel.class, "KeywordSearchEditListPanel.addWordButton.text")); // NOI18N
         addWordButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -243,6 +268,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
 
         chRegex.setText(org.openide.util.NbBundle.getMessage(GlobalEditListPanel.class, "KeywordSearchEditListPanel.chRegex.text")); // NOI18N
 
+        deleteWordButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/delete16.png"))); // NOI18N
         deleteWordButton.setText(org.openide.util.NbBundle.getMessage(GlobalEditListPanel.class, "KeywordSearchEditListPanel.deleteWordButton.text")); // NOI18N
         deleteWordButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -256,13 +282,13 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
             addKeywordPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(addKeywordPanelLayout.createSequentialGroup()
                 .addGroup(addKeywordPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(addKeywordPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(addKeywordPanelLayout.createSequentialGroup()
-                            .addComponent(addWordField, javax.swing.GroupLayout.PREFERRED_SIZE, 216, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                            .addComponent(addWordButton))
-                        .addComponent(deleteWordButton))
+                    .addGroup(addKeywordPanelLayout.createSequentialGroup()
+                        .addComponent(addWordField, javax.swing.GroupLayout.PREFERRED_SIZE, 216, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(addWordButton))
                     .addComponent(chRegex, javax.swing.GroupLayout.Alignment.LEADING))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(deleteWordButton)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         addKeywordPanelLayout.setVerticalGroup(
@@ -271,12 +297,11 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                 .addGap(0, 0, 0)
                 .addGroup(addKeywordPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(addWordField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(addWordButton))
-                .addGap(7, 7, 7)
+                    .addComponent(addWordButton)
+                    .addComponent(deleteWordButton))
+                .addGap(6, 6, 6)
                 .addComponent(chRegex)
-                .addGap(7, 7, 7)
-                .addComponent(deleteWordButton)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(43, 43, 43))
         );
 
         ingestMessagesCheckbox.setSelected(true);
@@ -294,13 +319,18 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
 
         listOptionsLabel.setText(org.openide.util.NbBundle.getMessage(GlobalEditListPanel.class, "KeywordSearchEditListPanel.listOptionsLabel.text")); // NOI18N
 
-        deleteListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/delete16.png"))); // NOI18N NON-NLS
+        deleteListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/delete16.png"))); // NOI18N
         deleteListButton.setText(org.openide.util.NbBundle.getMessage(GlobalEditListPanel.class, "KeywordSearchEditListPanel.deleteListButton.text")); // NOI18N
+        deleteListButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteListButtonActionPerformed(evt);
+            }
+        });
 
-        saveListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/save16.png"))); // NOI18N NON-NLS
+        saveListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/save16.png"))); // NOI18N
         saveListButton.setText(org.openide.util.NbBundle.getMessage(GlobalEditListPanel.class, "KeywordSearchEditListPanel.saveListButton.text")); // NOI18N
 
-        exportButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/export16.png"))); // NOI18N NON-NLS
+        exportButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/export16.png"))); // NOI18N
         exportButton.setText(org.openide.util.NbBundle.getMessage(GlobalEditListPanel.class, "KeywordSearchEditListPanel.exportButton.text")); // NOI18N
         exportButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -328,7 +358,9 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                                 .addComponent(keywordOptionsLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(keywordOptionsSeparator))
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(listEditorPanelLayout.createSequentialGroup()
+                                .addGap(10, 10, 10)
+                                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                             .addGroup(listEditorPanelLayout.createSequentialGroup()
                                 .addGroup(listEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(keywordsLabel)
@@ -351,7 +383,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                 .addContainerGap()
                 .addComponent(keywordsLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 178, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 117, Short.MAX_VALUE)
                 .addGap(10, 10, 10)
                 .addGroup(listEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(listEditorPanelLayout.createSequentialGroup()
@@ -384,8 +416,8 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(listEditorPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(listEditorPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(5, 5, 5))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -422,6 +454,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         XmlKeywordSearchList.getCurrent().addList(currentKeywordList);
         chRegex.setSelected(false);
         addWordField.setText("");
+        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
 
         setButtonStates();
     }//GEN-LAST:event_addWordButtonActionPerformed
@@ -432,6 +465,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
             tableModel.deleteSelected(keywordTable.getSelectedRows());
             XmlKeywordSearchList.getCurrent().addList(currentKeywordList);
             setButtonStates();
+            pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
     }//GEN-LAST:event_deleteWordButtonActionPerformed
 
@@ -494,7 +528,13 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         currentKeywordList.setIngestMessages(ingestMessagesCheckbox.isSelected());
         XmlKeywordSearchList updater = XmlKeywordSearchList.getCurrent();
         updater.addList(currentKeywordList);
+        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_ingestMessagesCheckboxActionPerformed
+
+    private void deleteListButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteListButtonActionPerformed
+        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+    }//GEN-LAST:event_deleteListButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel addKeywordPanel;
     private javax.swing.JButton addWordButton;
@@ -650,6 +690,57 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                 words.remove(selected[arrayi]);
             }
             resync();
+        }
+    }
+
+    /**
+     * A cell renderer for boolean cells that shows a center-aligned green check
+     * mark if true, nothing if false.
+     */
+    private class CheckBoxRenderer extends DefaultTableCellRenderer {
+
+        private static final long serialVersionUID = 1L;
+        final ImageIcon theCheck = new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/checkmark.png")); // NON-NLS
+
+        CheckBoxRenderer() {
+            setHorizontalAlignment(CENTER);
+        }
+
+        @Override
+        @Messages("IsRegularExpression=Keyword is a regular expression")
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+
+            if ((value instanceof Boolean)) {
+                if ((Boolean) value) {
+                    setIcon(theCheck);
+                    setToolTipText(Bundle.IsRegularExpression());
+                } else {
+                    setIcon(null);
+                    setToolTipText(null);
+                }
+            }
+            return this;
+        }
+    }
+
+    /**
+     * A cell renderer for header cells that center-aligns the header text.
+     */
+    private static class HeaderRenderer implements TableCellRenderer {
+
+        private DefaultTableCellRenderer renderer;
+
+        public HeaderRenderer(JTable table) {
+            renderer = (DefaultTableCellRenderer) table.getTableHeader().getDefaultRenderer();
+            renderer.setHorizontalAlignment(JLabel.CENTER);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(
+                JTable table, Object value, boolean isSelected,
+                boolean hasFocus, int row, int col) {
+            return renderer.getTableCellRendererComponent(
+                    table, value, isSelected, hasFocus, row, col);
         }
     }
 }

@@ -22,7 +22,7 @@ import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,12 +35,13 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListModel;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.ListDataListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -50,8 +51,8 @@ final class ReportVisualPanel2 extends JPanel {
     private Map<String, Boolean> tagStates = new LinkedHashMap<>();
     private List<String> tags = new ArrayList<>();
     ArtifactSelectionDialog dialog = new ArtifactSelectionDialog(new JFrame(), true);
-    private Map<ARTIFACT_TYPE, Boolean> artifactStates = new EnumMap<>(ARTIFACT_TYPE.class);
-    private List<ARTIFACT_TYPE> artifacts = new ArrayList<>();
+    private Map<BlackboardArtifact.Type, Boolean> artifactStates = new HashMap<>();
+    private List<BlackboardArtifact.Type> artifacts = new ArrayList<>();
     private TagsListModel tagsModel;
     private TagsListRenderer tagsRenderer;
 
@@ -67,6 +68,26 @@ final class ReportVisualPanel2 extends JPanel {
         deselectAllButton.setEnabled(false);
         allResultsRadioButton.setSelected(true);
         this.wizPanel = wizPanel;
+        this.allResultsRadioButton.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                tagsList.setEnabled(taggedResultsRadioButton.isSelected());
+                selectAllButton.setEnabled(taggedResultsRadioButton.isSelected());
+                deselectAllButton.setEnabled(taggedResultsRadioButton.isSelected());
+                advancedButton.setEnabled(!taggedResultsRadioButton.isSelected());
+                updateFinishButton();
+            }
+        });
+        this.taggedResultsRadioButton.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                tagsList.setEnabled(taggedResultsRadioButton.isSelected());
+                selectAllButton.setEnabled(taggedResultsRadioButton.isSelected());
+                deselectAllButton.setEnabled(taggedResultsRadioButton.isSelected());
+                advancedButton.setEnabled(!taggedResultsRadioButton.isSelected());
+                updateFinishButton();
+            }
+        });
     }
 
     // Initialize the list of Tags
@@ -96,10 +117,12 @@ final class ReportVisualPanel2 extends JPanel {
             public void mousePressed(MouseEvent evt) {
 
                 int index = tagsList.locationToIndex(evt.getPoint());
-                String value = tagsModel.getElementAt(index);
-                tagStates.put(value, !tagStates.get(value));
-                tagsList.repaint();
-                updateFinishButton();
+                if (index < tagsModel.getSize() && index >= 0) {
+                    String value = tagsModel.getElementAt(index);
+                    tagStates.put(value, !tagStates.get(value));
+                    tagsList.repaint();
+                    updateFinishButton();
+                }
             }
         });
     }
@@ -109,16 +132,20 @@ final class ReportVisualPanel2 extends JPanel {
     private void initArtifactTypes() {
 
         try {
-            ArrayList<BlackboardArtifact.ARTIFACT_TYPE> doNotReport = new ArrayList<>();
-            doNotReport.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO);
-            doNotReport.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT); // output is too unstructured for table review
+            ArrayList<BlackboardArtifact.Type> doNotReport = new ArrayList<>();
+            doNotReport.add(new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID(),
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getLabel(),
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getDisplayName()));
+            doNotReport.add(new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getTypeID(),
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getLabel(),
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getDisplayName())); // output is too unstructured for table review
 
-            artifacts = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifactTypesInUse();
+            artifacts = Case.getCurrentCase().getSleuthkitCase().getArtifactTypesInUse();
 
             artifacts.removeAll(doNotReport);
 
-            artifactStates = new EnumMap<>(ARTIFACT_TYPE.class);
-            for (ARTIFACT_TYPE type : artifacts) {
+            artifactStates = new HashMap<>();
+            for (BlackboardArtifact.Type type : artifacts) {
                 artifactStates.put(type, Boolean.TRUE);
             }
         } catch (TskCoreException ex) {
@@ -132,9 +159,11 @@ final class ReportVisualPanel2 extends JPanel {
     }
 
     /**
+     * Gets the enabled/disabled state of all artifacts
+     *
      * @return the enabled/disabled state of all Artifacts
      */
-    Map<ARTIFACT_TYPE, Boolean> getArtifactStates() {
+    Map<BlackboardArtifact.Type, Boolean> getArtifactStates() {
         return artifactStates;
     }
 
@@ -155,21 +184,11 @@ final class ReportVisualPanel2 extends JPanel {
         return result;
     }
 
-    private boolean areArtifactsSelected() {
-        boolean result = false;
-        for (Entry<ARTIFACT_TYPE, Boolean> entry : artifactStates.entrySet()) {
-            if (entry.getValue()) {
-                result = true;
-            }
-        }
-        return result;
-    }
-
     private void updateFinishButton() {
         if (taggedResultsRadioButton.isSelected()) {
             wizPanel.setFinish(areTagsSelected());
         } else {
-            wizPanel.setFinish(areArtifactsSelected());
+            wizPanel.setFinish(true);
         }
     }
 
@@ -202,11 +221,6 @@ final class ReportVisualPanel2 extends JPanel {
 
         optionsButtonGroup.add(taggedResultsRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(taggedResultsRadioButton, org.openide.util.NbBundle.getMessage(ReportVisualPanel2.class, "ReportVisualPanel2.taggedResultsRadioButton.text")); // NOI18N
-        taggedResultsRadioButton.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                taggedResultsRadioButtonStateChanged(evt);
-            }
-        });
 
         optionsButtonGroup.add(allResultsRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(allResultsRadioButton, org.openide.util.NbBundle.getMessage(ReportVisualPanel2.class, "ReportVisualPanel2.allResultsRadioButton.text")); // NOI18N
@@ -284,14 +298,6 @@ final class ReportVisualPanel2 extends JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void taggedResultsRadioButtonStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_taggedResultsRadioButtonStateChanged
-        tagsList.setEnabled(taggedResultsRadioButton.isSelected());
-        selectAllButton.setEnabled(taggedResultsRadioButton.isSelected());
-        deselectAllButton.setEnabled(taggedResultsRadioButton.isSelected());
-        advancedButton.setEnabled(!taggedResultsRadioButton.isSelected());
-        updateFinishButton();
-    }//GEN-LAST:event_taggedResultsRadioButtonStateChanged
-
     private void selectAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectAllButtonActionPerformed
         for (String tag : tags) {
             tagStates.put(tag, Boolean.TRUE);
@@ -310,8 +316,8 @@ final class ReportVisualPanel2 extends JPanel {
 
     private void advancedButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_advancedButtonActionPerformed
         artifactStates = dialog.display();
-        wizPanel.setFinish(areArtifactsSelected());
     }//GEN-LAST:event_advancedButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton advancedButton;
     private javax.swing.JRadioButton allResultsRadioButton;

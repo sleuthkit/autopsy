@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,14 +18,12 @@
  */
 package org.sleuthkit.autopsy.modules.fileextmismatch;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -33,31 +31,36 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
+import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
-import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.TskData.FileKnown;
 import org.sleuthkit.datamodel.TskException;
 
 /**
  * Flags mismatched filename extensions based on file signature.
  */
+@NbBundle.Messages({
+    "CannotRunFileTypeDetection=Unable to run file type detection.",
+    "FileExtMismatchIngestModule.readError.message=Could not read settings."
+})
 public class FileExtMismatchIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(FileExtMismatchIngestModule.class.getName());
     private final IngestServices services = IngestServices.getInstance();
     private final FileExtMismatchDetectorModuleSettings settings;
-    private HashMap<String, String[]> SigTypeToExtMap = new HashMap<>();
+    private HashMap<String, Set<String>> mimeTypeToExtsMap = new HashMap<>();
     private long jobId;
     private static final HashMap<Long, IngestJobTotals> totalsForIngestJobs = new HashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private static Blackboard blackboard;
+    private FileTypeDetector detector;
 
     private static class IngestJobTotals {
 
@@ -92,14 +95,23 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
         jobId = context.getJobId();
         refCounter.incrementAndGet(jobId);
 
-        FileExtMismatchXML xmlLoader = FileExtMismatchXML.getDefault();
-        SigTypeToExtMap = xmlLoader.load();
-
+        try {
+            mimeTypeToExtsMap = FileExtMismatchSettings.readSettings().getMimeTypeToExtsMap();
+            this.detector = new FileTypeDetector();
+        } catch (FileExtMismatchSettings.FileExtMismatchSettingsException ex) {
+            throw new IngestModuleException(Bundle.FileExtMismatchIngestModule_readError_message(), ex);
+        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+            throw new IngestModuleException(Bundle.CannotRunFileTypeDetection(), ex);
+        }
     }
 
     @Override
+    @Messages({"FileExtMismatchIngestModule.indexError.message=Failed to index file extension mismatch artifact for keyword search."})
     public ProcessResult process(AbstractFile abstractFile) {
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
+        if (this.settings.skipKnownFiles() && (abstractFile.getKnown() == FileKnown.KNOWN)) {
+            return ProcessResult.OK;
+        }
 
         // skip non-files
         if ((abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
@@ -129,9 +141,9 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
                     // index the artifact for keyword search
                     blackboard.indexArtifact(bart);
                 } catch (Blackboard.BlackboardException ex) {
-                    logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", bart.getDisplayName()), ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bart.getArtifactID(), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(
-                            NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), bart.getDisplayName());
+                            Bundle.FileExtMismatchIngestModule_indexError_message(), bart.getDisplayName());
                 }
 
                 services.fireModuleDataEvent(new ModuleDataEvent(FileExtMismatchDetectorModuleFactory.getModuleName(), ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED, Collections.singletonList(bart)));
@@ -157,7 +169,7 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
         if (settings.skipFilesWithNoExtension() && currActualExt.isEmpty()) {
             return false;
         }
-        String currActualSigType = abstractFile.getMIMEType();
+        String currActualSigType = detector.getFileType(abstractFile);
         if (currActualSigType == null) {
             return false;
         }
@@ -168,19 +180,15 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
         }
 
         //get known allowed values from the map for this type
-        String[] allowedExtArray = SigTypeToExtMap.get(currActualSigType);
-        if (allowedExtArray != null) {
-            List<String> allowedExtList = Arrays.asList(allowedExtArray);
-
+        Set<String> allowedExtSet = mimeTypeToExtsMap.get(currActualSigType);
+        if (allowedExtSet != null) {
             // see if the filename ext is in the allowed list
-            if (allowedExtList != null) {
-                for (String e : allowedExtList) {
-                    if (e.equals(currActualExt)) {
-                        return false;
-                    }
+            for (String e : allowedExtSet) {
+                if (e.equals(currActualExt)) {
+                    return false;
                 }
-                return true; //potential mismatch
             }
+            return true; //potential mismatch
         }
 
         return false;

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,20 +18,18 @@
  */
 package org.sleuthkit.autopsy.imagegallery.actions;
 
-import javafx.scene.image.ImageView;
-import org.controlsfx.control.action.Action;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
-import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 
 /**
  *
  */
-public class CategorizeSelectedFilesAction extends Action {
+public class CategorizeSelectedFilesAction extends CategorizeAction {
 
     public CategorizeSelectedFilesAction(Category cat, ImageGalleryController controller) {
-        super(cat.getDisplayName(), (javafx.event.ActionEvent actionEvent) -> new CategorizeAction(controller).addTag(controller.getTagsManager().getTagName(cat), ""));
-        setGraphic(new ImageView(DrawableAttribute.CATEGORY.getIcon()));
+        super(controller, cat, null);
+        setEventHandler(actionEvent ->
+                addCatToFiles(controller.getSelectionModel().getSelected())
+        );
     }
-
 }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,19 +18,19 @@
  */
 package org.sleuthkit.autopsy.imagegallery.actions;
 
-import javafx.scene.image.ImageView;
-import org.controlsfx.control.action.Action;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.datamodel.TagName;
 
 /**
  *
  */
-public class TagSelectedFilesAction extends Action {
+public class TagSelectedFilesAction extends AddTagAction {
 
     public TagSelectedFilesAction(final TagName tagName, ImageGalleryController controller) {
-        super(tagName.getDisplayName(), actionEvent -> new AddDrawableTagAction(controller).addTag(tagName, ""));
-        setGraphic(new ImageView(DrawableAttribute.TAGS.getIcon()));
+        super(controller, tagName, null);
+        setEventHandler(actionEvent ->
+                new AddTagAction(controller, tagName, controller.getSelectionModel().getSelected()).
+                handle(actionEvent)
+        );
     }
 }

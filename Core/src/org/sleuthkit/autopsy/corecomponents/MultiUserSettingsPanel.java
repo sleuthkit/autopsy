@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2013-2016 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.corecomponents;
 
@@ -185,26 +198,27 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
         pnDatabaseSettings.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        tbDbHostname.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        tbDbHostname.setFont(tbDbHostname.getFont().deriveFont(tbDbHostname.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
         tbDbHostname.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbHostname.text")); // NOI18N
         tbDbHostname.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbHostname.toolTipText")); // NOI18N
 
-        tbDbPort.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        tbDbPort.setFont(tbDbPort.getFont().deriveFont(tbDbPort.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
         tbDbPort.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbPort.text")); // NOI18N
         tbDbPort.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbPort.toolTipText")); // NOI18N
 
-        tbDbUsername.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        tbDbUsername.setFont(tbDbUsername.getFont().deriveFont(tbDbUsername.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
         tbDbUsername.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbUsername.text")); // NOI18N
         tbDbUsername.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbUsername.toolTipText")); // NOI18N
 
-        tbDbPassword.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        tbDbPassword.setFont(tbDbPassword.getFont().deriveFont(tbDbPassword.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
         tbDbPassword.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbPassword.text")); // NOI18N
         tbDbPassword.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbPassword.toolTipText")); // NOI18N
 
-        lbDatabaseSettings.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        lbDatabaseSettings.setFont(lbDatabaseSettings.getFont().deriveFont(lbDatabaseSettings.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
         org.openide.awt.Mnemonics.setLocalizedText(lbDatabaseSettings, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.lbDatabaseSettings.text")); // NOI18N
         lbDatabaseSettings.setVerticalAlignment(javax.swing.SwingConstants.TOP);
 
+        bnTestDatabase.setFont(bnTestDatabase.getFont().deriveFont(bnTestDatabase.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(bnTestDatabase, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.bnTestDatabase.text")); // NOI18N
         bnTestDatabase.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -263,15 +277,16 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
         pnSolrSettings.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        lbSolrSettings.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        lbSolrSettings.setFont(lbSolrSettings.getFont().deriveFont(lbSolrSettings.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
         org.openide.awt.Mnemonics.setLocalizedText(lbSolrSettings, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.lbSolrSettings.text")); // NOI18N
 
-        tbSolrHostname.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        tbSolrHostname.setFont(tbSolrHostname.getFont().deriveFont(tbSolrHostname.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
         tbSolrHostname.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbSolrHostname.toolTipText")); // NOI18N
 
-        tbSolrPort.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        tbSolrPort.setFont(tbSolrPort.getFont().deriveFont(tbSolrPort.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
         tbSolrPort.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbSolrPort.toolTipText")); // NOI18N
 
+        bnTestSolr.setFont(bnTestSolr.getFont().deriveFont(bnTestSolr.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(bnTestSolr, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.bnTestSolr.text")); // NOI18N
         bnTestSolr.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -324,25 +339,26 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
         pnMessagingSettings.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        lbMessageServiceSettings.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        lbMessageServiceSettings.setFont(lbMessageServiceSettings.getFont().deriveFont(lbMessageServiceSettings.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
         org.openide.awt.Mnemonics.setLocalizedText(lbMessageServiceSettings, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.lbMessageServiceSettings.text")); // NOI18N
 
-        tbMsgHostname.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        tbMsgHostname.setFont(tbMsgHostname.getFont().deriveFont(tbMsgHostname.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
         tbMsgHostname.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgHostname.text")); // NOI18N
         tbMsgHostname.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgHostname.toolTipText")); // NOI18N
 
-        tbMsgUsername.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        tbMsgUsername.setFont(tbMsgUsername.getFont().deriveFont(tbMsgUsername.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
         tbMsgUsername.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgUsername.text")); // NOI18N
         tbMsgUsername.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgUsername.toolTipText")); // NOI18N
 
-        tbMsgPort.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        tbMsgPort.setFont(tbMsgPort.getFont().deriveFont(tbMsgPort.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
         tbMsgPort.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgPort.text")); // NOI18N
         tbMsgPort.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgPort.toolTipText")); // NOI18N
 
-        tbMsgPassword.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        tbMsgPassword.setFont(tbMsgPassword.getFont().deriveFont(tbMsgPassword.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
         tbMsgPassword.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgPassword.text")); // NOI18N
         tbMsgPassword.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgPassword.toolTipText")); // NOI18N
 
+        bnTestMessageService.setFont(bnTestMessageService.getFont().deriveFont(bnTestMessageService.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(bnTestMessageService, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.bnTestMessageService.text")); // NOI18N
         bnTestMessageService.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -399,6 +415,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
+        cbEnableMultiUser.setFont(cbEnableMultiUser.getFont().deriveFont(cbEnableMultiUser.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(cbEnableMultiUser, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.cbEnableMultiUser.text")); // NOI18N
         cbEnableMultiUser.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -407,7 +424,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         });
 
         tbOops.setEditable(false);
-        tbOops.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        tbOops.setFont(tbOops.getFont().deriveFont(tbOops.getFont().getStyle() | java.awt.Font.BOLD, 12));
         tbOops.setForeground(new java.awt.Color(255, 0, 0));
         tbOops.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbOops.text")); // NOI18N
         tbOops.setBorder(null);
@@ -453,14 +470,18 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 559, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 537, Short.MAX_VALUE)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
     /**
      * Enables/disables the multi-user settings, based upon input provided
      *
-     * @param enabled true means enable, false means disable
+     * @param textFields The text fields to enable/disable.
+     * @param enabled True means enable, false means disable.
      */
     private static void enableMultiUserComponents(Collection<JTextField> textFields, boolean enabled) {
         for (JTextField textField : textFields) {

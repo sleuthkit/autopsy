@@ -25,5 +25,6 @@ import javax.swing.JPanel;
  */
 public abstract class IngestModuleGlobalSettingsPanel extends JPanel {
 
+
     public abstract void saveSettings();
 }

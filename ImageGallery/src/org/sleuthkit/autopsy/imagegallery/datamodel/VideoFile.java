@@ -28,7 +28,6 @@ import javafx.scene.image.Image;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -36,13 +35,13 @@ import org.sleuthkit.autopsy.coreutils.VideoUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 
-public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
+public class VideoFile extends DrawableFile {
 
     private static final Logger LOGGER = Logger.getLogger(VideoFile.class.getName());
 
     private static final Image VIDEO_ICON = new Image("org/sleuthkit/autopsy/imagegallery/images/Clapperboard.png"); //NON-NLS
 
-    VideoFile(T file, Boolean analyzed) {
+    VideoFile(AbstractFile file, Boolean analyzed) {
         super(file, analyzed);
     }
 
@@ -75,7 +74,7 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
 
         if (cacheFile.exists() == false || cacheFile.length() < getAbstractFile().getSize()) {
             Files.createParentDirs(cacheFile);
-            ProgressHandle progressHandle = ProgressHandleFactory.createHandle(Bundle.VideoFile_getMedia_progress());
+            ProgressHandle progressHandle = ProgressHandle.createHandle(Bundle.VideoFile_getMedia_progress());
             progressHandle.start(100);
             ContentUtils.writeToFile(this.getAbstractFile(), cacheFile, progressHandle, null, true);
             progressHandle.finish();

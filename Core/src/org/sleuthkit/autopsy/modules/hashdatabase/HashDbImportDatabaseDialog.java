@@ -22,18 +22,19 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.logging.Level;
-
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.JFrame;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.apache.commons.io.FilenameUtils;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDbManagerException;
 
 /**
@@ -46,6 +47,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     private JFileChooser fileChooser = new JFileChooser();
     private String selectedFilePath = "";
     private HashDb selectedHashDb = null;
+    private final static String LAST_FILE_PATH_KEY = "HashDbImport_Path";
 
     /**
      * Displays a dialog that allows a user to select an existing hash database
@@ -249,6 +251,16 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void openButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openButtonActionPerformed
+        String lastBaseDirectory = Paths.get(PlatformUtil.getUserConfigDirectory(), "HashDatabases").toString();
+        if (ModuleSettings.settingExists(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY)) {
+            lastBaseDirectory = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY);
+        }
+        File hashDbFolder = new File(lastBaseDirectory);
+        // create the folder if it doesn't exist
+        if (!hashDbFolder.exists()) {
+            hashDbFolder.mkdir();
+        }
+        fileChooser.setCurrentDirectory(hashDbFolder);
         if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             File databaseFile = fileChooser.getSelectedFile();
             try {
@@ -259,6 +271,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                     knownRadioButton.setSelected(true);
                     knownRadioButtonActionPerformed(null);
                 }
+                ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY, databaseFile.getParent());
             } catch (IOException ex) {
                 Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.SEVERE, "Failed to get path of selected database", ex); //NON-NLS
                 JOptionPane.showMessageDialog(this,
@@ -327,19 +340,11 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                 "HashDbImportDatabaseDialog.errorMessage.failedToOpenHashDbMsg",
                 selectedFilePath);
         try {
-            selectedHashDb = HashDbManager.getInstance().addExistingHashDatabaseInternal(hashSetNameTextField.getText(), selectedFilePath, true, sendIngestMessagesCheckbox.isSelected(), type);
+            selectedHashDb = HashDbManager.getInstance().addExistingHashDatabaseNoSave(hashSetNameTextField.getText(), selectedFilePath, true, sendIngestMessagesCheckbox.isSelected(), type);
         } catch (HashDbManagerException ex) {
             Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
             JOptionPane.showMessageDialog(this,
                     ex.getMessage(),
-                    NbBundle.getMessage(this.getClass(),
-                            "HashDbImportDatabaseDialog.importHashDbErr"),
-                    JOptionPane.ERROR_MESSAGE);
-            return;
-        } catch (TskCoreException ex) {
-            Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.SEVERE, errorMessage, ex);
-            JOptionPane.showMessageDialog(this,
-                    errorMessage,
                     NbBundle.getMessage(this.getClass(),
                             "HashDbImportDatabaseDialog.importHashDbErr"),
                     JOptionPane.ERROR_MESSAGE);

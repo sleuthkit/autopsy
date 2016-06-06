@@ -20,27 +20,41 @@ package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
 import java.util.Comparator;
 import javafx.scene.control.TreeItem;
-import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 
-enum TreeComparator implements Comparator<TreeItem<EventBundle<?>>> {
+@NbBundle.Messages({"TreeComparator.Description.displayName=Description",
+    "TreeComparator.Count.displayName=Count",
+    "TreeComparator.Type.displayName=Type"})
+enum TreeComparator implements Comparator<TreeItem<TimeLineEvent>> {
 
-    Description {
+    Description(Bundle.TreeComparator_Description_displayName()) {
                 @Override
-                public int compare(TreeItem<EventBundle<?>> o1, TreeItem<EventBundle<?>> o2) {
+        public int compare(TreeItem<TimeLineEvent> o1, TreeItem<TimeLineEvent> o2) {
                     return o1.getValue().getDescription().compareTo(o2.getValue().getDescription());
                 }
             },
-    Count {
+    Count(Bundle.TreeComparator_Count_displayName()) {
                 @Override
-                public int compare(TreeItem<EventBundle<?>> o1, TreeItem<EventBundle<?>> o2) {
-                    return Long.compare(o2.getValue().getCount(), o1.getValue().getCount());
+        public int compare(TreeItem<TimeLineEvent> o1, TreeItem<TimeLineEvent> o2) {
+                    return Long.compare(o2.getValue().getSize(), o1.getValue().getSize());
                 }
             },
-    Type {
+    Type(Bundle.TreeComparator_Type_displayName()) {
                 @Override
-                public int compare(TreeItem<EventBundle<?>> o1, TreeItem<EventBundle<?>> o2) {
+        public int compare(TreeItem<TimeLineEvent> o1, TreeItem<TimeLineEvent> o2) {
                     return EventType.getComparator().compare(o1.getValue().getEventType(), o2.getValue().getEventType());
                 }
             };
+
+    private final String displayName;
+
+    private TreeComparator(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
 }

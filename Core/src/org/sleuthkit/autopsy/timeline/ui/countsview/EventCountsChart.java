@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-15 Basis Technology Corp.
+ * Copyright 2014-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.timeline.ui.countsview;
 
 import java.util.Arrays;
-import java.util.MissingResourceException;
 import javafx.beans.Observable;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
@@ -65,11 +64,6 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
     private static final Effect SELECTED_NODE_EFFECT = new Lighting();
     private ContextMenu chartContextMenu;
 
-    @Override
-    public ContextMenu getChartContextMenu() {
-        return chartContextMenu;
-    }
-
     private final TimeLineController controller;
     private final FilteredEventsModel filteredEvents;
 
@@ -93,7 +87,6 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
         dateAxis.setTickLabelsVisible(false);
         dateAxis.setTickLabelGap(0);
 
-        countAxis.setLabel(NbBundle.getMessage(CountsViewPane.class, "CountsChartPane.numberOfEvents"));
         countAxis.setAutoRanging(false);
         countAxis.setLowerBound(0);
         countAxis.setAnimated(true);
@@ -114,6 +107,10 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
         setOnMouseClicked(new MouseClickedHandler<>(this));
 
         this.selectedNodes = selectedNodes;
+
+        getController().getEventsModel().timeRangeProperty().addListener(o -> {
+            clearIntervalSelector();
+        });
     }
 
     @Override
@@ -122,8 +119,22 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
         intervalSelector = null;
     }
 
+    public void clearContextMenu() {
+        chartContextMenu = null;
+    }
+
+    /**
+     * used by {@link CountsViewPane#BarClickHandler} to close the context menu
+     * when the bar menu is requested
+     *
+     * @return the context menu for this chart
+     */
+    public ContextMenu getContextMenu() {
+        return chartContextMenu;
+    }
+
     @Override
-    public ContextMenu getChartContextMenu(MouseEvent clickEvent) throws MissingResourceException {
+    public ContextMenu getContextMenu(MouseEvent clickEvent) {
         if (chartContextMenu != null) {
             chartContextMenu.hide();
         }
@@ -155,14 +166,9 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
         return new CountsIntervalSelector(this);
     }
 
-    /**
-     * used by {@link CountsViewPane#BarClickHandler} to close the context menu
-     * when the bar menu is requested
-     *
-     * @return the context menu for this chart
-     */
-    ContextMenu getContextMenu() {
-        return chartContextMenu;
+    @Override
+    public ObservableList<Node> getSelectedNodes() {
+        return selectedNodes;
     }
 
     void setRangeInfo(RangeDivisionInfo rangeInfo) {
@@ -370,7 +376,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
                     controller.selectTimeAndType(interval, type);
                     selectedNodes.setAll(node);
                 } else if (e.getButton().equals(MouseButton.SECONDARY)) {
-                    getChartContextMenu(e).hide();
+                    getContextMenu(e).hide();
 
                     if (barContextMenu == null) {
                         barContextMenu = new ContextMenu();
@@ -382,7 +388,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
                                 new SeparatorMenuItem(),
                                 ActionUtils.createMenuItem(new ZoomToIntervalAction()));
 
-                        barContextMenu.getItems().addAll(getChartContextMenu(e).getItems());
+                        barContextMenu.getItems().addAll(getContextMenu(e).getItems());
                     }
 
                     barContextMenu.show(node, e.getScreenX(), e.getScreenY());
@@ -397,7 +403,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
                             Bundle.CountsViewPane_detailSwitchMessage(),
                             Bundle.CountsViewPane_detailSwitchTitle(), JOptionPane.YES_NO_OPTION);
                     if (showConfirmDialog == JOptionPane.YES_OPTION) {
-                        controller.setViewMode(VisualizationMode.DETAIL);
+                        controller.setVisualizationMode(VisualizationMode.DETAIL);
                     }
 
                     /*

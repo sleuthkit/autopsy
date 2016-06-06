@@ -32,6 +32,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import org.sleuthkit.autopsy.coreutils.TextUtil;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 
@@ -188,7 +189,7 @@ class TikaTextExtractor implements TextExtractor {
 
                 // Sanitize by replacing non-UTF-8 characters with caret '^'
                 for (int i = 0; i < totalRead; ++i) {
-                    if (!isValidSolrUTF8(textChunkBuf[i])) {
+                    if (!TextUtil.isValidSolrUTF8(textChunkBuf[i])) {
                         textChunkBuf[i] = '^';
                     }
                 }
@@ -253,27 +254,6 @@ class TikaTextExtractor implements TextExtractor {
         ingester.ingest(this);
 
         return success;
-    }
-
-    /**
-     * This method determines if a passed-in Java char (16 bits) is a valid
-     * UTF-8 printable character, returning true if so, false if not.
-     *
-     * Note that this method can have ramifications for characters outside the
-     * Unicode Base Multilingual Plane (BMP), which require more than 16 bits.
-     * We are using Java characters (16 bits) to look at the data and this will
-     * not accurately identify any non-BMP character (larger than 16 bits)
-     * ending with 0xFFFF and 0xFFFE. In the interest of a fast solution, we
-     * have chosen to ignore the extended planes above Unicode BMP for the time
-     * being. The net result of this is some non-BMP characters may be
-     * interspersed with '^' characters in Autopsy.
-     *
-     * @param ch the character to test
-     *
-     * @return Returns true if the character is valid UTF-8, false if not.
-     */
-    private static boolean isValidSolrUTF8(char ch) {
-        return ((ch <= 0xFDD0 || ch >= 0xFDEF) && (ch > 0x1F || ch == 0x9 || ch == 0xA || ch == 0xD) && (ch != 0xFFFF) && (ch != 0xFFFE));
     }
 
     @Override

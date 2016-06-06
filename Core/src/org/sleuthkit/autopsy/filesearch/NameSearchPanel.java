@@ -24,7 +24,6 @@
  */
 package org.sleuthkit.autopsy.filesearch;
 
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JCheckBox;
@@ -43,6 +42,7 @@ class NameSearchPanel extends javax.swing.JPanel {
     NameSearchPanel() {
         initComponents();
         customizeComponents();
+        setComponentsEnabled();
     }
 
     private void customizeComponents() {
@@ -77,6 +77,12 @@ class NameSearchPanel extends javax.swing.JPanel {
     JTextField getSearchTextField() {
         return searchTextField;
     }
+    
+    void setComponentsEnabled() {
+        boolean enabled = nameCheckBox.isSelected();
+        this.searchTextField.setEnabled(enabled);
+        this.noteNameLabel.setEnabled(enabled);
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -108,8 +114,15 @@ class NameSearchPanel extends javax.swing.JPanel {
         selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(NameSearchPanel.class, "NameSearchPanel.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
 
+        nameCheckBox.setFont(nameCheckBox.getFont().deriveFont(nameCheckBox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         nameCheckBox.setText(org.openide.util.NbBundle.getMessage(NameSearchPanel.class, "NameSearchPanel.nameCheckBox.text")); // NOI18N
+        nameCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                nameCheckBoxActionPerformed(evt);
+            }
+        });
 
+        searchTextField.setFont(searchTextField.getFont().deriveFont(searchTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         searchTextField.setText(org.openide.util.NbBundle.getMessage(NameSearchPanel.class, "NameSearchPanel.searchTextField.text")); // NOI18N
         searchTextField.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -117,23 +130,25 @@ class NameSearchPanel extends javax.swing.JPanel {
             }
         });
 
-        noteNameLabel.setFont(noteNameLabel.getFont().deriveFont(Font.PLAIN, 10));
+        noteNameLabel.setFont(noteNameLabel.getFont().deriveFont(noteNameLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 10));
         noteNameLabel.setText(org.openide.util.NbBundle.getMessage(NameSearchPanel.class, "NameSearchPanel.noteNameLabel.text")); // NOI18N
+        noteNameLabel.setMaximumSize(new java.awt.Dimension(250, 30));
+        noteNameLabel.setMinimumSize(new java.awt.Dimension(250, 30));
+        noteNameLabel.setPreferredSize(new java.awt.Dimension(250, 30));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(nameCheckBox)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGap(0, 0, 0)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(noteNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 296, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(12, 12, 12)
-                        .addComponent(noteNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap())
-                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(nameCheckBox)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(searchTextField))))
+                        .addComponent(searchTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 247, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(0, 0, 0))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -142,13 +157,19 @@ class NameSearchPanel extends javax.swing.JPanel {
                     .addComponent(nameCheckBox)
                     .addComponent(searchTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(noteNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(noteNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void searchTextFieldMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_searchTextFieldMouseClicked
 
         this.nameCheckBox.setSelected(true);     }//GEN-LAST:event_searchTextFieldMouseClicked
+
+    private void nameCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nameCheckBoxActionPerformed
+        setComponentsEnabled();
+    }//GEN-LAST:event_nameCheckBoxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuItem copyMenuItem;
     private javax.swing.JMenuItem cutMenuItem;

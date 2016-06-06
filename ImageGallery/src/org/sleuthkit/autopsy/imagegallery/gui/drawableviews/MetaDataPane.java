@@ -39,6 +39,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TitledPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.Clipboard;
@@ -65,11 +66,19 @@ import org.sleuthkit.datamodel.TagName;
 /**
  * Shows details of the selected file.
  */
+@NbBundle.Messages({"MetaDataPane.tableView.placeholder=Select a file to show its details here.",
+        "MetaDataPane.copyMenuItem.text=Copy",
+        "MetaDataPane.titledPane.displayName=Details",
+        "MetaDataPane.attributeColumn.headingName=Attribute",
+        "MetaDataPane.valueColumn.headingName=Value"})
 public class MetaDataPane extends DrawableUIBase {
 
     private static final Logger LOGGER = Logger.getLogger(MetaDataPane.class.getName());
 
     private static final KeyCodeCombination COPY_KEY_COMBINATION = new KeyCodeCombination(KeyCode.C, KeyCombination.CONTROL_DOWN);
+
+    @FXML
+    private TitledPane titledPane;
 
     @FXML
     private TableColumn<Pair<DrawableAttribute<?>, Collection<?>>, DrawableAttribute<?>> attributeColumn;
@@ -80,7 +89,7 @@ public class MetaDataPane extends DrawableUIBase {
     @FXML
     private TableColumn<Pair<DrawableAttribute<?>, Collection<?>>, String> valueColumn;
 
-    private final MenuItem copyMenuItem = new MenuItem("Copy");
+    private final MenuItem copyMenuItem = new MenuItem(Bundle.MetaDataPane_copyMenuItem_text());
     private final ContextMenu contextMenu = new ContextMenu(copyMenuItem);
 
     public MetaDataPane(ImageGalleryController controller) {
@@ -89,7 +98,6 @@ public class MetaDataPane extends DrawableUIBase {
     }
 
     @FXML
-    @NbBundle.Messages({"MetaDataPane.tableView.placeholder=Select a file to show its details here."})
     void initialize() {
         assert attributeColumn != null : "fx:id=\"attributeColumn\" was not injected: check your FXML file 'MetaDataPane.fxml'.";
         assert imageView != null : "fx:id=\"imageView\" was not injected: check your FXML file 'MetaDataPane.fxml'.";
@@ -122,6 +130,7 @@ public class MetaDataPane extends DrawableUIBase {
         tableView.getColumns().setAll(Arrays.asList(attributeColumn, valueColumn));
 
         attributeColumn.setPrefWidth(USE_COMPUTED_SIZE);
+        attributeColumn.setText(Bundle.MetaDataPane_attributeColumn_headingName());
         attributeColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getKey()));
         attributeColumn.setCellFactory(param -> new TableCell<Pair<DrawableAttribute<?>, Collection<?>>, DrawableAttribute<?>>() {
             @Override
@@ -138,6 +147,7 @@ public class MetaDataPane extends DrawableUIBase {
         });
 
         valueColumn.setPrefWidth(USE_COMPUTED_SIZE);
+        valueColumn.setText(Bundle.MetaDataPane_valueColumn_headingName());
         valueColumn.setCellValueFactory(p -> new SimpleStringProperty(getValueDisplayString(p.getValue())));
         valueColumn.setCellFactory(p -> new TableCell<Pair<DrawableAttribute<?>, Collection<?>>, String>() {
             @Override
@@ -152,6 +162,8 @@ public class MetaDataPane extends DrawableUIBase {
                 }
             }
         });
+
+        titledPane.setText(Bundle.MetaDataPane_titledPane_displayName());
     }
 
     @SuppressWarnings("unchecked")
@@ -189,7 +201,7 @@ public class MetaDataPane extends DrawableUIBase {
     }
 
     @Override
-    Task<Image> newReadImageTask(DrawableFile<?> file) {
+    Task<Image> newReadImageTask(DrawableFile file) {
         return file.getThumbnailTask();
     }
 

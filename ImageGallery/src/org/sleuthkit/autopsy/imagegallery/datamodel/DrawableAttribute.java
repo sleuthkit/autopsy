@@ -25,7 +25,9 @@ import java.util.List;
 import java.util.function.Function;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.StringProperty;
+import javafx.scene.Node;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
@@ -39,20 +41,20 @@ import org.sleuthkit.datamodel.TagName;
  * of type paramaters and multivalued attributes
  */
 @NbBundle.Messages({"DrawableAttribute.md5hash=MD5 Hash",
-        "DrawableAttribute.name=Name",
-        "DrawableAttribute.analyzed=Analyzed",
-        "DrawableAttribute.category=Category",
-        "DrawableAttribute.tags=Tags",
-        "DrawableAttribute.path=Path",
-        "DrawableAttribute.createdTime=Created Time",
-        "DrawableAttribute.modifiedTime=Modified Time",
-        "DrawableAttribute.cameraMake=Camera Make",
-        "DrawableAttribute.cameraModel=Camera Model",
-        "DrawableAttribute.hashSet=Hashset",
-        "DrawableAttribute.intObjID=Internal Object ID",
-        "DrawableAttribute.width=Width",
-        "DrawableAttribute.height=Height",
-        "DrawableAttribute.mimeType=MIME type"})
+    "DrawableAttribute.name=Name",
+    "DrawableAttribute.analyzed=Analyzed",
+    "DrawableAttribute.category=Category",
+    "DrawableAttribute.tags=Tags",
+    "DrawableAttribute.path=Path",
+    "DrawableAttribute.createdTime=Created Time",
+    "DrawableAttribute.modifiedTime=Modified Time",
+    "DrawableAttribute.cameraMake=Camera Make",
+    "DrawableAttribute.cameraModel=Camera Model",
+    "DrawableAttribute.hashSet=Hashset",
+    "DrawableAttribute.intObjID=Internal Object ID",
+    "DrawableAttribute.width=Width",
+    "DrawableAttribute.height=Height",
+    "DrawableAttribute.mimeType=MIME type"})
 public class DrawableAttribute<T extends Comparable<T>> {
 
     public final static DrawableAttribute<String> MD5_HASH =
@@ -82,10 +84,16 @@ public class DrawableAttribute<T extends Comparable<T>> {
      * advantage. move categories into DrawableDB?
      */
     public final static DrawableAttribute<Category> CATEGORY =
-            new DrawableAttribute<>(AttributeName.CATEGORY, Bundle.DrawableAttribute_category(),
+            new DrawableAttribute<Category>(AttributeName.CATEGORY, Bundle.DrawableAttribute_category(),
                     false,
                     "category-icon.png", //NON-NLS
-                    f -> Collections.singleton(f.getCategory()));
+                    f -> Collections.singleton(f.getCategory())) {
+
+                @Override
+                public Node getGraphicForValue(Category val) {
+                    return val.getGraphic();
+                }
+            };
 
     public final static DrawableAttribute<TagName> TAGS =
             new DrawableAttribute<>(AttributeName.TAGS, Bundle.DrawableAttribute_tags(),
@@ -103,13 +111,13 @@ public class DrawableAttribute<T extends Comparable<T>> {
             new DrawableAttribute<>(AttributeName.CREATED_TIME, Bundle.DrawableAttribute_createdTime(),
                     true,
                     "clock--plus.png", //NON-NLS
-                    f -> Collections.singleton(ContentUtils.getStringTime(f.getCrtime(), f)));
+                    f -> Collections.singleton(ContentUtils.getStringTime(f.getCrtime(), f.getAbstractFile())));
 
     public final static DrawableAttribute<String> MODIFIED_TIME =
             new DrawableAttribute<>(AttributeName.MODIFIED_TIME, Bundle.DrawableAttribute_modifiedTime(),
                     true,
                     "clock--pencil.png", //NON-NLS
-                    f -> Collections.singleton(ContentUtils.getStringTime(f.getMtime(), f)));
+                    f -> Collections.singleton(ContentUtils.getStringTime(f.getMtime(), f.getAbstractFile())));
 
     public final static DrawableAttribute<String> MAKE =
             new DrawableAttribute<>(AttributeName.MAKE, Bundle.DrawableAttribute_cameraMake(),
@@ -160,9 +168,9 @@ public class DrawableAttribute<T extends Comparable<T>> {
             Arrays.asList(NAME, ANALYZED, CATEGORY, TAGS, PATH, CREATED_TIME,
                     MODIFIED_TIME, MD5_HASH, HASHSET, MAKE, MODEL, OBJ_ID, WIDTH, HEIGHT, MIME_TYPE);
 
-    private final Function<DrawableFile<?>, Collection<T>> extractor;
+    private final Function<DrawableFile, Collection<T>> extractor;
 
-    private DrawableAttribute(AttributeName name, String displayName, Boolean isDBColumn, String imageName, Function<DrawableFile<?>, Collection<T>> extractor) {
+    private DrawableAttribute(AttributeName name, String displayName, Boolean isDBColumn, String imageName, Function<DrawableFile, Collection<T>> extractor) {
         this.attrName = name;
         this.displayName = new ReadOnlyStringWrapper(displayName);
         this.isDBColumn = isDBColumn;
@@ -195,8 +203,8 @@ public class DrawableAttribute<T extends Comparable<T>> {
      * TODO: override this to load per value icons form some attributes like
      * mime-type and category
      */
-    public Image getIconForValue(T val) {
-        return getIcon();
+    public Node getGraphicForValue(T val) {
+        return new ImageView(getIcon());
     }
 
     public static List<DrawableAttribute<?>> getGroupableAttrs() {
@@ -215,7 +223,7 @@ public class DrawableAttribute<T extends Comparable<T>> {
         return displayName.get();
     }
 
-    public Collection<T> getValue(DrawableFile<?> f) {
+    public Collection<T> getValue(DrawableFile f) {
         return extractor.apply(f);
     }
 

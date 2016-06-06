@@ -35,6 +35,7 @@ import org.openide.util.Lookup;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
+import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.casemodule.OpenFromArguments;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -78,7 +79,7 @@ public class Installer extends ModuleInstall {
                 if (processor instanceof OpenFromArguments) {
                     OpenFromArguments argsProcessor = (OpenFromArguments) processor;
                     final String caseFile = argsProcessor.getDefaultArg();
-                    if (caseFile != null && !caseFile.equals("") && caseFile.endsWith(".aut") && new File(caseFile).exists()) { //NON-NLS
+                    if (caseFile != null && !caseFile.equals("") && caseFile.endsWith(CaseMetadata.getFileExtension()) && new File(caseFile).exists()) { //NON-NLS
                         new Thread(() -> {
                             try {
                                 Case.open(caseFile);

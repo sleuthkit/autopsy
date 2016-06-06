@@ -55,7 +55,6 @@ import javafx.scene.media.MediaView;
 import javafx.util.Duration;
 import javax.swing.JPanel;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
@@ -557,7 +556,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             @Override
             protected Long call() throws Exception {
                 if (tempFile.exists() == false || tempFile.length() < sourceFile.getSize()) {
-                    progress = ProgressHandleFactory.createHandle(
+                    progress = ProgressHandle.createHandle(
                             NbBundle.getMessage(this.getClass(),
                                     "FXVideoPanel.progress.bufferingFile",
                                     sourceFile.getName()

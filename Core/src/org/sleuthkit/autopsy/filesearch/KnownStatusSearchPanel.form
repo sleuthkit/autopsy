@@ -16,14 +16,19 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="knownCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
-          <Group type="102" alignment="0" attributes="0">
-              <EmptySpace min="21" pref="21" max="21" attributes="0"/>
+          <Group type="102" attributes="0">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="knownBadOptionCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
-                  <Component id="unknownOptionCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
-                  <Component id="knownOptionCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="knownCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Group type="102" alignment="0" attributes="0">
+                      <EmptySpace min="21" pref="21" max="21" attributes="0"/>
+                      <Component id="unknownOptionCheckBox" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="knownOptionCheckBox" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="knownBadOptionCheckBox" min="-2" max="-2" attributes="0"/>
+                  </Group>
               </Group>
+              <EmptySpace pref="28" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -32,11 +37,11 @@
           <Group type="102" alignment="0" attributes="0">
               <Component id="knownCheckBox" min="-2" max="-2" attributes="0"/>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
-              <Component id="unknownOptionCheckBox" min="-2" max="-2" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
-              <Component id="knownOptionCheckBox" min="-2" max="-2" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
-              <Component id="knownBadOptionCheckBox" min="-2" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="unknownOptionCheckBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="knownOptionCheckBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="knownBadOptionCheckBox" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
           </Group>
       </Group>
     </DimensionLayout>
@@ -48,6 +53,9 @@
           <ResourceString bundle="org/sleuthkit/autopsy/filesearch/Bundle.properties" key="KnownStatusSearchPanel.knownCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="knownCheckBoxActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JCheckBox" name="unknownOptionCheckBox">
       <Properties>

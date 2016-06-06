@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-15 Basis Technology Corp.
+ * Copyright 2014-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,6 +26,7 @@ import javafx.fxml.FXML;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
+import javafx.scene.chart.Axis;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
@@ -34,6 +35,8 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
@@ -53,7 +56,7 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
  */
 public abstract class IntervalSelector<X> extends BorderPane {
 
-    private static final Image ClEAR_INTERVAL_ICON = new Image("/org/sleuthkit/autopsy/timeline/images/cross-script.png", 16, 16, true, true, true); //NON-NLS
+    private static final Image CLEAR_INTERVAL_ICON = new Image("/org/sleuthkit/autopsy/timeline/images/cross-script.png", 16, 16, true, true, true); //NON-NLS
     private static final Image ZOOM_TO_INTERVAL_ICON = new Image("/org/sleuthkit/autopsy/timeline/images/magnifier-zoom-fit.png", 16, 16, true, true, true); //NON-NLS
     private static final double STROKE_WIDTH = 3;
     private static final double HALF_STROKE = STROKE_WIDTH / 2;
@@ -61,7 +64,7 @@ public abstract class IntervalSelector<X> extends BorderPane {
     /**
      * the Axis this is a selector over
      */
-    public final TimeLineChart<X> chart;
+    public final IntervalSelectorProvider<X> chart;
 
     private Tooltip tooltip;
     /////////drag state
@@ -89,7 +92,7 @@ public abstract class IntervalSelector<X> extends BorderPane {
     @FXML
     private BorderPane bottomBorder;
 
-    public IntervalSelector(TimeLineChart<X> chart) {
+    public IntervalSelector(IntervalSelectorProvider<X> chart) {
         this.chart = chart;
         this.controller = chart.getController();
         FXMLConstructor.construct(this, IntervalSelector.class, "IntervalSelector.fxml"); // NON-NLS
@@ -107,7 +110,7 @@ public abstract class IntervalSelector<X> extends BorderPane {
         setMaxWidth(USE_PREF_SIZE);
         setMinWidth(USE_PREF_SIZE);
 
-        BooleanBinding showingControls = hoverProperty().and(isDragging.not());
+        BooleanBinding showingControls = zoomButton.hoverProperty().or(bottomBorder.hoverProperty().or(hoverProperty())).and(isDragging.not());
         closeButton.visibleProperty().bind(showingControls);
         closeButton.managedProperty().bind(showingControls);
         zoomButton.visibleProperty().bind(showingControls);
@@ -115,8 +118,9 @@ public abstract class IntervalSelector<X> extends BorderPane {
 
         widthProperty().addListener(o -> {
             IntervalSelector.this.updateStartAndEnd();
-            if (startLabel.getWidth() + zoomButton.getWidth() + endLabel.getWidth() > getWidth()) {
+            if (startLabel.getWidth() + zoomButton.getWidth() + endLabel.getWidth() > getWidth() - 10) {
                 this.setCenter(zoomButton);
+                bottomBorder.setCenter(new Rectangle(10, 10, Color.TRANSPARENT));
             } else {
                 bottomBorder.setCenter(zoomButton);
             }
@@ -154,7 +158,11 @@ public abstract class IntervalSelector<X> extends BorderPane {
             mousePress.consume();
         });
 
-        setOnMouseReleased(mouseRelease -> isDragging.set(false));
+        setOnMouseReleased((MouseEvent mouseRelease) -> {
+            isDragging.set(false);
+            mouseRelease.consume();;
+        });
+
         setOnMouseDragged(mouseDrag -> {
             isDragging.set(true);
             double dX = mouseDrag.getScreenX() - startDragX;
@@ -188,20 +196,17 @@ public abstract class IntervalSelector<X> extends BorderPane {
             mouseDrag.consume();
         });
 
-        ActionUtils.configureButton(new ZoomToSelectedIntervalAction(), zoomButton);
-        ActionUtils.configureButton(new ClearSelectedIntervalAction(), closeButton);
-
-        //have to add handler rather than use convenience methods so that charts can listen for dismisal click
-        setOnMouseClicked(mosueClick -> {
-            if (mosueClick.getButton() == MouseButton.SECONDARY) {
+        setOnMouseClicked(mouseClick -> {
+            if (mouseClick.getButton() == MouseButton.SECONDARY) {
                 chart.clearIntervalSelector();
-                mosueClick.consume();
-            }
-            if (mosueClick.getClickCount() >= 2) {
+            } else if (mouseClick.getClickCount() >= 2) {
                 zoomToSelectedInterval();
-                mosueClick.consume();
+                mouseClick.consume();
             }
         });
+
+        ActionUtils.configureButton(new ZoomToSelectedIntervalAction(), zoomButton);
+        ActionUtils.configureButton(new ClearSelectedIntervalAction(), closeButton);
     }
 
     private Point2D getLocalMouseCoords(MouseEvent mouseEvent) {
@@ -246,7 +251,7 @@ public abstract class IntervalSelector<X> extends BorderPane {
 
     @NbBundle.Messages(value = {"# {0} - start timestamp",
         "# {1} - end timestamp",
-        "Timeline.ui.TimeLineChart.tooltip.text=Double-click to zoom into range:\n{0} to {1}\nRight-click to clear."})
+        "Timeline.ui.TimeLineChart.tooltip.text=Double-click to zoom into range:\n{0} to {1}.\n\nRight-click to close."})
     private void updateStartAndEnd() {
         String startString = formatSpan(getSpanStart());
         String endString = formatSpan(getSpanEnd());
@@ -307,10 +312,35 @@ public abstract class IntervalSelector<X> extends BorderPane {
         ClearSelectedIntervalAction() {
             super("");
             setLongText(Bundle.IntervalSelector_ClearSelectedIntervalAction_tooltTipText());
-            setGraphic(new ImageView(ClEAR_INTERVAL_ICON));
+            setGraphic(new ImageView(CLEAR_INTERVAL_ICON));
             setEventHandler((ActionEvent t) -> {
                 chart.clearIntervalSelector();
             });
         }
+    }
+
+    public interface IntervalSelectorProvider<X> {
+
+        public TimeLineController getController();
+
+        IntervalSelector<? extends X> getIntervalSelector();
+
+        void setIntervalSelector(IntervalSelector<? extends X> newIntervalSelector);
+
+        /**
+         * derived classes should implement this so as to supply an appropriate
+         * subclass of {@link IntervalSelector}
+         *
+         * @return a new interval selector
+         */
+        IntervalSelector<X> newIntervalSelector();
+
+        /**
+         * Clear any references to previous interval selectors , including
+         * removing the interval selector from the UI / scene-graph.
+         */
+        void clearIntervalSelector();
+
+        public Axis<X> getXAxis();
     }
 }

@@ -97,7 +97,7 @@ public enum ThumbnailCache {
      *         could not be generated
      */
     @Nullable
-    public Image get(DrawableFile<?> file) {
+    public Image get(DrawableFile file) {
         try {
             return cache.get(file.getId(), () -> load(file));
         } catch (UncheckedExecutionException | CacheLoader.InvalidCacheLoadException | ExecutionException ex) {
@@ -124,9 +124,9 @@ public enum ThumbnailCache {
      *
      * @return an (possibly empty) optional containing a thumbnail
      */
-    private Image load(DrawableFile<?> file) {
+    private Image load(DrawableFile file) {
 
-        if (FileTypeUtils.isGIF(file)) {
+        if (ImageUtils.isGIF(file.getAbstractFile())) {
             //directly read gif to preserve potential animation,
             //NOTE: not saved to disk!
             return new Image(new BufferedInputStream(new ReadContentInputStream(file.getAbstractFile())), MAX_THUMBNAIL_SIZE, MAX_THUMBNAIL_SIZE, true, true);
@@ -171,7 +171,7 @@ public enum ThumbnailCache {
      * @return a Optional containing a File to store the cached icon in or an
      *         empty optional if there was a problem.
      */
-    private static Optional<File> getCacheFile(DrawableFile<?> file) {
+    private static Optional<File> getCacheFile(DrawableFile file) {
         try {
             return Optional.of(ImageUtils.getCachedThumbnailFile(file.getAbstractFile(), MAX_THUMBNAIL_SIZE));
 
@@ -181,7 +181,7 @@ public enum ThumbnailCache {
         }
     }
 
-    public Task<Image> getThumbnailTask(DrawableFile<?> file) {
+    public Task<Image> getThumbnailTask(DrawableFile file) {
         final Image thumbnail = cache.getIfPresent(file.getId());
         if (thumbnail != null) {
             return TaskUtils.taskFrom(() -> thumbnail);

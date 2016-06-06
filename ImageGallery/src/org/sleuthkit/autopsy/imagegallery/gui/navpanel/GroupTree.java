@@ -32,7 +32,6 @@ import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.image.ImageView;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.util.Beta;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
@@ -73,7 +72,8 @@ final public class GroupTree extends NavPanel<TreeItem<GroupTreeNode>> {
         getToolBar().visibleProperty().bind(groupedByPath.not());
         getToolBar().managedProperty().bind(groupedByPath.not());
 
-        groupTree.setCellFactory(treeView -> new GroupTreeCell(getSortByBox().getSelectionModel().selectedItemProperty()));
+        GroupCellFactory groupCellFactory = new GroupCellFactory(getController(), comparatorProperty());
+        groupTree.setCellFactory(groupCellFactory::getTreeCell);
         groupTree.setShowRoot(false);
 
         getGroupManager().getAnalyzedGroups().addListener((ListChangeListener.Change<? extends DrawableGroup> change) -> {
@@ -152,4 +152,5 @@ final public class GroupTree extends NavPanel<TreeItem<GroupTreeNode>> {
             return Arrays.asList(stripStart);
         }
     }
+
 }
