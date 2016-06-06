@@ -711,7 +711,7 @@ public class ImageUtils {
      */
     static private abstract class ReadImageTaskBase extends Task<javafx.scene.image.Image> implements IIOReadProgressListener {
 
-        private static final String IMAGEIO_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT = "ImageIO could not read {0}.  It may be unsupported or corrupt"; //NON-NLS
+        private static final String IMAGEIO_COULD_NOT_READ_UNSUPPORTED_OR_CORRUPT = "ImageIO could not read {0}.  It may be unsupported or corrupt"; //NON-NLS
         final AbstractFile file;
 //        private ImageReader reader;
 
@@ -747,7 +747,7 @@ public class ImageUtils {
                         try {
                             bufferedImage = imageReader.read(0, param); //should always be same bufferedImage object
                         } catch (IOException iOException) {
-                            LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT + ": " + iOException.toString(), ImageUtils.getContentPathSafe(file)); //NON-NLS
+                            LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTED_OR_CORRUPT + ": " + iOException.toString(), ImageUtils.getContentPathSafe(file)); //NON-NLS
                         } finally {
                             imageReader.removeIIOReadProgressListener(ReadImageTaskBase.this);
                         }
@@ -775,11 +775,11 @@ public class ImageUtils {
             try {
                 javafx.scene.image.Image fxImage = get();
                 if (fxImage == null) {
-                    LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT, ImageUtils.getContentPathSafe(file));
+                    LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTED_OR_CORRUPT, ImageUtils.getContentPathSafe(file));
                 } else {
                     if (fxImage.isError()) {
                         //if there was somekind of error, log it
-                        LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT + ": " + ObjectUtils.toString(fxImage.getException()), ImageUtils.getContentPathSafe(file));
+                        LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTED_OR_CORRUPT + ": " + ObjectUtils.toString(fxImage.getException()), ImageUtils.getContentPathSafe(file));
                     }
                 }
             } catch (InterruptedException | ExecutionException ex) {
@@ -790,7 +790,7 @@ public class ImageUtils {
         @Override
         protected void failed() {
             super.failed();
-            LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTE_OR_CORRUPT + ": " + ObjectUtils.toString(getException()), ImageUtils.getContentPathSafe(file));
+            LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTED_OR_CORRUPT + ": " + ObjectUtils.toString(getException()), ImageUtils.getContentPathSafe(file));
         }
 
         @Override
