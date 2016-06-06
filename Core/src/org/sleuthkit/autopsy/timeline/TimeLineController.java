@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
@@ -188,7 +189,7 @@ public class TimeLineController {
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private TimeLineTopComponent mainFrame;
+    private TimeLineTopComponent topComponent;
 
     //are the listeners currently attached
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
@@ -199,11 +200,7 @@ public class TimeLineController {
     private final PropertyChangeListener ingestModuleListener = new AutopsyIngestModuleListener();
 
     @GuardedBy("this")
-    private final ReadOnlyObjectWrapper<VisualizationMode> visualizationMode = new ReadOnlyObjectWrapper<>(VisualizationMode.COUNTS);
-
-    synchronized public ReadOnlyObjectProperty<VisualizationMode> visualizationModeProperty() {
-        return visualizationMode.getReadOnlyProperty();
-    }
+    private final ReadOnlyObjectWrapper<ViewMode> viewMode = new ReadOnlyObjectWrapper<>(ViewMode.COUNTS);
 
     @GuardedBy("filteredEvents")
     private final FilteredEventsModel filteredEvents;
@@ -223,21 +220,38 @@ public class TimeLineController {
     @GuardedBy("this")
     private final ObservableList<Long> selectedEventIDs = FXCollections.<Long>synchronizedObservableList(FXCollections.<Long>observableArrayList());
 
+    @GuardedBy("this")
+    private final ReadOnlyObjectWrapper<Interval> selectedTimeRange = new ReadOnlyObjectWrapper<>();
+
+    private final ReadOnlyBooleanWrapper eventsDBStale = new ReadOnlyBooleanWrapper(true);
+
+    private final PromptDialogManager promptDialogManager = new PromptDialogManager(this);
+
     /**
-     * @return A list of the selected event ids
+     * Get an ObservableList of selected event IDs
+     *
+     * @return A list of the selected event IDs
      */
     synchronized public ObservableList<Long> getSelectedEventIDs() {
         return selectedEventIDs;
     }
 
-    @GuardedBy("this")
-    private final ReadOnlyObjectWrapper<Interval> selectedTimeRange = new ReadOnlyObjectWrapper<>();
+    /**
+     * Get a read only observable view of the selected time range.
+     *
+     * @return A read only view of the selected time range.
+     */
+    synchronized public ReadOnlyObjectProperty<Interval> selectedTimeRangeProperty() {
+        return selectedTimeRange.getReadOnlyProperty();
+    }
 
     /**
-     * @return a read only view of the selected interval.
+     * Get the selected time range.
+     *
+     * @return The selected time range.
      */
-    synchronized public ReadOnlyObjectProperty<Interval> getSelectedTimeRange() {
-        return selectedTimeRange.getReadOnlyProperty();
+    synchronized public Interval getSelectedTimeRange() {
+        return selectedTimeRange.get();
     }
 
     public ReadOnlyBooleanProperty eventsDBStaleProperty() {
@@ -282,9 +296,30 @@ public class TimeLineController {
     synchronized public ReadOnlyBooleanProperty canRetreatProperty() {
         return historyManager.getCanRetreat();
     }
-    private final ReadOnlyBooleanWrapper eventsDBStale = new ReadOnlyBooleanWrapper(true);
 
-    private final PromptDialogManager promptDialogManager = new PromptDialogManager(this);
+    synchronized public ReadOnlyObjectProperty<ViewMode> viewModeProperty() {
+        return viewMode.getReadOnlyProperty();
+    }
+
+    /**
+     * Set a new ViewMode as the active one.
+     *
+     * @param viewMode The new ViewMode to set.
+     */
+    synchronized public void setViewMode(ViewMode viewMode) {
+        if (this.viewMode.get() != viewMode) {
+            this.viewMode.set(viewMode);
+        }
+    }
+
+    /**
+     * Get the currently active ViewMode.
+     *
+     * @return The currently active ViewMode.
+     */
+    synchronized public ViewMode getViewMode() {
+        return viewMode.get();
+    }
 
     public TimeLineController(Case autoCase) throws IOException {
         this.autoCase = autoCase;
@@ -310,6 +345,9 @@ public class TimeLineController {
                 filteredEvents.filterProperty().get(),
                 DescriptionLoD.SHORT);
         historyManager.advance(InitialZoomState);
+
+        //clear the selected events when the view mode changes
+        viewMode.addListener(observable -> selectEventIDs(Collections.emptySet()));
     }
 
     /**
@@ -449,9 +487,9 @@ public class TimeLineController {
         IngestManager.getInstance().removeIngestModuleEventListener(ingestModuleListener);
         IngestManager.getInstance().removeIngestJobEventListener(ingestJobListener);
         Case.removePropertyChangeListener(caseListener);
-        if (mainFrame != null) {
-            mainFrame.close();
-            mainFrame = null;
+        if (topComponent != null) {
+            topComponent.close();
+            topComponent = null;
         }
         OpenTimelineAction.invalidateController();
     }
@@ -582,17 +620,6 @@ public class TimeLineController {
         pushTimeRange(new Interval(start, end));
     }
 
-    /**
-     * Set a new Visualization mode as the active one.
-     *
-     * @param visualizationMode The new VisaualizationMode to set.
-     */
-    synchronized public void setVisualizationMode(VisualizationMode visualizationMode) {
-        if (this.visualizationMode.get() != visualizationMode) {
-            this.visualizationMode.set(visualizationMode);
-        }
-    }
-
     public void selectEventIDs(Collection<Long> events) {
         final LoggedTask<Interval> selectEventIDsTask = new LoggedTask<Interval>("Select Event IDs", true) { //NON-NLS
             @Override
@@ -624,16 +651,16 @@ public class TimeLineController {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     synchronized private void showWindow() {
-        if (mainFrame == null) {
-            mainFrame = new TimeLineTopComponent(this);
+        if (topComponent == null) {
+            topComponent = new TimeLineTopComponent(this);
         }
-        mainFrame.open();
-        mainFrame.toFront();
+        topComponent.open();
+        topComponent.toFront();
         /*
          * Make this top component active so its ExplorerManager's lookup gets
          * proxied in Utilities.actionsGlobalContext()
          */
-        mainFrame.requestActive();
+        topComponent.requestActive();
     }
 
     synchronized public void pushEventTypeZoom(EventTypeZoomLevel typeZoomeLevel) {
