@@ -485,15 +485,12 @@ public class TimeLineController {
             showFullRange();
         } else {
 
-            setViewMode(ViewMode.LIST);
-            List<Long> eventIDs = filteredEvents.getDerivedEventIDs(fileIDs, artifactIDS);
-
-            Interval interval = filteredEvents.getSpanningInterval(eventIDs);
-
             synchronized (filteredEvents) {
+                List<Long> eventIDs = filteredEvents.getDerivedEventIDs(fileIDs, artifactIDS);
+                Interval interval = filteredEvents.getSpanningInterval(eventIDs);
                 pushTimeRange(interval);
+                selectEventIDs(eventIDs, () -> setViewMode(ViewMode.LIST));
             }
-            Platform.runLater(() -> selectEventIDs(eventIDs));
 
         }
     }
@@ -641,6 +638,12 @@ public class TimeLineController {
     }
 
     public void selectEventIDs(Collection<Long> events) {
+        selectEventIDs(events, () -> {
+        }
+        );
+    }
+
+    public void selectEventIDs(Collection<Long> events, Runnable andThen) {
         final LoggedTask<Interval> selectEventIDsTask = new LoggedTask<Interval>("Select Event IDs", true) { //NON-NLS
             @Override
             protected Interval call() throws Exception {
@@ -654,7 +657,7 @@ public class TimeLineController {
                     synchronized (TimeLineController.this) {
                         selectedTimeRange.set(get());
                         selectedEventIDs.setAll(events);
-
+                        andThen.run();
                     }
                 } catch (InterruptedException | ExecutionException ex) {
                     LOGGER.log(Level.SEVERE, getTitle() + " Unexpected error", ex); //NON-NLS

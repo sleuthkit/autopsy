@@ -94,7 +94,7 @@ public class ListViewPane extends AbstractTimeLineView {
             Platform.runLater(() -> {
                 //put the combined events into the table.
                 listTimeline.setCombinedEvents(combinedEvents);
-                //restore the selected event
+                //restore the selected events
                 listTimeline.selectEvents(selectedEvents);
             });
 

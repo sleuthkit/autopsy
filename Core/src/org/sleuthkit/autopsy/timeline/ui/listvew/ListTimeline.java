@@ -182,24 +182,29 @@ class ListTimeline extends BorderPane {
             }
         });
 
-
         table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         //keep controller's list of selected event IDs in sync with this list's
         table.getSelectionModel().getSelectedItems().addListener((Observable change) -> {
-//            keep the selectedEventsIDs in sync with the table's selection model, via getRepresentitiveEventID().
+            //keep the selectedEventsIDs in sync with the table's selection model, via getRepresentitiveEventID().
             controller.selectEventIDs(table.getSelectionModel().getSelectedItems().stream()
                     .filter(Objects::nonNull)
                     .map(CombinedEvent::getRepresentativeEventID)
                     .collect(Collectors.toSet()));
-
         });
+        
+        Platform.runLater(new Runnable() {
+            
+            @Override
+            public void run() {
+                Set<CombinedEvent> collect = table.getItems().stream()
+                .filter(combinedEvent -> combinedEvent.getEventIDs().stream().anyMatch(controller.getSelectedEventIDs()::contains))
+                .collect(Collectors.toSet());
 
-        controller.getSelectedEventIDs().addListener((Observable change) -> {
-            Set<CombinedEvent> selectedCombinedEvents = table.getItems().stream()
-                    .filter(combinedEvent -> combinedEvent.getEventIDs().stream().anyMatch(controller.getSelectedEventIDs()::contains))
-                    .collect(Collectors.toSet());
-            selectEvents(selectedCombinedEvents);
+        selectEvents(collect);
+            }
         });
+        
+        
     }
 
     /**
