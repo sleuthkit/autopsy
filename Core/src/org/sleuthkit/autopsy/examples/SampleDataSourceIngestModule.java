@@ -36,23 +36,19 @@ import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
-import org.sleuthkit.autopsy.casemodule.services.Services;
-import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
-import org.sleuthkit.autopsy.ingest.IngestModule;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.FsContent;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
+import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
-import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Sample data source ingest module that doesn't do much. Demonstrates per
@@ -63,10 +59,7 @@ import org.sleuthkit.datamodel.TskData;
 class SampleDataSourceIngestModule implements DataSourceIngestModule {
 
     private IngestJobContext context = null;
-    private static final Logger logger = Logger.getLogger(NbBundle.getMessage(SampleDataSourceIngestModuleFactory.class, "SampleDataSourceIngestModuleFactory.moduleName"));
-
-    SampleDataSourceIngestModule(SampleModuleIngestJobSettings settings) {
-    }
+    private static final Logger logger = Logger.getLogger(SampleDataSourceIngestModule.class.getName());
 
     @Override
     /*
