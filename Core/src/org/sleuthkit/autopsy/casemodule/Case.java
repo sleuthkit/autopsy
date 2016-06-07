@@ -1528,14 +1528,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
                     if (toChangeTo.hasData()) {
                         // open all top components
-                        SwingUtilities.invokeLater(() -> {
-                            CoreComponentControl.openCoreWindows();
-                        });
+                        CoreComponentControl.openCoreWindows();
                     } else {
                         // close all top components
-                        SwingUtilities.invokeLater(() -> {
-                            CoreComponentControl.closeCoreWindows();
-                        });
+                        CoreComponentControl.closeCoreWindows();
                     }
                 });
                 updateMainWindowTitle(currentCase.getName());
@@ -1547,9 +1543,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
             }
 
         } else { // case is closed
-            if (RuntimeProperties.coreComponentsAreActive()) {
+            SwingUtilities.invokeLater(() -> {
+                if (RuntimeProperties.coreComponentsAreActive()) {
 
-                SwingUtilities.invokeLater(() -> {
                     // close all top components first
                     CoreComponentControl.closeCoreWindows();
 
@@ -1559,11 +1555,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     CallableSystemAction.get(CasePropertiesAction.class).setEnabled(false); // Case Properties menu
                     CallableSystemAction.get(CaseDeleteAction.class).setEnabled(false); // Delete Case menu
                     CallableSystemAction.get(OpenTimelineAction.class).setEnabled(false);
-                });
-            }
+                }
 
-            //clear pending notifications
-            SwingUtilities.invokeLater(() -> {
+                //clear pending notifications
                 MessageNotifyUtil.Notify.clear();
                 Frame f = WindowManager.getDefault().getMainWindow();
                 f.setTitle(Case.getAppName()); // set the window name to just application name
