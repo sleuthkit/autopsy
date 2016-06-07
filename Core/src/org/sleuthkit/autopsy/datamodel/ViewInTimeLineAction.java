@@ -5,6 +5,7 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import com.google.common.collect.Iterables;
 import java.awt.event.ActionEvent;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -41,20 +42,22 @@ public class ViewInTimeLineAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Set<Long> fileIDs = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class).stream()
-                .map(AbstractFile::getId)
+        Set<AbstractFile> files = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class).stream()
                 .collect(Collectors.toSet());
 
         final Set<Integer> artifactEventTypeIDs = ArtifactEventType.getAllArtifactEventTypes().stream()
                 .map(ArtifactEventType::getArtifactTypeID)
                 .collect(Collectors.toSet());
-
+        
         //for each artifact, get all datetime attributes for that artifact type
-        Set<Long> artifactIDs = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class).stream()
+        Set<BlackboardArtifact> artifacts = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class).stream()
                 .filter(artifact -> artifactEventTypeIDs.contains(artifact.getArtifactTypeID()))
-                .map(BlackboardArtifact::getArtifactID)
                 .collect(Collectors.toSet());
-
-        SystemAction.get(OpenTimelineAction.class).showTimeline(fileIDs, artifactIDs);
+        
+        if (files.size() > 1) {
+            return;
+        }else{
+            SystemAction.get(OpenTimelineAction.class).showTimeline(Iterables.getOnlyElement(files,null), artifacts);
+        }
     }
 }

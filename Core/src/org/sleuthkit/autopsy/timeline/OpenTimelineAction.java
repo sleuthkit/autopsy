@@ -20,8 +20,11 @@ package org.sleuthkit.autopsy.timeline;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.DialogPane;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
@@ -34,6 +37,9 @@ import org.sleuthkit.autopsy.core.Installer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.timeline.Timeline")
 @ActionRegistration(displayName = "#CTL_MakeTimeline", lazy = false)
@@ -63,13 +69,13 @@ public class OpenTimelineAction extends CallableSystemAction {
     @Override
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void performAction() {
-        showTimeline(Collections.emptySet(), Collections.emptySet());
+        showTimeline(null, Collections.emptySet());
     }
 
     @NbBundle.Messages({
         "OpenTimelineAction.settingsErrorMessage=Failed to initialize timeline settings.",
         "OpenTimeLineAction.msgdlg.text=Could not create timeline, there are no data sources."})
-    public void showTimeline(Set<Long> fileIDs, Set<Long> artifactIDS) {
+    public void showTimeline(AbstractFile file, Set<BlackboardArtifact> artifactS) {
         //check case
         if (!Case.isCaseOpen()) {
             return;
@@ -88,7 +94,15 @@ public class OpenTimelineAction extends CallableSystemAction {
                     timeLineController.shutDownTimeLine();
                     timeLineController = new TimeLineController(currentCase);
                 }
-                timeLineController.openTimeLine(fileIDs, artifactIDS);
+                
+                javafx.scene.control.Dialog<SingleEvent> d = new javafx.scene.control.Dialog<>();
+                
+                DialogPane dp = d.getDialogPane();
+                dp.setContent(new ComboBox);
+                
+                Optional<SingleEvent> result = d.showAndWait();
+                
+                timeLineController.openTimeLine(file, artifactS);
             } catch (IOException iOException) {
                 MessageNotifyUtil.Message.error(Bundle.OpenTimelineAction_settingsErrorMessage());
                 LOGGER.log(Level.SEVERE, "Failed to initialize per case timeline settings.", iOException);
