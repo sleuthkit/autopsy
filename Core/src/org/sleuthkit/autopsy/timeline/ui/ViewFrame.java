@@ -100,7 +100,8 @@ import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 /**
  * A container for an AbstractTimelineView. Has a Toolbar on top to hold
  * settings widgets supplied by contained AbstractTimelineView, and the
- * histogram / time selection on bottom.
+ * histogram / time selection on bottom. The time selection Toolbar has default
+ * controls that can be replaced by ones supplied by the current view.
  *
  * TODO: Refactor common code out of histogram and CountsView? -jm
  */
@@ -124,6 +125,18 @@ final public class ViewFrame extends BorderPane {
             setOpacity(.3);
         }
     };
+
+    /**
+     * The scene graph Nodes for the current view's settings will be inserted
+     * into the toolbar at this index.
+     */
+    private static final int SETTINGS_TOOLBAR_INSERTION_INDEX = 2;
+
+    /**
+     * The scene graph Nodes for the current view's time navigation controls
+     * will be inserted into the toolbar at this index.
+     */
+    private static final int TIME_TOOLBAR_INSERTION_INDEX = 2;
 
     @GuardedBy("this")
     private LoggedTask<Void> histogramTask;
@@ -200,7 +213,7 @@ final public class ViewFrame extends BorderPane {
     private Button updateDBButton;
 
     /*
-     * defualt zoom in/out buttons provided by the ViewFrame, some views replace
+     * Default zoom in/out buttons provided by the ViewFrame, some views replace
      * these with other nodes (eg, list view)
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
@@ -632,8 +645,6 @@ final public class ViewFrame extends BorderPane {
 
         Platform.runLater(() -> {
             //clear out old view.
-//            clearTimeNavigationNodes();
-//            clearSettingsNodes();
             if (hostedView != null) {
                 hostedView.dispose();
             }
@@ -694,7 +705,7 @@ final public class ViewFrame extends BorderPane {
     private void setViewSettingsControls(List<Node> newSettingsNodes) {
         toolBar.getItems().removeAll(this.settingsNodes); //remove old nodes
         this.settingsNodes.setAll(newSettingsNodes);
-        toolBar.getItems().addAll(2, settingsNodes);
+        toolBar.getItems().addAll(SETTINGS_TOOLBAR_INSERTION_INDEX, settingsNodes);
     }
 
     /**
@@ -707,7 +718,7 @@ final public class ViewFrame extends BorderPane {
     private void setTimeNavigationControls(List<Node> timeNavigationNodes) {
         timeRangeToolBar.getItems().removeAll(this.timeNavigationNodes); //remove old nodes
         this.timeNavigationNodes.setAll(timeNavigationNodes);
-        timeRangeToolBar.getItems().addAll(2, timeNavigationNodes);
+        timeRangeToolBar.getItems().addAll(TIME_TOOLBAR_INSERTION_INDEX, timeNavigationNodes);
     }
 
     @NbBundle.Messages("NoEventsDialog.titledPane.text=No Visible Events")
