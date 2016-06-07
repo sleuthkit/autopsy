@@ -73,13 +73,13 @@ public class ImageNode extends AbstractContentNode<Image> {
      */
     @Override
     @Messages({"ImageNode.action.runIngestMods.text=Run Ingest Modules",
-        "ImageNode.action.openFileSrcByAttr.text=Open File Search by Attributes",})
+        "ImageNode.getActions.openFileSearchByAttr.text=Open File Search by Attributes",})
     public Action[] getActions(boolean context) {
 
         List<Action> actionsList = new ArrayList<Action>();
         actionsList.addAll(ExplorerNodeActionVisitor.getActions(content));
         actionsList.add(new FileSearchAction(
-                NbBundle.getMessage(this.getClass(), "ImageNode.getActions.openFileSearchByAttr.text")));
+                Bundle.ImageNode_getActions_openFileSearchByAttr_text()));
         actionsList.add(new AbstractAction(
                 Bundle.ImageNode_action_runIngestMods_text()) {
             @Override

@@ -79,8 +79,7 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
      * @return
      */
     @Override
-    @NbBundle.Messages({"VirtualDirectoryNode.action.runIngestMods.text=Run Ingest Modules",
-        "VirtualDirectoryNode.action.openFileSrcByAttr.text=Open File Search by Attributes"})
+    @NbBundle.Messages({"VirtualDirectoryNode.action.runIngestMods.text=Run Ingest Modules"})
     public Action[] getActions(boolean popup) {
         List<Action> actions = new ArrayList<>();
 
@@ -89,9 +88,10 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
         actions.add(null); // creates a menu separator
         actions.add(ExtractAction.getInstance());
         actions.add(null); // creates a menu separator
-        actions.add(new FileSearchAction(
-                Bundle.VirtualDirectoryNode_action_openFileSrcByAttr_text()));
+        
         if (this.content.isDataSource()) {
+            actions.add(new FileSearchAction(
+                Bundle.ImageNode_getActions_openFileSearchByAttr_text()));
             actions.add(new AbstractAction(
                     Bundle.VirtualDirectoryNode_action_runIngestMods_text()) {
                 @Override
