@@ -754,14 +754,12 @@ public class ImageUtils {
                     return image;
                 }
             } else if (file.getNameExtension().equalsIgnoreCase("tec")) { //NON-NLS
-                int offset = 0;
+                ReadContentInputStream readContentInputStream = new ReadContentInputStream(file);
                 if (isJfifFileHeaderWithLeadingEOIMarker(file)) {
-                    offset = 2;
-                } else if (isJpegFileHeader(file)) {
-                    offset = 0;
+                    readContentInputStream.seek(2); // Skip any leading EOI markers
                 }
-                //use JavaFX to directly read .tec files, skipping any leading EOI markers
-                javafx.scene.image.Image image = new javafx.scene.image.Image(new BufferedInputStream(new ReadContentInputStream(file, offset)));
+                //use JavaFX to directly read .tec files
+                javafx.scene.image.Image image = new javafx.scene.image.Image(new BufferedInputStream(readContentInputStream));
                 if (image.isError() == false) {
                     return image;
                 }
