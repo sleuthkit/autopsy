@@ -18,14 +18,17 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.listvew;
 
+import com.google.common.collect.ImmutableList;
 import java.util.HashSet;
 import java.util.List;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.concurrent.Task;
-import javafx.scene.Parent;
+import javafx.scene.Node;
 import org.joda.time.Interval;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.datamodel.CombinedEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.ui.AbstractTimeLineView;
@@ -48,7 +51,6 @@ public class ListViewPane extends AbstractTimeLineView {
 
         //initialize chart;
         setCenter(listTimeline);
-        setSettingsNodes(new ListViewPane.ListViewSettingsPane().getChildrenUnmodifiable());
 
         //keep controller's list of selected event IDs in sync with this list's
         listTimeline.getSelectedEventIDs().addListener((Observable selectedIDs) -> {
@@ -66,13 +68,34 @@ public class ListViewPane extends AbstractTimeLineView {
         listTimeline.clear();
     }
 
-    private static class ListViewSettingsPane extends Parent {
+    @Override
+    final protected ViewMode getViewMode() {
+        return ViewMode.LIST;
+    }
+
+    @Override
+    protected ImmutableList<Node> getSettingsControls() {
+        return ImmutableList.of();
+    }
+
+    @Override
+    protected ImmutableList<Node> getTimeNavigationControls() {
+        return ImmutableList.copyOf(listTimeline.getNavControls());
+    }
+
+    @Override
+    protected boolean hasCustomTimeNavigationControls() {
+        return true;
     }
 
     private class ListUpdateTask extends ViewRefreshTask<Interval> {
 
+        @NbBundle.Messages({
+            "ListViewPane.loggedTask.queryDb=Retreiving event data",
+            "ListViewPane.loggedTask.name=Updating Details View",
+            "ListViewPane.loggedTask.updateUI=Populating view"})
         ListUpdateTask() {
-            super("List update task", true);
+            super(Bundle.ListViewPane_loggedTask_name(), true);
         }
 
         @Override
@@ -91,10 +114,10 @@ public class ListViewPane extends AbstractTimeLineView {
             resetView(eventsModel.getTimeRange());
 
             //get the combined events to be displayed
-            updateMessage("Querying DB for events");
+            updateMessage(Bundle.ListViewPane_loggedTask_queryDb());
             List<CombinedEvent> combinedEvents = eventsModel.getCombinedEvents();
 
-            updateMessage("Updating UI");
+            updateMessage(Bundle.ListViewPane_loggedTask_updateUI());
             Platform.runLater(() -> {
                 //put the combined events into the table.
                 listTimeline.setCombinedEvents(combinedEvents);

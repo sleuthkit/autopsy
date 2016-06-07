@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-16 Basis Technology Corp.
+ * Copyright 2011-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,19 +18,24 @@
  */
 package org.sleuthkit.autopsy.timeline.ui;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.eventbus.Subscribe;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuButton;
@@ -69,6 +74,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
@@ -84,6 +90,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.DBUpdatedEvent;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsUpdatedEvent;
+import static org.sleuthkit.autopsy.timeline.ui.Bundle.*;
 import org.sleuthkit.autopsy.timeline.ui.countsview.CountsViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.tree.EventsTree;
@@ -101,14 +108,15 @@ final public class ViewFrame extends BorderPane {
 
     private static final Logger LOGGER = Logger.getLogger(ViewFrame.class.getName());
 
-    private static final Image INFORMATION = new Image("org/sleuthkit/autopsy/timeline/images/information.png", 16, 16, true, true); // NON-NLS
-    private static final Image WARNING = new Image("org/sleuthkit/autopsy/timeline/images/warning_triangle.png", 16, 16, true, true); // NON-NLS
-    private static final Image REFRESH = new Image("org/sleuthkit/autopsy/timeline/images/arrow-circle-double-135.png"); // NON-NLS
+    private static final Image INFORMATION = new Image("org/sleuthkit/autopsy/timeline/images/information.png", 16, 16, true, true); //NON-NLS
+    private static final Image WARNING = new Image("org/sleuthkit/autopsy/timeline/images/warning_triangle.png", 16, 16, true, true); //NON-NLS
+    private static final Image REFRESH = new Image("org/sleuthkit/autopsy/timeline/images/arrow-circle-double-135.png"); //NON-NLS
     private static final Background GRAY_BACKGROUND = new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY));
 
     /**
      * Region that will be stacked in between the no-events "dialog" and the
-     * hosted AbstractTimelineView in order to gray out the AbstractTimelineView.
+     * hosted AbstractTimelineView in order to gray out the
+     * AbstractTimelineView.
      */
     private final static Region NO_EVENTS_BACKGROUND = new Region() {
         {
@@ -139,6 +147,19 @@ final public class ViewFrame extends BorderPane {
 
     private final RangeSlider rangeSlider = new RangeSlider(0, 1.0, .25, .75);
 
+    /**
+     * The lower tool bar that has controls to adjust the viewed timerange.
+     */
+    @FXML
+    private ToolBar timeRangeToolBar;
+
+    /**
+     * Parent for the default zoom in/out buttons that can be replaced in some
+     * views(eg List View)
+     */
+    @FXML
+    private HBox zoomInOutHBox;
+
     //// time range selection components
     @FXML
     private MenuButton zoomMenuButton;
@@ -158,6 +179,8 @@ final public class ViewFrame extends BorderPane {
     //// header toolbar componenets
     @FXML
     private ToolBar toolBar;
+
+    private ToggleGroupValue<ViewMode> viewModeToggleGroup;
     @FXML
     private Label viewModeLabel;
     @FXML
@@ -168,6 +191,7 @@ final public class ViewFrame extends BorderPane {
     private ToggleButton detailsToggle;
     @FXML
     private ToggleButton listToggle;
+
     @FXML
     private Button snapShotButton;
     @FXML
@@ -176,7 +200,27 @@ final public class ViewFrame extends BorderPane {
     private Button updateDBButton;
 
     /*
-     * Wraps contained AbstractTimelineView so that we can show notifications over it.
+     * defualt zoom in/out buttons provided by the ViewFrame, some views replace
+     * these with other nodes (eg, list view)
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private ImmutableList<Node> defaultTimeNavigationNodes;
+
+    /*
+     * The settings nodes for the current view.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private final ObservableList<Node> settingsNodes = FXCollections.observableArrayList();
+
+    /*
+     * The time nagivation nodes for the current view.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private final ObservableList<Node> timeNavigationNodes = FXCollections.observableArrayList();
+
+    /**
+     * Wraps the contained AbstractTimelineView so that we can show
+     * notifications over it.
      */
     private final NotificationPane notificationPane = new NotificationPane();
 
@@ -252,7 +296,8 @@ final public class ViewFrame extends BorderPane {
         this.controller = controller;
         this.filteredEvents = controller.getEventsModel();
         this.eventsTree = eventsTree;
-        FXMLConstructor.construct(this, "ViewFrame.fxml"); // NON-NLS
+        FXMLConstructor.construct(this, "ViewFrame.fxml"); //NON-NLS
+
     }
 
     @FXML
@@ -267,12 +312,15 @@ final public class ViewFrame extends BorderPane {
         "ViewFrame.tagsAddedOrDeleted=Tags have been created and/or deleted.  The view may not be up to date."
     })
     void initialize() {
-        assert endPicker != null : "fx:id=\"endPicker\" was not injected: check your FXML file 'ViewWrapper.fxml'."; // NON-NLS
-        assert histogramBox != null : "fx:id=\"histogramBox\" was not injected: check your FXML file 'ViewWrapper.fxml'."; // NON-NLS
-        assert startPicker != null : "fx:id=\"startPicker\" was not injected: check your FXML file 'ViewWrapper.fxml'."; // NON-NLS
-        assert rangeHistogramStack != null : "fx:id=\"rangeHistogramStack\" was not injected: check your FXML file 'ViewWrapper.fxml'."; // NON-NLS
-        assert countsToggle != null : "fx:id=\"countsToggle\" was not injected: check your FXML file 'VisToggle.fxml'."; // NON-NLS
-        assert detailsToggle != null : "fx:id=\"eventsToggle\" was not injected: check your FXML file 'VisToggle.fxml'."; // NON-NLS
+        assert endPicker != null : "fx:id=\"endPicker\" was not injected: check your FXML file 'ViewWrapper.fxml'."; //NON-NLS
+        assert histogramBox != null : "fx:id=\"histogramBox\" was not injected: check your FXML file 'ViewWrapper.fxml'."; //NON-NLS
+        assert startPicker != null : "fx:id=\"startPicker\" was not injected: check your FXML file 'ViewWrapper.fxml'."; //NON-NLS
+        assert rangeHistogramStack != null : "fx:id=\"rangeHistogramStack\" was not injected: check your FXML file 'ViewWrapper.fxml'."; //NON-NLS
+        assert countsToggle != null : "fx:id=\"countsToggle\" was not injected: check your FXML file 'VisToggle.fxml'."; //NON-NLS
+        assert detailsToggle != null : "fx:id=\"eventsToggle\" was not injected: check your FXML file 'VisToggle.fxml'."; //NON-NLS
+
+        defaultTimeNavigationNodes = ImmutableList.of(zoomInOutHBox, zoomMenuButton);
+        timeNavigationNodes.setAll(defaultTimeNavigationNodes);
 
         //configure notification pane 
         notificationPane.getStyleClass().add(NotificationPane.STYLE_CLASS_DARK);
@@ -283,17 +331,14 @@ final public class ViewFrame extends BorderPane {
         countsToggle.setText(Bundle.ViewFrame_countsToggle_text());
         detailsToggle.setText(Bundle.ViewFrame_detailsToggle_text());
         listToggle.setText(Bundle.ViewFrame_listToggle_text());
-
-        ToggleGroupValue<ViewMode> visModeToggleGroup = new ToggleGroupValue<>();
-        visModeToggleGroup.add(listToggle, ViewMode.LIST);
-        visModeToggleGroup.add(detailsToggle, ViewMode.DETAIL);
-        visModeToggleGroup.add(countsToggle, ViewMode.COUNTS);
-
-        modeSegButton.setToggleGroup(visModeToggleGroup);
-
-        visModeToggleGroup.valueProperty().addListener((observable, oldVisMode, newValue) -> {
-            controller.setViewMode(newValue != null ? newValue : (oldVisMode != null ? oldVisMode : ViewMode.COUNTS));
-        });
+        viewModeToggleGroup = new ToggleGroupValue<>();
+        viewModeToggleGroup.add(listToggle, ViewMode.LIST);
+        viewModeToggleGroup.add(detailsToggle, ViewMode.DETAIL);
+        viewModeToggleGroup.add(countsToggle, ViewMode.COUNTS);
+        modeSegButton.setToggleGroup(viewModeToggleGroup);
+        viewModeToggleGroup.valueProperty().addListener((observable, oldViewMode, newViewVode) ->
+                controller.setViewMode(newViewVode != null ? newViewVode : (oldViewMode != null ? oldViewMode : ViewMode.COUNTS))
+        );
 
         controller.viewModeProperty().addListener(viewMode -> syncViewMode());
         syncViewMode();
@@ -330,7 +375,7 @@ final public class ViewFrame extends BorderPane {
          * rangeslider track doesn't extend to edge of node,and so the
          * histrogram doesn't quite line up with the rangeslider
          */
-        histogramBox.setStyle("   -fx-padding: 0,0.5em,0,.5em; "); // NON-NLS
+        histogramBox.setStyle("   -fx-padding: 0,0.5em,0,.5em; "); //NON-NLS
 
         //configure zoom buttons
         zoomMenuButton.getItems().clear();
@@ -362,11 +407,10 @@ final public class ViewFrame extends BorderPane {
     }
 
     /**
-     * Handle TagsUpdatedEvents by marking that the view needs to be
-     * refreshed.
+     * Handle TagsUpdatedEvents by marking that the view needs to be refreshed.
      *
-     * NOTE: This ViewFrame must be registered with the
-     * filteredEventsModel's EventBus in order for this handler to be invoked.
+     * NOTE: This ViewFrame must be registered with the filteredEventsModel's
+     * EventBus in order for this handler to be invoked.
      *
      * @param event The TagsUpdatedEvent to handle.
      */
@@ -385,8 +429,8 @@ final public class ViewFrame extends BorderPane {
      * Handle a RefreshRequestedEvent from the events model by clearing the
      * refresh notification.
      *
-     * NOTE: This ViewFrame must be registered with the
-     * filteredEventsModel's EventBus in order for this handler to be invoked.
+     * NOTE: This ViewFrame must be registered with the filteredEventsModel's
+     * EventBus in order for this handler to be invoked.
      *
      * @param event The RefreshRequestedEvent to handle.
      */
@@ -400,11 +444,10 @@ final public class ViewFrame extends BorderPane {
     }
 
     /**
-     * Handle a DBUpdatedEvent from the events model by refreshing the
-     * view.
+     * Handle a DBUpdatedEvent from the events model by refreshing the view.
      *
-     * NOTE: This ViewFrame must be registered with the
-     * filteredEventsModel's EventBus in order for this handler to be invoked.
+     * NOTE: This ViewFrame must be registered with the filteredEventsModel's
+     * EventBus in order for this handler to be invoked.
      *
      * @param event The DBUpdatedEvent to handle.
      */
@@ -419,8 +462,8 @@ final public class ViewFrame extends BorderPane {
      * Handle a DataSourceAddedEvent from the events model by showing a
      * notification.
      *
-     * NOTE: This ViewFrame must be registered with the
-     * filteredEventsModel's EventBus in order for this handler to be invoked.
+     * NOTE: This ViewFrame must be registered with the filteredEventsModel's
+     * EventBus in order for this handler to be invoked.
      *
      * @param event The DataSourceAddedEvent to handle.
      */
@@ -439,8 +482,8 @@ final public class ViewFrame extends BorderPane {
      * Handle a DataSourceAnalysisCompletedEvent from the events modelby showing
      * a notification.
      *
-     * NOTE: This ViewFrame must be registered with the
-     * filteredEventsModel's EventBus in order for this handler to be invoked.
+     * NOTE: This ViewFrame must be registered with the filteredEventsModel's
+     * EventBus in order for this handler to be invoked.
      *
      * @param event The DataSourceAnalysisCompletedEvent to handle.
      */
@@ -458,19 +501,23 @@ final public class ViewFrame extends BorderPane {
     /**
      * Refresh the Histogram to represent the current state of the DB.
      */
+    @NbBundle.Messages({"ViewFrame.histogramTask.title=Rebuilding Histogram",
+        "ViewFrame.histogramTask.preparing=Preparing",
+        "ViewFrame.histogramTask.resetUI=Resetting UI",
+        "ViewFrame.histogramTask.queryDb=Querying FB",
+        "ViewFrame.histogramTask.updateUI2=Updating UI"})
     synchronized private void refreshHistorgram() {
         if (histogramTask != null) {
             histogramTask.cancel(true);
         }
 
-        histogramTask = new LoggedTask<Void>(
-                NbBundle.getMessage(ViewFrame.class, "ViewFrame.histogramTask.title"), true) { // NON-NLS
+        histogramTask = new LoggedTask<Void>(Bundle.ViewFrame_histogramTask_title(), true) {
             private final Lighting lighting = new Lighting();
 
             @Override
             protected Void call() throws Exception {
 
-                updateMessage(NbBundle.getMessage(ViewFrame.class, "ViewFrame.histogramTask.preparing")); // NON-NLS
+                updateMessage(ViewFrame_histogramTask_preparing());
 
                 long max = 0;
                 final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval());
@@ -483,7 +530,7 @@ final public class ViewFrame extends BorderPane {
 
                 //clear old data, and reset ranges and series
                 Platform.runLater(() -> {
-                    updateMessage(NbBundle.getMessage(ViewFrame.class, "ViewFrame.histogramTask.resetUI")); // NON-NLS
+                    updateMessage(ViewFrame_histogramTask_resetUI());
 
                 });
 
@@ -500,7 +547,7 @@ final public class ViewFrame extends BorderPane {
 
                     start = end;
 
-                    updateMessage(NbBundle.getMessage(ViewFrame.class, "ViewFrame.histogramTask.queryDb")); // NON-NLS
+                    updateMessage(ViewFrame_histogramTask_queryDb());
                     //query for current range
                     long count = filteredEvents.getEventCounts(interval).values().stream().mapToLong(Long::valueOf).sum();
                     bins.add(count);
@@ -510,7 +557,7 @@ final public class ViewFrame extends BorderPane {
                     final double fMax = Math.log(max);
                     final ArrayList<Long> fbins = new ArrayList<>(bins);
                     Platform.runLater(() -> {
-                        updateMessage(NbBundle.getMessage(ViewFrame.class, "ViewFrame.histogramTask.updateUI2")); // NON-NLS
+                        updateMessage(ViewFrame_histogramTask_updateUI2());
 
                         histogramBox.getChildren().clear();
 
@@ -543,7 +590,7 @@ final public class ViewFrame extends BorderPane {
     }
 
     /**
-     * Refresh the time selection UI to match the current zoome paramaters.
+     * Refresh the time selection UI to match the current zoom parameters.
      */
     private void refreshTimeUI() {
         RangeDivisionInfo rangeDivisionInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval());
@@ -576,57 +623,54 @@ final public class ViewFrame extends BorderPane {
     }
 
     /**
-     * Switch to the given ViewMode, by swapping out the hosted
-     * AbstractTimelineView for one of the correct type.
+     * Sync up the view shown in the UI to the one currently active according to
+     * the controller. Swaps out the hosted AbstractTimelineView for a new one
+     * of the correct type.
      */
     private void syncViewMode() {
-        AbstractTimeLineView view;
-        ViewMode viewMode = controller.viewModeProperty().get();
+        ViewMode newViewMode = controller.getViewMode();
 
-        //make new view.
-        switch (viewMode) {
-            case LIST:
-                view = new ListViewPane(controller);
-                Platform.runLater(() -> {
-                    listToggle.setSelected(true);
-                    //TODO: should remove listeners from events tree
-                });
-                break;
-            case COUNTS:
-                view = new CountsViewPane(controller);
-                Platform.runLater(() -> {
-                    countsToggle.setSelected(true);
-                    //TODO: should remove listeners from events tree
-                });
-                break;
-            case DETAIL:
-                DetailViewPane detailViewPane = new DetailViewPane(controller);
-                Platform.runLater(() -> {
-                    detailsToggle.setSelected(true);
-                    detailViewPane.setHighLightedEvents(eventsTree.getSelectedEvents());
-                    eventsTree.setDetailViewPane(detailViewPane);
-                });
-                view = detailViewPane;
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown ViewMode: " + viewMode.toString());
-        }
-
-        //Set the new AbstractTimeLineView as the one hosted by this ViewFrame.
         Platform.runLater(() -> {
             //clear out old view.
+//            clearTimeNavigationNodes();
+//            clearSettingsNodes();
             if (hostedView != null) {
-                toolBar.getItems().removeAll(hostedView.getSettingsNodes());
                 hostedView.dispose();
             }
 
-            hostedView = view;
-            //setup new view.
+            //Set a new AbstractTimeLineView as the one hosted by this ViewFrame.
+            switch (newViewMode) {
+                case LIST:
+                    hostedView = new ListViewPane(controller);
+                    //TODO: should remove listeners from events tree
+                    break;
+                case COUNTS:
+                    hostedView = new CountsViewPane(controller);
+                    //TODO: should remove listeners from events tree
+                    break;
+                case DETAIL:
+                    DetailViewPane detailViewPane = new DetailViewPane(controller);
+                    //link events tree to detailview instance.
+                    detailViewPane.setHighLightedEvents(eventsTree.getSelectedEvents());
+                    eventsTree.setDetailViewPane(detailViewPane);
+                    hostedView = detailViewPane;
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown ViewMode: " + newViewMode.toString());//NON-NLS
+            }
+
+            viewModeToggleGroup.setValue(newViewMode); //this selects the right toggle automatically
+
+            //configure settings and time navigation nodes
+            setViewSettingsControls(hostedView.getSettingsControls());
+            setTimeNavigationControls(hostedView.hasCustomTimeNavigationControls()
+                    ? hostedView.getTimeNavigationControls()
+                    : defaultTimeNavigationNodes);
+
+            //do further setup of  new view.
             ActionUtils.configureButton(new Refresh(), refreshButton);//configure new refresh action for new view
             hostedView.refresh();
-            toolBar.getItems().addAll(2, view.getSettingsNodes());
             notificationPane.setContent(hostedView);
-
             //listen to has events property and show "dialog" if it is false.
             hostedView.hasVisibleEventsProperty().addListener(hasEvents -> {
                 notificationPane.setContent(hostedView.hasVisibleEvents()
@@ -638,6 +682,32 @@ final public class ViewFrame extends BorderPane {
                 );
             });
         });
+    }
+
+    /**
+     * Show the given List of Nodes in the top ToolBar. Replaces any settings
+     * Nodes that may have previously been set with the given List of Nodes.
+     *
+     * @param newSettingsNodes The Nodes to show in the ToolBar.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private void setViewSettingsControls(List<Node> newSettingsNodes) {
+        toolBar.getItems().removeAll(this.settingsNodes); //remove old nodes
+        this.settingsNodes.setAll(newSettingsNodes);
+        toolBar.getItems().addAll(2, settingsNodes);
+    }
+
+    /**
+     * Show the given List of Nodes in the time range ToolBar. Replaces any
+     * Nodes that may have previously been set with the given List of Nodes.
+     *
+     * @param newSettingsNodes The Nodes to show in the time range ToolBar.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private void setTimeNavigationControls(List<Node> timeNavigationNodes) {
+        timeRangeToolBar.getItems().removeAll(this.timeNavigationNodes); //remove old nodes
+        this.timeNavigationNodes.setAll(timeNavigationNodes);
+        timeRangeToolBar.getItems().addAll(2, timeNavigationNodes);
     }
 
     @NbBundle.Messages("NoEventsDialog.titledPane.text=No Visible Events")
@@ -660,17 +730,18 @@ final public class ViewFrame extends BorderPane {
 
         private NoEventsDialog(Runnable closeCallback) {
             this.closeCallback = closeCallback;
-            FXMLConstructor.construct(this, "NoEventsDialog.fxml"); // NON-NLS
+            FXMLConstructor.construct(this, "NoEventsDialog.fxml"); //NON-NLS
         }
 
         @FXML
+        @NbBundle.Messages("ViewFrame.noEventsDialogLabel.text=There are no events visible with the current zoom / filter settings.")
         void initialize() {
-            assert resetFiltersButton != null : "fx:id=\"resetFiltersButton\" was not injected: check your FXML file 'NoEventsDialog.fxml'."; // NON-NLS
-            assert dismissButton != null : "fx:id=\"dismissButton\" was not injected: check your FXML file 'NoEventsDialog.fxml'."; // NON-NLS
-            assert zoomButton != null : "fx:id=\"zoomButton\" was not injected: check your FXML file 'NoEventsDialog.fxml'."; // NON-NLS
+            assert resetFiltersButton != null : "fx:id=\"resetFiltersButton\" was not injected: check your FXML file 'NoEventsDialog.fxml'."; //NON-NLS
+            assert dismissButton != null : "fx:id=\"dismissButton\" was not injected: check your FXML file 'NoEventsDialog.fxml'."; //NON-NLS
+            assert zoomButton != null : "fx:id=\"zoomButton\" was not injected: check your FXML file 'NoEventsDialog.fxml'."; //NON-NLS
 
             titledPane.setText(Bundle.NoEventsDialog_titledPane_text());
-            noEventsDialogLabel.setText(NbBundle.getMessage(NoEventsDialog.class, "ViewFrame.noEventsDialogLabel.text")); // NON-NLS
+            noEventsDialogLabel.setText(Bundle.ViewFrame_noEventsDialogLabel_text());
 
             dismissButton.setOnAction(actionEvent -> closeCallback.run());
 
