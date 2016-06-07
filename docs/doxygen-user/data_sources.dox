@@ -15,7 +15,7 @@ Autopsy supports three types of data sources:
 You can add a data source in several ways:
 - After you create a case, it automatically prompts you to add a data source.
 - There is a toolbar item to add a Data Source when a case is open.
-- The "File", "Add Data Source" menu item when a case is open.
+- The "Case", "Add Data Source" menu item when a case is open.
 
 The data source must remain accessible for the duration of the analysis because the case contains a reference to the data source.  It does <b>not</b> copy the data source into the case folder. 
 
@@ -79,6 +79,9 @@ You can add files or folders that are on your local computer (or on a shared dri
 Some things to note when doing this:
 - Autopsy ignores the time stamps on files that it adds this way because they could be the timestamps when they were copied onto your examination device.
 - If you have a USB-attached device that you are analyzing and you choose to add the device's contents using this method, then note that it will not look at unallocated space or deleted files.  Autopsy will only be able to see the allocated files.  You should add the device as a "Logical Drive" to analyze the unallocated space.
+- You can modify the name of the Logical File Set from the default LogicalFileSet# by clicking the "Change" button as shown in the screenshot below:
+
+\image html change_logical_file_set_display_name.PNG
 
 To add logical files:
 -# Choose "Logical Files" from the pull down.
