@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+
+<fx:root type="BorderPane" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1">
+   <top>
+      <HBox alignment="CENTER" BorderPane.alignment="CENTER">
+         <children>
+            <Region HBox.hgrow="ALWAYS" />
+            <Label fx:id="eventCountLabel" text=" # of events" />
+         </children>
+         <BorderPane.margin>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </BorderPane.margin>
+      </HBox>
+   </top>
+   <center>
+      <TableView fx:id="table" tableMenuButtonVisible="true" BorderPane.alignment="CENTER">
+        <columns>
+          <TableColumn fx:id="dateTimeColumn" editable="false" maxWidth="200.0" minWidth="150.0" prefWidth="150.0" resizable="false" sortable="false" text="Date/Time" />
+            <TableColumn fx:id="typeColumn" editable="false" maxWidth="100.0" minWidth="100.0" prefWidth="100.0" sortable="false" text="Event Type" />
+            <TableColumn fx:id="descriptionColumn" editable="false" maxWidth="3000.0" minWidth="100.0" prefWidth="300.0" sortable="false" text="Description" />
+            <TableColumn fx:id="knownColumn" editable="false" maxWidth="75.0" minWidth="75.0" prefWidth="75.0" resizable="false" sortable="false" text="Known" />
+          <TableColumn fx:id="idColumn" editable="false" maxWidth="50.0" minWidth="50.0" prefWidth="50.0" resizable="false" sortable="false" text="ID" />
+            <TableColumn fx:id="taggedColumn" maxWidth="75.0" minWidth="75.0" prefWidth="75.0" resizable="false" text="Tagged" />
+            <TableColumn fx:id="hashHitColumn" maxWidth="75.0" minWidth="75.0" prefWidth="75.0" resizable="false" text="Hash Hit" />
+        </columns>
+         <columnResizePolicy>
+            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+         </columnResizePolicy>
+      </TableView>
+   </center>
+</fx:root>

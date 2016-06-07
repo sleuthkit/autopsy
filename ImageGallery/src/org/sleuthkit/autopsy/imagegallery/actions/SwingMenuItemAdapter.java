@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.imagegallery.actions;
 
-import javafx.event.ActionEvent;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javax.swing.JMenu;
@@ -34,9 +33,7 @@ public class SwingMenuItemAdapter extends MenuItem {
     SwingMenuItemAdapter(final JMenuItem jMenuItem) {
         super(jMenuItem.getText());
         this.jMenuItem = jMenuItem;
-        setOnAction((ActionEvent t) -> {
-            jMenuItem.doClick();
-        });
+        setOnAction(actionEvent -> jMenuItem.doClick());
     }
 
     public static MenuItem create(MenuElement jmenuItem) {

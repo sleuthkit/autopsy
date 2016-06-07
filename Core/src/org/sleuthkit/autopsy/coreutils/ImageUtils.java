@@ -769,8 +769,7 @@ public class ImageUtils {
                 return null;
             }
 
-            return getImageProperty(file,
-                    "ImageIO could not read {0}: ",
+            return getImageProperty(file, "ImageIO could not read {0}: ",
                     imageReader -> {
                         imageReader.addIIOReadProgressListener(ReadImageTaskBase.this);
                         /*
