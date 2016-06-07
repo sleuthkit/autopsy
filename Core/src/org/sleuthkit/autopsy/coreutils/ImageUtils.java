@@ -1,4 +1,4 @@
- /*
+/*
  * Autopsy Forensic Browser
  * 
  * Copyright 2012-16 Basis Technology Corp.
@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -89,7 +90,7 @@ public class ImageUtils {
     private static final List<String> GIF_EXTENSION_LIST = Arrays.asList("gif");
     private static final SortedSet<String> GIF_MIME_SET = ImmutableSortedSet.copyOf(new String[]{"image/gif"});
 
-    private static final List<String> SUPPORTED_IMAGE_EXTENSIONS;
+    private static final List<String> SUPPORTED_IMAGE_EXTENSIONS = new ArrayList<>();
     private static final SortedSet<String> SUPPORTED_IMAGE_MIME_TYPES;
 
     private static final boolean openCVLoaded;
@@ -124,7 +125,8 @@ public class ImageUtils {
         }
 
         openCVLoaded = openCVLoadedTemp;
-        SUPPORTED_IMAGE_EXTENSIONS = Arrays.asList(ImageIO.getReaderFileSuffixes());
+        SUPPORTED_IMAGE_EXTENSIONS.addAll(Arrays.asList(ImageIO.getReaderFileSuffixes()));
+        SUPPORTED_IMAGE_EXTENSIONS.add("tec"); // Add JFIF .tec files
         SUPPORTED_IMAGE_MIME_TYPES = new TreeSet<>(Arrays.asList(ImageIO.getReaderMIMETypes()));
         /*
          * special cases and variants that we support, but don't get registered
@@ -374,6 +376,45 @@ public class ImageUtils {
             //ignore if can't read the first few bytes, not a JPEG
             return false;
         }
+    }
+
+    /**
+     * Find the offset for the first Start Of Image marker (0xFFD8) in JFIF,
+     * allowing for leading End Of Image markers.
+     *
+     * @param file the AbstractFile to parse
+     *
+     * @return Offset of first Start Of Image marker, or 0 if none found. This
+     *         will let ImageIO try to open it from offset 0.
+     */
+    private static long getJfifStartOfImageOffset(AbstractFile file) {
+        byte[] fileHeaderBuffer;
+        long length;
+        try {
+            length = file.getSize();
+            if (length % 2 != 0) {
+                length -= 1; // Make it an even number so we can parse two bytes at a time
+            }
+            if (length >= 1024) {
+                length = 1024;
+            }
+            fileHeaderBuffer = readHeader(file, (int) length); // read up to first 1024 bytes
+        } catch (TskCoreException ex) {
+            // Couldn't read header. Let ImageIO try it.
+            return 0;
+        }
+
+        if (fileHeaderBuffer != null) {
+            for (int index = 0; index < length; index += 2) {
+                // Look for Start Of Image marker and return the index when it's found
+                if ((fileHeaderBuffer[index] == (byte) 0xFF) && (fileHeaderBuffer[index + 1] == (byte) 0xD8)) {
+                    return index;
+                }
+            }
+        }
+
+        // Didn't match JFIF. Let ImageIO try to open it from offset 0.
+        return 0;
     }
 
     /**
@@ -726,8 +767,17 @@ public class ImageUtils {
                 if (image.isError() == false) {
                     return image;
                 }
-                //fall through to default image reading code if there was an error
+            } else if (file.getNameExtension().equalsIgnoreCase("tec")) { //NON-NLS
+                ReadContentInputStream readContentInputStream = new ReadContentInputStream(file);
+                // Find first Start Of Image marker
+                readContentInputStream.seek(getJfifStartOfImageOffset(file));
+                //use JavaFX to directly read .tec files
+                javafx.scene.image.Image image = new javafx.scene.image.Image(new BufferedInputStream(readContentInputStream));
+                if (image.isError() == false) {
+                    return image;
+                }
             }
+            //fall through to default image reading code if there was an error
             if (isCancelled()) {
                 return null;
             }
@@ -755,7 +805,8 @@ public class ImageUtils {
                             return null;
                         }
                         return SwingFXUtils.toFXImage(bufferedImage, null);
-                    });
+                    }
+            );
         }
 
         @Override
@@ -776,11 +827,9 @@ public class ImageUtils {
                 javafx.scene.image.Image fxImage = get();
                 if (fxImage == null) {
                     LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTED_OR_CORRUPT, ImageUtils.getContentPathSafe(file));
-                } else {
-                    if (fxImage.isError()) {
-                        //if there was somekind of error, log it
-                        LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTED_OR_CORRUPT + ": " + ObjectUtils.toString(fxImage.getException()), ImageUtils.getContentPathSafe(file));
-                    }
+                } else if (fxImage.isError()) {
+                    //if there was somekind of error, log it
+                    LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTED_OR_CORRUPT + ": " + ObjectUtils.toString(fxImage.getException()), ImageUtils.getContentPathSafe(file));
                 }
             } catch (InterruptedException | ExecutionException ex) {
                 failed();
