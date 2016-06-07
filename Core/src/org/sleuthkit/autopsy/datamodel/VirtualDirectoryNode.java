@@ -18,19 +18,28 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
+import org.sleuthkit.autopsy.directorytree.FileSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
-import org.sleuthkit.datamodel.VirtualDirectory;
+import org.sleuthkit.autopsy.ingest.RunIngestModulesDialog;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Directory;
+import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
  * Node for layout dir
@@ -73,8 +82,54 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
      * @return
      */
     @Override
+    @NbBundle.Messages({"VirtualDirectoryNode.action.runIngestMods.text=Run Ingest Modules",
+        "VirtualDirectoryNode.action.openFileSrcByAttr.text=Open File Search by Attributes",})
     public Action[] getActions(boolean popup) {
         List<Action> actions = new ArrayList<>();
+        if (this.content.isDataSource()) {
+            //extract dir action
+            Directory dir = this.getLookup().lookup(Directory.class);
+            if (dir != null) {
+                actions.add(ExtractAction.getInstance());
+                actions.add(new AbstractAction(
+                        Bundle.VirtualDirectoryNode_action_runIngestMods_text()) {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        final RunIngestModulesDialog ingestDialog = new RunIngestModulesDialog(dir);
+                        ingestDialog.display();
+                    }
+                });
+            }
+            final Image img = this.getLookup().lookup(Image.class);
+
+            VirtualDirectory virtualDirectory = this.getLookup().lookup(VirtualDirectory.class);
+            // determine if the virtualDireory is at root-level (Logical File Set).
+            boolean isRootVD = false;
+            if (virtualDirectory != null) {
+                try {
+                    if (virtualDirectory.getParent() == null) {
+                        isRootVD = true;
+                    }
+                } catch (TskCoreException ex) {
+                    //logger.log(Level.WARNING, "Error determining the parent of the virtual directory", ex); // NON-NLS
+                }
+            }
+
+            // 'run ingest' action and 'file search' action are added only if the
+            // selected node is img node or a root level virtual directory.
+            if (img != null || isRootVD) {
+                actions.add(new FileSearchAction(
+                        Bundle.VirtualDirectoryNode_action_openFileSrcByAttr_text()));
+                actions.add(new AbstractAction(
+                        Bundle.VirtualDirectoryNode_action_runIngestMods_text()) {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        final RunIngestModulesDialog ingestDialog = new RunIngestModulesDialog(Collections.<Content>singletonList(content));
+                        ingestDialog.display();
+                    }
+                });
+            }
+        }
         actions.add(new NewWindowViewAction(
                 NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.getActions.viewInNewWin.text"), this));
         actions.add(null); // creates a menu separator

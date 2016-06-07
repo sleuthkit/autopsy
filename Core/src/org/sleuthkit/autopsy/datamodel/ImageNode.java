@@ -18,15 +18,25 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.directorytree.ExplorerNodeActionVisitor;
+import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.FileSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
+import org.sleuthkit.autopsy.ingest.RunIngestModulesDialog;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
  * This class is used to represent the "Node" for the image. The children of
@@ -66,15 +76,58 @@ public class ImageNode extends AbstractContentNode<Image> {
      * @return
      */
     @Override
+    @Messages({"ImageNode.action.runIngestMods.text=Run Ingest Modules",
+        "ImageNode.action.openFileSrcByAttr.text=Open File Search by Attributes",})
     public Action[] getActions(boolean context) {
+
         List<Action> actionsList = new ArrayList<Action>();
+        actionsList.addAll(ExplorerNodeActionVisitor.getActions(content));
+        actionsList.add(new FileSearchAction(
+                NbBundle.getMessage(this.getClass(), "ImageNode.getActions.openFileSearchByAttr.text")));
+
+        //extract dir action
+        Directory dir = this.getLookup().lookup(Directory.class);
+        if (dir != null) {
+            actionsList.add(ExtractAction.getInstance());
+            actionsList.add(new AbstractAction(
+                    Bundle.ImageNode_action_runIngestMods_text()) {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    final RunIngestModulesDialog ingestDialog = new RunIngestModulesDialog(dir);
+                    ingestDialog.display();
+                }
+            });
+        }
+        final Image img = this.getLookup().lookup(Image.class);
+
+        VirtualDirectory virtualDirectory = this.getLookup().lookup(VirtualDirectory.class);
+        // determine if the virtualDireory is at root-level (Logical File Set).
+        boolean isRootVD = false;
+        if (virtualDirectory != null) {
+            try {
+                if (virtualDirectory.getParent() == null) {
+                    isRootVD = true;
+                }
+            } catch (TskCoreException ex) {
+                //logger.log(Level.WARNING, "Error determining the parent of the virtual directory", ex); // NON-NLS
+            }
+        }
+
+        // 'run ingest' action and 'file search' action are added only if the
+        // selected node is img node or a root level virtual directory.
+        if (img != null || isRootVD) {
+            actionsList.add(new AbstractAction(
+                    Bundle.ImageNode_action_runIngestMods_text()) {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    final RunIngestModulesDialog ingestDialog = new RunIngestModulesDialog(Collections.<Content>singletonList(content));
+                    ingestDialog.display();
+                }
+            });
+        }
 
         actionsList.add(new NewWindowViewAction(
                 NbBundle.getMessage(this.getClass(), "ImageNode.getActions.viewInNewWin.text"), this));
-        actionsList.add(new FileSearchAction(
-                NbBundle.getMessage(this.getClass(), "ImageNode.getActions.openFileSearchByAttr.text")));
-        actionsList.addAll(ExplorerNodeActionVisitor.getActions(content));
-
         return actionsList.toArray(new Action[0]);
     }
 
