@@ -1519,11 +1519,14 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
             if (RuntimeProperties.coreComponentsAreActive()) {
                 // enable these menus
-                CallableSystemAction.get(AddImageAction.class).setEnabled(true);
-                CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
-                CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
-                CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true); // Delete Case menu
-                CallableSystemAction.get(OpenTimelineAction.class).setEnabled(true);
+                SwingUtilities.invokeLater(() -> {
+                    CallableSystemAction.get(AddImageAction.class).setEnabled(true);
+                    CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
+                    CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
+                    CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true); // Delete Case menu
+                    CallableSystemAction.get(OpenTimelineAction.class).setEnabled(true);
+                });
+
                 if (toChangeTo.hasData()) {
                     // open all top components
                     SwingUtilities.invokeLater(() -> {
@@ -1665,7 +1668,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * Deletes reports from the case.
      *
      * @param reports        Collection of Report to be deleted from the case.
-     * @param deleteFromDisk No longer supported - ignored. 
+     * @param deleteFromDisk No longer supported - ignored.
      *
      * @throws TskCoreException
      * @deprecated Use deleteReports(Collection<? extends Report> reports)
@@ -1675,5 +1678,5 @@ public class Case implements SleuthkitCase.ErrorObserver {
     public void deleteReports(Collection<? extends Report> reports, boolean deleteFromDisk) throws TskCoreException {
         deleteReports(reports);
     }
-    
+
 }
