@@ -92,7 +92,7 @@ public class ListViewPane extends AbstractTimeLineView {
 
         @NbBundle.Messages({
             "ListViewPane.loggedTask.queryDb=Retreiving event data",
-            "ListViewPane.loggedTask.name=Updating Details View",
+            "ListViewPane.loggedTask.name=Updating List View",
             "ListViewPane.loggedTask.updateUI=Populating view"})
         ListUpdateTask() {
             super(Bundle.ListViewPane_loggedTask_name(), true);
