@@ -379,28 +379,42 @@ public class ImageUtils {
     }
 
     /**
-     * Check if the given file is a JFIF based on header, but has a leading End
-     * Of Image marker (0xFFD9)
+     * Find the offset for the first Start Of Image marker (0xFFD8) in JFIF,
+     * allowing for leading End Of Image markers.
      *
-     * @param file the AbstractFile to check
+     * @param file the AbstractFile to parse
      *
-     * @return true if JFIF file, false otherwise
+     * @return Offset of first Start Of Image marker, or 0 if none found. This
+     *         will let ImageIO try to open it from offset 0.
      */
-    public static boolean isJfifFileHeaderWithLeadingEOIMarker(AbstractFile file) {
-        if (file.getSize() < 100) {
-            return false;
-        }
+    private static long getJfifStartOfImageOffset(AbstractFile file) {
+        byte[] fileHeaderBuffer;
+        long length;
         try {
-            byte[] fileHeaderBuffer = readHeader(file, 4);
-            // Check for the JFIF header with leading EOI marker: 0xFFD9 followed by SOI marker: 0xFFD8
-            return (fileHeaderBuffer[0] == (byte) 0xFF
-                    && fileHeaderBuffer[1] == (byte) 0xD9
-                    && fileHeaderBuffer[2] == (byte) 0xFF
-                    && fileHeaderBuffer[3] == (byte) 0xD8);
+            length = file.getSize();
+            if (length % 2 != 0) {
+                length -= 1; // Make it an even number so we can parse two bytes at a time
+            }
+            if (length >= 1024) {
+                length = 1024;
+            }
+            fileHeaderBuffer = readHeader(file, (int) length); // read up to first 1024 bytes
         } catch (TskCoreException ex) {
-            //ignore if can't read the first few bytes, not a JPEG
-            return false;
+            // Couldn't read header. Let ImageIO try it.
+            return 0;
         }
+
+        if (fileHeaderBuffer != null) {
+            for (int index = 0; index < length; index += 2) {
+                // Look for Start Of Image marker and return the index when it's found
+                if ((fileHeaderBuffer[index] == (byte) 0xFF) && (fileHeaderBuffer[index + 1] == (byte) 0xD8)) {
+                    return index;
+                }
+            }
+        }
+
+        // Didn't match JFIF. Let ImageIO try to open it from offset 0.
+        return 0;
     }
 
     /**
@@ -755,9 +769,8 @@ public class ImageUtils {
                 }
             } else if (file.getNameExtension().equalsIgnoreCase("tec")) { //NON-NLS
                 ReadContentInputStream readContentInputStream = new ReadContentInputStream(file);
-                if (isJfifFileHeaderWithLeadingEOIMarker(file)) {
-                    readContentInputStream.seek(2); // Skip any leading EOI markers
-                }
+                // Find first Start Of Image marker
+                readContentInputStream.seek(getJfifStartOfImageOffset(file));
                 //use JavaFX to directly read .tec files
                 javafx.scene.image.Image image = new javafx.scene.image.Image(new BufferedInputStream(readContentInputStream));
                 if (image.isError() == false) {
