@@ -1525,25 +1525,20 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
                     CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true); // Delete Case menu
                     CallableSystemAction.get(OpenTimelineAction.class).setEnabled(true);
-                });
 
-                if (toChangeTo.hasData()) {
-                    // open all top components
-                    SwingUtilities.invokeLater(() -> {
-                        CoreComponentControl.openCoreWindows();
-                    });
-                } else {
-                    // close all top components
-                    SwingUtilities.invokeLater(() -> {
-                        CoreComponentControl.closeCoreWindows();
-                    });
-                }
-            }
-
-            if (RuntimeProperties.coreComponentsAreActive()) {
-                SwingUtilities.invokeLater(() -> {
-                    updateMainWindowTitle(currentCase.getName());
+                    if (toChangeTo.hasData()) {
+                        // open all top components
+                        SwingUtilities.invokeLater(() -> {
+                            CoreComponentControl.openCoreWindows();
+                        });
+                    } else {
+                        // close all top components
+                        SwingUtilities.invokeLater(() -> {
+                            CoreComponentControl.closeCoreWindows();
+                        });
+                    }
                 });
+                updateMainWindowTitle(currentCase.getName());
             } else {
                 SwingUtilities.invokeLater(() -> {
                     Frame f = WindowManager.getDefault().getMainWindow();
@@ -1570,9 +1565,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
             //clear pending notifications
             SwingUtilities.invokeLater(() -> {
                 MessageNotifyUtil.Notify.clear();
-            });
-
-            SwingUtilities.invokeLater(() -> {
                 Frame f = WindowManager.getDefault().getMainWindow();
                 f.setTitle(Case.getAppName()); // set the window name to just application name
             });
