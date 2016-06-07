@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-16 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -56,8 +56,8 @@ import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 
 /**
- * Customized {@link StackedBarChart<String, Number>} used to display the event
- * counts in {@link CountsViewPane}
+ * Customized StackedBarChart<String, Number> used to display the event counts
+ * in CountsViewPane.
  */
 final class EventCountsChart extends StackedBarChart<String, Number> implements TimeLineChart<String> {
 
@@ -70,10 +70,11 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
     private IntervalSelector<? extends String> intervalSelector;
 
     final ObservableList<Node> selectedNodes;
+
     /**
-     * * the RangeDivisionInfo for the currently displayed time range, used to
-     * correct the interval provided {@link  EventCountsChart#intervalSelector}
-     * by padding the end with one 'period'
+     * the RangeDivisionInfo for the currently displayed time range, used to
+     * correct the interval provided by intervalSelector by padding the end with
+     * one 'period'
      */
     private RangeDivisionInfo rangeInfo;
 
@@ -81,6 +82,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
         super(dateAxis, countAxis);
         this.controller = controller;
         this.filteredEvents = controller.getEventsModel();
+
         //configure constant properties on axes and chart
         dateAxis.setAnimated(true);
         dateAxis.setLabel(null);
@@ -114,23 +116,8 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
     }
 
     @Override
-    public void clearIntervalSelector() {
-        getChartChildren().remove(intervalSelector);
-        intervalSelector = null;
-    }
-
     public void clearContextMenu() {
         chartContextMenu = null;
-    }
-
-    /**
-     * used by {@link CountsViewPane#BarClickHandler} to close the context menu
-     * when the bar menu is requested
-     *
-     * @return the context menu for this chart
-     */
-    public ContextMenu getContextMenu() {
-        return chartContextMenu;
     }
 
     @Override
@@ -151,6 +138,12 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
     }
 
     @Override
+    public void clearIntervalSelector() {
+        getChartChildren().remove(intervalSelector);
+        intervalSelector = null;
+    }
+
+    @Override
     public IntervalSelector<? extends String> getIntervalSelector() {
         return intervalSelector;
     }
@@ -158,6 +151,8 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
     @Override
     public void setIntervalSelector(IntervalSelector<? extends String> newIntervalSelector) {
         intervalSelector = newIntervalSelector;
+        //Add a listener that sizes the interval selector to its preferred size.
+        intervalSelector.prefHeightProperty().addListener(observable -> newIntervalSelector.autosize());
         getChartChildren().add(getIntervalSelector());
     }
 
@@ -213,8 +208,8 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
                 tooltip.setGraphic(new ImageView(eventType.getFXImage()));
                 Tooltip.install(node, tooltip);
 
-                node.setOnMouseEntered((mouseEntered) -> node.setEffect(new DropShadow(10, eventType.getColor())));
-                node.setOnMouseExited((MouseEvent mouseExited) -> node.setEffect(selectedNodes.contains(node) ? SELECTED_NODE_EFFECT : null));
+                node.setOnMouseEntered(mouseEntered -> node.setEffect(new DropShadow(10, eventType.getColor())));
+                node.setOnMouseExited(mouseExited -> node.setEffect(selectedNodes.contains(node) ? SELECTED_NODE_EFFECT : null));
                 node.setOnMouseClicked(new BarClickHandler(item));
             }
         });
