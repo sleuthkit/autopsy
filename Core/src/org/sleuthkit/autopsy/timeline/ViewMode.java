@@ -21,7 +21,9 @@ package org.sleuthkit.autopsy.timeline;
 /**
  *
  */
-public enum VisualizationMode {
+public enum ViewMode {
 
-    COUNTS, DETAIL;
+    COUNTS,
+    DETAIL,
+    LIST;
 }

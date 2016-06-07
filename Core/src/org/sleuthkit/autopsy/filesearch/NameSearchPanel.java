@@ -24,7 +24,6 @@
  */
 package org.sleuthkit.autopsy.filesearch;
 
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JCheckBox;
@@ -43,6 +42,7 @@ class NameSearchPanel extends javax.swing.JPanel {
     NameSearchPanel() {
         initComponents();
         customizeComponents();
+        setComponentsEnabled();
     }
 
     private void customizeComponents() {
@@ -77,6 +77,12 @@ class NameSearchPanel extends javax.swing.JPanel {
     JTextField getSearchTextField() {
         return searchTextField;
     }
+    
+    void setComponentsEnabled() {
+        boolean enabled = nameCheckBox.isSelected();
+        this.searchTextField.setEnabled(enabled);
+        this.noteNameLabel.setEnabled(enabled);
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -110,6 +116,11 @@ class NameSearchPanel extends javax.swing.JPanel {
 
         nameCheckBox.setFont(nameCheckBox.getFont().deriveFont(nameCheckBox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         nameCheckBox.setText(org.openide.util.NbBundle.getMessage(NameSearchPanel.class, "NameSearchPanel.nameCheckBox.text")); // NOI18N
+        nameCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                nameCheckBoxActionPerformed(evt);
+            }
+        });
 
         searchTextField.setFont(searchTextField.getFont().deriveFont(searchTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         searchTextField.setText(org.openide.util.NbBundle.getMessage(NameSearchPanel.class, "NameSearchPanel.searchTextField.text")); // NOI18N
@@ -154,6 +165,11 @@ class NameSearchPanel extends javax.swing.JPanel {
     private void searchTextFieldMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_searchTextFieldMouseClicked
 
         this.nameCheckBox.setSelected(true);     }//GEN-LAST:event_searchTextFieldMouseClicked
+
+    private void nameCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nameCheckBoxActionPerformed
+        setComponentsEnabled();
+    }//GEN-LAST:event_nameCheckBoxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuItem copyMenuItem;
     private javax.swing.JMenuItem cutMenuItem;

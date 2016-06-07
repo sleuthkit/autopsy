@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.logging.Level;
 import org.apache.commons.codec.binary.Base64;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
@@ -68,6 +69,7 @@ class TangoMessageAnalyzer {
         }
     }
 
+    @Messages({"TangoMessageAnalyzer.indexError.message=Failed to index Tango message artifact for keyword search."})
     private static void findTangoMessagesInDB(String DatabasePath, AbstractFile f) {
         Connection connection = null;
         ResultSet resultSet = null;
@@ -110,14 +112,14 @@ class TangoMessageAnalyzer {
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE, moduleName,
                         NbBundle.getMessage(TangoMessageAnalyzer.class,
                                 "TangoMessageAnalyzer.bbAttribute.tangoMessage")));
-                
+
                 try {
                     // index the artifact for keyword search
                     blackboard.indexArtifact(bba);
                 } catch (Blackboard.BlackboardException ex) {
-                    logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", bba.getDisplayName()), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(
-                        NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), bba.getDisplayName());
+                            Bundle.TangoMessageAnalyzer_indexError_message(), bba.getDisplayName());
+                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
                 }
             }
         } catch (Exception e) {
