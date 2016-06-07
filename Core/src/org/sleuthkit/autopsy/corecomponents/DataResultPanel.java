@@ -341,6 +341,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
         if (null != explorerManager && null != emNodeSelectionListener) {
             explorerManager.removePropertyChangeListener(emNodeSelectionListener);
+            explorerManager = null;
         }
         
         // clear all set nodes

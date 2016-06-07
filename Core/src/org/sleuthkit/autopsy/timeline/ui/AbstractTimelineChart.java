@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-16 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -309,7 +309,15 @@ public abstract class AbstractTimelineChart<X, Y, NodeType extends Node, ChartTy
         //make a copy of the list sorted by position along axis
         SortedList<Axis.TickMark<X>> tickMarks = getXAxis().getTickMarks().sorted(Comparator.comparing(Axis.TickMark::getPosition));
 
-        if (tickMarks.isEmpty() == false) {
+        if (tickMarks.isEmpty()) {
+            /*
+             * Since StackedBarChart does some funky animation/background thread
+             * stuff, sometimes there are no tick marks even though there is
+             * data. Dispatching another call to layoutDateLables() allows that
+             * stuff time to run before we check a gain.
+             */
+            Platform.runLater(this::layoutDateLabels);
+        } else {
             //get the spacing between ticks in the underlying axis
             double spacing = getTickSpacing();
 
