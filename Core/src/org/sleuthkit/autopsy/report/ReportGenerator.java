@@ -65,13 +65,6 @@ class ReportGenerator {
     private SleuthkitCase skCase = currentCase.getSleuthkitCase();
 
     /**
-     * Only one of the ReportModules below should be non-null for a given report
-     * generator.
-     */
-    private TableReportModule tableReportModule;
-    private GeneralReportModule generalReportModule;
-    private FileReportModule fileReportModule;
-    /**
      * Progress panel that can be used to check for cancellation.
      */
     private ReportProgressPanel progressPanel;
@@ -99,14 +92,9 @@ class ReportGenerator {
     }
 
     /**
-     * Creates a report generator. Only one of the passed arguments should be
-     * non-null.
-     *
-     * @param tableModule    The table report module
-     * @param generalModule  The general report module
-     * @param fileListModule The file report module
+     * Creates a report generator.
      */
-    ReportGenerator(TableReportModule tableModule, GeneralReportModule generalModule, FileReportModule fileListModule) {
+    ReportGenerator() {
         // Create the root reports directory path of the form: <CASE DIRECTORY>/Reports/<Case fileName> <Timestamp>/
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
         Date date = new Date();
@@ -121,17 +109,14 @@ class ReportGenerator {
         } catch (IOException ex) {
             errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedMakeRptFolder"));
             logger.log(Level.SEVERE, "Failed to make report folder, may be unable to generate reports.", ex); //NON-NLS
-            return;
         }
-
-        // Initialize the progress panels
     }
 
     /**
      * Display the progress panels to the user, and add actions to close the
      * parent dialog.
      */
-    public void displayProgressPanel() {
+    private void displayProgressPanel() {
         final JDialog dialog = new JDialog(new JFrame(), true);
         dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
         dialog.setTitle(NbBundle.getMessage(this.getClass(), "ReportGenerator.displayProgress.title.text"));
@@ -166,37 +151,10 @@ class ReportGenerator {
      */
     void generateGeneralReport(GeneralReportModule generalReportModule) {
         if (generalReportModule != null) {
-            String reportFilePath = generalReportModule.getRelativeFilePath();
-            if (!reportFilePath.isEmpty()) {
-                this.progressPanel = panel.addReport(generalReportModule.getName(), reportPath + reportFilePath);
-            } else {
-                this.progressPanel = panel.addReport(generalReportModule.getName(), null);
-            }
-            SwingWorker<Integer, Integer> worker = new SwingWorker<Integer, Integer>() {
-                @Override
-                protected Integer doInBackground() throws Exception {
-                    generalReportModule.generateReport(reportPath, progressPanel);
-                    return 1;
-                }
-
-                @Override
-                protected void done() {
-                    try {
-                        get();
-                    } catch (InterruptedException | ExecutionException ex) {
-                        MessageNotifyUtil.Notify.show(
-                                NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorTitle"),
-                                NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorText") + ex.getLocalizedMessage(),
-                                MessageNotifyUtil.MessageType.ERROR);
-                        logger.log(Level.SEVERE, "failed to generate reports", ex); //NON-NLS
-                    } // catch and ignore if we were cancelled
-                    catch (java.util.concurrent.CancellationException ex) {
-                    } finally {
-                        displayReportErrors();
-                        errorList.clear();
-                    }
-                }
-            };
+            setupProgressPanel(generalReportModule);
+            ReportWorker worker = new ReportWorker(() -> {
+                generalReportModule.generateReport(reportPath, progressPanel);
+            });
             worker.execute();
             displayProgressPanel();
         }
@@ -212,41 +170,14 @@ class ReportGenerator {
      */
     void generateTableReport(TableReportModule tableReport, Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) {
         if (tableReport != null && null != artifactTypeSelections) {
-            String reportFilePath = tableReport.getRelativeFilePath();
-            if (!reportFilePath.isEmpty()) {
-                this.progressPanel = panel.addReport(tableReport.getName(), reportPath + reportFilePath);
-            } else {
-                this.progressPanel = panel.addReport(tableReport.getName(), null);
-            }
-            SwingWorker<Integer, Integer> worker = new SwingWorker<Integer, Integer>() {
-                @Override
-                protected Integer doInBackground() throws Exception {
-                    tableReport.startReport(reportPath);
-                    TableReportGenerator generator = new TableReportGenerator(artifactTypeSelections, tagNameSelections, progressPanel, tableReport);
-                    generator.execute();
-                    tableReport.endReport();
-                    errorList = generator.getErrorList();
-                    return 1;
-                }
-
-                @Override
-                protected void done() {
-                    try {
-                        get();
-                    } catch (InterruptedException | ExecutionException ex) {
-                        MessageNotifyUtil.Notify.show(
-                                NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorTitle"),
-                                NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorText") + ex.getLocalizedMessage(),
-                                MessageNotifyUtil.MessageType.ERROR);
-                        logger.log(Level.SEVERE, "failed to generate reports", ex); //NON-NLS
-                    } // catch and ignore if we were cancelled
-                    catch (java.util.concurrent.CancellationException ex) {
-                    } finally {
-                        displayReportErrors();
-                        errorList.clear();
-                    }
-                }
-            };
+            setupProgressPanel(tableReport);
+            ReportWorker worker = new ReportWorker(() -> {
+                tableReport.startReport(reportPath);
+                TableReportGenerator generator = new TableReportGenerator(artifactTypeSelections, tagNameSelections, progressPanel, tableReport);
+                generator.execute();
+                tableReport.endReport();
+                errorList = generator.getErrorList();
+            });
             worker.execute();
             displayProgressPanel();
         }
@@ -266,73 +197,46 @@ class ReportGenerator {
                     enabled.add(e.getKey());
                 }
             }
-            String reportFilePath = fileReportModule.getRelativeFilePath();
-            if (!reportFilePath.isEmpty()) {
-                this.progressPanel = panel.addReport(fileReportModule.getName(), reportPath + reportFilePath);
-            } else {
-                this.progressPanel = panel.addReport(fileReportModule.getName(), null);
-            }
-            SwingWorker<Integer, Integer> worker = new SwingWorker<Integer, Integer>() {
-                @Override
-                protected Integer doInBackground() throws Exception {
-                    if (progressPanel.getStatus() != ReportStatus.CANCELED) {
-                        progressPanel.start();
+            setupProgressPanel(fileReportModule);
+            ReportWorker worker = new ReportWorker(() -> {
+                if (progressPanel.getStatus() != ReportStatus.CANCELED) {
+                    progressPanel.start();
+                    progressPanel.updateStatusLabel(
+                            NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.queryingDb.text"));
+                }
+
+                List<AbstractFile> files = getFiles();
+                int numFiles = files.size();
+                if (progressPanel.getStatus() != ReportStatus.CANCELED) {
+                    fileReportModule.startReport(reportPath);
+                    fileReportModule.startTable(enabled);
+                }
+                progressPanel.setIndeterminate(false);
+                progressPanel.setMaximumProgress(numFiles);
+
+                int i = 0;
+                // Add files to report.
+                for (AbstractFile file : files) {
+                    // Check to see if any reports have been cancelled.
+                    if (progressPanel.getStatus() == ReportStatus.CANCELED) {
+                        return;
+                    } else {
+                        fileReportModule.addRow(file, enabled);
+                        progressPanel.increment();
+                    }
+
+                    if ((i % 100) == 0) {
                         progressPanel.updateStatusLabel(
-                                NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.queryingDb.text"));
+                                NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processingFile.text",
+                                        file.getName()));
                     }
-
-                    List<AbstractFile> files = getFiles();
-                    int numFiles = files.size();
-                    if (progressPanel.getStatus() != ReportStatus.CANCELED) {
-                        fileReportModule.startReport(reportPath);
-                        fileReportModule.startTable(enabled);
-                    }
-                    progressPanel.setIndeterminate(false);
-                    progressPanel.setMaximumProgress(numFiles);
-
-                    int i = 0;
-                    // Add files to report.
-                    for (AbstractFile file : files) {
-                        // Check to see if any reports have been cancelled.
-                        if (progressPanel.getStatus() == ReportStatus.CANCELED) {
-                            return 0;
-                        } else {
-                            fileReportModule.addRow(file, enabled);
-                            progressPanel.increment();
-                        }
-
-                        if ((i % 100) == 0) {
-                            progressPanel.updateStatusLabel(
-                                    NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processingFile.text",
-                                            file.getName()));
-                        }
-                        i++;
-                    }
-
-                    fileReportModule.endTable();
-                    fileReportModule.endReport();
-                    progressPanel.complete(ReportStatus.COMPLETE);
-                    return 1;
+                    i++;
                 }
 
-                @Override
-                protected void done() {
-                    try {
-                        get();
-                    } catch (InterruptedException | ExecutionException ex) {
-                        MessageNotifyUtil.Notify.show(
-                                NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorTitle"),
-                                NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorText") + ex.getLocalizedMessage(),
-                                MessageNotifyUtil.MessageType.ERROR);
-                        logger.log(Level.SEVERE, "failed to generate reports", ex); //NON-NLS
-                    } // catch and ignore if we were cancelled
-                    catch (java.util.concurrent.CancellationException ex) {
-                    } finally {
-                        displayReportErrors();
-                        errorList.clear();
-                    }
-                }
-            };
+                fileReportModule.endTable();
+                fileReportModule.endReport();
+                progressPanel.complete(ReportStatus.COMPLETE);
+            });
             worker.execute();
             displayProgressPanel();
         }
@@ -357,5 +261,48 @@ class ReportGenerator {
             logger.log(Level.SEVERE, "failed to generate reports. Unable to get all files in the image.", ex); //NON-NLS
             return Collections.<AbstractFile>emptyList();
         }
+    }
+
+    private void setupProgressPanel(ReportModule module) {
+        String reportFilePath = module.getRelativeFilePath();
+        if (!reportFilePath.isEmpty()) {
+            this.progressPanel = panel.addReport(module.getName(), reportPath + reportFilePath);
+        } else {
+            this.progressPanel = panel.addReport(module.getName(), null);
+        }
+    }
+
+    private class ReportWorker extends SwingWorker<Void, Void> {
+
+        private final Runnable doInBackground;
+
+        private ReportWorker(Runnable doInBackground) {
+            this.doInBackground = doInBackground;
+        }
+
+        @Override
+        protected Void doInBackground() throws Exception {
+            doInBackground.run();
+            return null;
+        }
+
+        @Override
+        protected void done() {
+            try {
+                get();
+            } catch (InterruptedException | ExecutionException ex) {
+                MessageNotifyUtil.Notify.show(
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorTitle"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorText") + ex.getLocalizedMessage(),
+                        MessageNotifyUtil.MessageType.ERROR);
+                logger.log(Level.SEVERE, "failed to generate reports", ex); //NON-NLS
+            } // catch and ignore if we were cancelled
+            catch (java.util.concurrent.CancellationException ex) {
+            } finally {
+                displayReportErrors();
+                errorList.clear();
+            }
+        }
+
     }
 }

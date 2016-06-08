@@ -65,9 +65,7 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
         wiz.setTitle(NbBundle.getMessage(ReportWizardAction.class, "ReportWizardAction.reportWiz.title"));
         if (DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) {
             @SuppressWarnings("unchecked")
-            ReportGenerator generator = new ReportGenerator((TableReportModule) wiz.getProperty("tableModule"), //NON-NLS
-                    (GeneralReportModule) wiz.getProperty("generalModule"), //NON-NLS
-                    (FileReportModule) wiz.getProperty("fileModule")); //NON-NLS
+            ReportGenerator generator = new ReportGenerator(); //NON-NLS
             TableReportModule tableReport = (TableReportModule) wiz.getProperty("tableModule");
             GeneralReportModule generalReport = (GeneralReportModule) wiz.getProperty("generalModule");
             FileReportModule fileReport = (FileReportModule) wiz.getProperty("fileModule");
