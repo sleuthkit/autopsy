@@ -30,9 +30,9 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
@@ -40,13 +40,22 @@ import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
+import org.sleuthkit.autopsy.ingest.FileIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
+import org.sleuthkit.autopsy.ingest.IngestMonitor;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
+import org.sleuthkit.autopsy.ingest.ProcTerminationCode;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
@@ -54,15 +63,6 @@ import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.Volume;
-import org.sleuthkit.autopsy.coreutils.FileUtil;
-import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.ingest.ProcTerminationCode;
-import org.sleuthkit.autopsy.ingest.FileIngestModuleProcessTerminator;
-import org.sleuthkit.autopsy.ingest.IngestMonitor;
-import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 
 /**
  * A file ingest module that runs the Unallocated Carver executable with
@@ -205,6 +205,12 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                         NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.NotEnoughDiskSpace"));
                 return IngestModule.ProcessResult.ERROR;
             }
+            if (this.context.fileIngestIsCancelled() == true) {
+                // if it was cancelled by the user, result is OK
+                logger.log(Level.INFO, "PhotoRec cancelled by user"); // NON-NLS
+                MessageNotifyUtil.Notify.info(PhotoRecCarverIngestModuleFactory.getModuleName(), NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.cancelledByUser"));
+                return IngestModule.ProcessResult.OK;
+            }
 
             // Write the file to disk.
             long writestart = System.currentTimeMillis();
@@ -262,6 +268,12 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             java.io.File newAuditFile = new java.io.File(Paths.get(outputDirPath.toString(), PHOTOREC_REPORT).toString()); //NON-NLS
             oldAuditFile.renameTo(newAuditFile);
 
+            if (this.context.fileIngestIsCancelled() == true) {
+                // if it was cancelled by the user, result is OK
+                logger.log(Level.INFO, "PhotoRec cancelled by user"); // NON-NLS
+                MessageNotifyUtil.Notify.info(PhotoRecCarverIngestModuleFactory.getModuleName(), NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.cancelledByUser"));
+                return IngestModule.ProcessResult.OK;
+            }
             Path pathToRemove = Paths.get(outputDirPath.toAbsolutePath().toString());
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(pathToRemove)) {
                 for (Path entry : stream) {
@@ -276,7 +288,13 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             // Now that we've cleaned up the folders and data files, parse the xml output file to add carved items into the database
             long calcstart = System.currentTimeMillis();
             PhotoRecCarverOutputParser parser = new PhotoRecCarverOutputParser(outputDirPath);
-            List<LayoutFile> carvedItems = parser.parse(newAuditFile, id, file);
+            if (this.context.fileIngestIsCancelled() == true) {
+                // if it was cancelled by the user, result is OK
+                logger.log(Level.INFO, "PhotoRec cancelled by user"); // NON-NLS
+                MessageNotifyUtil.Notify.info(PhotoRecCarverIngestModuleFactory.getModuleName(), NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.cancelledByUser"));
+                return IngestModule.ProcessResult.OK;
+            }
+            List<LayoutFile> carvedItems = parser.parse(newAuditFile, id, file, this.context);
             long calcdelta = (System.currentTimeMillis() - calcstart);
             totals.totalParsetime.addAndGet(calcdelta);
             if (carvedItems != null) { // if there were any results from carving, add the unallocated carving event to the reports list.
