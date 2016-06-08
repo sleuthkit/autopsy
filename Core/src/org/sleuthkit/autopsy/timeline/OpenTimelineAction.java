@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-16 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,8 +23,6 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.DialogPane;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
@@ -75,7 +73,7 @@ public class OpenTimelineAction extends CallableSystemAction {
     @NbBundle.Messages({
         "OpenTimelineAction.settingsErrorMessage=Failed to initialize timeline settings.",
         "OpenTimeLineAction.msgdlg.text=Could not create timeline, there are no data sources."})
-    public void showTimeline(AbstractFile file, Set<BlackboardArtifact> artifactS) {
+    public void showTimeline(AbstractFile file, Set<BlackboardArtifact> artifacts) {
         //check case
         if (!Case.isCaseOpen()) {
             return;
@@ -95,14 +93,11 @@ public class OpenTimelineAction extends CallableSystemAction {
                     timeLineController = new TimeLineController(currentCase);
                 }
                 
-                javafx.scene.control.Dialog<SingleEvent> d = new javafx.scene.control.Dialog<>();
-                
-                DialogPane dp = d.getDialogPane();
-                dp.setContent(new ComboBox);
+                ShowInTimelineDialog d = new ShowInTimelineDialog(timeLineController, file, artifacts);
                 
                 Optional<SingleEvent> result = d.showAndWait();
                 
-                timeLineController.openTimeLine(file, artifactS);
+//                timeLineController.openTimeLine(result);
             } catch (IOException iOException) {
                 MessageNotifyUtil.Message.error(Bundle.OpenTimelineAction_settingsErrorMessage());
                 LOGGER.log(Level.SEVERE, "Failed to initialize per case timeline settings.", iOException);

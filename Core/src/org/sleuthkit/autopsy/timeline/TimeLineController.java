@@ -90,6 +90,8 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.zooming.TimeUnits;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  * Controller in the MVC design along with FilteredEventsModel TimeLineView.
@@ -401,7 +403,7 @@ public class TimeLineController {
     @NbBundle.Messages({
         "TimeLineController.setIngestRunning.errMsgRunning=Failed to mark the timeline db as populated while ingest was running. Some results may be out of date or missing.",
         "TimeLinecontroller.setIngestRunning.errMsgNotRunning=Failed to mark the timeline db as populated while ingest was not running. Some results may be out of date or missing."})
-    private void rebuildRepoHelper(Function<Consumer<Worker.State>, CancellationProgressTask<?>> repoBuilder, Boolean markDBNotStale, Set<Long> fileIDs, Set<Long> artifactIDS) {
+    private void rebuildRepoHelper(Function<Consumer<Worker.State>, CancellationProgressTask<?>> repoBuilder, Boolean markDBNotStale, AbstractFile file, Set<BlackboardArtifact> artifacts) {
 
         boolean ingestRunning = IngestManager.getInstance().isIngestRunning();
         //if there is an existing prompt or progressdialog, just show that
@@ -436,7 +438,7 @@ public class TimeLineController {
                         filteredEvents.postDBUpdated();
                     }
                     SwingUtilities.invokeLater(this::showWindow);
-                    TimeLineController.this.showEvents(fileIDs, artifactIDS);
+//                    TimeLineController.this.showEvents(file, artifacts);
                     break;
 
                 case FAILED:
@@ -458,8 +460,8 @@ public class TimeLineController {
      * done.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    public void rebuildRepo(Set<Long> fileIDs, Set<Long> artifactIDS) {
-        rebuildRepoHelper(eventsRepository::rebuildRepository, true, fileIDs, artifactIDS);
+    public void rebuildRepo(AbstractFile file, Set<BlackboardArtifact> artifacts) {
+        rebuildRepoHelper(eventsRepository::rebuildRepository, true, file, artifacts);
     }
 
     /**
@@ -467,8 +469,8 @@ public class TimeLineController {
      * timeline when done.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    void rebuildTagsTable(Set<Long> fileIDs, Set<Long> artifactIDS) {
-        rebuildRepoHelper(eventsRepository::rebuildTags, false, fileIDs, artifactIDS);
+    void rebuildTagsTable(AbstractFile file, Set<BlackboardArtifact> artifacts) {
+        rebuildRepoHelper(eventsRepository::rebuildTags, false, file, artifacts);
     }
 
     /**
@@ -517,7 +519,7 @@ public class TimeLineController {
      * necessary, and show the timeline window.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    void openTimeLine(Set<Long> fileIDs, Set<Long> artifactIDS) {
+    void openTimeLine(AbstractFile file, Set<BlackboardArtifact> artifact) {
         // listen for case changes (specifically images being added, and case changes).
         if (Case.isCaseOpen() && !listeningToAutopsy) {
             IngestManager.getInstance().addIngestModuleEventListener(ingestModuleListener);
@@ -526,7 +528,7 @@ public class TimeLineController {
             listeningToAutopsy = true;
         }
 
-        Platform.runLater(() -> promptForRebuild(fileIDs, artifactIDS));
+        Platform.runLater(() -> promptForRebuild(file, artifact));
     }
 
     /**
@@ -536,7 +538,7 @@ public class TimeLineController {
      * rebuild is done, or immediately if the rebuild is not confirmed. F
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private void promptForRebuild(Set<Long> fileIDs, Set<Long> artifactIDS) {
+    private void promptForRebuild(AbstractFile file, Set<BlackboardArtifact> artifacts) {
         //if there is an existing prompt or progressdialog, just show that
         if (promptDialogManager.bringCurrentDialogToFront()) {
             return;
@@ -544,7 +546,7 @@ public class TimeLineController {
 
         //if the repo is empty just (re)build it with out asking, the user can always cancel part way through
         if (eventsRepository.countAllEvents() == 0) {
-            rebuildRepo(fileIDs, artifactIDS);
+            rebuildRepo(file, artifacts);
             return;
         }
 
@@ -552,7 +554,7 @@ public class TimeLineController {
         List<String> rebuildReasons = getRebuildReasons();
         if (false == rebuildReasons.isEmpty()) {
             if (promptDialogManager.confirmRebuild(rebuildReasons)) {
-                rebuildRepo(fileIDs, artifactIDS);
+                rebuildRepo(file, artifacts);
                 return;
             }
         }
@@ -564,7 +566,7 @@ public class TimeLineController {
          *
          * //TODO: can we check the tags to see if we need to do this?
          */
-        rebuildTagsTable(fileIDs, artifactIDS);
+        rebuildTagsTable(file, artifacts);
     }
 
     /**
