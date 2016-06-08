@@ -659,7 +659,7 @@ class ListTimeline extends BorderPane {
         }
     }
 
-    private class ChronoFieldListCell extends ListCell<ChronoField> {
+    static private class ChronoFieldListCell extends ListCell<ChronoField> {
 
         @Override
         protected void updateItem(ChronoField item, boolean empty) {

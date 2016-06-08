@@ -19,9 +19,6 @@
 package org.sleuthkit.autopsy.timeline;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.Set;
 import java.util.logging.Level;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
@@ -35,7 +32,6 @@ import org.sleuthkit.autopsy.core.Installer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
@@ -67,13 +63,13 @@ public class OpenTimelineAction extends CallableSystemAction {
     @Override
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void performAction() {
-        showTimeline(null, Collections.emptySet());
+        showTimeline();
     }
 
     @NbBundle.Messages({
         "OpenTimelineAction.settingsErrorMessage=Failed to initialize timeline settings.",
         "OpenTimeLineAction.msgdlg.text=Could not create timeline, there are no data sources."})
-    public void showTimeline(AbstractFile file, Set<BlackboardArtifact> artifacts) {
+    private void showTimeline(AbstractFile file, BlackboardArtifact artifact) {
         //check case
         if (!Case.isCaseOpen()) {
             return;
@@ -92,12 +88,9 @@ public class OpenTimelineAction extends CallableSystemAction {
                     timeLineController.shutDownTimeLine();
                     timeLineController = new TimeLineController(currentCase);
                 }
-                
-                ShowInTimelineDialog d = new ShowInTimelineDialog(timeLineController, file, artifacts);
-                
-                Optional<SingleEvent> result = d.showAndWait();
-                
-//                timeLineController.openTimeLine(result);
+
+                timeLineController.openTimeLine(file, artifact);
+
             } catch (IOException iOException) {
                 MessageNotifyUtil.Message.error(Bundle.OpenTimelineAction_settingsErrorMessage());
                 LOGGER.log(Level.SEVERE, "Failed to initialize per case timeline settings.", iOException);
@@ -105,6 +98,18 @@ public class OpenTimelineAction extends CallableSystemAction {
         } catch (IllegalStateException e) {
             //there is no case...   Do nothing.
         }
+    }
+
+    public void showTimeline() {
+        showTimeline(null, null);
+    }
+
+    public void showFileInTimeline(AbstractFile file) {
+        showTimeline(file, null);
+    }
+
+    public void showArtifactInTimeline(BlackboardArtifact artifact) {
+        showTimeline(null, artifact);
     }
 
     @Override

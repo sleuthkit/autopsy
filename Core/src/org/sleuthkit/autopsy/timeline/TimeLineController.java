@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
@@ -403,7 +404,7 @@ public class TimeLineController {
     @NbBundle.Messages({
         "TimeLineController.setIngestRunning.errMsgRunning=Failed to mark the timeline db as populated while ingest was running. Some results may be out of date or missing.",
         "TimeLinecontroller.setIngestRunning.errMsgNotRunning=Failed to mark the timeline db as populated while ingest was not running. Some results may be out of date or missing."})
-    private void rebuildRepoHelper(Function<Consumer<Worker.State>, CancellationProgressTask<?>> repoBuilder, Boolean markDBNotStale, AbstractFile file, Set<BlackboardArtifact> artifacts) {
+    private void rebuildRepoHelper(Function<Consumer<Worker.State>, CancellationProgressTask<?>> repoBuilder, Boolean markDBNotStale, AbstractFile file, BlackboardArtifact artifact) {
 
         boolean ingestRunning = IngestManager.getInstance().isIngestRunning();
         //if there is an existing prompt or progressdialog, just show that
@@ -437,8 +438,19 @@ public class TimeLineController {
                         setEventsDBStale(false);
                         filteredEvents.postDBUpdated();
                     }
-                    SwingUtilities.invokeLater(this::showWindow);
-//                    TimeLineController.this.showEvents(file, artifacts);
+                    
+                    if (file == null && artifact==null) {
+                        SwingUtilities.invokeLater(this::showWindow);
+                        TimeLineController.this.showFullRange();
+                    } else {
+                        ShowInTimelineDialog d = new ShowInTimelineDialog(this, file, artifact);
+
+                        Optional<EventInTimeRange> result = d.showAndWait();
+                        result.ifPresent((EventInTimeRange t) -> {
+                            SwingUtilities.invokeLater(this::showWindow);
+                            showEvents(t.getEventIDs(), t.getRange());
+                        });
+                    }
                     break;
 
                 case FAILED:
@@ -460,8 +472,8 @@ public class TimeLineController {
      * done.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    public void rebuildRepo(AbstractFile file, Set<BlackboardArtifact> artifacts) {
-        rebuildRepoHelper(eventsRepository::rebuildRepository, true, file, artifacts);
+    public void rebuildRepo(AbstractFile file, BlackboardArtifact artifact) {
+        rebuildRepoHelper(eventsRepository::rebuildRepository, true, file, artifact);
     }
 
     /**
@@ -469,31 +481,31 @@ public class TimeLineController {
      * timeline when done.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    void rebuildTagsTable(AbstractFile file, Set<BlackboardArtifact> artifacts) {
-        rebuildRepoHelper(eventsRepository::rebuildTags, false, file, artifacts);
+    void rebuildTagsTable(AbstractFile file,BlackboardArtifact artifact) {
+        rebuildRepoHelper(eventsRepository::rebuildTags, false, file, artifact);
     }
 
     /**
      * Show the entire range of the timeline.
      */
-    public boolean showFullRange() {
+    private boolean showFullRange() {
         synchronized (filteredEvents) {
             return pushTimeRange(filteredEvents.getSpanningInterval());
         }
     }
 
-    public void showEvents(Set<Long> fileIDs, Set<Long> artifactIDS) {
-        if (fileIDs.isEmpty() && artifactIDS.isEmpty()) {
+    public void showEvents(Set<Long> eventIDs, Interval interval) {
+        if (eventIDs == null && interval == null) {
             showFullRange();
         } else {
-
             synchronized (filteredEvents) {
-                List<Long> eventIDs = filteredEvents.getDerivedEventIDs(fileIDs, artifactIDS);
-                Interval interval = filteredEvents.getSpanningInterval(eventIDs);
-                pushTimeRange(interval);
-                selectEventIDs(eventIDs, () -> setViewMode(ViewMode.LIST));
+                if (interval != null) {
+                    pushTimeRange(interval);
+                }
+                if (eventIDs != null) {
+                    selectEventIDs(eventIDs, () -> setViewMode(ViewMode.LIST));
+                }
             }
-
         }
     }
 
@@ -519,7 +531,7 @@ public class TimeLineController {
      * necessary, and show the timeline window.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    void openTimeLine(AbstractFile file, Set<BlackboardArtifact> artifact) {
+    void openTimeLine(AbstractFile file, BlackboardArtifact artifact) {
         // listen for case changes (specifically images being added, and case changes).
         if (Case.isCaseOpen() && !listeningToAutopsy) {
             IngestManager.getInstance().addIngestModuleEventListener(ingestModuleListener);
@@ -538,7 +550,7 @@ public class TimeLineController {
      * rebuild is done, or immediately if the rebuild is not confirmed. F
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private void promptForRebuild(AbstractFile file, Set<BlackboardArtifact> artifacts) {
+    private void promptForRebuild(AbstractFile file, BlackboardArtifact artifact) {
         //if there is an existing prompt or progressdialog, just show that
         if (promptDialogManager.bringCurrentDialogToFront()) {
             return;
@@ -546,7 +558,7 @@ public class TimeLineController {
 
         //if the repo is empty just (re)build it with out asking, the user can always cancel part way through
         if (eventsRepository.countAllEvents() == 0) {
-            rebuildRepo(file, artifacts);
+            rebuildRepo(file, artifact);
             return;
         }
 
@@ -554,7 +566,7 @@ public class TimeLineController {
         List<String> rebuildReasons = getRebuildReasons();
         if (false == rebuildReasons.isEmpty()) {
             if (promptDialogManager.confirmRebuild(rebuildReasons)) {
-                rebuildRepo(file, artifacts);
+                rebuildRepo(file, artifact);
                 return;
             }
         }
@@ -566,7 +578,7 @@ public class TimeLineController {
          *
          * //TODO: can we check the tags to see if we need to do this?
          */
-        rebuildTagsTable(file, artifacts);
+        rebuildTagsTable(file, artifact);
     }
 
     /**
@@ -618,8 +630,7 @@ public class TimeLineController {
      */
     synchronized public void pushPeriod(ReadablePeriod period) {
         synchronized (filteredEvents) {
-            final DateTime middleOf = IntervalUtils.middleOf(filteredEvents.timeRangeProperty().get());
-            pushTimeRange(IntervalUtils.getIntervalAround(middleOf, period));
+            pushTimeRange(IntervalUtils.getIntervalAroundMiddle(filteredEvents.getTimeRange(), period));
         }
     }
 

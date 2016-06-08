@@ -13,31 +13,29 @@ import javax.swing.AbstractAction;
 import org.openide.util.Utilities;
 import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.timeline.OpenTimelineAction;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.ArtifactEventType;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  *
  */
-public class ViewInTimeLineAction extends AbstractAction {
+public class ViewFileInTimelineAction extends AbstractAction {
 
     private static final long serialVersionUID = 1L;
 
     // This class is a singleton to support multi-selection of nodes, since 
     // org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick up an Action if every 
     // node in the array returns a reference to the same action object from Node.getActions(boolean).    
-    private static ViewInTimeLineAction instance;
+    private static ViewFileInTimelineAction instance;
 
-    public static synchronized ViewInTimeLineAction getInstance() {
+    public static synchronized ViewFileInTimelineAction getInstance() {
         if (null == instance) {
-            instance = new ViewInTimeLineAction();
+            instance = new ViewFileInTimelineAction();
         }
         return instance;
     }
 
-    private ViewInTimeLineAction() {
-        super("View in Timeline");
+    private ViewFileInTimelineAction() {
+        super("View file in Timeline");
     }
 
     @Override
@@ -45,19 +43,19 @@ public class ViewInTimeLineAction extends AbstractAction {
         Set<AbstractFile> files = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class).stream()
                 .collect(Collectors.toSet());
 
-        final Set<Integer> artifactEventTypeIDs = ArtifactEventType.getAllArtifactEventTypes().stream()
-                .map(ArtifactEventType::getArtifactTypeID)
-                .collect(Collectors.toSet());
-        
-        //for each artifact, get all datetime attributes for that artifact type
-        Set<BlackboardArtifact> artifacts = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class).stream()
-                .filter(artifact -> artifactEventTypeIDs.contains(artifact.getArtifactTypeID()))
-                .collect(Collectors.toSet());
+//        final Set<Integer> artifactEventTypeIDs = ArtifactEventType.getAllArtifactEventTypes().stream()
+//                .map(ArtifactEventType::getArtifactTypeID)
+//                .collect(Collectors.toSet());
+//        
+//        //for each artifact, get all datetime attributes for that artifact type
+//        Set<BlackboardArtifact> artifacts = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class).stream()
+//                .filter(artifact -> artifactEventTypeIDs.contains(artifact.getArtifactTypeID()))
+//                .collect(Collectors.toSet());
         
         if (files.size() > 1) {
             return;
         }else{
-            SystemAction.get(OpenTimelineAction.class).showTimeline(Iterables.getOnlyElement(files,null), artifacts);
+            SystemAction.get(OpenTimelineAction.class).showFileInTimeline(Iterables.getOnlyElement(files,null));//, artifacts);
         }
     }
 }

@@ -62,6 +62,7 @@ import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
@@ -429,8 +430,13 @@ public final class FilteredEventsModel {
         return false;
     }
 
-    public List<Long> getDerivedEventIDs(Set<Long> fileIDs, Set<Long> artifactIDS) {
-        return repo.getDerivedEventIDs(fileIDs, artifactIDS);
+
+    public List<Long> getEventIDsForFile(AbstractFile file, boolean includedDerivedArtifacts) {
+         return repo.getEventIDsForFile(file,includedDerivedArtifacts);
+    }
+
+    public List<Long> getEventIDsForArtifact(BlackboardArtifact artifact) {
+        return repo.getEventIDsForArtifact( artifact);
     }
 
     /**

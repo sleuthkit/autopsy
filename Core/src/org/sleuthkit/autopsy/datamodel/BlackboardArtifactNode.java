@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import javax.swing.Action;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
@@ -31,6 +32,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.ArtifactEventType;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -98,6 +100,32 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         this.setName(Long.toString(artifact.getArtifactID()));
         this.setDisplayName();
         this.setIconBaseWithExtension(ExtractedContent.getIconFilePath(artifact.getArtifactTypeID())); //NON-NLS
+    }
+
+    @Override
+    public Action[] getActions(boolean context) {
+
+        List<Action> actionsList = new ArrayList<>();
+        actionsList.addAll(Arrays.asList(super.getActions(context)));
+
+        boolean hasTimeStamp = ArtifactEventType.getAllArtifactEventTypes().stream()
+                .filter(artEventType -> artEventType.getArtifactType().getTypeID() == artifact.getArtifactTypeID())
+                .filter(artEventType -> {
+                    try {
+                        return artifact.getAttribute(artEventType.getDateTimeAttrubuteType()) != null;
+                    } catch (TskCoreException ex) {
+                        Logger.getLogger(BlackboardArtifactNode.class.getName()).log(Level.WARNING, "Error retreiving blackboard arttributes from blackboard artifact.", ex);
+                        return false;
+                    }
+                }).findAny().isPresent();
+        if (hasTimeStamp) {
+            actionsList.add(ViewArtifactInTimelineAction.getInstance());
+        }
+        
+        if (associated != null){
+            actionsList.add(ViewFileInTimelineAction.getInstance());
+        }
+        return actionsList.toArray(new Action[actionsList.size()]);
     }
 
     /**

@@ -71,6 +71,8 @@ import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskData;
@@ -670,7 +672,7 @@ public class EventDB {
     List<Long> getDerivedEventIDs(Set<Long> fileIDs, Set<Long> artifactIDS) {
         DBLock.lock();
         String query = "SELECT Group_Concat(event_id) FROM events"
-                + " WHERE file_id IN (" + StringUtils.join(fileIDs, ", ") + ")"
+                + " WHERE ( file_id IN (" + StringUtils.join(fileIDs, ", ") + ") AND artifact_id IS NULL)"
                 + " OR artifact_id IN (" + StringUtils.join(artifactIDS, ", ") + ")";
 
         try (Statement stmt = con.createStatement();
@@ -684,6 +686,47 @@ public class EventDB {
             DBLock.unlock();
         }
         return null;
+    }
+
+    List<Long> getEventIDsForArtifact(BlackboardArtifact artifact) {
+        DBLock.lock();
+        String query = "SELECT event_id FROM events WHERE artifact_id == " + artifact.getArtifactID() ;
+
+        ArrayList<Long> results = new ArrayList<>();
+
+        try (Statement stmt = con.createStatement();
+                ResultSet rs = stmt.executeQuery(query);) { // NON-NLS
+            while (rs.next()) {
+                results.add(rs.getLong("event_id"));
+            }
+
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error executing getEventIDsForArtifact query.", ex); // NON-NLS
+        } finally {
+            DBLock.unlock();
+        }
+        return results;
+    }
+
+    List<Long> getEventIDsForFile(AbstractFile file, boolean includeDerivedArtifacts) {
+        DBLock.lock();
+        String query = "SELECT event_id FROM events WHERE file_id == " + file.getId()
+                + (includeDerivedArtifacts ? "" : " AND artifact_id IS NULL");
+
+        ArrayList<Long> results = new ArrayList<>();
+
+        try (Statement stmt = con.createStatement();
+                ResultSet rs = stmt.executeQuery(query);) { // NON-NLS
+            while (rs.next()) {
+                results.add(rs.getLong("event_id"));
+            }
+
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error executing getEventIDsForFile query.", ex); // NON-NLS
+        } finally {
+            DBLock.unlock();
+        }
+        return results;
     }
 
     /**

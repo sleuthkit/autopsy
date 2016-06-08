@@ -394,13 +394,8 @@ final public class ViewFrame extends BorderPane {
         zoomMenuButton.getItems().clear();
         for (ZoomRanges zoomRange : ZoomRanges.values()) {
             zoomMenuButton.getItems().add(ActionUtils.createMenuItem(
-                    new Action(zoomRange.getDisplayName(), event -> {
-                        if (zoomRange != ZoomRanges.ALL) {
-                            controller.pushPeriod(zoomRange.getPeriod());
-                        } else {
-                            controller.showFullRange();
-                        }
-                    })));
+                    new Action(zoomRange.getDisplayName(), event -> controller.pushPeriod(zoomRange.getPeriod()))
+            ));
         }
         zoomMenuButton.setText(Bundle.ViewFrame_zoomMenuButton_text());
         ActionUtils.configureButton(new ZoomOut(controller), zoomOutButton);

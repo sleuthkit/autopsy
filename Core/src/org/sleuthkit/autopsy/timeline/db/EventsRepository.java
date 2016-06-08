@@ -207,8 +207,14 @@ public class EventsRepository {
         return eventDB.countAllEvents();
     }
 
-    public List<Long> getDerivedEventIDs(Set<Long> fileIDs, Set<Long> artifactIDS) {
-    return     eventDB.getDerivedEventIDs(fileIDs, artifactIDS);
+   
+
+    public List<Long> getEventIDsForFile(AbstractFile file, boolean includedDerivedArtifacts) {
+        return eventDB.getEventIDsForFile(file, includedDerivedArtifacts);
+    }
+
+    public List<Long> getEventIDsForArtifact(BlackboardArtifact artifact) {
+        return eventDB.getEventIDsForArtifact(artifact);
     }
 
     private void invalidateCaches() {
@@ -601,10 +607,10 @@ public class EventsRepository {
             timeMap.put(FileSystemTypes.FILE_MODIFIED, f.getMtime());
 
             /*
-             * if there are no legitimate ( greater than zero ) time stamps ( eg,
-             * logical/local files) skip the rest of the event generation: this
-             * should result in droping logical files, since they do not have
-             * legitimate time stamps.
+             * if there are no legitimate ( greater than zero ) time stamps (
+             * eg, logical/local files) skip the rest of the event generation:
+             * this should result in droping logical files, since they do not
+             * have legitimate time stamps.
              */
             if (Collections.max(timeMap.values()) > 0) {
                 final String uniquePath = f.getUniquePath();
