@@ -18,11 +18,14 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.awt.event.ActionEvent;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
+import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
@@ -32,6 +35,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExplorerNodeActionVisitor;
 import org.sleuthkit.autopsy.directorytree.FileSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
+import org.sleuthkit.autopsy.ingest.RunIngestModulesDialog;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -76,15 +81,25 @@ public class ImageNode extends AbstractContentNode<Image> {
      * @return
      */
     @Override
+    @Messages({"ImageNode.action.runIngestMods.text=Run Ingest Modules",
+        "ImageNode.getActions.openFileSearchByAttr.text=Open File Search by Attributes",})
     public Action[] getActions(boolean context) {
+
         List<Action> actionsList = new ArrayList<Action>();
+        actionsList.addAll(ExplorerNodeActionVisitor.getActions(content));
+        actionsList.add(new FileSearchAction(
+                Bundle.ImageNode_getActions_openFileSearchByAttr_text()));
+        actionsList.add(new AbstractAction(
+                Bundle.ImageNode_action_runIngestMods_text()) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                final RunIngestModulesDialog ingestDialog = new RunIngestModulesDialog(Collections.<Content>singletonList(content));
+                ingestDialog.display();
+            }
+        });
 
         actionsList.add(new NewWindowViewAction(
                 NbBundle.getMessage(this.getClass(), "ImageNode.getActions.viewInNewWin.text"), this));
-        actionsList.add(new FileSearchAction(
-                NbBundle.getMessage(this.getClass(), "ImageNode.getActions.openFileSearchByAttr.text")));
-        actionsList.addAll(ExplorerNodeActionVisitor.getActions(content));
-
         return actionsList.toArray(new Action[0]);
     }
 
