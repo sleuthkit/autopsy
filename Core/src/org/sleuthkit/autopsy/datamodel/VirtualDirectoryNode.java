@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-
 import java.awt.event.ActionEvent;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -96,19 +95,16 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
         actions.add(null); // creates a menu separator
         actions.add(ExtractAction.getInstance());
         actions.add(null); // creates a menu separator
-        
-        if (this.content.isDataSource()) {
-            actions.add(new FileSearchAction(
+        actions.add(new FileSearchAction(
                 Bundle.ImageNode_getActions_openFileSearchByAttr_text()));
-            actions.add(new AbstractAction(
-                    Bundle.VirtualDirectoryNode_action_runIngestMods_text()) {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    final RunIngestModulesDialog ingestDialog = new RunIngestModulesDialog(Collections.<Content>singletonList(content));
-                    ingestDialog.display();
-                }
-            });
-        }
+        actions.add(new AbstractAction(
+                Bundle.VirtualDirectoryNode_action_runIngestMods_text()) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                final RunIngestModulesDialog ingestDialog = new RunIngestModulesDialog(Collections.<Content>singletonList(content));
+                ingestDialog.display();
+            }
+        });
         actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions.toArray(new Action[0]);
     }
