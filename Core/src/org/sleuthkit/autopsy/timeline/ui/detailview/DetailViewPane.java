@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-16 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
+import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -29,6 +30,7 @@ import javafx.beans.Observable;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.chart.Axis;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonBar;
@@ -51,6 +53,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
@@ -112,7 +115,6 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
 
         //initialize chart;
         setChart(new DetailsChart(controller, detailsChartDateAxis, pinnedDateAxis, verticalAxis, getSelectedNodes()));
-        setSettingsNodes(new DetailViewSettingsPane(getChart().getLayoutSettings()).getChildrenUnmodifiable());
 
         //bind layout fo axes and spacers
         detailsChartDateAxis.getTickMarks().addListener((Observable observable) -> layoutDateLabels());
@@ -243,6 +245,26 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
         return 0;
     }
 
+    @Override
+    final protected ViewMode getViewMode() {
+        return ViewMode.DETAIL;
+    }
+
+    @Override
+    protected ImmutableList<Node> getSettingsControls() {
+        return ImmutableList.copyOf(new DetailViewSettingsPane(getChart().getLayoutSettings()).getChildrenUnmodifiable());
+    }
+
+    @Override
+    protected boolean hasCustomTimeNavigationControls() {
+        return false;
+    }
+
+    @Override
+    protected ImmutableList<Node> getTimeNavigationControls() {
+        return ImmutableList.of();
+    }
+
     /**
      * A Pane that contains widgets to adjust settings specific to a
      * DetailViewPane
@@ -286,7 +308,7 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
 
         DetailViewSettingsPane(DetailsChartLayoutSettings layoutSettings) {
             this.layoutSettings = layoutSettings;
-            FXMLConstructor.construct(DetailViewSettingsPane.this, "DetailViewSettingsPane.fxml"); // NON-NLS
+            FXMLConstructor.construct(DetailViewSettingsPane.this, "DetailViewSettingsPane.fxml"); //NON-NLS
         }
 
         @NbBundle.Messages({
@@ -300,11 +322,11 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
             "DetailViewPane.hiddenRadio.text=Hide Description"})
         @FXML
         void initialize() {
-            assert bandByTypeBox != null : "fx:id=\"bandByTypeBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
-            assert oneEventPerRowBox != null : "fx:id=\"oneEventPerRowBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
-            assert truncateAllBox != null : "fx:id=\"truncateAllBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
-            assert truncateWidthSlider != null : "fx:id=\"truncateAllSlider\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
-            assert pinnedEventsToggle != null : "fx:id=\"pinnedEventsToggle\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
+            assert bandByTypeBox != null : "fx:id=\"bandByTypeBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; //NON-NLS
+            assert oneEventPerRowBox != null : "fx:id=\"oneEventPerRowBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; //NON-NLS
+            assert truncateAllBox != null : "fx:id=\"truncateAllBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; //NON-NLS
+            assert truncateWidthSlider != null : "fx:id=\"truncateAllSlider\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; //NON-NLS
+            assert pinnedEventsToggle != null : "fx:id=\"pinnedEventsToggle\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; //NON-NLS
 
             //bind widgets to settings object properties
             bandByTypeBox.selectedProperty().bindBidirectional(layoutSettings.bandByTypeProperty());

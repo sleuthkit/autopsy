@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2016 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,10 +18,8 @@
  */
 package org.sleuthkit.autopsy.timeline.ui;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.eventbus.Subscribe;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javafx.application.Platform;
@@ -40,9 +38,14 @@ import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 
+/**
+ * Base class for views that can be hosted in the ViewFrame
+ *
+ */
 public abstract class AbstractTimeLineView extends BorderPane {
 
     private static final Logger LOGGER = Logger.getLogger(AbstractTimeLineView.class.getName());
@@ -59,12 +62,6 @@ public abstract class AbstractTimeLineView extends BorderPane {
      * the view. was not refreshed.
      */
     private final ReadOnlyBooleanWrapper outOfDate = new ReadOnlyBooleanWrapper(false);
-
-    /**
-     * List of Nodes to insert into the toolbar. This should be set in an
-     * implementation's constructor.
-     */
-    private List<Node> settingsNodes;
 
     /**
      * Listener that is attached to various properties that should trigger a
@@ -136,8 +133,8 @@ public abstract class AbstractTimeLineView extends BorderPane {
 
     /**
      * Refresh this view based on current state of zoom / filters. Primarily
-     * this invokes the background ViewRefreshTask returned by
-     * getUpdateTask(), which derived classes must implement.
+     * this invokes the background ViewRefreshTask returned by getUpdateTask(),
+     * which derived classes must implement.
      *
      * TODO: replace this logic with a javafx Service ? -jm
      */
@@ -186,26 +183,35 @@ public abstract class AbstractTimeLineView extends BorderPane {
     protected abstract Task<Boolean> getNewUpdateTask();
 
     /**
-     * Get a List of Nodes containing settings widgets to insert into this
-     * view's header.
+     * Get the ViewMode for this view.
+     *
+     * @return The ViewMode for this view.
+     */
+    protected abstract ViewMode getViewMode();
+
+    /**
+     * Get a List of Nodes containing settings widgets to insert into top
+     * ToolBar of the ViewFrame.
      *
      * @return The List of settings Nodes.
      */
-    protected List<Node> getSettingsNodes() {
-        return Collections.unmodifiableList(settingsNodes);
-    }
+    abstract protected ImmutableList<Node> getSettingsControls();
 
     /**
-     * Set the List of Nodes containing settings widgets to insert into this
-     * view's header.
+     * Does this view have custom time navigation controls that should replace
+     * the default ones from the ViewFrame?
      *
-     *
-     * @param settingsNodes The List of Nodes containing settings widgets to
-     *                      insert into this view's header.
+     * @return True if this view have custom time navigation controls.
      */
-    final protected void setSettingsNodes(List<Node> settingsNodes) {
-        this.settingsNodes = new ArrayList<>(settingsNodes);
-    }
+    abstract protected boolean hasCustomTimeNavigationControls();
+
+    /**
+     * Get a List of Nodes containing controls to insert into the lower time
+     * range ToolBar of the ViewFrame.
+     *
+     * @return The List of Nodes.
+     */
+    abstract protected ImmutableList<Node> getTimeNavigationControls();
 
     /**
      * Dispose of this view and any resources it holds onto.
