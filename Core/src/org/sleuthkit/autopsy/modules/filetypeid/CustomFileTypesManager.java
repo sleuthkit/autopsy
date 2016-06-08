@@ -300,6 +300,15 @@ final class CustomFileTypesManager {
             fileType = new FileType("application/x-iff", signatureList); //NON-NLS
             autopsyDefinedFileTypes.add(fileType);
 
+            /*
+             * Add type for .tec files with leading End Of Image marker (JFIF JPEG)
+             */
+            byteArray = DatatypeConverter.parseHexBinary("FFD9FFD8"); //NON-NLS
+            signatureList.clear();
+            signatureList.add(new Signature(byteArray, 0L));
+            fileType = new FileType("image/jpeg", signatureList); //NON-NLS
+            autopsyDefinedFileTypes.add(fileType);
+
         } catch (IllegalArgumentException ex) {
             /*
              * parseHexBinary() throws this if the argument passed in is not hex
