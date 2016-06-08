@@ -18,29 +18,20 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-<<<<<<< HEAD
 import java.awt.event.ActionEvent;
-=======
 import java.sql.ResultSet;
 import java.sql.SQLException;
->>>>>>> upstream/develop
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-<<<<<<< HEAD
-import javax.swing.AbstractAction;
-=======
 import java.util.logging.Level;
->>>>>>> upstream/develop
+import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
-<<<<<<< HEAD
-=======
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
->>>>>>> upstream/develop
 import org.sleuthkit.autopsy.directorytree.ExplorerNodeActionVisitor;
 import org.sleuthkit.autopsy.directorytree.FileSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
