@@ -18,23 +18,39 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+<<<<<<< HEAD
 import java.awt.event.ActionEvent;
+=======
+import java.sql.ResultSet;
+import java.sql.SQLException;
+>>>>>>> upstream/develop
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+<<<<<<< HEAD
 import javax.swing.AbstractAction;
+=======
+import java.util.logging.Level;
+>>>>>>> upstream/develop
 import javax.swing.Action;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.FileSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
+<<<<<<< HEAD
 import org.sleuthkit.autopsy.ingest.RunIngestModulesDialog;
 import org.sleuthkit.datamodel.Content;
+=======
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
+>>>>>>> upstream/develop
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
@@ -106,6 +122,19 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
     }
 
     @Override
+    @Messages({"VirtualDirectoryNode.createSheet.size.name=Size (Bytes)",
+        "VirtualDirectoryNode.createSheet.size.displayName=Size (Bytes)",
+        "VirtualDirectoryNode.createSheet.size.desc=Size of the data source in bytes.",
+        "VirtualDirectoryNode.createSheet.type.name=Type",
+        "VirtualDirectoryNode.createSheet.type.displayName=Type",
+        "VirtualDirectoryNode.createSheet.type.desc=Type of the image.",
+        "VirtualDirectoryNode.createSheet.type.text=Logical File Set",
+        "VirtualDirectoryNode.createSheet.timezone.name=Timezone",
+        "VirtualDirectoryNode.createSheet.timezone.displayName=Timezone",
+        "VirtualDirectoryNode.createSheet.timezone.desc=Timezone of the image",
+        "VirtualDirectoryNode.createSheet.deviceId.name=Device ID",
+        "VirtualDirectoryNode.createSheet.deviceId.displayName=Device ID",
+        "VirtualDirectoryNode.createSheet.deviceId.desc=Device ID of the image"})
     protected Sheet createSheet() {
         Sheet s = super.createSheet();
         Sheet.Set ss = s.get(Sheet.PROPERTIES);
@@ -114,18 +143,52 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
             s.put(ss);
         }
 
-        Map<String, Object> map = new LinkedHashMap<>();
-        fillPropertyMap(map, content);
-
         ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.name.name"),
                 NbBundle.getMessage(this.getClass(),
                         "VirtualDirectoryNode.createSheet.name.displayName"),
                 NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.name.desc"),
                 getName()));
 
-        final String NO_DESCR = NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.noDesc");
-        for (Map.Entry<String, Object> entry : map.entrySet()) {
-            ss.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
+        if (!this.content.isDataSource()) {
+            Map<String, Object> map = new LinkedHashMap<>();
+            fillPropertyMap(map, content);
+
+            final String NO_DESCR = NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.noDesc");
+            for (Map.Entry<String, Object> entry : map.entrySet()) {
+                ss.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
+            }
+        } else {
+            ss.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_type_name(),
+                    Bundle.VirtualDirectoryNode_createSheet_type_displayName(),
+                    Bundle.VirtualDirectoryNode_createSheet_type_desc(),
+                    Bundle.VirtualDirectoryNode_createSheet_type_text()));
+            ss.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_size_name(),
+                    Bundle.VirtualDirectoryNode_createSheet_size_displayName(),
+                    Bundle.VirtualDirectoryNode_createSheet_size_desc(),
+                    this.content.getSize()));
+            try (SleuthkitCase.CaseDbQuery query = Case.getCurrentCase().getSleuthkitCase().executeQuery("SELECT time_zone FROM data_source_info WHERE obj_id = " + this.content.getId())) {
+                ResultSet timeZoneSet = query.getResultSet();
+                if (timeZoneSet.next()) {
+                    ss.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_timezone_name(),
+                            Bundle.VirtualDirectoryNode_createSheet_timezone_displayName(),
+                            Bundle.VirtualDirectoryNode_createSheet_timezone_desc(),
+                            timeZoneSet.getString("time_zone")));
+                }
+            } catch (SQLException | TskCoreException ex) {
+                logger.log(Level.SEVERE, "Failed to get time zone for the following image: " + this.content.getId(), ex);
+            }
+            try (SleuthkitCase.CaseDbQuery query = Case.getCurrentCase().getSleuthkitCase().executeQuery("SELECT device_id FROM data_source_info WHERE obj_id = " + this.content.getId());) {
+                ResultSet deviceIdSet = query.getResultSet();
+                if (deviceIdSet.next()) {
+                    ss.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_deviceId_name(),
+                            Bundle.VirtualDirectoryNode_createSheet_deviceId_displayName(),
+                            Bundle.VirtualDirectoryNode_createSheet_deviceId_desc(),
+                            deviceIdSet.getString("device_id")));
+                }
+            } catch (SQLException | TskCoreException ex) {
+                logger.log(Level.SEVERE, "Failed to get device id for the following image: " + this.content.getId(), ex);
+            }
+
         }
 
         return s;

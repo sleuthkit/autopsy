@@ -71,7 +71,7 @@ public class SaveSnapshotAsReport extends Action {
         "Timeline.ModuleName=Timeline",
         "SaveSnapShotAsReport.action.dialogs.title=Timeline",
         "SaveSnapShotAsReport.action.name.text=Snapshot Report",
-        "SaveSnapShotAsReport.action.longText=Save a screen capture of the visualization as a report.",
+        "SaveSnapShotAsReport.action.longText=Save a screen capture of the current view of the timeline as a report.",
         "# {0} - report file path",
         "SaveSnapShotAsReport.ReportSavedAt=Report saved at [{0}]",
         "SaveSnapShotAsReport.Success=Success",
