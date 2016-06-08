@@ -601,7 +601,7 @@ public class EventsRepository {
             timeMap.put(FileSystemTypes.FILE_MODIFIED, f.getMtime());
 
             /*
-             * if there are no legitimate ( greater tan zero ) time stamps ( eg,
+             * if there are no legitimate ( greater than zero ) time stamps ( eg,
              * logical/local files) skip the rest of the event generation: this
              * should result in droping logical files, since they do not have
              * legitimate time stamps.

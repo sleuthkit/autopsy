@@ -19,28 +19,42 @@
 package org.sleuthkit.autopsy.timeline.ui.listvew;
 
 import com.google.common.collect.Iterables;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoField;
+import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.Observable;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.IntegerBinding;
 import javafx.beans.binding.StringBinding;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.SelectionMode;
@@ -53,12 +67,15 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
 import javax.swing.Action;
 import javax.swing.JMenuItem;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.control.Notifications;
+import org.controlsfx.control.action.ActionUtils;
 import org.openide.awt.Actions;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter;
@@ -88,11 +105,40 @@ class ListTimeline extends BorderPane {
 
     private static final Image HASH_HIT = new Image("/org/sleuthkit/autopsy/images/hashset_hits.png");  //NON-NLS 
     private static final Image TAG = new Image("/org/sleuthkit/autopsy/images/green-tag-icon-16.png");  //NON-NLS
+    private static final Image FIRST = new Image("/org/sleuthkit/autopsy/timeline/images/resultset_first.png");  //NON-NLS
+    private static final Image PREVIOUS = new Image("/org/sleuthkit/autopsy/timeline/images/resultset_previous.png");  //NON-NLS
+    private static final Image NEXT = new Image("/org/sleuthkit/autopsy/timeline/images/resultset_next.png");  //NON-NLS
+    private static final Image LAST = new Image("/org/sleuthkit/autopsy/timeline/images/resultset_last.png");  //NON-NLS
 
     /**
      * call-back used to wrap the CombinedEvent in a ObservableValue
      */
     private static final Callback<TableColumn.CellDataFeatures<CombinedEvent, CombinedEvent>, ObservableValue<CombinedEvent>> CELL_VALUE_FACTORY = param -> new SimpleObjectProperty<>(param.getValue());
+    private static final List<ChronoField> SCROLL_BY_UNITS = Arrays.asList(
+            ChronoField.YEAR,
+            ChronoField.MONTH_OF_YEAR,
+            ChronoField.DAY_OF_MONTH,
+            ChronoField.HOUR_OF_DAY,
+            ChronoField.MINUTE_OF_HOUR,
+            ChronoField.SECOND_OF_MINUTE);
+
+    @FXML
+    private HBox navControls;
+
+    @FXML
+    private ComboBox<ChronoField> scrollInrementComboBox;
+
+    @FXML
+    private Button firstButton;
+
+    @FXML
+    private Button previousButton;
+
+    @FXML
+    private Button nextButton;
+
+    @FXML
+    private Button lastButton;
 
     @FXML
     private Label eventCountLabel;
@@ -113,6 +159,8 @@ class ListTimeline extends BorderPane {
     @FXML
     private TableColumn<CombinedEvent, CombinedEvent> hashHitColumn;
 
+    private final ConcurrentSkipListSet<CombinedEvent> visibleEvents;
+
     private final TimeLineController controller;
     private final SleuthkitCase sleuthkitCase;
     private final TagsManager tagsManager;
@@ -123,10 +171,12 @@ class ListTimeline extends BorderPane {
      * @param controller The controller for this timeline
      */
     ListTimeline(TimeLineController controller) {
+
         this.controller = controller;
         sleuthkitCase = controller.getAutopsyCase().getSleuthkitCase();
         tagsManager = controller.getAutopsyCase().getServices().getTagsManager();
         FXMLConstructor.construct(this, ListTimeline.class, "ListTimeline.fxml"); //NON-NLS
+        this.visibleEvents = new ConcurrentSkipListSet<>(Comparator.comparing(table.getItems()::indexOf));
     }
 
     @FXML
@@ -141,6 +191,16 @@ class ListTimeline extends BorderPane {
         assert descriptionColumn != null : "fx:id=\"descriptionColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
         assert typeColumn != null : "fx:id=\"typeColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
         assert knownColumn != null : "fx:id=\"knownColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
+
+        scrollInrementComboBox.setButtonCell(new ChronoFieldListCell());
+        scrollInrementComboBox.setCellFactory(comboBox -> new ChronoFieldListCell());
+        scrollInrementComboBox.getItems().setAll(SCROLL_BY_UNITS);
+        scrollInrementComboBox.getSelectionModel().select(ChronoField.YEAR);
+
+        ActionUtils.configureButton(new ScrollToFirst(), firstButton);
+        ActionUtils.configureButton(new ScrollToPrevious(), previousButton);
+        ActionUtils.configureButton(new ScrollToNext(), nextButton);
+        ActionUtils.configureButton(new ScrollToLast(), lastButton);
 
         //override default row with one that provides context menus
         table.setRowFactory(tableView -> new EventRow());
@@ -255,6 +315,18 @@ class ListTimeline extends BorderPane {
                 table.requestFocus();
             }
         }
+    }
+
+    List<Node> getNavControls() {
+        return Collections.singletonList(navControls);
+    }
+
+    private void scrollToAndFocus(Integer index) {
+        table.requestFocus();
+        if (visibleEvents.contains(table.getItems().get(index)) == false) {
+            table.scrollTo(index);
+        }
+        table.getFocusModel().focus(index);
     }
 
     /**
@@ -523,11 +595,16 @@ class ListTimeline extends BorderPane {
             "ListChart.errorMsg=There was a problem getting the content for the selected event."})
         @Override
         protected void updateItem(CombinedEvent item, boolean empty) {
+            CombinedEvent oldItem = getItem();
+            if (oldItem != null) {
+                visibleEvents.remove(oldItem);
+            }
             super.updateItem(item, empty);
 
             if (empty || item == null) {
                 event = null;
             } else {
+                visibleEvents.add(item);
                 event = controller.getEventsModel().getEventById(item.getRepresentativeEventID());
 
                 setOnContextMenuRequested(contextMenuEvent -> {
@@ -581,4 +658,122 @@ class ListTimeline extends BorderPane {
             }
         }
     }
+
+    private class ChronoFieldListCell extends ListCell<ChronoField> {
+
+        @Override
+        protected void updateItem(ChronoField item, boolean empty) {
+            super.updateItem(item, empty);
+
+            if (empty || item == null) {
+                setText(null);
+            } else {
+                String displayName = item.getDisplayName(Locale.getDefault());
+                setText(String.join(" ", StringUtils.splitByCharacterTypeCamelCase(displayName)));
+            }
+        }
+    }
+
+    private class ScrollToFirst extends org.controlsfx.control.action.Action {
+
+        ScrollToFirst() {
+            super("", actionEvent -> scrollToAndFocus(0));
+            setGraphic(new ImageView(FIRST));
+            disabledProperty().bind(table.getFocusModel().focusedIndexProperty().lessThan(1));
+        }
+    }
+
+    private class ScrollToLast extends org.controlsfx.control.action.Action {
+
+        ScrollToLast() {
+            super("", actionEvent -> scrollToAndFocus(table.getItems().size() - 1));
+            setGraphic(new ImageView(LAST));
+            IntegerBinding size = Bindings.size(table.getItems());
+            disabledProperty().bind(size.isEqualTo(0).or(
+                    table.getFocusModel().focusedIndexProperty().greaterThanOrEqualTo(size.subtract(1))));
+        }
+    }
+
+    private class ScrollToNext extends org.controlsfx.control.action.Action {
+
+        ScrollToNext() {
+            super("", actionEvent -> {
+
+                ChronoField selectedChronoField = scrollInrementComboBox.getSelectionModel().getSelectedItem();
+                ZoneId timeZoneID = TimeLineController.getTimeZoneID();
+                TemporalUnit selectedUnit = selectedChronoField.getBaseUnit();
+
+                int focusedIndex = table.getFocusModel().getFocusedIndex();
+                CombinedEvent focusedItem = table.getFocusModel().getFocusedItem();
+                if (-1 == focusedIndex || null == focusedItem) {
+                    focusedItem = visibleEvents.first();
+                    focusedIndex = table.getItems().indexOf(focusedItem);
+                }
+
+                ZonedDateTime focusedDateTime = Instant.ofEpochMilli(focusedItem.getStartMillis()).atZone(timeZoneID);
+                ZonedDateTime nextDateTime = focusedDateTime.plus(1, selectedUnit);//
+                for (ChronoField field : SCROLL_BY_UNITS) {
+                    if (field.getBaseUnit().getDuration().compareTo(selectedUnit.getDuration()) < 0) {
+                        nextDateTime = nextDateTime.with(field, field.rangeRefinedBy(nextDateTime).getMinimum());//
+                    }
+                }
+                long nextMillis = nextDateTime.toInstant().toEpochMilli();
+
+                int nextIndex = table.getItems().size() - 1;
+                for (int i = focusedIndex; i < table.getItems().size(); i++) {
+                    if (table.getItems().get(i).getStartMillis() >= nextMillis) {
+                        nextIndex = i;
+                        break;
+                    }
+                }
+                scrollToAndFocus(nextIndex);
+            });
+            setGraphic(new ImageView(NEXT));
+            IntegerBinding size = Bindings.size(table.getItems());
+            disabledProperty().bind(size.isEqualTo(0).or(
+                    table.getFocusModel().focusedIndexProperty().greaterThanOrEqualTo(size.subtract(1))));
+        }
+
+    }
+
+    private class ScrollToPrevious extends org.controlsfx.control.action.Action {
+
+        ScrollToPrevious() {
+            super("", actionEvent -> {
+                ZoneId timeZoneID = TimeLineController.getTimeZoneID();
+                ChronoField selectedChronoField = scrollInrementComboBox.getSelectionModel().getSelectedItem();
+                TemporalUnit selectedUnit = selectedChronoField.getBaseUnit();
+
+                int focusedIndex = table.getFocusModel().getFocusedIndex();
+                CombinedEvent focusedItem = table.getFocusModel().getFocusedItem();
+                if (-1 == focusedIndex || null == focusedItem) {
+                    focusedItem = visibleEvents.last();
+                    focusedIndex = table.getItems().indexOf(focusedItem);
+                }
+
+                ZonedDateTime focusedDateTime = Instant.ofEpochMilli(focusedItem.getStartMillis()).atZone(timeZoneID);
+                ZonedDateTime previousDateTime = focusedDateTime.minus(1, selectedUnit);//
+
+                for (ChronoField field : SCROLL_BY_UNITS) {
+                    if (field.getBaseUnit().getDuration().compareTo(selectedUnit.getDuration()) < 0) {
+                        previousDateTime = previousDateTime.with(field, field.rangeRefinedBy(previousDateTime).getMaximum());//
+                    }
+                }
+                long previousMillis = previousDateTime.toInstant().toEpochMilli();
+
+                int previousIndex = 0;
+                for (int i = focusedIndex; i > 0; i--) {
+                    if (table.getItems().get(i).getStartMillis() <= previousMillis) {
+                        previousIndex = i;
+                        break;
+                    }
+                }
+
+                scrollToAndFocus(previousIndex);
+            });
+            setGraphic(new ImageView(PREVIOUS));
+            disabledProperty().bind(table.getFocusModel().focusedIndexProperty().lessThan(1));
+        }
+    }
+
 }
