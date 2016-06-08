@@ -43,7 +43,6 @@ import org.sleuthkit.datamodel.IngestModuleInfo;
 import org.sleuthkit.datamodel.IngestModuleInfo.IngestModuleType;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * Encapsulates a data source and the ingest module pipelines used to process
@@ -397,7 +396,7 @@ final class DataSourceIngestJob {
                 this.startSecondStage();
             }
             try {
-                this.ingestJob = Case.getCurrentCase().getSleuthkitCase().addIngestJob(dataSource, NetworkUtils.getLocalHostName(), ingestModules, new Date(this.createTime));
+                this.ingestJob = Case.getCurrentCase().getSleuthkitCase().addIngestJob(dataSource, NetworkUtils.getLocalHostName(), ingestModules, new Date(this.createTime), new Date(0), IngestJobStatusType.STARTED, "");
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Failed to add ingest job to database.", ex);
             }
@@ -680,20 +679,20 @@ final class DataSourceIngestJob {
         if (this.cancelled) {
             try {
                 ingestJob.setIngestJobStatus(IngestJobStatusType.CANCELLED);
-            } catch (TskCoreException | TskDataException ex) {
+            } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Failed to set ingest status for ingest job in database.", ex);
             }
         }
         else {
             try {
                 ingestJob.setIngestJobStatus(IngestJobStatusType.COMPLETED);
-            } catch (TskCoreException | TskDataException ex) {
+            } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Failed to set ingest status for ingest job in database.", ex);
             }
         }
         try {
             this.ingestJob.setEndDateTime(new Date());
-        } catch (TskCoreException | TskDataException ex) {
+        } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed to set end date for ingest job in database.", ex);
         }
         this.parentJob.dataSourceJobFinished(this);
