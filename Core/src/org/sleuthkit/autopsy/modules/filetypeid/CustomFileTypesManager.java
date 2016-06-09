@@ -105,6 +105,19 @@ final class CustomFileTypesManager {
     }
 
     /**
+     * Gets the custom file types defined by Autopsy.
+     *
+     * @return A list of custom file types, possibly empty.
+     */
+    synchronized List<FileType> getAutopsyDefinedFileTypes() {
+        /**
+         * It is safe to return references instead of copies in this snapshot
+         * because FileType objects are immutable.
+         */
+        return new ArrayList<>(autopsyDefinedFileTypes);
+    }
+
+    /**
      * Gets the user-defined custom file types.
      *
      * @return A list of file types, possibly empty.
@@ -285,6 +298,15 @@ final class CustomFileTypesManager {
             signatureList.clear();
             signatureList.add(new Signature("FORM", 0L)); //NON-NLS
             fileType = new FileType("application/x-iff", signatureList); //NON-NLS
+            autopsyDefinedFileTypes.add(fileType);
+
+            /*
+             * Add type for .tec files with leading End Of Image marker (JFIF JPEG)
+             */
+            byteArray = DatatypeConverter.parseHexBinary("FFD9FFD8"); //NON-NLS
+            signatureList.clear();
+            signatureList.add(new Signature(byteArray, 0L));
+            fileType = new FileType("image/jpeg", signatureList); //NON-NLS
             autopsyDefinedFileTypes.add(fileType);
 
         } catch (IllegalArgumentException ex) {

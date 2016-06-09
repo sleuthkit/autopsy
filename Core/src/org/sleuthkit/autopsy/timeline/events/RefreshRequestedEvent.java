@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.timeline.events;
 
 /**
  * A "local" event published by filteredEventsModel to indicate that the user
- * requested that the current visualization be refreshed with out changing any
+ * requested that the current view be refreshed with out changing any
  * of the parameters ( to include more up to date tag data for example.)
  *
  * This event is not intended for use out side of the Timeline module.
