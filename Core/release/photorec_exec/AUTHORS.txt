@@ -1,0 +1,4 @@
+
+TestDisk and PhotoRec are written and maintained by Christophe GRENIER <grenier@cgsecurity.org>
+TestDisk logos has been created by Simone Brandt and by Dmitri Zdorov in 2001,
+PhotoRec logo by Marcel Bruins in 2006.
