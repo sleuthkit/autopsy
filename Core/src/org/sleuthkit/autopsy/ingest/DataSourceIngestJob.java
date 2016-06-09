@@ -32,9 +32,17 @@ import javax.swing.JOptionPane;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.IngestJobInfo;
+import org.sleuthkit.datamodel.IngestJobInfo.IngestJobStatusType;
+import org.sleuthkit.datamodel.IngestModuleInfo;
+import org.sleuthkit.datamodel.IngestModuleInfo.IngestModuleType;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Encapsulates a data source and the ingest module pipelines used to process
@@ -151,6 +159,8 @@ final class DataSourceIngestJob {
     private ProgressHandle fileIngestProgress;
     private String currentFileIngestModule = "";
     private String currentFileIngestTask = "";
+    private List<IngestModuleInfo> ingestModules = new ArrayList<>();
+    private IngestJobInfo ingestJob;
 
     /**
      * A data source ingest job uses this field to report its creation time.
@@ -242,6 +252,21 @@ final class DataSourceIngestJob {
              * interrupted flag rather than just swallowing the exception.
              */
             Thread.currentThread().interrupt();
+        }
+        SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+        try {
+            this.addIngestModules(firstStageDataSourceModuleTemplates, IngestModuleType.DATA_SOURCE_LEVEL, skCase);
+            this.addIngestModules(fileIngestModuleTemplates, IngestModuleType.FILE_LEVEL, skCase);
+            this.addIngestModules(secondStageDataSourceModuleTemplates, IngestModuleType.DATA_SOURCE_LEVEL, skCase);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Failed to add ingest modules to database.", ex);
+        }
+    }
+
+    private void addIngestModules(List<IngestModuleTemplate> templates, IngestModuleType type, SleuthkitCase skCase) throws TskCoreException {
+        for (IngestModuleTemplate module : templates) {
+            String uniqueName = FactoryClassNameNormalizer.normalize(module.getModuleFactory().getClass().getCanonicalName()) + "-" + module.getModuleFactory().getModuleDisplayName() + "-" + type.toString() + "-" + module.getModuleFactory().getModuleVersionNumber();
+            ingestModules.add(skCase.addIngestModule(module.getModuleName(), uniqueName, type, module.getModuleFactory().getModuleVersionNumber()));
         }
     }
 
@@ -364,6 +389,11 @@ final class DataSourceIngestJob {
             } else if (this.hasSecondStageDataSourceIngestPipeline()) {
                 logger.log(Level.INFO, "Starting second stage analysis for {0} (jobId={1}), no first stage configured", new Object[]{dataSource.getName(), this.id}); //NON-NLS
                 this.startSecondStage();
+            }
+            try {
+                this.ingestJob = Case.getCurrentCase().getSleuthkitCase().addIngestJob(dataSource, NetworkUtils.getLocalHostName(), ingestModules, new Date(this.createTime), new Date(0), IngestJobStatusType.STARTED, "");
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Failed to add ingest job to database.", ex);
             }
         }
         return errors;
@@ -641,8 +671,26 @@ final class DataSourceIngestJob {
                 }
             }
         }
-
+        if (this.cancelled) {
+            try {
+                ingestJob.setIngestJobStatus(IngestJobStatusType.CANCELLED);
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Failed to set ingest status for ingest job in database.", ex);
+            }
+        } else {
+            try {
+                ingestJob.setIngestJobStatus(IngestJobStatusType.COMPLETED);
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Failed to set ingest status for ingest job in database.", ex);
+            }
+        }
+        try {
+            this.ingestJob.setEndDateTime(new Date());
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Failed to set end date for ingest job in database.", ex);
+        }
         this.parentJob.dataSourceJobFinished(this);
+
     }
 
     /**
