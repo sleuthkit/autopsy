@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,12 +16,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.timeline;
+package org.sleuthkit.autopsy.timeline.events;
 
 /**
+ * A "local" event published by filteredEventsModel to indicate that DB has been
+ * updated.
  *
+ * This event is not intended for use out side of the Timeline module.
  */
-public enum VisualizationMode {
+public class DBUpdatedEvent {
 
-    COUNTS, DETAIL;
 }

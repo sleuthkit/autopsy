@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.filesearch;
 
-import org.openide.util.NbBundle;
-
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.NumberFormat;
@@ -40,6 +38,7 @@ class SizeSearchPanel extends javax.swing.JPanel {
     SizeSearchPanel() {
         initComponents();
         customizeComponents();
+        setComponentsEnabled();
     }
 
     private void customizeComponents() {
@@ -82,6 +81,13 @@ class SizeSearchPanel extends javax.swing.JPanel {
     JComboBox<String> getSizeUnitComboBox() {
         return sizeUnitComboBox;
     }
+    
+    void setComponentsEnabled() {
+        boolean enabled = this.sizeCheckBox.isSelected();
+        this.sizeCompareComboBox.setEnabled(enabled);
+        this.sizeUnitComboBox.setEnabled(enabled);
+        this.sizeTextField.setEnabled(enabled);
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -97,9 +103,9 @@ class SizeSearchPanel extends javax.swing.JPanel {
         copyMenuItem = new javax.swing.JMenuItem();
         pasteMenuItem = new javax.swing.JMenuItem();
         selectAllMenuItem = new javax.swing.JMenuItem();
-        sizeUnitComboBox = new javax.swing.JComboBox<String>();
+        sizeUnitComboBox = new javax.swing.JComboBox<>();
         sizeTextField = new JFormattedTextField(NumberFormat.getIntegerInstance());
-        sizeCompareComboBox = new javax.swing.JComboBox<String>();
+        sizeCompareComboBox = new javax.swing.JComboBox<>();
         sizeCheckBox = new javax.swing.JCheckBox();
 
         cutMenuItem.setText(org.openide.util.NbBundle.getMessage(SizeSearchPanel.class, "SizeSearchPanel.cutMenuItem.text")); // NOI18N
@@ -114,7 +120,7 @@ class SizeSearchPanel extends javax.swing.JPanel {
         selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(SizeSearchPanel.class, "SizeSearchPanel.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
 
-        sizeUnitComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { "Byte(s)", "KB", "MB", "GB", "TB" })); //NON-NLS
+        sizeUnitComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { "Byte(s)", "KB", "MB", "GB", "TB" }));
 
         sizeTextField.setValue(0);
         sizeTextField.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -123,12 +129,14 @@ class SizeSearchPanel extends javax.swing.JPanel {
             }
         });
 
-        sizeCompareComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] {
-                NbBundle.getMessage(this.getClass(), "SizeSearchPanel.sizeCompareComboBox.equalTo"),
-                NbBundle.getMessage(this.getClass(), "SizeSearchPanel.sizeCompareComboBox.greaterThan"),
-                NbBundle.getMessage(this.getClass(), "SizeSearchPanel.sizeCompareComboBox.lessThan") }));
+        sizeCompareComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { "equal to", "greater than", "less than" }));
 
         sizeCheckBox.setText(org.openide.util.NbBundle.getMessage(SizeSearchPanel.class, "SizeSearchPanel.sizeCheckBox.text")); // NOI18N
+        sizeCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                sizeCheckBoxActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -157,6 +165,11 @@ class SizeSearchPanel extends javax.swing.JPanel {
         this.sizeCheckBox.setSelected(true);
         this.sizeTextField.selectAll(); // select all so user can change it easily
     }//GEN-LAST:event_sizeTextFieldMouseClicked
+
+    private void sizeCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sizeCheckBoxActionPerformed
+        setComponentsEnabled();
+    }//GEN-LAST:event_sizeCheckBoxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuItem copyMenuItem;
     private javax.swing.JMenuItem cutMenuItem;

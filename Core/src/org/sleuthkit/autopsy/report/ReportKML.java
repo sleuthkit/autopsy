@@ -1,21 +1,21 @@
-/*
+/**
  *
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2014 Basis Technology Corp.
  * contact: carrier <at> sleuthkit <dot> org
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package org.sleuthkit.autopsy.report;
 
@@ -82,6 +82,7 @@ class ReportKML implements GeneralReportModule {
         String reportPath2 = baseReportDir + "ReportKML.txt"; //NON-NLS
         currentCase = Case.getCurrentCase();
         skCase = currentCase.getSleuthkitCase();
+
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportKML.progress.loading"));
         // Check if ingest has finished
         String ingestwarning = "";
@@ -105,20 +106,17 @@ class ReportKML implements GeneralReportModule {
 
                 File f;
                 for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF)) {
-                    if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
-                        return;
-                    }
                     lat = 0;
                     lon = 0;
                     geoPath = "";
                     String extractedToPath;
                     for (BlackboardAttribute attribute : artifact.getAttributes()) {
-                        if (attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()) //latitude
+                        if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()) //latitude
                         {
 
                             lat = attribute.getValueDouble();
                         }
-                        if (attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()) //longitude
+                        if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()) //longitude
                         {
                             lon = attribute.getValueDouble();
                         }
@@ -150,11 +148,11 @@ class ReportKML implements GeneralReportModule {
                     lat = 0;
                     lon = 0;
                     for (BlackboardAttribute attribute : artifact.getAttributes()) {
-                        if (attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()) //latitude
+                        if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()) //latitude
                         {
                             lat = attribute.getValueDouble();
                         }
-                        if (attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()) //longitude
+                        if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()) //longitude
                         {
                             lon = attribute.getValueDouble();
                         }
@@ -172,22 +170,22 @@ class ReportKML implements GeneralReportModule {
                     String name = "";
                     String location = "";
                     for (BlackboardAttribute attribute : artifact.getAttributes()) {
-                        if (attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START.getTypeID()) //latitude
+                        if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START.getTypeID()) //latitude
                         {
                             lat = attribute.getValueDouble();
-                        } else if (attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END.getTypeID()) //longitude
+                        } else if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END.getTypeID()) //longitude
                         {
                             destlat = attribute.getValueDouble();
-                        } else if (attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START.getTypeID()) //longitude
+                        } else if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START.getTypeID()) //longitude
                         {
                             lon = attribute.getValueDouble();
-                        } else if (attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END.getTypeID()) //longitude 
+                        } else if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END.getTypeID()) //longitude 
                         {
                             destlon = attribute.getValueDouble();
-                        } else if (attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID()) //longitude 
+                        } else if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID()) //longitude 
                         {
                             name = attribute.getValueString();
-                        } else if (attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()) //longitude 
+                        } else if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()) //longitude 
                         {
                             location = attribute.getValueString();
                         }

@@ -5,10 +5,10 @@
 Data sources are added to a <strong>case</strong>. A case can have a single data source or it can have multiple data sources. Currently, a single report is generated for an entire case, so if you need to report on individual data sources, then you should use one data source per case. If there are many drives/phones/other data sources for one investigation, then your case should have multiple data sources.
 
 \subsection s2 Creating a Case
-To create a case, use either the "Create New Case" option on the Welcome screen or from the "File" menu. This will start the <strong>New Case Wizard</strong>. You will need to supply it with the name of the case and a directory to store the case results into. You can optionally provide case numbers and reviewer names.
+To create a case, use either the "Create New Case" option on the Welcome screen or from the "Case" menu. This will start the <strong>New Case Wizard</strong>. You will need to supply it with the name of the case and a directory to store the case results into. You can optionally provide case numbers and reviewer names.
 
 \subsection s3 Adding a Data Source
-The next step is to add an input data source to the case. The <strong>Add Data Source Wizard</strong> will start automatically after the case is created or you can manually start it from the &quot;File&quot; menu or toolbar. You will need to choose the type of input data source to add (image, local disk, or logical files and folders).  Next, supply it with the location of the source to add. 
+The next step is to add an input data source to the case. The <strong>Add Data Source Wizard</strong> will start automatically after the case is created or you can manually start it from the &quot;Case&quot; menu or toolbar. You will need to choose the type of input data source to add (image, local disk, or logical files and folders).  Next, supply it with the location of the source to add. 
         
 
 - For a disk image, browse to the first file in the set (Autopsy will find the rest of the files). Autopsy currently supports E01 and raw (dd) files.
@@ -114,7 +114,7 @@ You can select an image or video from the upper right and view the video or imag
 A final report can be generated that will include all analysis results.
 Use the &quot;Generate Report&quot; button to create this.
 It will create an HTML or XLS report in the Reports folder of the case folder.
-If you forgot the location of your case folder, you can determine it using the &quot;Case Properties&quot; option in the &quot;File&quot; menu.
+If you forgot the location of your case folder, you can determine it using the &quot;Case Properties&quot; option in the &quot;Case&quot; menu.
 There is also an option to export report files to a separate folder outside of the case folder. 
 
 */

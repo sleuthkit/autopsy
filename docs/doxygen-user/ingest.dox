@@ -52,4 +52,9 @@ Ingest modules run in the background.  An ingest module can provide you results 
 
 All of the official Autopsy modules send results to the blackboard, but if you install third-party apps, then they may choose any approach -- including a pop-up window each time they find something.  
 
+\section ingest_monitoring Viewing Ongoing Ingest Activity
+While Ingest is running, one can use the "Ingest Progress Snapshot" tool to see what activity is going on at the moment. Click on "Help", "Get Ingest Progress Snapshot" to view the dialog shown in the screenshot below.
+\image html ingest_progress_snapshot.PNG
+To refresh the view, use the "Refresh" button.
+
 */

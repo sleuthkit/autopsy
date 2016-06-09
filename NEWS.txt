@@ -8,6 +8,11 @@ Improvements:
 - File size and MIME type conditions can be specified for file search by attributes. 
 - Local/GMT time preference is used in reports. 
 - User has option to choose display name for logical/local file set data sources.
+- Global settings panel behavior is more consistent and the panels handle resizing better.
+- Additional Autopsy-defined custom file type definitions for assorted media file types have been added.
+- The precedence of user-defined custom file type definitions has been restored.
+- The File Metadata content viewer displays MIME type.
+- Virtual directories can be tagged.
 - Assorted bug fixes and minor enhancements. 
 
 ---------------- VERSION 4.0.0  --------------
