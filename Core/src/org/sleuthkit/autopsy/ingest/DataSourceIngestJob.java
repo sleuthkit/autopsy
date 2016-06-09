@@ -255,23 +255,19 @@ final class DataSourceIngestJob {
         }
         SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
         try {
-            for (IngestModuleTemplate module : firstStageDataSourceModuleTemplates) {
-                IngestModuleType type = module.isDataSourceIngestModuleTemplate() ? IngestModuleType.DATA_SOURCE_LEVEL : IngestModuleType.FILE_LEVEL;
-                String uniqueName = FactoryClassNameNormalizer.normalize(module.getModuleFactory().getClass().getCanonicalName()) + "-" + module.getModuleFactory().getModuleDisplayName() + "-" + type.toString() + "-" + module.getModuleFactory().getModuleVersionNumber();
-                ingestModules.add(skCase.addIngestModule(module.getModuleName(), uniqueName, type, module.getModuleFactory().getModuleVersionNumber()));
-            }
-            for (IngestModuleTemplate module : fileIngestModuleTemplates) {
-                IngestModuleType type = module.isDataSourceIngestModuleTemplate() ? IngestModuleType.DATA_SOURCE_LEVEL : IngestModuleType.FILE_LEVEL;
-                String uniqueName = FactoryClassNameNormalizer.normalize(module.getModuleFactory().getClass().getCanonicalName()) + "-" + module.getModuleFactory().getModuleDisplayName() + "-" + type.toString() + "-" + module.getModuleFactory().getModuleVersionNumber();
-                ingestModules.add(skCase.addIngestModule(module.getModuleName(), uniqueName, type, module.getModuleFactory().getModuleVersionNumber()));
-            }
-            for (IngestModuleTemplate module : secondStageDataSourceModuleTemplates) {
-                IngestModuleType type = module.isDataSourceIngestModuleTemplate() ? IngestModuleType.DATA_SOURCE_LEVEL : IngestModuleType.FILE_LEVEL;
-                String uniqueName = FactoryClassNameNormalizer.normalize(module.getModuleFactory().getClass().getCanonicalName()) + "-" + module.getModuleFactory().getModuleDisplayName() + "-" + type.toString() + "-" + module.getModuleFactory().getModuleVersionNumber();
-                ingestModules.add(skCase.addIngestModule(module.getModuleName(), uniqueName, type, module.getModuleFactory().getModuleVersionNumber()));
-            }
+            this.addIngestModules(firstStageDataSourceModuleTemplates, skCase);
+            this.addIngestModules(fileIngestModuleTemplates, skCase);
+            this.addIngestModules(secondStageDataSourceModuleTemplates, skCase);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed to add ingest modules to database.", ex);
+        }
+    }
+
+    private void addIngestModules(List<IngestModuleTemplate> templates, SleuthkitCase skCase) throws TskCoreException {
+        for (IngestModuleTemplate module : templates) {
+            IngestModuleType type = module.isDataSourceIngestModuleTemplate() ? IngestModuleType.DATA_SOURCE_LEVEL : IngestModuleType.FILE_LEVEL;
+            String uniqueName = FactoryClassNameNormalizer.normalize(module.getModuleFactory().getClass().getCanonicalName()) + "-" + module.getModuleFactory().getModuleDisplayName() + "-" + type.toString() + "-" + module.getModuleFactory().getModuleVersionNumber();
+            ingestModules.add(skCase.addIngestModule(module.getModuleName(), uniqueName, type, module.getModuleFactory().getModuleVersionNumber()));
         }
     }
 
@@ -682,8 +678,7 @@ final class DataSourceIngestJob {
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Failed to set ingest status for ingest job in database.", ex);
             }
-        }
-        else {
+        } else {
             try {
                 ingestJob.setIngestJobStatus(IngestJobStatusType.COMPLETED);
             } catch (TskCoreException ex) {
