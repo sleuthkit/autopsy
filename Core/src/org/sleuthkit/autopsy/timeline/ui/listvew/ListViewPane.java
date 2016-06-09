@@ -19,9 +19,9 @@
 package org.sleuthkit.autopsy.timeline.ui.listvew;
 
 import com.google.common.collect.ImmutableList;
-import java.util.HashSet;
 import java.util.List;
 import javafx.application.Platform;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.scene.Node;
 import org.joda.time.Interval;
@@ -46,6 +46,7 @@ public class ListViewPane extends AbstractTimeLineView {
      */
     public ListViewPane(TimeLineController controller) {
         super(controller);
+        
         listTimeline = new ListTimeline(controller);
 
         //initialize chart;
@@ -104,7 +105,7 @@ public class ListViewPane extends AbstractTimeLineView {
             FilteredEventsModel eventsModel = getEventsModel();
 
             //grab the currently selected event
-            HashSet<CombinedEvent> selectedEvents = new HashSet<>(listTimeline.getSelectedEvents());
+            ObservableList<Long> selectedEventIDs = getController().getSelectedEventIDs();
 
             //clear the chart and set the time range.
             resetView(eventsModel.getTimeRange());
@@ -118,7 +119,7 @@ public class ListViewPane extends AbstractTimeLineView {
                 //put the combined events into the table.
                 listTimeline.setCombinedEvents(combinedEvents);
                 //restore the selected events
-                listTimeline.selectEvents(selectedEvents);
+                listTimeline.selectEvents(selectedEventIDs);
             });
 
             return combinedEvents.isEmpty() == false;

@@ -74,7 +74,7 @@ public abstract class AbstractTimeLineView extends BorderPane {
      */
     private Task<Boolean> updateTask;
 
-    private final TimeLineController controller;
+    public final TimeLineController controller;
     private final FilteredEventsModel filteredEvents;
 
     /**

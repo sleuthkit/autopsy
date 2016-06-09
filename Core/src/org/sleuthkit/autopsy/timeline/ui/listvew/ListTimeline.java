@@ -251,20 +251,8 @@ class ListTimeline extends BorderPane {
                     .map(CombinedEvent::getRepresentativeEventID)
                     .collect(Collectors.toSet()));
         });
-        
-        Platform.runLater(new Runnable() {
-            
-            @Override
-            public void run() {
-                Set<CombinedEvent> collect = table.getItems().stream()
-                .filter(combinedEvent -> combinedEvent.getEventIDs().stream().anyMatch(controller.getSelectedEventIDs()::contains))
-                .collect(Collectors.toSet());
 
-        selectEvents(collect);
-            }
-        });
-        
-        
+        selectEvents(controller.getSelectedEventIDs());
     }
 
     /**
@@ -298,17 +286,25 @@ class ListTimeline extends BorderPane {
     /**
      * Set the combined events that are selected in this view.
      *
-     * @param selectedEvents The events that should be selected.
+     * @param selectedEventIDs The events that should be selected.
      */
-    void selectEvents(Collection<CombinedEvent> selectedEvents) {
+    void selectEvents(Collection<Long> selectedEventIDs) {
         table.getSelectionModel().clearSelection();
-        if (selectedEvents.isEmpty() == false) {
-            CombinedEvent firstSelected = selectedEvents.stream().filter(Objects::nonNull).min(Comparator.comparing(CombinedEvent::getStartMillis)).orElse(null);
-            table.scrollTo(firstSelected);
-            Set<Integer> selectedIndices = selectedEvents.stream()
+        if (selectedEventIDs.isEmpty() == false) {
+            List<CombinedEvent> selectedCombinedEvents = table.getItems().stream()
+                    .filter(combinedEvent -> combinedEvent.getEventIDs().stream().anyMatch(selectedEventIDs::contains))
+                    .sorted(Comparator.comparing(CombinedEvent::getStartMillis))
+                    .collect(Collectors.toList());
+
+            if (selectedCombinedEvents.size() > 0) {
+                CombinedEvent firstSelected = selectedCombinedEvents.get(0);
+                table.scrollTo(firstSelected);
+            }
+            Set<Integer> selectedIndices = selectedCombinedEvents.stream()
                     .map(table.getItems()::indexOf)
                     .filter(index -> index >= 0)
                     .collect(Collectors.toSet());
+
             Integer[] indices = selectedIndices.toArray(new Integer[selectedIndices.size()]);
             if (indices.length >= 1) {
                 table.getSelectionModel().selectIndices(indices[0], ArrayUtils.toPrimitive(indices));

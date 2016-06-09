@@ -438,8 +438,8 @@ public class TimeLineController {
                         setEventsDBStale(false);
                         filteredEvents.postDBUpdated();
                     }
-                    
-                    if (file == null && artifact==null) {
+
+                    if (file == null && artifact == null) {
                         SwingUtilities.invokeLater(this::showWindow);
                         TimeLineController.this.showFullRange();
                     } else {
@@ -481,7 +481,7 @@ public class TimeLineController {
      * timeline when done.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    void rebuildTagsTable(AbstractFile file,BlackboardArtifact artifact) {
+    void rebuildTagsTable(AbstractFile file, BlackboardArtifact artifact) {
         rebuildRepoHelper(eventsRepository::rebuildTags, false, file, artifact);
     }
 
@@ -503,7 +503,8 @@ public class TimeLineController {
                     pushTimeRange(interval);
                 }
                 if (eventIDs != null) {
-                    selectEventIDs(eventIDs, () -> setViewMode(ViewMode.LIST));
+                    setViewMode(ViewMode.LIST);
+                    selectEventIDs(eventIDs);
                 }
             }
         }
@@ -651,34 +652,8 @@ public class TimeLineController {
     }
 
     public void selectEventIDs(Collection<Long> events) {
-        selectEventIDs(events, () -> {
-        }
-        );
-    }
-
-    public void selectEventIDs(Collection<Long> events, Runnable andThen) {
-        final LoggedTask<Interval> selectEventIDsTask = new LoggedTask<Interval>("Select Event IDs", true) { //NON-NLS
-            @Override
-            protected Interval call() throws Exception {
-                return filteredEvents.getSpanningInterval(events);
-            }
-
-            @Override
-            protected void succeeded() {
-                super.succeeded();
-                try {
-                    synchronized (TimeLineController.this) {
-                        selectedTimeRange.set(get());
-                        selectedEventIDs.setAll(events);
-                        andThen.run();
-                    }
-                } catch (InterruptedException | ExecutionException ex) {
-                    LOGGER.log(Level.SEVERE, getTitle() + " Unexpected error", ex); //NON-NLS
-                }
-            }
-        };
-
-        monitorTask(selectEventIDsTask);
+        selectedTimeRange.set(filteredEvents.getSpanningInterval(events));
+        selectedEventIDs.setAll(events);
     }
 
     /**
