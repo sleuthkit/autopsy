@@ -406,31 +406,6 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     }
 
     /**
-     * Finds the root Volume or Image of the AbstractFile passed in.
-     *
-     * @param file The file we want to find the root parent for
-     *
-     * @return The ID of the root parent Volume or Image
-     */
-    private static long getRootId(AbstractFile file) {
-        long id = -1;
-        Content parent = null;
-        try {
-            parent = file.getParent();
-            while (parent != null) {
-                if (parent instanceof Volume || parent instanceof Image) {
-                    id = parent.getId();
-                    break;
-                }
-                parent = parent.getParent();
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "PhotoRec carver exception while trying to get parent of AbstractFile.", ex); //NON-NLS
-        }
-        return id;
-    }
-
-    /**
      * Finds and returns the path to the executable, if able.
      *
      * @param executableToFindName The name of the executable to find
