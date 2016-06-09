@@ -255,17 +255,16 @@ final class DataSourceIngestJob {
         }
         SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
         try {
-            this.addIngestModules(firstStageDataSourceModuleTemplates, skCase);
-            this.addIngestModules(fileIngestModuleTemplates, skCase);
-            this.addIngestModules(secondStageDataSourceModuleTemplates, skCase);
+            this.addIngestModules(firstStageDataSourceModuleTemplates, IngestModuleType.DATA_SOURCE_LEVEL, skCase);
+            this.addIngestModules(fileIngestModuleTemplates, IngestModuleType.FILE_LEVEL, skCase);
+            this.addIngestModules(secondStageDataSourceModuleTemplates, IngestModuleType.DATA_SOURCE_LEVEL, skCase);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed to add ingest modules to database.", ex);
         }
     }
 
-    private void addIngestModules(List<IngestModuleTemplate> templates, SleuthkitCase skCase) throws TskCoreException {
+    private void addIngestModules(List<IngestModuleTemplate> templates, IngestModuleType type, SleuthkitCase skCase) throws TskCoreException {
         for (IngestModuleTemplate module : templates) {
-            IngestModuleType type = module.isDataSourceIngestModuleTemplate() ? IngestModuleType.DATA_SOURCE_LEVEL : IngestModuleType.FILE_LEVEL;
             String uniqueName = FactoryClassNameNormalizer.normalize(module.getModuleFactory().getClass().getCanonicalName()) + "-" + module.getModuleFactory().getModuleDisplayName() + "-" + type.toString() + "-" + module.getModuleFactory().getModuleVersionNumber();
             ingestModules.add(skCase.addIngestModule(module.getModuleName(), uniqueName, type, module.getModuleFactory().getModuleVersionNumber()));
         }
