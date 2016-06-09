@@ -51,26 +51,19 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
-/**
- * Instances of this class use GeneralReportModules, TableReportModules and
- * FileReportModules to generate a report. If desired, displayProgressPanel()
- * can be called to show report generation progress using ReportProgressPanel
- * objects displayed using a dialog box.
- */
 class ReportGenerator {
 
     private static final Logger logger = Logger.getLogger(ReportGenerator.class.getName());
 
     private Case currentCase = Case.getCurrentCase();
-    private SleuthkitCase skCase = currentCase.getSleuthkitCase();
 
     /**
-     * Progress panel that can be used to check for cancellation.
+     * Progress reportGenerationPanel that can be used to check for cancellation.
      */
     private ReportProgressPanel progressPanel;
 
-    private String reportPath;
-    private ReportGenerationPanel panel = new ReportGenerationPanel();
+    private final String reportPath;
+    private final ReportGenerationPanel reportGenerationPanel = new ReportGenerationPanel();
 
     static final String REPORTS_DIR = "Reports"; //NON-NLS
 
@@ -101,7 +94,7 @@ class ReportGenerator {
         String dateNoTime = dateFormat.format(date);
         this.reportPath = currentCase.getReportDirectory() + File.separator + currentCase.getName() + " " + dateNoTime + File.separator;
 
-        this.errorList = new ArrayList<String>();
+        this.errorList = new ArrayList<>();
 
         // Create the root reports directory.
         try {
@@ -120,10 +113,10 @@ class ReportGenerator {
         final JDialog dialog = new JDialog(new JFrame(), true);
         dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
         dialog.setTitle(NbBundle.getMessage(this.getClass(), "ReportGenerator.displayProgress.title.text"));
-        dialog.add(this.panel);
+        dialog.add(this.reportGenerationPanel);
         dialog.pack();
 
-        panel.addCloseAction(new ActionListener() {
+        reportGenerationPanel.addCloseAction(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 dialog.dispose();
@@ -133,7 +126,7 @@ class ReportGenerator {
         dialog.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                panel.close();
+                reportGenerationPanel.close();
             }
         });
 
@@ -266,9 +259,9 @@ class ReportGenerator {
     private void setupProgressPanel(ReportModule module) {
         String reportFilePath = module.getRelativeFilePath();
         if (!reportFilePath.isEmpty()) {
-            this.progressPanel = panel.addReport(module.getName(), reportPath + reportFilePath);
+            this.progressPanel = reportGenerationPanel.addReport(module.getName(), reportPath + reportFilePath);
         } else {
-            this.progressPanel = panel.addReport(module.getName(), null);
+            this.progressPanel = reportGenerationPanel.addReport(module.getName(), null);
         }
     }
 
