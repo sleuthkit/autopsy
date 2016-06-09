@@ -18,48 +18,45 @@
  */
 package org.sleuthkit.autopsy.modules.stix;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
-import java.util.logging.Level;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
 import javax.swing.JPanel;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.namespace.QName;
-
 import org.mitre.cybox.cybox_2.ObjectType;
 import org.mitre.cybox.cybox_2.Observable;
 import org.mitre.cybox.cybox_2.ObservableCompositionType;
+import org.mitre.cybox.cybox_2.OperatorTypeEnum;
+import org.mitre.cybox.objects.AccountObjectType;
+import org.mitre.cybox.objects.Address;
+import org.mitre.cybox.objects.DomainName;
+import org.mitre.cybox.objects.EmailMessage;
+import org.mitre.cybox.objects.FileObjectType;
+import org.mitre.cybox.objects.SystemObjectType;
+import org.mitre.cybox.objects.URIObjectType;
+import org.mitre.cybox.objects.URLHistory;
+import org.mitre.cybox.objects.WindowsNetworkShare;
+import org.mitre.cybox.objects.WindowsRegistryKey;
 import org.mitre.stix.common_1.IndicatorBaseType;
 import org.mitre.stix.indicator_2.Indicator;
 import org.mitre.stix.stix_1.STIXPackage;
-
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.report.GeneralReportModule;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.report.ReportProgressPanel;
-import org.sleuthkit.datamodel.TskCoreException;
-
-import org.mitre.cybox.cybox_2.OperatorTypeEnum;
-import org.mitre.cybox.objects.Address;
-import org.mitre.cybox.objects.FileObjectType;
-import org.mitre.cybox.objects.URIObjectType;
-import org.mitre.cybox.objects.EmailMessage;
-import org.mitre.cybox.objects.WindowsNetworkShare;
-import org.mitre.cybox.objects.AccountObjectType;
-import org.mitre.cybox.objects.SystemObjectType;
-import org.mitre.cybox.objects.URLHistory;
-import org.mitre.cybox.objects.DomainName;
-import org.mitre.cybox.objects.WindowsRegistryKey;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.report.GeneralReportModule;
+import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
@@ -180,6 +177,9 @@ public class STIXReportModule implements GeneralReportModule {
 
         // Process each STIX file
         for (File file : stixFiles) {
+            if (progressPanel.getStatus() == ReportStatus.CANCELED) {
+                return;
+            }
             try {
                 processFile(file.getAbsolutePath(), progressPanel);
             } catch (TskCoreException ex) {

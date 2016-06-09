@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.report;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
-import java.util.Map;
 import java.util.prefs.Preferences;
 import javax.swing.JButton;
 import javax.swing.event.ChangeListener;
@@ -108,17 +107,17 @@ class ReportWizardPanel1 implements WizardDescriptor.FinishablePanel<WizardDescr
 
     @Override
     public void storeSettings(WizardDescriptor wiz) {
-        Map<TableReportModule, Boolean> tables = getComponent().getTableModuleStates();
-        Map<GeneralReportModule, Boolean> generals = getComponent().getGeneralModuleStates();
-        wiz.putProperty("tableModuleStates", tables); //NON-NLS
-        wiz.putProperty("generalModuleStates", generals); //NON-NLS
-        wiz.putProperty("fileModuleStates", getComponent().getFileModuleStates()); //NON-NLS
+        TableReportModule module = getComponent().getTableModule();
+        GeneralReportModule general = getComponent().getGeneralModule();
+        wiz.putProperty("tableModule", module); //NON-NLS
+        wiz.putProperty("generalModule", general); //NON-NLS
+        wiz.putProperty("fileModule", getComponent().getFileModule()); //NON-NLS
 
         // Store preferences that WizardIterator will use to determine what 
         // panels need to be shown
         Preferences prefs = NbPreferences.forModule(ReportWizardPanel1.class);
-        prefs.putBoolean("tableModule", any(tables.values())); //NON-NLS
-        prefs.putBoolean("generalModule", any(generals.values())); //NON-NLS
+        prefs.putBoolean("tableModule", module != null); //NON-NLS
+        prefs.putBoolean("generalModule", general != null); //NON-NLS
     }
 
     /**
