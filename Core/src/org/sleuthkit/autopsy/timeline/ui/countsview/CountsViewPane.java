@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-16 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.countsview;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +57,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
@@ -112,13 +114,10 @@ public class CountsViewPane extends AbstractTimelineChart<String, Number, Node, 
         "CountsViewPane.numberOfEvents=Number of Events ({0})"})
     public CountsViewPane(TimeLineController controller) {
         super(controller);
-      
 
         setChart(new EventCountsChart(controller, dateAxis, countAxis, getSelectedNodes()));
         getChart().setData(dataSeries);
         Tooltip.install(getChart(), getDefaultTooltip());
-
-        setSettingsNodes(new CountsViewSettingsPane().getChildrenUnmodifiable());
 
         dateAxis.getTickMarks().addListener((Observable tickMarks) -> layoutDateLabels());
         dateAxis.categorySpacingProperty().addListener((Observable spacing) -> layoutDateLabels());
@@ -165,6 +164,26 @@ public class CountsViewPane extends AbstractTimelineChart<String, Number, Node, 
         dataSeries.clear();
         eventTypeToSeriesMap.clear();
         createSeries();
+    }
+
+    @Override
+    final protected ViewMode getViewMode() {
+        return ViewMode.COUNTS;
+    }
+
+    @Override
+    protected ImmutableList<Node> getSettingsControls() {
+        return ImmutableList.copyOf(new CountsViewSettingsPane().getChildrenUnmodifiable());
+    }
+
+    @Override
+    protected boolean hasCustomTimeNavigationControls() {
+      return false;
+    }
+
+    @Override
+    protected ImmutableList<Node> getTimeNavigationControls() {
+        return ImmutableList.of();
     }
 
     /**
