@@ -74,7 +74,7 @@ public class FXMLConstructor {
      *
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    static public void construct(Node node, Class<?> clazz, String fxmlFileName) {
+    static public void construct(Node node, Class<? extends Node> clazz, String fxmlFileName) {
         final String name = "nbres:/" + StringUtils.replace(clazz.getPackage().getName(), ".", "/") + "/" + fxmlFileName; // NON-NLS
 
         try {
