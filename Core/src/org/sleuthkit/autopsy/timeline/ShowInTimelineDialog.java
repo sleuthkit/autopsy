@@ -46,6 +46,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.joda.time.Interval;
@@ -62,7 +63,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  * choose a specific event and a time range around it to show in the Timeline
  * List View.
  */
-final class ShowInTimelineDialog extends Dialog<ShowInTimelineDialog.EventInTimeRange> {
+final class ShowInTimelineDialog extends Dialog<ShowInTimelineDialog.EvenstInInterval> {
 
     private static final Logger LOGGER = Logger.getLogger(ShowInTimelineDialog.class.getName());
 
@@ -103,11 +104,18 @@ final class ShowInTimelineDialog extends Dialog<ShowInTimelineDialog.EventInTime
             ChronoUnit.MINUTES,
             ChronoUnit.SECONDS);
 
+    /**
+     * Common Private Constructor
+     *
+     * @param controller The controller for this Dialog.
+     * @param eventIDS   A List of eventIDs to present to the user to choose
+     *                   from.
+     */
     private ShowInTimelineDialog(TimeLineController controller, List<Long> eventIDS) {
         this.controller = controller;
 
+        //load dialog content fxml
         final String name = "nbres:/" + StringUtils.replace(ShowInTimelineDialog.class.getPackage().getName(), ".", "/") + "/ShowInTimelineDialog.fxml"; // NON-NLS
-
         try {
             FXMLLoader fxmlLoader = new FXMLLoader(new URL(name));
             fxmlLoader.setRoot(contentRoot);
@@ -117,16 +125,25 @@ final class ShowInTimelineDialog extends Dialog<ShowInTimelineDialog.EventInTime
         } catch (IOException ex) {
             LOGGER.log(Level.SEVERE, "Unable to load FXML, node initialization may not be complete.", ex); //NON-NLS
         }
-
+        //assert that fxml loading happened correctly
         assert eventTable != null : "fx:id=\"eventTable\" was not injected: check your FXML file 'ShowInTimelineDialog.fxml'.";
         assert typeColumn != null : "fx:id=\"typeColumn\" was not injected: check your FXML file 'ShowInTimelineDialog.fxml'.";
         assert dateTimeColumn != null : "fx:id=\"dateTimeColumn\" was not injected: check your FXML file 'ShowInTimelineDialog.fxml'.";
         assert amountSpinner != null : "fx:id=\"amountsSpinner\" was not injected: check your FXML file 'ShowInTimelineDialog.fxml'.";
         assert unitComboBox != null : "fx:id=\"unitChoiceBox\" was not injected: check your FXML file 'ShowInTimelineDialog.fxml'.";
+
+        //configure dialog properties
+        PromptDialogManager.setDialogIcons(this);
+        setTitle(Bundle.Timeline_dialogs_title());
+        initModality(Modality.APPLICATION_MODAL);
+
+        //add scenegraph loaded from fxml to this dialog.
         DialogPane dialogPane = getDialogPane();
         dialogPane.setContent(contentRoot);
+        //add buttons to dialog
         dialogPane.getButtonTypes().setAll(SHOW, ButtonType.CANCEL);
 
+        ///configure dialog controls
         amountSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 1000));
 
         unitComboBox.setButtonCell(new ChronoUnitListCell());
@@ -140,35 +157,51 @@ final class ShowInTimelineDialog extends Dialog<ShowInTimelineDialog.EventInTime
         dateTimeColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getStartMillis()));
         dateTimeColumn.setCellFactory(param -> new DateTimeTableCell<>());
 
+        //add events to table
         eventTable.getItems().setAll(eventIDS.stream().map(controller.getEventsModel()::getEventById).collect(Collectors.toSet()));
         eventTable.setPrefHeight(Math.min(200, 24 * eventTable.getItems().size() + 28));
     }
 
+    /**
+     * Constructor for artifact based dialog. suppressed the choosing event
+     * aspect as each artifact is assumed to have only one associated event.
+     *
+     * @param controller The controller for this Dialog
+     * @param artifact   The BlackboardArtifact to configure this dialog for.
+     */
     ShowInTimelineDialog(TimeLineController controller, BlackboardArtifact artifact) {
-        this(controller,
-                controller.getEventsModel().getEventIDsForArtifact(artifact));
+        //get events IDs from artifact
+        this(controller, controller.getEventsModel().getEventIDsForArtifact(artifact));
+
+        //hide instructional label and autoselect first(and only) event.
         chooseEventLabel.setVisible(false);
         chooseEventLabel.setManaged(false);
         eventTable.getSelectionModel().select(0);
 
+        //set result converter that does not require selection.
         setResultConverter(buttonType -> {
             if (buttonType == SHOW) {
-                SingleEvent selectedEvent = eventTable.getSelectionModel().getSelectedItem();
-                if (selectedEvent == null) {
-                    selectedEvent = eventTable.getItems().get(0);
-                }
-                return makeEventInTimeRange(selectedEvent);
+                return makeEventInTimeRange(eventTable.getItems().get(0));
             } else {
                 return null;
             }
         });
     }
 
+    /**
+     * Constructor for file based dialog. Allows the user to choose an event
+     * (MAC time) derived from the given file
+     *
+     * @param controller The controller for this Dialog.
+     * @param file       The AbstractFile to configure this dialog for.
+     */
     ShowInTimelineDialog(TimeLineController controller, AbstractFile file) {
-        this(controller,
-                controller.getEventsModel().getEventIDsForFile(file, false));
+        this(controller, controller.getEventsModel().getEventIDsForFile(file, false));
+
+        //require selection to enable show button
         getDialogPane().lookupButton(SHOW).disableProperty().bind(eventTable.getSelectionModel().selectedItemProperty().isNull());
 
+        //set result converter that uses selection.
         setResultConverter(buttonType -> {
             if (buttonType == SHOW) {
                 return makeEventInTimeRange(eventTable.getSelectionModel().getSelectedItem());
@@ -178,12 +211,22 @@ final class ShowInTimelineDialog extends Dialog<ShowInTimelineDialog.EventInTime
         });
     }
 
-    private EventInTimeRange makeEventInTimeRange(SingleEvent selectedEvent) {
+    /**
+     * Construct this Dialog's "result" from the given event.
+     *
+     * @param selectedEvent The SingleEvent to include in the EventInTimeRange
+     *
+     * @return The EventInTimeRange that is the "result" of this dialof.
+     */
+    private EvenstInInterval makeEventInTimeRange(SingleEvent selectedEvent) {
         Duration selectedDuration = Duration.of(amountSpinner.getValue(), unitComboBox.getSelectionModel().getSelectedItem());
         Interval range = IntervalUtils.getIntervalAround(Instant.ofEpochMilli(selectedEvent.getStartMillis()), selectedDuration);
-        return new EventInTimeRange(Collections.singleton(selectedEvent.getEventID()), range);
+        return new EvenstInInterval(Collections.singleton(selectedEvent.getEventID()), range);
     }
 
+    /**
+     * ListCell that shows a ChronoUnit
+     */
     static private class ChronoUnitListCell extends ListCell<ChronoUnit> {
 
         @Override
@@ -198,6 +241,12 @@ final class ShowInTimelineDialog extends Dialog<ShowInTimelineDialog.EventInTime
         }
     }
 
+    /**
+     * TableCell that shows a formatted date/time for a given millisecond since
+     * the unix epoch
+     *
+     * @param <X> Anything
+     */
     static private class DateTimeTableCell<X> extends TableCell<X, Long> {
 
         @Override
@@ -212,6 +261,11 @@ final class ShowInTimelineDialog extends Dialog<ShowInTimelineDialog.EventInTime
         }
     }
 
+    /**
+     * TableCell that shows a EventType including the associated icon.
+     *
+     * @param <X> Anything
+     */
     static private class TypeTableCell<X> extends TableCell<X, EventType> {
 
         @Override
@@ -229,25 +283,41 @@ final class ShowInTimelineDialog extends Dialog<ShowInTimelineDialog.EventInTime
     }
 
     /**
-     * Encapsulates the result of the ShowIntimelineDialog.
+     * Encapsulates the result of the ShowIntimelineDialog: a Set of event IDs
+     * and an Interval.
      */
-    static final class EventInTimeRange {
+    static final class EvenstInInterval {
 
         private final Set<Long> eventIDs;
         private final Interval range;
 
-        EventInTimeRange(Set<Long> eventIDs, Interval range) {
+        /**
+         * Constructor
+         *
+         * @param eventIDs The event IDs to include.
+         * @param range    The Interval to show.
+         */
+        EvenstInInterval(Set<Long> eventIDs, Interval range) {
             this.eventIDs = eventIDs;
             this.range = range;
         }
 
+        /**
+         * Get the event IDs.
+         *
+         * @return The event IDs
+         */
         public Set<Long> getEventIDs() {
             return eventIDs;
         }
 
-        public Interval getRange() {
+        /**
+         * Get the Interval.
+         *
+         * @return The Interval.
+         */
+        public Interval getInterval() {
             return range;
         }
-
     }
 }

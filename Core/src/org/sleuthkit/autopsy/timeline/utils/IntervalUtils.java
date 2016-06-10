@@ -72,7 +72,7 @@ public class IntervalUtils {
 
     static public Interval getIntervalAround(Instant aroundInstant, Duration period) {
         long start = aroundInstant.minus(period).toEpochMilli();
-        long end = aroundInstant.plus(period).toEpochMilli();
+        long end = aroundInstant.plusMillis(1).plus(period).toEpochMilli();
         final Interval newInterval = new Interval(start, Math.max(start + 1, end));
         return newInterval;
     }

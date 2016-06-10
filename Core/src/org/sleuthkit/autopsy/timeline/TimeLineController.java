@@ -388,7 +388,9 @@ public class TimeLineController {
     /**
      * Rebuild the repo using the given repoBuilder (expected to be a member
      * reference to EventsRepository.rebuildRepository() or
-     * EventsRepository.rebuildTags()) and display the ui when it is done.
+     * EventsRepository.rebuildTags()) and display the ui when it is done. If
+     * either file or artifact is not null the user will be prompted to choose a
+     * derived event and time range to show in the Timeline List View.
      *
      * @param repoBuilder    A Function from Consumer<Worker.State> to
      *                       CancellationProgressTask<?>. Ie a function that
@@ -399,6 +401,9 @@ public class TimeLineController {
      *                       EventsRepository.rebuildTags()
      * @param markDBNotStale After the repo is rebuilt should it be marked not
      *                       stale
+     * @param file           The AbstractFile from which to choose an event to
+     *                       show in the List View.
+     * @param artifact       The BlackboardArtifact to show in the List View.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     @NbBundle.Messages({
@@ -444,15 +449,18 @@ public class TimeLineController {
                         SwingUtilities.invokeLater(this::showWindow);
                         TimeLineController.this.showFullRange();
                     } else {
-                        ShowInTimelineDialog d = (file == null)
-                                ? new ShowInTimelineDialog(this, artifact)
-                                : new ShowInTimelineDialog(this, file);
+                        Platform.runLater(() -> {
+                            ShowInTimelineDialog d = (file == null)
+                                    ? new ShowInTimelineDialog(TimeLineController.this, artifact)
+                                    : new ShowInTimelineDialog(TimeLineController.this, file);
 
-                        Optional<ShowInTimelineDialog.EventInTimeRange> result = d.showAndWait();
-                        result.ifPresent(eventInTimeRange -> {
-                            SwingUtilities.invokeLater(this::showWindow);
-                            showEvents(eventInTimeRange.getEventIDs(), eventInTimeRange.getRange());
+                            Optional<ShowInTimelineDialog.EvenstInInterval> result = d.showAndWait();
+                            result.ifPresent(eventInTimeRange -> {
+                                SwingUtilities.invokeLater(TimeLineController.this::showWindow);
+                                showEvents(eventInTimeRange.getEventIDs(), eventInTimeRange.getInterval());
+                            });
                         });
+
                     }
                     break;
 

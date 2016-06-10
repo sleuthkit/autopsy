@@ -21,7 +21,7 @@
             <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
          </columnResizePolicy>
       </TableView>
-      <Label text="Choose the amount of time to show around the selected event:" />
+      <Label text="Choose the amount of time to show before and after the selected event:" />
       <HBox spacing="10.0">
          <children>
             <Spinner fx:id="amountSpinner" editable="true" prefHeight="25.0" prefWidth="80.0" />
