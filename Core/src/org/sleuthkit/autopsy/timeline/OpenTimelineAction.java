@@ -35,18 +35,27 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
+/**
+ * An Action that opens the Timeline window. Has methods to open the window in
+ * various specific states (e.g., showing a specific artifact in the List View)
+ */
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.timeline.Timeline")
 @ActionRegistration(displayName = "#CTL_MakeTimeline", lazy = false)
 @ActionReferences(value = {
     @ActionReference(path = "Menu/Tools", position = 100)})
 public class OpenTimelineAction extends CallableSystemAction {
 
+    private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(OpenTimelineAction.class.getName());
 
-    private static final boolean fxInited = Installer.isJavaFxInited();
+    private static final boolean FX_INITED = Installer.isJavaFxInited();
 
     private static TimeLineController timeLineController = null;
 
+    /**
+     * Invalidate the reference to the controller so that a new will will be
+     * instantiated the next time this action is invoked
+     */
     synchronized static void invalidateController() {
         timeLineController = null;
     }
@@ -57,7 +66,7 @@ public class OpenTimelineAction extends CallableSystemAction {
          * we disabled the check to hasData() because if it is executed while a
          * data source is being added, it blocks the edt
          */
-        return Case.isCaseOpen() && fxInited;// && Case.getCurrentCase().hasData();
+        return Case.isCaseOpen() && FX_INITED;// && Case.getCurrentCase().hasData();
     }
 
     @Override
@@ -69,11 +78,7 @@ public class OpenTimelineAction extends CallableSystemAction {
     @NbBundle.Messages({
         "OpenTimelineAction.settingsErrorMessage=Failed to initialize timeline settings.",
         "OpenTimeLineAction.msgdlg.text=Could not create timeline, there are no data sources."})
-    private void showTimeline(AbstractFile file, BlackboardArtifact artifact) {
-        //check case
-        if (!Case.isCaseOpen()) {
-            return;
-        }
+    synchronized private void showTimeline(AbstractFile file, BlackboardArtifact artifact) {
         try {
             Case currentCase = Case.getCurrentCase();
             if (currentCase.hasData() == false) {
@@ -100,21 +105,41 @@ public class OpenTimelineAction extends CallableSystemAction {
         }
     }
 
+    /**
+     * Open the Timeline window with the default initial view.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void showTimeline() {
         showTimeline(null, null);
     }
 
+    /**
+     * Open the Timeline window with the given file selected in ListView. The
+     * user will be prompted to choose which timestamp to use for the file, and
+     * how much time to show around it.
+     *
+     * @param file The AbstractFile to show in the Timeline.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void showFileInTimeline(AbstractFile file) {
         showTimeline(file, null);
     }
 
+    /**
+     * Open the Timeline window with the given artifact selected in ListView.
+     * The how much time to show around it.
+     *
+     * @param artifact The BlackboardArtifact to show in the Timeline.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void showArtifactInTimeline(BlackboardArtifact artifact) {
         showTimeline(null, artifact);
     }
 
     @Override
+    @NbBundle.Messages("OpenTimelineAction.displayName=Timeline")
     public String getName() {
-        return NbBundle.getMessage(OpenTimelineAction.class, "CTL_MakeTimeline");
+        return Bundle.OpenTimelineAction_displayName();
     }
 
     @Override
