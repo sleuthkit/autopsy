@@ -909,9 +909,6 @@ class TableReportGenerator {
                 }
 
                 attributeDataArray[2] = content.getUniquePath();
-                if (attributeDataArray[2].isEmpty()) {
-                    attributeDataArray[2] = getFileUniquePath(content);
-                }
                 orderedRowData.addAll(Arrays.asList(attributeDataArray));
 
                 HashSet<String> allTags = getTags();
