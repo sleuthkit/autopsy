@@ -26,7 +26,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.beans.property.SimpleObjectProperty;
@@ -54,6 +53,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
+import org.sleuthkit.autopsy.timeline.events.ViewInTimelineRequestedEvent;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -63,7 +63,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  * choose a specific event and a time range around it to show in the Timeline
  * List View.
  */
-final class ShowInTimelineDialog extends Dialog<ShowInTimelineDialog.EvenstInInterval> {
+final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
 
     private static final Logger LOGGER = Logger.getLogger(ShowInTimelineDialog.class.getName());
 
@@ -218,10 +218,10 @@ final class ShowInTimelineDialog extends Dialog<ShowInTimelineDialog.EvenstInInt
      *
      * @return The EventInTimeRange that is the "result" of this dialof.
      */
-    private EvenstInInterval makeEventInTimeRange(SingleEvent selectedEvent) {
+    private ViewInTimelineRequestedEvent makeEventInTimeRange(SingleEvent selectedEvent) {
         Duration selectedDuration = Duration.of(amountSpinner.getValue(), unitComboBox.getSelectionModel().getSelectedItem());
         Interval range = IntervalUtils.getIntervalAround(Instant.ofEpochMilli(selectedEvent.getStartMillis()), selectedDuration);
-        return new EvenstInInterval(Collections.singleton(selectedEvent.getEventID()), range);
+        return new ViewInTimelineRequestedEvent(Collections.singleton(selectedEvent.getEventID()), range);
     }
 
     /**
@@ -279,45 +279,6 @@ final class ShowInTimelineDialog extends Dialog<ShowInTimelineDialog.EvenstInInt
                 setText(item.getDisplayName());
                 setGraphic(new ImageView(item.getFXImage()));
             }
-        }
-    }
-
-    /**
-     * Encapsulates the result of the ShowIntimelineDialog: a Set of event IDs
-     * and an Interval.
-     */
-    static final class EvenstInInterval {
-
-        private final Set<Long> eventIDs;
-        private final Interval range;
-
-        /**
-         * Constructor
-         *
-         * @param eventIDs The event IDs to include.
-         * @param range    The Interval to show.
-         */
-        EvenstInInterval(Set<Long> eventIDs, Interval range) {
-            this.eventIDs = eventIDs;
-            this.range = range;
-        }
-
-        /**
-         * Get the event IDs.
-         *
-         * @return The event IDs
-         */
-        public Set<Long> getEventIDs() {
-            return eventIDs;
-        }
-
-        /**
-         * Get the Interval.
-         *
-         * @return The Interval.
-         */
-        public Interval getInterval() {
-            return range;
         }
     }
 }

@@ -40,12 +40,12 @@ import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
-import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.IntegerBinding;
 import javafx.beans.binding.StringBinding;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
@@ -242,17 +242,20 @@ class ListTimeline extends BorderPane {
             }
         });
 
-        table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        //keep controller's list of selected event IDs in sync with this list's
-        table.getSelectionModel().getSelectedItems().addListener((Observable change) -> {
-            //keep the selectedEventsIDs in sync with the table's selection model, via getRepresentitiveEventID().
+        /*
+         * push list view selection to controller, mapping from CombinedEvent to
+         * eventID via getRepresentitiveEventID().
+         */
+        table.getSelectionModel().getSelectedItems().addListener((ListChangeListener.Change<? extends CombinedEvent> c) -> {
             controller.selectEventIDs(table.getSelectionModel().getSelectedItems().stream()
                     .filter(Objects::nonNull)
                     .map(CombinedEvent::getRepresentativeEventID)
                     .collect(Collectors.toSet()));
         });
+        table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
         selectEvents(controller.getSelectedEventIDs());
+
     }
 
     /**
@@ -290,6 +293,7 @@ class ListTimeline extends BorderPane {
      */
     void selectEvents(Collection<Long> selectedEventIDs) {
         table.getSelectionModel().clearSelection();
+
         if (selectedEventIDs.isEmpty() == false) {
             List<CombinedEvent> selectedCombinedEvents = table.getItems().stream()
                     .filter(combinedEvent -> combinedEvent.getEventIDs().stream().anyMatch(selectedEventIDs::contains))
@@ -305,8 +309,8 @@ class ListTimeline extends BorderPane {
                     .filter(index -> index >= 0)
                     .collect(Collectors.toSet());
 
-            Integer[] indices = selectedIndices.toArray(new Integer[selectedIndices.size()]);
-            if (indices.length >= 1) {
+            if (selectedIndices.size() > 0) {
+                Integer[] indices = selectedIndices.toArray(new Integer[selectedIndices.size()]);
                 table.getSelectionModel().selectIndices(indices[0], ArrayUtils.toPrimitive(indices));
                 table.requestFocus();
             }

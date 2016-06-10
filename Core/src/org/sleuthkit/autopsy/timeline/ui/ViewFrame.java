@@ -638,55 +638,54 @@ final public class ViewFrame extends BorderPane {
     private void syncViewMode() {
         ViewMode newViewMode = controller.getViewMode();
 
-        Platform.runLater(() -> {
-            //clear out old view.
-            if (hostedView != null) {
-                hostedView.dispose();
-            }
+        //clear out old view.
+        if (hostedView != null) {
+            hostedView.dispose();
+        }
 
-            //Set a new AbstractTimeLineView as the one hosted by this ViewFrame.
-            switch (newViewMode) {
-                case LIST:
-                    hostedView = new ListViewPane(controller);
-                    //TODO: should remove listeners from events tree
-                    break;
-                case COUNTS:
-                    hostedView = new CountsViewPane(controller);
-                    //TODO: should remove listeners from events tree
-                    break;
-                case DETAIL:
-                    DetailViewPane detailViewPane = new DetailViewPane(controller);
-                    //link events tree to detailview instance.
-                    detailViewPane.setHighLightedEvents(eventsTree.getSelectedEvents());
-                    eventsTree.setDetailViewPane(detailViewPane);
-                    hostedView = detailViewPane;
-                    break;
-                default:
-                    throw new IllegalArgumentException("Unknown ViewMode: " + newViewMode.toString());//NON-NLS
-            }
+        //Set a new AbstractTimeLineView as the one hosted by this ViewFrame.
+        switch (newViewMode) {
+            case LIST:
+                hostedView = new ListViewPane(controller);
+                //TODO: should remove listeners from events tree
+                break;
+            case COUNTS:
+                hostedView = new CountsViewPane(controller);
+                //TODO: should remove listeners from events tree
+                break;
+            case DETAIL:
+                DetailViewPane detailViewPane = new DetailViewPane(controller);
+                //link events tree to detailview instance.
+                detailViewPane.setHighLightedEvents(eventsTree.getSelectedEvents());
+                eventsTree.setDetailViewPane(detailViewPane);
+                hostedView = detailViewPane;
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown ViewMode: " + newViewMode.toString());//NON-NLS
+        }
+        controller.registerForEvents(hostedView);
 
-            viewModeToggleGroup.setValue(newViewMode); //this selects the right toggle automatically
+        viewModeToggleGroup.setValue(newViewMode); //this selects the right toggle automatically
 
-            //configure settings and time navigation nodes
-            setViewSettingsControls(hostedView.getSettingsControls());
-            setTimeNavigationControls(hostedView.hasCustomTimeNavigationControls()
-                    ? hostedView.getTimeNavigationControls()
-                    : defaultTimeNavigationNodes);
+        //configure settings and time navigation nodes
+        setViewSettingsControls(hostedView.getSettingsControls());
+        setTimeNavigationControls(hostedView.hasCustomTimeNavigationControls()
+                ? hostedView.getTimeNavigationControls()
+                : defaultTimeNavigationNodes);
 
-            //do further setup of  new view.
-            ActionUtils.configureButton(new Refresh(), refreshButton);//configure new refresh action for new view
-            hostedView.refresh();
-            notificationPane.setContent(hostedView);
-            //listen to has events property and show "dialog" if it is false.
-            hostedView.hasVisibleEventsProperty().addListener(hasEvents -> {
-                notificationPane.setContent(hostedView.hasVisibleEvents()
-                        ? hostedView
-                        : new StackPane(hostedView,
-                                NO_EVENTS_BACKGROUND,
-                                new NoEventsDialog(() -> notificationPane.setContent(hostedView))
-                        )
-                );
-            });
+        //do further setup of  new view.
+        ActionUtils.configureButton(new Refresh(), refreshButton);//configure new refresh action for new view
+        hostedView.refresh();
+        notificationPane.setContent(hostedView);
+        //listen to has events property and show "dialog" if it is false.
+        hostedView.hasVisibleEventsProperty().addListener(hasEvents -> {
+            notificationPane.setContent(hostedView.hasVisibleEvents()
+                    ? hostedView
+                    : new StackPane(hostedView,
+                            NO_EVENTS_BACKGROUND,
+                            new NoEventsDialog(() -> notificationPane.setContent(hostedView))
+                    )
+            );
         });
     }
 

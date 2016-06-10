@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline;
 
+import com.google.common.eventbus.EventBus;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
@@ -27,7 +28,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -83,6 +83,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.db.EventsRepository;
+import org.sleuthkit.autopsy.timeline.events.ViewInTimelineRequestedEvent;
 import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
@@ -145,6 +146,7 @@ public class TimeLineController {
     private final ReadOnlyStringWrapper taskTitle = new ReadOnlyStringWrapper();
 
     private final ReadOnlyStringWrapper statusMessage = new ReadOnlyStringWrapper();
+    private EventBus eventbus = new EventBus("TimeLineController_EventBus");
 
     /**
      * Status is a string that will be displayed in the status bar as a kind of
@@ -222,7 +224,7 @@ public class TimeLineController {
 
     //selected events (ie shown in the result viewer)
     @GuardedBy("this")
-    private final ObservableList<Long> selectedEventIDs = FXCollections.<Long>synchronizedObservableList(FXCollections.<Long>observableArrayList());
+    private final ObservableList<Long> selectedEventIDs = FXCollections.<Long>observableArrayList();
 
     @GuardedBy("this")
     private final ReadOnlyObjectWrapper<Interval> selectedTimeRange = new ReadOnlyObjectWrapper<>();
@@ -424,50 +426,49 @@ public class TimeLineController {
 
         //get a task that rebuilds the repo with the bellow state listener attached
         final CancellationProgressTask<?> rebuildRepositoryTask;
-        rebuildRepositoryTask = repoBuilder.apply(newSate -> {
-            //this will be on JFX thread
-            switch (newSate) {
-                case SUCCEEDED:
-                    /*
-                     * Record if ingest was running the last time the db was
-                     * rebuilt, and hence it might stale.
-                     */
-                    try {
-                        perCaseTimelineProperties.setIngestRunning(ingestRunning);
-                    } catch (IOException ex) {
-                        MessageNotifyUtil.Notify.error(Bundle.Timeline_dialogs_title(),
-                                ingestRunning ? Bundle.TimeLineController_setIngestRunning_errMsgRunning()
-                                        : Bundle.TimeLinecontroller_setIngestRunning_errMsgNotRunning());
-                        LOGGER.log(Level.SEVERE, "Error marking the ingest state while the timeline db was populated.", ex); //NON-NLS
-                    }
-                    if (markDBNotStale) {
-                        setEventsDBStale(false);
-                        filteredEvents.postDBUpdated();
-                    }
+        rebuildRepositoryTask = repoBuilder.apply(new Consumer<Worker.State>() {
+            @Override
+            public void accept(Worker.State newSate) {
+                //this will be on JFX thread
+                switch (newSate) {
+                    case SUCCEEDED:
+                        /*
+                         * Record if ingest was running the last time the db was
+                         * rebuilt, and hence it might stale.
+                         */
+                        try {
+                            perCaseTimelineProperties.setIngestRunning(ingestRunning);
+                        } catch (IOException ex) {
+                            MessageNotifyUtil.Notify.error(Bundle.Timeline_dialogs_title(),
+                                    ingestRunning ? Bundle.TimeLineController_setIngestRunning_errMsgRunning()
+                                            : Bundle.TimeLinecontroller_setIngestRunning_errMsgNotRunning());
+                            LOGGER.log(Level.SEVERE, "Error marking the ingest state while the timeline db was populated.", ex); //NON-NLS
+                        }
+                        if (markDBNotStale) {
+                            setEventsDBStale(false);
+                            filteredEvents.postDBUpdated();
+                        }
+                        if (file == null && artifact == null) {
+                            SwingUtilities.invokeLater(TimeLineController.this::showWindow);
+                            TimeLineController.this.showFullRange();
+                        } else {
 
-                    if (file == null && artifact == null) {
-                        SwingUtilities.invokeLater(this::showWindow);
-                        TimeLineController.this.showFullRange();
-                    } else {
-                        Platform.runLater(() -> {
                             ShowInTimelineDialog d = (file == null)
                                     ? new ShowInTimelineDialog(TimeLineController.this, artifact)
                                     : new ShowInTimelineDialog(TimeLineController.this, file);
 
-                            Optional<ShowInTimelineDialog.EvenstInInterval> result = d.showAndWait();
-                            result.ifPresent(eventInTimeRange -> {
+                            Optional<ViewInTimelineRequestedEvent> result = d.showAndWait();
+                            result.ifPresent(viewInTimelineRequestedEvent -> {
                                 SwingUtilities.invokeLater(TimeLineController.this::showWindow);
-                                showEvents(eventInTimeRange.getEventIDs(), eventInTimeRange.getInterval());
+                                showEvents(viewInTimelineRequestedEvent);
                             });
-                        });
-
-                    }
-                    break;
-
-                case FAILED:
-                case CANCELLED:
-                    setEventsDBStale(true);
-                    break;
+                        }
+                        break;
+                    case FAILED:
+                    case CANCELLED:
+                        setEventsDBStale(true);
+                        break;
+                }
             }
         });
 
@@ -483,6 +484,7 @@ public class TimeLineController {
      * done.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+
     public void rebuildRepo(AbstractFile file, BlackboardArtifact artifact) {
         rebuildRepoHelper(eventsRepository::rebuildRepository, true, file, artifact);
     }
@@ -505,19 +507,13 @@ public class TimeLineController {
         }
     }
 
-    public void showEvents(Set<Long> eventIDs, Interval interval) {
-        if (eventIDs == null && interval == null) {
-            showFullRange();
-        } else {
-            synchronized (filteredEvents) {
-                if (interval != null) {
-                    pushTimeRange(interval);
-                }
-                if (eventIDs != null) {
-                    setViewMode(ViewMode.LIST);
-                    selectEventIDs(eventIDs);
-                }
-            }
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private void showEvents(ViewInTimelineRequestedEvent requestEvent) {
+        synchronized (filteredEvents) {
+            pushTimeRange(requestEvent.getInterval());
+            selectEventIDs(requestEvent.getEventIDs());
+            setViewMode(ViewMode.LIST);
+            eventbus.post(requestEvent);
         }
     }
 
@@ -662,11 +658,6 @@ public class TimeLineController {
         pushTimeRange(new Interval(start, end));
     }
 
-    public void selectEventIDs(Collection<Long> events) {
-        selectedTimeRange.set(filteredEvents.getSpanningInterval(events));
-        selectedEventIDs.setAll(events);
-    }
-
     /**
      * Show the timeline TimeLineTopComponent. This method will construct a new
      * instance of TimeLineTopComponent if necessary.
@@ -770,6 +761,17 @@ public class TimeLineController {
         historyManager.advance(newState);
     }
 
+    /**
+     * Select the given event IDs and set their spanning interval as the
+     * selected time range.
+     *
+     * @param eventIDs The eventIDs to select
+     */
+    synchronized public void selectEventIDs(Collection<Long> eventIDs) {
+        selectedTimeRange.set(filteredEvents.getSpanningInterval(eventIDs));
+        selectedEventIDs.setAll(eventIDs);
+    }
+
     public void selectTimeAndType(Interval interval, EventType type) {
         final Interval timeRange = filteredEvents.getSpanningInterval().overlap(interval);
 
@@ -855,8 +857,28 @@ public class TimeLineController {
         }
     }
 
+    /**
+     * Register the given object to receive events.
+     *
+     * @param o The object to register. Must implement public methods annotated
+     *          with Subscribe.
+     */
+    synchronized public void registerForEvents(Object o) {
+        eventbus.register(o);
+    }
+
+    /**
+     * Un-register the given object, so it no longer receives events.
+     *
+     * @param o The object to un-register.
+     */
+    synchronized public void unRegisterForEvents(Object o) {
+        eventbus.unregister(0);
+    }
+
     static synchronized public void setTimeZone(TimeZone timeZone) {
         TimeLineController.timeZone.set(timeZone);
+
     }
 
     /**

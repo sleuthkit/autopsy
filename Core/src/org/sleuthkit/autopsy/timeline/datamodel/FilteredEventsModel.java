@@ -114,7 +114,7 @@ public final class FilteredEventsModel {
     @GuardedBy("this")
     private final ReadOnlyObjectWrapper<ZoomParams> requestedZoomParamters = new ReadOnlyObjectWrapper<>();
 
-    private final EventBus eventbus = new EventBus("Event_Repository_EventBus"); //NON-NLS
+    private final EventBus eventbus = new EventBus("FilteredEventsModel_EventBus"); //NON-NLS
 
     /**
      * The underlying repo for events. Atomic access to repo is synchronized

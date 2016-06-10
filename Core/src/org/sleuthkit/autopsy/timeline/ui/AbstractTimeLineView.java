@@ -74,7 +74,7 @@ public abstract class AbstractTimeLineView extends BorderPane {
      */
     private Task<Boolean> updateTask;
 
-    public final TimeLineController controller;
+    private final TimeLineController controller;
     private final FilteredEventsModel filteredEvents;
 
     /**
@@ -100,6 +100,9 @@ public abstract class AbstractTimeLineView extends BorderPane {
     public void handleRefreshRequested(RefreshRequestedEvent event) {
         refresh();
     }
+ 
+    
+   
 
     /**
      * Does the view represent an out-of-date state of the DB. It might if, for
@@ -227,6 +230,7 @@ public abstract class AbstractTimeLineView extends BorderPane {
         TimeLineController.getTimeZone().removeListener(updateListener);
         updateListener = null;
         filteredEvents.unRegisterForEvents(this);
+        controller.unRegisterForEvents(this);
     }
 
     /**

@@ -36,7 +36,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 public interface ArtifactEventType extends EventType {
 
     public static final Logger LOGGER = Logger.getLogger(ArtifactEventType.class.getName());
-    static final EmptyExtractor EMPTY_EXTRACTOR = new EmptyExtractor();
 
     public static Set<ArtifactEventType> getAllArtifactEventTypes() {
         return allTypes.stream()
