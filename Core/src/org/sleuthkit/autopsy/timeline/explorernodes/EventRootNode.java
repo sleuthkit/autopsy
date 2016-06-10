@@ -27,21 +27,18 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Root Explorer node to represent events.
+ * Root Explorer Node to represent events.
  */
 public class EventRootNode extends DisplayableItemNode {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * Since the lazy loading seems to be broken if there are more than this
@@ -50,18 +47,8 @@ public class EventRootNode extends DisplayableItemNode {
      */
     public static final int MAX_EVENTS_TO_DISPLAY = 5000;
 
-    /**
-     * the number of child events
-     */
-    private final int childCount;
-
-    public EventRootNode(String NAME, Collection<Long> fileIds, FilteredEventsModel filteredEvents) {
+    public EventRootNode(Collection<Long> fileIds, FilteredEventsModel filteredEvents) {
         super(Children.create(new EventNodeChildFactory(fileIds, filteredEvents), true), Lookups.singleton(fileIds));
-
-        super.setName(NAME);
-        super.setDisplayName(NAME);
-
-        childCount = fileIds.size();
     }
 
     @Override
@@ -74,9 +61,6 @@ public class EventRootNode extends DisplayableItemNode {
         return null;
     }
 
-    public int getChildCount() {
-        return childCount;
-    }
 
     /*
      * TODO (AUT-1849): Correct or remove peristent column reordering code
@@ -95,12 +79,12 @@ public class EventRootNode extends DisplayableItemNode {
         private static final Logger LOGGER = Logger.getLogger(EventNodeChildFactory.class.getName());
 
         /**
-         * list of event ids that act as keys for the child nodes.
+         * List of event IDs that act as keys for the child nodes.
          */
         private final Collection<Long> eventIDs;
 
         /**
-         * filteredEvents is used to lookup the events from their ids
+         * filteredEvents is used to lookup the events from their IDs
          */
         private final FilteredEventsModel filteredEvents;
 
@@ -112,8 +96,8 @@ public class EventRootNode extends DisplayableItemNode {
         @Override
         protected boolean createKeys(List<Long> toPopulate) {
             /**
-             * if there are too many events, just add one id (-1) to indicate
-             * this.
+             * If there are too many events, just add one dummy ID (-1) to
+             * indicate this.
              */
             if (eventIDs.size() < MAX_EVENTS_TO_DISPLAY) {
                 toPopulate.addAll(eventIDs);
@@ -127,34 +111,24 @@ public class EventRootNode extends DisplayableItemNode {
         protected Node createNodeForKey(Long eventID) {
             if (eventID < 0) {
                 /*
-                 * if the eventId is a the special value, return a node with a
-                 * warning that their are too many evens
+                 * If the eventId is a the special value ( -1 ), return a node
+                 * with a warning that their are too many evens
                  */
                 return new TooManyNode(eventIDs.size());
             } else {
-                /*
-                 * look up the event by id and creata an EventNode with the
-                 * appropriate data in the lookup.
-                 */
-                final SingleEvent eventById = filteredEvents.getEventById(eventID);
                 try {
-                    SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
-                    AbstractFile file = sleuthkitCase.getAbstractFileById(eventById.getFileID());
-                    if (file != null) {
-                        if (eventById.getArtifactID().isPresent()) {
-                            BlackboardArtifact blackboardArtifact = sleuthkitCase.getBlackboardArtifact(eventById.getArtifactID().get());
-                            return new EventNode(eventById, file, blackboardArtifact);
-                        } else {
-                            return new EventNode(eventById, file);
-                        }
-                    } else {
-                        //This should never happen in normal operations
-                        LOGGER.log(Level.WARNING, "Failed to lookup sleuthkit object backing TimeLineEvent."); // NON-NLS
-                        return null;
-                    }
-                } catch (IllegalStateException | TskCoreException ex) {
-                    //if some how the case was closed or ther is another unspecified exception, just bail out with a warning.
-                    LOGGER.log(Level.WARNING, "Failed to lookup sleuthkit object backing TimeLineEvent.", ex); // NON-NLS
+                    return EventNode.createEventNode(eventID, filteredEvents);
+                } catch (IllegalStateException ex) {
+                    //Since the case is closed, the user probably doesn't care about this, just log it as a precaution.
+                    LOGGER.log(Level.SEVERE, "There was no case open to lookup the Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
+                    return null;
+                } catch (TskCoreException ex) {
+                    /*
+                     * Just log it: There might be lots of these errors, and we
+                     * don't want to flood the user with notifications. It will
+                     * be obvious the UI is broken anyways
+                     */
+                    LOGGER.log(Level.SEVERE, "Failed to lookup Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
                     return null;
                 }
             }
@@ -162,8 +136,7 @@ public class EventRootNode extends DisplayableItemNode {
     }
 
     /**
-     * A Node that just shows a warning message that their are too many events
-     * to show
+     * A Node with a warning message that their are too many events to show.
      */
     private static class TooManyNode extends AbstractNode {
 

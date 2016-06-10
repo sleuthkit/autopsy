@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-16 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.countsview;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.Tooltip;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -55,10 +57,10 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
-import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
-import static org.sleuthkit.autopsy.timeline.ui.countsview.Bundle.*;
+import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 
 /**
@@ -77,7 +79,7 @@ import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
  * Platform.runLater(java.lang.Runnable). The FilteredEventsModel should
  * encapsulate all need synchronization internally.
  */
-public class CountsViewPane extends AbstractVisualizationPane<String, Number, Node, EventCountsChart> {
+public class CountsViewPane extends AbstractTimelineChart<String, Number, Node, EventCountsChart> {
 
     private static final Logger LOGGER = Logger.getLogger(CountsViewPane.class.getName());
 
@@ -93,8 +95,8 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
 
     @Override
     protected Boolean isTickBold(String value) {
-        return dataSeries.stream().flatMap((series) -> series.getData().stream())
-                .anyMatch((data) -> data.getXValue().equals(value) && data.getYValue().intValue() > 0);
+        return dataSeries.stream().flatMap(series -> series.getData().stream())
+                .anyMatch(data -> data.getXValue().equals(value) && data.getYValue().intValue() > 0);
     }
 
     @Override
@@ -105,22 +107,17 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
     /**
      * Constructor
      *
-     * @param controller   The TimelineController for this visualization.
-     * @param specificPane The container for the specific axis labels.
-     * @param contextPane  The container for the contextual axis labels.
-     * @param spacer       The Region to use as a spacer to keep the axis labels
-     *                     aligned.
+     * @param controller The TimelineController for this view.
      */
     @NbBundle.Messages({
         "# {0} - scale name",
         "CountsViewPane.numberOfEvents=Number of Events ({0})"})
     public CountsViewPane(TimeLineController controller) {
         super(controller);
+
         setChart(new EventCountsChart(controller, dateAxis, countAxis, getSelectedNodes()));
         getChart().setData(dataSeries);
         Tooltip.install(getChart(), getDefaultTooltip());
-
-        setSettingsNodes(new CountsViewSettingsPane().getChildrenUnmodifiable());
 
         dateAxis.getTickMarks().addListener((Observable tickMarks) -> layoutDateLabels());
         dateAxis.categorySpacingProperty().addListener((Observable spacing) -> layoutDateLabels());
@@ -132,7 +129,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
         countAxis.tickMarkVisibleProperty().bind(scaleIsLinear);
         countAxis.minorTickVisibleProperty().bind(scaleIsLinear);
         scaleProp.addListener(scale -> {
-            update();
+            refresh();
             syncAxisScaleLabel();
         });
         syncAxisScaleLabel();
@@ -160,13 +157,33 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     @Override
-    protected void clearChartData() {
+    protected void clearData() {
         for (XYChart.Series<String, Number> series : dataSeries) {
             series.getData().clear();
         }
         dataSeries.clear();
         eventTypeToSeriesMap.clear();
         createSeries();
+    }
+
+    @Override
+    final protected ViewMode getViewMode() {
+        return ViewMode.COUNTS;
+    }
+
+    @Override
+    protected ImmutableList<Node> getSettingsControls() {
+        return ImmutableList.copyOf(new CountsViewSettingsPane().getChildrenUnmodifiable());
+    }
+
+    @Override
+    protected boolean hasCustomTimeNavigationControls() {
+      return false;
+    }
+
+    @Override
+    protected ImmutableList<Node> getTimeNavigationControls() {
+        return ImmutableList.of();
     }
 
     /**
@@ -220,7 +237,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
     }
 
     @Override
-     protected double getAxisMargin() {
+    protected double getAxisMargin() {
         return dateAxis.getStartMargin() + dateAxis.getEndMargin();
     }
 
@@ -241,7 +258,9 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
         private Label scaleLabel;
 
         @FXML
-        private ImageView helpImageView;
+        private ImageView logImageView;
+        @FXML
+        private ImageView linearImageView;
 
         @FXML
         @NbBundle.Messages({
@@ -249,44 +268,48 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
             "CountsViewPane.scaleLabel.text=Scale:",
             "CountsViewPane.scaleHelp.label.text=Scales:   ",
             "CountsViewPane.linearRadio.text=Linear",
-            "CountsViewPane.scaleHelp=The default linear scale is good for many use cases.  When this scale is selected, the height of the bars represents the counts in a linear, one-to-one fashion, and the y-axis is labeled with values. When the range of values is very large, date ranges with relatively low counts have a bar that may be too small to see.  To help avoid the misperception of this as no events, the labels for date ranges with events are bold.  To see bars that are too small, there are three options:  adjust the window size so that the visualization area has more vertical space, adjust the time range shown so that time periods with relatively much larger bars are excluded, or adjust the scale setting to logarithmic.\n\nThe logarithmic scale represents the number of events in a non-linear way that compresses the difference between very large and very small numbers. Note that even with the logarithmic scale, an extremely large difference in counts may still produce bars too small to see.  In this case the only option may be to exclude events to reduce the difference in counts.  NOTE: Because the logarithmic scale is applied to each event type separately, the height of the combined bar is not very meaningful, and to emphasize this, no labels are shown on the y-axis. The logarithmic scale should be used to quickly compare the counts ",
-            "CountsViewPane.scaleHelp2=across time within a type, or across types for one time period, but not both.",
-            "CountsViewPane.scaleHelp3= The exact numbers (available in tooltips or the result viewer) should be used for absolute comparisons.  Use the logarithmic scale with care."})
+            "CountsViewPane.scaleHelpLinear=The linear scale is good for many use cases.  When this scale is selected, the height of the bars represents the counts in a linear, one-to-one fashion, and the y-axis is labeled with values. When the range of values is very large, time periods with low counts may have a bar that is too small to see.  To help the user detect this, the labels for date ranges with events are bold.  To see bars that are too small, there are three options:  adjust the window size so that the timeline has more vertical space, adjust the time range shown so that time periods with larger bars are excluded, or adjust the scale setting to logarithmic.",
+            "CountsViewPane.scaleHelpLog=The logarithmic scale represents the number of events in a non-linear way that compresses the difference between large and small numbers. Note that even with the logarithmic scale, an extremely large difference in counts may still produce bars too small to see.  In this case the only option may be to filter events to reduce the difference in counts.  NOTE: Because the logarithmic scale is applied to each event type separately, the meaning of the height of the combined bar is not intuitive, and to emphasize this, no labels are shown on the y-axis with the logarithmic scale. The logarithmic scale should be used to quickly compare the counts ",
+            "CountsViewPane.scaleHelpLog2=across time within a type, or across types for one time period, but not both.",
+            "CountsViewPane.scaleHelpLog3= The actual counts (available in tooltips or the result viewer) should be used for absolute comparisons.  Use the logarithmic scale with care."})
         void initialize() {
             assert logRadio != null : "fx:id=\"logRadio\" was not injected: check your FXML file 'CountsViewSettingsPane.fxml'."; // NON-NLS
             assert linearRadio != null : "fx:id=\"linearRadio\" was not injected: check your FXML file 'CountsViewSettingsPane.fxml'."; // NON-NLS
-            scaleLabel.setText(CountsViewPane_scaleLabel_text());
-            linearRadio.setText(CountsViewPane_linearRadio_text());
-            logRadio.setText(CountsViewPane_logRadio_text());
+            scaleLabel.setText(Bundle.CountsViewPane_scaleLabel_text());
+            linearRadio.setText(Bundle.CountsViewPane_linearRadio_text());
+            logRadio.setText(Bundle.CountsViewPane_logRadio_text());
 
-            scaleGroup.selectedToggleProperty().addListener(observable -> {
-                if (scaleGroup.getSelectedToggle() == linearRadio) {
+            scaleGroup.selectedToggleProperty().addListener((observable, oldToggle, newToggle) -> {
+                if (newToggle == linearRadio) {
                     scaleProp.set(Scale.LINEAR);
-                } else if (scaleGroup.getSelectedToggle() == logRadio) {
+                } else if (newToggle == logRadio) {
                     scaleProp.set(Scale.LOGARITHMIC);
                 }
             });
             logRadio.setSelected(true);
 
-            //make a popup hrlp window with descriptions of the scales.
-            helpImageView.setCursor(Cursor.HAND);
-            helpImageView.setOnMouseClicked(clicked -> {
-                Text text = new Text(Bundle.CountsViewPane_scaleHelp());
-                Text text2 = new Text(Bundle.CountsViewPane_scaleHelp2());
+            //make a popup help "window" with a description of the log scale.
+            logImageView.setCursor(Cursor.HAND);
+            logImageView.setOnMouseClicked(clicked -> {
+                Text text = new Text(Bundle.CountsViewPane_scaleHelpLog());
+                Text text2 = new Text(Bundle.CountsViewPane_scaleHelpLog2());
                 Font baseFont = text.getFont();
                 text2.setFont(Font.font(baseFont.getFamily(), FontWeight.BOLD, FontPosture.ITALIC, baseFont.getSize()));
-                Text text3 = new Text(Bundle.CountsViewPane_scaleHelp3());
+                Text text3 = new Text(Bundle.CountsViewPane_scaleHelpLog3());
+                showPopoverHelp(logImageView,
+                        Bundle.CountsViewPane_logRadio_text(),
+                        logImageView.getImage(),
+                        new TextFlow(text, text2, text3));
+            });
 
-                Pane borderPane = new BorderPane(null, null, new ImageView(helpImageView.getImage()),
-                        new TextFlow(text, text2, text3),
-                        new Label(Bundle.CountsViewPane_scaleHelp_label_text()));
-                borderPane.setPadding(new Insets(10));
-                borderPane.setPrefWidth(500);
-
-                PopOver popOver = new PopOver(borderPane);
-                popOver.setDetachable(false);
-                popOver.setArrowLocation(PopOver.ArrowLocation.TOP_CENTER);
-                popOver.show(helpImageView);
+            //make a popup help "window" with a description of the linear scale.
+            linearImageView.setCursor(Cursor.HAND);
+            linearImageView.setOnMouseClicked(clicked -> {
+                Text text = new Text(Bundle.CountsViewPane_scaleHelpLinear());
+                text.setWrappingWidth(480);  //This is a hack to fix the layout.
+                showPopoverHelp(linearImageView,
+                        Bundle.CountsViewPane_linearRadio_text(),
+                        linearImageView.getImage(), text);
             });
         }
 
@@ -299,17 +322,50 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
     }
 
     /**
+     *
+     * Static utility to to show a Popover with the given Node as owner.
+     *
+     * @param owner       The owner of the Popover
+     * @param headerText  A short String that will be shown in the top-left
+     *                    corner of the Popover.
+     * @param headerImage An Image that will be shown at the top-right corner of
+     *                    the Popover.
+     * @param content     The main content of the Popover, shown in the
+     *                    bottom-center
+     *
+     */
+    private static void showPopoverHelp(final Node owner, final String headerText, final Image headerImage, final Node content) {
+        Pane borderPane = new BorderPane(null, null, new ImageView(headerImage),
+                content,
+                new Label(headerText));
+        borderPane.setPadding(new Insets(10));
+        borderPane.setPrefWidth(500);
+
+        PopOver popOver = new PopOver(borderPane);
+        popOver.setDetachable(false);
+        popOver.setArrowLocation(PopOver.ArrowLocation.TOP_CENTER);
+
+        popOver.show(owner);
+    }
+
+    /**
      * Task that clears the Chart, fetches new data according to the current
      * ZoomParams and loads it into the Chart
      *
      */
     @NbBundle.Messages({
         "CountsViewPane.loggedTask.name=Updating Counts View",
-        "CountsViewPane.loggedTask.updatingCounts=Populating visualization"})
-    private class CountsUpdateTask extends VisualizationUpdateTask<List<String>> {
+        "CountsViewPane.loggedTask.updatingCounts=Populating view"})
+    private class CountsUpdateTask extends ViewRefreshTask<List<String>> {
 
         CountsUpdateTask() {
             super(Bundle.CountsViewPane_loggedTask_name(), true);
+        }
+
+        @Override
+        protected void succeeded() {
+            super.succeeded();
+            layoutDateLabels();
         }
 
         @Override
@@ -325,7 +381,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
             List<Interval> intervals = rangeInfo.getIntervals();
 
             //clear old data, and reset ranges and series
-            resetChart(Lists.transform(intervals, rangeInfo::formatForTick));
+            resetView(Lists.transform(intervals, rangeInfo::formatForTick));
 
             updateMessage(Bundle.CountsViewPane_loggedTask_updatingCounts());
             int chartMax = 0;
@@ -383,7 +439,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
         }
 
         @Override
-        protected void setDateAxisValues(List<String> categories) {
+        protected void setDateValues(List<String> categories) {
             dateAxis.getCategories().setAll(categories);
         }
     }

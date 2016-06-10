@@ -132,11 +132,9 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         keywordListsLabel = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(250, 0));
-        setPreferredSize(new java.awt.Dimension(250, 492));
-
-        jScrollPane1.setPreferredSize(new java.awt.Dimension(200, 402));
 
         listsTable.setModel(tableModel);
+        listsTable.setMaximumSize(new java.awt.Dimension(30000, 30000));
         listsTable.setShowHorizontalLines(false);
         listsTable.setShowVerticalLines(false);
         listsTable.getTableHeader().setReorderingAllowed(false);
@@ -147,23 +145,23 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         });
         jScrollPane1.setViewportView(listsTable);
 
-        newListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/new16.png"))); // NOI18N NON-NLS
-        newListButton.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "KeywordSearchListsManagementPanel.newListButton.text")); // NOI18N
+        newListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/new16.png"))); // NOI18N
+        newListButton.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "GlobalListsManagementPanel.newListButton.text")); // NOI18N
         newListButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 newListButtonActionPerformed(evt);
             }
         });
 
-        importButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/import16.png"))); // NOI18N NON-NLS
-        importButton.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "KeywordSearchListsManagementPanel.importButton.text")); // NOI18N
+        importButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/import16.png"))); // NOI18N
+        importButton.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "GlobalListsManagementPanel.importButton.text")); // NOI18N
         importButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 importButtonActionPerformed(evt);
             }
         });
 
-        keywordListsLabel.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "KeywordSearchListsManagementPanel.keywordListsLabel.text")); // NOI18N
+        keywordListsLabel.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "GlobalListsManagementPanel.keywordListsLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -172,7 +170,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(keywordListsLabel)
@@ -189,8 +187,8 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
                 .addContainerGap()
                 .addComponent(keywordListsLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 414, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 355, Short.MAX_VALUE)
+                .addGap(5, 5, 5)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(newListButton)
                     .addComponent(importButton))

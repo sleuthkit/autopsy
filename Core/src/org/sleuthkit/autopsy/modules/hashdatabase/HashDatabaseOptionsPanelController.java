@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.hashdatabase;
 
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import javax.swing.JComponent;
@@ -113,6 +114,14 @@ public final class HashDatabaseOptionsPanelController extends OptionsPanelContro
     private HashLookupSettingsPanel getPanel() {
         if (panel == null) {
             panel = new HashLookupSettingsPanel();
+            panel.addPropertyChangeListener(new PropertyChangeListener() {
+                @Override
+                public void propertyChange(PropertyChangeEvent evt) {
+                    if (evt.getPropertyName().equals(OptionsPanelController.PROP_CHANGED)) {
+                        changed();
+                    }
+                }
+            });
         }
         return panel;
     }

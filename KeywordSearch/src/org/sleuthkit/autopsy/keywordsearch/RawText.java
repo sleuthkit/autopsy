@@ -24,12 +24,14 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskData;
 
 /**
- * Display content with just raw text
- *
+ * A "source" for the extracted content viewer that displays "raw" (not
+ * highlighted) indexed text for a file or an artifact.
  */
 class RawText implements IndexedText {
 
@@ -147,24 +149,28 @@ class RawText implements IndexedText {
     public String getText() {
         try {
             if (this.content != null) {
-                if (hasChunks) {
-                    return getIndexedTextForPage(currentPage);
-                } else {
-                    String msg = NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.getSolrContent.noTxtYetMsg", content.getName());
-                    return NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.getSolrContent.txtBodyItal", msg);
-                }
+                return getContentText(currentPage, hasChunks);
             } else if (this.blackboardArtifact != null) {
-                return KeywordSearch.getServer().getSolrContent(this.objectId, 1);
+                return getArtifactText();
             }
-        } catch (SolrServerException | NoOpenCoreException ex) {
-            logger.log(Level.WARNING, "Couldn't get extracted content.", ex); //NON-NLS
+        } catch (SolrServerException ex) {
+            logger.log(Level.SEVERE, "Couldn't get extracted content", ex); //NON-NLS
+        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+            logger.log(Level.SEVERE, "Couldn't read settings", ex); //NON-NLS
         }
         return NbBundle.getMessage(this.getClass(), "RawText.getText.error.msg");
     }
 
+    @NbBundle.Messages({
+        "RawText.FileText=File Text",
+        "RawText.ResultText=Result Text"})
     @Override
     public String toString() {
-        return NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.toString");
+        if (null != content) {
+            return Bundle.RawText_FileText();
+        } else {
+            return Bundle.RawText_ResultText();
+        }
     }
 
     @Override
@@ -207,46 +213,87 @@ class RawText implements IndexedText {
             } else {
                 hasChunks = true;
             }
-        } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
+        } catch (KeywordSearchModuleException ex) {
+            logger.log(Level.WARNING, "Could not get number of chunks: ", ex); //NON-NLS		
+
+        } catch (NoOpenCoreException ex) {
             logger.log(Level.WARNING, "Could not get number of chunks: ", ex); //NON-NLS		
         }
     }
 
     /**
-     * Gets the indexed text from Solr for a given page in the content viewer.
+     * Get extracted content for a node from Solr
      *
-     * @param pageNumber The page number.
+     * @param node        a node that has extracted content in Solr (check with
+     *                    solrHasContent(ContentNode))
+     * @param currentPage currently used page
+     * @param hasChunks   true if the content behind the node has multiple
+     *                    chunks. This means we need to address the content
+     *                    pages specially.
      *
-     * @return The indexed text for the page.
+     * @return the extracted content
      *
-     * @throws NoOpenCoreException if there is no open Solr core.
-     * @throws SolrServerException if there is a problem querying the Solr
-     *                             server for the indexed text.
+     * @throws SolrServerException if something goes wrong
      */
-    private String getIndexedTextForPage(int pageNumber) throws SolrServerException, NoOpenCoreException {
-        /*
-         * Each page displays a single chunk from the Solr document, so the page
-         * number is the chunk id.
-         */
-        int chunkId = pageNumber;
+    private String getContentText(int currentPage, boolean hasChunks) throws SolrServerException, KeywordSearchSettingsManager.KeywordSearchSettingsManagerException {
+        final Server solrServer = KeywordSearch.getServer();
+        KeywordSearchSettingsManager manager = KeywordSearchSettingsManager.getInstance();
 
-        /*
-         * Is the indexed text for this page in the cache?
-         */
-        if (cachedString != null && cachedChunk == chunkId) {
-            return cachedString;
+        if (hasChunks == false) {
+            //if no chunks, it is safe to assume there is no text content
+            //because we are storing extracted text in chunks only
+            //and the non-chunk stores meta-data only
+            String name = content.getName();
+            String msg = null;
+            if (content instanceof AbstractFile) {
+                //we know it's AbstractFile, but do quick check to make sure if we index other objects in future
+                boolean isKnown = TskData.FileKnown.KNOWN.equals(((AbstractFile) content).getKnown());
+                if (isKnown && manager.getSkipKnown()) {
+                    msg = NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.getSolrContent.knownFileMsg", name);
+                }
+            }
+            if (msg == null) {
+                msg = NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.getSolrContent.noTxtYetMsg", name);
+            }
+            String htmlMsg = NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.getSolrContent.txtBodyItal", msg);
+            return htmlMsg;
         }
 
-        /*
-         * Get the indexed text form the Solr server, format it, and cache it.
-         */
-        Server solrServer = KeywordSearch.getServer();
-        String indexedText = solrServer.getSolrContent(this.objectId, chunkId);
-        cachedString = EscapeUtil.escapeHtml(indexedText).trim();
-        StringBuilder sb = new StringBuilder(cachedString.length() + 20);
-        sb.append("<pre>").append(cachedString).append("</pre>"); //NON-NLS
-        cachedString = sb.toString();
-        cachedChunk = pageNumber;
+        int chunkId = currentPage;
+
+        //check if cached
+        if (cachedString != null) {
+            if (cachedChunk == chunkId) {
+                return cachedString;
+            }
+        }
+
+        //not cached
+        try {
+            String indexedText = solrServer.getSolrContent(this.objectId, chunkId);
+            cachedString = EscapeUtil.escapeHtml(indexedText).trim();
+            StringBuilder sb = new StringBuilder(cachedString.length() + 20);
+            sb.append("<pre>").append(cachedString).append("</pre>"); //NON-NLS
+            cachedString = sb.toString();
+            cachedChunk = chunkId;
+        } catch (NoOpenCoreException ex) {
+            logger.log(Level.SEVERE, "No open core", ex); //NON-NLS
+            return "";
+        }
         return cachedString;
     }
+
+    private String getArtifactText() throws SolrServerException {
+        try {
+            String indexedText = KeywordSearch.getServer().getSolrContent(this.objectId, 1);
+            indexedText = EscapeUtil.escapeHtml(indexedText).trim();
+            StringBuilder sb = new StringBuilder(indexedText.length() + 20);
+            sb.append("<pre>").append(indexedText).append("</pre>"); //NON-NLS
+            return sb.toString();
+        } catch (NoOpenCoreException ex) {
+            logger.log(Level.SEVERE, "No open core", ex); //NON-NLS
+            return "";
+        }
+    }
+
 }

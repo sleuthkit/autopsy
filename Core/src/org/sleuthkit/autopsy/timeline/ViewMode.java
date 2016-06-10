@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,9 +19,10 @@
 package org.sleuthkit.autopsy.timeline;
 
 /**
- *
+ * Enumeration of view modes.
  */
-public enum VisualizationMode {
-
-    COUNTS, DETAIL;
+public enum ViewMode {
+    COUNTS,
+    DETAIL,
+    LIST;
 }
