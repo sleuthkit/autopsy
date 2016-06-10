@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.event.ActionListener;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.TskData.FileKnown;
 
@@ -42,6 +41,7 @@ class KnownStatusSearchFilter extends AbstractFileSearchFilter<KnownStatusSearch
     @Override
     public boolean isEnabled() {
         return this.getComponent().getKnownCheckBox().isSelected();
+                
     }
 
     @Override
@@ -82,5 +82,10 @@ class KnownStatusSearchFilter extends AbstractFileSearchFilter<KnownStatusSearch
 
     @Override
     public void addActionListener(ActionListener l) {
+    }
+
+    @Override
+    public boolean isValid() {
+            return this.getComponent().isValidSearch();
     }
 }

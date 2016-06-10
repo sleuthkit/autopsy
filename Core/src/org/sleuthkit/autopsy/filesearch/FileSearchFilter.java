@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeListener;
 import javax.swing.JComponent;
 
 /**
@@ -41,6 +42,13 @@ interface FileSearchFilter {
     boolean isEnabled();
 
     /**
+     * Checks if the panel has valid input for search.
+     *
+     * @return Whether the panel has valid input for search.
+     */
+    boolean isValid();
+
+    /**
      * Gets predicate expression to include in the SQL filter expression
      *
      * @return SQL expression that evaluates to a boolean true if the filter
@@ -55,6 +63,13 @@ interface FileSearchFilter {
      * Add an action listener to the fields of this panel
      */
     void addActionListener(ActionListener l);
+
+    /**
+     * Adds the property change listener to the panel
+     *
+     * @param listener the listener to add.
+     */
+    void addPropertyChangeListener(PropertyChangeListener listener);
 
     /**
      * Thrown if a filter's inputs are invalid

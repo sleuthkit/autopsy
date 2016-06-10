@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-15 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,9 +40,11 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent.DeletedContentTagInfo;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
 import org.sleuthkit.autopsy.timeline.db.EventsRepository;
+import org.sleuthkit.autopsy.timeline.events.DBUpdatedEvent;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsAddedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsDeletedEvent;
@@ -68,15 +70,15 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * This class acts as the model for a {@link TimeLineView}
+ * This class acts as the model for a TimelineView
  *
  * Views can register listeners on properties returned by methods.
  *
  * This class is implemented as a filtered view into an underlying
- * {@link EventsRepository}.
+ * EventsRepository.
  *
  * TODO: as many methods as possible should cache their results so as to avoid
- * unnecessary db calls through the {@link EventsRepository} -jm
+ * unnecessary db calls through the EventsRepository -jm
  *
  * Concurrency Policy: repo is internally synchronized, so methods that only
  * access the repo atomically do not need further synchronization
@@ -277,7 +279,7 @@ public final class FilteredEventsModel {
         return repo.getTagCountsByTagName(eventIDsWithTags);
     }
 
-    public Set<Long> getEventIDs(Interval timeRange, Filter filter) {
+    public List<Long> getEventIDs(Interval timeRange, Filter filter) {
         final Interval overlap;
         final RootFilter intersect;
         synchronized (this) {
@@ -286,6 +288,21 @@ public final class FilteredEventsModel {
         }
         intersect.getSubFilters().add(filter);
         return repo.getEventIDs(overlap, intersect);
+    }
+
+    /**
+     * Get a representation of all the events, within the given time range, that
+     * pass the given filter, grouped by time and description such that file
+     * system events for the same file, with the same timestamp, are combined
+     * together.
+     *
+     * @param timeRange The Interval that all returned events must be within.
+     * @param filter    The Filter that all returned events must pass.
+     *
+     * @return A List of combined events, sorted by timestamp.
+     */
+    public List<CombinedEvent> getCombinedEvents() {
+        return repo.getCombinedEvents(requestedTimeRange.get(), requestedFilter.get());
     }
 
     /**
@@ -412,6 +429,15 @@ public final class FilteredEventsModel {
         return false;
     }
 
+    /**
+     * Post a TagsAddedEvent to all registered subscribers, if the given set of
+     * updated event IDs is not empty.
+     *
+     * @param updatedEventIDs The set of event ids to be included in the
+     *                        TagsAddedEvent.
+     *
+     * @return True if an event was posted.
+     */
     private boolean postTagsAdded(Set<Long> updatedEventIDs) {
         boolean tagsUpdated = !updatedEventIDs.isEmpty();
         if (tagsUpdated) {
@@ -420,6 +446,15 @@ public final class FilteredEventsModel {
         return tagsUpdated;
     }
 
+    /**
+     * Post a TagsDeletedEvent to all registered subscribers, if the given set
+     * of updated event IDs is not empty.
+     *
+     * @param updatedEventIDs The set of event ids to be included in the
+     *                        TagsDeletedEvent.
+     *
+     * @return True if an event was posted.
+     */
     private boolean postTagsDeleted(Set<Long> updatedEventIDs) {
         boolean tagsUpdated = !updatedEventIDs.isEmpty();
         if (tagsUpdated) {
@@ -428,16 +463,45 @@ public final class FilteredEventsModel {
         return tagsUpdated;
     }
 
+    /**
+     * Register the given object to receive events.
+     *
+     * @param o The object to register. Must implement public methods annotated
+     *          with Subscribe.
+     */
     synchronized public void registerForEvents(Object o) {
         eventbus.register(o);
     }
 
+    /**
+     * Un-register the given object, so it no longer receives events.
+     *
+     * @param o The object to un-register.
+     */
     synchronized public void unRegisterForEvents(Object o) {
         eventbus.unregister(0);
     }
 
-    public void refresh() {
+    /**
+     * Post a DBUpdatedEvent to all registered subscribers.
+     */
+    public void postDBUpdated() {
+        eventbus.post(new DBUpdatedEvent());
+    }
+
+    /**
+     * Post a RefreshRequestedEvent to all registered subscribers.
+     */
+    public void postRefreshRequest() {
         eventbus.post(new RefreshRequestedEvent());
+    }
+
+    /**
+     * (Re)Post an AutopsyEvent received from another event distribution system
+     * locally to all registered subscribers.
+     */
+    public void postAutopsyEventLocally(AutopsyEvent event) {
+        eventbus.post(event);
     }
 
 }

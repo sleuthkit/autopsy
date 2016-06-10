@@ -5,17 +5,20 @@
  */
 package org.sleuthkit.autopsy.filesearch;
 
-import java.awt.event.ActionListener;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MimeTypes;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 
 /**
  *
@@ -26,12 +29,20 @@ public class MimeTypePanel extends javax.swing.JPanel {
     private static final SortedSet<MediaType> mediaTypes = MimeTypes.getDefaultMimeTypes().getMediaTypeRegistry().getTypes();
     private static final Logger logger = Logger.getLogger(MimeTypePanel.class.getName());
     private static final long serialVersionUID = 1L;
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     /**
      * Creates new form MimeTypePanel
      */
     public MimeTypePanel() {
         initComponents();
+        setComponentsEnabled();
+        this.mimeTypeList.addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                pcs.firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+            }
+        });
     }
 
     private String[] getMimeTypeArray() {
@@ -63,11 +74,27 @@ public class MimeTypePanel extends javax.swing.JPanel {
     }
 
     List<String> getMimeTypesSelected() {
-        return this.jList1.getSelectedValuesList();
+        return this.mimeTypeList.getSelectedValuesList();
     }
 
     boolean isSelected() {
-        return this.jCheckBox1.isSelected();
+        return this.mimeTypeCheckBox.isSelected();
+    }
+    
+    void setComponentsEnabled() {
+        boolean enabled = this.isSelected();
+        this.mimeTypeList.setEnabled(enabled);
+        this.jLabel1.setEnabled(enabled);
+    }
+    
+    @Override
+    public void addPropertyChangeListener(PropertyChangeListener pcl) {
+        pcs.addPropertyChangeListener(pcl);
+    }
+
+    @Override
+    public void removePropertyChangeListener(PropertyChangeListener pcl) {
+        pcs.removePropertyChangeListener(pcl);
     }
 
     /**
@@ -80,22 +107,27 @@ public class MimeTypePanel extends javax.swing.JPanel {
     private void initComponents() {
 
         jScrollPane1 = new javax.swing.JScrollPane();
-        jList1 = new javax.swing.JList<String>();
-        jCheckBox1 = new javax.swing.JCheckBox();
+        mimeTypeList = new javax.swing.JList<>();
+        mimeTypeCheckBox = new javax.swing.JCheckBox();
         jLabel1 = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(150, 150));
         setPreferredSize(new java.awt.Dimension(100, 100));
 
-        jList1.setModel(new javax.swing.AbstractListModel<String>() {
+        mimeTypeList.setModel(new javax.swing.AbstractListModel<String>() {
             String[] strings = getMimeTypeArray();
             public int getSize() { return strings.length; }
             public String getElementAt(int i) { return strings[i]; }
         });
-        jList1.setMinimumSize(new java.awt.Dimension(0, 200));
-        jScrollPane1.setViewportView(jList1);
+        mimeTypeList.setMinimumSize(new java.awt.Dimension(0, 200));
+        jScrollPane1.setViewportView(mimeTypeList);
 
-        org.openide.awt.Mnemonics.setLocalizedText(jCheckBox1, org.openide.util.NbBundle.getMessage(MimeTypePanel.class, "MimeTypePanel.jCheckBox1.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(mimeTypeCheckBox, org.openide.util.NbBundle.getMessage(MimeTypePanel.class, "MimeTypePanel.mimeTypeCheckBox.text")); // NOI18N
+        mimeTypeCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mimeTypeCheckBoxActionPerformed(evt);
+            }
+        });
 
         jLabel1.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(MimeTypePanel.class, "MimeTypePanel.jLabel1.text")); // NOI18N
@@ -105,12 +137,12 @@ public class MimeTypePanel extends javax.swing.JPanel {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jCheckBox1)
+                .addComponent(mimeTypeCheckBox)
                 .addGap(0, 0, Short.MAX_VALUE))
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 298, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 246, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, Short.MAX_VALUE)))
@@ -119,20 +151,26 @@ public class MimeTypePanel extends javax.swing.JPanel {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addComponent(jCheckBox1)
+                .addComponent(mimeTypeCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 106, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel1)
-                .addGap(0, 0, 0))
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private void mimeTypeCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mimeTypeCheckBoxActionPerformed
+        setComponentsEnabled();
+        pcs.firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+        this.mimeTypeList.setSelectedIndices(new int[0]);
+    }//GEN-LAST:event_mimeTypeCheckBoxActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JCheckBox jCheckBox1;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JList<String> jList1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JCheckBox mimeTypeCheckBox;
+    private javax.swing.JList<String> mimeTypeList;
     // End of variables declaration//GEN-END:variables
 }

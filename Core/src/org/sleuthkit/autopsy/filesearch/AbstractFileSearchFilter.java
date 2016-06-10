@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.filesearch;
 
+import java.beans.PropertyChangeListener;
 import javax.swing.JComponent;
 
 /**
@@ -38,5 +39,10 @@ abstract class AbstractFileSearchFilter<T extends JComponent> implements FileSea
     @Override
     public T getComponent() {
         return this.component;
+    }
+
+    @Override
+    public void addPropertyChangeListener(PropertyChangeListener listener) {
+        this.getComponent().addPropertyChangeListener(listener);
     }
 }

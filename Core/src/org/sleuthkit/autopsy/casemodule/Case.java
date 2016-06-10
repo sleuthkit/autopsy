@@ -31,8 +31,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Collection;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -46,7 +46,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import org.apache.commons.io.FileUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
@@ -54,28 +53,29 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceEvent;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceFailedEvent;
-import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
-import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
-import org.sleuthkit.autopsy.casemodule.services.Services;
-import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.autopsy.corecomponentinterfaces.CoreComponentControl;
-import org.sleuthkit.autopsy.coreutils.FileUtil;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.coreutils.Version;
-import org.sleuthkit.autopsy.coreutils.NetworkUtils;
-import org.sleuthkit.autopsy.events.AutopsyEvent;
-import org.sleuthkit.autopsy.events.AutopsyEventException;
-import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
+import org.sleuthkit.autopsy.casemodule.services.Services;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
+import org.sleuthkit.autopsy.corecomponentinterfaces.CoreComponentControl;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.NetworkUtils;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.Version;
+import org.sleuthkit.autopsy.events.AutopsyEvent;
+import org.sleuthkit.autopsy.events.AutopsyEventException;
+import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.timeline.OpenTimelineAction;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
@@ -437,7 +437,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      *                   CaseActionException.getCause will return a Throwable
      *                   (null otherwise).
      *
-     * @throws CaseActionException   if there is a problem creating the case.
+     * @throws CaseActionException if there is a problem creating the case.
      */
     @Messages({"Case.creationException=Could not create case: failed to make metadata file."})
     public static void create(String caseDir, String caseName, String caseNumber, String examiner, CaseType caseType) throws CaseActionException {
@@ -1519,28 +1519,22 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
             if (RuntimeProperties.coreComponentsAreActive()) {
                 // enable these menus
-                CallableSystemAction.get(AddImageAction.class).setEnabled(true);
-                CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
-                CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
-                CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true); // Delete Case menu
-
-                if (toChangeTo.hasData()) {
-                    // open all top components
-                    SwingUtilities.invokeLater(() -> {
-                        CoreComponentControl.openCoreWindows();
-                    });
-                } else {
-                    // close all top components
-                    SwingUtilities.invokeLater(() -> {
-                        CoreComponentControl.closeCoreWindows();
-                    });
-                }
-            }
-
-            if (RuntimeProperties.coreComponentsAreActive()) {
                 SwingUtilities.invokeLater(() -> {
-                    updateMainWindowTitle(currentCase.getName());
+                    CallableSystemAction.get(AddImageAction.class).setEnabled(true);
+                    CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
+                    CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
+                    CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true); // Delete Case menu
+                    CallableSystemAction.get(OpenTimelineAction.class).setEnabled(true);
+
+                    if (toChangeTo.hasData()) {
+                        // open all top components
+                        CoreComponentControl.openCoreWindows();
+                    } else {
+                        // close all top components
+                        CoreComponentControl.closeCoreWindows();
+                    }
                 });
+                updateMainWindowTitle(currentCase.getName());
             } else {
                 SwingUtilities.invokeLater(() -> {
                     Frame f = WindowManager.getDefault().getMainWindow();
@@ -1549,9 +1543,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
             }
 
         } else { // case is closed
-            if (RuntimeProperties.coreComponentsAreActive()) {
+            SwingUtilities.invokeLater(() -> {
+                if (RuntimeProperties.coreComponentsAreActive()) {
 
-                SwingUtilities.invokeLater(() -> {
                     // close all top components first
                     CoreComponentControl.closeCoreWindows();
 
@@ -1560,15 +1554,11 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     CallableSystemAction.get(CaseCloseAction.class).setEnabled(false); // Case Close menu
                     CallableSystemAction.get(CasePropertiesAction.class).setEnabled(false); // Case Properties menu
                     CallableSystemAction.get(CaseDeleteAction.class).setEnabled(false); // Delete Case menu
-                });
-            }
+                    CallableSystemAction.get(OpenTimelineAction.class).setEnabled(false);
+                }
 
-            //clear pending notifications
-            SwingUtilities.invokeLater(() -> {
+                //clear pending notifications
                 MessageNotifyUtil.Notify.clear();
-            });
-
-            SwingUtilities.invokeLater(() -> {
                 Frame f = WindowManager.getDefault().getMainWindow();
                 f.setTitle(Case.getAppName()); // set the window name to just application name
             });
@@ -1619,39 +1609,15 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     /**
-     * Deletes reports from the case - deletes it from the disk as well as the
-     * database.
+     * Deletes reports from the case.
      *
-     * @param reports        Collection of Report to be deleted from the case.
-     * @param deleteFromDisk Set true to perform reports file deletion from
-     *                       disk.
+     * @param reports Collection of Report to be deleted from the case.
      *
-     * @throws TskCoreException
+     * @throws TskCoreException If there is a problem deleting a report.
      */
-    public void deleteReports(Collection<? extends Report> reports, boolean deleteFromDisk) throws TskCoreException {
-
-        String pathToReportsFolder = Paths.get(this.db.getDbDirPath(), "Reports").normalize().toString(); // NON-NLS
+    public void deleteReports(Collection<? extends Report> reports) throws TskCoreException {
         for (Report report : reports) {
-
-            // delete from the database.
             this.db.deleteReport(report);
-
-            if (deleteFromDisk) {
-                // traverse to the root directory of Report report.
-                String reportPath = report.getPath();
-                while (!Paths.get(reportPath, "..").normalize().toString().equals(pathToReportsFolder)) { // NON-NLS
-                    reportPath = Paths.get(reportPath, "..").normalize().toString(); // NON-NLS
-                }
-
-                // delete from the disk.
-                try {
-                    FileUtils.deleteDirectory(new File(reportPath));
-                } catch (IOException | SecurityException ex) {
-                    logger.log(Level.WARNING, NbBundle.getMessage(Case.class, "Case.deleteReports.deleteFromDiskException.log.msg"), ex);
-                    JOptionPane.showMessageDialog(null, NbBundle.getMessage(Case.class, "Case.deleteReports.deleteFromDiskException.msg", report.getReportName(), reportPath));
-                }
-            }
-
             eventPublisher.publish(new AutopsyEvent(Events.REPORT_DELETED.toString(), null, null));
         }
     }
@@ -1676,11 +1642,27 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * Gets the full path to the case metadata file for this case.
      *
      * @return configFilePath The case metadata file path.
+     *
      * @deprecated Use getCaseMetadata and CaseMetadata.getFilePath instead.
      */
     @Deprecated
     String getConfigFilePath() {
         return getCaseMetadata().getFilePath().toString();
-    }    
-    
+    }
+
+    /**
+     * Deletes reports from the case.
+     *
+     * @param reports        Collection of Report to be deleted from the case.
+     * @param deleteFromDisk No longer supported - ignored.
+     *
+     * @throws TskCoreException
+     * @deprecated Use deleteReports(Collection<? extends Report> reports)
+     * instead.
+     */
+    @Deprecated
+    public void deleteReports(Collection<? extends Report> reports, boolean deleteFromDisk) throws TskCoreException {
+        deleteReports(reports);
+    }
+
 }

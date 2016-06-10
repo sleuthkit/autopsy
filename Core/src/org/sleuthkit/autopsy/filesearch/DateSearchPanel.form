@@ -180,6 +180,9 @@
           <ResourceString bundle="org/sleuthkit/autopsy/filesearch/Bundle.properties" key="DateSearchPanel.dateCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="dateCheckBoxActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JComboBox" name="timeZoneComboBox">
       <Properties>
@@ -233,6 +236,9 @@
           <ResourceString bundle="org/sleuthkit/autopsy/filesearch/Bundle.properties" key="DateSearchPanel.modifiedCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="modifiedCheckBoxActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JCheckBox" name="changedCheckBox">
       <Properties>
@@ -241,6 +247,9 @@
           <ResourceString bundle="org/sleuthkit/autopsy/filesearch/Bundle.properties" key="DateSearchPanel.changedCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="changedCheckBoxActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JCheckBox" name="accessedCheckBox">
       <Properties>
@@ -249,6 +258,9 @@
           <ResourceString bundle="org/sleuthkit/autopsy/filesearch/Bundle.properties" key="DateSearchPanel.accessedCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="accessedCheckBoxActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JCheckBox" name="createdCheckBox">
       <Properties>
@@ -257,6 +269,9 @@
           <ResourceString bundle="org/sleuthkit/autopsy/filesearch/Bundle.properties" key="DateSearchPanel.createdCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="createdCheckBoxActionPerformed"/>
+      </Events>
     </Component>
     <Component class="org.jbundle.thin.base.screen.jcalendarbutton.JCalendarButton" name="dateFromButtonCalendar">
       <Properties>

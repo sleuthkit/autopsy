@@ -44,8 +44,10 @@ public interface TimeLineChart<X> extends ContextMenuProvider, IntervalSelectorP
 
     ObservableList<? extends Node> getSelectedNodes();
 
+    @Override
     IntervalSelector<? extends X> getIntervalSelector();
 
+    @Override
     void setIntervalSelector(IntervalSelector<? extends X> newIntervalSelector);
 
     /**
@@ -54,30 +56,29 @@ public interface TimeLineChart<X> extends ContextMenuProvider, IntervalSelectorP
      *
      * @return a new interval selector
      */
+    @Override
     IntervalSelector<X> newIntervalSelector();
 
-    /**
-     * clear any references to previous interval selectors , including removing
-     * the interval selector from the ui / scene-graph
-     */
+    @Override
     void clearIntervalSelector();
 
+    @Override
     public Axis<X> getXAxis();
 
+    @Override
     public TimeLineController getController();
 
     /**
-     * drag handler class used by {@link TimeLineChart}s to create
-     * {@link IntervalSelector}s
+     * Drag handler class used by TimeLineCharts to create IntervalSelectors
      *
-     * @param <X> the type of values along the horizontal axis
-     * @param <Y> the type of chart this is a drag handler for
+     * @param <X> The type of values along the horizontal axis.
+     * @param <Y> The type of chart this is a drag handler for.
      */
     public static class ChartDragHandler<X, Y extends Region & IntervalSelectorProvider<X>> implements EventHandler<MouseEvent> {
 
         private final Y chart;
 
-        private double startX;  //hanlder mainstains position of drag start
+        private double startX;  //hanlder maintains position of drag start
 
         public ChartDragHandler(Y chart) {
             this.chart = chart;

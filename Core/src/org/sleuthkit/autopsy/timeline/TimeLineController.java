@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
@@ -51,7 +52,6 @@ import javafx.concurrent.Task;
 import javafx.concurrent.Worker;
 import static javafx.concurrent.Worker.State.FAILED;
 import static javafx.concurrent.Worker.State.SUCCEEDED;
-import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.Immutable;
 import javax.swing.SwingUtilities;
@@ -74,10 +74,9 @@ import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent.CANCELLED;
-import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisEvent;
-import static org.sleuthkit.autopsy.timeline.Bundle.*;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
@@ -90,12 +89,11 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.zooming.TimeUnits;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
-import org.sleuthkit.datamodel.Content;
 
 /**
- * Controller in the MVC design along with model = {@link FilteredEventsModel}
- * and views = {@link TimeLineView}. Forwards interpreted user gestures form
- * views to model. Provides model to view. Is entry point for timeline module.
+ * Controller in the MVC design along with FilteredEventsModel TimeLineView.
+ * Forwards interpreted user gestures form views to model. Provides model to
+ * view. Is entry point for timeline module.
  *
  * Concurrency Policy:<ul>
  * <li>Since filteredEvents is internally synchronized, only compound access to
@@ -142,7 +140,7 @@ public class TimeLineController {
 
     private final ReadOnlyStringWrapper taskTitle = new ReadOnlyStringWrapper();
 
-    private final ReadOnlyStringWrapper status = new ReadOnlyStringWrapper();
+    private final ReadOnlyStringWrapper statusMessage = new ReadOnlyStringWrapper();
 
     /**
      * Status is a string that will be displayed in the status bar as a kind of
@@ -150,12 +148,12 @@ public class TimeLineController {
      *
      * @return The status property
      */
-    public ReadOnlyStringProperty getStatusProperty() {
-        return status.getReadOnlyProperty();
+    public ReadOnlyStringProperty statusMessageProperty() {
+        return statusMessage.getReadOnlyProperty();
     }
 
-    public void setStatus(String string) {
-        status.set(string);
+    public void setStatusMessage(String string) {
+        statusMessage.set(string);
     }
     private final Case autoCase;
     private final PerCaseTimelineProperties perCaseTimelineProperties;
@@ -191,7 +189,7 @@ public class TimeLineController {
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private TimeLineTopComponent mainFrame;
+    private TimeLineTopComponent topComponent;
 
     //are the listeners currently attached
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
@@ -202,11 +200,7 @@ public class TimeLineController {
     private final PropertyChangeListener ingestModuleListener = new AutopsyIngestModuleListener();
 
     @GuardedBy("this")
-    private final ReadOnlyObjectWrapper<VisualizationMode> viewMode = new ReadOnlyObjectWrapper<>(VisualizationMode.COUNTS);
-
-    synchronized public ReadOnlyObjectProperty<VisualizationMode> viewModeProperty() {
-        return viewMode.getReadOnlyProperty();
-    }
+    private final ReadOnlyObjectWrapper<ViewMode> viewMode = new ReadOnlyObjectWrapper<>(ViewMode.COUNTS);
 
     @GuardedBy("filteredEvents")
     private final FilteredEventsModel filteredEvents;
@@ -226,21 +220,38 @@ public class TimeLineController {
     @GuardedBy("this")
     private final ObservableList<Long> selectedEventIDs = FXCollections.<Long>synchronizedObservableList(FXCollections.<Long>observableArrayList());
 
+    @GuardedBy("this")
+    private final ReadOnlyObjectWrapper<Interval> selectedTimeRange = new ReadOnlyObjectWrapper<>();
+
+    private final ReadOnlyBooleanWrapper eventsDBStale = new ReadOnlyBooleanWrapper(true);
+
+    private final PromptDialogManager promptDialogManager = new PromptDialogManager(this);
+
     /**
-     * @return A list of the selected event ids
+     * Get an ObservableList of selected event IDs
+     *
+     * @return A list of the selected event IDs
      */
     synchronized public ObservableList<Long> getSelectedEventIDs() {
         return selectedEventIDs;
     }
 
-    @GuardedBy("this")
-    private final ReadOnlyObjectWrapper<Interval> selectedTimeRange = new ReadOnlyObjectWrapper<>();
+    /**
+     * Get a read only observable view of the selected time range.
+     *
+     * @return A read only view of the selected time range.
+     */
+    synchronized public ReadOnlyObjectProperty<Interval> selectedTimeRangeProperty() {
+        return selectedTimeRange.getReadOnlyProperty();
+    }
 
     /**
-     * @return a read only view of the selected interval.
+     * Get the selected time range.
+     *
+     * @return The selected time range.
      */
-    synchronized public ReadOnlyObjectProperty<Interval> getSelectedTimeRange() {
-        return selectedTimeRange.getReadOnlyProperty();
+    synchronized public Interval getSelectedTimeRange() {
+        return selectedTimeRange.get();
     }
 
     public ReadOnlyBooleanProperty eventsDBStaleProperty() {
@@ -264,6 +275,7 @@ public class TimeLineController {
     @NbBundle.Messages({
         "TimeLineController.setEventsDBStale.errMsgStale=Failed to mark the timeline db as stale. Some results may be out of date or missing.",
         "TimeLineController.setEventsDBStale.errMsgNotStale=Failed to mark the timeline db as not stale. Some results may be out of date or missing."})
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void setEventsDBStale(final Boolean stale) {
         eventsDBStale.set(stale);
         try {
@@ -284,9 +296,30 @@ public class TimeLineController {
     synchronized public ReadOnlyBooleanProperty canRetreatProperty() {
         return historyManager.getCanRetreat();
     }
-    private final ReadOnlyBooleanWrapper eventsDBStale = new ReadOnlyBooleanWrapper(true);
 
-    private final PromptDialogManager promptDialogManager = new PromptDialogManager(this);
+    synchronized public ReadOnlyObjectProperty<ViewMode> viewModeProperty() {
+        return viewMode.getReadOnlyProperty();
+    }
+
+    /**
+     * Set a new ViewMode as the active one.
+     *
+     * @param viewMode The new ViewMode to set.
+     */
+    synchronized public void setViewMode(ViewMode viewMode) {
+        if (this.viewMode.get() != viewMode) {
+            this.viewMode.set(viewMode);
+        }
+    }
+
+    /**
+     * Get the currently active ViewMode.
+     *
+     * @return The currently active ViewMode.
+     */
+    synchronized public ViewMode getViewMode() {
+        return viewMode.get();
+    }
 
     public TimeLineController(Case autoCase) throws IOException {
         this.autoCase = autoCase;
@@ -312,6 +345,9 @@ public class TimeLineController {
                 filteredEvents.filterProperty().get(),
                 DescriptionLoD.SHORT);
         historyManager.advance(InitialZoomState);
+
+        //clear the selected events when the view mode changes
+        viewMode.addListener(observable -> selectEventIDs(Collections.emptySet()));
     }
 
     /**
@@ -389,12 +425,13 @@ public class TimeLineController {
                         perCaseTimelineProperties.setIngestRunning(ingestRunning);
                     } catch (IOException ex) {
                         MessageNotifyUtil.Notify.error(Bundle.Timeline_dialogs_title(),
-                                ingestRunning ? TimeLineController_setIngestRunning_errMsgRunning()
-                                        : TimeLinecontroller_setIngestRunning_errMsgNotRunning());
+                                ingestRunning ? Bundle.TimeLineController_setIngestRunning_errMsgRunning()
+                                        : Bundle.TimeLinecontroller_setIngestRunning_errMsgNotRunning());
                         LOGGER.log(Level.SEVERE, "Error marking the ingest state while the timeline db was populated.", ex); //NON-NLS
                     }
                     if (markDBNotStale) {
                         setEventsDBStale(false);
+                        filteredEvents.postDBUpdated();
                     }
                     SwingUtilities.invokeLater(this::showWindow);
                     break;
@@ -450,10 +487,11 @@ public class TimeLineController {
         IngestManager.getInstance().removeIngestModuleEventListener(ingestModuleListener);
         IngestManager.getInstance().removeIngestJobEventListener(ingestJobListener);
         Case.removePropertyChangeListener(caseListener);
-        if (mainFrame != null) {
-            mainFrame.close();
-            mainFrame = null;
+        if (topComponent != null) {
+            topComponent.close();
+            topComponent = null;
         }
+        OpenTimelineAction.invalidateController();
     }
 
     /**
@@ -470,21 +508,17 @@ public class TimeLineController {
             listeningToAutopsy = true;
         }
 
-        Platform.runLater(() -> promptForRebuild(null));
+        Platform.runLater(this::promptForRebuild);
     }
 
     /**
-     * Prompt the user to confirm rebuilding the db because ingest has finished
-     * on the datasource with the given name. Checks if a database rebuild is
-     * necessary for any other reasons and includes those in the prompt. If the
-     * user confirms, rebuilds the database. Shows the timeline window when the
-     * rebuild is done, or immediately if the rebuild is not confirmed.
-     *
-     * @param dataSourceName The name of the datasource that ingest has finished
-     *                       processing. Will be ignored if it is null or empty.
+     * Prompt the user to confirm rebuilding the db. Checks if a database
+     * rebuild is necessary and includes the reasons in the prompt. If the user
+     * confirms, rebuilds the database. Shows the timeline window when the
+     * rebuild is done, or immediately if the rebuild is not confirmed. F
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private void promptForRebuild(@Nullable String dataSourceName) {
+    private void promptForRebuild() {
 
         //if there is an existing prompt or progressdialog, just show that
         if (promptDialogManager.bringCurrentDialogToFront()) {
@@ -500,7 +534,7 @@ public class TimeLineController {
         //if necessary prompt user with reasons to rebuild
         List<String> rebuildReasons = getRebuildReasons();
         if (false == rebuildReasons.isEmpty()) {
-            if (promptDialogManager.confirmRebuild(dataSourceName, rebuildReasons)) {
+            if (promptDialogManager.confirmRebuild(rebuildReasons)) {
                 rebuildRepo();
                 return;
             }
@@ -560,7 +594,7 @@ public class TimeLineController {
      * Request a time range the same length as the given period and centered
      * around the middle of the currently viewed time range.
      *
-     * @param period The period of time to shw around the current center of the
+     * @param period The period of time to show around the current center of the
      *               view.
      */
     synchronized public void pushPeriod(ReadablePeriod period) {
@@ -584,12 +618,6 @@ public class TimeLineController {
         DateTime start = timeRange.getStart().plus(toDurationMillis);
         DateTime end = timeRange.getEnd().minus(toDurationMillis);
         pushTimeRange(new Interval(start, end));
-    }
-
-    synchronized public void setViewMode(VisualizationMode visualizationMode) {
-        if (viewMode.get() != visualizationMode) {
-            viewMode.set(visualizationMode);
-        }
     }
 
     public void selectEventIDs(Collection<Long> events) {
@@ -618,15 +646,21 @@ public class TimeLineController {
     }
 
     /**
-     * private method to build gui if necessary and make it visible.
+     * Show the timeline TimeLineTopComponent. This method will construct a new
+     * instance of TimeLineTopComponent if necessary.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     synchronized private void showWindow() {
-        if (mainFrame == null) {
-            mainFrame = new TimeLineTopComponent(this);
+        if (topComponent == null) {
+            topComponent = new TimeLineTopComponent(this);
         }
-        mainFrame.open();
-        mainFrame.toFront();
+        topComponent.open();
+        topComponent.toFront();
+        /*
+         * Make this top component active so its ExplorerManager's lookup gets
+         * proxied in Utilities.actionsGlobalContext()
+         */
+        topComponent.requestActive();
     }
 
     synchronized public void pushEventTypeZoom(EventTypeZoomLevel typeZoomeLevel) {
@@ -669,9 +703,6 @@ public class TimeLineController {
         }
     }
 
-    @NbBundle.Messages({"# {0} - the number of events",
-        "Timeline.pushDescrLOD.confdlg.msg=You are about to show details for {0} events.  This might be very slow or even crash Autopsy.\n\nDo you want to continue?",
-        "Timeline.pushDescrLOD.confdlg.title=Change description level of detail?"})
     synchronized public void pushDescrLOD(DescriptionLoD newLOD) {
         ZoomParams currentZoom = filteredEvents.zoomParametersProperty().get();
         if (currentZoom == null) {
@@ -806,47 +837,6 @@ public class TimeLineController {
         TimeLineController.timeZone.set(timeZone);
     }
 
-    Interval getSpanningInterval(Collection<Long> eventIDs) {
-        return filteredEvents.getSpanningInterval(eventIDs);
-
-    }
-
-    /**
-     * Is the timeline window open?
-     *
-     * @return True if the timeline is open.
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private boolean isWindowOpen() {
-        return mainFrame != null && mainFrame.isOpened() && mainFrame.isVisible();
-    }
-
-    /**
-     * Rebuild the db ONLY IF THE TIMELINE WINDOW IS OPEN. The user will be
-     * prompted with reasons why the database needs to be rebuilt and can still
-     * cancel the rebuild. The prompt will include that ingest has finished for
-     * the given datasource name, if not blank.
-     *
-     * @param dataSourceName The name of the datasource that has finished
-     *                       ingest. Will be ignored if it is null or empty.
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private void rebuildIfWindowOpen(@Nullable String dataSourceName) {
-        if (isWindowOpen()) {
-            Platform.runLater(() -> this.promptForRebuild(dataSourceName));
-        }
-    }
-
-    /**
-     * Rebuild the db ONLY IF THE TIMELINE WINDOW IS OPEN. The user will be
-     * prompted with reasons why the database needs to be rebuilt and can still
-     * cancel the rebuild.
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    public void rebuildIfWindowOpen() {
-        rebuildIfWindowOpen(null);
-    }
-
     /**
      * Listener for IngestManager.IngestModuleEvents.
      */
@@ -864,16 +854,14 @@ public class TimeLineController {
             try {
                 Case.getCurrentCase();
             } catch (IllegalStateException notUsed) {
-                /**
-                 * Case is closed, do nothing.
-                 */
+                // Case is closed, do nothing.
                 return;
             }
 
             switch (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName())) {
                 case CONTENT_CHANGED:
                 case DATA_ADDED:
-                    //since black board artifacts or new derived content have been added, the db is stale.
+                    //since black board artifacts or new derived content have been added, the DB is stale.
                     Platform.runLater(() -> setEventsDBStale(true));
                     break;
                 case FILE_DONE:
@@ -896,9 +884,9 @@ public class TimeLineController {
         public void propertyChange(PropertyChangeEvent evt) {
             switch (IngestManager.IngestJobEvent.valueOf(evt.getPropertyName())) {
                 case DATA_SOURCE_ANALYSIS_COMPLETED:
-                    // include data source name in rebuild prompt on ingest completed
-                    final Content dataSource = ((DataSourceAnalysisEvent) evt).getDataSource();
-                    SwingUtilities.invokeLater(() -> rebuildIfWindowOpen(dataSource.getName()));
+                    //mark db stale, and prompt to rebuild
+                    Platform.runLater(() -> setEventsDBStale(true));
+                    filteredEvents.postAutopsyEventLocally((AutopsyEvent) evt);
                     break;
                 case DATA_SOURCE_ANALYSIS_STARTED:
                 case CANCELLED:
@@ -933,10 +921,10 @@ public class TimeLineController {
                 case DATA_SOURCE_ADDED:
                     //mark db stale, and prompt to rebuild
                     Platform.runLater(() -> setEventsDBStale(true));
+                    filteredEvents.postAutopsyEventLocally((AutopsyEvent) evt);
                     break;
                 case CURRENT_CASE:
                     //close timeline on case changes.
-                    OpenTimelineAction.invalidateController();
                     SwingUtilities.invokeLater(TimeLineController.this::shutDownTimeLine);
                     break;
             }

@@ -17,19 +17,22 @@
  * limitations under the License.
  */
 
-/*
+ /*
  * NameSearchPanel.java
  *
  * Created on Oct 19, 2011, 11:58:53 AM
  */
 package org.sleuthkit.autopsy.filesearch;
 
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import javax.swing.JCheckBox;
 import javax.swing.JMenuItem;
 import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 /**
  *
@@ -37,12 +40,15 @@ import javax.swing.JTextField;
  */
 class NameSearchPanel extends javax.swing.JPanel {
 
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+
     /**
      * Creates new form NameSearchPanel
      */
     NameSearchPanel() {
         initComponents();
         customizeComponents();
+        setComponentsEnabled();
     }
 
     private void customizeComponents() {
@@ -67,6 +73,22 @@ class NameSearchPanel extends javax.swing.JPanel {
         copyMenuItem.addActionListener(actList);
         pasteMenuItem.addActionListener(actList);
         selectAllMenuItem.addActionListener(actList);
+        this.searchTextField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                pcs.firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                pcs.firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                pcs.firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+            }
+        });
 
     }
 
@@ -76,6 +98,22 @@ class NameSearchPanel extends javax.swing.JPanel {
 
     JTextField getSearchTextField() {
         return searchTextField;
+    }
+
+    void setComponentsEnabled() {
+        boolean enabled = nameCheckBox.isSelected();
+        this.searchTextField.setEnabled(enabled);
+        this.noteNameLabel.setEnabled(enabled);
+    }
+    
+    @Override
+    public void addPropertyChangeListener(PropertyChangeListener pcl) {
+        pcs.addPropertyChangeListener(pcl);
+    }
+
+    @Override
+    public void removePropertyChangeListener(PropertyChangeListener pcl) {
+        pcs.removePropertyChangeListener(pcl);
     }
 
     /**
@@ -110,6 +148,11 @@ class NameSearchPanel extends javax.swing.JPanel {
 
         nameCheckBox.setFont(nameCheckBox.getFont().deriveFont(nameCheckBox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         nameCheckBox.setText(org.openide.util.NbBundle.getMessage(NameSearchPanel.class, "NameSearchPanel.nameCheckBox.text")); // NOI18N
+        nameCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                nameCheckBoxActionPerformed(evt);
+            }
+        });
 
         searchTextField.setFont(searchTextField.getFont().deriveFont(searchTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         searchTextField.setText(org.openide.util.NbBundle.getMessage(NameSearchPanel.class, "NameSearchPanel.searchTextField.text")); // NOI18N
@@ -154,6 +197,12 @@ class NameSearchPanel extends javax.swing.JPanel {
     private void searchTextFieldMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_searchTextFieldMouseClicked
 
         this.nameCheckBox.setSelected(true);     }//GEN-LAST:event_searchTextFieldMouseClicked
+
+    private void nameCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nameCheckBoxActionPerformed
+        setComponentsEnabled();
+        pcs.firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+    }//GEN-LAST:event_nameCheckBoxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuItem copyMenuItem;
     private javax.swing.JMenuItem cutMenuItem;

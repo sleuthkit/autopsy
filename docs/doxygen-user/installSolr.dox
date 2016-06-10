@@ -75,8 +75,8 @@ The log file should end up looking like this (modified lines are highlighted in 
 <br><br>
 \image html log4j.PNG
 <br><br>
-5. From an Autopsy installation, copy the folder <i>"C:\Program Files\Autopsy-4.0\autopsy\solr\solr\configsets"</i> to <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\solr"</i>.
-6. From an Autopsy installation, copy the folder <i>"C:\Program Files\Autopsy-4.0\autopsy\solr\solr\lib"</i> to <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\solr"</i>.
+5. From an Autopsy installation, copy the folder <i>"C:\Program Files\Autopsy-4.1\autopsy\solr\solr\configsets"</i> to <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\solr"</i>.
+6. From an Autopsy installation, copy the folder <i>"C:\Program Files\Autopsy-4.1\autopsy\solr\solr\lib"</i> to <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\solr"</i>.
 7. Start a Windows command prompt as administrator by pressing _Start_, typing _command_, right clicking on _Command Prompt_, and clicking on _Run as administrator_. Then run the following command to install the _solrJetty_ service:
     <br><br>
     <i>cmd /c C:\\Bitnami\\solr-4.10.3-0\\apache-solr\\scripts\\serviceinstall.bat INSTALL</i>
