@@ -245,7 +245,6 @@ public class DataResultFilterNode extends FilterNode {
                 actions.add(null);
                 actions.add(AddBlackboardArtifactTagAction.getInstance());
             }
-
             return actions;
         }
 

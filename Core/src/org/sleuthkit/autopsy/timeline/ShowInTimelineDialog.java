@@ -26,6 +26,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.beans.property.SimpleObjectProperty;
@@ -58,7 +59,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 /**
  *
  */
-public class ShowInTimelineDialog extends Dialog<EventInTimeRange> {
+public class ShowInTimelineDialog extends Dialog<ShowInTimelineDialog.EventInTimeRange> {
 
     private static final ButtonType SHOW = new ButtonType("Show Timeline", ButtonBar.ButtonData.OK_DONE);
 
@@ -130,7 +131,6 @@ public class ShowInTimelineDialog extends Dialog<EventInTimeRange> {
         DialogPane dialogPane = getDialogPane();
         dialogPane.setContent(contentRoot);
         dialogPane.getButtonTypes().setAll(SHOW, ButtonType.CANCEL);
-    
 
         setResultConverter(buttonType -> {
             if (buttonType == SHOW) {
@@ -164,7 +164,7 @@ public class ShowInTimelineDialog extends Dialog<EventInTimeRange> {
         List<Long> eventIDS;
         if (file != null) {
             eventIDS = controller.getEventsModel().getEventIDsForFile(file, false);
-                dialogPane.lookupButton(SHOW).disableProperty().bind(eventTable.getSelectionModel().selectedItemProperty().isNull());
+            dialogPane.lookupButton(SHOW).disableProperty().bind(eventTable.getSelectionModel().selectedItemProperty().isNull());
         } else if (artifact != null) {
 
             eventIDS = controller.getEventsModel().getEventIDsForArtifact(artifact);
@@ -209,5 +209,28 @@ public class ShowInTimelineDialog extends Dialog<EventInTimeRange> {
                 setGraphic(new ImageView(item.getFXImage()));
             }
         }
+    }
+
+    /**
+     * Encapsulates the result of the ShowIntimelineDialog.
+     */
+    static final class EventInTimeRange {
+
+        private final Set<Long> eventIDs;
+        private final Interval range;
+
+        EventInTimeRange(Set<Long> eventIDs, Interval range) {
+            this.eventIDs = eventIDs;
+            this.range = range;
+        }
+
+        public Set<Long> getEventIDs() {
+            return eventIDs;
+        }
+
+        public Interval getRange() {
+            return range;
+        }
+
     }
 }

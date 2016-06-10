@@ -445,10 +445,10 @@ public class TimeLineController {
                     } else {
                         ShowInTimelineDialog d = new ShowInTimelineDialog(this, file, artifact);
 
-                        Optional<EventInTimeRange> result = d.showAndWait();
-                        result.ifPresent((EventInTimeRange t) -> {
+                        Optional<ShowInTimelineDialog.EventInTimeRange> result = d.showAndWait();
+                        result.ifPresent(eventInTimeRange -> {
                             SwingUtilities.invokeLater(this::showWindow);
-                            showEvents(t.getEventIDs(), t.getRange());
+                            showEvents(eventInTimeRange.getEventIDs(), eventInTimeRange.getRange());
                         });
                     }
                     break;
