@@ -49,6 +49,7 @@ import javafx.scene.layout.VBox;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.joda.time.Interval;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
@@ -57,13 +58,16 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- *
+ * A Dialog that, given a AbstractFile OR BlackBoardArtifact, allows the user to
+ * choose a specific event and a time range around it to show in the Timeline
+ * List View.
  */
-public class ShowInTimelineDialog extends Dialog<ShowInTimelineDialog.EventInTimeRange> {
-
-    private static final ButtonType SHOW = new ButtonType("Show Timeline", ButtonBar.ButtonData.OK_DONE);
+final class ShowInTimelineDialog extends Dialog<ShowInTimelineDialog.EventInTimeRange> {
 
     private static final Logger LOGGER = Logger.getLogger(ShowInTimelineDialog.class.getName());
+
+    @NbBundle.Messages({"ShowInTimelineDialog.showTimelineButtonType.text=Show Timeline"})
+    private static final ButtonType SHOW = new ButtonType(Bundle.ShowInTimelineDialog_showTimelineButtonType_text(), ButtonBar.ButtonData.OK_DONE);
 
     @FXML
     private TableView<SingleEvent> eventTable;
@@ -79,12 +83,18 @@ public class ShowInTimelineDialog extends Dialog<ShowInTimelineDialog.EventInTim
 
     @FXML
     private ComboBox<ChronoUnit> unitComboBox;
+
     @FXML
     private Label chooseEventLabel;
 
-    private final VBox contentRoot;
+    private final VBox contentRoot = new VBox();
+
     private final TimeLineController controller;
 
+    /**
+     * List of ChronoUnits the user can select from when choosing a time range
+     * to show.
+     */
     private static final List<ChronoUnit> SCROLL_BY_UNITS = Arrays.asList(
             ChronoUnit.YEARS,
             ChronoUnit.MONTHS,
@@ -93,24 +103,9 @@ public class ShowInTimelineDialog extends Dialog<ShowInTimelineDialog.EventInTim
             ChronoUnit.MINUTES,
             ChronoUnit.SECONDS);
 
-    static private class ChronoUnitListCell extends ListCell<ChronoUnit> {
-
-        @Override
-        protected void updateItem(ChronoUnit item, boolean empty) {
-            super.updateItem(item, empty);
-
-            if (empty || item == null) {
-                setText(null);
-            } else {
-                setText(WordUtils.capitalizeFully(item.toString()));
-            }
-        }
-    }
-
-    public ShowInTimelineDialog(TimeLineController controller, AbstractFile file, BlackboardArtifact artifact) {
-        super();
+    private ShowInTimelineDialog(TimeLineController controller, List<Long> eventIDS) {
         this.controller = controller;
-        contentRoot = new VBox();
+
         final String name = "nbres:/" + StringUtils.replace(ShowInTimelineDialog.class.getPackage().getName(), ".", "/") + "/ShowInTimelineDialog.fxml"; // NON-NLS
 
         try {
@@ -132,22 +127,6 @@ public class ShowInTimelineDialog extends Dialog<ShowInTimelineDialog.EventInTim
         dialogPane.setContent(contentRoot);
         dialogPane.getButtonTypes().setAll(SHOW, ButtonType.CANCEL);
 
-        setResultConverter(buttonType -> {
-            if (buttonType == SHOW) {
-                SingleEvent selectedEvent = eventTable.getSelectionModel().getSelectedItem();
-
-                if (file == null) {
-                    selectedEvent = eventTable.getItems().get(0);
-                }
-                Duration selectedDuration = Duration.of(amountSpinner.getValue(), unitComboBox.getSelectionModel().getSelectedItem());
-
-                Interval range = IntervalUtils.getIntervalAround(Instant.ofEpochMilli(selectedEvent.getStartMillis()), selectedDuration);
-                return new EventInTimeRange(Collections.singleton(selectedEvent.getEventID()), range);
-            } else {
-                return null;
-            }
-        });
-
         amountSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 1000));
 
         unitComboBox.setButtonCell(new ChronoUnitListCell());
@@ -161,24 +140,62 @@ public class ShowInTimelineDialog extends Dialog<ShowInTimelineDialog.EventInTim
         dateTimeColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getStartMillis()));
         dateTimeColumn.setCellFactory(param -> new DateTimeTableCell<>());
 
-        List<Long> eventIDS;
-        if (file != null) {
-            eventIDS = controller.getEventsModel().getEventIDsForFile(file, false);
-            dialogPane.lookupButton(SHOW).disableProperty().bind(eventTable.getSelectionModel().selectedItemProperty().isNull());
-        } else if (artifact != null) {
-
-            eventIDS = controller.getEventsModel().getEventIDsForArtifact(artifact);
-        } else {
-            throw new IllegalArgumentException();
-        }
-        setResizable(true);
         eventTable.getItems().setAll(eventIDS.stream().map(controller.getEventsModel()::getEventById).collect(Collectors.toSet()));
-        if (eventIDS.size() == 1) {
-            chooseEventLabel.setVisible(false);
-            chooseEventLabel.setManaged(false);
-            eventTable.getSelectionModel().select(0);
-        }
         eventTable.setPrefHeight(Math.min(200, 24 * eventTable.getItems().size() + 28));
+    }
+
+    ShowInTimelineDialog(TimeLineController controller, BlackboardArtifact artifact) {
+        this(controller,
+                controller.getEventsModel().getEventIDsForArtifact(artifact));
+        chooseEventLabel.setVisible(false);
+        chooseEventLabel.setManaged(false);
+        eventTable.getSelectionModel().select(0);
+
+        setResultConverter(buttonType -> {
+            if (buttonType == SHOW) {
+                SingleEvent selectedEvent = eventTable.getSelectionModel().getSelectedItem();
+                if (selectedEvent == null) {
+                    selectedEvent = eventTable.getItems().get(0);
+                }
+                return makeEventInTimeRange(selectedEvent);
+            } else {
+                return null;
+            }
+        });
+    }
+
+    ShowInTimelineDialog(TimeLineController controller, AbstractFile file) {
+        this(controller,
+                controller.getEventsModel().getEventIDsForFile(file, false));
+        getDialogPane().lookupButton(SHOW).disableProperty().bind(eventTable.getSelectionModel().selectedItemProperty().isNull());
+
+        setResultConverter(buttonType -> {
+            if (buttonType == SHOW) {
+                return makeEventInTimeRange(eventTable.getSelectionModel().getSelectedItem());
+            } else {
+                return null;
+            }
+        });
+    }
+
+    private EventInTimeRange makeEventInTimeRange(SingleEvent selectedEvent) {
+        Duration selectedDuration = Duration.of(amountSpinner.getValue(), unitComboBox.getSelectionModel().getSelectedItem());
+        Interval range = IntervalUtils.getIntervalAround(Instant.ofEpochMilli(selectedEvent.getStartMillis()), selectedDuration);
+        return new EventInTimeRange(Collections.singleton(selectedEvent.getEventID()), range);
+    }
+
+    static private class ChronoUnitListCell extends ListCell<ChronoUnit> {
+
+        @Override
+        protected void updateItem(ChronoUnit item, boolean empty) {
+            super.updateItem(item, empty);
+
+            if (empty || item == null) {
+                setText(null);
+            } else {
+                setText(WordUtils.capitalizeFully(item.toString()));
+            }
+        }
     }
 
     static private class DateTimeTableCell<X> extends TableCell<X, Long> {

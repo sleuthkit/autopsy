@@ -23,24 +23,28 @@ import javax.swing.AbstractAction;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.timeline.OpenTimelineAction;
-import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * An action that shows the given artifact in the Timeline List View.
+ * An action to prompt the user to pick an timestamp/event associated with the
+ * given file and show it in the Timeline List View
  */
-public final class ShowArtifactInTimelineAction extends AbstractAction {
+public final class ViewFileInTimelineAction extends AbstractAction {
 
     private static final long serialVersionUID = 1L;
-    private final BlackboardArtifact artifact;
+    private final AbstractFile file;
 
-    @NbBundle.Messages({"ShowArtifactInTimelineAction.displayName=Show Result in Timeline... "})
-    public ShowArtifactInTimelineAction(BlackboardArtifact artifact) {
-        super(Bundle.ShowArtifactInTimelineAction_displayName());
-        this.artifact = artifact;
+    @NbBundle.Messages({"ViewFileInTimelineAction.fileSource.displayName=View File in Timeline... ",
+        "ViewFileInTimelineAction.artifactSource.displayName=View Source File in Timeline... "})
+    public ViewFileInTimelineAction(AbstractFile file, boolean isArtifactSource) {
+        super(isArtifactSource
+                ? Bundle.ViewFileInTimelineAction_artifactSource_displayName()
+                : Bundle.ViewFileInTimelineAction_fileSource_displayName());
+        this.file = file;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        SystemAction.get(OpenTimelineAction.class).showArtifactInTimeline(artifact);
+        SystemAction.get(OpenTimelineAction.class).showFileInTimeline(file);
     }
 }

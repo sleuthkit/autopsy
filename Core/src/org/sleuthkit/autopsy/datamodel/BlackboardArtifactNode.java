@@ -35,8 +35,8 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import static org.sleuthkit.autopsy.datamodel.Bundle.*;
-import org.sleuthkit.autopsy.timeline.actions.ShowArtifactInTimelineAction;
-import org.sleuthkit.autopsy.timeline.actions.ShowFileInTimelineAction;
+import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
+import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.ArtifactEventType;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -131,14 +131,14 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         }
         if (hasTimeStamp) {
             //if this artifact has a time stamp add the action to view it in the timeline
-            actionsList.add(new ShowArtifactInTimelineAction(artifact));
+            actionsList.add(new ViewArtifactInTimelineAction(artifact));
         }
 
         AbstractFile file = getLookup().lookup(AbstractFile.class);
 
         if (null != file) {
             //if this artifact has associated content, add the action to view the content in the timeline
-            actionsList.add(new ShowFileInTimelineAction(file));
+            actionsList.add(new ViewFileInTimelineAction(file, true));
         }
 
         return actionsList.toArray(new Action[actionsList.size()]);

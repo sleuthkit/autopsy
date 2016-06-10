@@ -23,25 +23,24 @@ import javax.swing.AbstractAction;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.timeline.OpenTimelineAction;
-import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * An action to prompt the user to pick an timestamp/event associated with the
- * given file and show it in the Timeline List View
+ * An action that shows the given artifact in the Timeline List View.
  */
-public final class ShowFileInTimelineAction extends AbstractAction {
+public final class ViewArtifactInTimelineAction extends AbstractAction {
 
     private static final long serialVersionUID = 1L;
-    private final AbstractFile file;
+    private final BlackboardArtifact artifact;
 
-    @NbBundle.Messages({"ShowFileInTimelineAction.displayName=Show File in Timeline... "})
-    public ShowFileInTimelineAction(AbstractFile file) {
-        super(Bundle.ShowFileInTimelineAction_displayName());
-        this.file = file;
+    @NbBundle.Messages({"ViewArtifactInTimelineAction.displayName=View Result in Timeline... "})
+    public ViewArtifactInTimelineAction(BlackboardArtifact artifact) {
+        super(Bundle.ViewArtifactInTimelineAction_displayName());
+        this.artifact = artifact;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        SystemAction.get(OpenTimelineAction.class).showFileInTimeline(file);
+        SystemAction.get(OpenTimelineAction.class).showArtifactInTimeline(artifact);
     }
 }

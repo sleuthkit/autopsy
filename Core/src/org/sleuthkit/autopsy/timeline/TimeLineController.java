@@ -418,7 +418,8 @@ public class TimeLineController {
         }
 
         //get a task that rebuilds the repo with the bellow state listener attached
-        final CancellationProgressTask<?> rebuildRepositoryTask = repoBuilder.apply(newSate -> {
+        final CancellationProgressTask<?> rebuildRepositoryTask;
+        rebuildRepositoryTask = repoBuilder.apply(newSate -> {
             //this will be on JFX thread
             switch (newSate) {
                 case SUCCEEDED:
@@ -443,7 +444,9 @@ public class TimeLineController {
                         SwingUtilities.invokeLater(this::showWindow);
                         TimeLineController.this.showFullRange();
                     } else {
-                        ShowInTimelineDialog d = new ShowInTimelineDialog(this, file, artifact);
+                        ShowInTimelineDialog d = (file == null)
+                                ? new ShowInTimelineDialog(this, artifact)
+                                : new ShowInTimelineDialog(this, file);
 
                         Optional<ShowInTimelineDialog.EventInTimeRange> result = d.showAndWait();
                         result.ifPresent(eventInTimeRange -> {

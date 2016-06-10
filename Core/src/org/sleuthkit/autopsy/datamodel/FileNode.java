@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
-import org.sleuthkit.autopsy.timeline.actions.ShowFileInTimelineAction;
+import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
@@ -86,7 +86,7 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
         }
         actionsList.add(new NewWindowViewAction(Bundle.FileNode_getActions_viewInNewWin_text(), this));
         actionsList.add(new ExternalViewerAction(Bundle.FileNode_getActions_openInExtViewer_text(), this));
-        actionsList.add(new ShowFileInTimelineAction(getContent()));
+        actionsList.add(new ViewFileInTimelineAction(getContent(), false));
 
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
