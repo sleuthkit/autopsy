@@ -432,8 +432,8 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
             configureMouseListeners(pinnedLane, mouseClickedHandler, chartDragHandler);
 
             //show and hide pinned lane in response to settings property change
-            getSkinnable().getLayoutSettings().pinnedLaneShowing().addListener(observable -> syncPinnedShowing());
-            syncPinnedShowing();
+            getSkinnable().getLayoutSettings().pinnedLaneShowing().addListener(observable -> syncPinnedLaneShowing());
+            syncPinnedLaneShowing();
 
             //show and remove interval selector in sync with control state change
             getSkinnable().intervalSelectorProp.addListener((observable, oldIntervalSelector, newIntervalSelector) -> {
@@ -484,7 +484,7 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
          * Show the pinned lane if and only if the settings object says it
          * should be.
          */
-        private void syncPinnedShowing() {
+        private void syncPinnedLaneShowing() {
             boolean pinnedLaneShowing = getSkinnable().getLayoutSettings().isPinnedLaneShowing();
             if (pinnedLaneShowing == false) {
                 //Save  the divider position for later.

@@ -17,13 +17,15 @@
  * limitations under the License.
  */
 
-/*
+ /*
  * KnownStatusSearchPanel.java
  *
  * Created on Oct 19, 2011, 11:45:44 AM
  */
 package org.sleuthkit.autopsy.filesearch;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import javax.swing.JCheckBox;
 
 /**
@@ -32,11 +34,14 @@ import javax.swing.JCheckBox;
  */
 class KnownStatusSearchPanel extends javax.swing.JPanel {
 
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+
     /**
      * Creates new form KnownStatusSearchPanel
      */
     KnownStatusSearchPanel() {
         initComponents();
+        setComponentsEnabled();
     }
 
     JCheckBox getKnownCheckBox() {
@@ -55,6 +60,27 @@ class KnownStatusSearchPanel extends javax.swing.JPanel {
         return unknownOptionCheckBox;
     }
 
+    private void setComponentsEnabled() {
+        boolean enabled = this.knownCheckBox.isSelected();
+        this.unknownOptionCheckBox.setEnabled(enabled);
+        this.knownOptionCheckBox.setEnabled(enabled);
+        this.knownBadOptionCheckBox.setEnabled(enabled);
+    }
+
+    @Override
+    public void addPropertyChangeListener(PropertyChangeListener pcl) {
+        pcs.addPropertyChangeListener(pcl);
+    }
+
+    @Override
+    public void removePropertyChangeListener(PropertyChangeListener pcl) {
+        pcs.removePropertyChangeListener(pcl);
+    }
+
+    boolean isValidSearch() {
+        return this.unknownOptionCheckBox.isSelected() || this.knownBadOptionCheckBox.isSelected() || this.knownOptionCheckBox.isSelected();
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -70,9 +96,19 @@ class KnownStatusSearchPanel extends javax.swing.JPanel {
         knownBadOptionCheckBox = new javax.swing.JCheckBox();
 
         knownCheckBox.setText(org.openide.util.NbBundle.getMessage(KnownStatusSearchPanel.class, "KnownStatusSearchPanel.knownCheckBox.text")); // NOI18N
+        knownCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                knownCheckBoxActionPerformed(evt);
+            }
+        });
 
         unknownOptionCheckBox.setSelected(true);
         unknownOptionCheckBox.setText(org.openide.util.NbBundle.getMessage(KnownStatusSearchPanel.class, "KnownStatusSearchPanel.unknownOptionCheckBox.text")); // NOI18N
+        unknownOptionCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                unknownOptionCheckBoxActionPerformed(evt);
+            }
+        });
 
         knownOptionCheckBox.setSelected(true);
         knownOptionCheckBox.setText(org.openide.util.NbBundle.getMessage(KnownStatusSearchPanel.class, "KnownStatusSearchPanel.knownOptionCheckBox.text")); // NOI18N
@@ -84,6 +120,11 @@ class KnownStatusSearchPanel extends javax.swing.JPanel {
 
         knownBadOptionCheckBox.setSelected(true);
         knownBadOptionCheckBox.setText(org.openide.util.NbBundle.getMessage(KnownStatusSearchPanel.class, "KnownStatusSearchPanel.knownBadOptionCheckBox.text")); // NOI18N
+        knownBadOptionCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                knownBadOptionCheckBoxActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -114,8 +155,21 @@ class KnownStatusSearchPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void knownOptionCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_knownOptionCheckBoxActionPerformed
-        // TODO add your handling code here:
+        pcs.firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
     }//GEN-LAST:event_knownOptionCheckBoxActionPerformed
+
+    private void knownCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_knownCheckBoxActionPerformed
+        setComponentsEnabled();
+        pcs.firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+    }//GEN-LAST:event_knownCheckBoxActionPerformed
+
+    private void unknownOptionCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_unknownOptionCheckBoxActionPerformed
+        pcs.firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+    }//GEN-LAST:event_unknownOptionCheckBoxActionPerformed
+
+    private void knownBadOptionCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_knownBadOptionCheckBoxActionPerformed
+        pcs.firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+    }//GEN-LAST:event_knownBadOptionCheckBoxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox knownBadOptionCheckBox;

@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
@@ -127,6 +128,7 @@ public final class ExternalResultsImporter {
         }
     }
 
+    @Messages({"ExternalResultsImporter.indexError.message=Failed to index imported artifact for keyword search."})
     private void importArtifacts(ExternalResults results) {
         SleuthkitCase caseDb = Case.getCurrentCase().getSleuthkitCase();
         for (ExternalResults.Artifact artifactData : results.getArtifacts()) {
@@ -200,9 +202,9 @@ public final class ExternalResultsImporter {
                         // index the artifact for keyword search
                         blackboard.indexArtifact(artifact);
                     } catch (Blackboard.BlackboardException ex) {
-                        logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", artifact.getDisplayName()), ex); //NON-NLS
+                        logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
                         MessageNotifyUtil.Notify.error(
-                                NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), artifact.getDisplayName());
+                            Bundle.ExternalResultsImporter_indexError_message(), artifact.getDisplayName());
                     }
 
                     if (standardArtifactTypeIds.contains(artifactTypeId)) {

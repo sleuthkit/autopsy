@@ -53,6 +53,9 @@
           <ResourceString bundle="org/sleuthkit/autopsy/filesearch/Bundle.properties" key="KnownStatusSearchPanel.knownCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="knownCheckBoxActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JCheckBox" name="unknownOptionCheckBox">
       <Properties>
@@ -61,6 +64,9 @@
           <ResourceString bundle="org/sleuthkit/autopsy/filesearch/Bundle.properties" key="KnownStatusSearchPanel.unknownOptionCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="unknownOptionCheckBoxActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JCheckBox" name="knownOptionCheckBox">
       <Properties>
@@ -80,6 +86,9 @@
           <ResourceString bundle="org/sleuthkit/autopsy/filesearch/Bundle.properties" key="KnownStatusSearchPanel.knownBadOptionCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="knownBadOptionCheckBoxActionPerformed"/>
+      </Events>
     </Component>
   </SubComponents>
 </Form>

@@ -56,6 +56,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.datamodel.CombinedEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
@@ -343,18 +344,29 @@ public class EventDB {
         return result;
     }
 
-    Set<Long> getEventIDs(Interval timeRange, RootFilter filter) {
-        return getEventIDs(timeRange.getStartMillis() / 1000, timeRange.getEndMillis() / 1000, filter);
-    }
+    /**
+     * Get the IDs of all the events within the given time range that pass the
+     * given filter.
+     *
+     * @param timeRange The Interval that all returned events must be within.
+     * @param filter    The Filter that all returned events must pass.
+     *
+     * @return A List of event ids, sorted by timestamp of the corresponding
+     *         event..
+     */
+    List<Long> getEventIDs(Interval timeRange, RootFilter filter) {
+        Long startTime = timeRange.getStartMillis() / 1000;
+        Long endTime = timeRange.getEndMillis() / 1000;
 
-    Set<Long> getEventIDs(Long startTime, Long endTime, RootFilter filter) {
         if (Objects.equals(startTime, endTime)) {
-            endTime++;
+            endTime++; //make sure end is at least 1 millisecond after start
         }
-        Set<Long> resultIDs = new HashSet<>();
+
+        ArrayList<Long> resultIDs = new ArrayList<>();
 
         DBLock.lock();
-        final String query = "SELECT events.event_id AS event_id FROM events" + useHashHitTablesHelper(filter) + useTagTablesHelper(filter) + " WHERE time >=  " + startTime + " AND time <" + endTime + " AND " + SQLHelper.getSQLWhere(filter); // NON-NLS
+        final String query = "SELECT events.event_id AS event_id FROM events" + useHashHitTablesHelper(filter) + useTagTablesHelper(filter)
+                + " WHERE time >=  " + startTime + " AND time <" + endTime + " AND " + SQLHelper.getSQLWhere(filter) + " ORDER BY time ASC"; // NON-NLS
         try (Statement stmt = con.createStatement();
                 ResultSet rs = stmt.executeQuery(query)) {
             while (rs.next()) {
@@ -368,6 +380,55 @@ public class EventDB {
         }
 
         return resultIDs;
+    }
+
+    /**
+     * Get a representation of all the events, within the given time range, that
+     * pass the given filter, grouped by time and description such that file
+     * system events for the same file, with the same timestamp, are combined
+     * together.
+     *
+     * @param timeRange The Interval that all returned events must be within.
+     * @param filter    The Filter that all returned events must pass.
+     *
+     * @return A List of combined events, sorted by timestamp.
+     */
+    List<CombinedEvent> getCombinedEvents(Interval timeRange, RootFilter filter) {
+        Long startTime = timeRange.getStartMillis() / 1000;
+        Long endTime = timeRange.getEndMillis() / 1000;
+
+        if (Objects.equals(startTime, endTime)) {
+            endTime++; //make sure end is at least 1 millisecond after start
+        }
+
+        ArrayList<CombinedEvent> results = new ArrayList<>();
+
+        DBLock.lock();
+        final String query = "SELECT full_description, time, file_id, GROUP_CONCAT(events.event_id), GROUP_CONCAT(sub_type)"
+                + " FROM events " + useHashHitTablesHelper(filter) + useTagTablesHelper(filter)
+                + " WHERE time >= " + startTime + " AND time <" + endTime + " AND " + SQLHelper.getSQLWhere(filter)
+                + " GROUP BY time,full_description, file_id ORDER BY time ASC, full_description";
+        try (Statement stmt = con.createStatement();
+                ResultSet rs = stmt.executeQuery(query)) {
+            while (rs.next()) {
+
+                //make a map from event type to event ID
+                List<Long> eventIDs = SQLHelper.unGroupConcat(rs.getString("GROUP_CONCAT(events.event_id)"), Long::valueOf);
+                List<EventType> eventTypes = SQLHelper.unGroupConcat(rs.getString("GROUP_CONCAT(sub_type)"), s -> RootEventType.allTypes.get(Integer.valueOf(s)));
+                Map<EventType, Long> eventMap = new HashMap<>();
+                for (int i = 0; i < eventIDs.size(); i++) {
+                    eventMap.put(eventTypes.get(i), eventIDs.get(i));
+                }
+                results.add(new CombinedEvent(rs.getLong("time") * 1000, rs.getString("full_description"), rs.getLong("file_id"), eventMap));
+            }
+
+        } catch (SQLException sqlEx) {
+            LOGGER.log(Level.SEVERE, "failed to execute query for combined events", sqlEx); // NON-NLS
+        } finally {
+            DBLock.unlock();
+        }
+
+        return results;
     }
 
     /**
@@ -583,7 +644,14 @@ public class EventDB {
                 insertHashHitStmt = prepareStatement("INSERT OR IGNORE INTO hash_set_hits (hash_set_id, event_id) values (?,?)"); //NON-NLS
                 insertTagStmt = prepareStatement("INSERT OR IGNORE INTO tags (tag_id, tag_name_id,tag_name_display_name, event_id) values (?,?,?,?)"); //NON-NLS
                 deleteTagStmt = prepareStatement("DELETE FROM tags WHERE tag_id = ?"); //NON-NLS
-                countAllEventsStmt = prepareStatement("SELECT count(*) AS count FROM events"); //NON-NLS
+
+                /*
+                 * This SQL query is really just a select count(*), but that has
+                 * performance problems on very large tables unless you include
+                 * a where clause see http://stackoverflow.com/a/9338276/4004683
+                 * for more.
+                 */
+                countAllEventsStmt = prepareStatement("SELECT count(event_id) AS count FROM events WHERE event_id IS NOT null"); //NON-NLS
                 dropEventsTableStmt = prepareStatement("DROP TABLE IF EXISTS events"); //NON-NLS
                 dropHashSetHitsTableStmt = prepareStatement("DROP TABLE IF EXISTS hash_set_hits"); //NON-NLS
                 dropHashSetsTableStmt = prepareStatement("DROP TABLE IF EXISTS hash_sets"); //NON-NLS
@@ -1090,12 +1158,12 @@ public class EventDB {
     private EventCluster eventClusterHelper(ResultSet rs, boolean useSubTypes, DescriptionLoD descriptionLOD, TagsFilter filter) throws SQLException {
         Interval interval = new Interval(rs.getLong("min(time)") * 1000, rs.getLong("max(time)") * 1000, TimeLineController.getJodaTimeZone());// NON-NLS
         String eventIDsString = rs.getString("event_ids");// NON-NLS
-        Set<Long> eventIDs = SQLHelper.unGroupConcat(eventIDsString, Long::valueOf);
+        List<Long> eventIDs = SQLHelper.unGroupConcat(eventIDsString, Long::valueOf);
         String description = rs.getString(SQLHelper.getDescriptionColumn(descriptionLOD));
         EventType type = useSubTypes ? RootEventType.allTypes.get(rs.getInt("sub_type")) : BaseTypes.values()[rs.getInt("base_type")];// NON-NLS
 
-        Set<Long> hashHits = SQLHelper.unGroupConcat(rs.getString("hash_hits"), Long::valueOf); //NON-NLS
-        Set<Long> tagged = SQLHelper.unGroupConcat(rs.getString("taggeds"), Long::valueOf); //NON-NLS
+        List<Long> hashHits = SQLHelper.unGroupConcat(rs.getString("hash_hits"), Long::valueOf); //NON-NLS
+        List<Long> tagged = SQLHelper.unGroupConcat(rs.getString("taggeds"), Long::valueOf); //NON-NLS
 
         return new EventCluster(interval, type, eventIDs, hashHits, tagged, description, descriptionLOD);
     }
@@ -1167,7 +1235,6 @@ public class EventDB {
     private static String typeColumnHelper(final boolean useSubTypes) {
         return useSubTypes ? "sub_type" : "base_type"; //NON-NLS
     }
-
 
     private PreparedStatement prepareStatement(String queryString) throws SQLException {
         PreparedStatement prepareStatement = con.prepareStatement(queryString);
