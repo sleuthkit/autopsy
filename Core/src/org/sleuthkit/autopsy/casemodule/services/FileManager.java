@@ -40,10 +40,10 @@ import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskFileRange;
 import org.sleuthkit.datamodel.VirtualDirectory;
-import org.sleuthkit.datamodel.CarvedFileContainer;
 import org.sleuthkit.datamodel.LocalFilesDataSource;
 import org.sleuthkit.datamodel.TskDataException;
 import org.apache.commons.lang3.StringUtils;
+import org.sleuthkit.datamodel.CarvingResult;
 
 /**
  * A manager that provides methods for retrieving files from the current case
@@ -53,7 +53,7 @@ import org.apache.commons.lang3.StringUtils;
 public class FileManager implements Closeable {
 
     private SleuthkitCase caseDb;
-    
+
     /**
      * Constructs a manager that provides methods for retrieving files from the
      * current case and for adding local files, carved files, and derived files
@@ -112,7 +112,7 @@ public class FileManager implements Closeable {
         String types = StringUtils.join(mimeTypes, "', '");
         return "mime_type IN ('" + types + "')";
     }
-        
+
     /**
      * Finds all files and directories with a given file name. The name search
      * is for full or partial matches and is case insensitive (a case
@@ -324,47 +324,23 @@ public class FileManager implements Closeable {
     }
 
     /**
-     * Adds a carved file to the '$CarvedFiles' virtual directory of a data
-     * source, volume or file system.
+     * Adds a carving result to the case database.
      *
-     * @param fileName    The name of the file.
-     * @param fileSize    The size of the file.
-     * @param parentObjId The object id of the parent data source, volume or
-     *                    file system.
-     * @param layout      A list of the offsets and sizes that gives the layout
-     *                    of the file within its parent.
+     * @param carvingResult The carving result (a set of carved files and their
+     *                      parent) to be added.
      *
-     * @return A LayoutFile object representing the carved file.
+     * @return A list of LayoutFile representations of the carved files.
      *
-     * @throws TskCoreException if there is a problem adding the file to the
-     *                          case database.
+     * @throws TskCoreException If there is a problem completing a case database
+     *                          operation.
      */
-    public synchronized LayoutFile addCarvedFile(String fileName, long fileSize, long parentObjId, List<TskFileRange> layout) throws TskCoreException {
+    public synchronized List<LayoutFile> addCarvedFiles(CarvingResult carvingResult) throws TskCoreException {
         if (null == caseDb) {
             throw new TskCoreException("File manager has been closed");
         }
-        return caseDb.addCarvedFile(fileName, fileSize, parentObjId, layout);
+        return caseDb.addCarvedFiles(carvingResult);
     }
-
-    /**
-     * Adds a collection of carved files to the '$CarvedFiles' virtual directory
-     * of a data source, volume or file system.
-     *
-     * @param A collection of CarvedFileContainer objects, one per carved file,
-     *          all of which must have the same parent object id.
-     *
-     * @return A collection of LayoutFile object representing the carved files.
-     *
-     * @throws TskCoreException if there is a problem adding the files to the
-     *                          case database.
-     */
-    public synchronized List<LayoutFile> addCarvedFiles(List<CarvedFileContainer> filesToAdd) throws TskCoreException {
-        if (null == caseDb) {
-            throw new TskCoreException("File manager has been closed");
-        }
-        return caseDb.addCarvedFiles(filesToAdd);
-    }
-
+        
     /**
      * Interface for receiving a notification for each file or directory added
      * to the case database by a FileManager add files operation.
@@ -553,6 +529,16 @@ public class FileManager implements Closeable {
     }
 
     /**
+     * Closes the file manager.
+     *
+     * @throws IOException If there is a problem closing the file manager.
+     */
+    @Override
+    public synchronized void close() throws IOException {
+        caseDb = null;
+    }
+        
+    /**
      * Adds a set of local/logical files and/or directories to the case database
      * as data source.
      *
@@ -583,13 +569,55 @@ public class FileManager implements Closeable {
     }
 
     /**
-     * Closes the file manager.
+     * Adds a carved file to the '$CarvedFiles' virtual directory of a data
+     * source, volume or file system.
      *
-     * @throws IOException If there is a problem closing the file manager.
+     * @param fileName    The name of the file.
+     * @param fileSize    The size of the file.
+     * @param parentObjId The object id of the parent data source, volume or
+     *                    file system.
+     * @param layout      A list of the offsets and sizes that gives the layout
+     *                    of the file within its parent.
+     *
+     * @return A LayoutFile object representing the carved file.
+     *
+     * @throws TskCoreException if there is a problem adding the file to the
+     *                          case database.
+     * @deprecated Use List<LayoutFile> addCarvedFiles(CarvingResult
+     * carvingResult instead.
      */
-    @Override
-    public synchronized void close() throws IOException {
-        caseDb = null;
+    @Deprecated
+    public synchronized LayoutFile addCarvedFile(String fileName, long fileSize, long parentObjId, List<TskFileRange> layout) throws TskCoreException {
+        if (null == caseDb) {
+            throw new TskCoreException("File manager has been closed");
+        }
+        Content parent = caseDb.getContentById(parentObjId);
+        List<CarvingResult.CarvedFile> carvedFiles = new ArrayList<>();
+        carvedFiles.add(new CarvingResult.CarvedFile(fileName, fileSize, layout));
+        List<LayoutFile> layoutFiles = caseDb.addCarvedFiles(new CarvingResult(parent, carvedFiles));
+        return layoutFiles.get(0);
+    }
+
+    /**
+     * Adds a collection of carved files to the '$CarvedFiles' virtual directory
+     * of a data source, volume or file system.
+     *
+     * @param A collection of CarvedFileContainer objects, one per carved file,
+     *          all of which must have the same parent object id.
+     *
+     * @return A collection of LayoutFile object representing the carved files.
+     *
+     * @throws TskCoreException if there is a problem adding the files to the
+     *                          case database.
+     * @deprecated Use List<LayoutFile> addCarvedFiles(CarvingResult
+     * carvingResult instead.
+     */
+    @Deprecated
+    public synchronized List<LayoutFile> addCarvedFiles(List<org.sleuthkit.datamodel.CarvedFileContainer> filesToAdd) throws TskCoreException {
+        if (null == caseDb) {
+            throw new TskCoreException("File manager has been closed");
+        }
+        return caseDb.addCarvedFiles(filesToAdd);
     }
 
 }

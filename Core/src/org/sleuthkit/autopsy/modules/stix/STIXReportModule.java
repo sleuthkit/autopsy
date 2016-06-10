@@ -167,6 +167,9 @@ public class STIXReportModule implements GeneralReportModule {
 
             // Process each STIX file
             for (File file : stixFiles) {
+                if (progressPanel.getStatus() == ReportStatus.CANCELED) {
+                    return;
+                }
                 try {
                     processFile(file.getAbsolutePath(), progressPanel, output);
                 } catch (TskCoreException ex) {
@@ -176,7 +179,6 @@ public class STIXReportModule implements GeneralReportModule {
                             MessageNotifyUtil.MessageType.ERROR);
                     hadErrors = true;
                 }
-
                 // Clear out the ID maps before loading the next file
                 idToObjectMap = new HashMap<String, ObjectType>();
                 idToResult = new HashMap<String, ObservableResult>();

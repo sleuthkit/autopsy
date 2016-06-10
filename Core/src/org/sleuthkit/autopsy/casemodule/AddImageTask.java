@@ -99,7 +99,7 @@ class AddImageTask implements Runnable {
         List<String> errorMessages = new ArrayList<>();
         List<Content> newDataSources = new ArrayList<>();
         try {
-            currentCase.getSleuthkitCase().acquireExclusiveLock();
+            currentCase.getSleuthkitCase().acquireExclusiveLockForSQLite();
             synchronized (tskAddImageProcessLock) {
                 tskAddImageProcess = currentCase.makeAddImageProcess(timeZone, true, ignoreFatOrphanFiles);
             }
@@ -112,7 +112,7 @@ class AddImageTask implements Runnable {
             commitOrRevertAddImageProcess(currentCase, errorMessages, newDataSources);
             progressMonitor.setProgress(100);
         } finally {
-            currentCase.getSleuthkitCase().releaseExclusiveLock();
+            currentCase.getSleuthkitCase().releaseExclusiveLockForSQLite();
             DataSourceProcessorCallback.DataSourceProcessorResult result;
             if (criticalErrorOccurred) {
                 result = DataSourceProcessorResult.CRITICAL_ERRORS;
