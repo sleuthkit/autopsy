@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 - 2013 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,17 +31,20 @@ import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
+import org.sleuthkit.autopsy.timeline.actions.ShowFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
 /**
- * This class is used to represent the "Node" for the file. It may have derived
- * files children.
+ * This class is the Node for a AbstractFile. It may have derived files
+ * children.
  */
 public class FileNode extends AbstractFsContentNode<AbstractFile> {
 
     /**
+     * Constructor
+     *
      * @param file underlying Content
      */
     public FileNode(AbstractFile file) {
@@ -69,30 +72,25 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
         }
     }
 
-    /**
-     * Right click action for this node
-     *
-     * @param popup
-     *
-     * @return
-     */
     @Override
+    @NbBundle.Messages({
+        "FileNode.getActions.viewFileInDir.text=View File in Directory",
+        "FileNode.getActions.viewInNewWin.text=View in New Window",
+        "FileNode.getActions.openInExtViewer.text=Open in External Viewer",
+        "FileNode.getActions.searchFilesSameMD5.text=Search for files with the same MD5 hash"})
     public Action[] getActions(boolean popup) {
         List<Action> actionsList = new ArrayList<>();
         if (!this.getDirectoryBrowseMode()) {
-            actionsList.add(new ViewContextAction(NbBundle.getMessage(this.getClass(), "FileNode.viewFileInDir.text"), this));
+            actionsList.add(new ViewContextAction(Bundle.FileNode_getActions_viewFileInDir_text(), this));
             actionsList.add(null); // creates a menu separator
         }
-        actionsList.add(new NewWindowViewAction(
-                NbBundle.getMessage(this.getClass(), "FileNode.getActions.viewInNewWin.text"), this));
-        actionsList.add(new ExternalViewerAction(
-                NbBundle.getMessage(this.getClass(), "FileNode.getActions.openInExtViewer.text"), this));
-        actionsList.add(ViewFileInTimelineAction.getInstance());
+        actionsList.add(new NewWindowViewAction(Bundle.FileNode_getActions_viewInNewWin_text(), this));
+        actionsList.add(new ExternalViewerAction(Bundle.FileNode_getActions_openInExtViewer_text(), this));
+        actionsList.add(new ShowFileInTimelineAction(getContent()));
 
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
-        actionsList.add(new HashSearchAction(
-                NbBundle.getMessage(this.getClass(), "FileNode.getActions.searchFilesSameMD5.text"), this));
+        actionsList.add(new HashSearchAction(Bundle.FileNode_getActions_searchFilesSameMD5_text(), this));
         actionsList.add(null); // creates a menu separator        
         actionsList.add(AddContentTagAction.getInstance());
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
@@ -100,12 +98,12 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
     }
 
     @Override
-    public <T> T accept(ContentNodeVisitor< T> v) {
+    public <T> T accept(ContentNodeVisitor<T> v) {
         return v.visit(this);
     }
 
     @Override
-    public <T> T accept(DisplayableItemNodeVisitor< T> v) {
+    public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
     }
 

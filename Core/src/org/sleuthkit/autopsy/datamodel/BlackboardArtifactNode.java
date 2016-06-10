@@ -35,6 +35,8 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import static org.sleuthkit.autopsy.datamodel.Bundle.*;
+import org.sleuthkit.autopsy.timeline.actions.ShowArtifactInTimelineAction;
+import org.sleuthkit.autopsy.timeline.actions.ShowFileInTimelineAction;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.ArtifactEventType;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -105,18 +107,19 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
     }
 
     @Override
-    @NbBundle.Messages({"BlackboardArtifactNode.getAction.errorTitle=Error getting action",
+    @NbBundle.Messages({"BlackboardArtifactNode.getAction.errorTitle=Error getting actions",
         "BlackboardArtifactNode.getAction.errorMessage=There was a problem getting actions for the selected result."})
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<>();
         actionsList.addAll(Arrays.asList(super.getActions(context)));
 
-        //see if this artifact has a timestamp in any of the supported artifacts/attributes
+        //see if this artifact has a timestamp in any of the supported attributes
         boolean hasTimeStamp = false;
+
         for (ArtifactEventType artEventType : ArtifactEventType.getAllArtifactEventTypes()) {
             if (artEventType.getArtifactTypeID() == artifact.getArtifactTypeID()) {
                 try {
-                    if (artifact.getAttribute(artEventType.getDateTimeAttrubuteType()) != null) {
+                    if (null != artifact.getAttribute(artEventType.getDateTimeAttrubuteType())) {
                         hasTimeStamp = true;
                         break;
                     }
@@ -128,12 +131,14 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         }
         if (hasTimeStamp) {
             //if this artifact has a time stamp add the action to view it in the timeline
-            actionsList.add(ViewArtifactInTimelineAction.getInstance());
+            actionsList.add(new ShowArtifactInTimelineAction(artifact));
         }
 
-        if (associated != null) {
+        AbstractFile file = getLookup().lookup(AbstractFile.class);
+
+        if (null != file) {
             //if this artifact has associated content, add the action to view the content in the timeline
-            actionsList.add(ViewFileInTimelineAction.getInstance());
+            actionsList.add(new ShowFileInTimelineAction(file));
         }
 
         return actionsList.toArray(new Action[actionsList.size()]);
