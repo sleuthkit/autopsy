@@ -1533,8 +1533,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
                         // close all top components
                         CoreComponentControl.closeCoreWindows();
                     }
+                    updateMainWindowTitle(currentCase.getName());
                 });
-                updateMainWindowTitle(currentCase.getName());
             } else {
                 SwingUtilities.invokeLater(() -> {
                     Frame f = WindowManager.getDefault().getMainWindow();
