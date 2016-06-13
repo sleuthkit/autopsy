@@ -265,8 +265,7 @@ final class DataSourceIngestJob {
 
     private void addIngestModules(List<IngestModuleTemplate> templates, IngestModuleType type, SleuthkitCase skCase) throws TskCoreException {
         for (IngestModuleTemplate module : templates) {
-            String uniqueName = FactoryClassNameNormalizer.normalize(module.getModuleFactory().getClass().getCanonicalName()) + "-" + module.getModuleFactory().getModuleDisplayName() + "-" + type.toString() + "-" + module.getModuleFactory().getModuleVersionNumber();
-            ingestModules.add(skCase.addIngestModule(module.getModuleName(), uniqueName, type, module.getModuleFactory().getModuleVersionNumber()));
+            ingestModules.add(skCase.addIngestModule(module.getModuleName(), FactoryClassNameNormalizer.normalize(module.getModuleFactory().getClass().getCanonicalName()), type, module.getModuleFactory().getModuleVersionNumber()));
         }
     }
 
