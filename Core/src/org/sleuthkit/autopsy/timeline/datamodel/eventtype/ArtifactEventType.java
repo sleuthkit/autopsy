@@ -37,6 +37,12 @@ public interface ArtifactEventType extends EventType {
 
     public static final Logger LOGGER = Logger.getLogger(ArtifactEventType.class.getName());
 
+    /**
+     * Get the Set of all the EventTypes that are derived from artifacts.
+     *
+     * @return The Set of all the EventTypes that are derived from artifacts.
+     *
+     */
     public static Set<ArtifactEventType> getAllArtifactEventTypes() {
         return allTypes.stream()
                 .filter((EventType t) -> t instanceof ArtifactEventType)
@@ -51,9 +57,15 @@ public interface ArtifactEventType extends EventType {
 
     public BlackboardAttribute.Type getDateTimeAttrubuteType();
 
-    public default int getArtifactTypeID(){
+    /**
+     * Get the ID of the the artifact type that this EventType is derived from.
+     *
+     * @return the ID of the the artifact type that this EventType is derived
+     *         from.
+     */
+    public default int getArtifactTypeID() {
         return getArtifactType().getTypeID();
-    };
+    }
 
     /**
      * given an artifact, pull out the time stamp, and compose the descriptions.

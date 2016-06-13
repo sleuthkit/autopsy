@@ -22,7 +22,7 @@ import java.util.Set;
 import org.joda.time.Interval;
 
 /**
- * Encapsulates the result of the ShowIntimelineDialog: a Set of event IDs and
+ * Encapsulates the result of the ShowInTimelineDialog: a Set of event IDs and
  * an Interval.
  */
 public final class ViewInTimelineRequestedEvent {

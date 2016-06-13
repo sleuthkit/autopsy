@@ -94,7 +94,7 @@ public class OpenTimelineAction extends CallableSystemAction {
                     timeLineController = new TimeLineController(currentCase);
                 }
 
-                timeLineController.openTimeLine(file, artifact);
+                timeLineController.showTimeLine(file, artifact);
 
             } catch (IOException iOException) {
                 MessageNotifyUtil.Message.error(Bundle.OpenTimelineAction_settingsErrorMessage());

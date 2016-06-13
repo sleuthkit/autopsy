@@ -22,10 +22,12 @@ import java.io.IOException;
 import java.net.URL;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.beans.property.SimpleObjectProperty;
@@ -83,7 +85,7 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
     private Spinner<Integer> amountSpinner;
 
     @FXML
-    private ComboBox<ChronoUnit> unitComboBox;
+    private ComboBox<ChronoField> unitComboBox;
 
     @FXML
     private Label chooseEventLabel;
@@ -96,13 +98,13 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
      * List of ChronoUnits the user can select from when choosing a time range
      * to show.
      */
-    private static final List<ChronoUnit> SCROLL_BY_UNITS = Arrays.asList(
-            ChronoUnit.YEARS,
-            ChronoUnit.MONTHS,
-            ChronoUnit.DAYS,
-            ChronoUnit.HOURS,
-            ChronoUnit.MINUTES,
-            ChronoUnit.SECONDS);
+    private static final List<ChronoField> SCROLL_BY_UNITS = Arrays.asList(
+            ChronoField.YEAR,
+            ChronoField.MONTH_OF_YEAR,
+            ChronoField.DAY_OF_MONTH,
+            ChronoField.HOUR_OF_DAY,
+            ChronoField.MINUTE_OF_HOUR,
+            ChronoField.SECOND_OF_MINUTE);
 
     /**
      * Common Private Constructor
@@ -146,10 +148,10 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
         ///configure dialog controls
         amountSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 1000));
 
-        unitComboBox.setButtonCell(new ChronoUnitListCell());
-        unitComboBox.setCellFactory(comboBox -> new ChronoUnitListCell());
+        unitComboBox.setButtonCell(new ChronoFieldListCell());
+        unitComboBox.setCellFactory(comboBox -> new ChronoFieldListCell());
         unitComboBox.getItems().setAll(SCROLL_BY_UNITS);
-        unitComboBox.getSelectionModel().select(ChronoUnit.MINUTES);
+        unitComboBox.getSelectionModel().select(ChronoField.MINUTE_OF_HOUR);
 
         typeColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getEventType()));
         typeColumn.setCellFactory(param -> new TypeTableCell<>());
@@ -219,10 +221,11 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
      * @return The EventInTimeRange that is the "result" of this dialog.
      */
     private ViewInTimelineRequestedEvent makeEventInTimeRange(SingleEvent selectedEvent) {
-        Duration selectedDuration = unitComboBox.getSelectionModel().getSelectedItem().getDuration().multipliedBy(amountSpinner.getValue());
+        Duration selectedDuration = unitComboBox.getSelectionModel().getSelectedItem().getBaseUnit().getDuration().multipliedBy(amountSpinner.getValue());
         Interval range = IntervalUtils.getIntervalAround(Instant.ofEpochMilli(selectedEvent.getStartMillis()), selectedDuration);
         return new ViewInTimelineRequestedEvent(Collections.singleton(selectedEvent.getEventID()), range);
     }
+
 
     /**
      * ListCell that shows a ChronoUnit

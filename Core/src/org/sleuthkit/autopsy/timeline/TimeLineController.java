@@ -452,15 +452,15 @@ public class TimeLineController {
                             SwingUtilities.invokeLater(TimeLineController.this::showWindow);
                             TimeLineController.this.showFullRange();
                         } else {
-
+                            //prompt user to pick specific event and time range
                             ShowInTimelineDialog d = (file == null)
                                     ? new ShowInTimelineDialog(TimeLineController.this, artifact)
                                     : new ShowInTimelineDialog(TimeLineController.this, file);
-
                             Optional<ViewInTimelineRequestedEvent> result = d.showAndWait();
+
                             result.ifPresent(viewInTimelineRequestedEvent -> {
                                 SwingUtilities.invokeLater(TimeLineController.this::showWindow);
-                                showEvents(viewInTimelineRequestedEvent);
+                                showInListView(viewInTimelineRequestedEvent); //show requested event in list view
                             });
                         }
                         break;
@@ -484,17 +484,33 @@ public class TimeLineController {
      * done.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    public void rebuildRepo() {
+        rebuildRepo(null, null);
+    }
 
-    public void rebuildRepo(AbstractFile file, BlackboardArtifact artifact) {
+    /**
+     * Rebuild the entire repo in the background, and show the timeline when
+     * done.
+     *
+     * @param file     The AbstractFile from which to choose an event to show in
+     *                 the List View.
+     * @param artifact The BlackboardArtifact to show in the List View.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private void rebuildRepo(AbstractFile file, BlackboardArtifact artifact) {
         rebuildRepoHelper(eventsRepository::rebuildRepository, true, file, artifact);
     }
 
     /**
      * Drop the tags table and rebuild it in the background, and show the
      * timeline when done.
+     *
+     * @param file     The AbstractFile from which to choose an event to show in
+     *                 the List View.
+     * @param artifact The BlackboardArtifact to show in the List View.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    void rebuildTagsTable(AbstractFile file, BlackboardArtifact artifact) {
+    private void rebuildTagsTable(AbstractFile file, BlackboardArtifact artifact) {
         rebuildRepoHelper(eventsRepository::rebuildTags, false, file, artifact);
     }
 
@@ -507,8 +523,15 @@ public class TimeLineController {
         }
     }
 
+    /**
+     * Show the events and the amount of time indicated in the given
+     * ViewInTimelineRequestedEvent in the List View.
+     *
+     * @param requestEvent Contains the ID of the requested events and the
+     *                     timerange to show.
+     */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private void showEvents(ViewInTimelineRequestedEvent requestEvent) {
+    private void showInListView(ViewInTimelineRequestedEvent requestEvent) {
         synchronized (filteredEvents) {
             setViewMode(ViewMode.LIST);
             pushTimeRange(requestEvent.getInterval());
@@ -537,9 +560,13 @@ public class TimeLineController {
     /**
      * Add the case and ingest listeners, prompt for rebuilding the database if
      * necessary, and show the timeline window.
+     *
+     * @param file     The AbstractFile from which to choose an event to show in
+     *                 the List View.
+     * @param artifact The BlackboardArtifact to show in the List View.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    void openTimeLine(AbstractFile file, BlackboardArtifact artifact) {
+    void showTimeLine(AbstractFile file, BlackboardArtifact artifact) {
         // listen for case changes (specifically images being added, and case changes).
         if (Case.isCaseOpen() && !listeningToAutopsy) {
             IngestManager.getInstance().addIngestModuleEventListener(ingestModuleListener);
@@ -555,7 +582,11 @@ public class TimeLineController {
      * Prompt the user to confirm rebuilding the db. Checks if a database
      * rebuild is necessary and includes the reasons in the prompt. If the user
      * confirms, rebuilds the database. Shows the timeline window when the
-     * rebuild is done, or immediately if the rebuild is not confirmed. F
+     * rebuild is done, or immediately if the rebuild is not confirmed.
+     *
+     * @param file     The AbstractFile from which to choose an event to show in
+     *                 the List View.
+     * @param artifact The BlackboardArtifact to show in the List View.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void promptForRebuild(AbstractFile file, BlackboardArtifact artifact) {

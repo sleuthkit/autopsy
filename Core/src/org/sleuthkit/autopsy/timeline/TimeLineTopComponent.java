@@ -124,7 +124,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
                                 LOGGER.log(Level.SEVERE, "Selecting the event node was vetoed.", ex); // NON-NLS
                             }
                             //if there is only one event selected push it into content viewer.
-                            if (childArray.length == 1) {
+                            if (selectedEventIDs.size() == 1) {
                                 contentViewerPanel.setNode(childArray[0]);
                             } else {
                                 contentViewerPanel.setNode(null);

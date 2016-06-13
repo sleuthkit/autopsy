@@ -223,7 +223,6 @@ public class EventsRepository {
      * @return A List of event IDs for the events that are derived from the
      *         given file.
      */
-
     public List<Long> getEventIDsForFile(AbstractFile file, boolean includedDerivedArtifacts) {
         return eventDB.getEventIDsForFile(file, includedDerivedArtifacts);
     }

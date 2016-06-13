@@ -79,7 +79,7 @@ public class ListViewPane extends AbstractTimeLineView {
 
     @Override
     protected ImmutableList<Node> getTimeNavigationControls() {
-        return ImmutableList.copyOf(listTimeline.getNavControls());
+        return ImmutableList.copyOf(listTimeline.getTimeNavigationControls());
     }
 
     @Override
