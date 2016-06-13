@@ -20,8 +20,10 @@ package org.sleuthkit.autopsy.timeline.datamodel.eventtype;
 
 import java.text.MessageFormat;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -34,7 +36,19 @@ import org.sleuthkit.datamodel.TskCoreException;
 public interface ArtifactEventType extends EventType {
 
     public static final Logger LOGGER = Logger.getLogger(ArtifactEventType.class.getName());
-    static final EmptyExtractor EMPTY_EXTRACTOR = new EmptyExtractor();
+
+    /**
+     * Get the Set of all the EventTypes that are derived from artifacts.
+     *
+     * @return The Set of all the EventTypes that are derived from artifacts.
+     *
+     */
+    public static Set<ArtifactEventType> getAllArtifactEventTypes() {
+        return allTypes.stream()
+                .filter((EventType t) -> t instanceof ArtifactEventType)
+                .map(ArtifactEventType.class::cast)
+                .collect(Collectors.toSet());
+    }
 
     /**
      * @return the Artifact type this event type is derived from
@@ -42,6 +56,16 @@ public interface ArtifactEventType extends EventType {
     public BlackboardArtifact.Type getArtifactType();
 
     public BlackboardAttribute.Type getDateTimeAttrubuteType();
+
+    /**
+     * Get the ID of the the artifact type that this EventType is derived from.
+     *
+     * @return the ID of the the artifact type that this EventType is derived
+     *         from.
+     */
+    public default int getArtifactTypeID() {
+        return getArtifactType().getTypeID();
+    }
 
     /**
      * given an artifact, pull out the time stamp, and compose the descriptions.

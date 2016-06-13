@@ -207,6 +207,39 @@ public class EventsRepository {
         return eventDB.countAllEvents();
     }
 
+   
+    /**
+     * Get a List of event IDs for the events that are derived from the given
+     * file.
+     *
+     * @param file                    The AbstractFile to get derived event IDs
+     *                                for.
+     * @param includeDerivedArtifacts If true, also get event IDs for events
+     *                                derived from artifacts derived form this
+     *                                file. If false, only gets events derived
+     *                                directly from this file (file system
+     *                                timestamps).
+     *
+     * @return A List of event IDs for the events that are derived from the
+     *         given file.
+     */
+    public List<Long> getEventIDsForFile(AbstractFile file, boolean includedDerivedArtifacts) {
+        return eventDB.getEventIDsForFile(file, includedDerivedArtifacts);
+    }
+
+    /**
+     * Get a List of event IDs for the events that are derived from the given
+     * artifact.
+     *
+     * @param artifact The BlackboardArtifact to get derived event IDs for.
+     *
+     * @return A List of event IDs for the events that are derived from the
+     *         given artifact.
+     */
+    public List<Long> getEventIDsForArtifact(BlackboardArtifact artifact) {
+        return eventDB.getEventIDsForArtifact(artifact);
+    }
+
     private void invalidateCaches() {
         minCache.invalidateAll();
         maxCache.invalidateAll();
@@ -597,10 +630,10 @@ public class EventsRepository {
             timeMap.put(FileSystemTypes.FILE_MODIFIED, f.getMtime());
 
             /*
-             * if there are no legitimate ( greater than zero ) time stamps ( eg,
-             * logical/local files) skip the rest of the event generation: this
-             * should result in droping logical files, since they do not have
-             * legitimate time stamps.
+             * if there are no legitimate ( greater than zero ) time stamps (
+             * eg, logical/local files) skip the rest of the event generation:
+             * this should result in droping logical files, since they do not
+             * have legitimate time stamps.
              */
             if (Collections.max(timeMap.values()) > 0) {
                 final String uniquePath = f.getUniquePath();

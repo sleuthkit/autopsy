@@ -30,7 +30,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.SortedSet;
@@ -40,14 +39,12 @@ import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
-import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.IntegerBinding;
 import javafx.beans.binding.StringBinding;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
+import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -55,7 +52,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.SelectionMode;
@@ -73,7 +69,6 @@ import javafx.scene.layout.VBox;
 import javafx.util.Callback;
 import javax.swing.Action;
 import javax.swing.JMenuItem;
-import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.control.Notifications;
 import org.controlsfx.control.action.ActionUtils;
 import org.openide.awt.Actions;
@@ -82,6 +77,7 @@ import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.timeline.ChronoFieldListCell;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.CombinedEvent;
@@ -111,9 +107,10 @@ class ListTimeline extends BorderPane {
     private static final Image LAST = new Image("/org/sleuthkit/autopsy/timeline/images/resultset_last.png");  //NON-NLS
 
     /**
-     * call-back used to wrap the CombinedEvent in a ObservableValue
+     * call-back used to wrap a CombinedEvent in a ObservableValue
      */
     private static final Callback<TableColumn.CellDataFeatures<CombinedEvent, CombinedEvent>, ObservableValue<CombinedEvent>> CELL_VALUE_FACTORY = param -> new SimpleObjectProperty<>(param.getValue());
+
     private static final List<ChronoField> SCROLL_BY_UNITS = Arrays.asList(
             ChronoField.YEAR,
             ChronoField.MONTH_OF_YEAR,
@@ -160,10 +157,9 @@ class ListTimeline extends BorderPane {
     private TableColumn<CombinedEvent, CombinedEvent> hashHitColumn;
 
     /**
-     * Observable list used to track selected events.
+     * Since TableView does not expose what cells/items are visible, we track
+     * them in this set. It is sorted by index in the TableView's model.
      */
-    private final ObservableList<Long> selectedEventIDs = FXCollections.observableArrayList();
-
     private final ConcurrentSkipListSet<CombinedEvent> visibleEvents;
 
     private final TimeLineController controller;
@@ -171,12 +167,26 @@ class ListTimeline extends BorderPane {
     private final TagsManager tagsManager;
 
     /**
+     * Listener attached to the table's selection model that pushes that
+     * selection to the controller. Maps from Combined event in table to EventID
+     * in controller via CombinedEvent.getRepresentativeEventID.
+     */
+    private final ListChangeListener<CombinedEvent> selectedEventListener = new ListChangeListener<CombinedEvent>() {
+        @Override
+        public void onChanged(ListChangeListener.Change<? extends CombinedEvent> c) {
+            controller.selectEventIDs(table.getSelectionModel().getSelectedItems().stream()
+                    .filter(Objects::nonNull)
+                    .map(CombinedEvent::getRepresentativeEventID)
+                    .collect(Collectors.toSet()));
+        }
+    };
+
+    /**
      * Constructor
      *
      * @param controller The controller for this timeline
      */
     ListTimeline(TimeLineController controller) {
-
         this.controller = controller;
         sleuthkitCase = controller.getAutopsyCase().getSleuthkitCase();
         tagsManager = controller.getAutopsyCase().getServices().getTagsManager();
@@ -197,17 +207,17 @@ class ListTimeline extends BorderPane {
         assert typeColumn != null : "fx:id=\"typeColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
         assert knownColumn != null : "fx:id=\"knownColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
 
+        //configure scroll controls
         scrollInrementComboBox.setButtonCell(new ChronoFieldListCell());
         scrollInrementComboBox.setCellFactory(comboBox -> new ChronoFieldListCell());
         scrollInrementComboBox.getItems().setAll(SCROLL_BY_UNITS);
         scrollInrementComboBox.getSelectionModel().select(ChronoField.YEAR);
-
         ActionUtils.configureButton(new ScrollToFirst(), firstButton);
         ActionUtils.configureButton(new ScrollToPrevious(), previousButton);
         ActionUtils.configureButton(new ScrollToNext(), nextButton);
         ActionUtils.configureButton(new ScrollToLast(), lastButton);
 
-        //override default row with one that provides context menus
+        //override default table row with one that provides context menus
         table.setRowFactory(tableView -> new EventRow());
 
         //remove idColumn (can be restored for debugging).  
@@ -247,14 +257,11 @@ class ListTimeline extends BorderPane {
             }
         });
 
+        // use listener to keep controller selection in sync with table selection.
+        table.getSelectionModel().getSelectedItems().addListener(selectedEventListener);
         table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        table.getSelectionModel().getSelectedItems().addListener((Observable observable) -> {
-            //keep the selectedEventsIDs in sync with the table's selection model, via getRepresentitiveEventID(). 
-            selectedEventIDs.setAll(table.getSelectionModel().getSelectedItems().stream()
-                    .filter(Objects::nonNull)
-                    .map(CombinedEvent::getRepresentativeEventID)
-                    .collect(Collectors.toSet()));
-        });
+        selectEvents(controller.getSelectedEventIDs()); //grab initial selection
+
     }
 
     /**
@@ -276,48 +283,81 @@ class ListTimeline extends BorderPane {
     }
 
     /**
-     * Get an ObservableList of IDs of events that are selected in this table.
-     *
-     * @return An ObservableList of IDs of events that are selected in this
-     *         table.
-     */
-    ObservableList<Long> getSelectedEventIDs() {
-        return selectedEventIDs;
-    }
-
-    /**
-     * Get an ObservableList of combined events that are selected in this table.
-     *
-     * @return An ObservableList of combined events that are selected in this
-     *         table.
-     */
-    ObservableList<CombinedEvent> getSelectedEvents() {
-        return table.getSelectionModel().getSelectedItems();
-    }
-
-    /**
      * Set the combined events that are selected in this view.
      *
-     * @param selectedEvents The events that should be selected.
+     * @param selectedEventIDs The events that should be selected.
      */
-    void selectEvents(Collection<CombinedEvent> selectedEvents) {
-        CombinedEvent firstSelected = selectedEvents.stream().min(Comparator.comparing(CombinedEvent::getStartMillis)).orElse(null);
-        table.getSelectionModel().clearSelection();
-        table.scrollTo(firstSelected);
-        selectedEvents.forEach(table.getSelectionModel()::select);
-        table.requestFocus();
+    void selectEvents(Collection<Long> selectedEventIDs) {
+        if (selectedEventIDs.isEmpty()) {
+            //this is the final selection, so we don't need to mess with the listener
+            table.getSelectionModel().clearSelection();
+        } else {
+            /*
+             * Changes in the table selection are propogated to the controller
+             * by a listener. There is no API on TableView's selection model to
+             * clear the selection and select multiple rows as one "action".
+             * Therefore we clear the selction and then make the new selection,
+             * but we don't want this intermediate state of no selection to be
+             * pushed to the controller as it interferes with maintaining the
+             * right selection. To avoid notifying the controller, we wemove the
+             * listener, clear the selection, then re-attach it.
+             */
+            table.getSelectionModel().getSelectedItems().removeListener(selectedEventListener);
+
+            table.getSelectionModel().clearSelection();
+
+            table.getSelectionModel().getSelectedItems().addListener(selectedEventListener);
+
+            //find the indices of the CombinedEvents that will be selected
+            List<Integer> selectedIndices = table.getItems().stream()
+                    .filter(combinedEvent -> combinedEvent.getEventIDs().stream().anyMatch(selectedEventIDs::contains))
+                    .map(table.getItems()::indexOf)
+                    .collect(Collectors.toList());
+
+            //select indices and scroll to the first one
+            if (selectedIndices.isEmpty() == false) {
+                int[] indicesArray = selectedIndices.stream().mapToInt(Integer::valueOf).toArray();
+                Integer firstSelectedIndex = indicesArray[0];
+                table.getSelectionModel().selectIndices(firstSelectedIndex, indicesArray);
+                scrollTo(firstSelectedIndex);
+                table.requestFocus(); //grab focus so selection is clearer to user
+            }
+        }
     }
 
-    List<Node> getNavControls() {
+    /**
+     * Get the time navigation controls that this ListTimeline's parent
+     * ListViewPane will provide to its host ViewFrame.
+     *
+     * @return A List of time navigation controls in the from of JavaFX scene
+     *         graph Nodes.
+     */
+    List<Node> getTimeNavigationControls() {
         return Collections.singletonList(navControls);
     }
 
+    /**
+     * Scroll the table to the given index (if it is not already visible) and
+     * focus it.
+     *
+     * @param index The index of the item that should be scrolled in to view and
+     *              focused.
+     */
     private void scrollToAndFocus(Integer index) {
         table.requestFocus();
+        scrollTo(index);
+        table.getFocusModel().focus(index);
+    }
+
+    /**
+     * Scroll the table to the given index (if it is not already visible).
+     *
+     * @param index The index of the item that should be scrolled in to view.
+     */
+    private void scrollTo(Integer index) {
         if (visibleEvents.contains(table.getItems().get(index)) == false) {
             table.scrollTo(index);
         }
-        table.getFocusModel().focus(index);
     }
 
     /**
@@ -483,7 +523,7 @@ class ListTimeline extends BorderPane {
                 setTooltip(null);
             } else {
                 /*
-                 * if the cell is not empty and the event's file is a hash hit,
+                 * If the cell is not empty and the event's file is a hash hit,
                  * show the hash hit icon, and show a list of hash set names in
                  * the tooltip
                  */
@@ -646,21 +686,6 @@ class ListTimeline extends BorderPane {
                     }
                 });
 
-            }
-        }
-    }
-
-    private class ChronoFieldListCell extends ListCell<ChronoField> {
-
-        @Override
-        protected void updateItem(ChronoField item, boolean empty) {
-            super.updateItem(item, empty);
-
-            if (empty || item == null) {
-                setText(null);
-            } else {
-                String displayName = item.getDisplayName(Locale.getDefault());
-                setText(String.join(" ", StringUtils.splitByCharacterTypeCamelCase(displayName)));
             }
         }
     }
