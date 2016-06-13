@@ -216,10 +216,10 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
      *
      * @param selectedEvent The SingleEvent to include in the EventInTimeRange
      *
-     * @return The EventInTimeRange that is the "result" of this dialof.
+     * @return The EventInTimeRange that is the "result" of this dialog.
      */
     private ViewInTimelineRequestedEvent makeEventInTimeRange(SingleEvent selectedEvent) {
-        Duration selectedDuration = Duration.of(amountSpinner.getValue(), unitComboBox.getSelectionModel().getSelectedItem());
+        Duration selectedDuration = unitComboBox.getSelectionModel().getSelectedItem().getDuration().multipliedBy(amountSpinner.getValue());
         Interval range = IntervalUtils.getIntervalAround(Instant.ofEpochMilli(selectedEvent.getStartMillis()), selectedDuration);
         return new ViewInTimelineRequestedEvent(Collections.singleton(selectedEvent.getEventID()), range);
     }

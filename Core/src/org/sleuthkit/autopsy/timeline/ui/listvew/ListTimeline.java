@@ -164,6 +164,7 @@ class ListTimeline extends BorderPane {
     private final TimeLineController controller;
     private final SleuthkitCase sleuthkitCase;
     private final TagsManager tagsManager;
+    private ListChangeListener<CombinedEvent> name;
 
     /**
      * Constructor
@@ -241,17 +242,18 @@ class ListTimeline extends BorderPane {
                 return Bundle.ListTimeline_eventCountLabel_text(table.getItems().size());
             }
         });
+        name = (ListChangeListener.Change<? extends CombinedEvent> c) -> {
+            controller.selectEventIDs(table.getSelectionModel().getSelectedItems().stream()
+                    .filter(Objects::nonNull)
+                    .map(CombinedEvent::getRepresentativeEventID)
+                    .collect(Collectors.toSet()));
+        };
 
         /*
          * push list view selection to controller, mapping from CombinedEvent to
          * eventID via getRepresentitiveEventID().
          */
-        table.getSelectionModel().getSelectedItems().addListener((ListChangeListener.Change<? extends CombinedEvent> c) -> {
-            controller.selectEventIDs(table.getSelectionModel().getSelectedItems().stream()
-                    .filter(Objects::nonNull)
-                    .map(CombinedEvent::getRepresentativeEventID)
-                    .collect(Collectors.toSet()));
-        });
+        table.getSelectionModel().getSelectedItems().addListener(name);
         table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
         selectEvents(controller.getSelectedEventIDs());
@@ -292,15 +294,21 @@ class ListTimeline extends BorderPane {
      * @param selectedEventIDs The events that should be selected.
      */
     void selectEvents(Collection<Long> selectedEventIDs) {
-        table.getSelectionModel().clearSelection();
+        if (selectedEventIDs.isEmpty()) {
+            table.getSelectionModel().clearSelection();
+        } else {
+            table.getSelectionModel().getSelectedItems().removeListener(name);
 
-        if (selectedEventIDs.isEmpty() == false) {
+            table.getSelectionModel().clearSelection();
+            
+            table.getSelectionModel().getSelectedItems().addListener(name);
+            
             List<CombinedEvent> selectedCombinedEvents = table.getItems().stream()
                     .filter(combinedEvent -> combinedEvent.getEventIDs().stream().anyMatch(selectedEventIDs::contains))
                     .sorted(Comparator.comparing(CombinedEvent::getStartMillis))
                     .collect(Collectors.toList());
 
-            if (selectedCombinedEvents.size() > 0) {
+            if (selectedCombinedEvents.isEmpty() == false) {
                 CombinedEvent firstSelected = selectedCombinedEvents.get(0);
                 table.scrollTo(firstSelected);
             }
@@ -309,7 +317,7 @@ class ListTimeline extends BorderPane {
                     .filter(index -> index >= 0)
                     .collect(Collectors.toSet());
 
-            if (selectedIndices.size() > 0) {
+            if (selectedIndices.isEmpty() == false) {
                 Integer[] indices = selectedIndices.toArray(new Integer[selectedIndices.size()]);
                 table.getSelectionModel().selectIndices(indices[0], ArrayUtils.toPrimitive(indices));
                 table.requestFocus();

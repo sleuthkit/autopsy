@@ -510,9 +510,9 @@ public class TimeLineController {
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void showEvents(ViewInTimelineRequestedEvent requestEvent) {
         synchronized (filteredEvents) {
+            setViewMode(ViewMode.LIST);
             pushTimeRange(requestEvent.getInterval());
             selectEventIDs(requestEvent.getEventIDs());
-            setViewMode(ViewMode.LIST);
             eventbus.post(requestEvent);
         }
     }
