@@ -31,7 +31,7 @@ import org.openide.util.Lookup;
  */
 @OptionsPanelController.TopLevelRegistration(
         categoryName = "#OptionsCategory_Name_Options",
-        iconBase = "org/sleuthkit/autopsy/imagegallery/images/polaroid_32_silhouette.png",
+        iconBase = "org/sleuthkit/autopsy/imagegallery/images/btn_icon_image_gallery_32.png",
         keywords = "#OptionsCategory_Keywords_Options",
         keywordsCategory = "Options",
         position = 10

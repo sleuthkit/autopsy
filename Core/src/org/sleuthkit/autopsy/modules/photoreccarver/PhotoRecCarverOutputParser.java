@@ -32,8 +32,8 @@ import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.CarvingResult;
 import org.sleuthkit.datamodel.LayoutFile;
-import org.sleuthkit.datamodel.CarvedFileContainer;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskFileRange;
 import org.w3c.dom.Document;
@@ -70,7 +70,7 @@ class PhotoRecCarverOutputParser {
      * @throws FileNotFoundException
      * @throws IOException
      */
-    List<LayoutFile> parse(File xmlInputFile, long id, AbstractFile af) throws FileNotFoundException, IOException {
+    List<LayoutFile> parse(File xmlInputFile, AbstractFile af) throws FileNotFoundException, IOException {
         try {
             final Document doc = XMLUtil.loadDoc(PhotoRecCarverOutputParser.class, xmlInputFile.toString());
             if (doc == null) {
@@ -99,8 +99,7 @@ class PhotoRecCarverOutputParser {
             FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
 
             // create and initialize the list to put into the database
-            List<CarvedFileContainer> carvedFileContainer = new ArrayList<>();
-
+            List<CarvingResult.CarvedFile> carvedFiles = new ArrayList<>();
             for (int fileIndex = 0; fileIndex < numberOfFiles; ++fileIndex) {
                 entry = (Element) fileObjects.item(fileIndex);
                 fileNames = entry.getElementsByTagName("filename"); //NON-NLS
@@ -133,7 +132,7 @@ class PhotoRecCarverOutputParser {
                     if (fileByteEnd > af.getSize()) {
                         long overshoot = fileByteEnd - af.getSize();
                         if (fileSize > overshoot) {
-                            fileSize = fileSize - overshoot;
+                            fileSize -= overshoot;
                         } else {
                             // This better never happen... Data for this file is corrupted. Skip it.
                             continue;
@@ -144,10 +143,10 @@ class PhotoRecCarverOutputParser {
                 }
 
                 if (!tskRanges.isEmpty()) {
-                    carvedFileContainer.add(new CarvedFileContainer(fileName, fileSize, id, tskRanges));
+                    carvedFiles.add(new CarvingResult.CarvedFile(fileName, fileSize, tskRanges));
                 }
             }
-            return fileManager.addCarvedFiles(carvedFileContainer);
+            return fileManager.addCarvedFiles(new CarvingResult(af, carvedFiles));
         } catch (NumberFormatException | TskCoreException ex) {
             logger.log(Level.SEVERE, "Error parsing PhotoRec output and inserting it into the database: {0}", ex); //NON-NLS
         }
