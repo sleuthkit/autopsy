@@ -100,9 +100,6 @@ public abstract class AbstractTimeLineView extends BorderPane {
     public void handleRefreshRequested(RefreshRequestedEvent event) {
         refresh();
     }
- 
-    
-   
 
     /**
      * Does the view represent an out-of-date state of the DB. It might if, for
