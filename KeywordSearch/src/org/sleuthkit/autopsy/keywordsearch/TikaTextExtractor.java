@@ -35,17 +35,17 @@ import java.util.concurrent.TimeUnit;
 import org.sleuthkit.autopsy.coreutils.TextUtil;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
-
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.apache.tika.Tika;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
  * Extractor of text from TIKA supported AbstractFile content. Extracted text is
@@ -66,14 +66,12 @@ class TikaTextExtractor implements TextExtractor {
     private static final int SINGLE_READ_CHARS = 1024;
     private static final int EXTRA_CHARS = 128; //for whitespace
     private final char[] textChunkBuf = new char[MAX_EXTR_TEXT_CHARS];
-    private final KeywordSearchIngestModule module;
     private AbstractFile sourceFile; //currently processed file
     private int numChunks = 0;
     private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
     private final List<String> TIKA_SUPPORTED_TYPES = new ArrayList<>();
 
-    TikaTextExtractor(KeywordSearchIngestModule module) {
-        this.module = module;
+    TikaTextExtractor() {
         ingester = Server.getIngester();
 
         Set<MediaType> mediaTypes = new Tika().getParser().getSupportedTypes(new ParseContext());
@@ -113,7 +111,7 @@ class TikaTextExtractor implements TextExtractor {
     }
 
     @Override
-    public boolean index(AbstractFile sourceFile) throws Ingester.IngesterException {
+    public boolean index(AbstractFile sourceFile, IngestJobContext context) throws Ingester.IngesterException {
         this.sourceFile = sourceFile;
         numChunks = 0; //unknown until indexing is done
 
@@ -160,6 +158,10 @@ class TikaTextExtractor implements TextExtractor {
             boolean eof = false;
             //we read max 1024 chars at time, this seems to max what this Reader would return
             while (!eof) {
+                if (context.fileIngestIsCancelled()) {
+                    ingester.ingest(this);
+                    return true;
+                }
                 readSize = reader.read(textChunkBuf, 0, SINGLE_READ_CHARS);
                 if (readSize == -1) {
                     eof = true;
