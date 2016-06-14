@@ -104,17 +104,16 @@ public class STIXReportModule implements GeneralReportModule {
         progressPanel.start();
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.readSTIX"));
         reportPath = baseReportDir + getRelativeFilePath();
-
+        File reportFile = new File(reportPath);
         // Check if the user wants to display all output or just hits
         reportAllResults = configPanel.getShowAllResults();
 
-        // Set up the output file
         // Keep track of whether any errors occur during processing
         boolean hadErrors = false;
 
         // Process the file/directory name entry
         String stixFileName = configPanel.getStixFile();
-        File reportFile = new File(reportPath);
+
         if (stixFileName == null) {
             logger.log(Level.SEVERE, "STIXReportModuleConfigPanel.stixFile not initialized "); //NON-NLS
             MessageNotifyUtil.Message.error(
@@ -184,15 +183,6 @@ public class STIXReportModule implements GeneralReportModule {
                 idToResult = new HashMap<String, ObservableResult>();
             }
 
-            // Close the output file
-            if (output != null) {
-                try {
-                    output.close();
-                } catch (IOException ex) {
-                    logger.log(Level.SEVERE, String.format("Error closing STIX report file %s", reportPath), ex); //NON-NLS
-                }
-            }
-
             // Set the progress bar to done. If any errors occurred along the way, modify
             // the "complete" message to indicate this.
             Case.getCurrentCase().addReport(reportPath, Bundle.STIXReportModule_srcModuleName_text(), "");
@@ -204,11 +194,10 @@ public class STIXReportModule implements GeneralReportModule {
                 progressPanel.complete(ReportStatus.COMPLETE);
             }
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, String.format("Unable to open STIX report file %s", reportPath), ex); //NON-NLS
+            logger.log(Level.SEVERE, "Unable to complete STIX report.", ex); //NON-NLS
             MessageNotifyUtil.Notify.show("STIXReportModule", //NON-NLS
                     NbBundle.getMessage(this.getClass(),
-                            "STIXReportModule.notifyMsg.unableToOpenReportFile",
-                            reportPath),
+                            "STIXReportModule.notifyMsg.unableToOpenReportFile"),
                     MessageNotifyUtil.MessageType.ERROR);
             progressPanel.complete(ReportStatus.ERROR);
             progressPanel.updateStatusLabel(
