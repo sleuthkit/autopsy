@@ -79,6 +79,9 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
     @Override
     public Action[] getActions(boolean popup) {
         List<Action> actionsList = new ArrayList<>();
+        for (Action a : super.getActions(true)) {
+            actionsList.add(a);
+        }
         if (!this.getDirectoryBrowseMode()) {
             actionsList.add(new ViewContextAction(NbBundle.getMessage(FileNode.class, "FileNode.viewFileInDir.text"), this));
             actionsList.add(null); // creates a menu separator

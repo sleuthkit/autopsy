@@ -21,10 +21,9 @@ package org.sleuthkit.autopsy.datamodel;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.Action;
-
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
+import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
@@ -72,6 +71,9 @@ public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
     @Override
     public Action[] getActions(boolean popup) {
         List<Action> actions = new ArrayList<>();
+        for (Action a : super.getActions(true)) {
+            actions.add(a);
+        }
         if (!getDirectoryBrowseMode()) {
             actions.add(new ViewContextAction(
                     NbBundle.getMessage(this.getClass(), "DirectoryNode.getActions.viewFileInDir.text"), this));
