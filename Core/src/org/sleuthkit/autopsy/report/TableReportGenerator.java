@@ -59,7 +59,7 @@ class TableReportGenerator {
     private final TableReportModule tableReport;
     private final Map<Integer, List<Column>> columnHeaderMap;
     private static final Logger logger = Logger.getLogger(TableReportGenerator.class.getName());
-    
+
     private final List<String> errorList;
 
     TableReportGenerator(Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections, ReportProgressPanel progressPanel, TableReportModule tableReport) {
@@ -899,23 +899,29 @@ class TableReportGenerator {
 
             } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() == getArtifact().getArtifactTypeID()) {
                 String[] attributeDataArray = new String[3];
-                // Array is used so that the order of the attributes is 
-                // maintained.
+                // Array is used so that order of the attributes is maintained.
                 for (BlackboardAttribute attr : attributes) {
                     if (attr.getAttributeType().equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME))) {
                         attributeDataArray[0] = attr.getDisplayString();
                     } else if (attr.getAttributeType().equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY))) {
                         attributeDataArray[1] = attr.getDisplayString();
-                    } else if (attr.getAttributeType().equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH))) {
-                        String pathToShow = attr.getDisplayString();
-                        if (pathToShow.isEmpty()) {
-                            pathToShow = getFileUniquePath(content);
-                        }
-                        attributeDataArray[2] = pathToShow;
                     }
                 }
+
+                attributeDataArray[2] = content.getUniquePath();
                 orderedRowData.addAll(Arrays.asList(attributeDataArray));
-                orderedRowData.add(makeCommaSeparatedList(getTags()));
+
+                HashSet<String> allTags = getTags();
+                try {
+                    List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(content);
+                    for (ContentTag ct : contentTags) {
+                        allTags.add(ct.getName().getDisplayName());
+                    }
+                } catch (TskCoreException ex) {
+                    errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedGetContentTags"));
+                    logger.log(Level.SEVERE, "Failed to get content tags", ex); //NON-NLS
+                }
+                orderedRowData.add(makeCommaSeparatedList(allTags));
 
             } else if (columnHeaderMap.containsKey(this.artifact.getArtifactTypeID())) {
 
@@ -1494,7 +1500,7 @@ class TableReportGenerator {
 
         return columns;
     }
-    
+
     /**
      * Given a tsk_file's obj_id, return the unique path of that file.
      *
@@ -1516,7 +1522,7 @@ class TableReportGenerator {
         return "";
 
     }
-    
+
     /**
      * Get any tags associated with an artifact
      *
