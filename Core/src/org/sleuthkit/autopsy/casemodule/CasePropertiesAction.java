@@ -20,8 +20,6 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Dimension;
 import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.logging.Level;
 import javax.swing.Action;
 import javax.swing.JDialog;
@@ -64,16 +62,6 @@ final class CasePropertiesAction extends CallableSystemAction {
 
             // create the case properties form
             CaseInformationPanel caseInformationPanel = new CaseInformationPanel();
-            frame.setPreferredSize(caseInformationPanel.getSize());
-
-            // add the command to close the window to the button on the Case Properties form / panel
-            caseInformationPanel.setOKButtonActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    popUpWindow.dispose();
-                }
-            });
 
             // add the case properties form / panel to the popup window
             popUpWindow.add(caseInformationPanel);

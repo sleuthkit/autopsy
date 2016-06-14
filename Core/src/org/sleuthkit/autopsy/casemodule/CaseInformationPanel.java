@@ -5,7 +5,6 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.awt.event.ActionListener;
 import java.util.Map;
 import org.openide.util.NbBundle.Messages;
 
@@ -33,21 +32,13 @@ public class CaseInformationPanel extends javax.swing.JPanel {
             // put the image paths information into hashmap
             Map<Long, String> imgPaths = Case.getImagePaths(currentCase.getSleuthkitCase());
             CasePropertiesForm cpf = new CasePropertiesForm(currentCase, crDate, caseDir, imgPaths);
+            cpf.setSize(cpf.getPreferredSize());
             this.tabbedPane.addTab(Bundle.CaseInformationPanel_caseDetails_header(), cpf);
-            this.setSize(cpf.getSize());
         } catch (CaseMetadata.CaseMetadataException ex) {
             //TOLOG
         }
     }
     
-    /**
-     * Sets the listener for the OK button
-     *
-     * @param e The action listener
-     */
-    public void setOKButtonActionListener(ActionListener e) {
-        okButton.addActionListener(e);
-    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -60,31 +51,20 @@ public class CaseInformationPanel extends javax.swing.JPanel {
 
         jPanel1 = new javax.swing.JPanel();
         tabbedPane = new javax.swing.JTabbedPane();
-        okButton = new javax.swing.JButton();
 
-        org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(CaseInformationPanel.class, "CaseInformationPanel.okButton.text")); // NOI18N
+        tabbedPane.setPreferredSize(new java.awt.Dimension(420, 200));
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addContainerGap(350, Short.MAX_VALUE)
-                .addComponent(okButton, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
-            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 420, Short.MAX_VALUE))
+            .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addContainerGap(272, Short.MAX_VALUE)
-                .addComponent(okButton)
-                .addContainerGap())
-            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel1Layout.createSequentialGroup()
-                    .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 261, Short.MAX_VALUE)
-                    .addGap(45, 45, 45)))
+                .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 228, Short.MAX_VALUE)
+                .addGap(0, 0, 0))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -98,14 +78,13 @@ public class CaseInformationPanel extends javax.swing.JPanel {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JButton okButton;
     private javax.swing.JTabbedPane tabbedPane;
     // End of variables declaration//GEN-END:variables
 }
