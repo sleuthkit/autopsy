@@ -85,7 +85,12 @@ public class ImageNode extends AbstractContentNode<Image> {
         "ImageNode.getActions.openFileSearchByAttr.text=Open File Search by Attributes",})
     public Action[] getActions(boolean context) {
 
+        
+
         List<Action> actionsList = new ArrayList<Action>();
+        for (Action a : super.getActions(true)) {
+            actionsList.add(a);
+        }
         actionsList.addAll(ExplorerNodeActionVisitor.getActions(content));
         actionsList.add(new FileSearchAction(
                 Bundle.ImageNode_getActions_openFileSearchByAttr_text()));
