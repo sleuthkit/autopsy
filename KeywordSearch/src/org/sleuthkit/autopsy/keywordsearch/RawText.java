@@ -155,6 +155,8 @@ class RawText implements IndexedText {
             }
         } catch (SolrServerException ex) {
             logger.log(Level.SEVERE, "Couldn't get extracted content", ex); //NON-NLS
+        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+            logger.log(Level.SEVERE, "Couldn't read settings", ex); //NON-NLS
         }
         return NbBundle.getMessage(this.getClass(), "RawText.getText.error.msg");
     }
@@ -233,8 +235,9 @@ class RawText implements IndexedText {
      *
      * @throws SolrServerException if something goes wrong
      */
-    private String getContentText(int currentPage, boolean hasChunks) throws SolrServerException {
+    private String getContentText(int currentPage, boolean hasChunks) throws SolrServerException, KeywordSearchSettingsManager.KeywordSearchSettingsManagerException {
         final Server solrServer = KeywordSearch.getServer();
+        KeywordSearchSettingsManager manager = KeywordSearchSettingsManager.getInstance();
 
         if (hasChunks == false) {
             //if no chunks, it is safe to assume there is no text content
@@ -245,7 +248,7 @@ class RawText implements IndexedText {
             if (content instanceof AbstractFile) {
                 //we know it's AbstractFile, but do quick check to make sure if we index other objects in future
                 boolean isKnown = TskData.FileKnown.KNOWN.equals(((AbstractFile) content).getKnown());
-                if (isKnown && KeywordSearchSettings.getSkipKnown()) {
+                if (isKnown && manager.getSkipKnown()) {
                     msg = NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.getSolrContent.knownFileMsg", name);
                 }
             }
@@ -279,8 +282,8 @@ class RawText implements IndexedText {
         }
         return cachedString;
     }
-    
-    private String getArtifactText() throws SolrServerException{
+
+    private String getArtifactText() throws SolrServerException {
         try {
             String indexedText = KeywordSearch.getServer().getSolrContent(this.objectId, 1);
             indexedText = EscapeUtil.escapeHtml(indexedText).trim();
@@ -292,5 +295,5 @@ class RawText implements IndexedText {
             return "";
         }
     }
-    
+
 }

@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.autopsy.keywordsearch.KeywordSearchSettingsManager.KeywordSearchSettingsManagerException;
 
 /**
  * Interface for a search query. Implemented by various engines or methods of
@@ -39,11 +39,15 @@ interface KeywordSearchQuery {
      * execute query and return results without publishing them return results
      * for all matching terms
      *
-     * @throws NoOpenCoreException if query failed due to server error, this
-     *                             could be a notification to stop processing
+     * @throws NoOpenCoreException                   if query failed due to
+     *                                               server error, this could be
+     *                                               a notification to stop
+     *                                               processing
+     * @throws KeywordSearchSettingsManagerException if the settings cannot be
+     *                                               loaded
      * @return
      */
-    public QueryResults performQuery() throws NoOpenCoreException;
+    public QueryResults performQuery() throws NoOpenCoreException, KeywordSearchSettingsManagerException;
 
     /**
      * Set an optional filter to narrow down the search Adding multiple filters
