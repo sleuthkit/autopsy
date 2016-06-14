@@ -208,6 +208,13 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             tempFilePath = Paths.get(paths.getTempDirPath().toString(), file.getName());
             ContentUtils.writeToFile(file, tempFilePath.toFile());
 
+            if (this.context.fileIngestIsCancelled() == true) {
+                // if it was cancelled by the user, result is OK
+                logger.log(Level.INFO, "PhotoRec cancelled by user"); // NON-NLS
+                MessageNotifyUtil.Notify.info(PhotoRecCarverIngestModuleFactory.getModuleName(), NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.cancelledByUser"));
+                return IngestModule.ProcessResult.OK;
+            }
+
             // Create a subdirectory for this file.
             Path outputDirPath = Paths.get(paths.getOutputDirPath().toString(), file.getName());
             Files.createDirectory(outputDirPath);
