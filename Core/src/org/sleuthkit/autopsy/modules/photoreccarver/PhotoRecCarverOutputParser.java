@@ -27,10 +27,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.CarvingResult;
 import org.sleuthkit.datamodel.LayoutFile;
@@ -70,7 +73,7 @@ class PhotoRecCarverOutputParser {
      * @throws FileNotFoundException
      * @throws IOException
      */
-    List<LayoutFile> parse(File xmlInputFile, AbstractFile af) throws FileNotFoundException, IOException {
+    List<LayoutFile> parse(File xmlInputFile, AbstractFile af, IngestJobContext context) throws FileNotFoundException, IOException {
         try {
             final Document doc = XMLUtil.loadDoc(PhotoRecCarverOutputParser.class, xmlInputFile.toString());
             if (doc == null) {
@@ -101,6 +104,12 @@ class PhotoRecCarverOutputParser {
             // create and initialize the list to put into the database
             List<CarvingResult.CarvedFile> carvedFiles = new ArrayList<>();
             for (int fileIndex = 0; fileIndex < numberOfFiles; ++fileIndex) {
+                if (context.fileIngestIsCancelled() == true) {
+                    // if it was cancelled by the user, result is OK
+                    logger.log(Level.INFO, "PhotoRec cancelled by user"); // NON-NLS
+                    MessageNotifyUtil.Notify.info(PhotoRecCarverIngestModuleFactory.getModuleName(), NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.cancelledByUser"));
+                    break;
+                }
                 entry = (Element) fileObjects.item(fileIndex);
                 fileNames = entry.getElementsByTagName("filename"); //NON-NLS
                 fileSizes = entry.getElementsByTagName("filesize"); //NON-NLS

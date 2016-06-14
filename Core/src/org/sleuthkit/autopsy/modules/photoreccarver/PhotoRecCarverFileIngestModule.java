@@ -291,7 +291,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 MessageNotifyUtil.Notify.info(PhotoRecCarverIngestModuleFactory.getModuleName(), NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.cancelledByUser"));
                 return IngestModule.ProcessResult.OK;
             }
-            List<LayoutFile> carvedItems = parser.parse(newAuditFile, file);
+            List<LayoutFile> carvedItems = parser.parse(newAuditFile, file, context);
             long calcdelta = (System.currentTimeMillis() - calcstart);
             totals.totalParsetime.addAndGet(calcdelta);
             if (carvedItems != null) { // if there were any results from carving, add the unallocated carving event to the reports list.
