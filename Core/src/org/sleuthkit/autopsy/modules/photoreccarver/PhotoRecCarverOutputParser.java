@@ -77,20 +77,20 @@ class PhotoRecCarverOutputParser {
         try {
             final Document doc = XMLUtil.loadDoc(PhotoRecCarverOutputParser.class, xmlInputFile.toString());
             if (doc == null) {
-                return null;
+                return new ArrayList<>();
             }
 
             Element root = doc.getDocumentElement();
             if (root == null) {
                 logger.log(Level.SEVERE, "Error loading config file: invalid file format (bad root)."); //NON-NLS
-                return null;
+                return new ArrayList<>();
             }
 
             NodeList fileObjects = root.getElementsByTagName("fileobject"); //NON-NLS
             final int numberOfFiles = fileObjects.getLength();
 
             if (numberOfFiles == 0) {
-                return null;
+                return new ArrayList<>();
             }
             String fileName;
             Long fileSize;

@@ -294,7 +294,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             List<LayoutFile> carvedItems = parser.parse(newAuditFile, file, context);
             long calcdelta = (System.currentTimeMillis() - calcstart);
             totals.totalParsetime.addAndGet(calcdelta);
-            if (carvedItems != null) { // if there were any results from carving, add the unallocated carving event to the reports list.
+            if (carvedItems != null && !carvedItems.isEmpty()) { // if there were any results from carving, add the unallocated carving event to the reports list.
                 totals.totalItemsRecovered.addAndGet(carvedItems.size());
                 context.addFilesToJob(new ArrayList<>(carvedItems));
                 services.fireModuleContentEvent(new ModuleContentEvent(carvedItems.get(0))); // fire an event to update the tree
