@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -57,12 +57,8 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ProcTerminationCode;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LayoutFile;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
-import org.sleuthkit.datamodel.Volume;
 
 /**
  * A file ingest module that runs the Unallocated Carver executable with
@@ -182,12 +178,6 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
         Path tempFilePath = null;
         try {
-            long id = getRootId(file);
-            // make sure we have a valid systemID
-            if (id == -1) {
-                return IngestModule.ProcessResult.ERROR;
-            }
-
             // Verify initialization succeeded.
             if (null == this.executableFile) {
                 logger.log(Level.SEVERE, "PhotoRec carver called after failed start up");  // NON-NLS
@@ -294,7 +284,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 MessageNotifyUtil.Notify.info(PhotoRecCarverIngestModuleFactory.getModuleName(), NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.cancelledByUser"));
                 return IngestModule.ProcessResult.OK;
             }
-            List<LayoutFile> carvedItems = parser.parse(newAuditFile, id, file, this.context);
+            List<LayoutFile> carvedItems = parser.parse(newAuditFile, file);
             long calcdelta = (System.currentTimeMillis() - calcstart);
             totals.totalParsetime.addAndGet(calcdelta);
             if (carvedItems != null) { // if there were any results from carving, add the unallocated carving event to the reports list.
@@ -427,31 +417,6 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             throw new IngestModule.IngestModuleException(Bundle.cannotCreateOutputDir_message(ex.getLocalizedMessage()), ex);
         }
         return path;
-    }
-
-    /**
-     * Finds the root Volume or Image of the AbstractFile passed in.
-     *
-     * @param file The file we want to find the root parent for
-     *
-     * @return The ID of the root parent Volume or Image
-     */
-    private static long getRootId(AbstractFile file) {
-        long id = -1;
-        Content parent = null;
-        try {
-            parent = file.getParent();
-            while (parent != null) {
-                if (parent instanceof Volume || parent instanceof Image) {
-                    id = parent.getId();
-                    break;
-                }
-                parent = parent.getParent();
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "PhotoRec carver exception while trying to get parent of AbstractFile.", ex); //NON-NLS
-        }
-        return id;
     }
 
     /**
