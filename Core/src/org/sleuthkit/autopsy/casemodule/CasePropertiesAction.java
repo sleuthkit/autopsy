@@ -54,31 +54,34 @@ final class CasePropertiesAction extends CallableSystemAction {
      */
     @Override
     public void performAction() {
-        try {
+        if (popUpWindow == null) {
             // create the popUp window for it
             String title = NbBundle.getMessage(this.getClass(), "CasePropertiesAction.window.title");
             final JFrame frame = new JFrame(title);
             popUpWindow = new JDialog(frame, title, false); // to make the popUp Window to be modal
+            try {
 
-            // create the case properties form
-            CaseInformationPanel caseInformationPanel = new CaseInformationPanel();
+                // create the case properties form
+                CaseInformationPanel caseInformationPanel = new CaseInformationPanel();
 
-            // add the case properties form / panel to the popup window
-            popUpWindow.add(caseInformationPanel);
-            popUpWindow.setResizable(true);
-            popUpWindow.pack();
-            
+                // add the case properties form / panel to the popup window
+                popUpWindow.add(caseInformationPanel);
+                popUpWindow.setResizable(true);
+                popUpWindow.pack();
 
-            // set the location of the popUp Window on the center of the screen
-            Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-            double w = popUpWindow.getSize().getWidth();
-            double h = popUpWindow.getSize().getHeight();
-            popUpWindow.setLocation((int) ((screenDimension.getWidth() - w) / 2), (int) ((screenDimension.getHeight() - h) / 2));
+                // set the location of the popUp Window on the center of the screen
+                Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
+                double w = popUpWindow.getSize().getWidth();
+                double h = popUpWindow.getSize().getHeight();
+                popUpWindow.setLocation((int) ((screenDimension.getWidth() - w) / 2), (int) ((screenDimension.getHeight() - h) / 2));
 
-            popUpWindow.setVisible(true);
-        } catch (Exception ex) {
-            Logger.getLogger(CasePropertiesAction.class.getName()).log(Level.WARNING, "Error displaying Case Properties window.", ex); //NON-NLS
+                popUpWindow.setVisible(true);
+            } catch (Exception ex) {
+                Logger.getLogger(CasePropertiesAction.class.getName()).log(Level.WARNING, "Error displaying Case Properties window.", ex); //NON-NLS
+            }
         }
+            popUpWindow.setVisible(true);
+            popUpWindow.toFront();
     }
 
     /**
