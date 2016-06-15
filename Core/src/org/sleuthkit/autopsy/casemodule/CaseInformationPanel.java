@@ -34,6 +34,7 @@ public class CaseInformationPanel extends javax.swing.JPanel {
             CasePropertiesForm cpf = new CasePropertiesForm(currentCase, crDate, caseDir, imgPaths);
             cpf.setSize(cpf.getPreferredSize());
             this.tabbedPane.addTab(Bundle.CaseInformationPanel_caseDetails_header(), cpf);
+            this.tabbedPane.addTab("TEST", new IngestJobInfoPanel());
         } catch (CaseMetadata.CaseMetadataException ex) {
             //TOLOG
         }

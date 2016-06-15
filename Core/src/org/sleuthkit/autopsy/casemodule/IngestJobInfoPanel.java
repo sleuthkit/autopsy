@@ -5,17 +5,63 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.datamodel.IngestJobInfo;
+import org.sleuthkit.datamodel.IngestModuleInfo;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
+
 /**
  *
  * @author oliver
  */
 public class IngestJobInfoPanel extends javax.swing.JPanel {
+    
+    private static final Logger logger = Logger.getLogger(IngestJobInfoPanel.class.getName());
 
     /**
      * Creates new form IngestJobInfoPanel
      */
     public IngestJobInfoPanel() {
         initComponents();
+        customizeComponents();
+    }
+    
+    @Messages({"IngestJobInfoPanel.loadIngestJob.error.text=Failed to load ingest jobs.",
+        "IngestJobInfoPanel.loadIngestJob.error.title=Load Failure"})
+    private void customizeComponents() {
+        SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+        DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        try {
+            List<IngestJobInfo> ingestJobs = skCase.getIngestJobs();
+            for (IngestJobInfo ingestJob : ingestJobs) {
+                Object[] row = new Object[5];
+                row[0] = skCase.getContentById(ingestJob.getObjectId()).getName();
+                row[1] = datetimeFormat.format(ingestJob.getStartDateTime());
+                row[2] = datetimeFormat.format(ingestJob.getEndDateTime());
+                row[3] = ingestJob.getStatus().getDisplayName();
+                String ingestModules = "";
+                for (IngestModuleInfo ingestModule : ingestJob.getIngestModuleInfo()) {
+                    ingestModules += ingestModule.getDisplayName() + ", ";
+                }
+                if (ingestModules.length() > 2) {
+                    ingestModules = ingestModules.substring(0, ingestModules.length() - 2);
+                }
+                row[4] = ingestModules;
+                DefaultTableModel model = (DefaultTableModel) this.jTable1.getModel();
+                model.addRow(row);
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Failed to load ingest jobs.", ex);
+            JOptionPane.showMessageDialog(null, Bundle.IngestJobInfoPanel_loadIngestJob_error_text(), Bundle.IngestJobInfoPanel_loadIngestJob_error_title(), JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     /**
@@ -27,19 +73,82 @@ public class IngestJobInfoPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jScrollPane1 = new javax.swing.JScrollPane();
+        jTable1 = new javax.swing.JTable();
+        jButton1 = new javax.swing.JButton();
+
+        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "Content", "Start Time", "End Time", "Ingest Status", "Ingest Modules"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        jScrollPane1.setViewportView(jTable1);
+        if (jTable1.getColumnModel().getColumnCount() > 0) {
+            jTable1.getColumnModel().getColumn(0).setMinWidth(100);
+            jTable1.getColumnModel().getColumn(0).setHeaderValue(org.openide.util.NbBundle.getMessage(IngestJobInfoPanel.class, "IngestJobInfoPanel.jTable1.columnModel.title0")); // NOI18N
+            jTable1.getColumnModel().getColumn(1).setMinWidth(100);
+            jTable1.getColumnModel().getColumn(1).setHeaderValue(org.openide.util.NbBundle.getMessage(IngestJobInfoPanel.class, "IngestJobInfoPanel.jTable1.columnModel.title1")); // NOI18N
+            jTable1.getColumnModel().getColumn(2).setMinWidth(100);
+            jTable1.getColumnModel().getColumn(2).setHeaderValue(org.openide.util.NbBundle.getMessage(IngestJobInfoPanel.class, "IngestJobInfoPanel.jTable1.columnModel.title2")); // NOI18N
+            jTable1.getColumnModel().getColumn(3).setMinWidth(100);
+            jTable1.getColumnModel().getColumn(3).setHeaderValue(org.openide.util.NbBundle.getMessage(IngestJobInfoPanel.class, "IngestJobInfoPanel.jTable1.columnModel.title3")); // NOI18N
+            jTable1.getColumnModel().getColumn(4).setMinWidth(150);
+            jTable1.getColumnModel().getColumn(4).setPreferredWidth(250);
+            jTable1.getColumnModel().getColumn(4).setHeaderValue(org.openide.util.NbBundle.getMessage(IngestJobInfoPanel.class, "IngestJobInfoPanel.jTable1.columnModel.title4")); // NOI18N
+        }
+
+        org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(IngestJobInfoPanel.class, "IngestJobInfoPanel.jButton1.text")); // NOI18N
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jButton1)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 686, Short.MAX_VALUE))
+                .addGap(0, 0, 0))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 403, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jButton1))
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jButton1ActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton jButton1;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JTable jTable1;
     // End of variables declaration//GEN-END:variables
 }
