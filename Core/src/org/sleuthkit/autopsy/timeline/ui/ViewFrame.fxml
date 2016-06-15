@@ -50,7 +50,7 @@
                                     <graphic>
                                         <ImageView fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" rotate="0.0" smooth="true" style="-fx-background-color:white;" x="2.0" y="1.0">
                                             <image>
-                                                <Image url="@../images/20140521121247760_easyicon_net_32_colorized.png" />
+                                                <Image url="@../images/btn_icon_timeline_colorized_32.png" />
                                             </image>
                                         </ImageView>
                                     </graphic>
