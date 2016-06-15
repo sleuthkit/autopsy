@@ -99,6 +99,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     private int instanceNum = 0;
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private IngestJobContext context;
+    private KeywordSearchSettingsManager manager;
 
     private enum IngestStatus {
 
@@ -150,6 +151,12 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
             throw new IngestModuleException(Bundle.CannotRunFileTypeDetection(), ex);
         }
+
+        try {
+            manager = KeywordSearchSettingsManager.getInstance();
+        } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+            throw new IngestModuleException("Couldn't create keyword settings manager.", ex);
+        }
         ingester = Server.getIngester();
         this.context = context;
 
@@ -190,7 +197,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 }
 
                 // check if this job has any searchable keywords    
-                List<KeywordList> keywordLists = XmlKeywordSearchList.getCurrent().getListsL();
+                List<KeywordList> keywordLists = manager.getKeywordLists();
                 boolean hasKeywordsForSearch = false;
                 for (KeywordList keywordList : keywordLists) {
                     if (settings.keywordListIsEnabled(keywordList.getName()) && !keywordList.getKeywords().isEmpty()) {
@@ -207,9 +214,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
         //initialize extractors
         stringExtractor = new StringsTextExtractor();
-        stringExtractor.setScripts(KeywordSearchSettings.getStringExtractScripts());
-        stringExtractor.setOptions(KeywordSearchSettings.getStringExtractOptions());
-
+        stringExtractor.setScripts(manager.getStringExtractScripts());
+        stringExtractor.setOptions(manager.getStringExtractOptions());
         textExtractors = new ArrayList<>();
         //order matters, more specific extractors first
         textExtractors.add(new HtmlTextExtractor());
@@ -233,7 +239,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             return ProcessResult.OK;
         }
 
-        if (KeywordSearchSettings.getSkipKnown() && abstractFile.getKnown().equals(FileKnown.KNOWN)) {
+        if (manager.getSkipKnown() && abstractFile.getKnown().equals(FileKnown.KNOWN)) {
             //index meta-data only
             if (context.fileIngestIsCancelled()) {
                 return ProcessResult.OK;
@@ -254,7 +260,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 return ProcessResult.OK;
             }
             List<String> keywordListNames = settings.getNamesOfEnabledKeyWordLists();
-            SearchRunner.getInstance().startJob(jobId, dataSourceId, keywordListNames);
+            SearchRunner.getInstance().startJob(jobId, dataSourceId, keywordListNames, manager.getUpdateFrequency());
             startedSearching = true;
         }
 

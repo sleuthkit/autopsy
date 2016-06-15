@@ -41,9 +41,9 @@ import org.w3c.dom.NodeList;
  * Manages reading and writing of keyword lists to user settings XML file
  * keywords.xml or to any file provided in constructor
  */
-final class XmlKeywordSearchList extends KeywordSearchList {
+final class XmlKeywordListImportExport {
 
-    private static final Logger xmlListslogger = Logger.getLogger(XmlKeywordSearchList.class.getName());
+    private static final Logger xmlListslogger = Logger.getLogger(XmlKeywordListImportExport.class.getName());
     private static final String CUR_LISTS_FILE_NAME = "keywords.xml";     //NON-NLS
     private static final String CUR_LISTS_FILE = PlatformUtil.getUserConfigDirectory() + File.separator + CUR_LISTS_FILE_NAME;
     private static final String ROOT_EL = "keyword_lists"; //NON-NLS
@@ -58,13 +58,13 @@ final class XmlKeywordSearchList extends KeywordSearchList {
     private static final String KEYWORD_SELECTOR_ATTR = "selector"; //NON-NLS
     private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss"; //NON-NLS
     private static final String ENCODING = "UTF-8"; //NON-NLS
-    private static XmlKeywordSearchList currentInstance = null;
+    private static XmlKeywordListImportExport currentInstance = null;
     private final DateFormat dateFormatter;
+    private String filePath;
 
-    static synchronized XmlKeywordSearchList getCurrent() {
+    static synchronized XmlKeywordListImportExport getCurrent() {
         if (currentInstance == null) {
-            currentInstance = new XmlKeywordSearchList(CUR_LISTS_FILE);
-            currentInstance.reload();
+            currentInstance = new XmlKeywordListImportExport(CUR_LISTS_FILE);
         }
         return currentInstance;
     }
@@ -75,18 +75,12 @@ final class XmlKeywordSearchList extends KeywordSearchList {
      *
      * @param xmlFile xmlFile to obtain XmlKeywordSearchList handle on
      */
-    XmlKeywordSearchList(String xmlFile) {
-        super(xmlFile);
+    XmlKeywordListImportExport(String xmlFile) {
+        this.filePath = xmlFile;
         dateFormatter = new SimpleDateFormat(DATE_FORMAT);
     }
 
-    @Override
-    public boolean save() {
-        return save(false);
-    }
-
-    @Override
-    public boolean save(boolean isExport) {
+    public boolean save(List<KeywordList> keywordLists) {
         boolean success = false;
 
         DocumentBuilderFactory dbfac = DocumentBuilderFactory.newInstance();
@@ -95,14 +89,10 @@ final class XmlKeywordSearchList extends KeywordSearchList {
             DocumentBuilder docBuilder = dbfac.newDocumentBuilder();
             Document doc = docBuilder.newDocument();
 
-            Element rootEl = doc.createElement(ROOT_EL);
-            doc.appendChild(rootEl);
-
-            for (String listName : theLists.keySet()) {
-                if (theLists.get(listName).isLocked() == true) {
-                    continue;
-                }
-                KeywordList list = theLists.get(listName);
+            for (KeywordList list : keywordLists) {
+                Element rootEl = doc.createElement(ROOT_EL);
+                doc.appendChild(rootEl);
+                String listName = list.getName();
                 String created = dateFormatter.format(list.getDateCreated());
                 String modified = dateFormatter.format(list.getDateModified());
                 String useForIngest = list.getUseForIngest().toString();
@@ -113,13 +103,8 @@ final class XmlKeywordSearchList extends KeywordSearchList {
                 listEl.setAttribute(LIST_NAME_ATTR, listName);
                 listEl.setAttribute(LIST_CREATE_ATTR, created);
                 listEl.setAttribute(LIST_MOD_ATTR, modified);
-
-                // only write the 'useForIngest' and 'ingestMessages' attributes
-                // if we're not exporting the list.
-                if (!isExport) {
-                    listEl.setAttribute(LIST_USE_FOR_INGEST, useForIngest);
-                    listEl.setAttribute(LIST_INGEST_MSGS, ingestMessages);
-                }
+                listEl.setAttribute(LIST_USE_FOR_INGEST, useForIngest);
+                listEl.setAttribute(LIST_INGEST_MSGS, ingestMessages);
 
                 for (Keyword keyword : keywords) {
                     Element keywordEl = doc.createElement(KEYWORD_EL);
@@ -135,7 +120,7 @@ final class XmlKeywordSearchList extends KeywordSearchList {
                 rootEl.appendChild(listEl);
             }
 
-            success = XMLUtil.saveDoc(XmlKeywordSearchList.class, filePath, ENCODING, doc);
+            success = XMLUtil.saveDoc(XmlKeywordListImportExport.class, filePath, ENCODING, doc);
         } catch (ParserConfigurationException e) {
             xmlListslogger.log(Level.SEVERE, "Error saving keyword list: can't initialize parser.", e); //NON-NLS
         }
@@ -145,21 +130,22 @@ final class XmlKeywordSearchList extends KeywordSearchList {
     /**
      * load and parse XML, then dispose
      */
-    @Override
-    public boolean load() {
-        final Document doc = XMLUtil.loadDoc(XmlKeywordSearchList.class, filePath);
+    public List<KeywordList> load() {
+        final Document doc;
+        doc = XMLUtil.loadDoc(XmlKeywordListImportExport.class, filePath);
         if (doc == null) {
-            return false;
+            return null;
         }
 
         Element root = doc.getDocumentElement();
         if (root == null) {
             xmlListslogger.log(Level.SEVERE, "Error loading keyword list: invalid file format."); //NON-NLS
-            return false;
+            return null;
         }
         try {
             NodeList listsNList = root.getElementsByTagName(LIST_EL);
             int numLists = listsNList.getLength();
+            List<KeywordList> lists = new ArrayList<>();
             for (int i = 0; i < numLists; ++i) {
                 Element listEl = (Element) listsNList.item(i);
                 final String name = listEl.getAttribute(LIST_NAME_ATTR);
@@ -204,13 +190,13 @@ final class XmlKeywordSearchList extends KeywordSearchList {
                     words.add(keyword);
 
                 }
-                theLists.put(name, list);
+                lists.add(list);
             }
+            return lists;
         } catch (ParseException e) {
             //error parsing dates
             xmlListslogger.log(Level.SEVERE, "Error loading keyword list: can't parse dates.", e); //NON-NLS
-            return false;
+            return null;
         }
-        return true;
     }
 }

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.awt.Component;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -27,9 +28,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import javax.swing.JCheckBox;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.netbeans.spi.options.OptionsPanelController;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -42,11 +48,15 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
     private final Map<String, StringExtract.StringExtractUnicodeTable.SCRIPT> scripts = new HashMap<>();
     private ActionListener updateLanguagesAction;
     private List<SCRIPT> toUpdate;
+    private static final Logger logger = Logger.getLogger(KeywordSearchGlobalLanguageSettingsPanel.class.getName());
+    private KeywordSearchSettingsManager manager;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
-    KeywordSearchGlobalLanguageSettingsPanel() {
+    KeywordSearchGlobalLanguageSettingsPanel(KeywordSearchSettingsManager manager) {
+        this.manager = manager;
         initComponents();
         customizeComponents();
+        enableComponents();
     }
 
     private void customizeComponents() {
@@ -62,11 +72,24 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
                         toUpdate.add(s);
                     }
                 }
+                store();
             }
         };
 
         initScriptsCheckBoxes();
-        reloadScriptsCheckBoxes();
+        if (manager != null) {
+            reloadScriptsCheckBoxes();
+        }
+    }
+
+    private void enableComponents() {
+        boolean enable = manager != null;
+        for (Component c : this.checkPanel.getComponents()) {
+            c.setEnabled(enable);
+        }
+        this.enableUTF16Checkbox.setEnabled(enable);
+        this.enableUTF8Checkbox.setEnabled(enable);
+        this.langPanel.setEnabled(enable);
     }
 
     @Override
@@ -116,15 +139,15 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
 
     private void reloadScriptsCheckBoxes() {
         boolean utf16
-                = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString()));
+                = Boolean.parseBoolean(manager.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString()));
 
         enableUTF16Checkbox.setSelected(utf16);
 
         boolean utf8
-                = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString()));
+                = Boolean.parseBoolean(manager.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString()));
         enableUTF8Checkbox.setSelected(utf8);
 
-        final List<SCRIPT> serviceScripts = KeywordSearchSettings.getStringExtractScripts();
+        final List<SCRIPT> serviceScripts = manager.getStringExtractScripts();
         final int components = checkPanel.getComponentCount();
 
         for (int i = 0; i < components; ++i) {
@@ -136,16 +159,19 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
         }
     }
 
+    @Messages({
+        "KeywordSearchGlobalLanguageSettingsPanel.failedReadSettings.message=Couldn't read keyword search settings",
+        "KeywordSearchGlobalLanguageSettingsPanel.failedReadSettings.title=Error Reading Settings"})
     private void activateWidgets() {
         reloadScriptsCheckBoxes();
 
         boolean utf16
-                = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString()));
+                = Boolean.parseBoolean(manager.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString()));
 
         enableUTF16Checkbox.setSelected(utf16);
 
         boolean utf8
-                = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString()));
+                = Boolean.parseBoolean(manager.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString()));
         enableUTF8Checkbox.setSelected(utf8);
         final boolean extractEnabled = utf16 || utf8;
 
@@ -247,6 +273,7 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
         boolean selected = this.enableUTF8Checkbox.isSelected();
 
         activateScriptsCheckboxes(selected || this.enableUTF16Checkbox.isSelected());
+        store();
         pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
 
     }//GEN-LAST:event_enableUTF8CheckboxActionPerformed
@@ -256,6 +283,7 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
         boolean selected = this.enableUTF16Checkbox.isSelected();
 
         activateScriptsCheckboxes(selected || this.enableUTF8Checkbox.isSelected());
+        store();
         pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_enableUTF16CheckboxActionPerformed
 
@@ -269,22 +297,43 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
     // End of variables declaration//GEN-END:variables
 
     @Override
+    @Messages({
+        "KeywordSearchGlobalLanguageSettingsPanel.failedWriteSettings.message=Couldn't write keyword search settings",
+        "KeywordSearchGlobalLanguageSettingsPanel.failedWriteSettings.title=Error Writing Settings"})
     public void store() {
-        KeywordSearchSettings.setStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString(),
-                Boolean.toString(enableUTF8Checkbox.isSelected()));
-        KeywordSearchSettings.setStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString(),
-                Boolean.toString(enableUTF16Checkbox.isSelected()));
+        if (manager != null) {
+            try {
+                manager.setStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString(),
+                        Boolean.toString(enableUTF8Checkbox.isSelected()));
 
-        if (toUpdate != null) {
-            KeywordSearchSettings.setStringExtractScripts(toUpdate);
+                manager.setStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString(),
+                        Boolean.toString(enableUTF16Checkbox.isSelected()));
+
+                if (toUpdate != null) {
+                    manager.setStringExtractScripts(toUpdate);
+                }
+            } catch (KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        JOptionPane.showMessageDialog(null, Bundle.KeywordSearchGlobalLanguageSettingsPanel_failedWriteSettings_message(),
+                        Bundle.KeywordSearchGlobalLanguageSettingsPanel_failedWriteSettings_title(), JOptionPane.ERROR_MESSAGE);
+                    }
+                });
+                
+                this.reloadScriptsCheckBoxes();
+                logger.log(Level.SEVERE, "Failed to write keyword search settings.", ex);
+            }
+
+            // This is a stop-gap way of notifying the job settings panel of potential changes.
+            manager.fireLanguagesEvent(KeywordSearchSettingsManager.LanguagesEvent.LANGUAGES_CHANGED);
         }
-
-        // This is a stop-gap way of notifying the job settings panel of potential changes.
-        XmlKeywordSearchList.getCurrent().fireLanguagesEvent(KeywordSearchList.LanguagesEvent.LANGUAGES_CHANGED);
     }
 
     @Override
     public void load() {
-        activateWidgets();
+        if (manager != null) {
+            activateWidgets();
+        }
     }
 }

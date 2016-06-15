@@ -18,10 +18,13 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
-public class KeywordList {
+public class KeywordList implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private String name;
     private Date created;

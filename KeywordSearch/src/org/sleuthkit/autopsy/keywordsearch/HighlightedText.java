@@ -25,12 +25,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.logging.Level;
-
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.datamodel.TextMarkupLookup;
 import org.sleuthkit.autopsy.keywordsearch.KeywordQueryFilter.FilterType;
@@ -143,10 +142,12 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
                 chunksQuery.addFilter(new KeywordQueryFilter(FilterType.CHUNK, this.objectId));
                 try {
                     hits = chunksQuery.performQuery();
-                } catch (NoOpenCoreException ex) {
+                } catch (NoOpenCoreException | KeywordSearchSettingsManager.KeywordSearchSettingsManagerException ex) {
                     logger.log(Level.INFO, "Could not get chunk info and get highlights", ex); //NON-NLS
                     return;
                 }
+                //NON-NLS
+                
             }
 
             //organize the hits by page, filter as needed
