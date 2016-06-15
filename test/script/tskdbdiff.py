@@ -403,8 +403,8 @@ def normalize_db_entry(line, table):
         return newLine
     elif (ingest_job_index != -1):
         fields_list[2] = "{host_name}"
-        start_time = long(fields_list[3])
-        end_time = long(fields_list[4])
+        start_time = int(fields_list[3])
+        end_time = int(fields_list[4])
         if (start_time <= end_time):
             fields_list[3] = "0"
             fields_list[4] = "0"
