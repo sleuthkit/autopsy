@@ -10,7 +10,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import org.openide.util.NbBundle.Messages;
 
 /**
@@ -30,7 +29,7 @@ public class CaseInformationPanel extends javax.swing.JPanel {
     }
 
     @Messages({"CaseInformationPanel.caseDetails.header=Case Details",
-        "CaseInformationPanel.ingestJobInfo.header=Ingest Job Information",
+        "CaseInformationPanel.ingestJobInfo.header=Ingest History",
         "CaseInformationPanel.loadMetadataFail.message=Failed to load case metadata.",
         "CaseInformationPanel.loadMetadataFail.title=Metadata load failure",})
     private void customizeComponents() {
@@ -45,11 +44,8 @@ public class CaseInformationPanel extends javax.swing.JPanel {
             cpf.setSize(cpf.getPreferredSize());
             this.tabbedPane.addTab(Bundle.CaseInformationPanel_caseDetails_header(), cpf);
             this.tabbedPane.addTab(Bundle.CaseInformationPanel_ingestJobInfo_header(), new IngestJobInfoPanel());
-            this.tabbedPane.addChangeListener(new ChangeListener() {
-                @Override
-                public void stateChanged(ChangeEvent e) {
-                    tabbedPane.getSelectedComponent().setSize(tabbedPane.getSelectedComponent().getPreferredSize());
-                }
+            this.tabbedPane.addChangeListener((ChangeEvent e) -> {
+                tabbedPane.getSelectedComponent().setSize(tabbedPane.getSelectedComponent().getPreferredSize());
             });
         } catch (CaseMetadata.CaseMetadataException ex) {
             logger.log(Level.SEVERE, "Failed to load case metadata.", ex);

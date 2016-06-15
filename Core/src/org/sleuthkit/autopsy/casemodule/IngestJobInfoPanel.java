@@ -5,16 +5,19 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.beans.PropertyChangeEvent;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.IngestJobInfo;
 import org.sleuthkit.datamodel.IngestModuleInfo;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -28,6 +31,9 @@ public class IngestJobInfoPanel extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(IngestJobInfoPanel.class.getName());
     private List<IngestJobInfo> ingestJobs;
+    private IngestJobTableModel ingestJobTableModel = new IngestJobTableModel();
+    private IngestModuleTableModel ingestModuleTableModel = new IngestModuleTableModel(null);
+    private final DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 
     /**
      * Creates new form IngestJobInfoPanel
@@ -40,59 +46,134 @@ public class IngestJobInfoPanel extends javax.swing.JPanel {
     @Messages({"IngestJobInfoPanel.loadIngestJob.error.text=Failed to load ingest jobs.",
         "IngestJobInfoPanel.loadIngestJob.error.title=Load Failure"})
     private void customizeComponents() {
-        SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-        DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-        DefaultTableModel model = (DefaultTableModel) this.ingestJobTable.getModel();
-        this.ingestJobTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                int selectedIndex = ingestJobTable.getSelectedRow();
-                DefaultTableModel ingestModuleModel = (DefaultTableModel) ingestModuleTable.getModel();
-                if (selectedIndex != -1) {
-                    IngestJobInfo selectedJob = ingestJobs.get(selectedIndex);
-                    List<IngestModuleInfo> ingestModules = selectedJob.getIngestModuleInfo();
-                    for (int i = 0; i < ingestModuleModel.getRowCount(); i++) {
-                        ingestModuleModel.removeRow(0);
-                    }
-                    for (IngestModuleInfo ingestModule : ingestModules) {
-                        Object[] row = new Object[2];
-                        row[0] = ingestModule.getDisplayName();
-                        row[1] = ingestModule.getVersion();
-                        ingestModuleModel.addRow(row);
-                    }
-                } else {
-                    for (int i = 0; i < ingestModuleModel.getRowCount(); i++) {
-                        ingestModuleModel.removeRow(0);
-                    }
-                }
-            }
+        refresh();
+        this.ingestJobTable.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
+            this.ingestModuleTableModel = new IngestModuleTableModel(this.ingestJobs.get(ingestJobTable.getSelectedRow()));
+            this.ingestModuleTable.setModel(this.ingestModuleTableModel);
         });
 
+        IngestManager.getInstance().addIngestJobEventListener((PropertyChangeEvent evt) -> {
+            if (evt.getPropertyName().equals(IngestManager.IngestJobEvent.STARTED.toString())
+                    || evt.getPropertyName().equals(IngestManager.IngestJobEvent.CANCELLED.toString())
+                    || evt.getPropertyName().equals(IngestManager.IngestJobEvent.COMPLETED.toString())) {
+                refresh();
+            }
+        });
+    }
+
+    private void refresh() {
+        SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
         try {
             List<IngestJobInfo> ingestJobs = skCase.getIngestJobs();
             this.ingestJobs = ingestJobs;
-            for (IngestJobInfo ingestJob : ingestJobs) {
-                Object[] row = new Object[5];
-                row[0] = skCase.getContentById(ingestJob.getObjectId()).getName();
-                row[1] = datetimeFormat.format(ingestJob.getStartDateTime());
-                row[2] = datetimeFormat.format(ingestJob.getEndDateTime());
-                row[3] = ingestJob.getStatus().getDisplayName();
-                String ingestModules = "";
-                for (IngestModuleInfo ingestModule : ingestJob.getIngestModuleInfo()) {
-                    ingestModules += ingestModule.getDisplayName() + ", ";
-                }
-                if (ingestModules.length() > 2) {
-                    ingestModules = ingestModules.substring(0, ingestModules.length() - 2);
-                }
-                row[4] = ingestModules;
-
-                model.addRow(row);
-            }
-
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed to load ingest jobs.", ex);
             JOptionPane.showMessageDialog(null, Bundle.IngestJobInfoPanel_loadIngestJob_error_text(), Bundle.IngestJobInfoPanel_loadIngestJob_error_title(), JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    @Messages({"IngestJobInfoPanel.IngestJobTableModel.DataSource.header=Data Source",
+        "IngestJobInfoPanel.IngestJobTableModel.StartTime.header=Start Time",
+        "IngestJobInfoPanel.IngestJobTableModel.EndTime.header=End Time",
+        "IngestJobInfoPanel.IngestJobTableModel.IngestStatus.header=Ingest Status"})
+    private class IngestJobTableModel extends AbstractTableModel {
+
+        private List<String> columnHeaders = new ArrayList<>();
+
+        IngestJobTableModel() {
+            columnHeaders.add(Bundle.IngestJobInfoPanel_IngestJobTableModel_DataSource_header());
+            columnHeaders.add(Bundle.IngestJobInfoPanel_IngestJobTableModel_StartTime_header());
+            columnHeaders.add(Bundle.IngestJobInfoPanel_IngestJobTableModel_EndTime_header());
+            columnHeaders.add(Bundle.IngestJobInfoPanel_IngestJobTableModel_IngestStatus_header());
+        }
+
+        @Override
+        public int getRowCount() {
+            return ingestJobs.size();
+        }
+
+        @Override
+        public int getColumnCount() {
+            return columnHeaders.size();
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            IngestJobInfo currIngestJob = ingestJobs.get(rowIndex);
+            SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+            if (columnIndex == 0) {
+                try {
+                    return skCase.getContentById(currIngestJob.getObjectId()).getName();
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Failed to get content from db", ex);
+                    return "";
+                }
+            } else if (columnIndex == 1) {
+                return datetimeFormat.format(currIngestJob.getStartDateTime());
+            } else if (columnIndex == 2) {
+                Date endDate = currIngestJob.getEndDateTime();
+                if (endDate.getTime() == 0) {
+                    return "N/A";
+                }
+                return datetimeFormat.format(currIngestJob.getEndDateTime());
+            } else if (columnIndex == 3) {
+                return currIngestJob.getStatus().getDisplayName();
+            }
+            return null;
+        }
+
+        @Override
+        public String getColumnName(int column) {
+            return columnHeaders.get(column);
+        }
+
+    }
+
+    @Messages({"IngestJobInfoPanel.IngestModuleTableModel.ModuleName.header=Module Name",
+        "IngestJobInfoPanel.IngestModuleTableModel.ModuleVersion.header=Module Version"})
+    private class IngestModuleTableModel extends AbstractTableModel {
+
+        private List<String> columnHeaders = new ArrayList<>();
+        private IngestJobInfo currJob;
+
+        IngestModuleTableModel(IngestJobInfo currJob) {
+            columnHeaders.add(Bundle.IngestJobInfoPanel_IngestModuleTableModel_ModuleName_header());
+            columnHeaders.add(Bundle.IngestJobInfoPanel_IngestModuleTableModel_ModuleVersion_header());
+            this.currJob = currJob;
+        }
+
+        @Override
+        public int getRowCount() {
+            if (currJob == null) {
+                return 0;
+            }
+            return currJob.getIngestModuleInfo().size();
+        }
+
+        @Override
+        public int getColumnCount() {
+            return columnHeaders.size();
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            if (currJob != null) {
+                IngestModuleInfo currIngestModule = currJob.getIngestModuleInfo().get(rowIndex);
+                if (columnIndex == 0) {
+                    return currIngestModule.getDisplayName();
+                } else if (columnIndex == 1) {
+                    return currIngestModule.getVersion();
+                }
+                return null;
+            }
+            return null;
+        }
+
+        @Override
+        public String getColumnName(int column) {
+            return columnHeaders.get(column);
+        }
+
     }
 
     /**
@@ -106,7 +187,6 @@ public class IngestJobInfoPanel extends javax.swing.JPanel {
 
         jScrollPane1 = new javax.swing.JScrollPane();
         ingestJobTable = new javax.swing.JTable();
-        jButton1 = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
@@ -114,103 +194,31 @@ public class IngestJobInfoPanel extends javax.swing.JPanel {
 
         jScrollPane1.setBorder(null);
 
-        ingestJobTable.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-                "Content", "Start Time", "End Time", "Ingest Status"
-            }
-        ) {
-            Class[] types = new Class [] {
-                java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class
-            };
-            boolean[] canEdit = new boolean [] {
-                false, false, false, false
-            };
-
-            public Class getColumnClass(int columnIndex) {
-                return types [columnIndex];
-            }
-
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
-            }
-        });
-        ingestJobTable.setPreferredSize(null);
+        ingestJobTable.setModel(ingestJobTableModel);
         ingestJobTable.getTableHeader().setReorderingAllowed(false);
         jScrollPane1.setViewportView(ingestJobTable);
         ingestJobTable.getColumnModel().getSelectionModel().setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        if (ingestJobTable.getColumnModel().getColumnCount() > 0) {
-            ingestJobTable.getColumnModel().getColumn(0).setHeaderValue(org.openide.util.NbBundle.getMessage(IngestJobInfoPanel.class, "IngestJobInfoPanel.ingestJobTable.columnModel.title0")); // NOI18N
-            ingestJobTable.getColumnModel().getColumn(1).setHeaderValue(org.openide.util.NbBundle.getMessage(IngestJobInfoPanel.class, "IngestJobInfoPanel.ingestJobTable.columnModel.title1")); // NOI18N
-            ingestJobTable.getColumnModel().getColumn(2).setHeaderValue(org.openide.util.NbBundle.getMessage(IngestJobInfoPanel.class, "IngestJobInfoPanel.ingestJobTable.columnModel.title2")); // NOI18N
-            ingestJobTable.getColumnModel().getColumn(3).setHeaderValue(org.openide.util.NbBundle.getMessage(IngestJobInfoPanel.class, "IngestJobInfoPanel.ingestJobTable.columnModel.title3")); // NOI18N
-        }
-
-        org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(IngestJobInfoPanel.class, "IngestJobInfoPanel.jButton1.text")); // NOI18N
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
-            }
-        });
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(IngestJobInfoPanel.class, "IngestJobInfoPanel.jLabel1.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(IngestJobInfoPanel.class, "IngestJobInfoPanel.jLabel2.text")); // NOI18N
 
-        ingestModuleTable.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null},
-                {null, null},
-                {null, null},
-                {null, null}
-            },
-            new String [] {
-                "Module Name", "Module Version"
-            }
-        ) {
-            Class[] types = new Class [] {
-                java.lang.String.class, java.lang.String.class
-            };
-            boolean[] canEdit = new boolean [] {
-                false, false
-            };
-
-            public Class getColumnClass(int columnIndex) {
-                return types [columnIndex];
-            }
-
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
-            }
-        });
+        ingestModuleTable.setModel(ingestModuleTableModel);
         jScrollPane2.setViewportView(ingestModuleTable);
-        if (ingestModuleTable.getColumnModel().getColumnCount() > 0) {
-            ingestModuleTable.getColumnModel().getColumn(0).setPreferredWidth(100);
-            ingestModuleTable.getColumnModel().getColumn(0).setHeaderValue(org.openide.util.NbBundle.getMessage(IngestJobInfoPanel.class, "IngestJobInfoPanel.ingestModuleTable.columnModel.title0")); // NOI18N
-            ingestModuleTable.getColumnModel().getColumn(1).setPreferredWidth(50);
-            ingestModuleTable.getColumnModel().getColumn(1).setHeaderValue(org.openide.util.NbBundle.getMessage(IngestJobInfoPanel.class, "IngestJobInfoPanel.ingestModuleTable.columnModel.title1")); // NOI18N
-        }
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
+                .addGap(15, 15, 15)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(15, 15, 15)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel2)
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 492, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel1)
-                            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 233, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(jButton1)))
+                    .addComponent(jLabel2)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 485, Short.MAX_VALUE))
+                .addGap(8, 8, 8)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 254, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel1))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -224,21 +232,14 @@ public class IngestJobInfoPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 162, Short.MAX_VALUE)
                     .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jButton1)
-                .addGap(6, 6, 6))
+                .addGap(10, 10, 10))
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jButton1ActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTable ingestJobTable;
     private javax.swing.JTable ingestModuleTable;
-    private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollPane jScrollPane1;

@@ -80,8 +80,8 @@ final class CasePropertiesAction extends CallableSystemAction {
                 Logger.getLogger(CasePropertiesAction.class.getName()).log(Level.WARNING, "Error displaying Case Properties window.", ex); //NON-NLS
             }
         }
-            popUpWindow.setVisible(true);
-            popUpWindow.toFront();
+        popUpWindow.setVisible(true);
+        popUpWindow.toFront();
     }
 
     /**
