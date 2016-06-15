@@ -27,7 +27,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.beans.property.SimpleObjectProperty;
@@ -61,8 +60,8 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * A Dialog that, given a AbstractFile OR BlackBoardArtifact, allows the user to
- * choose a specific event and a time range around it to show in the Timeline
+ * A Dialog that, given an AbstractFile or BlackBoardArtifact, allows the user
+ * to choose a specific event and a time range around it to show in the Timeline
  * List View.
  */
 final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
@@ -225,7 +224,6 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
         Interval range = IntervalUtils.getIntervalAround(Instant.ofEpochMilli(selectedEvent.getStartMillis()), selectedDuration);
         return new ViewInTimelineRequestedEvent(Collections.singleton(selectedEvent.getEventID()), range);
     }
-
 
     /**
      * ListCell that shows a ChronoUnit

@@ -37,7 +37,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
 /**
- * This class is the Node for a AbstractFile. It may have derived files
+ * This class is the Node for an AbstractFile. It may have derived files
  * children.
  */
 public class FileNode extends AbstractFsContentNode<AbstractFile> {

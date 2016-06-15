@@ -296,10 +296,10 @@ class ListTimeline extends BorderPane {
              * Changes in the table selection are propogated to the controller
              * by a listener. There is no API on TableView's selection model to
              * clear the selection and select multiple rows as one "action".
-             * Therefore we clear the selction and then make the new selection,
+             * Therefore we clear the selection and then make the new selection,
              * but we don't want this intermediate state of no selection to be
              * pushed to the controller as it interferes with maintaining the
-             * right selection. To avoid notifying the controller, we wemove the
+             * right selection. To avoid notifying the controller, we remove the
              * listener, clear the selection, then re-attach it.
              */
             table.getSelectionModel().getSelectedItems().removeListener(selectedEventListener);

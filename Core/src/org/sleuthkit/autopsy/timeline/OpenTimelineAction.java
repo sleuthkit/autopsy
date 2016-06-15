@@ -61,7 +61,7 @@ public final class OpenTimelineAction extends CallableSystemAction implements Pr
             new ImageIcon("Core/src/org/sleuthkit/autopsy/timeline/images/btn_icon_timeline_colorized_26.png"));//NON-NLS
 
     /**
-     * Invalidate the reference to the controller so that a new will will be
+     * Invalidate the reference to the controller so that a new one will be
      * instantiated the next time this action is invoked
      */
     synchronized static void invalidateController() {
@@ -76,10 +76,11 @@ public final class OpenTimelineAction extends CallableSystemAction implements Pr
     @Override
     public boolean isEnabled() {
         /**
-         * we disabled the check to hasData() because if it is executed while a
-         * data source is being added, it blocks the edt
+         * We used to also check if Case.getCurrentCase().hasData() was true. We
+         * disabled that check because if it is executed while a data source is
+         * being added, it blocks the edt
          */
-        return Case.isCaseOpen() && FX_INITED;// && Case.getCurrentCase().hasData();
+        return Case.isCaseOpen() && FX_INITED;
     }
 
     @Override

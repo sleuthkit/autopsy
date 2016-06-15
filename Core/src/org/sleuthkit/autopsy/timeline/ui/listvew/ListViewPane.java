@@ -95,7 +95,7 @@ public class ListViewPane extends AbstractTimeLineView {
     private class ListUpdateTask extends ViewRefreshTask<Interval> {
 
         @NbBundle.Messages({
-            "ListViewPane.loggedTask.queryDb=Retreiving event data",
+            "ListViewPane.loggedTask.queryDb=Retrieving event data",
             "ListViewPane.loggedTask.name=Updating List View",
             "ListViewPane.loggedTask.updateUI=Populating view"})
         ListUpdateTask() {

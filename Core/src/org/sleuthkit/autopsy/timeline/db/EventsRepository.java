@@ -207,7 +207,6 @@ public class EventsRepository {
         return eventDB.countAllEvents();
     }
 
-   
     /**
      * Get a List of event IDs for the events that are derived from the given
      * file.
@@ -632,7 +631,7 @@ public class EventsRepository {
             /*
              * if there are no legitimate ( greater than zero ) time stamps (
              * eg, logical/local files) skip the rest of the event generation:
-             * this should result in droping logical files, since they do not
+             * this should result in dropping logical files, since they do not
              * have legitimate time stamps.
              */
             if (Collections.max(timeMap.values()) > 0) {
@@ -688,7 +687,7 @@ public class EventsRepository {
         private void populateEventType(final ArtifactEventType type, EventDB.EventTransaction trans) {
             try {
                 //get all the blackboard artifacts corresponding to the given event sub_type
-                final ArrayList<BlackboardArtifact> blackboardArtifacts = skCase.getBlackboardArtifacts(type.getArtifactType().getTypeID());
+                final ArrayList<BlackboardArtifact> blackboardArtifacts = skCase.getBlackboardArtifacts(type.getArtifactTypeID());
                 final int numArtifacts = blackboardArtifacts.size();
                 restartProgressHandle(Bundle.progressWindow_populatingXevents(type.getDisplayName()), "", 0D, numArtifacts, true);
                 for (int i = 0; i < numArtifacts; i++) {

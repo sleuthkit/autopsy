@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -34,10 +35,8 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import static org.sleuthkit.autopsy.datamodel.Bundle.*;
 import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.ArtifactEventType;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -107,35 +106,25 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
     }
 
     @Override
-    @NbBundle.Messages({"BlackboardArtifactNode.getAction.errorTitle=Error getting actions",
-        "BlackboardArtifactNode.getAction.errorMessage=There was a problem getting actions for the selected result."})
+    @NbBundle.Messages({
+        "BlackboardArtifactNode.getAction.errorTitle=Error getting actions",
+        "BlackboardArtifactNode.getAction.errorMessage=There was a problem getting actions for the selected result."
+        + "  The 'View Result in Timeline' action will not be available."})
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<>();
         actionsList.addAll(Arrays.asList(super.getActions(context)));
 
-        //see if this artifact has a timestamp in any of the supported attributes
-        boolean hasTimeStamp = false;
-
-        for (ArtifactEventType artEventType : ArtifactEventType.getAllArtifactEventTypes()) {
-            if (artEventType.getArtifactTypeID() == artifact.getArtifactTypeID()) {
-                try {
-                    if (null != artifact.getAttribute(artEventType.getDateTimeAttrubuteType())) {
-                        hasTimeStamp = true;
-                        break;
-                    }
-                } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "Error retreiving blackboard arttributes from blackboard artifact.", ex); //NON-NLS
-                    MessageNotifyUtil.Notify.error(BlackboardArtifactNode_getAction_errorTitle(), BlackboardArtifactNode_getAction_errorMessage());
-                }
+        try {
+            if (ViewArtifactInTimelineAction.hasSupportedTimeStamp(artifact)) {
+                //if this artifact has a time stamp add the action to view it in the timeline
+                actionsList.add(new ViewArtifactInTimelineAction(artifact));
             }
-        }
-        if (hasTimeStamp) {
-            //if this artifact has a time stamp add the action to view it in the timeline
-            actionsList.add(new ViewArtifactInTimelineAction(artifact));
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, MessageFormat.format("Error getting arttribute(s) from blackboard artifact{0}.", artifact.getArtifactID()), ex); //NON-NLS
+            MessageNotifyUtil.Notify.error(Bundle.BlackboardArtifactNode_getAction_errorTitle(), Bundle.BlackboardArtifactNode_getAction_errorMessage());
         }
 
         AbstractFile file = getLookup().lookup(AbstractFile.class);
-
         if (null != file) {
             //if this artifact has associated content, add the action to view the content in the timeline
             actionsList.add(new ViewFileInTimelineAction(file, true));

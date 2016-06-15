@@ -104,7 +104,7 @@ public enum MiscTypes implements EventType, ArtifactEventType {
 
                 @Override
         public AttributeEventDescription parseAttributesHelper(BlackboardArtifact artf) throws TskCoreException {
-            final BlackboardAttribute dateTimeAttr = artf.getAttribute(getDateTimeAttrubuteType());
+            final BlackboardAttribute dateTimeAttr = artf.getAttribute(getDateTimeAttributeType());
 
                     long time = dateTimeAttr.getValueLong();
 
@@ -199,7 +199,7 @@ public enum MiscTypes implements EventType, ArtifactEventType {
     }
 
     @Override
-    public BlackboardAttribute.Type getDateTimeAttrubuteType() {
+    public BlackboardAttribute.Type getDateTimeAttributeType() {
         return dateTimeAttributeType;
     }
 

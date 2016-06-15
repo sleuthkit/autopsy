@@ -367,7 +367,7 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
     }
 
     @NbBundle.Messages({
-        "DetailViewPane.loggedTask.queryDb=Retreiving event data",
+        "DetailViewPane.loggedTask.queryDb=Retrieving event data",
         "DetailViewPane.loggedTask.name=Updating Details View",
         "DetailViewPane.loggedTask.updateUI=Populating view",
         "DetailViewPane.loggedTask.continueButton=Continue",

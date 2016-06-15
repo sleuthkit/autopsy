@@ -390,7 +390,7 @@ public class TimeLineController {
     /**
      * Rebuild the repo using the given repoBuilder (expected to be a member
      * reference to EventsRepository.rebuildRepository() or
-     * EventsRepository.rebuildTags()) and display the ui when it is done. If
+     * EventsRepository.rebuildTags()) and display the UI when it is done. If
      * either file or artifact is not null the user will be prompted to choose a
      * derived event and time range to show in the Timeline List View.
      *
@@ -424,7 +424,7 @@ public class TimeLineController {
             return;  //if they cancel, do nothing.
         }
 
-        //get a task that rebuilds the repo with the bellow state listener attached
+        //get a task that rebuilds the repo with the below state listener attached
         final CancellationProgressTask<?> rebuildRepositoryTask;
         rebuildRepositoryTask = repoBuilder.apply(new Consumer<Worker.State>() {
             @Override
@@ -453,12 +453,12 @@ public class TimeLineController {
                             TimeLineController.this.showFullRange();
                         } else {
                             //prompt user to pick specific event and time range
-                            ShowInTimelineDialog d = (file == null)
-                                    ? new ShowInTimelineDialog(TimeLineController.this, artifact)
-                                    : new ShowInTimelineDialog(TimeLineController.this, file);
-                            Optional<ViewInTimelineRequestedEvent> result = d.showAndWait();
-
-                            result.ifPresent(viewInTimelineRequestedEvent -> {
+                            ShowInTimelineDialog showInTimelineDilaog =
+                                    (file == null)
+                                            ? new ShowInTimelineDialog(TimeLineController.this, artifact)
+                                            : new ShowInTimelineDialog(TimeLineController.this, file);
+                            Optional<ViewInTimelineRequestedEvent> dialogResult = showInTimelineDilaog.showAndWait();
+                            dialogResult.ifPresent(viewInTimelineRequestedEvent -> {
                                 SwingUtilities.invokeLater(TimeLineController.this::showWindow);
                                 showInListView(viewInTimelineRequestedEvent); //show requested event in list view
                             });
