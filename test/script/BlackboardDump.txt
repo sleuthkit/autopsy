@@ -1,8 +1,0 @@
-/$CarvedFiles/f0003957.jpg <artifact type="General Info" > <attribute source="File Type Identification" type="File Type (signature)" value="image/jpeg" /> <artifact/>
-/$FAT1 <artifact type="General Info" > <attribute source="File Type Identification" type="File Type (signature)" value="application/octet-stream" /> <artifact/>
-/$FAT2 <artifact type="General Info" > <attribute source="File Type Identification" type="File Type (signature)" value="application/octet-stream" /> <artifact/>
-/$MBR <artifact type="General Info" > <attribute source="File Type Identification" type="File Type (signature)" value="application/octet-stream" /> <artifact/>
-/$OrphanFiles <artifact type="General Info" > <attribute source="File Type Identification" type="File Type (signature)" value="application/octet-stream" /> <artifact/>
-/$Unalloc <artifact type="General Info" > <attribute source="File Type Identification" type="File Type (signature)" value="application/octet-stream" /> <artifact/>
-/test.txt <artifact type="General Info" > <attribute source="File Type Identification" type="File Type (signature)" value="text/plain" /> <artifact/>
-Unalloc_9_19968_2097152 <artifact type="General Info" > <attribute source="File Type Identification" type="File Type (signature)" value="application/octet-stream" /> <artifact/>
