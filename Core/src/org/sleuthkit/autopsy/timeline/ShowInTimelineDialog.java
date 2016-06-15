@@ -58,6 +58,8 @@ import org.sleuthkit.autopsy.timeline.events.ViewInTimelineRequestedEvent;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A Dialog that, given an AbstractFile or BlackBoardArtifact, allows the user
@@ -135,7 +137,7 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
 
         //configure dialog properties
         PromptDialogManager.setDialogIcons(this);
-        setTitle(Bundle.Timeline_dialogs_title());
+
         initModality(Modality.APPLICATION_MODAL);
 
         //add scenegraph loaded from fxml to this dialog.
@@ -170,6 +172,7 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
      * @param controller The controller for this Dialog
      * @param artifact   The BlackboardArtifact to configure this dialog for.
      */
+    @NbBundle.Messages({"ShowInTimelineDialog.artifactTitle=View Result in Timeline."})
     ShowInTimelineDialog(TimeLineController controller, BlackboardArtifact artifact) {
         //get events IDs from artifact
         this(controller, controller.getEventsModel().getEventIDsForArtifact(artifact));
@@ -187,6 +190,7 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
                 return null;
             }
         });
+        setTitle(Bundle.ShowInTimelineDialog_artifactTitle());
     }
 
     /**
@@ -196,6 +200,7 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
      * @param controller The controller for this Dialog.
      * @param file       The AbstractFile to configure this dialog for.
      */
+    @NbBundle.Messages({"ShowInTimelineDialog.fileTitle=View {0} in timeline."})
     ShowInTimelineDialog(TimeLineController controller, AbstractFile file) {
         this(controller, controller.getEventsModel().getEventIDsForFile(file, false));
 
@@ -210,6 +215,28 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
                 return null;
             }
         });
+        setTitle(Bundle.ShowInTimelineDialog_fileTitle(StringUtils.abbreviateMiddle(getContentPathSafe(file), " ... ", 50)));
+    }
+
+    /**
+     * Get the unique path for the content, or if that fails, just return the
+     * name.
+     *
+     * NOTE: This was copied from IamgeUtils and should be refactored to avoid
+     * duplication.
+     *
+     * @param content
+     *
+     * @return the unique path for the content, or if that fails, just the name.
+     */
+    static String getContentPathSafe(Content content) {
+        try {
+            return content.getUniquePath();
+        } catch (TskCoreException tskCoreException) {
+            String contentName = content.getName();
+            LOGGER.log(Level.SEVERE, "Failed to get unique path for " + contentName, tskCoreException); //NON-NLS
+            return contentName;
+        }
     }
 
     /**
