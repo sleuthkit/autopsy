@@ -19,8 +19,6 @@
 package org.sleuthkit.autopsy.timeline;
 
 import java.awt.Component;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.logging.Level;
 import javax.swing.ImageIcon;
@@ -50,7 +48,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 @ActionReferences(value = {
     @ActionReference(path = "Menu/Tools", position = 100),
     @ActionReference(path = "Toolbars/Case", position = 102)})
-public class OpenTimelineAction extends CallableSystemAction implements Presenter.Toolbar {
+public final class OpenTimelineAction extends CallableSystemAction implements Presenter.Toolbar {
 
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(OpenTimelineAction.class.getName());
@@ -59,7 +57,8 @@ public class OpenTimelineAction extends CallableSystemAction implements Presente
 
     private static TimeLineController timeLineController = null;
 
-    private JButton toolbarButton = new JButton();
+    private final JButton toolbarButton = new JButton(getName(),
+            new ImageIcon("Core/src/org/sleuthkit/autopsy/timeline/images/btn_icon_timeline_colorized_26.png"));//NON-NLS
 
     /**
      * Invalidate the reference to the controller so that a new will will be
@@ -70,12 +69,7 @@ public class OpenTimelineAction extends CallableSystemAction implements Presente
     }
 
     public OpenTimelineAction() {
-        toolbarButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                performAction();
-            }
-        });
+        toolbarButton.addActionListener(actionEvent -> performAction());
         this.setEnabled(false);
     }
 
@@ -189,10 +183,6 @@ public class OpenTimelineAction extends CallableSystemAction implements Presente
      */
     @Override
     public Component getToolbarPresenter() {
-        ImageIcon icon = new ImageIcon("Core/src/org/sleuthkit/autopsy/timeline/images/btn_icon_timeline_colorized_26.png"); //NON-NLS
-        toolbarButton.setIcon(icon);
-        toolbarButton.setText(this.getName());
-
         return toolbarButton;
     }
 }
