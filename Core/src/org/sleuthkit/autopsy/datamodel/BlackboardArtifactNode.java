@@ -108,25 +108,38 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
     @Override
     @NbBundle.Messages({
         "BlackboardArtifactNode.getAction.errorTitle=Error getting actions",
-        "BlackboardArtifactNode.getAction.errorMessage=There was a problem getting actions for the selected result."
-        + "  The 'View Result in Timeline' action will not be available."})
+        "BlackboardArtifactNode.getAction.resultErrorMessage=There was a problem getting actions for the selected result."
+        + "  The 'View Result in Timeline' action will not be available.",
+        "BlackboardArtifactNode.getAction.linkedFileMessage=There was a problem getting actions for the selected result. "
+        + " The 'View File in Timeline' action will not be available."})
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<>();
         actionsList.addAll(Arrays.asList(super.getActions(context)));
 
+        //if this artifact has a time stamp add the action to view it in the timeline
         try {
             if (ViewArtifactInTimelineAction.hasSupportedTimeStamp(artifact)) {
-                //if this artifact has a time stamp add the action to view it in the timeline
                 actionsList.add(new ViewArtifactInTimelineAction(artifact));
             }
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, MessageFormat.format("Error getting arttribute(s) from blackboard artifact{0}.", artifact.getArtifactID()), ex); //NON-NLS
-            MessageNotifyUtil.Notify.error(Bundle.BlackboardArtifactNode_getAction_errorTitle(), Bundle.BlackboardArtifactNode_getAction_errorMessage());
+            MessageNotifyUtil.Notify.error(Bundle.BlackboardArtifactNode_getAction_errorTitle(), Bundle.BlackboardArtifactNode_getAction_resultErrorMessage());
         }
 
+        // if the artifact links to another file, add an action to go to that file
+        try {
+            AbstractFile c = findLinked(artifact);
+            if (c != null) {
+                actionsList.add(new ViewFileInTimelineAction(c, false));
+            }
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, MessageFormat.format("Error getting linked file from blackboard artifact{0}.", artifact.getArtifactID()), ex); //NON-NLS
+            MessageNotifyUtil.Notify.error(Bundle.BlackboardArtifactNode_getAction_errorTitle(), Bundle.BlackboardArtifactNode_getAction_linkedFileMessage());
+        }
+
+        //if this artifact has associated content, add the action to view the content in the timeline
         AbstractFile file = getLookup().lookup(AbstractFile.class);
         if (null != file) {
-            //if this artifact has associated content, add the action to view the content in the timeline
             actionsList.add(new ViewFileInTimelineAction(file, true));
         }
 
@@ -310,7 +323,6 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
             customProperties = new ArrayList<>();
         }
         customProperties.add(np);
-
     }
 
     /**
@@ -395,6 +407,30 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         }
         throw new IllegalArgumentException(
                 NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.getAssocCont.exception.msg"));
+    }
+
+    /**
+     * this code started as a cut and past of
+     * DataResultFilterNode.GetPopupActionsDisplayableItemNodeVisitor.findLinked(BlackboardArtifactNode
+     * ba)
+     *
+     *
+     * @param artifact
+     *
+     * @return
+     */
+    static private AbstractFile findLinked(BlackboardArtifact artifact) throws TskCoreException {
+
+        BlackboardAttribute pathIDAttribute = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PATH_ID));
+
+        if (pathIDAttribute != null) {
+            long contentID = pathIDAttribute.getValueLong();
+            if (contentID != -1) {
+                return artifact.getSleuthkitCase().getAbstractFileById(contentID);
+            }
+        }
+
+        return null;
     }
 
     private static TextMarkupLookup getHighlightLookup(BlackboardArtifact artifact, Content content) {
