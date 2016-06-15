@@ -80,6 +80,9 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
         "FileNode.getActions.searchFilesSameMD5.text=Search for files with the same MD5 hash"})
     public Action[] getActions(boolean popup) {
         List<Action> actionsList = new ArrayList<>();
+        for (Action a : super.getActions(true)) {
+            actionsList.add(a);
+        }
         if (!this.getDirectoryBrowseMode()) {
             actionsList.add(new ViewContextAction(Bundle.FileNode_getActions_viewFileInDir_text(), this));
             actionsList.add(null); // creates a menu separator

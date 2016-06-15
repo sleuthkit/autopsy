@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -44,7 +45,6 @@ class StringsTextExtractor implements TextExtractor {
     private static final int BOM_LEN = 0;  //disabled prepending of BOM
     private static final Charset INDEX_CHARSET = Server.DEFAULT_INDEXED_TEXT_CHARSET;
     private static final SCRIPT DEFAULT_SCRIPT = SCRIPT.LATIN_2;
-    private KeywordSearchIngestModule module;
     private AbstractFile sourceFile;
     private int numChunks = 0;
     private final List<SCRIPT> extractScripts = new ArrayList<>();
@@ -57,8 +57,7 @@ class StringsTextExtractor implements TextExtractor {
     //stringChunkBuf[1] = (byte) 0xBB;
     //stringChunkBuf[2] = (byte) 0xBF;
     //}
-    public StringsTextExtractor(KeywordSearchIngestModule module) {
-        this.module = module;
+    public StringsTextExtractor() {
         ingester = Server.getIngester();
         extractScripts.add(DEFAULT_SCRIPT);
     }
@@ -96,7 +95,7 @@ class StringsTextExtractor implements TextExtractor {
     }
 
     @Override
-    public boolean index(AbstractFile sourceFile) throws IngesterException {
+    public boolean index(AbstractFile sourceFile, IngestJobContext context) throws IngesterException {
         this.sourceFile = sourceFile;
         this.numChunks = 0; //unknown until indexing is done
         boolean success = false;
@@ -129,6 +128,10 @@ class StringsTextExtractor implements TextExtractor {
             final byte[] stringChunkBuf = new byte[(int) MAX_STRING_CHUNK_SIZE];
             long readSize;
             while ((readSize = stringStream.read(stringChunkBuf, BOM_LEN, (int) MAX_STRING_CHUNK_SIZE - BOM_LEN)) != -1) {
+                if (context.fileIngestIsCancelled()) {
+                    ingester.ingest(this);
+                    return true;
+                }
                 //FileOutputStream debug = new FileOutputStream("c:\\temp\\" + sourceFile.getName() + Integer.toString(this.numChunks+1));
                 //debug.write(stringChunkBuf, 0, (int)readSize);
 

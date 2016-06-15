@@ -1,4 +1,4 @@
- /*
+/*
  *
  * Autopsy Forensic Browser
  * 
@@ -65,13 +65,17 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
         wiz.setTitle(NbBundle.getMessage(ReportWizardAction.class, "ReportWizardAction.reportWiz.title"));
         if (DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) {
             @SuppressWarnings("unchecked")
-            ReportGenerator generator = new ReportGenerator((Map<TableReportModule, Boolean>) wiz.getProperty("tableModuleStates"), //NON-NLS
-                    (Map<GeneralReportModule, Boolean>) wiz.getProperty("generalModuleStates"), //NON-NLS
-                    (Map<FileReportModule, Boolean>) wiz.getProperty("fileModuleStates")); //NON-NLS
-            generator.generateTableReports((Map<BlackboardArtifact.Type, Boolean>) wiz.getProperty("artifactStates"), (Map<String, Boolean>) wiz.getProperty("tagStates")); //NON-NLS
-            generator.generateFileListReports((Map<FileReportDataTypes, Boolean>) wiz.getProperty("fileReportOptions")); //NON-NLS
-            generator.generateGeneralReports();
-            generator.displayProgressPanels();
+            ReportGenerator generator = new ReportGenerator(); //NON-NLS
+            TableReportModule tableReport = (TableReportModule) wiz.getProperty("tableModule");
+            GeneralReportModule generalReport = (GeneralReportModule) wiz.getProperty("generalModule");
+            FileReportModule fileReport = (FileReportModule) wiz.getProperty("fileModule");
+            if (tableReport != null) {
+                generator.generateTableReport(tableReport, (Map<BlackboardArtifact.Type, Boolean>) wiz.getProperty("artifactStates"), (Map<String, Boolean>) wiz.getProperty("tagStates")); //NON-NLS
+            } else if (generalReport != null) {
+                generator.generateGeneralReport(generalReport);
+            } else if (fileReport != null) {
+                generator.generateFileListReport(fileReport, (Map<FileReportDataTypes, Boolean>) wiz.getProperty("fileReportOptions")); //NON-NLS
+            }
         }
     }
 
