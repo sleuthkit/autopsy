@@ -47,8 +47,11 @@ import javafx.scene.control.TableView;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
+import javafx.util.StringConverter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
+import org.controlsfx.validation.ValidationSupport;
+import org.controlsfx.validation.Validator;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -106,6 +109,7 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
             ChronoField.HOUR_OF_DAY,
             ChronoField.MINUTE_OF_HOUR,
             ChronoField.SECOND_OF_MINUTE);
+    private final ValidationSupport validationSupport;
 
     /**
      * Common Private Constructor
@@ -114,6 +118,9 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
      * @param eventIDS   A List of eventIDs to present to the user to choose
      *                   from.
      */
+    @NbBundle.Messages({
+        "ShowInTimelineDialog.amountValidator.message=The entered amount must be parsable as a number.",
+        "ShowInTimelineDialog.eventSelectionValidator.message=You must select an event."})
     private ShowInTimelineDialog(TimeLineController controller, List<Long> eventIDS) {
         this.controller = controller;
 
@@ -135,6 +142,17 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
         assert amountSpinner != null : "fx:id=\"amountsSpinner\" was not injected: check your FXML file 'ShowInTimelineDialog.fxml'.";
         assert unitComboBox != null : "fx:id=\"unitChoiceBox\" was not injected: check your FXML file 'ShowInTimelineDialog.fxml'.";
 
+        validationSupport = new ValidationSupport();
+        validationSupport.registerValidator(amountSpinner.getEditor(), false, Validator.createPredicateValidator((String value) -> {
+            try {
+                Double.parseDouble(value);
+                return true;
+            } catch (NumberFormatException ex) {
+                return false;
+            }
+
+        }, Bundle.ShowInTimelineDialog_amountValidator_message()));
+
         //configure dialog properties
         PromptDialogManager.setDialogIcons(this);
 
@@ -148,6 +166,21 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
 
         ///configure dialog controls
         amountSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 1000));
+        amountSpinner.getValueFactory().setConverter(new StringConverter<Integer>() {
+            @Override
+            public String toString(Integer object) {
+                return object.toString();
+            }
+
+            @Override
+            public Integer fromString(String string) {
+                try {
+                    return Integer.valueOf(string);
+                } catch (NumberFormatException ex) {
+                    return amountSpinner.getValue();
+                }
+            }
+        });
 
         unitComboBox.setButtonCell(new ChronoFieldListCell());
         unitComboBox.setCellFactory(comboBox -> new ChronoFieldListCell());
@@ -182,6 +215,8 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
         chooseEventLabel.setManaged(false);
         eventTable.getSelectionModel().select(0);
 
+        getDialogPane().lookupButton(SHOW).disableProperty().bind(validationSupport.invalidProperty());
+
         //set result converter that does not require selection.
         setResultConverter(buttonType -> {
             if (buttonType == SHOW) {
@@ -205,7 +240,7 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
         this(controller, controller.getEventsModel().getEventIDsForFile(file, false));
 
         //require selection to enable show button
-        getDialogPane().lookupButton(SHOW).disableProperty().bind(eventTable.getSelectionModel().selectedItemProperty().isNull());
+        getDialogPane().lookupButton(SHOW).disableProperty().bind(validationSupport.invalidProperty().or(eventTable.getSelectionModel().selectedItemProperty().isNull()));
 
         //set result converter that uses selection.
         setResultConverter(buttonType -> {

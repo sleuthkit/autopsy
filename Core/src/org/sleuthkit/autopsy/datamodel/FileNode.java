@@ -89,7 +89,7 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
         }
         actionsList.add(new NewWindowViewAction(Bundle.FileNode_getActions_viewInNewWin_text(), this));
         actionsList.add(new ExternalViewerAction(Bundle.FileNode_getActions_openInExtViewer_text(), this));
-        actionsList.add(new ViewFileInTimelineAction(getContent(), false));
+        actionsList.add(ViewFileInTimelineAction.createViewFileAction(getContent()));
 
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());

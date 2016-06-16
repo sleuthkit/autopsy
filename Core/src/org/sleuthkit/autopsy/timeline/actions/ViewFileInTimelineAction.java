@@ -32,15 +32,22 @@ import org.sleuthkit.datamodel.AbstractFile;
 public final class ViewFileInTimelineAction extends AbstractAction {
 
     private static final long serialVersionUID = 1L;
+
     private final AbstractFile file;
 
-    @NbBundle.Messages({"ViewFileInTimelineAction.fileSource.displayName=View File in Timeline... ",
-        "ViewFileInTimelineAction.artifactSource.displayName=View Source File in Timeline... "})
-    public ViewFileInTimelineAction(AbstractFile file, boolean isArtifactSource) {
-        super(isArtifactSource
-                ? Bundle.ViewFileInTimelineAction_artifactSource_displayName()
-                : Bundle.ViewFileInTimelineAction_fileSource_displayName());
+    private ViewFileInTimelineAction(AbstractFile file, String displayName) {
+        super(displayName);
         this.file = file;
+    }
+
+    @NbBundle.Messages({"ViewFileInTimelineAction.viewFile.displayName=View File in Timeline... "})
+    public static ViewFileInTimelineAction createViewFileAction(AbstractFile file) {
+        return new ViewFileInTimelineAction(file, Bundle.ViewFileInTimelineAction_viewFile_displayName());
+    }
+
+    @NbBundle.Messages({"ViewFileInTimelineAction.viewSourceFile.displayName=View Source File in Timeline... "})
+    public static ViewFileInTimelineAction createViewSourceFileAction(AbstractFile file) {
+        return new ViewFileInTimelineAction(file, Bundle.ViewFileInTimelineAction_viewSourceFile_displayName());
     }
 
     @Override

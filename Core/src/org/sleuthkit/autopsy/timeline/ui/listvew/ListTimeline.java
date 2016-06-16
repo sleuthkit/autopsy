@@ -356,7 +356,7 @@ class ListTimeline extends BorderPane {
      */
     private void scrollTo(Integer index) {
         if (visibleEvents.contains(table.getItems().get(index)) == false) {
-            table.scrollTo(index);
+            table.scrollTo(index - visibleEvents.size() / 2);
         }
     }
 

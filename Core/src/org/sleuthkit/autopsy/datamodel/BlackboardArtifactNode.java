@@ -130,7 +130,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         try {
             AbstractFile c = findLinked(artifact);
             if (c != null) {
-                actionsList.add(new ViewFileInTimelineAction(c, false));
+                actionsList.add(ViewFileInTimelineAction.createViewFileAction(c));
             }
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, MessageFormat.format("Error getting linked file from blackboard artifact{0}.", artifact.getArtifactID()), ex); //NON-NLS
@@ -140,7 +140,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         //if this artifact has associated content, add the action to view the content in the timeline
         AbstractFile file = getLookup().lookup(AbstractFile.class);
         if (null != file) {
-            actionsList.add(new ViewFileInTimelineAction(file, true));
+            actionsList.add(ViewFileInTimelineAction.createViewSourceFileAction(file));
         }
 
         return actionsList.toArray(new Action[actionsList.size()]);

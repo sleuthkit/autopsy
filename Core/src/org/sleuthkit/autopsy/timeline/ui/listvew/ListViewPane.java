@@ -111,9 +111,13 @@ public class ListViewPane extends AbstractTimeLineView {
 
             FilteredEventsModel eventsModel = getEventsModel();
 
+            Set<Long> selectedEventIDs;
+            TimeLineController controller = getController();
             //grab the currently selected event
-            Set<Long> selectedEventIDs = ImmutableSet.copyOf(getController().getSelectedEventIDs());
-
+            synchronized (controller) {
+                selectedEventIDs = ImmutableSet.copyOf(controller.getSelectedEventIDs());
+            }
+            
             //clear the chart and set the time range.
             resetView(eventsModel.getTimeRange());
 
