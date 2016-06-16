@@ -66,6 +66,7 @@ public class IngestJobInfoPanel extends javax.swing.JPanel {
         try {
             List<IngestJobInfo> ingestJobs = skCase.getIngestJobs();
             this.ingestJobs = ingestJobs;
+            this.repaint();
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed to load ingest jobs.", ex);
             JOptionPane.showMessageDialog(null, Bundle.IngestJobInfoPanel_loadIngestJob_error_text(), Bundle.IngestJobInfoPanel_loadIngestJob_error_title(), JOptionPane.ERROR_MESSAGE);
