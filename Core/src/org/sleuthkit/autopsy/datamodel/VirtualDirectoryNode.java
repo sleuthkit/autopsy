@@ -89,6 +89,9 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
     @NbBundle.Messages({"VirtualDirectoryNode.action.runIngestMods.text=Run Ingest Modules"})
     public Action[] getActions(boolean popup) {
         List<Action> actions = new ArrayList<>();
+        for (Action a : super.getActions(true)) {
+            actions.add(a);
+        }
 
         actions.add(new NewWindowViewAction(
                 NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.getActions.viewInNewWin.text"), this));

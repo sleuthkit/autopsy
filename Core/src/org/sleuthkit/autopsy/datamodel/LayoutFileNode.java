@@ -25,11 +25,11 @@ import java.util.Map;
 import javax.swing.Action;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
-import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.TskData;
 
@@ -116,6 +116,9 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
     @Override
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<>();
+        for (Action a : super.getActions(true)) {
+            actionsList.add(a);
+        }
         actionsList.add(new NewWindowViewAction(
                 NbBundle.getMessage(this.getClass(), "LayoutFileNode.getActions.viewInNewWin.text"), this));
         actionsList.add(new ExternalViewerAction(
