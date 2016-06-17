@@ -46,7 +46,6 @@ import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -144,35 +143,11 @@ public class EventNode extends DisplayableItemNode {
             }
         }
 
-        //get default actions for the file
+        //get default actions for the source file
         final List<Action> factoryActions = DataModelActionsFactory.getActions(sourceFile, artifact != null);
 
         actionsList.addAll(factoryActions);
         return actionsList.toArray(new Action[actionsList.size()]);
-    }
-
-    /**
-     * this code started as a cut and past of
-     * DataResultFilterNode.GetPopupActionsDisplayableItemNodeVisitor.findLinked(BlackboardArtifactNode
-     * ba)
-     *
-     *
-     * @param artifact
-     *
-     * @return
-     */
-    static private AbstractFile findLinked(BlackboardArtifact artifact) throws TskCoreException {
-
-        BlackboardAttribute pathIDAttribute = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PATH_ID));
-
-        if (pathIDAttribute != null) {
-            long contentID = pathIDAttribute.getValueLong();
-            if (contentID != -1) {
-                return artifact.getSleuthkitCase().getAbstractFileById(contentID);
-            }
-        }
-
-        return null;
     }
 
     @Override
@@ -260,5 +235,31 @@ public class EventNode extends DisplayableItemNode {
         } else {
             return new EventNode(eventById, file);
         }
+    }
+
+    /**
+     * this code started as a cut and past of
+     * DataResultFilterNode.GetPopupActionsDisplayableItemNodeVisitor.findLinked(BlackboardArtifactNode
+     * ba)
+     *
+     * It is now in DisplayableItemNode too, but is not accesible across
+     * packages
+     *
+     * @param artifact
+     *
+     * @return
+     */
+    static AbstractFile findLinked(BlackboardArtifact artifact) throws TskCoreException {
+
+        BlackboardAttribute pathIDAttribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID));
+
+        if (pathIDAttribute != null) {
+            long contentID = pathIDAttribute.getValueLong();
+            if (contentID != -1) {
+                return artifact.getSleuthkitCase().getAbstractFileById(contentID);
+            }
+        }
+
+        return null;
     }
 }

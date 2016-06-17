@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.timeline.ui.listvew;
 
 import com.google.common.collect.Iterables;
+import com.google.common.math.DoubleMath;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -118,6 +120,8 @@ class ListTimeline extends BorderPane {
             ChronoField.HOUR_OF_DAY,
             ChronoField.MINUTE_OF_HOUR,
             ChronoField.SECOND_OF_MINUTE);
+
+    private static final int DEFAULT_ROW_HEIGHT = 24;
 
     @FXML
     private HBox navControls;
@@ -356,7 +360,7 @@ class ListTimeline extends BorderPane {
      */
     private void scrollTo(Integer index) {
         if (visibleEvents.contains(table.getItems().get(index)) == false) {
-            table.scrollTo(index - visibleEvents.size() / 2);
+            table.scrollTo(DoubleMath.roundToInt(index - (table.getHeight() / 2 / DEFAULT_ROW_HEIGHT), RoundingMode.DOWN));
         }
     }
 

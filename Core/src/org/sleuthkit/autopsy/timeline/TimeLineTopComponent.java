@@ -158,6 +158,36 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
         }
     };
 
+    private void syncViewMode() {
+        switch (controller.getViewMode()) {
+            case COUNTS:
+            case DETAIL:
+                /*
+                 * For counts and details mode, restore the result table at the
+                 * bottom left.
+                 */
+                SwingUtilities.invokeLater(() -> {
+                    splitYPane.remove(contentViewerPanel);
+                    if ((horizontalSplitPane.getParent() == splitYPane) == false) {
+                        splitYPane.setBottomComponent(horizontalSplitPane);
+                        horizontalSplitPane.setRightComponent(contentViewerPanel);
+                    }
+                });
+                break;
+            case LIST:
+                /*
+                 * For list mode, remove the result table, and let the content
+                 * viewer expand across the bottom.
+                 */
+                SwingUtilities.invokeLater(() -> {
+                    splitYPane.setBottomComponent(contentViewerPanel);
+                });
+                break;
+            default:
+                throw new UnsupportedOperationException("Unknown ViewMode: " + controller.getViewMode());
+        }
+    }
+
     /**
      * Constructor
      *
@@ -189,35 +219,8 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
         controller.getSelectedEventIDs().addListener(selectedEventsListener);
 
         //Listen to ViewMode and adjust GUI componenets as needed.
-        controller.viewModeProperty().addListener(viewMode -> {
-            switch (controller.getViewMode()) {
-                case COUNTS:
-                case DETAIL:
-                    /*
-                     * For counts and details mode, restore the result table at
-                     * the bottom left.
-                     */
-                    SwingUtilities.invokeLater(() -> {
-                        splitYPane.remove(contentViewerPanel);
-                        if ((horizontalSplitPane.getParent() == splitYPane) == false) {
-                            splitYPane.setBottomComponent(horizontalSplitPane);
-                            horizontalSplitPane.setRightComponent(contentViewerPanel);
-                        }
-                    });
-                    break;
-                case LIST:
-                    /*
-                     * For list mode, remove the result table, and let the
-                     * content viewer expand across the bottom.
-                     */
-                    SwingUtilities.invokeLater(() -> {
-                        splitYPane.setBottomComponent(contentViewerPanel);
-                    });
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Unknown ViewMode: " + controller.getViewMode());
-            }
-        });
+        controller.viewModeProperty().addListener(viewMode -> syncViewMode());
+        syncViewMode();
     }
 
     /**

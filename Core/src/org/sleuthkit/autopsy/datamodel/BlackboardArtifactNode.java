@@ -140,6 +140,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         //if this artifact has associated content, add the action to view the content in the timeline
         AbstractFile file = getLookup().lookup(AbstractFile.class);
         if (null != file) {
+            
             actionsList.add(ViewFileInTimelineAction.createViewSourceFileAction(file));
         }
 
@@ -409,29 +410,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.getAssocCont.exception.msg"));
     }
 
-    /**
-     * this code started as a cut and past of
-     * DataResultFilterNode.GetPopupActionsDisplayableItemNodeVisitor.findLinked(BlackboardArtifactNode
-     * ba)
-     *
-     *
-     * @param artifact
-     *
-     * @return
-     */
-    static private AbstractFile findLinked(BlackboardArtifact artifact) throws TskCoreException {
-
-        BlackboardAttribute pathIDAttribute = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PATH_ID));
-
-        if (pathIDAttribute != null) {
-            long contentID = pathIDAttribute.getValueLong();
-            if (contentID != -1) {
-                return artifact.getSleuthkitCase().getAbstractFileById(contentID);
-            }
-        }
-
-        return null;
-    }
+    
 
     private static TextMarkupLookup getHighlightLookup(BlackboardArtifact artifact, Content content) {
         if (artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {

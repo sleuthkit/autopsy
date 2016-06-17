@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -47,9 +48,11 @@ import javafx.scene.control.TableView;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
-import javafx.util.StringConverter;
+import javafx.util.converter.IntegerStringConverter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.text.WordUtils;
+import org.controlsfx.validation.ValidationMessage;
 import org.controlsfx.validation.ValidationSupport;
 import org.controlsfx.validation.Validator;
 import org.joda.time.Interval;
@@ -76,6 +79,18 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
     @NbBundle.Messages({"ShowInTimelineDialog.showTimelineButtonType.text=Show Timeline"})
     private static final ButtonType SHOW = new ButtonType(Bundle.ShowInTimelineDialog_showTimelineButtonType_text(), ButtonBar.ButtonData.OK_DONE);
 
+    /**
+     * List of ChronoUnits the user can select from when choosing a time range
+     * to show.
+     */
+    private static final List<ChronoField> SCROLL_BY_UNITS = Arrays.asList(
+            ChronoField.YEAR,
+            ChronoField.MONTH_OF_YEAR,
+            ChronoField.DAY_OF_MONTH,
+            ChronoField.HOUR_OF_DAY,
+            ChronoField.MINUTE_OF_HOUR,
+            ChronoField.SECOND_OF_MINUTE);
+
     @FXML
     private TableView<SingleEvent> eventTable;
 
@@ -98,18 +113,7 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
 
     private final TimeLineController controller;
 
-    /**
-     * List of ChronoUnits the user can select from when choosing a time range
-     * to show.
-     */
-    private static final List<ChronoField> SCROLL_BY_UNITS = Arrays.asList(
-            ChronoField.YEAR,
-            ChronoField.MONTH_OF_YEAR,
-            ChronoField.DAY_OF_MONTH,
-            ChronoField.HOUR_OF_DAY,
-            ChronoField.MINUTE_OF_HOUR,
-            ChronoField.SECOND_OF_MINUTE);
-    private final ValidationSupport validationSupport;
+    private final ValidationSupport validationSupport = new ValidationSupport();
 
     /**
      * Common Private Constructor
@@ -119,8 +123,8 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
      *                   from.
      */
     @NbBundle.Messages({
-        "ShowInTimelineDialog.amountValidator.message=The entered amount must be parsable as a number.",
-        "ShowInTimelineDialog.eventSelectionValidator.message=You must select an event."})
+        "ShowInTimelineDialog.amountValidator.message=The entered amount must only contain digits."
+    })
     private ShowInTimelineDialog(TimeLineController controller, List<Long> eventIDS) {
         this.controller = controller;
 
@@ -142,20 +146,12 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
         assert amountSpinner != null : "fx:id=\"amountsSpinner\" was not injected: check your FXML file 'ShowInTimelineDialog.fxml'.";
         assert unitComboBox != null : "fx:id=\"unitChoiceBox\" was not injected: check your FXML file 'ShowInTimelineDialog.fxml'.";
 
-        validationSupport = new ValidationSupport();
-        validationSupport.registerValidator(amountSpinner.getEditor(), false, Validator.createPredicateValidator((String value) -> {
-            try {
-                Double.parseDouble(value);
-                return true;
-            } catch (NumberFormatException ex) {
-                return false;
-            }
-
-        }, Bundle.ShowInTimelineDialog_amountValidator_message()));
+        //validat that spinner has a integer in the text field.
+        validationSupport.registerValidator(amountSpinner.getEditor(), false,
+                Validator.createPredicateValidator(NumberUtils::isDigits, Bundle.ShowInTimelineDialog_amountValidator_message()));
 
         //configure dialog properties
         PromptDialogManager.setDialogIcons(this);
-
         initModality(Modality.APPLICATION_MODAL);
 
         //add scenegraph loaded from fxml to this dialog.
@@ -166,16 +162,20 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
 
         ///configure dialog controls
         amountSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 1000));
-        amountSpinner.getValueFactory().setConverter(new StringConverter<Integer>() {
-            @Override
-            public String toString(Integer object) {
-                return object.toString();
-            }
-
+        amountSpinner.getValueFactory().setConverter(new IntegerStringConverter() {
+            /**
+             * Convert the String to an Integer using Integer.valueOf, but if
+             * that throws a NumberFormatException, reset the spinner to the
+             * last valid value.
+             *
+             * @param string The String to convert
+             *
+             * @return The Integer value of string.
+             */
             @Override
             public Integer fromString(String string) {
                 try {
-                    return Integer.valueOf(string);
+                    return super.fromString(string);
                 } catch (NumberFormatException ex) {
                     return amountSpinner.getValue();
                 }
@@ -215,16 +215,14 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
         chooseEventLabel.setManaged(false);
         eventTable.getSelectionModel().select(0);
 
+        //require validation of ammount spinner to enable show button
         getDialogPane().lookupButton(SHOW).disableProperty().bind(validationSupport.invalidProperty());
 
         //set result converter that does not require selection.
-        setResultConverter(buttonType -> {
-            if (buttonType == SHOW) {
-                return makeEventInTimeRange(eventTable.getItems().get(0));
-            } else {
-                return null;
-            }
-        });
+        setResultConverter(buttonType -> (buttonType == SHOW)
+                ? makeEventInTimeRange(eventTable.getItems().get(0))
+                : null
+        );
         setTitle(Bundle.ShowInTimelineDialog_artifactTitle());
     }
 
@@ -235,21 +233,38 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
      * @param controller The controller for this Dialog.
      * @param file       The AbstractFile to configure this dialog for.
      */
-    @NbBundle.Messages({"ShowInTimelineDialog.fileTitle=View {0} in timeline."})
+    @NbBundle.Messages({"# {0} - file path",
+        "ShowInTimelineDialog.fileTitle=View {0} in timeline.",
+        "ShowInTimelineDialog.eventSelectionValidator.message=You must select an event."})
     ShowInTimelineDialog(TimeLineController controller, AbstractFile file) {
         this(controller, controller.getEventsModel().getEventIDsForFile(file, false));
 
-        //require selection to enable show button
-        getDialogPane().lookupButton(SHOW).disableProperty().bind(validationSupport.invalidProperty().or(eventTable.getSelectionModel().selectedItemProperty().isNull()));
-
-        //set result converter that uses selection.
-        setResultConverter(buttonType -> {
-            if (buttonType == SHOW) {
-                return makeEventInTimeRange(eventTable.getSelectionModel().getSelectedItem());
+        /*
+         * since ValidationSupport does not support list selection, we will
+         * manually apply and remove decoration in response to selection
+         * property changes.
+         */
+        eventTable.getSelectionModel().selectedItemProperty().isNull().addListener((selectedItemNullProperty, wasNull, isNull) -> {
+            if (isNull) {
+                validationSupport.getValidationDecorator().applyValidationDecoration(
+                        ValidationMessage.error(eventTable, Bundle.ShowInTimelineDialog_eventSelectionValidator_message()));
             } else {
-                return null;
+                validationSupport.getValidationDecorator().removeDecorations(eventTable);
             }
         });
+
+        //require selection and validation of ammount spinner to enable show button
+        getDialogPane().lookupButton(SHOW).disableProperty().bind(Bindings.or(
+                validationSupport.invalidProperty(),
+                eventTable.getSelectionModel().selectedItemProperty().isNull()
+        ));
+
+        //set result converter that uses selection.
+        setResultConverter(buttonType -> (buttonType == SHOW)
+                ? makeEventInTimeRange(eventTable.getSelectionModel().getSelectedItem())
+                : null
+        );
+
         setTitle(Bundle.ShowInTimelineDialog_fileTitle(StringUtils.abbreviateMiddle(getContentPathSafe(file), " ... ", 50)));
     }
 

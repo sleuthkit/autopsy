@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2013-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.Action;
@@ -27,6 +29,11 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.actions.DeleteBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
+import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -38,7 +45,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * either content or blackboard artifact tag nodes.
  */
 public class BlackboardArtifactTagNode extends DisplayableItemNode {
-
+  private static final Logger LOGGER = Logger.getLogger(BlackboardArtifactTagNode.class.getName());
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/green-tag-icon-16.png"; //NON-NLS
     private final BlackboardArtifactTag tag;
 
@@ -93,11 +100,37 @@ public class BlackboardArtifactTagNode extends DisplayableItemNode {
     @Override
     public Action[] getActions(boolean context) {
         List<Action> actions = DataModelActionsFactory.getActions(tag.getContent(), true);
-        for (Action a : super.getActions(true)) {
-            actions.add(a);
+        actions.addAll(Arrays.asList(super.getActions(context)));
+
+        BlackboardArtifact artifact = getLookup().lookup(BlackboardArtifact.class);
+        //if this artifact has a time stamp add the action to view it in the timeline
+        try {
+            if (ViewArtifactInTimelineAction.hasSupportedTimeStamp(artifact)) {
+                actions.add(new ViewArtifactInTimelineAction(artifact));
+            }
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, MessageFormat.format("Error getting arttribute(s) from blackboard artifact{0}.", artifact.getArtifactID()), ex); //NON-NLS
+            MessageNotifyUtil.Notify.error(Bundle.BlackboardArtifactNode_getAction_errorTitle(), Bundle.BlackboardArtifactNode_getAction_resultErrorMessage());
         }
-        actions.add(null); // Adds a menu item separator.      
-        
+
+        // if the artifact links to another file, add an action to go to that file
+        try {
+            AbstractFile c = findLinked(artifact);
+            if (c != null) {
+                actions.add(ViewFileInTimelineAction.createViewFileAction(c));
+            }
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, MessageFormat.format("Error getting linked file from blackboard artifact{0}.", artifact.getArtifactID()), ex); //NON-NLS
+            MessageNotifyUtil.Notify.error(Bundle.BlackboardArtifactNode_getAction_errorTitle(), Bundle.BlackboardArtifactNode_getAction_linkedFileMessage());
+        }
+
+        //if this artifact has associated content, add the action to view the content in the timeline
+        AbstractFile file = getLookup().lookup(AbstractFile.class);
+        if (null != file) {
+
+            actions.add(ViewFileInTimelineAction.createViewSourceFileAction(file));
+        }
+
         actions.add(DeleteBlackboardArtifactTagAction.getInstance());
         return actions.toArray(new Action[0]);
     }
