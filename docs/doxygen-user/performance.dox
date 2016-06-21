@@ -6,7 +6,7 @@ After installing Autopsy, there are several hardware-based things that we sugges
     - Run Autopsy from the Start Menu or desktop
     - When presented with the case creation splash screen, cancel/close the window
     - Select "Tools", "Options"
-    - On the "Autopsy" tab, there is a drop down for _Number of threads to use for file ingest_. We recommend you set this value 4.  If you set this number too high, performance can degrade because the pipelines are fighting for the same physical resources. Individual testing should be done to find an optimal setting. 
+    - On the "Autopsy" tab, there is a drop down for _Number of threads to use for file ingest_. We recommend you set this value 4.  If you set this number too high, performance can degrade because the pipelines are fighting for the same physical resources. Individual testing should be done to find an optimal setting, but our testing reveals that for most systems and setups, after four threads, the machine is I/O bound anyway, and increasing this number beyond 4 may actually reduce performance.
     - After each change, restart Autopsy to let this setting take effect.
 
 <br><br>
