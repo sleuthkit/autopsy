@@ -81,7 +81,7 @@ The log file should end up looking like this (modified lines are highlighted in 
     <br><br>
     <i>cmd /c C:\\Bitnami\\solr-4.10.3-0\\apache-solr\\scripts\\serviceinstall.bat INSTALL</i>
     <br><br>
-    Your command prompt should look like the screenshot below. Very likely it will say "The solrJetty service could not be started." This is okay.
+    Note the argument "INSTALL" is case sensitive. Your command prompt should look like the screenshot below. Very likely it will say "The solrJetty service could not be started." This is okay.
 <br><br>
 \image html solrinstall1.PNG
 <br><br>
