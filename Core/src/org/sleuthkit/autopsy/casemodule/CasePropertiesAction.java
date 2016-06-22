@@ -58,13 +58,11 @@ final class CasePropertiesAction extends CallableSystemAction {
             // create the popUp window for it
             String title = NbBundle.getMessage(this.getClass(), "CasePropertiesAction.window.title");
             final JFrame frame = new JFrame(title);
-            popUpWindow = new JDialog(frame, title, false); // to make the popUp Window to be modal
+            popUpWindow = new JDialog(frame, title, false);
             try {
 
-                // create the case properties form
                 CaseInformationPanel caseInformationPanel = new CaseInformationPanel();
 
-                // add the case properties form / panel to the popup window
                 popUpWindow.add(caseInformationPanel);
                 popUpWindow.setResizable(true);
                 popUpWindow.pack();

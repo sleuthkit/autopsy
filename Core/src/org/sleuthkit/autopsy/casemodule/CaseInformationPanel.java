@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ * 
+ * Copyright 2011-2016 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.casemodule;
 
@@ -13,8 +26,8 @@ import javax.swing.event.ChangeEvent;
 import org.openide.util.NbBundle.Messages;
 
 /**
- *
- * @author oliver
+ * Panel for displaying the case information, including both case details and
+ * ingest job history.
  */
 public class CaseInformationPanel extends javax.swing.JPanel {
 
@@ -51,6 +64,10 @@ public class CaseInformationPanel extends javax.swing.JPanel {
             logger.log(Level.SEVERE, "Failed to load case metadata.", ex);
             JOptionPane.showMessageDialog(null, Bundle.IngestJobInfoPanel_loadIngestJob_error_text(), Bundle.IngestJobInfoPanel_loadIngestJob_error_title(), JOptionPane.ERROR_MESSAGE);
         }
+    }
+    
+    public void setSelectedTab(int tab) {
+        this.tabbedPane.setSelectedComponent(this.tabbedPane.getComponent(1));
     }
 
     /**
