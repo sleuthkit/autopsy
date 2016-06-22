@@ -39,7 +39,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  */
 @ActionRegistration(
         displayName = "#CTL_OpenOutputFolder", iconInMenu = true)
-@ActionReference(path = "Menu/Help", position = 1850)
+@ActionReference(path = "Menu/Tools", position = 1850, separatorBefore = 1849)
 @ActionID(id = "org.sleuthkit.autopsy.actions.OpenOutputFolderAction", category = "Help")
 public final class OpenOutputFolderAction extends CallableSystemAction {
 

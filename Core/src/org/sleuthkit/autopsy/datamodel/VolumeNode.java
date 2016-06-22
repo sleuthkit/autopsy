@@ -131,6 +131,10 @@ public class VolumeNode extends AbstractContentNode<Volume> {
     public Action[] getActions(boolean popup) {
         List<Action> actionsList = new ArrayList<>();
 
+        for (Action a : super.getActions(true)) {
+            actionsList.add(a);
+        }
+
         actionsList.add(new NewWindowViewAction(
                 NbBundle.getMessage(this.getClass(), "VolumeNode.getActions.viewInNewWin.text"), this));
         actionsList.addAll(ExplorerNodeActionVisitor.getActions(content));

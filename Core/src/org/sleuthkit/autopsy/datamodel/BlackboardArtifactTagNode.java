@@ -20,13 +20,13 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.util.List;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.Action;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.actions.DeleteBlackboardArtifactTagAction;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -93,7 +93,11 @@ public class BlackboardArtifactTagNode extends DisplayableItemNode {
     @Override
     public Action[] getActions(boolean context) {
         List<Action> actions = DataModelActionsFactory.getActions(tag.getContent(), true);
-        actions.add(null); // Adds a menu item separator.         
+        for (Action a : super.getActions(true)) {
+            actions.add(a);
+        }
+        actions.add(null); // Adds a menu item separator.      
+        
         actions.add(DeleteBlackboardArtifactTagAction.getInstance());
         return actions.toArray(new Action[0]);
     }

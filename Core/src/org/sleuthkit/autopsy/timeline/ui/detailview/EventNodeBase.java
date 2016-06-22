@@ -77,7 +77,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.events.TagsAddedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsDeletedEvent;
-import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
+import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
 import org.sleuthkit.autopsy.timeline.ui.ContextMenuProvider;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.show;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.MultiEventNodeBase.CORNER_RADII_3;
@@ -167,7 +167,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
 
         //set up mouse hover effect and tooltip
         setOnMouseEntered(mouseEntered -> {
-            Tooltip.uninstall(chartLane, AbstractVisualizationPane.getDefaultTooltip());
+            Tooltip.uninstall(chartLane, AbstractTimelineChart.getDefaultTooltip());
             showHoverControls(true);
             toFront();
         });
@@ -176,7 +176,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
             if (parentNode != null) {
                 parentNode.showHoverControls(true);
             } else {
-                Tooltip.install(chartLane, AbstractVisualizationPane.getDefaultTooltip());
+                Tooltip.install(chartLane, AbstractTimelineChart.getDefaultTooltip());
             }
         });
         setOnMouseClicked(new ClickHandler());

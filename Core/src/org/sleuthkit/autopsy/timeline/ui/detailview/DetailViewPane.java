@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-16 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
+import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -29,6 +30,7 @@ import javafx.beans.Observable;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.chart.Axis;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonBar;
@@ -51,10 +53,11 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
-import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
+import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
 import org.sleuthkit.autopsy.timeline.utils.MappedList;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
@@ -73,7 +76,7 @@ import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
  * grouped EventStripes, etc, etc. The leaves of the trees are EventClusters or
  * SingleEvents.
  */
-public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStripe, EventNodeBase<?>, DetailsChart> {
+public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe, EventNodeBase<?>, DetailsChart> {
 
     private final static Logger LOGGER = Logger.getLogger(DetailViewPane.class.getName());
 
@@ -91,7 +94,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
 
     /**
      * Local copy of the zoomParams. Used to backout of a zoomParam change
-     * without needing to requery/redraw the vis.
+     * without needing to requery/redraw the view.
      */
     private ZoomParams currentZoomParams;
 
@@ -112,7 +115,6 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
 
         //initialize chart;
         setChart(new DetailsChart(controller, detailsChartDateAxis, pinnedDateAxis, verticalAxis, getSelectedNodes()));
-        setSettingsNodes(new DetailViewSettingsPane(getChart().getLayoutSettings()).getChildrenUnmodifiable());
 
         //bind layout fo axes and spacers
         detailsChartDateAxis.getTickMarks().addListener((Observable observable) -> layoutDateLabels());
@@ -204,7 +206,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     @Override
-    protected void clearChartData() {
+    protected void clearData() {
         getChart().reset();
     }
 
@@ -241,6 +243,26 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
     @Override
     protected double getAxisMargin() {
         return 0;
+    }
+
+    @Override
+    final protected ViewMode getViewMode() {
+        return ViewMode.DETAIL;
+    }
+
+    @Override
+    protected ImmutableList<Node> getSettingsControls() {
+        return ImmutableList.copyOf(new DetailViewSettingsPane(getChart().getLayoutSettings()).getChildrenUnmodifiable());
+    }
+
+    @Override
+    protected boolean hasCustomTimeNavigationControls() {
+        return false;
+    }
+
+    @Override
+    protected ImmutableList<Node> getTimeNavigationControls() {
+        return ImmutableList.of();
     }
 
     /**
@@ -286,7 +308,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
 
         DetailViewSettingsPane(DetailsChartLayoutSettings layoutSettings) {
             this.layoutSettings = layoutSettings;
-            FXMLConstructor.construct(DetailViewSettingsPane.this, "DetailViewSettingsPane.fxml"); // NON-NLS
+            FXMLConstructor.construct(DetailViewSettingsPane.this, "DetailViewSettingsPane.fxml"); //NON-NLS
         }
 
         @NbBundle.Messages({
@@ -300,11 +322,11 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
             "DetailViewPane.hiddenRadio.text=Hide Description"})
         @FXML
         void initialize() {
-            assert bandByTypeBox != null : "fx:id=\"bandByTypeBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
-            assert oneEventPerRowBox != null : "fx:id=\"oneEventPerRowBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
-            assert truncateAllBox != null : "fx:id=\"truncateAllBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
-            assert truncateWidthSlider != null : "fx:id=\"truncateAllSlider\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
-            assert pinnedEventsToggle != null : "fx:id=\"pinnedEventsToggle\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
+            assert bandByTypeBox != null : "fx:id=\"bandByTypeBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; //NON-NLS
+            assert oneEventPerRowBox != null : "fx:id=\"oneEventPerRowBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; //NON-NLS
+            assert truncateAllBox != null : "fx:id=\"truncateAllBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; //NON-NLS
+            assert truncateWidthSlider != null : "fx:id=\"truncateAllSlider\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; //NON-NLS
+            assert pinnedEventsToggle != null : "fx:id=\"pinnedEventsToggle\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; //NON-NLS
 
             //bind widgets to settings object properties
             bandByTypeBox.selectedProperty().bindBidirectional(layoutSettings.bandByTypeProperty());
@@ -347,13 +369,12 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
     @NbBundle.Messages({
         "DetailViewPane.loggedTask.queryDb=Retreiving event data",
         "DetailViewPane.loggedTask.name=Updating Details View",
-        "DetailViewPane.loggedTask.updateUI=Populating visualization",
+        "DetailViewPane.loggedTask.updateUI=Populating view",
         "DetailViewPane.loggedTask.continueButton=Continue",
         "DetailViewPane.loggedTask.backButton=Back (Cancel)",
         "# {0} - number of events",
-
         "DetailViewPane.loggedTask.prompt=You are about to show details for {0} events.  This might be very slow and could exhaust available memory.\n\nDo you want to continue?"})
-    private class DetailsUpdateTask extends VisualizationRefreshTask<Interval> {
+    private class DetailsUpdateTask extends ViewRefreshTask<Interval> {
 
         DetailsUpdateTask() {
             super(Bundle.DetailViewPane_loggedTask_name(), true);
@@ -409,7 +430,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
             currentZoomParams = newZoomParams;
 
             //clear the chart and set the horixontal axis
-            resetChart(eventsModel.getTimeRange());
+            resetView(eventsModel.getTimeRange());
 
             updateMessage(Bundle.DetailViewPane_loggedTask_updateUI());
 
@@ -433,9 +454,15 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
         }
 
         @Override
-        protected void setDateAxisValues(Interval timeRange) {
+        protected void setDateValues(Interval timeRange) {
             detailsChartDateAxis.setRange(timeRange, true);
             pinnedDateAxis.setRange(timeRange, true);
+        }
+
+        @Override
+        protected void succeeded() {
+            super.succeeded();
+            layoutDateLabels();
         }
     }
 }

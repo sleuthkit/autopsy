@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -56,6 +56,7 @@ import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.CancellationProgressTask;
+import org.sleuthkit.autopsy.timeline.datamodel.CombinedEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
@@ -214,8 +215,23 @@ public class EventsRepository {
         idToEventCache.invalidateAll();
     }
 
-    public Set<Long> getEventIDs(Interval timeRange, RootFilter filter) {
+    public List<Long> getEventIDs(Interval timeRange, RootFilter filter) {
         return eventDB.getEventIDs(timeRange, filter);
+    }
+
+    /**
+     * Get a representation of all the events, within the given time range, that
+     * pass the given filter, grouped by time and description such that file
+     * system events for the same file, with the same timestamp, are combined
+     * together.
+     *
+     * @param timeRange The Interval that all returned events must be within.
+     * @param filter    The Filter that all returned events must pass.
+     *
+     * @return A List of combined events, sorted by timestamp.
+     */
+    public List<CombinedEvent> getCombinedEvents(Interval timeRange, RootFilter filter) {
+        return eventDB.getCombinedEvents(timeRange, filter);
     }
 
     public Interval getSpanningInterval(Collection<Long> eventIDs) {
@@ -581,7 +597,7 @@ public class EventsRepository {
             timeMap.put(FileSystemTypes.FILE_MODIFIED, f.getMtime());
 
             /*
-             * if there are no legitimate ( greater tan zero ) time stamps ( eg,
+             * if there are no legitimate ( greater than zero ) time stamps ( eg,
              * logical/local files) skip the rest of the event generation: this
              * should result in droping logical files, since they do not have
              * legitimate time stamps.

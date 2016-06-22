@@ -23,7 +23,7 @@
             <items>
                 <HBox alignment="CENTER_LEFT" BorderPane.alignment="CENTER" HBox.hgrow="NEVER">
                     <children>
-                        <Label fx:id="visualizationModeLabel" text="Visualisation Mode:" textAlignment="CENTER" wrapText="true" HBox.hgrow="NEVER">
+                        <Label fx:id="viewModeLabel" text="View Mode:" textAlignment="CENTER" wrapText="true" HBox.hgrow="NEVER">
                             <HBox.margin>
                                 <Insets right="5.0" />
                             </HBox.margin>
@@ -32,7 +32,7 @@
                             </font>
                         </Label>
                                    
-                        <SegmentedButton maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" HBox.hgrow="NEVER">
+                        <SegmentedButton fx:id="modeSegButton" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" HBox.hgrow="NEVER">
                             <buttons>   
                                 <ToggleButton fx:id="countsToggle" alignment="TOP_LEFT" mnemonicParsing="false" selected="true">
                                     <graphic>
@@ -58,8 +58,20 @@
                                         <Font name="System Bold" size="16.0" />
                                     </font>
                                 </ToggleButton>
+                                <ToggleButton fx:id="listToggle" alignment="CENTER_RIGHT" layoutX="74.0" mnemonicParsing="false" selected="false">
+                                    <graphic>
+                                        <ImageView fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" rotate="0.0" smooth="true" style="-fx-background-color:white;" x="2.0" y="1.0">
+                                            <image>
+                                                <Image url="@../images/table.png" />
+                                            </image>
+                                        </ImageView>
+                                    </graphic>
+                                    <font>
+                                        <Font name="System Bold" size="16.0" />
+                                    </font>
+                                </ToggleButton>
                             </buttons>
-                                          
+
                         </SegmentedButton>
                     </children>
                     <padding>
@@ -81,7 +93,7 @@
                     </graphic>
                 </Button>
                 <Separator maxWidth="1.7976931348623157E308" orientation="VERTICAL" />
-                <Button fx:id="refreshButton" alignment="CENTER_RIGHT" mnemonicParsing="false" text="Refresh Vis.">
+                <Button fx:id="refreshButton" alignment="CENTER_RIGHT" mnemonicParsing="false" text="Refresh View">
                     <graphic>
                         <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
                             <image>
@@ -113,7 +125,7 @@
                     </children>
                 </StackPane>
                 <Separator />
-                <ToolBar>
+                <ToolBar fx:id="timeRangeToolBar">
                     <items>
                         <Label fx:id="startLabel" contentDisplay="RIGHT" minWidth="-Infinity">
                             <graphic>
@@ -129,7 +141,7 @@
                                 <Insets left="10.0" right="10.0" />
                             </HBox.margin>
                         </Separator>
-                        <HBox>
+                        <HBox fx:id="zoomInOutHBox">
                             <children>
                                 <Button fx:id="zoomOutButton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false">
                                     <graphic>

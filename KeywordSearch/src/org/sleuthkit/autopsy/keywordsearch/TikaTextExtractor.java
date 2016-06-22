@@ -32,19 +32,20 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import org.sleuthkit.autopsy.coreutils.TextUtil;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
-
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.apache.tika.Tika;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
  * Extractor of text from TIKA supported AbstractFile content. Extracted text is
@@ -65,14 +66,12 @@ class TikaTextExtractor implements TextExtractor {
     private static final int SINGLE_READ_CHARS = 1024;
     private static final int EXTRA_CHARS = 128; //for whitespace
     private final char[] textChunkBuf = new char[MAX_EXTR_TEXT_CHARS];
-    private final KeywordSearchIngestModule module;
     private AbstractFile sourceFile; //currently processed file
     private int numChunks = 0;
     private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
     private final List<String> TIKA_SUPPORTED_TYPES = new ArrayList<>();
 
-    TikaTextExtractor(KeywordSearchIngestModule module) {
-        this.module = module;
+    TikaTextExtractor() {
         ingester = Server.getIngester();
 
         Set<MediaType> mediaTypes = new Tika().getParser().getSupportedTypes(new ParseContext());
@@ -112,7 +111,7 @@ class TikaTextExtractor implements TextExtractor {
     }
 
     @Override
-    public boolean index(AbstractFile sourceFile) throws Ingester.IngesterException {
+    public boolean index(AbstractFile sourceFile, IngestJobContext context) throws Ingester.IngesterException {
         this.sourceFile = sourceFile;
         numChunks = 0; //unknown until indexing is done
 
@@ -159,6 +158,10 @@ class TikaTextExtractor implements TextExtractor {
             boolean eof = false;
             //we read max 1024 chars at time, this seems to max what this Reader would return
             while (!eof) {
+                if (context.fileIngestIsCancelled()) {
+                    ingester.ingest(this);
+                    return true;
+                }
                 readSize = reader.read(textChunkBuf, 0, SINGLE_READ_CHARS);
                 if (readSize == -1) {
                     eof = true;
@@ -188,7 +191,7 @@ class TikaTextExtractor implements TextExtractor {
 
                 // Sanitize by replacing non-UTF-8 characters with caret '^'
                 for (int i = 0; i < totalRead; ++i) {
-                    if (!isValidSolrUTF8(textChunkBuf[i])) {
+                    if (!TextUtil.isValidSolrUTF8(textChunkBuf[i])) {
                         textChunkBuf[i] = '^';
                     }
                 }
@@ -253,27 +256,6 @@ class TikaTextExtractor implements TextExtractor {
         ingester.ingest(this);
 
         return success;
-    }
-
-    /**
-     * This method determines if a passed-in Java char (16 bits) is a valid
-     * UTF-8 printable character, returning true if so, false if not.
-     *
-     * Note that this method can have ramifications for characters outside the
-     * Unicode Base Multilingual Plane (BMP), which require more than 16 bits.
-     * We are using Java characters (16 bits) to look at the data and this will
-     * not accurately identify any non-BMP character (larger than 16 bits)
-     * ending with 0xFFFF and 0xFFFE. In the interest of a fast solution, we
-     * have chosen to ignore the extended planes above Unicode BMP for the time
-     * being. The net result of this is some non-BMP characters may be
-     * interspersed with '^' characters in Autopsy.
-     *
-     * @param ch the character to test
-     *
-     * @return Returns true if the character is valid UTF-8, false if not.
-     */
-    private static boolean isValidSolrUTF8(char ch) {
-        return ((ch <= 0xFDD0 || ch >= 0xFDEF) && (ch > 0x1F || ch == 0x9 || ch == 0xA || ch == 0xD) && (ch != 0xFFFF) && (ch != 0xFFFE));
     }
 
     @Override

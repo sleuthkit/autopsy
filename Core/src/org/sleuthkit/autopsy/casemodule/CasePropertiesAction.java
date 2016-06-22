@@ -20,9 +20,6 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Dimension;
 import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.Action;
 import javax.swing.JDialog;
@@ -61,32 +58,16 @@ final class CasePropertiesAction extends CallableSystemAction {
             // create the popUp window for it
             String title = NbBundle.getMessage(this.getClass(), "CasePropertiesAction.window.title");
             final JFrame frame = new JFrame(title);
-            popUpWindow = new JDialog(frame, title, true); // to make the popUp Window to be modal
-
-            // get the information that needed
-            Case currentCase = Case.getCurrentCase();
-            String crDate = currentCase.getCreatedDate();
-            String caseDir = currentCase.getCaseDirectory();
-
-            // put the image paths information into hashmap
-            Map<Long, String> imgPaths = Case.getImagePaths(currentCase.getSleuthkitCase());
+            popUpWindow = new JDialog(frame, title, false); // to make the popUp Window to be modal
 
             // create the case properties form
-            CasePropertiesForm cpf = new CasePropertiesForm(currentCase, crDate, caseDir, imgPaths);
-
-            // add the command to close the window to the button on the Case Properties form / panel
-            cpf.setOKButtonActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    popUpWindow.dispose();
-                }
-            });
+            CaseInformationPanel caseInformationPanel = new CaseInformationPanel();
 
             // add the case properties form / panel to the popup window
-            popUpWindow.add(cpf);
+            popUpWindow.add(caseInformationPanel);
+            popUpWindow.setResizable(true);
             popUpWindow.pack();
-            popUpWindow.setResizable(false);
+            
 
             // set the location of the popUp Window on the center of the screen
             Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();

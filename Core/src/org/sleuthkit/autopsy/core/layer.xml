@@ -5,12 +5,12 @@
     <!-- ======================================================
          General
          ====================================================== -->
-    <attr name="Toolbars\File\org-sleuthkit-autopsy-casemodule-CaseCloseAction.instance\iconBase" stringvalue="org/sleuthkit/autopsy/images/close-icon.gif"/>
-    <attr name="Menu\File\org-netbeans-modules-print-action-PageSetupAction.shadow_hidden\position" intvalue="300"/>
-    <attr name="Menu\File\org-netbeans-modules-print-action-PrintAction.shadow_hidden\position" intvalue="500"/>
-    <!--<attr name="Menu\File\Separator2.instance_hidden\position" intvalue="100"/>
-    <attr name="Menu\File\Separator3.instance_hidden\position" intvalue="200"/>
-    <attr name="Menu\File\Separator4.instance_hidden\position" intvalue="400"/>-->
+    <attr name="Toolbars\Case\org-sleuthkit-autopsy-casemodule-CaseCloseAction.instance\iconBase" stringvalue="org/sleuthkit/autopsy/images/close-icon.gif"/>
+    <attr name="Menu\Case\org-netbeans-modules-print-action-PageSetupAction.shadow_hidden\position" intvalue="300"/>
+    <attr name="Menu\Case\org-netbeans-modules-print-action-PrintAction.shadow_hidden\position" intvalue="500"/>
+    <!--<attr name="Menu\Case\Separator2.instance_hidden\position" intvalue="100"/>
+    <attr name="Menu\Case\Separator3.instance_hidden\position" intvalue="200"/>
+    <attr name="Menu\Case\Separator4.instance_hidden\position" intvalue="400"/>-->
 
     <folder name="OptionsDialog"> 
         <!--<folder name="General.instance_hidden"/>-->
@@ -39,7 +39,7 @@
          Actions
          ====================================================== -->
     <folder name="Actions">
-        <folder name="File">
+        <folder name="Case">
             <file name="org-sleuthkit-autopsy-casemodule-AddImageAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-CaseCloseAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-CaseNewAction.instance">
@@ -145,24 +145,25 @@
         <file name="GoTo_hidden"/>
         <file name="Reports_hidden"/>
         <file name="Edit_hidden"/>
-        <folder name="File">
+        <file name="File_hidden"/>
+        <folder name="Case">
             <file name="org-sleuthkit-autopsy-casemodule-CaseNewAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/File/org-sleuthkit-autopsy-casemodule-CaseNewAction.instance"/>
+                <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-CaseNewAction.instance"/>
                 <attr name="position" intvalue="100"/>
             </file>
             <file name="org-sleuthkit-autopsy-casemodule-CaseOpenAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/File/org-sleuthkit-autopsy-casemodule-CaseOpenAction.instance"/>
+                <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-CaseOpenAction.instance"/>
                 <attr name="position" intvalue="101"/>
             </file>
-            <folder name="OpenRecentCase">
+            <folder name="Open Recent Case">
                 <attr name="position" intvalue="102"/>
                 <attr name="SystemFileSystem.localizingBundle" stringvalue="org.sleuthkit.autopsy.casemodule.Bundle"/>
                 <file name="org-sleuthkit-autopsy-casemodule-RecentCasesAction.shadow">
-                    <attr name="originalFile" stringvalue="Actions/File/org-sleuthkit-autopsy-casemodule-RecentCases.instance"/>
+                    <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-RecentCases.instance"/>
                 </file>
             </folder>
             <file name="org-sleuthkit-autopsy-casemodule-CaseCloseAct.shadow">
-                <attr name="originalFile" stringvalue="Actions/File/org-sleuthkit-autopsy-casemodule-CaseCloseAction.instance"/>
+                <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-CaseCloseAction.instance"/>
                 <attr name="position" intvalue="103"/>
             </file>
             <file name="org-sleuthkit-autopsy-casemodule-AddImage-separatorBefore.instance">
@@ -170,7 +171,7 @@
                 <attr name="position" intvalue="200"/>
             </file>
             <file name="org-sleuthkit-autopsy-casemodule-AddImageAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/File/org-sleuthkit-autopsy-casemodule-AddImageAction.instance"/>
+                <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-AddImageAction.instance"/>
                 <attr name="position" intvalue="201"/>
             </file>
             <file name="org-sleuthkit-autopsy-casemodule-AddImage-separatorAfter.instance">
@@ -182,7 +183,7 @@
                 <attr name="position" intvalue="300"/>
             </file>
             <file name="org-sleuthkit-autopsy-casemodule-CasePropertiesAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/File/org-sleuthkit-autopsy-casemodule-CasePropertiesAction.instance"/>
+                <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-CasePropertiesAction.instance"/>
                 <attr name="position" intvalue="301"/>
             </file>
             <file name="org-netbeans-modules-print-action-PageSetupAction.shadow_hidden"/>
@@ -361,7 +362,8 @@
         <file name="Clipboard_hidden"/>
         <file name="Memory_hidden"/>
         <file name="UndoRedo_hidden"/>
-        <folder name="File">
+        <file name="File_hidden"/>
+        <folder name="Case">
             <file name="org-sleuthkit-autopsy-casemodule-CaseCloseAction.instance">
                 <attr name="delegate" newvalue="org.sleuthkit.autopsy.casemodule.CaseCloseAction"/>
                 <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.casemodule.Bundle#CTL_CaseCloseAct"/>
@@ -385,11 +387,11 @@
             <file name="org-sleuthkit-autopsy-report-ReportWizardAction.shadow">
                 <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.report.Bundle#Toolbars/Reports/org-sleuthkit-autopsy-report-ReportWizardAction.shadow"/>
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-report-ReportWizardAction.instance"/>
-                <attr name="position" intvalue="102"/>
+                <attr name="position" intvalue="103"/>
             </file>
         </folder>
         <folder name="Ingest">
-            <attr intvalue="103" name="position"/>
+            <attr intvalue="104" name="position"/>
             <file name="org-sleuthkit-autopsy-ingest-IngestMessagesAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-ingest-IngestMessagesAction.instance"/>
             </file>
@@ -404,10 +406,10 @@
          ====================================================== -->
     <folder name="Shortcuts">
         <file name="D-N.shadow">
-            <attr name="originalFile" stringvalue="Actions/File/org-sleuthkit-autopsy-casemodule-CaseNewAction.instance"/>
+            <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-CaseNewAction.instance"/>
         </file>
         <file name="D-O.shadow">
-            <attr name="originalFile" stringvalue="Actions/File/org-sleuthkit-autopsy-casemodule-CaseOpenAction.instance"/>
+            <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-CaseOpenAction.instance"/>
         </file>
     </folder>
 

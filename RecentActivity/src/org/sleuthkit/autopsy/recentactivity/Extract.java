@@ -22,18 +22,18 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
-import org.sleuthkit.autopsy.coreutils.SQLiteDBConnect;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.logging.Level;
-
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.SQLiteDBConnect;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.datamodel.*;
@@ -103,15 +103,15 @@ abstract class Extract {
      *
      * @param bbart Blackboard artifact to be indexed
      */
+    @Messages({"Extract.indexError.message=Failed to index artifact for keyword search."})
     void indexArtifact(BlackboardArtifact bbart) {
         Blackboard blackboard = Case.getCurrentCase().getServices().getBlackboard();
         try {
             // index the artifact for keyword search
             blackboard.indexArtifact(bbart);
         } catch (Blackboard.BlackboardException ex) {
-            logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", bbart.getDisplayName()), ex); //NON-NLS
-            MessageNotifyUtil.Notify.error(
-                    NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), bbart.getDisplayName());
+            logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bbart.getDisplayName(), ex); //NON-NLS
+            MessageNotifyUtil.Notify.error(Bundle.Extract_indexError_message(), bbart.getDisplayName());
         }
     }
 

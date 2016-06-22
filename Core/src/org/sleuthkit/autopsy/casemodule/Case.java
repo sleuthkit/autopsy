@@ -75,7 +75,7 @@ import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.RunIngestAction;
+import org.sleuthkit.autopsy.timeline.OpenTimelineAction;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
@@ -1519,27 +1519,20 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
             if (RuntimeProperties.coreComponentsAreActive()) {
                 // enable these menus
-                CallableSystemAction.get(AddImageAction.class).setEnabled(true);
-                CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
-                CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
-                CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true); // Delete Case menu
-                CallableSystemAction.get(RunIngestAction.class).setEnabled(true);
-
-                if (toChangeTo.hasData()) {
-                    // open all top components
-                    SwingUtilities.invokeLater(() -> {
-                        CoreComponentControl.openCoreWindows();
-                    });
-                } else {
-                    // close all top components
-                    SwingUtilities.invokeLater(() -> {
-                        CoreComponentControl.closeCoreWindows();
-                    });
-                }
-            }
-
-            if (RuntimeProperties.coreComponentsAreActive()) {
                 SwingUtilities.invokeLater(() -> {
+                    CallableSystemAction.get(AddImageAction.class).setEnabled(true);
+                    CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
+                    CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
+                    CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true); // Delete Case menu
+                    CallableSystemAction.get(OpenTimelineAction.class).setEnabled(true);
+
+                    if (toChangeTo.hasData()) {
+                        // open all top components
+                        CoreComponentControl.openCoreWindows();
+                    } else {
+                        // close all top components
+                        CoreComponentControl.closeCoreWindows();
+                    }
                     updateMainWindowTitle(currentCase.getName());
                 });
             } else {
@@ -1550,9 +1543,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
             }
 
         } else { // case is closed
-            if (RuntimeProperties.coreComponentsAreActive()) {
+            SwingUtilities.invokeLater(() -> {
+                if (RuntimeProperties.coreComponentsAreActive()) {
 
-                SwingUtilities.invokeLater(() -> {
                     // close all top components first
                     CoreComponentControl.closeCoreWindows();
 
@@ -1561,16 +1554,11 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     CallableSystemAction.get(CaseCloseAction.class).setEnabled(false); // Case Close menu
                     CallableSystemAction.get(CasePropertiesAction.class).setEnabled(false); // Case Properties menu
                     CallableSystemAction.get(CaseDeleteAction.class).setEnabled(false); // Delete Case menu
-                    CallableSystemAction.get(RunIngestAction.class).setEnabled(false);
-                });
-            }
+                    CallableSystemAction.get(OpenTimelineAction.class).setEnabled(false);
+                }
 
-            //clear pending notifications
-            SwingUtilities.invokeLater(() -> {
+                //clear pending notifications
                 MessageNotifyUtil.Notify.clear();
-            });
-
-            SwingUtilities.invokeLater(() -> {
                 Frame f = WindowManager.getDefault().getMainWindow();
                 f.setTitle(Case.getAppName()); // set the window name to just application name
             });
@@ -1666,7 +1654,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * Deletes reports from the case.
      *
      * @param reports        Collection of Report to be deleted from the case.
-     * @param deleteFromDisk No longer supported - ignored. 
+     * @param deleteFromDisk No longer supported - ignored.
      *
      * @throws TskCoreException
      * @deprecated Use deleteReports(Collection<? extends Report> reports)
@@ -1676,5 +1664,5 @@ public class Case implements SleuthkitCase.ErrorObserver {
     public void deleteReports(Collection<? extends Report> reports, boolean deleteFromDisk) throws TskCoreException {
         deleteReports(reports);
     }
-    
+
 }

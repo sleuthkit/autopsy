@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,9 +30,9 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
@@ -40,29 +40,25 @@ import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
+import org.sleuthkit.autopsy.ingest.FileIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.LayoutFile;
-import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
-import org.sleuthkit.datamodel.Volume;
-import org.sleuthkit.autopsy.coreutils.FileUtil;
-import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.ingest.ProcTerminationCode;
-import org.sleuthkit.autopsy.ingest.FileIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.IngestMonitor;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
+import org.sleuthkit.autopsy.ingest.ProcTerminationCode;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * A file ingest module that runs the Unallocated Carver executable with
@@ -182,12 +178,6 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
         Path tempFilePath = null;
         try {
-            long id = getRootId(file);
-            // make sure we have a valid systemID
-            if (id == -1) {
-                return IngestModule.ProcessResult.ERROR;
-            }
-
             // Verify initialization succeeded.
             if (null == this.executableFile) {
                 logger.log(Level.SEVERE, "PhotoRec carver called after failed start up");  // NON-NLS
@@ -205,12 +195,25 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                         NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.NotEnoughDiskSpace"));
                 return IngestModule.ProcessResult.ERROR;
             }
+            if (this.context.fileIngestIsCancelled() == true) {
+                // if it was cancelled by the user, result is OK
+                logger.log(Level.INFO, "PhotoRec cancelled by user"); // NON-NLS
+                MessageNotifyUtil.Notify.info(PhotoRecCarverIngestModuleFactory.getModuleName(), NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.cancelledByUser"));
+                return IngestModule.ProcessResult.OK;
+            }
 
             // Write the file to disk.
             long writestart = System.currentTimeMillis();
             WorkingPaths paths = PhotoRecCarverFileIngestModule.pathsByJob.get(this.jobId);
             tempFilePath = Paths.get(paths.getTempDirPath().toString(), file.getName());
             ContentUtils.writeToFile(file, tempFilePath.toFile());
+
+            if (this.context.fileIngestIsCancelled() == true) {
+                // if it was cancelled by the user, result is OK
+                logger.log(Level.INFO, "PhotoRec cancelled by user"); // NON-NLS
+                MessageNotifyUtil.Notify.info(PhotoRecCarverIngestModuleFactory.getModuleName(), NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.cancelledByUser"));
+                return IngestModule.ProcessResult.OK;
+            }
 
             // Create a subdirectory for this file.
             Path outputDirPath = Paths.get(paths.getOutputDirPath().toString(), file.getName());
@@ -262,6 +265,12 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             java.io.File newAuditFile = new java.io.File(Paths.get(outputDirPath.toString(), PHOTOREC_REPORT).toString()); //NON-NLS
             oldAuditFile.renameTo(newAuditFile);
 
+            if (this.context.fileIngestIsCancelled() == true) {
+                // if it was cancelled by the user, result is OK
+                logger.log(Level.INFO, "PhotoRec cancelled by user"); // NON-NLS
+                MessageNotifyUtil.Notify.info(PhotoRecCarverIngestModuleFactory.getModuleName(), NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.cancelledByUser"));
+                return IngestModule.ProcessResult.OK;
+            }
             Path pathToRemove = Paths.get(outputDirPath.toAbsolutePath().toString());
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(pathToRemove)) {
                 for (Path entry : stream) {
@@ -276,10 +285,16 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             // Now that we've cleaned up the folders and data files, parse the xml output file to add carved items into the database
             long calcstart = System.currentTimeMillis();
             PhotoRecCarverOutputParser parser = new PhotoRecCarverOutputParser(outputDirPath);
-            List<LayoutFile> carvedItems = parser.parse(newAuditFile, id, file);
+            if (this.context.fileIngestIsCancelled() == true) {
+                // if it was cancelled by the user, result is OK
+                logger.log(Level.INFO, "PhotoRec cancelled by user"); // NON-NLS
+                MessageNotifyUtil.Notify.info(PhotoRecCarverIngestModuleFactory.getModuleName(), NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.cancelledByUser"));
+                return IngestModule.ProcessResult.OK;
+            }
+            List<LayoutFile> carvedItems = parser.parse(newAuditFile, file, context);
             long calcdelta = (System.currentTimeMillis() - calcstart);
             totals.totalParsetime.addAndGet(calcdelta);
-            if (carvedItems != null) { // if there were any results from carving, add the unallocated carving event to the reports list.
+            if (carvedItems != null && !carvedItems.isEmpty()) { // if there were any results from carving, add the unallocated carving event to the reports list.
                 totals.totalItemsRecovered.addAndGet(carvedItems.size());
                 context.addFilesToJob(new ArrayList<>(carvedItems));
                 services.fireModuleContentEvent(new ModuleContentEvent(carvedItems.get(0))); // fire an event to update the tree
@@ -409,31 +424,6 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             throw new IngestModule.IngestModuleException(Bundle.cannotCreateOutputDir_message(ex.getLocalizedMessage()), ex);
         }
         return path;
-    }
-
-    /**
-     * Finds the root Volume or Image of the AbstractFile passed in.
-     *
-     * @param file The file we want to find the root parent for
-     *
-     * @return The ID of the root parent Volume or Image
-     */
-    private static long getRootId(AbstractFile file) {
-        long id = -1;
-        Content parent = null;
-        try {
-            parent = file.getParent();
-            while (parent != null) {
-                if (parent instanceof Volume || parent instanceof Image) {
-                    id = parent.getId();
-                    break;
-                }
-                parent = parent.getParent();
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "PhotoRec carver exception while trying to get parent of AbstractFile.", ex); //NON-NLS
-        }
-        return id;
     }
 
     /**

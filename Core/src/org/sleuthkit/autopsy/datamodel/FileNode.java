@@ -79,18 +79,21 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
     @Override
     public Action[] getActions(boolean popup) {
         List<Action> actionsList = new ArrayList<>();
+        for (Action a : super.getActions(true)) {
+            actionsList.add(a);
+        }
         if (!this.getDirectoryBrowseMode()) {
-            actionsList.add(new ViewContextAction(NbBundle.getMessage(this.getClass(), "FileNode.viewFileInDir.text"), this));
+            actionsList.add(new ViewContextAction(NbBundle.getMessage(FileNode.class, "FileNode.viewFileInDir.text"), this));
             actionsList.add(null); // creates a menu separator
         }
         actionsList.add(new NewWindowViewAction(
-                NbBundle.getMessage(this.getClass(), "FileNode.getActions.viewInNewWin.text"), this));
+                NbBundle.getMessage(FileNode.class, "FileNode.getActions.viewInNewWin.text"), this));
         actionsList.add(new ExternalViewerAction(
-                NbBundle.getMessage(this.getClass(), "FileNode.getActions.openInExtViewer.text"), this));
+                NbBundle.getMessage(FileNode.class, "FileNode.getActions.openInExtViewer.text"), this));
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
         actionsList.add(new HashSearchAction(
-                NbBundle.getMessage(this.getClass(), "FileNode.getActions.searchFilesSameMD5.text"), this));
+                NbBundle.getMessage(FileNode.class, "FileNode.getActions.searchFilesSameMD5.text"), this));
         actionsList.add(null); // creates a menu separator        
         actionsList.add(AddContentTagAction.getInstance());
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
