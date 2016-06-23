@@ -19,13 +19,11 @@
 package org.sleuthkit.autopsy.actions;
 
 import java.awt.Window;
-import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
-import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
@@ -87,12 +85,6 @@ public class GetTagNameDialog extends JDialog {
         InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), cancelName);
         ActionMap actionMap = getRootPane().getActionMap();
-        actionMap.put(cancelName, new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                cancelButtonActionPerformed(e);
-            }
-        });
 
         // Get the current set of tag names and hash them for a speedy lookup in
         // case the user chooses an existing tag name from the tag names table.
@@ -175,7 +167,6 @@ public class GetTagNameDialog extends JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        cancelButton = new javax.swing.JButton();
         okButton = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         tagsTable = new javax.swing.JTable();
@@ -190,13 +181,6 @@ public class GetTagNameDialog extends JDialog {
         addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 formKeyReleased(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(GetTagNameDialog.class, "GetTagNameDialog.cancelButton.text")); // NOI18N
-        cancelButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cancelButtonActionPerformed(evt);
             }
         });
 
@@ -251,7 +235,7 @@ public class GetTagNameDialog extends JDialog {
                 .addContainerGap()
                 .addComponent(tagNameLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tagNameField)
+                .addComponent(tagNameField, javax.swing.GroupLayout.DEFAULT_SIZE, 192, Short.MAX_VALUE)
                 .addGap(2, 2, 2)
                 .addComponent(addTagButton)
                 .addContainerGap())
@@ -281,17 +265,16 @@ public class GetTagNameDialog extends JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 198, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(preexistingLabel)
-                    .addComponent(deleteTagButton))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 233, Short.MAX_VALUE)
-                        .addComponent(okButton)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 198, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(preexistingLabel)
+                            .addComponent(deleteTagButton))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(cancelButton))
-                    .addComponent(newTagPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(newTagPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(okButton)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -308,62 +291,15 @@ public class GetTagNameDialog extends JDialog {
                         .addGap(0, 5, Short.MAX_VALUE))
                     .addComponent(newTagPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cancelButton)
-                    .addComponent(okButton))
+                .addComponent(okButton)
                 .addContainerGap())
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
-        tagName = null;
-        dispose();
-    }//GEN-LAST:event_cancelButtonActionPerformed
-
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
-        String tagDisplayName = tagNameField.getText();
-        if (tagDisplayName.isEmpty()) {
-            JOptionPane.showMessageDialog(null,
-                    NbBundle.getMessage(this.getClass(),
-                            "GetTagNameDialog.mustSupplyTtagName.msg"),
-                    NbBundle.getMessage(this.getClass(), "GetTagNameDialog.tagNameErr"),
-                    JOptionPane.ERROR_MESSAGE);
-        } else if (containsIllegalCharacters(tagDisplayName)) {
-            JOptionPane.showMessageDialog(null,
-                    NbBundle.getMessage(this.getClass(), "GetTagNameDialog.illegalChars.msg"),
-                    NbBundle.getMessage(this.getClass(), "GetTagNameDialog.illegalCharsErr"),
-                    JOptionPane.ERROR_MESSAGE);
-        } else {
-            tagName = tagNames.get(tagDisplayName);
-            if (tagName == null) {
-                try {
-                    tagName = Case.getCurrentCase().getServices().getTagsManager().addTagName(tagDisplayName);
-                    dispose();
-                } catch (TskCoreException ex) {
-                    Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, "Error adding " + tagDisplayName + " tag name", ex); //NON-NLS
-                    JOptionPane.showMessageDialog(null,
-                            NbBundle.getMessage(this.getClass(),
-                                    "GetTagNameDialog.unableToAddTagNameToCase.msg",
-                                    tagDisplayName),
-                            NbBundle.getMessage(this.getClass(), "GetTagNameDialog.taggingErr"),
-                            JOptionPane.ERROR_MESSAGE);
-                    tagName = null;
-                } catch (TagsManager.TagNameAlreadyExistsException ex) {
-                    Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, "Error adding " + tagDisplayName + " tag name", ex); //NON-NLS
-                    JOptionPane.showMessageDialog(null,
-                            NbBundle.getMessage(this.getClass(),
-                                    "GetTagNameDialog.tagNameAlreadyDef.msg",
-                                    tagDisplayName),
-                            NbBundle.getMessage(this.getClass(), "GetTagNameDialog.dupTagErr"),
-                            JOptionPane.ERROR_MESSAGE);
-                    tagName = null;
-                }
-            } else {
-                dispose();
-            }
-        }
+        dispose();
     }//GEN-LAST:event_okButtonActionPerformed
 
     private void formKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_formKeyReleased
@@ -436,7 +372,6 @@ public class GetTagNameDialog extends JDialog {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addTagButton;
-    private javax.swing.JButton cancelButton;
     private javax.swing.JButton deleteTagButton;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JPanel newTagPanel;

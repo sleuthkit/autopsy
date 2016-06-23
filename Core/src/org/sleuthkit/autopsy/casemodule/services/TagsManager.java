@@ -20,9 +20,11 @@ package org.sleuthkit.autopsy.casemodule.services;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -46,7 +48,8 @@ public class TagsManager implements Closeable {
     private static final String TAGS_SETTINGS_NAME = "Tags"; //NON-NLS
     private static final String TAG_NAMES_SETTING_KEY = "TagNames"; //NON-NLS
     private SleuthkitCase caseDb;
-    private final HashMap<String, TagName> uniqueTagNames = new HashMap<>();
+    private final HashMap<String, TagName> settingsTagNames = new HashMap<>();
+    private final Map<String, TagName> dbTagNames = new HashMap<>();
     private boolean tagNamesLoaded = false;
 
     /**
@@ -74,7 +77,7 @@ public class TagsManager implements Closeable {
             throw new TskCoreException("Tags manager has been closed");
         }
         lazyLoadExistingTagNames();
-        return caseDb.getAllTagNames();
+        return new ArrayList<>(settingsTagNames.values());
     }
 
     /**
@@ -103,7 +106,7 @@ public class TagsManager implements Closeable {
      */
     public synchronized boolean tagNameExists(String tagDisplayName) {
         lazyLoadExistingTagNames();
-        return uniqueTagNames.containsKey(tagDisplayName);
+        return settingsTagNames.containsKey(tagDisplayName);
     }
 
     /**
@@ -167,31 +170,53 @@ public class TagsManager implements Closeable {
             throw new TskCoreException("Tags manager has been closed");
         }
         lazyLoadExistingTagNames();
-        if (uniqueTagNames.containsKey(displayName)) {
+        if (settingsTagNames.containsKey(displayName)) {
             throw new TagNameAlreadyExistsException();
         }
+        TagName newTagName = null;
+        if (dbTagNames.containsKey(displayName)) {
+            TagName dbTag = dbTagNames.get(displayName);
+            if (!(dbTag.getDescription().equals(description) && dbTag.getColor() == color)) {
+                throw new TagNameAlreadyExistsException();
+            } else {
 
+                newTagName = dbTag;
+                /*
+                 * Add the tag name to the tags settings.
+                 */
+                settingsTagNames.put(newTagName.getDisplayName(), newTagName);
+                saveTagNamesToTagsSettings();
+
+                return newTagName;
+            }
+        }
         /*
          * Add the tag name to the case.
          */
-        TagName newTagName = caseDb.addTagName(displayName, description, color);
-
+        newTagName = caseDb.addTagName(displayName, description, color);
         /*
          * Add the tag name to the tags settings.
          */
-        uniqueTagNames.put(newTagName.getDisplayName(), newTagName);
+        settingsTagNames.put(newTagName.getDisplayName(), newTagName);
         saveTagNamesToTagsSettings();
 
         return newTagName;
     }
 
+    /**
+     * Deletes the given tag name from the properties.
+     *
+     * @param tag The tag to delete from the properties
+     *
+     * @throws TskCoreException If the tag manager has been closed.
+     */
     public synchronized void deleteTagName(TagName tag) throws TskCoreException {
         if (null == caseDb) {
             throw new TskCoreException("Tags manager has been closed");
         }
         lazyLoadExistingTagNames();
-        if (uniqueTagNames.containsValue(tag)) {
-            uniqueTagNames.remove(tag.getDisplayName());
+        if (settingsTagNames.containsValue(tag)) {
+            settingsTagNames.remove(tag.getDisplayName());
             saveTagNamesToTagsSettings();
         }
     }
@@ -609,7 +634,7 @@ public class TagsManager implements Closeable {
         try {
             List<TagName> currentTagNames = caseDb.getAllTagNames();
             for (TagName tagName : currentTagNames) {
-                uniqueTagNames.put(tagName.getDisplayName(), tagName);
+                dbTagNames.put(tagName.getDisplayName(), tagName);
             }
         } catch (TskCoreException ex) {
             Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get tag types from the current case", ex); //NON-NLS
@@ -631,10 +656,15 @@ public class TagsManager implements Closeable {
             // at a time to gracefully discard any duplicates or corrupt tuples.
             for (String tagNameTuple : tagNameTuples) {
                 String[] tagNameAttributes = tagNameTuple.split(",");
-                if (!uniqueTagNames.containsKey(tagNameAttributes[0])) {
+                if (!settingsTagNames.containsKey(tagNameAttributes[0])) {
                     try {
-                        TagName tagName = caseDb.addTagName(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.getColorByName(tagNameAttributes[2]));
-                        uniqueTagNames.put(tagName.getDisplayName(), tagName);
+                        if (this.dbTagNames.containsKey(tagNameAttributes[0])) {
+                            TagName tagName = dbTagNames.get(tagNameAttributes[0]);
+                            settingsTagNames.put(tagName.getDisplayName(), tagName);
+                        } else {
+                            TagName tagName = caseDb.addTagName(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.getColorByName(tagNameAttributes[2]));
+                            settingsTagNames.put(tagName.getDisplayName(), tagName);
+                        }
                     } catch (TskCoreException ex) {
                         Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to add saved tag name " + tagNameAttributes[0], ex); //NON-NLS
                     }
@@ -647,11 +677,12 @@ public class TagsManager implements Closeable {
      * Adds the standard tag names to the tag names collection.
      */
     private void addPredefinedTagNames() {
-        if (!uniqueTagNames.containsKey(NbBundle.getMessage(this.getClass(), "TagsManager.predefTagNames.bookmark.text"))) {
+        if (!dbTagNames.containsKey(NbBundle.getMessage(this.getClass(), "TagsManager.predefTagNames.bookmark.text"))) {
             try {
                 TagName tagName = caseDb.addTagName(
                         NbBundle.getMessage(this.getClass(), "TagsManager.predefTagNames.bookmark.text"), "", TagName.HTML_COLOR.NONE);
-                uniqueTagNames.put(tagName.getDisplayName(), tagName);
+                dbTagNames.put(tagName.getDisplayName(), tagName);
+                settingsTagNames.put(tagName.getDisplayName(), tagName);
             } catch (TskCoreException ex) {
                 Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to add standard 'Bookmark' tag name to case database", ex); //NON-NLS
             }
@@ -663,9 +694,9 @@ public class TagsManager implements Closeable {
      * make it possible to use tag names across cases.
      */
     private void saveTagNamesToTagsSettings() {
-        if (!uniqueTagNames.isEmpty()) {
+        if (!settingsTagNames.isEmpty()) {
             StringBuilder setting = new StringBuilder();
-            for (TagName tagName : uniqueTagNames.values()) {
+            for (TagName tagName : settingsTagNames.values()) {
                 if (setting.length() != 0) {
                     setting.append(";");
                 }

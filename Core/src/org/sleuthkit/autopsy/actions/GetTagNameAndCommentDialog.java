@@ -68,7 +68,7 @@ public class GetTagNameAndCommentDialog extends JDialog {
     /**
      * Show the Tag Name and Comment Dialog and return the TagNameAndContent
      * chosen by the user. The dialog will be centered with the main autopsy
-     * window as its owner. 
+     * window as its owner.
      *
      * @return a TagNameAndComment instance containing the TagName selected by
      *         the user and the entered comment, or null if the user canceled
@@ -256,11 +256,22 @@ public class GetTagNameAndCommentDialog extends JDialog {
 
     private void newTagButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newTagButtonActionPerformed
         TagName newTagName = GetTagNameDialog.doDialog(this);
-        if (newTagName != null) {
-            tagNames.put(newTagName.getDisplayName(), newTagName);
-            tagCombo.addItem(newTagName.getDisplayName());
-            tagCombo.setSelectedItem(newTagName.getDisplayName());
+        try {
+            List<TagName> currentTagNames = Case.getCurrentCase().getServices().getTagsManager().getAllTagNames();
+            tagNames.clear();
+            for (TagName tagName : currentTagNames) {
+                tagNames.put(tagName.getDisplayName(), tagName);
+            }
+            if (newTagName != null) {
+                tagNames.put(newTagName.getDisplayName(), newTagName);
+                for(TagName tagName : currentTagNames) {
+                    tagCombo.addItem(tagName.getDisplayName());
+                }
+            }
+        } catch (TskCoreException ex) {
+            //OSTODO
         }
+
     }//GEN-LAST:event_newTagButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
