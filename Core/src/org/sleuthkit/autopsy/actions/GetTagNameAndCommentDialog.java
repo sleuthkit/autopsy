@@ -262,11 +262,10 @@ public class GetTagNameAndCommentDialog extends JDialog {
             for (TagName tagName : currentTagNames) {
                 tagNames.put(tagName.getDisplayName(), tagName);
             }
-            if (newTagName != null) {
-                tagNames.put(newTagName.getDisplayName(), newTagName);
-                for(TagName tagName : currentTagNames) {
-                    tagCombo.addItem(tagName.getDisplayName());
-                }
+            tagNames.put(newTagName.getDisplayName(), newTagName);
+            tagCombo.removeAllItems();
+            for (TagName tagName : currentTagNames) {
+                tagCombo.addItem(tagName.getDisplayName());
             }
         } catch (TskCoreException ex) {
             //OSTODO

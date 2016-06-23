@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
-import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -84,7 +83,6 @@ public class GetTagNameDialog extends JDialog {
         String cancelName = NbBundle.getMessage(this.getClass(), "GetTagNameDialog.cancelName");
         InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), cancelName);
-        ActionMap actionMap = getRootPane().getActionMap();
 
         // Get the current set of tag names and hash them for a speedy lookup in
         // case the user chooses an existing tag name from the tag names table.
