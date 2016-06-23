@@ -32,6 +32,7 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
+import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
@@ -113,7 +114,8 @@ public class GetTagNameDialog extends JDialog {
         // Populate the tag names table.
         tagsTable.setModel(new TagsTableModel(currentTagNames));
         tagsTable.setTableHeader(null);
-        tagsTable.setCellSelectionEnabled(false);
+        tagsTable.setCellSelectionEnabled(true);
+        tagsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         tagsTable.setFocusable(false);
         tagsTable.setRowHeight(tagsTable.getRowHeight() + 5);
 
@@ -181,6 +183,8 @@ public class GetTagNameDialog extends JDialog {
         newTagPanel = new javax.swing.JPanel();
         tagNameLabel = new javax.swing.JLabel();
         tagNameField = new javax.swing.JTextField();
+        addTagButton = new javax.swing.JButton();
+        deleteTagButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         addKeyListener(new java.awt.event.KeyAdapter() {
@@ -205,7 +209,6 @@ public class GetTagNameDialog extends JDialog {
 
         jScrollPane1.setBackground(new java.awt.Color(255, 255, 255));
 
-        tagsTable.setBackground(new java.awt.Color(240, 240, 240));
         tagsTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
@@ -214,6 +217,7 @@ public class GetTagNameDialog extends JDialog {
 
             }
         ));
+        tagsTable.setGridColor(java.awt.Color.black);
         tagsTable.setShowHorizontalLines(false);
         tagsTable.setShowVerticalLines(false);
         tagsTable.setTableHeader(null);
@@ -232,6 +236,13 @@ public class GetTagNameDialog extends JDialog {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(addTagButton, org.openide.util.NbBundle.getMessage(GetTagNameDialog.class, "GetTagNameDialog.addTagButton.text")); // NOI18N
+        addTagButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                addTagButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout newTagPanelLayout = new javax.swing.GroupLayout(newTagPanel);
         newTagPanel.setLayout(newTagPanelLayout);
         newTagPanelLayout.setHorizontalGroup(
@@ -239,8 +250,10 @@ public class GetTagNameDialog extends JDialog {
             .addGroup(newTagPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(tagNameLabel)
-                .addGap(36, 36, 36)
-                .addComponent(tagNameField, javax.swing.GroupLayout.DEFAULT_SIZE, 235, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tagNameField)
+                .addGap(2, 2, 2)
+                .addComponent(addTagButton)
                 .addContainerGap())
         );
         newTagPanelLayout.setVerticalGroup(
@@ -249,9 +262,17 @@ public class GetTagNameDialog extends JDialog {
                 .addContainerGap()
                 .addGroup(newTagPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(tagNameLabel)
-                    .addComponent(tagNameField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(164, Short.MAX_VALUE))
+                    .addComponent(tagNameField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(addTagButton))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
+
+        org.openide.awt.Mnemonics.setLocalizedText(deleteTagButton, org.openide.util.NbBundle.getMessage(GetTagNameDialog.class, "GetTagNameDialog.deleteTagButton.text")); // NOI18N
+        deleteTagButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteTagButtonActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -261,7 +282,8 @@ public class GetTagNameDialog extends JDialog {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 198, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(preexistingLabel))
+                    .addComponent(preexistingLabel)
+                    .addComponent(deleteTagButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
@@ -280,7 +302,10 @@ public class GetTagNameDialog extends JDialog {
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(preexistingLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 164, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(deleteTagButton)
+                        .addGap(0, 5, Short.MAX_VALUE))
                     .addComponent(newTagPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -353,8 +378,66 @@ public class GetTagNameDialog extends JDialog {
         }
     }//GEN-LAST:event_tagNameFieldKeyReleased
 
+    private void deleteTagButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteTagButtonActionPerformed
+        String tagDisplayName = (String) this.tagsTable.getModel().getValueAt(this.tagsTable.getSelectedRow(), 1);
+        try {
+            Case.getCurrentCase().getServices().getTagsManager().deleteTagName(tagNames.get(tagDisplayName));
+            tagNames.remove(tagDisplayName);
+            tagsTable.setModel(new TagsTableModel(new ArrayList<>(this.tagNames.values())));
+        } catch (TskCoreException ex) {
+            //OSTODO
+        }
+    }//GEN-LAST:event_deleteTagButtonActionPerformed
+
+    private void addTagButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addTagButtonActionPerformed
+        String tagDisplayName = tagNameField.getText();
+        if (tagDisplayName.isEmpty()) {
+            JOptionPane.showMessageDialog(null,
+                    NbBundle.getMessage(this.getClass(),
+                            "GetTagNameDialog.mustSupplyTtagName.msg"),
+                    NbBundle.getMessage(this.getClass(), "GetTagNameDialog.tagNameErr"),
+                    JOptionPane.ERROR_MESSAGE);
+        } else if (containsIllegalCharacters(tagDisplayName)) {
+            JOptionPane.showMessageDialog(null,
+                    NbBundle.getMessage(this.getClass(), "GetTagNameDialog.illegalChars.msg"),
+                    NbBundle.getMessage(this.getClass(), "GetTagNameDialog.illegalCharsErr"),
+                    JOptionPane.ERROR_MESSAGE);
+        } else {
+            tagName = tagNames.get(tagDisplayName);
+            if (tagName == null) {
+                try {
+                    tagName = Case.getCurrentCase().getServices().getTagsManager().addTagName(tagDisplayName);
+                    tagNames.put(tagDisplayName, tagName);
+                    tagsTable.setModel(new TagsTableModel(new ArrayList<>(this.tagNames.values())));
+                    this.tagNameField.setText("");
+                } catch (TskCoreException ex) {
+                    Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, "Error adding " + tagDisplayName + " tag name", ex); //NON-NLS
+                    JOptionPane.showMessageDialog(null,
+                            NbBundle.getMessage(this.getClass(),
+                                    "GetTagNameDialog.unableToAddTagNameToCase.msg",
+                                    tagDisplayName),
+                            NbBundle.getMessage(this.getClass(), "GetTagNameDialog.taggingErr"),
+                            JOptionPane.ERROR_MESSAGE);
+                    tagName = null;
+                } catch (TagsManager.TagNameAlreadyExistsException ex) {
+                    Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, "Error adding " + tagDisplayName + " tag name", ex); //NON-NLS
+                    JOptionPane.showMessageDialog(null,
+                            NbBundle.getMessage(this.getClass(),
+                                    "GetTagNameDialog.tagNameAlreadyDef.msg",
+                                    tagDisplayName),
+                            NbBundle.getMessage(this.getClass(), "GetTagNameDialog.dupTagErr"),
+                            JOptionPane.ERROR_MESSAGE);
+                    tagName = null;
+                }
+            }
+        }
+        this.repaint();
+    }//GEN-LAST:event_addTagButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton addTagButton;
     private javax.swing.JButton cancelButton;
+    private javax.swing.JButton deleteTagButton;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JPanel newTagPanel;
     private javax.swing.JButton okButton;

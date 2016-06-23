@@ -53,7 +53,7 @@ public class TagsManager implements Closeable {
      * Constructs a per case Autopsy service that manages the creation,
      * updating, and deletion of tags applied to content and blackboard
      * artifacts by users.
-     * 
+     *
      * @param caseDb The case database.
      */
     TagsManager(SleuthkitCase caseDb) {
@@ -183,6 +183,17 @@ public class TagsManager implements Closeable {
         saveTagNamesToTagsSettings();
 
         return newTagName;
+    }
+
+    public synchronized void deleteTagName(TagName tag) throws TskCoreException {
+        if (null == caseDb) {
+            throw new TskCoreException("Tags manager has been closed");
+        }
+        lazyLoadExistingTagNames();
+        if (uniqueTagNames.containsValue(tag)) {
+            uniqueTagNames.remove(tag.getDisplayName());
+            saveTagNamesToTagsSettings();
+        }
     }
 
     /**
