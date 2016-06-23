@@ -32,7 +32,6 @@ import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.contentviewers.Utilities;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -41,7 +40,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 
@@ -105,7 +103,9 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             jPanel1.setPreferredSize(new java.awt.Dimension(622, 424));
 
             outputViewPane.setEditable(false);
-            outputViewPane.setPreferredSize(new java.awt.Dimension(700, 400));
+            outputViewPane.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N
+            outputViewPane.setMaximumSize(new java.awt.Dimension(2000, 20000000));
+            outputViewPane.setPreferredSize(null);
             jScrollPane1.setViewportView(outputViewPane);
 
             totalPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerArtifact.class, "DataContentViewerArtifact.totalPageLabel.text")); // NOI18N
@@ -122,14 +122,14 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             pageLabel.setMinimumSize(new java.awt.Dimension(33, 14));
             pageLabel.setPreferredSize(new java.awt.Dimension(33, 14));
 
-            nextPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward.png"))); // NOI18N NON-NLS
+            nextPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward.png"))); // NOI18N
             nextPageButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerArtifact.class, "DataContentViewerArtifact.nextPageButton.text")); // NOI18N
             nextPageButton.setBorderPainted(false);
             nextPageButton.setContentAreaFilled(false);
-            nextPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_disabled.png"))); // NOI18N NON-NLS
+            nextPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_disabled.png"))); // NOI18N
             nextPageButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
             nextPageButton.setPreferredSize(new java.awt.Dimension(23, 23));
-            nextPageButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_hover.png"))); // NOI18N NON-NLS
+            nextPageButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_hover.png"))); // NOI18N
             nextPageButton.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent evt) {
                     nextPageButtonActionPerformed(evt);
@@ -141,14 +141,14 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             pageLabel2.setMinimumSize(new java.awt.Dimension(29, 14));
             pageLabel2.setPreferredSize(new java.awt.Dimension(29, 14));
 
-            prevPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back.png"))); // NOI18N NON-NLS
+            prevPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back.png"))); // NOI18N
             prevPageButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerArtifact.class, "DataContentViewerArtifact.prevPageButton.text")); // NOI18N
             prevPageButton.setBorderPainted(false);
             prevPageButton.setContentAreaFilled(false);
-            prevPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_disabled.png"))); // NOI18N NON-NLS
+            prevPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_disabled.png"))); // NOI18N
             prevPageButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
             prevPageButton.setPreferredSize(new java.awt.Dimension(23, 23));
-            prevPageButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_hover.png"))); // NOI18N NON-NLS
+            prevPageButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_hover.png"))); // NOI18N
             prevPageButton.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent evt) {
                     prevPageButtonActionPerformed(evt);
