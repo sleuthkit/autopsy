@@ -255,14 +255,13 @@ public class GetTagNameAndCommentDialog extends JDialog {
     }//GEN-LAST:event_closeDialog
 
     private void newTagButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newTagButtonActionPerformed
-        TagName newTagName = GetTagNameDialog.doDialog(this);
+        GetTagNameDialog.doDialog(this);
         try {
             List<TagName> currentTagNames = Case.getCurrentCase().getServices().getTagsManager().getAllTagNames();
             tagNames.clear();
             for (TagName tagName : currentTagNames) {
                 tagNames.put(tagName.getDisplayName(), tagName);
             }
-            tagNames.put(newTagName.getDisplayName(), newTagName);
             tagCombo.removeAllItems();
             for (TagName tagName : currentTagNames) {
                 tagCombo.addItem(tagName.getDisplayName());

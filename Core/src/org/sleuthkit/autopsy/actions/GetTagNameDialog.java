@@ -33,6 +33,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
@@ -174,6 +175,7 @@ public class GetTagNameDialog extends JDialog {
         tagNameField = new javax.swing.JTextField();
         addTagButton = new javax.swing.JButton();
         deleteTagButton = new javax.swing.JButton();
+        jLabel1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         addKeyListener(new java.awt.event.KeyAdapter() {
@@ -233,7 +235,7 @@ public class GetTagNameDialog extends JDialog {
                 .addContainerGap()
                 .addComponent(tagNameLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tagNameField, javax.swing.GroupLayout.DEFAULT_SIZE, 192, Short.MAX_VALUE)
+                .addComponent(tagNameField, javax.swing.GroupLayout.DEFAULT_SIZE, 172, Short.MAX_VALUE)
                 .addGap(2, 2, 2)
                 .addComponent(addTagButton)
                 .addContainerGap())
@@ -246,7 +248,7 @@ public class GetTagNameDialog extends JDialog {
                     .addComponent(tagNameLabel)
                     .addComponent(tagNameField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(addTagButton))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(238, Short.MAX_VALUE))
         );
 
         org.openide.awt.Mnemonics.setLocalizedText(deleteTagButton, org.openide.util.NbBundle.getMessage(GetTagNameDialog.class, "GetTagNameDialog.deleteTagButton.text")); // NOI18N
@@ -255,6 +257,8 @@ public class GetTagNameDialog extends JDialog {
                 deleteTagButtonActionPerformed(evt);
             }
         });
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(GetTagNameDialog.class, "GetTagNameDialog.jLabel1.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -267,8 +271,11 @@ public class GetTagNameDialog extends JDialog {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 198, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(preexistingLabel)
-                            .addComponent(deleteTagButton))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(deleteTagButton)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(0, 0, 0)
                         .addComponent(newTagPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
@@ -283,10 +290,12 @@ public class GetTagNameDialog extends JDialog {
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(preexistingLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 164, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 177, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(deleteTagButton)
-                        .addGap(0, 5, Short.MAX_VALUE))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(deleteTagButton)
+                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 0, 0))
                     .addComponent(newTagPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(okButton)
@@ -312,14 +321,17 @@ public class GetTagNameDialog extends JDialog {
         }
     }//GEN-LAST:event_tagNameFieldKeyReleased
 
+    @Messages({"GetTagNameDialog.deleteTag.success.text=Successfully deleted tag.",
+        "GetTagNameDialog.deleteTag.success.header=Success",
+        "GetTagNameDialog.deleteTag.failure.text=Failed to delete tag.",
+        "GetTagNameDialog.deleteTag.failure.header=Failure"})
     private void deleteTagButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteTagButtonActionPerformed
         String tagDisplayName = (String) this.tagsTable.getModel().getValueAt(this.tagsTable.getSelectedRow(), 1);
         try {
             Case.getCurrentCase().getServices().getTagsManager().deleteTagName(tagNames.get(tagDisplayName));
-            tagNames.remove(tagDisplayName);
-            tagsTable.setModel(new TagsTableModel(new ArrayList<>(this.tagNames.values())));
+            JOptionPane.showMessageDialog(null, Bundle.GetTagNameDialog_deleteTag_success_text(), Bundle.GetTagNameDialog_deleteTag_success_header(), JOptionPane.INFORMATION_MESSAGE);
         } catch (TskCoreException ex) {
-            //OSTODO
+            JOptionPane.showMessageDialog(null, Bundle.GetTagNameDialog_deleteTag_failure_text(), Bundle.GetTagNameDialog_deleteTag_failure_header(), JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_deleteTagButtonActionPerformed
 
@@ -371,6 +383,7 @@ public class GetTagNameDialog extends JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addTagButton;
     private javax.swing.JButton deleteTagButton;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JPanel newTagPanel;
     private javax.swing.JButton okButton;

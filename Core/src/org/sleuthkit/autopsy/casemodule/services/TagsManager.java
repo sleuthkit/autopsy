@@ -77,7 +77,14 @@ public class TagsManager implements Closeable {
             throw new TskCoreException("Tags manager has been closed");
         }
         lazyLoadExistingTagNames();
-        return new ArrayList<>(settingsTagNames.values());
+        List<TagName> tags = new ArrayList<>();
+        tags.addAll(this.settingsTagNames.values());
+        for(TagName tagName : dbTagNames.values()) {
+            if (!tags.contains(tagName)) {
+                tags.add(tagName);
+            }
+        }
+        return tags;
     }
 
     /**
@@ -106,7 +113,7 @@ public class TagsManager implements Closeable {
      */
     public synchronized boolean tagNameExists(String tagDisplayName) {
         lazyLoadExistingTagNames();
-        return settingsTagNames.containsKey(tagDisplayName);
+        return settingsTagNames.containsKey(tagDisplayName) || dbTagNames.containsKey(tagDisplayName);
     }
 
     /**
@@ -686,6 +693,9 @@ public class TagsManager implements Closeable {
             } catch (TskCoreException ex) {
                 Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to add standard 'Bookmark' tag name to case database", ex); //NON-NLS
             }
+        }
+        else {
+            settingsTagNames.put(NbBundle.getMessage(this.getClass(), "TagsManager.predefTagNames.bookmark.text"), dbTagNames.get(NbBundle.getMessage(this.getClass(), "TagsManager.predefTagNames.bookmark.text")));
         }
     }
 
