@@ -29,8 +29,10 @@ import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
@@ -254,6 +256,8 @@ public class GetTagNameAndCommentDialog extends JDialog {
         dispose();
     }//GEN-LAST:event_closeDialog
 
+    @Messages({"GetTagNameAndCommentDialog.newTagButtonAction.failure.message=Failed to load tags.",
+        "GetTagNameAndCommentDialog.newTagButtonAction.failure.header=Load Failure"})
     private void newTagButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newTagButtonActionPerformed
         GetTagNameDialog.doDialog(this);
         try {
@@ -267,7 +271,7 @@ public class GetTagNameAndCommentDialog extends JDialog {
                 tagCombo.addItem(tagName.getDisplayName());
             }
         } catch (TskCoreException ex) {
-            //OSTODO
+            JOptionPane.showMessageDialog(this, Bundle.GetTagNameAndCommentDialog_newTagButtonAction_failure_message(), Bundle.GetTagNameAndCommentDialog_newTagButtonAction_failure_header(), JOptionPane.ERROR_MESSAGE);
         }
 
     }//GEN-LAST:event_newTagButtonActionPerformed
