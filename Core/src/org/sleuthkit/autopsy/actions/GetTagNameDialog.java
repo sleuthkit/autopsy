@@ -46,6 +46,7 @@ public class GetTagNameDialog extends JDialog {
     private static final String TAG_ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
     private final HashMap<String, TagName> tagNames = new HashMap<>();
     private TagName tagName = null;
+    static final Logger logger = Logger.getLogger(GetTagNameDialog.class.getName());
 
     /**
      * Show the Tag Name Dialog and return the TagName selected by the user. The
@@ -332,6 +333,7 @@ public class GetTagNameDialog extends JDialog {
             JOptionPane.showMessageDialog(null, Bundle.GetTagNameDialog_deleteTag_success_text(), Bundle.GetTagNameDialog_deleteTag_success_header(), JOptionPane.INFORMATION_MESSAGE);
         } catch (TskCoreException ex) {
             JOptionPane.showMessageDialog(null, Bundle.GetTagNameDialog_deleteTag_failure_text(), Bundle.GetTagNameDialog_deleteTag_failure_header(), JOptionPane.ERROR_MESSAGE);
+            logger.log(Level.SEVERE, "Failed to delete tag: " + tagDisplayName, ex);
         }
     }//GEN-LAST:event_deleteTagButtonActionPerformed
 

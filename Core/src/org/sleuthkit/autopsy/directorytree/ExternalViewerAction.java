@@ -97,3 +97,4 @@ public class ExternalViewerAction extends AbstractAction {
         tempFile.deleteOnExit();
     }
 }
+ 
