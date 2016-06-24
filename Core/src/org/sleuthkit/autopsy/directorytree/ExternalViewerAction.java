@@ -24,7 +24,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
+import javax.swing.JOptionPane;
 import org.openide.nodes.Node;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
@@ -67,6 +69,8 @@ public class ExternalViewerAction extends AbstractAction {
         }
     }
 
+    @Messages({"ExternalViewerAction.actionPerformed.failure.message=The given file could not be open, as the file type is not supported.",
+        "ExternalViewerAction.actionPerformed.failure.title=Open Failure"})
     @Override
     public void actionPerformed(ActionEvent e) {
         // Get the temp folder path of the case
@@ -91,6 +95,7 @@ public class ExternalViewerAction extends AbstractAction {
         } catch (IOException ex) {
             // if can't open the file, throw the error saying: "File type not supported."
             logger.log(Level.WARNING, "File type not supported.", ex); //NON-NLS
+            JOptionPane.showMessageDialog(null, Bundle.ExternalViewerAction_actionPerformed_failure_message(), Bundle.ExternalViewerAction_actionPerformed_failure_title(), JOptionPane.ERROR_MESSAGE);
         }
 
         // delete the file on exit
