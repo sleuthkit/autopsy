@@ -73,61 +73,72 @@ public class EmailExtracted implements AutopsyVisitableItem {
     private final class EmailResults extends Observable {
 
         private final Map<String, Map<String, List<Long>>> accounts = new LinkedHashMap<>();
+        // "accounts" object can be accessed by multiple threads and needs to be protected with locks
+        private final Object accountsLock;
 
         EmailResults() {
+            accountsLock = new Object();
             update();
         }
 
         public Set<String> getAccounts() {
-            return accounts.keySet();
+            synchronized (accountsLock) {
+                return accounts.keySet();
+            }
         }
 
         public Set<String> getFolders(String account) {
-            return accounts.get(account).keySet();
+            synchronized (accountsLock) {
+                return accounts.get(account).keySet();
+            }
         }
 
         public List<Long> getArtifactIds(String account, String folder) {
-            return accounts.get(account).get(folder);
+            synchronized (accountsLock) {
+                return accounts.get(account).get(folder);
+            }
         }
 
         @SuppressWarnings("deprecation")
         public void update() {
-            accounts.clear();
-            if (skCase == null) {
-                return;
-            }
-
-            int artId = BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID();
-            int pathAttrId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID();
-            String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id " //NON-NLS
-                    + "FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
-                    + "attribute_type_id=" + pathAttrId //NON-NLS
-                    + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
-                    + " AND blackboard_artifacts.artifact_type_id=" + artId; //NON-NLS
-
-            try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
-                ResultSet resultSet = dbQuery.getResultSet();
-                while (resultSet.next()) {
-                    final String path = resultSet.getString("value_text"); //NON-NLS
-                    final long artifactId = resultSet.getLong("artifact_id"); //NON-NLS
-                    final Map<String, String> parsedPath = parsePath(path);
-                    final String account = parsedPath.get(MAIL_ACCOUNT);
-                    final String folder = parsedPath.get(MAIL_FOLDER);
-
-                    Map<String, List<Long>> folders = accounts.get(account);
-                    if (folders == null) {
-                        folders = new LinkedHashMap<>();
-                        accounts.put(account, folders);
-                    }
-                    List<Long> messages = folders.get(folder);
-                    if (messages == null) {
-                        messages = new ArrayList<>();
-                        folders.put(folder, messages);
-                    }
-                    messages.add(artifactId);
+            synchronized (accountsLock) {
+                accounts.clear();
+                if (skCase == null) {
+                    return;
                 }
-            } catch (TskCoreException | SQLException ex) {
-                logger.log(Level.WARNING, "Cannot initialize email extraction: ", ex); //NON-NLS
+
+                int artId = BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID();
+                int pathAttrId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID();
+                String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id " //NON-NLS
+                        + "FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
+                        + "attribute_type_id=" + pathAttrId //NON-NLS
+                        + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
+                        + " AND blackboard_artifacts.artifact_type_id=" + artId; //NON-NLS
+
+                try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
+                    ResultSet resultSet = dbQuery.getResultSet();
+                    while (resultSet.next()) {
+                        final String path = resultSet.getString("value_text"); //NON-NLS
+                        final long artifactId = resultSet.getLong("artifact_id"); //NON-NLS
+                        final Map<String, String> parsedPath = parsePath(path);
+                        final String account = parsedPath.get(MAIL_ACCOUNT);
+                        final String folder = parsedPath.get(MAIL_FOLDER);
+
+                        Map<String, List<Long>> folders = accounts.get(account);
+                        if (folders == null) {
+                            folders = new LinkedHashMap<>();
+                            accounts.put(account, folders);
+                        }
+                        List<Long> messages = folders.get(folder);
+                        if (messages == null) {
+                            messages = new ArrayList<>();
+                            folders.put(folder, messages);
+                        }
+                        messages.add(artifactId);
+                    }
+                } catch (TskCoreException | SQLException ex) {
+                    logger.log(Level.WARNING, "Cannot initialize email extraction: ", ex); //NON-NLS
+                }
             }
         }
 
