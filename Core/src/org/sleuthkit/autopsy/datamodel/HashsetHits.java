@@ -78,7 +78,7 @@ public class HashsetHits implements AutopsyVisitableItem {
     private class HashsetResults extends Observable {
 
         // maps hashset name to list of artifacts for that set
-
+        // NOTE: "hashSetHitsMap" object can be accessed by multiple threads and needs to be synchronized
         private final Map<String, Set<Long>> hashSetHitsMap = new LinkedHashMap<>();
 
         HashsetResults() {
@@ -86,47 +86,54 @@ public class HashsetHits implements AutopsyVisitableItem {
         }
 
         List<String> getSetNames() {
-            List<String> names = new ArrayList<>(hashSetHitsMap.keySet());
+            List<String> names;
+            synchronized (hashSetHitsMap) {
+                names = new ArrayList<>(hashSetHitsMap.keySet());
+            }
             Collections.sort(names);
             return names;
         }
 
         Set<Long> getArtifactIds(String hashSetName) {
-            return hashSetHitsMap.get(hashSetName);
+            synchronized (hashSetHitsMap) {            
+                return hashSetHitsMap.get(hashSetName);
+            }
         }
 
         @SuppressWarnings("deprecation")
         final void update() {
-            hashSetHitsMap.clear();
+            synchronized (hashSetHitsMap) {
+                hashSetHitsMap.clear();
 
-            if (skCase == null) {
-                return;
-            }
-
-            int setNameId = ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
-            int artId = ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID();
-            String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id " //NON-NLS
-                    + "FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
-                    + "attribute_type_id=" + setNameId //NON-NLS
-                    + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
-                    + " AND blackboard_artifacts.artifact_type_id=" + artId; //NON-NLS
-
-            try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
-                ResultSet resultSet = dbQuery.getResultSet();
-                while (resultSet.next()) {
-                    String setName = resultSet.getString("value_text"); //NON-NLS
-                    long artifactId = resultSet.getLong("artifact_id"); //NON-NLS
-                    if (!hashSetHitsMap.containsKey(setName)) {
-                        hashSetHitsMap.put(setName, new HashSet<Long>());
-                    }
-                    hashSetHitsMap.get(setName).add(artifactId);
+                if (skCase == null) {
+                    return;
                 }
-            } catch (TskCoreException | SQLException ex) {
-                logger.log(Level.WARNING, "SQL Exception occurred: ", ex); //NON-NLS
-            }
 
-            setChanged();
-            notifyObservers();
+                int setNameId = ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
+                int artId = ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID();
+                String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id " //NON-NLS
+                        + "FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
+                        + "attribute_type_id=" + setNameId //NON-NLS
+                        + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
+                        + " AND blackboard_artifacts.artifact_type_id=" + artId; //NON-NLS
+
+                try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
+                    ResultSet resultSet = dbQuery.getResultSet();
+                    while (resultSet.next()) {
+                        String setName = resultSet.getString("value_text"); //NON-NLS
+                        long artifactId = resultSet.getLong("artifact_id"); //NON-NLS
+                        if (!hashSetHitsMap.containsKey(setName)) {
+                            hashSetHitsMap.put(setName, new HashSet<Long>());
+                        }
+                        hashSetHitsMap.get(setName).add(artifactId);
+                    }
+                } catch (TskCoreException | SQLException ex) {
+                    logger.log(Level.WARNING, "SQL Exception occurred: ", ex); //NON-NLS
+                }
+
+                setChanged();
+                notifyObservers();
+            }
         }
     }
 
