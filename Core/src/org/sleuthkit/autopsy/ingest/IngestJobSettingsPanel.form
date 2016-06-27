@@ -34,17 +34,24 @@
           <Group type="102" attributes="0">
               <EmptySpace min="-2" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="modulesScrollPane" pref="256" max="32767" attributes="1"/>
                   <Group type="102" attributes="0">
-                      <Component id="jButtonSelectAll" min="-2" pref="103" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jButtonDeselectAll" min="-2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="processUnallocCheckbox" min="-2" max="-2" attributes="0"/>
+                          <Group type="102" alignment="0" attributes="0">
+                              <Group type="103" groupAlignment="1" max="-2" attributes="0">
+                                  <Component id="jButtonSelectAll" max="32767" attributes="0"/>
+                                  <Component id="pastJobsButton" max="32767" attributes="0"/>
+                              </Group>
+                              <EmptySpace min="-2" pref="5" max="-2" attributes="0"/>
+                              <Component id="jButtonDeselectAll" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                      </Group>
+                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                   </Group>
-                  <Component id="pastJobsButton" min="-2" max="-2" attributes="0"/>
-                  <Component id="processUnallocCheckbox" min="-2" max="-2" attributes="0"/>
-                  <Component id="modulesScrollPane" pref="261" max="32767" attributes="1"/>
               </Group>
               <EmptySpace min="-2" max="-2" attributes="0"/>
-              <Component id="jPanel1" pref="359" max="32767" attributes="0"/>
+              <Component id="jPanel1" pref="343" max="32767" attributes="0"/>
               <EmptySpace min="-2" max="-2" attributes="0"/>
           </Group>
       </Group>
@@ -67,7 +74,7 @@
                       <Component id="processUnallocCheckbox" min="-2" pref="23" max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" attributes="0">
-                      <Component id="jPanel1" pref="445" max="32767" attributes="0"/>
+                      <Component id="jPanel1" pref="428" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -131,7 +138,7 @@
                   <EmptySpace min="-2" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Component id="descriptionLabel" pref="0" max="32767" attributes="0"/>
-                      <Component id="jScrollPane1" alignment="1" pref="337" max="32767" attributes="0"/>
+                      <Component id="jScrollPane1" alignment="1" pref="321" max="32767" attributes="0"/>
                       <Group type="102" alignment="1" attributes="0">
                           <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                           <Component id="globalSettingsButton" min="-2" max="-2" attributes="0"/>
@@ -145,7 +152,7 @@
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" alignment="1" attributes="0">
                   <EmptySpace min="-2" max="-2" attributes="0"/>
-                  <Component id="jScrollPane1" pref="347" max="32767" attributes="0"/>
+                  <Component id="jScrollPane1" pref="330" max="32767" attributes="0"/>
                   <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
                   <Component id="jSeparator2" min="-2" pref="2" max="-2" attributes="0"/>
                   <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>

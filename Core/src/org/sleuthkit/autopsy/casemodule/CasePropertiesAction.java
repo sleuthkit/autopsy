@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Dimension;
 import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
 import java.util.logging.Level;
 import javax.swing.Action;
 import javax.swing.JDialog;
@@ -62,6 +63,9 @@ final class CasePropertiesAction extends CallableSystemAction {
             try {
 
                 CaseInformationPanel caseInformationPanel = new CaseInformationPanel();
+                caseInformationPanel.addCloseButtonAction((ActionEvent e) -> {
+                    popUpWindow.dispose();
+                });
 
                 popUpWindow.add(caseInformationPanel);
                 popUpWindow.setResizable(true);
