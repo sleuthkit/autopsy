@@ -72,36 +72,34 @@ public class EmailExtracted implements AutopsyVisitableItem {
 
     private final class EmailResults extends Observable {
 
+        // NOTE: "accounts" object can be accessed by multiple threads and needs to be synchronized
         private final Map<String, Map<String, List<Long>>> accounts = new LinkedHashMap<>();
-        // "accounts" object can be accessed by multiple threads and needs to be protected with locks
-        private final Object accountsLock;
 
         EmailResults() {
-            accountsLock = new Object();
             update();
         }
 
         public Set<String> getAccounts() {
-            synchronized (accountsLock) {
+            synchronized (accounts) {
                 return accounts.keySet();
             }
         }
 
         public Set<String> getFolders(String account) {
-            synchronized (accountsLock) {
+            synchronized (accounts) {
                 return accounts.get(account).keySet();
             }
         }
 
         public List<Long> getArtifactIds(String account, String folder) {
-            synchronized (accountsLock) {
+            synchronized (accounts) {
                 return accounts.get(account).get(folder);
             }
         }
 
         @SuppressWarnings("deprecation")
         public void update() {
-            synchronized (accountsLock) {
+            synchronized (accounts) {
                 accounts.clear();
                 if (skCase == null) {
                     return;
