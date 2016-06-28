@@ -34,14 +34,30 @@ import org.sleuthkit.datamodel.TskCoreException;
 public interface ArtifactEventType extends EventType {
 
     public static final Logger LOGGER = Logger.getLogger(ArtifactEventType.class.getName());
-    static final EmptyExtractor EMPTY_EXTRACTOR = new EmptyExtractor();
 
     /**
-     * @return the Artifact type this event type is derived from
+     * Get the artifact type this event type is derived from.
+     *
+     * @return The artifact type this event type is derived from.
      */
     public BlackboardArtifact.Type getArtifactType();
 
-    public BlackboardAttribute.Type getDateTimeAttrubuteType();
+    /**
+     * The attribute type this event type is derived from.
+     *
+     * @return The attribute type this event type is derived from.
+     */
+    public BlackboardAttribute.Type getDateTimeAttributeType();
+
+    /**
+     * Get the ID of the the artifact type that this EventType is derived from.
+     *
+     * @return the ID of the the artifact type that this EventType is derived
+     *         from.
+     */
+    public default int getArtifactTypeID() {
+        return getArtifactType().getTypeID();
+    }
 
     /**
      * given an artifact, pull out the time stamp, and compose the descriptions.
@@ -57,7 +73,7 @@ public interface ArtifactEventType extends EventType {
      * @throws TskCoreException
      */
     default AttributeEventDescription parseAttributesHelper(BlackboardArtifact artf) throws TskCoreException {
-        final BlackboardAttribute dateTimeAttr = artf.getAttribute(getDateTimeAttrubuteType());
+        final BlackboardAttribute dateTimeAttr = artf.getAttribute(getDateTimeAttributeType());
 
         long time = dateTimeAttr.getValueLong();
         String shortDescription = getShortExtractor().apply(artf);
@@ -144,10 +160,10 @@ public interface ArtifactEventType extends EventType {
     static public AttributeEventDescription buildEventDescription(ArtifactEventType type, BlackboardArtifact artf) throws TskCoreException {
         //if we got passed an artifact that doesn't correspond to the type of the event, 
         //something went very wrong. throw an exception.
-        if (type.getArtifactType().getTypeID() != artf.getArtifactTypeID()) {
+        if (type.getArtifactTypeID() != artf.getArtifactTypeID()) {
             throw new IllegalArgumentException();
         }
-        if (artf.getAttribute(type.getDateTimeAttrubuteType()) == null) {
+        if (artf.getAttribute(type.getDateTimeAttributeType()) == null) {
             LOGGER.log(Level.WARNING, "Artifact {0} has no date/time attribute, skipping it.", artf.getArtifactID()); // NON-NLS
             return null;
         }
@@ -184,8 +200,10 @@ public interface ArtifactEventType extends EventType {
         try {
             return artf.getAttribute(attrType);
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, MessageFormat.format("Error getting extracting attribute from artifact {0}.", artf.getArtifactID()), ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, MessageFormat.format("Error getting attribute from artifact {0}.", artf.getArtifactID()), ex); // NON-NLS
             return null;
         }
     }
+
+    
 }

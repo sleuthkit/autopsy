@@ -71,6 +71,8 @@ import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskData;
@@ -665,6 +667,69 @@ public class EventDB {
         } finally {
             DBLock.unlock();
         }
+    }
+
+    /**
+     * Get a List of event IDs for the events that are derived from the given
+     * artifact.
+     *
+     * @param artifact The BlackboardArtifact to get derived event IDs for.
+     *
+     * @return A List of event IDs for the events that are derived from the
+     *         given artifact.
+     */
+    List<Long> getEventIDsForArtifact(BlackboardArtifact artifact) {
+        DBLock.lock();
+
+        String query = "SELECT event_id FROM events WHERE artifact_id == " + artifact.getArtifactID();
+
+        ArrayList<Long> results = new ArrayList<>();
+        try (Statement stmt = con.createStatement();
+                ResultSet rs = stmt.executeQuery(query);) {
+            while (rs.next()) {
+                results.add(rs.getLong("event_id"));
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error executing getEventIDsForArtifact query.", ex); // NON-NLS
+        } finally {
+            DBLock.unlock();
+        }
+        return results;
+    }
+
+    /**
+     * Get a List of event IDs for the events that are derived from the given
+     * file.
+     *
+     * @param file                    The AbstractFile to get derived event IDs
+     *                                for.
+     * @param includeDerivedArtifacts If true, also get event IDs for events
+     *                                derived from artifacts derived form this
+     *                                file. If false, only gets events derived
+     *                                directly from this file (file system
+     *                                timestamps).
+     *
+     * @return A List of event IDs for the events that are derived from the
+     *         given file.
+     */
+    List<Long> getEventIDsForFile(AbstractFile file, boolean includeDerivedArtifacts) {
+        DBLock.lock();
+
+        String query = "SELECT event_id FROM events WHERE file_id == " + file.getId()
+                + (includeDerivedArtifacts ? "" : " AND artifact_id IS NULL");
+
+        ArrayList<Long> results = new ArrayList<>();
+        try (Statement stmt = con.createStatement();
+                ResultSet rs = stmt.executeQuery(query);) {
+            while (rs.next()) {
+                results.add(rs.getLong("event_id"));
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error executing getEventIDsForFile query.", ex); // NON-NLS
+        } finally {
+            DBLock.unlock();
+        }
+        return results;
     }
 
     /**

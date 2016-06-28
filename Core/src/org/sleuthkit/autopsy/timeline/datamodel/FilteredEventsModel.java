@@ -62,6 +62,7 @@ import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
@@ -113,7 +114,7 @@ public final class FilteredEventsModel {
     @GuardedBy("this")
     private final ReadOnlyObjectWrapper<ZoomParams> requestedZoomParamters = new ReadOnlyObjectWrapper<>();
 
-    private final EventBus eventbus = new EventBus("Event_Repository_EventBus"); //NON-NLS
+    private final EventBus eventbus = new EventBus("FilteredEventsModel_EventBus"); //NON-NLS
 
     /**
      * The underlying repo for events. Atomic access to repo is synchronized
@@ -427,6 +428,38 @@ public final class FilteredEventsModel {
             LOGGER.log(Level.SEVERE, "unable to determine tagged status of artifact.", ex); //NON-NLS
         }
         return false;
+    }
+
+    /**
+     * Get a List of event IDs for the events that are derived from the given
+     * file.
+     *
+     * @param file                    The AbstractFile to get derived event IDs
+     *                                for.
+     * @param includeDerivedArtifacts If true, also get event IDs for events
+     *                                derived from artifacts derived form this
+     *                                file. If false, only gets events derived
+     *                                directly from this file (file system
+     *                                timestamps).
+     *
+     * @return A List of event IDs for the events that are derived from the
+     *         given file.
+     */
+    public List<Long> getEventIDsForFile(AbstractFile file, boolean includedDerivedArtifacts) {
+        return repo.getEventIDsForFile(file, includedDerivedArtifacts);
+    }
+
+    /**
+     * Get a List of event IDs for the events that are derived from the given
+     * artifact.
+     *
+     * @param artifact The BlackboardArtifact to get derived event IDs for.
+     *
+     * @return A List of event IDs for the events that are derived from the
+     *         given artifact.
+     */
+    public List<Long> getEventIDsForArtifact(BlackboardArtifact artifact) {
+        return repo.getEventIDsForArtifact(artifact);
     }
 
     /**
