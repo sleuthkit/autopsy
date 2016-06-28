@@ -454,7 +454,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         chRegex.setSelected(false);
         addWordField.setText("");
         pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-
+        setFocusOnKeywordTextBox();
         setButtonStates();
     }//GEN-LAST:event_addWordButtonActionPerformed
 
