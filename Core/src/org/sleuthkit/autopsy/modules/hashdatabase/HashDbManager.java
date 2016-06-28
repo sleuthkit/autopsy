@@ -64,7 +64,7 @@ public class HashDbManager implements PropertyChangeListener {
     private Set<String> hashSetPaths = new HashSet<>();
     PropertyChangeSupport changeSupport = new PropertyChangeSupport(HashDbManager.class);
     private static final Logger logger = Logger.getLogger(HashDbManager.class.getName());
-    private boolean allDatabasesLoadedCorrectly = true;
+    private boolean allDatabasesLoadedCorrectly = false;
 
     /**
      * Property change event support In events: For both of these enums, the old
@@ -96,7 +96,7 @@ public class HashDbManager implements PropertyChangeListener {
         changeSupport.removePropertyChangeListener(listener);
     }
     
-    public synchronized boolean verifyAllDatabasesLoadedCorrectly(){
+    synchronized boolean verifyAllDatabasesLoadedCorrectly(){
         return allDatabasesLoadedCorrectly;
     }
 
