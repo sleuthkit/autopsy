@@ -594,6 +594,8 @@ public class IngestManager {
                         JOptionPane.showMessageDialog(null, message, Bundle.IngestManager_startupErr_dlgTitle(), JOptionPane.ERROR_MESSAGE);
                     });
                 }
+                // abort ingest
+                return new IngestJobStartResult(null, new IngestManagerException("Errors occurred while starting ingest"), errors);
             }
         }
         return new IngestJobStartResult(job, null, errors);
