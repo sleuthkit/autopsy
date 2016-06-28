@@ -101,20 +101,22 @@ public class EmailExtracted implements AutopsyVisitableItem {
         public void update() {
             synchronized (accounts) {
                 accounts.clear();
-                if (skCase == null) {
-                    return;
-                }
+            }
+            if (skCase == null) {
+                return;
+            }
 
-                int artId = BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID();
-                int pathAttrId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID();
-                String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id " //NON-NLS
-                        + "FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
-                        + "attribute_type_id=" + pathAttrId //NON-NLS
-                        + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
-                        + " AND blackboard_artifacts.artifact_type_id=" + artId; //NON-NLS
+            int artId = BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID();
+            int pathAttrId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID();
+            String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id " //NON-NLS
+                    + "FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
+                    + "attribute_type_id=" + pathAttrId //NON-NLS
+                    + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
+                    + " AND blackboard_artifacts.artifact_type_id=" + artId; //NON-NLS
 
-                try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
-                    ResultSet resultSet = dbQuery.getResultSet();
+            try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
+                ResultSet resultSet = dbQuery.getResultSet();
+                synchronized (accounts) {
                     while (resultSet.next()) {
                         final String path = resultSet.getString("value_text"); //NON-NLS
                         final long artifactId = resultSet.getLong("artifact_id"); //NON-NLS
@@ -134,9 +136,9 @@ public class EmailExtracted implements AutopsyVisitableItem {
                         }
                         messages.add(artifactId);
                     }
-                } catch (TskCoreException | SQLException ex) {
-                    logger.log(Level.WARNING, "Cannot initialize email extraction: ", ex); //NON-NLS
                 }
+            } catch (TskCoreException | SQLException ex) {
+                logger.log(Level.WARNING, "Cannot initialize email extraction: ", ex); //NON-NLS
             }
         }
 

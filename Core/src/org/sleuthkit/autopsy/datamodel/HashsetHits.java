@@ -104,21 +104,23 @@ public class HashsetHits implements AutopsyVisitableItem {
         final void update() {
             synchronized (hashSetHitsMap) {
                 hashSetHitsMap.clear();
+            }
 
-                if (skCase == null) {
-                    return;
-                }
+            if (skCase == null) {
+                return;
+            }
 
-                int setNameId = ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
-                int artId = ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID();
-                String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id " //NON-NLS
-                        + "FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
-                        + "attribute_type_id=" + setNameId //NON-NLS
-                        + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
-                        + " AND blackboard_artifacts.artifact_type_id=" + artId; //NON-NLS
+            int setNameId = ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
+            int artId = ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID();
+            String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id " //NON-NLS
+                    + "FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
+                    + "attribute_type_id=" + setNameId //NON-NLS
+                    + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
+                    + " AND blackboard_artifacts.artifact_type_id=" + artId; //NON-NLS
 
-                try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
-                    ResultSet resultSet = dbQuery.getResultSet();
+            try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
+                ResultSet resultSet = dbQuery.getResultSet();
+                synchronized (hashSetHitsMap) {
                     while (resultSet.next()) {
                         String setName = resultSet.getString("value_text"); //NON-NLS
                         long artifactId = resultSet.getLong("artifact_id"); //NON-NLS
@@ -127,13 +129,13 @@ public class HashsetHits implements AutopsyVisitableItem {
                         }
                         hashSetHitsMap.get(setName).add(artifactId);
                     }
-                } catch (TskCoreException | SQLException ex) {
-                    logger.log(Level.WARNING, "SQL Exception occurred: ", ex); //NON-NLS
                 }
-
-                setChanged();
-                notifyObservers();
+            } catch (TskCoreException | SQLException ex) {
+                logger.log(Level.WARNING, "SQL Exception occurred: ", ex); //NON-NLS
             }
+
+            setChanged();
+            notifyObservers();
         }
     }
 
