@@ -534,9 +534,10 @@ public class TimeLineController {
     private void showInListView(ViewInTimelineRequestedEvent requestEvent) {
         synchronized (filteredEvents) {
             setViewMode(ViewMode.LIST);
-            pushTimeRange(requestEvent.getInterval());
             selectEventIDs(requestEvent.getEventIDs());
-            eventbus.post(requestEvent);
+            if (pushTimeRange(requestEvent.getInterval()) == false) {
+                eventbus.post(requestEvent);
+            }
         }
     }
 

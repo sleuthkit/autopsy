@@ -164,7 +164,7 @@ class ListTimeline extends BorderPane {
      * Since TableView does not expose what cells/items are visible, we track
      * them in this set. It is sorted by index in the TableView's model.
      */
-    private final ConcurrentSkipListSet<CombinedEvent> visibleEvents;
+    private final SortedSet<CombinedEvent> visibleEvents;
 
     private final TimeLineController controller;
     private final SleuthkitCase sleuthkitCase;
@@ -265,15 +265,6 @@ class ListTimeline extends BorderPane {
         table.getSelectionModel().getSelectedItems().addListener(selectedEventListener);
         table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         selectEvents(controller.getSelectedEventIDs()); //grab initial selection
-
-    }
-
-    /**
-     * Clear all the events out of the table.
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    void clear() {
-        table.getItems().clear();
     }
 
     /**
@@ -313,16 +304,15 @@ class ListTimeline extends BorderPane {
             table.getSelectionModel().getSelectedItems().addListener(selectedEventListener);
 
             //find the indices of the CombinedEvents that will be selected
-            List<Integer> selectedIndices = table.getItems().stream()
-                    .filter(combinedEvent -> combinedEvent.getEventIDs().stream().anyMatch(selectedEventIDs::contains))
-                    .map(table.getItems()::indexOf)
-                    .collect(Collectors.toList());
+            int[] selectedIndices = table.getItems().stream()
+                    .filter(combinedEvent -> Collections.disjoint(combinedEvent.getEventIDs(), selectedEventIDs) == false)
+                    .mapToInt(table.getItems()::indexOf)
+                    .toArray();
 
             //select indices and scroll to the first one
-            if (selectedIndices.isEmpty() == false) {
-                int[] indicesArray = selectedIndices.stream().mapToInt(Integer::valueOf).toArray();
-                Integer firstSelectedIndex = indicesArray[0];
-                table.getSelectionModel().selectIndices(firstSelectedIndex, indicesArray);
+            if (selectedIndices.length > 0) {
+                Integer firstSelectedIndex = selectedIndices[0];
+                table.getSelectionModel().selectIndices(firstSelectedIndex, selectedIndices);
                 scrollTo(firstSelectedIndex);
                 table.requestFocus(); //grab focus so selection is clearer to user
             }
@@ -360,7 +350,7 @@ class ListTimeline extends BorderPane {
      */
     private void scrollTo(Integer index) {
         if (visibleEvents.contains(table.getItems().get(index)) == false) {
-            table.scrollTo(DoubleMath.roundToInt(index - (table.getHeight() / 2 / DEFAULT_ROW_HEIGHT), RoundingMode.DOWN));
+            table.scrollTo(DoubleMath.roundToInt(index - ((table.getHeight() / DEFAULT_ROW_HEIGHT)) / 2, RoundingMode.HALF_EVEN));
         }
     }
 

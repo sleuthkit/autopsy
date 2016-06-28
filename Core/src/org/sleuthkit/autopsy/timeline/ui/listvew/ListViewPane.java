@@ -62,9 +62,14 @@ public class ListViewPane extends AbstractTimeLineView {
         return new ListUpdateTask();
     }
 
+    /**
+     * This method is supposed to clear all the data from this View, but it
+     * might have been interfering with the "View in Timeline" action and was
+     * not strictly necessary so this implementation is a no-op.
+     */
     @Override
     protected void clearData() {
-        listTimeline.clear();
+
     }
 
     @Override
@@ -117,7 +122,7 @@ public class ListViewPane extends AbstractTimeLineView {
             synchronized (controller) {
                 selectedEventIDs = ImmutableSet.copyOf(controller.getSelectedEventIDs());
             }
-            
+
             //clear the chart and set the time range.
             resetView(eventsModel.getTimeRange());
 
