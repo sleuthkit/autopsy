@@ -39,11 +39,15 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  */
 class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPanel {
 
+    private static final long serialVersionUID = 1L;
+
     private Logger logger = Logger.getLogger(GlobalListsManagementPanel.class.getName());
     private KeywordListTableModel tableModel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+    private final org.sleuthkit.autopsy.keywordsearch.GlobalListSettingsPanel globalListSettingsPanel;
 
-    GlobalListsManagementPanel() {
+    GlobalListsManagementPanel(org.sleuthkit.autopsy.keywordsearch.GlobalListSettingsPanel gsp) {
+        this.globalListSettingsPanel = gsp;
         tableModel = new KeywordListTableModel();
         initComponents();
         customizeComponents();
@@ -78,7 +82,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
          * listsTable.getSelectionModel().clearSelection(); } } } });
          */
     }
-    
+
     @Override
     public void addPropertyChangeListener(PropertyChangeListener l) {
         pcs.addPropertyChangeListener(l);
@@ -210,6 +214,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
             }
         }
         pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        globalListSettingsPanel.setFocusOnKeywordTextBox();
     }//GEN-LAST:event_newListButtonActionPerformed
 
     private void importButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importButtonActionPerformed

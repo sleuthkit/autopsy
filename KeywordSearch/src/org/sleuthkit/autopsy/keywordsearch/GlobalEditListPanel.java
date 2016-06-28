@@ -721,4 +721,11 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
             return this;
         }
     }
+
+    /**
+     * Set the keyboard focus to new keyword textbox.
+     */
+    void setFocusOnKeywordTextBox() {
+        addWordField.requestFocus();
+    }
 }
