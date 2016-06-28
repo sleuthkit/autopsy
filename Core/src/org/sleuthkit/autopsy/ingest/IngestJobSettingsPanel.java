@@ -540,7 +540,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
             }
             boolean previousVersionRun = false;
             for (IngestJobInfo ingestJob : ingestJobs) {
-                if (ingestJob.getStatus() == IngestJobInfo.IngestJobStatusType.CANCELLED) {
+                if (ingestJob.getStatus() != IngestJobInfo.IngestJobStatusType.COMPLETED) {
                     continue;
                 }
                 long objectId = ingestJob.getObjectId();
