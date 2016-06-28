@@ -28,7 +28,9 @@ import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 
 final class GlobalListSettingsPanel extends javax.swing.JPanel implements OptionsPanel {
 
-    private final GlobalListsManagementPanel listsManagementPanel = new GlobalListsManagementPanel();
+    private static final long serialVersionUID = 1L;
+
+    private final GlobalListsManagementPanel listsManagementPanel = new GlobalListsManagementPanel(this);
     private final GlobalEditListPanel editListPanel = new GlobalEditListPanel();
 
     GlobalListSettingsPanel() {
@@ -110,7 +112,7 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
         mainSplitPane.revalidate();
         mainSplitPane.repaint();
     }
-    
+
     @Override
     public void addPropertyChangeListener(PropertyChangeListener l) {
         listsManagementPanel.addPropertyChangeListener(l);
@@ -133,6 +135,13 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
     @Override
     public void load() {
         listsManagementPanel.load();
+    }
+
+    /**
+     * Set the keyboard focus to new keyword textbox.
+     */
+    void setFocusOnKeywordTextBox() {
+        editListPanel.setFocusOnKeywordTextBox();
     }
 
     /**

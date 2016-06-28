@@ -135,7 +135,8 @@ public class SnapShotReportWriter {
     private Path writeIndexHTML() throws IOException {
         //make a map of context objects to resolve template paramaters against
         HashMap<String, Object> indexContext = new HashMap<>();
-        indexContext.put("currentCase", currentCase); //NON-NLS
+        indexContext.put("reportBranding", reportBranding); //NON-NLS
+        indexContext.put("reportName", reportName); //NON-NLS
         Path reportIndexFile = reportFolderPath.resolve("index.html"); //NON-NLS
 
         fillTemplateAndWrite("/org/sleuthkit/autopsy/timeline/snapshot/index_template.html", "Index", indexContext, reportIndexFile); //NON-NLS
@@ -206,9 +207,15 @@ public class SnapShotReportWriter {
             Files.copy(navStream, reportFolderPath.resolve("nav.html")); //NON-NLS
         }
         //copy favicon
-        try (InputStream faviconStream = SnapShotReportWriter.class.getResourceAsStream("/org/sleuthkit/autopsy/report/images/favicon.ico")) { //NON-NLS
-            Files.copy(faviconStream, reportFolderPath.resolve("favicon.ico")); //NON-NLS
+        if (StringUtils.isBlank(agencyLogoPath)) {
+            // use default Autopsy icon if custom icon is not set
+            try (InputStream faviconStream = SnapShotReportWriter.class.getResourceAsStream("/org/sleuthkit/autopsy/report/images/favicon.ico")) { //NON-NLS
+                Files.copy(faviconStream, reportFolderPath.resolve("favicon.ico")); //NON-NLS
+            }
+        } else {
+            Files.copy(Files.newInputStream(Paths.get(agencyLogoPath)), reportFolderPath.resolve("favicon.ico")); //NON-NLS           
         }
+
         //copy report summary icon
         try (InputStream summaryStream = SnapShotReportWriter.class.getResourceAsStream("/org/sleuthkit/autopsy/report/images/summary.png")) { //NON-NLS
             Files.copy(summaryStream, reportFolderPath.resolve("summary.png")); //NON-NLS

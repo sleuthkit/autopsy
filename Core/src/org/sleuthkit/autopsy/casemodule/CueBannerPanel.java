@@ -55,6 +55,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
             ImageIcon icon = new ImageIcon(cl.getResource(welcomeLogo));
             autopsyLogo.setIcon(icon);
         }
+        refresh();
     }
 
     /**

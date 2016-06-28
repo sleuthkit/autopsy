@@ -92,7 +92,6 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
             } else {
                 column.setPreferredWidth(((int) (width * 0.10)));
                 column.setCellRenderer(new CheckBoxRenderer());
-                column.setHeaderRenderer(new HeaderRenderer(keywordTable));
             }
         }
         keywordTable.setCellSelectionEnabled(false);
@@ -724,23 +723,9 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
     }
 
     /**
-     * A cell renderer for header cells that center-aligns the header text.
+     * Set the keyboard focus to new keyword textbox.
      */
-    private static class HeaderRenderer implements TableCellRenderer {
-
-        private DefaultTableCellRenderer renderer;
-
-        public HeaderRenderer(JTable table) {
-            renderer = (DefaultTableCellRenderer) table.getTableHeader().getDefaultRenderer();
-            renderer.setHorizontalAlignment(JLabel.CENTER);
-        }
-
-        @Override
-        public Component getTableCellRendererComponent(
-                JTable table, Object value, boolean isSelected,
-                boolean hasFocus, int row, int col) {
-            return renderer.getTableCellRendererComponent(
-                    table, value, isSelected, hasFocus, row, col);
-        }
+    void setFocusOnKeywordTextBox() {
+        addWordField.requestFocus();
     }
 }
