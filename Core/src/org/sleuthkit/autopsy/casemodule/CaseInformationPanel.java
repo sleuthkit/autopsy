@@ -6,6 +6,10 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JOptionPane;
+import javax.swing.event.ChangeEvent;
 import org.openide.util.NbBundle.Messages;
 
 /**
@@ -14,6 +18,8 @@ import org.openide.util.NbBundle.Messages;
  */
 public class CaseInformationPanel extends javax.swing.JPanel {
 
+    private static final Logger logger = Logger.getLogger(CaseInformationPanel.class.getName());
+
     /**
      * Creates new form CaseInformationPanel
      */
@@ -21,24 +27,31 @@ public class CaseInformationPanel extends javax.swing.JPanel {
         initComponents();
         customizeComponents();
     }
-    
-    @Messages({"CaseInformationPanel.caseDetails.header=Case Details"})
+
+    @Messages({"CaseInformationPanel.caseDetails.header=Case Details",
+        "CaseInformationPanel.ingestJobInfo.header=Ingest History",
+        "CaseInformationPanel.loadMetadataFail.message=Failed to load case metadata.",
+        "CaseInformationPanel.loadMetadataFail.title=Metadata load failure",})
     private void customizeComponents() {
         try {
             Case currentCase = Case.getCurrentCase();
             String crDate = currentCase.getCreatedDate();
             String caseDir = currentCase.getCaseDirectory();
-            
+
             // put the image paths information into hashmap
             Map<Long, String> imgPaths = Case.getImagePaths(currentCase.getSleuthkitCase());
             CasePropertiesForm cpf = new CasePropertiesForm(currentCase, crDate, caseDir, imgPaths);
             cpf.setSize(cpf.getPreferredSize());
             this.tabbedPane.addTab(Bundle.CaseInformationPanel_caseDetails_header(), cpf);
+            this.tabbedPane.addTab(Bundle.CaseInformationPanel_ingestJobInfo_header(), new IngestJobInfoPanel());
+            this.tabbedPane.addChangeListener((ChangeEvent e) -> {
+                tabbedPane.getSelectedComponent().setSize(tabbedPane.getSelectedComponent().getPreferredSize());
+            });
         } catch (CaseMetadata.CaseMetadataException ex) {
-            //TOLOG
+            logger.log(Level.SEVERE, "Failed to load case metadata.", ex);
+            JOptionPane.showMessageDialog(null, Bundle.IngestJobInfoPanel_loadIngestJob_error_text(), Bundle.IngestJobInfoPanel_loadIngestJob_error_title(), JOptionPane.ERROR_MESSAGE);
         }
     }
-    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -58,12 +71,12 @@ public class CaseInformationPanel extends javax.swing.JPanel {
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 691, Short.MAX_VALUE)
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 228, Short.MAX_VALUE)
+                .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 231, Short.MAX_VALUE)
                 .addGap(0, 0, 0))
         );
 
@@ -78,7 +91,7 @@ public class CaseInformationPanel extends javax.swing.JPanel {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
