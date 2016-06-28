@@ -195,7 +195,7 @@ For further reference regarding ContainerOperators, please see
 
 
 When an element has been selected, the individual components may be manipulated with ContainerOperators. 
-To select a button, use the code below, where cont is one of the ContainerOperators from above, text is the text displayed on the button, and index is the button's order if there are multiple with the same name (i.e. if there are three buttons labeled �preview�, the first's index is 0, then 1, then 2).
+To select a button, use the code below, where cont is one of the ContainerOperators from above, text is the text displayed on the button, and index is the button's order if there are multiple with the same name (i.e. if there are three buttons labeled "Preview", the first's index is 0, then 1, then 2).
 
 JbuttonOperator jbo = new JbuttonOperator(ContainerOperator cont, String text, int index);
 
