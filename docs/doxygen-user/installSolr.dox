@@ -7,7 +7,7 @@ A central Solr server is needed to store keyword indexes. To install Solr, perfo
 
 You will need:
 - 64-bit version of the Java Runtime Environment (JRE) from http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html. 
-- Download the Apache Solr 4.10.3-0 installation package from SourceForge at https://sourceforge.net/projects/autopsy/files/autopsy/ 
+- Download the Apache Solr 4.10.3-0 installation package from https://bitnami.com/stack/solr/installer. 
 - Access to an installed version of Autopsy so that you can copy files from it. 
 - A network-accessible machine to install Solr upon. Note that the Solr process will need to write data out to the main shared storage drive, and needs adequate permissions to write to this location, which may be across a network.
 
