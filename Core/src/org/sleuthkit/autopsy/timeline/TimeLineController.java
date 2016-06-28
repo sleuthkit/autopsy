@@ -717,15 +717,35 @@ public class TimeLineController {
         }
     }
 
-    @SuppressWarnings("AssignmentToMethodParameter") //clamp timerange to case
+    /**
+     * Set the new interval to view, and record it in the history. The interval
+     * will be clamped to the span of events in the current case.
+     *
+     * @param timeRange The Interval to view.
+     *
+     * @return True if the interval was changed. False if the interval was the
+     *         same as the existing one and no change happened.
+     */
     synchronized public boolean pushTimeRange(Interval timeRange) {
-        timeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
+        //clamp timerange to case
+        Interval clampedTimeRange;
+        if (timeRange == null) {
+            clampedTimeRange = this.filteredEvents.getSpanningInterval();
+        } else {
+            Interval spanningInterval = this.filteredEvents.getSpanningInterval();
+            if (spanningInterval.overlaps(timeRange)) {
+                clampedTimeRange = spanningInterval.overlap(timeRange);
+            } else {
+                clampedTimeRange = spanningInterval;
+            }
+        }
+
         ZoomParams currentZoom = filteredEvents.zoomParametersProperty().get();
         if (currentZoom == null) {
-            advance(InitialZoomState.withTimeRange(timeRange));
+            advance(InitialZoomState.withTimeRange(clampedTimeRange));
             return true;
-        } else if (currentZoom.hasTimeRange(timeRange) == false) {
-            advance(currentZoom.withTimeRange(timeRange));
+        } else if (currentZoom.hasTimeRange(clampedTimeRange) == false) {
+            advance(currentZoom.withTimeRange(clampedTimeRange));
             return true;
         } else {
             return false;
