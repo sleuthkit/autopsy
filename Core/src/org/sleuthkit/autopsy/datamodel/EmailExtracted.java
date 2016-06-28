@@ -72,7 +72,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
 
     private final class EmailResults extends Observable {
 
-        // NOTE: "accounts" object can be accessed by multiple threads and needs to be synchronized
+        // NOTE: the map can be accessed by multiple worker threads and needs to be synchronized
         private final Map<String, Map<String, List<Long>>> accounts = new LinkedHashMap<>();
 
         EmailResults() {

@@ -78,7 +78,7 @@ public class HashsetHits implements AutopsyVisitableItem {
     private class HashsetResults extends Observable {
 
         // maps hashset name to list of artifacts for that set
-        // NOTE: "hashSetHitsMap" object can be accessed by multiple threads and needs to be synchronized
+        // NOTE: the map can be accessed by multiple worker threads and needs to be synchronized
         private final Map<String, Set<Long>> hashSetHitsMap = new LinkedHashMap<>();
 
         HashsetResults() {
