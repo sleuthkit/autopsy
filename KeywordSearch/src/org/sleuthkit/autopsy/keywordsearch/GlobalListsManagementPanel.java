@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.AbstractTableModel;
@@ -65,6 +66,12 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         listsTable.setRowSelectionAllowed(true);
         tableModel.resync();
 
+        listsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                globalListSettingsPanel.setFocusOnKeywordTextBox();
+            }
+        });
         /*
          * XmlKeywordSearchList.getCurrent().addPropertyChangeListener(new
          * PropertyChangeListener() {
