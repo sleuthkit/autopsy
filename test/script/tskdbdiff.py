@@ -356,7 +356,7 @@ def normalize_db_entry(line, table):
     report_index = line.find('INSERT INTO "reports"')
     layout_index = line.find('INSERT INTO "tsk_file_layout"')
     data_source_info_index = line.find('INSERT INTO "data_source_info"')
-	ingest_job_index = line.find('INSERT INTO "ingest_jobs"')
+    ingest_job_index = line.find('INSERT INTO "ingest_jobs"')
     parens = line[line.find('(') + 1 : line.find(')')]
     fields_list = parens.replace(" ", "").split(',')
     
@@ -401,15 +401,15 @@ def normalize_db_entry(line, table):
         fields_list[1] = "{device id}"
         newLine = ('INSERT INTO "data_source_info" VALUES(' + ','.join(fields_list) + ');')
         return newLine
-	elif (ingest_job_index != -1):
-		fields_list[2] = "{host_name}"
-		start_time = long(fields_list[3])
-		end_time = long(fields_list[4])
-		if (start_time <= end_time):
-			fields_list[3] = "0"
-			fields_list[4] = "0"
-		newLine = ('INSERT INTO "injest_jobs" VALUES(' + ','.join(fields_list) + ');')
-		return newLine
+    elif (ingest_job_index != -1):
+        fields_list[2] = "{host_name}"
+        start_time = int(fields_list[3])
+        end_time = int(fields_list[4])
+        if (start_time <= end_time):
+            fields_list[3] = "0"
+            fields_list[4] = "0"
+        newLine = ('INSERT INTO "injest_jobs" VALUES(' + ','.join(fields_list) + ');')
+        return newLine
     else:
         return line
 

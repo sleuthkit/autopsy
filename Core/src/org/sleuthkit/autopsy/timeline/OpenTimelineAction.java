@@ -58,7 +58,8 @@ public final class OpenTimelineAction extends CallableSystemAction implements Pr
     private static TimeLineController timeLineController = null;
 
     private final JButton toolbarButton = new JButton(getName(),
-            new ImageIcon("Core/src/org/sleuthkit/autopsy/timeline/images/btn_icon_timeline_colorized_26.png"));//NON-NLS
+          new ImageIcon(getClass().getResource("images/btn_icon_timeline_colorized_26.png"))); //NON-NLS
+
 
     /**
      * Invalidate the reference to the controller so that a new one will be
