@@ -18,9 +18,15 @@ Once you have chosen to tag the file or the result, there are two more options:
 
 \image html tagging-2.PNG
 <br>
-You can create arbitrary tag names. Autopsy remembers your tag names from previous cases, so choose wisely. Choose a tag from the list you have created, or create a "New Tag".
-
+You can create arbitrary tag names. Autopsy remembers your tag names from previous cases. Choose a tag from the list you have created, or create a new tag using "Manage Tag Names" shown in the screenshot below.
+<br><br>
 \image html tagging-3.PNG
+<br><br>
+
+To delete a tag name, use the "Manage Tag Names" dialog. Note that a deleted tag will still show up in the current case, even if the tag was not actually used. Future cases, however, will not have this tag show available.
+<br><br>
+\image html manage-tag-names-dialog.PNG
+<br><br>
 
 You can apply tags to groups of items at once. Select multiple items in the Blackboard, right click, and add the appropriate tag.
 Items may have more than one tag.
