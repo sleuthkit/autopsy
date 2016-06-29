@@ -30,6 +30,7 @@ import java.awt.Toolkit;
 import java.awt.event.ActionListener;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import org.openide.windows.WindowManager;
 
 /**
  *
@@ -48,7 +49,7 @@ public class AdvancedConfigurationDialog extends javax.swing.JDialog {
      * Creates new form AdvancedConfigurationDialog
      */
     public AdvancedConfigurationDialog(boolean resizable) {
-        super(new JFrame(), true);
+        super((JFrame) WindowManager.getDefault().getMainWindow(), true);
         setResizable(resizable);
         if (resizable) {
             this.setIconImage(null);
