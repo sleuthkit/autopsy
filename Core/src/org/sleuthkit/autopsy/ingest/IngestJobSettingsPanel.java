@@ -385,7 +385,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
     private void processUnallocCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_processUnallocCheckboxActionPerformed
         this.settings.setProcessUnallocatedSpace(processUnallocCheckbox.isSelected());
     }//GEN-LAST:event_processUnallocCheckboxActionPerformed
-    @Messages({"IngestJobSettingsPanel.pastJobsButton.action.frame.title=Case Properties"})
+    @Messages({"IngestJobSettingsPanel.pastJobsButton.action.frame.title=Ingest History"})
     private void pastJobsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pastJobsButtonActionPerformed
         JDialog topFrame = (JDialog) SwingUtilities.getWindowAncestor(this);
         JDialog dialog = new JDialog(topFrame, Bundle.IngestJobSettingsPanel_pastJobsButton_action_frame_title(), false);
