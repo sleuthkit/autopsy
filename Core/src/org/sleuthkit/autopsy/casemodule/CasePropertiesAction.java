@@ -28,6 +28,7 @@ import javax.swing.JFrame;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -58,8 +59,7 @@ final class CasePropertiesAction extends CallableSystemAction {
         if (popUpWindow == null) {
             // create the popUp window for it
             String title = NbBundle.getMessage(this.getClass(), "CasePropertiesAction.window.title");
-            final JFrame frame = new JFrame(title);
-            popUpWindow = new JDialog(frame, title, false);
+            popUpWindow = new JDialog((JFrame) WindowManager.getDefault().getMainWindow(), title, false);
             try {
 
                 CaseInformationPanel caseInformationPanel = new CaseInformationPanel();
