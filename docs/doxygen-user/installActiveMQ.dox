@@ -5,7 +5,7 @@ To install ActiveMQ, perform the following steps:
 
 You will need:
 - 64-bit version of the Java Runtime Environment (JRE) from http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html. 
-- Download ActiveMQ-5.11.1 from: http://activemq.apache.org/activemq-5111-release.html
+- Download ActiveMQ-5.13.3 from: http://activemq.apache.org/activemq-5133-release.html
 
 
 \section install_activemq_install Installation
@@ -20,7 +20,7 @@ If you need the JRE, install it with the default settings.
 
 \subsection install_activemq_install_mq ActiveMQ Installation
 
-1. Extract the contents of the ActiveMQ archive folder to a location of your choice, bearing in mind that the files should be in a location that the running process will have write permissions to the folder. A typical folder choice is <i>C:\\Program Files\\apache-activemq-5.11.1</i>. Typically, it will ask for administrator permission to move the folder. Allow it if required. 
+1. Extract the contents of the ActiveMQ archive folder to a location of your choice, bearing in mind that the files should be in a location that the running process will have write permissions to the folder. A typical folder choice is <i>C:\\Program Files\\apache-activemq-5.13.3</i>. Typically, it will ask for administrator permission to move the folder. Allow it if required. 
 
 2. Edit the <i>conf\\activemq.xml</i> in the extracted folder to add <i>"&amp;wireFormat.maxInactivityDuration=0"</i> to the URI for the _transportConnector_ named _openwire_. Add the text highlighted in yellow below:
 <br><br>
