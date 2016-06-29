@@ -43,7 +43,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.CaseInformationPanel;
+import org.sleuthkit.autopsy.casemodule.IngestJobInfoPanel;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.IngestJobInfo;
@@ -389,9 +389,8 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
     private void pastJobsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pastJobsButtonActionPerformed
         JDialog topFrame = (JDialog) SwingUtilities.getWindowAncestor(this);
         JDialog dialog = new JDialog(topFrame, Bundle.IngestJobSettingsPanel_pastJobsButton_action_frame_title(), false);
-        CaseInformationPanel caseInfo = new CaseInformationPanel();
-        caseInfo.setSelectedTab(1);
-        dialog.add(caseInfo);
+        IngestJobInfoPanel ingestInfo = new IngestJobInfoPanel();
+        dialog.add(ingestInfo);
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
         double w = dialog.getSize().getWidth();
         double h = dialog.getSize().getHeight();

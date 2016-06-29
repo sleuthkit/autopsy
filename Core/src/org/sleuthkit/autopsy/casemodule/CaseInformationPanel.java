@@ -30,14 +30,14 @@ import org.openide.util.NbBundle.Messages;
  * Panel for displaying the case information, including both case details and
  * ingest job history.
  */
-public class CaseInformationPanel extends javax.swing.JPanel {
+class CaseInformationPanel extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(CaseInformationPanel.class.getName());
 
     /**
      * Creates new form CaseInformationPanel
      */
-    public CaseInformationPanel() {
+    CaseInformationPanel() {
         initComponents();
         customizeComponents();
     }
@@ -65,10 +65,6 @@ public class CaseInformationPanel extends javax.swing.JPanel {
             logger.log(Level.SEVERE, "Failed to load case metadata.", ex);
             JOptionPane.showMessageDialog(null, Bundle.IngestJobInfoPanel_loadIngestJob_error_text(), Bundle.IngestJobInfoPanel_loadIngestJob_error_title(), JOptionPane.ERROR_MESSAGE);
         }
-    }
-    
-    public void setSelectedTab(int tab) {
-        this.tabbedPane.setSelectedComponent(this.tabbedPane.getComponent(1));
     }
     
     void addCloseButtonAction(ActionListener action) {
