@@ -65,7 +65,6 @@
                           <Component id="deleteTagButton" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="jLabel1" alignment="3" min="-2" pref="92" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
                   </Group>
                   <Component id="newTagPanel" max="32767" attributes="0"/>
               </Group>

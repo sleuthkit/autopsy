@@ -79,7 +79,7 @@ public class TagsManager implements Closeable {
         lazyLoadExistingTagNames();
         List<TagName> tags = new ArrayList<>();
         tags.addAll(this.settingsTagNames.values());
-        for(TagName tagName : dbTagNames.values()) {
+        for (TagName tagName : dbTagNames.values()) {
             if (!tags.contains(tagName)) {
                 tags.add(tagName);
             }
@@ -183,10 +183,14 @@ public class TagsManager implements Closeable {
         TagName newTagName = null;
         if (dbTagNames.containsKey(displayName)) {
             TagName dbTag = dbTagNames.get(displayName);
+            //Checks if the tag that was obtained is the same. If either are not the same, should throw an exception as we already have a tag of this display name.
             if (!(dbTag.getDescription().equals(description) && dbTag.getColor() == color)) {
                 throw new TagNameAlreadyExistsException();
             } else {
 
+                /**
+                 * Else get the tag from the db and add it to the settings.
+                 */
                 newTagName = dbTag;
                 /*
                  * Add the tag name to the tags settings.
@@ -201,6 +205,7 @@ public class TagsManager implements Closeable {
          * Add the tag name to the case.
          */
         newTagName = caseDb.addTagName(displayName, description, color);
+        dbTagNames.put(newTagName.getDisplayName(), newTagName);
         /*
          * Add the tag name to the tags settings.
          */
@@ -689,13 +694,9 @@ public class TagsManager implements Closeable {
                 TagName tagName = caseDb.addTagName(
                         NbBundle.getMessage(this.getClass(), "TagsManager.predefTagNames.bookmark.text"), "", TagName.HTML_COLOR.NONE);
                 dbTagNames.put(tagName.getDisplayName(), tagName);
-                settingsTagNames.put(tagName.getDisplayName(), tagName);
             } catch (TskCoreException ex) {
                 Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to add standard 'Bookmark' tag name to case database", ex); //NON-NLS
             }
-        }
-        else {
-            settingsTagNames.put(NbBundle.getMessage(this.getClass(), "TagsManager.predefTagNames.bookmark.text"), dbTagNames.get(NbBundle.getMessage(this.getClass(), "TagsManager.predefTagNames.bookmark.text")));
         }
     }
 

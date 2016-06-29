@@ -379,7 +379,6 @@ public class GetTagNameDialog extends JDialog {
                 }
             }
         }
-        this.repaint();
     }//GEN-LAST:event_addTagButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
