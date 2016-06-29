@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.casemodule;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.logging.Level;
 import javax.swing.Action;
 import javax.swing.JDialog;
@@ -48,6 +50,12 @@ final class CasePropertiesAction extends CallableSystemAction {
     CasePropertiesAction() {
         putValue(Action.NAME, NbBundle.getMessage(CasePropertiesAction.class, "CTL_CasePropertiesAction")); // put the action Name
         this.setEnabled(false);
+        Case.addEventSubscriber(Case.Events.CURRENT_CASE.toString(), new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                popUpWindow = null;
+            }
+        });
     }
 
     /**
