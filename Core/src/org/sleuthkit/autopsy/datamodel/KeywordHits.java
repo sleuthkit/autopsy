@@ -73,85 +73,94 @@ public class KeywordHits implements AutopsyVisitableItem {
     private final class KeywordResults extends Observable {
 
         // Map from listName/Type to Map of keyword to set of artifact Ids
-        private final Map<String, Map<String, Set<Long>>> topLevelMap;
+        // NOTE: the map can be accessed by multiple worker threads and needs to be synchronized
+        private final Map<String, Map<String, Set<Long>>> topLevelMap = new LinkedHashMap<>();
 
         KeywordResults() {
-            topLevelMap = new LinkedHashMap<>();
             update();
         }
 
         List<String> getListNames() {
-            List<String> names = new ArrayList<>(topLevelMap.keySet());
-            // this causes the "Single ..." terms to be in the middle of the results, 
-            // which is wierd.  Make a custom comparator or do something else to maek them on top
-            //Collections.sort(names);
-            return names;
+            synchronized (topLevelMap) {
+                List<String> names = new ArrayList<>(topLevelMap.keySet());
+                // this causes the "Single ..." terms to be in the middle of the results, 
+                // which is wierd.  Make a custom comparator or do something else to maek them on top
+                //Collections.sort(names);
+                return names;
+            }
         }
 
         List<String> getKeywords(String listName) {
-            List<String> keywords = new ArrayList<>(topLevelMap.get(listName).keySet());
+            List<String> keywords;
+            synchronized (topLevelMap) {
+                keywords = new ArrayList<>(topLevelMap.get(listName).keySet());
+            }
             Collections.sort(keywords);
             return keywords;
         }
 
         Set<Long> getArtifactIds(String listName, String keyword) {
-            return topLevelMap.get(listName).get(keyword);
+            synchronized (topLevelMap) {
+                return topLevelMap.get(listName).get(keyword);
+            }
         }
 
         // populate maps based on artifactIds
         void populateMaps(Map<Long, Map<Long, String>> artifactIds) {
-            topLevelMap.clear();
+            synchronized (topLevelMap) {
+                topLevelMap.clear();
 
-            // map of list name to keword to artifact IDs
-            Map<String, Map<String, Set<Long>>> listsMap = new LinkedHashMap<>();
+                // map of list name to keword to artifact IDs
+                Map<String, Map<String, Set<Long>>> listsMap = new LinkedHashMap<>();
 
-            // Map from from literal keyword to artifact IDs
-            Map<String, Set<Long>> literalMap = new LinkedHashMap<>();
+                // Map from from literal keyword to artifact IDs
+                Map<String, Set<Long>> literalMap = new LinkedHashMap<>();
 
-            // Map from regex keyword artifact IDs
-            Map<String, Set<Long>> regexMap = new LinkedHashMap<>();
+                // Map from regex keyword artifact IDs
+                Map<String, Set<Long>> regexMap = new LinkedHashMap<>();
 
-            // top-level nodes
-            topLevelMap.put(SIMPLE_LITERAL_SEARCH, literalMap);
-            topLevelMap.put(SIMPLE_REGEX_SEARCH, regexMap);
+                // top-level nodes
+                topLevelMap.put(SIMPLE_LITERAL_SEARCH, literalMap);
+                topLevelMap.put(SIMPLE_REGEX_SEARCH, regexMap);
 
-            for (Map.Entry<Long, Map<Long, String>> art : artifactIds.entrySet()) {
-                long id = art.getKey();
-                Map<Long, String> attributes = art.getValue();
+                for (Map.Entry<Long, Map<Long, String>> art : artifactIds.entrySet()) {
+                    long id = art.getKey();
+                    Map<Long, String> attributes = art.getValue();
 
-                // I think we can use attributes.remove(...) here?
-                String listName = attributes.get(Long.valueOf(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()));
-                String word = attributes.get(Long.valueOf(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()));
-                String reg = attributes.get(Long.valueOf(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID()));
+                    // I think we can use attributes.remove(...) here?
+                    String listName = attributes.get(Long.valueOf(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()));
+                    String word = attributes.get(Long.valueOf(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()));
+                    String reg = attributes.get(Long.valueOf(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID()));
 
-                // part of a list
-                if (listName != null) {
-                    if (listsMap.containsKey(listName) == false) {
-                        listsMap.put(listName, new LinkedHashMap<String, Set<Long>>());
+                    // part of a list
+                    if (listName != null) {
+                        if (listsMap.containsKey(listName) == false) {
+                            listsMap.put(listName, new LinkedHashMap<String, Set<Long>>());
+                        }
+
+                        Map<String, Set<Long>> listMap = listsMap.get(listName);
+                        if (listMap.containsKey(word) == false) {
+                            listMap.put(word, new HashSet<Long>());
+                        }
+
+                        listMap.get(word).add(id);
+                    } // regular expression, single term
+                    else if (reg != null) {
+                        if (regexMap.containsKey(reg) == false) {
+                            regexMap.put(reg, new HashSet<Long>());
+                        }
+                        regexMap.get(reg).add(id);
+                    } // literal, single term
+                    else {
+                        if (literalMap.containsKey(word) == false) {
+                            literalMap.put(word, new HashSet<Long>());
+                        }
+                        literalMap.get(word).add(id);
                     }
-
-                    Map<String, Set<Long>> listMap = listsMap.get(listName);
-                    if (listMap.containsKey(word) == false) {
-                        listMap.put(word, new HashSet<Long>());
-                    }
-
-                    listMap.get(word).add(id);
-                } // regular expression, single term
-                else if (reg != null) {
-                    if (regexMap.containsKey(reg) == false) {
-                        regexMap.put(reg, new HashSet<Long>());
-                    }
-                    regexMap.get(reg).add(id);
-                } // literal, single term
-                else {
-                    if (literalMap.containsKey(word) == false) {
-                        literalMap.put(word, new HashSet<Long>());
-                    }
-                    literalMap.get(word).add(id);
+                    topLevelMap.putAll(listsMap);
                 }
-                topLevelMap.putAll(listsMap);
             }
-
+            
             setChanged();
             notifyObservers();
         }

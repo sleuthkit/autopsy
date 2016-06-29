@@ -1,9 +1,9 @@
 /*! \page install_postgresql Install and Configure PostgreSQL
 To install PostgreSQL, perform the following steps:
 
-1.	Download a 64-bit PostgreSQL version 9.4.1 installer from  http://www.enterprisedb.com/products-services-training/pgdownload#windows  Choose the one that says _Win X86-64_.
+1.	Download a 64-bit PostgreSQL version 9.5.3 installer from  http://www.enterprisedb.com/products-services-training/pgdownload#windows  Choose the one that says _Win X86-64_.
 
-2.	Run _postgresql-9.4.4-1-windows-x64.exe_
+2.	Run _postgresql-9.5.3-1-windows-x64.exe_
 
 3.	You may accept defaults for all items except for the password as you work through the wizard. Do not lose the password you enter in. This is the PostgreSQL administrator login password.
 
@@ -49,7 +49,7 @@ When you see the _CREATE ROLE_ output as shown in the screenshot below, the new 
 \image html postgresqlinstall2.PNG
 <br>
 
-6.	Edit  <i>C:\\Program Files\\PostgreSQL\\9.4\\data\\pg_hba.conf</i> to add an entry to allow external computers to connect via the network. 
+6.	Edit  <i>C:\\Program Files\\PostgreSQL\\9.5\\data\\pg_hba.conf</i> to add an entry to allow external computers to connect via the network. 
 <br><br>
 First, find your machine's IPv4 address and Subnet Mask (Press _Start_, type _cmd_, type _ipconfig_ and parse the results. The IP address is shown in yellow below.
 <br>
@@ -72,7 +72,7 @@ Add the line highlighted in yellow below, formatted with spaces between the entr
 If you intend to use PostgreSQL from machines on a different subnet, you need an entry in the _pg_hba.conf_ file for each subnet. 
 <br><br>
 
-7. Uncomment the following entires in the configuration file located at <i>C:\\Program Files\\PostgreSQL\\9.4\\data\\postgresql.conf</i> by removing the leading "#", and change their values <i>"off"</i> as shown below.
+7. Uncomment the following entires in the configuration file located at <i>C:\\Program Files\\PostgreSQL\\9.5\\data\\postgresql.conf</i> by removing the leading "#", and change their values <i>"off"</i> as shown below.
 <br>
 >	fsync = off<br>
 >	synchronous_commit = off<br>
@@ -89,12 +89,12 @@ To this:
 Note the removal of the leading number symbol-this uncomments that entry.
 <br><br>
 
-8. Still in <i id="max_connections">"C:\Program Files\PostgreSQL\9.4\data\postgresql.conf"</i>, find the entry named _max_connections_ and set it to the number of suggested connections for your configuration. A rule of thumb is add 100 connections for each Automated Ingest Node and 100 connections for each Reviewer node you plan to have in the network. More information is available at 5.1.1. See the screenshot below.
+8. Still in <i id="max_connections">"C:\Program Files\PostgreSQL\9.5\data\postgresql.conf"</i>, find the entry named _max_connections_ and set it to the number of suggested connections for your configuration. A rule of thumb is add 100 connections for each Automated Ingest Node and 100 connections for each Reviewer node you plan to have in the network. More information is available at 5.1.1. See the screenshot below.
 <br><br>
 \image html maxConnections.PNG
 <br><br>
 
-9.	Press _Start_, type _services.msc_, and press _Enter_.  Select _postgresql-x64-9.4 PostgreSQL Server 9.4_ in the services list and click the link that says _Stop the service_ then click the link that says _Start the service_ as shown in the screenshot below.
+9.	Press _Start_, type _services.msc_, and press _Enter_.  Select _postgresql-x64-9.5_ in the services list and click the link that says _Stop the service_ then click the link that says _Start the service_ as shown in the screenshot below.
 <br><br>
 \image html postgresqlinstall7.PNG
 <br><br>

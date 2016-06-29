@@ -66,7 +66,7 @@ public class Installer extends ModuleInstall {
                 //We should update this if we officially switch to a new version of CRT/compiler
                 System.loadLibrary("msvcr100"); //NON-NLS
                 System.loadLibrary("msvcp100"); //NON-NLS
-                
+
                 logger.log(Level.INFO, "MSVCR100 and MSVCP100 libraries loaded"); //NON-NLS
             } catch (UnsatisfiedLinkError e) {
                 logger.log(Level.SEVERE, "Error loading MSVCR100 and MSVCP100 libraries, ", e); //NON-NLS
@@ -85,14 +85,14 @@ public class Installer extends ModuleInstall {
             } catch (UnsatisfiedLinkError e) {
                 logger.log(Level.SEVERE, "Error loading EWF library, ", e); //NON-NLS
             }
-            
+
             try {
                 System.loadLibrary("libvmdk"); //NON-NLS
                 logger.log(Level.INFO, "VMDK library loaded"); //NON-NLS
             } catch (UnsatisfiedLinkError e) {
                 logger.log(Level.SEVERE, "Error loading VMDK library, ", e); //NON-NLS
             }
-            
+
             try {
                 System.loadLibrary("libvhdi"); //NON-NLS
                 logger.log(Level.INFO, "VHDI library loaded"); //NON-NLS
@@ -107,7 +107,7 @@ public class Installer extends ModuleInstall {
             } catch (UnsatisfiedLinkError e) {
                 logger.log(Level.SEVERE, "Error loading MSVCR120 library, ", e); //NON-NLS
             }
-            
+
             try {
                 System.loadLibrary("libeay32"); //NON-NLS
                 logger.log(Level.INFO, "LIBEAY32 library loaded"); //NON-NLS
@@ -122,18 +122,20 @@ public class Installer extends ModuleInstall {
                 logger.log(Level.SEVERE, "Error loading SSLEAY32 library, ", e); //NON-NLS
             }
 
-            // This library name is different in 32-bit versus 64-bit
-            String libintlName = "libintl-8"; //NON-NLS
-            if (PlatformUtil.is64BitJVM() == false) {
-                libintlName = "intl"; //NON-NLS
-            }
             try {
-                System.loadLibrary(libintlName); //NON-NLS
-                logger.log(Level.INFO, libintlName + " library loaded"); //NON-NLS
+                System.loadLibrary("libiconv-2"); //NON-NLS
+                logger.log(Level.INFO, "libiconv-2 library loaded"); //NON-NLS
             } catch (UnsatisfiedLinkError e) {
-                logger.log(Level.SEVERE, "Error loading " + libintlName + " library, ", e); //NON-NLS
+                logger.log(Level.SEVERE, "Error loading libiconv-2 library, ", e); //NON-NLS
             }
 
+            try {
+                System.loadLibrary("libintl-8"); //NON-NLS
+                logger.log(Level.INFO, "libintl-8 library loaded"); //NON-NLS
+            } catch (UnsatisfiedLinkError e) {
+                logger.log(Level.SEVERE, "Error loading libintl-8 library, ", e); //NON-NLS
+            }
+            
             try {
                 System.loadLibrary("libpq"); //NON-NLS
                 logger.log(Level.INFO, "LIBPQ library loaded"); //NON-NLS
@@ -156,7 +158,7 @@ public class Installer extends ModuleInstall {
     /**
      * Check if JavaFx initialized
      *
-     * @return false if java fx not initialized (classes coult not load), true
+     * @return false if java fx not initialized (classes could not load), true
      *         if initialized
      */
     public static boolean isJavaFxInited() {

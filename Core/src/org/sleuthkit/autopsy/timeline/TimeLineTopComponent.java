@@ -25,7 +25,6 @@ import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
-import javafx.collections.ObservableList;
 import javafx.scene.Scene;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
@@ -98,7 +97,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
     private final InvalidationListener selectedEventsListener = new InvalidationListener() {
         @Override
         public void invalidated(Observable observable) {
-            ObservableList<Long> selectedEventIDs = controller.getSelectedEventIDs();
+            List<Long> selectedEventIDs = controller.getSelectedEventIDs();
 
             //depending on the active view mode, we either update the dataResultPanel, or update the contentViewerPanel directly.
             switch (controller.getViewMode()) {
@@ -124,7 +123,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
                                 LOGGER.log(Level.SEVERE, "Selecting the event node was vetoed.", ex); // NON-NLS
                             }
                             //if there is only one event selected push it into content viewer.
-                            if (selectedEventIDs.size() == 1) {
+                            if (childArray.length == 1) {
                                 contentViewerPanel.setNode(childArray[0]);
                             } else {
                                 contentViewerPanel.setNode(null);
@@ -137,7 +136,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
                         LOGGER.log(Level.SEVERE, "Failed to lookup Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
                         Platform.runLater(() -> {
                             Notifications.create()
-                                        .owner(jFXViewPanel.getScene().getWindow())
+                                    .owner(jFXViewPanel.getScene().getWindow())
                                     .text(Bundle.TimelineTopComponent_selectedEventListener_errorMsg())
                                     .showError();
                         });
@@ -158,6 +157,36 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
             }
         }
     };
+
+    private void syncViewMode() {
+        switch (controller.getViewMode()) {
+            case COUNTS:
+            case DETAIL:
+                /*
+                 * For counts and details mode, restore the result table at the
+                 * bottom left.
+                 */
+                SwingUtilities.invokeLater(() -> {
+                    splitYPane.remove(contentViewerPanel);
+                    if ((horizontalSplitPane.getParent() == splitYPane) == false) {
+                        splitYPane.setBottomComponent(horizontalSplitPane);
+                        horizontalSplitPane.setRightComponent(contentViewerPanel);
+                    }
+                });
+                break;
+            case LIST:
+                /*
+                 * For list mode, remove the result table, and let the content
+                 * viewer expand across the bottom.
+                 */
+                SwingUtilities.invokeLater(() -> {
+                    splitYPane.setBottomComponent(contentViewerPanel);
+                });
+                break;
+            default:
+                throw new UnsupportedOperationException("Unknown ViewMode: " + controller.getViewMode());
+        }
+    }
 
     /**
      * Constructor
@@ -190,35 +219,8 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
         controller.getSelectedEventIDs().addListener(selectedEventsListener);
 
         //Listen to ViewMode and adjust GUI componenets as needed.
-        controller.viewModeProperty().addListener(viewMode -> {
-            switch (controller.getViewMode()) {
-                case COUNTS:
-                case DETAIL:
-                    /*
-                     * For counts and details mode, restore the result table at
-                     * the bottom left.
-                     */
-                    SwingUtilities.invokeLater(() -> {
-                        splitYPane.remove(contentViewerPanel);
-                        if ((horizontalSplitPane.getParent() == splitYPane) == false) {
-                            splitYPane.setBottomComponent(horizontalSplitPane);
-                            horizontalSplitPane.setRightComponent(contentViewerPanel);
-                        }
-                    });
-                    break;
-                case LIST:
-                    /*
-                     * For list mode, remove the result table, and let the
-                     * content viewer expand across the bottom.
-                     */
-                    SwingUtilities.invokeLater(() -> {
-                        splitYPane.setBottomComponent(contentViewerPanel);
-                    });
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Unknown ViewMode: " + controller.getViewMode());
-            }
-        });
+        controller.viewModeProperty().addListener(viewMode -> syncViewMode());
+        syncViewMode();
     }
 
     /**

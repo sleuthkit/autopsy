@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.timeline.explorernodes;
 
 import java.lang.reflect.InvocationTargetException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -33,16 +34,18 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.DataModelActionsFactory;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -107,15 +110,41 @@ public class EventNode extends DisplayableItemNode {
     }
 
     @Override
+    @NbBundle.Messages({
+        "EventNode.getAction.errorTitle=Error getting actions",
+        "EventNode.getAction.linkedFileMessage=There was a problem getting actions for the selected result. "
+        + " The 'View File in Timeline' action will not be available."})
     public Action[] getActions(boolean context) {
         Action[] superActions = super.getActions(context);
         List<Action> actionsList = new ArrayList<>();
         actionsList.addAll(Arrays.asList(superActions));
 
-        final Content content = getLookup().lookup(Content.class);
-        final BlackboardArtifact artifact = getLookup().lookup(BlackboardArtifact.class);
+        final AbstractFile sourceFile = getLookup().lookup(AbstractFile.class);
 
-        final List<Action> factoryActions = DataModelActionsFactory.getActions(content, artifact != null);
+        /*
+         * if this event is derived from an artifact, add actions to view the
+         * source file and a "linked" file, if present.
+         */
+        final BlackboardArtifact artifact = getLookup().lookup(BlackboardArtifact.class);
+        if (artifact != null) {
+            try {
+                AbstractFile linkedfile = findLinked(artifact);
+                if (linkedfile != null) {
+                    actionsList.add(ViewFileInTimelineAction.createViewFileAction(linkedfile));
+                }
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, MessageFormat.format("Error getting linked file from blackboard artifact{0}.", artifact.getArtifactID()), ex); //NON-NLS
+                MessageNotifyUtil.Notify.error(Bundle.EventNode_getAction_errorTitle(), Bundle.EventNode_getAction_linkedFileMessage());
+            }
+
+            //if this event  has associated content, add the action to view the content in the timeline
+            if (null != sourceFile) {
+                actionsList.add(ViewFileInTimelineAction.createViewSourceFileAction(sourceFile));
+            }
+        }
+
+        //get default actions for the source file
+        final List<Action> factoryActions = DataModelActionsFactory.getActions(sourceFile, artifact != null);
 
         actionsList.addAll(factoryActions);
         return actionsList.toArray(new Action[actionsList.size()]);
@@ -206,5 +235,31 @@ public class EventNode extends DisplayableItemNode {
         } else {
             return new EventNode(eventById, file);
         }
+    }
+
+    /**
+     * this code started as a cut and past of
+     * DataResultFilterNode.GetPopupActionsDisplayableItemNodeVisitor.findLinked(BlackboardArtifactNode
+     * ba)
+     *
+     * It is now in DisplayableItemNode too, but is not accesible across
+     * packages
+     *
+     * @param artifact
+     *
+     * @return
+     */
+    static AbstractFile findLinked(BlackboardArtifact artifact) throws TskCoreException {
+
+        BlackboardAttribute pathIDAttribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID));
+
+        if (pathIDAttribute != null) {
+            long contentID = pathIDAttribute.getValueLong();
+            if (contentID != -1) {
+                return artifact.getSleuthkitCase().getAbstractFileById(contentID);
+            }
+        }
+
+        return null;
     }
 }
