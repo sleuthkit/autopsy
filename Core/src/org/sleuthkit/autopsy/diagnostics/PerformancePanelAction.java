@@ -18,13 +18,14 @@
  */
 package org.sleuthkit.autopsy.diagnostics;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import javax.swing.JDialog;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
-import org.openide.util.NbBundle.Messages;
+import org.openide.util.HelpCtx;
+import org.openide.util.NbBundle;
+import org.openide.util.actions.CallableSystemAction;
+import org.sleuthkit.autopsy.casemodule.Case;
 
 @ActionID(
         category = "Help",
@@ -34,11 +35,30 @@ import org.openide.util.NbBundle.Messages;
         displayName = "#CTL_PerformancePanelAction"
 )
 @ActionReference(path = "Menu/Help", position = 1437)
-public final class PerformancePanelAction implements ActionListener {
+public final class PerformancePanelAction extends CallableSystemAction {
 
     @Override
-    public void actionPerformed(ActionEvent e) {
+    public void performAction() {
         JDialog dialog = new PerformancePanel();
         dialog.setVisible(true);
+    }
+    
+    @Override
+    public boolean isEnabled() {
+        return Case.isCaseOpen();
+    }
+
+    @Override
+    public HelpCtx getHelpCtx() {
+        return HelpCtx.DEFAULT_HELP;
+    }
+
+    @Override
+    public boolean asynchronous() {
+        return false; // run on edt
+    }
+    @Override
+    public String getName() {
+        return NbBundle.getMessage(PerformancePanelAction.class, "CTL_PerformancePanelAction");
     }
 }

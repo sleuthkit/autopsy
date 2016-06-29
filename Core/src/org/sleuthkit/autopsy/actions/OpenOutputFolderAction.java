@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.actions;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
@@ -30,7 +28,9 @@ import org.openide.NotifyDescriptor;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
+import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
+import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -41,12 +41,12 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         displayName = "#CTL_OpenOutputFolder", iconInMenu = true)
 @ActionReference(path = "Menu/Tools", position = 1850, separatorBefore = 1849)
 @ActionID(id = "org.sleuthkit.autopsy.actions.OpenOutputFolderAction", category = "Help")
-public final class OpenOutputFolderAction implements ActionListener {
+public final class OpenOutputFolderAction extends CallableSystemAction {
 
     private static final Logger logger = Logger.getLogger(OpenOutputFolderAction.class.getName());
 
     @Override
-    public void actionPerformed(ActionEvent e) {
+    public void performAction() {
 
         try {
             File outputDir;
@@ -55,7 +55,7 @@ public final class OpenOutputFolderAction implements ActionListener {
                 if (outputDir.exists() == false) {
                     NotifyDescriptor d
                             = new NotifyDescriptor.Message(NbBundle.getMessage(this.getClass(),
-                                            "OpenOutputFolder.error1", outputDir.getAbsolutePath()),
+                                    "OpenOutputFolder.error1", outputDir.getAbsolutePath()),
                                     NotifyDescriptor.ERROR_MESSAGE);
                     DialogDisplayer.getDefault().notify(d);
                 } else {
@@ -67,5 +67,24 @@ public final class OpenOutputFolderAction implements ActionListener {
         } catch (IOException ex) {
             logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "OpenOutputFolder.CouldNotOpenOutputFolder"), ex); //NON-NLS
         }
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return Case.isCaseOpen();
+    }
+
+    @Override
+    public HelpCtx getHelpCtx() {
+        return HelpCtx.DEFAULT_HELP;
+    }
+
+    @Override
+    public boolean asynchronous() {
+        return false; // run on edt
+    }
+    @Override
+    public String getName() {
+        return NbBundle.getMessage(OpenOutputFolderAction.class, "CTL_OpenOutputFolder");
     }
 }
