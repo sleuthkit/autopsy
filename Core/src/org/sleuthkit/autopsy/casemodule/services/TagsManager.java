@@ -189,7 +189,9 @@ public class TagsManager implements Closeable {
             } else {
 
                 /**
-                 * Else get the tag from the db and add it to the settings.
+                 * Else get the tag from the db and add it to the settings. This
+                 * is for the use case where someone deletes a tag name and then
+                 * tries to add it back.
                  */
                 newTagName = dbTag;
                 /*
