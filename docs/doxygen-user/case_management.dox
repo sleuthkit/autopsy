@@ -30,4 +30,18 @@ To open a case, either:
 
 Navigate to the case directory and select the ".aut" file.
 
+\section case_properties Viewing Case Properties
+You can view the case properties by going to the "Case" menu and clicking "Case Properties". This will open a screen similar to one of the two following screenshots:
+<br><br>
+\image html single-user-case-properties.PNG
+<br><br>
+\image html multi-user-case-properties.PNG
+<br><br>
+
+You can use the "Ingest History" tab to view which data sources had which modules run upon them, and when, as shown in the screenshot below.
+<br><br>
+\image html case-properties-history-tab.PNG
+<br><br>
+
+
 */
