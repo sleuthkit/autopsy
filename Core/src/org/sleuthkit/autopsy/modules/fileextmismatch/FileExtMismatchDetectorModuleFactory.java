@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.modules.fileextmismatch;
 
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
@@ -52,7 +53,7 @@ public class FileExtMismatchDetectorModuleFactory extends IngestModuleFactoryAda
 
     @Override
     public String getModuleVersionNumber() {
-        return "TEST";
+        return Version.getVersion();
     }
 
     @Override

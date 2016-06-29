@@ -39,7 +39,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Panel for displaying ingest job history.
  */
-public class IngestJobInfoPanel extends javax.swing.JPanel {
+class IngestJobInfoPanel extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(IngestJobInfoPanel.class.getName());
     private List<IngestJobInfo> ingestJobs;
@@ -50,7 +50,7 @@ public class IngestJobInfoPanel extends javax.swing.JPanel {
     /**
      * Creates new form IngestJobInfoPanel
      */
-    public IngestJobInfoPanel() {
+    IngestJobInfoPanel() {
         initComponents();
         customizeComponents();
     }
