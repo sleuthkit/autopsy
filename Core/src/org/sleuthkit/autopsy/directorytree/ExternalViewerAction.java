@@ -69,7 +69,7 @@ public class ExternalViewerAction extends AbstractAction {
         }
     }
 
-    @Messages({"ExternalViewerAction.actionPerformed.failure.message=The given file could not be open, as the file type is not supported.",
+    @Messages({"ExternalViewerAction.actionPerformed.failure.message=Could not find a viewer for the given file.",
         "ExternalViewerAction.actionPerformed.failure.title=Open Failure"})
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -86,15 +86,13 @@ public class ExternalViewerAction extends AbstractAction {
             tempFile.createNewFile();
             ContentUtils.writeToFile(fileObject, tempFile);
         } catch (IOException ex) {
-            // throw an error here
             logger.log(Level.WARNING, "Can't save to temporary file.", ex); //NON-NLS
         }
 
         try {
             Desktop.getDesktop().open(tempFile);
         } catch (IOException ex) {
-            // if can't open the file, throw the error saying: "File type not supported."
-            logger.log(Level.WARNING, "File type not supported.", ex); //NON-NLS
+            logger.log(Level.WARNING, "Could not find a viewer for the given file: " + tempFile.getName(), ex); //NON-NLS
             JOptionPane.showMessageDialog(null, Bundle.ExternalViewerAction_actionPerformed_failure_message(), Bundle.ExternalViewerAction_actionPerformed_failure_title(), JOptionPane.ERROR_MESSAGE);
         }
 
