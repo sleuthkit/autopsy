@@ -30,6 +30,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.datamodel.HashEntry;
 
@@ -49,7 +50,7 @@ public class AddHashValuesToDatabaseDialog extends javax.swing.JDialog {
      * database.
      */
     AddHashValuesToDatabaseDialog(HashDb hashDb) {
-        super(new JFrame(),
+        super((JFrame) WindowManager.getDefault().getMainWindow(),
                 NbBundle.getMessage(AddHashValuesToDatabaseDialog.class, "AddHashValuesToDatabaseDialog.JDialog.Title", hashDb.getHashSetName()),
                 true);
         this.hashDb = hashDb;
