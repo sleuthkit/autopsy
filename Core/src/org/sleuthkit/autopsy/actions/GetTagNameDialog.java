@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.actions;
 import java.awt.Window;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
@@ -103,6 +104,12 @@ public class GetTagNameDialog extends JDialog {
             currentTagNames = new ArrayList<>();
         }
 
+        currentTagNames.sort(new Comparator<TagName>() {
+            @Override
+            public int compare(TagName o1, TagName o2) {
+                return o1.getDisplayName().compareTo(o2.getDisplayName());
+            }
+        });
         // Populate the tag names table.
         tagsTable.setModel(new TagsTableModel(currentTagNames));
         tagsTable.setTableHeader(null);
@@ -327,13 +334,15 @@ public class GetTagNameDialog extends JDialog {
         "GetTagNameDialog.deleteTag.failure.text=Failed to delete tag.",
         "GetTagNameDialog.deleteTag.failure.header=Failure"})
     private void deleteTagButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteTagButtonActionPerformed
-        String tagDisplayName = (String) this.tagsTable.getModel().getValueAt(this.tagsTable.getSelectedRow(), 1);
-        try {
-            Case.getCurrentCase().getServices().getTagsManager().deleteTagName(tagNames.get(tagDisplayName));
-            JOptionPane.showMessageDialog(null, Bundle.GetTagNameDialog_deleteTag_success_text(), Bundle.GetTagNameDialog_deleteTag_success_header(), JOptionPane.INFORMATION_MESSAGE);
-        } catch (TskCoreException ex) {
-            JOptionPane.showMessageDialog(null, Bundle.GetTagNameDialog_deleteTag_failure_text(), Bundle.GetTagNameDialog_deleteTag_failure_header(), JOptionPane.ERROR_MESSAGE);
-            logger.log(Level.SEVERE, "Failed to delete tag: " + tagDisplayName, ex);
+        if (this.tagsTable.getSelectedRow() != -1) {
+            String tagDisplayName = (String) this.tagsTable.getModel().getValueAt(this.tagsTable.getSelectedRow(), 1);
+            try {
+                Case.getCurrentCase().getServices().getTagsManager().deleteTagName(tagNames.get(tagDisplayName));
+                JOptionPane.showMessageDialog(null, Bundle.GetTagNameDialog_deleteTag_success_text(), Bundle.GetTagNameDialog_deleteTag_success_header(), JOptionPane.INFORMATION_MESSAGE);
+            } catch (TskCoreException ex) {
+                JOptionPane.showMessageDialog(null, Bundle.GetTagNameDialog_deleteTag_failure_text(), Bundle.GetTagNameDialog_deleteTag_failure_header(), JOptionPane.ERROR_MESSAGE);
+                logger.log(Level.SEVERE, "Failed to delete tag: " + tagDisplayName, ex);
+            }
         }
     }//GEN-LAST:event_deleteTagButtonActionPerformed
 
@@ -356,7 +365,14 @@ public class GetTagNameDialog extends JDialog {
                 try {
                     tagName = Case.getCurrentCase().getServices().getTagsManager().addTagName(tagDisplayName);
                     tagNames.put(tagDisplayName, tagName);
-                    tagsTable.setModel(new TagsTableModel(new ArrayList<>(this.tagNames.values())));
+                    List<TagName> tagNameList = new ArrayList<>(this.tagNames.values());
+                    tagNameList.sort(new Comparator<TagName>() {
+                        @Override
+                        public int compare(TagName o1, TagName o2) {
+                            return o1.getDisplayName().compareTo(o2.getDisplayName());
+                        }
+                    });
+                    tagsTable.setModel(new TagsTableModel(tagNameList));
                     this.tagNameField.setText("");
                 } catch (TskCoreException ex) {
                     Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, "Error adding " + tagDisplayName + " tag name", ex); //NON-NLS
