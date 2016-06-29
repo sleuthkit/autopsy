@@ -115,6 +115,7 @@
                 <include name="libvhdi.dll"/>
                 <include name="zlib.dll" />
                 <include name="libintl-8.dll"/>
+                <include name="libiconv-2.dll"/>
                 <include name="ssleay32.dll"/>
                 <include name="libeay32.dll"/>
                 <include name="libpq.dll"/>

@@ -21,6 +21,10 @@ package org.sleuthkit.autopsy.datamodel;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.util.Lookup;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A DisplayableItem is any node in the Autopsy directory tree. All of the nodes
@@ -47,4 +51,27 @@ public abstract class DisplayableItemNode extends AbstractNode {
      * Added to support this feature.
      */
 //    public abstract String getItemType();
+    /**
+     * this code started as a cut and past of
+     * DataResultFilterNode.GetPopupActionsDisplayableItemNodeVisitor.findLinked(BlackboardArtifactNode
+     * ba)
+     *
+     *
+     * @param artifact
+     *
+     * @return
+     */
+    static AbstractFile findLinked(BlackboardArtifact artifact) throws TskCoreException {
+
+        BlackboardAttribute pathIDAttribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID));
+
+        if (pathIDAttribute != null) {
+            long contentID = pathIDAttribute.getValueLong();
+            if (contentID != -1) {
+                return artifact.getSleuthkitCase().getAbstractFileById(contentID);
+            }
+        }
+
+        return null;
+    }
 }

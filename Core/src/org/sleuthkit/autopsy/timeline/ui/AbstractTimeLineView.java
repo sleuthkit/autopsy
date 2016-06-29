@@ -227,6 +227,7 @@ public abstract class AbstractTimeLineView extends BorderPane {
         TimeLineController.getTimeZone().removeListener(updateListener);
         updateListener = null;
         filteredEvents.unRegisterForEvents(this);
+        controller.unRegisterForEvents(this);
     }
 
     /**

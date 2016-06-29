@@ -143,7 +143,7 @@ class PromptDialogManager {
      * @param dialog The dialog to set the title bar icon for.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    static private void setDialogIcons(Dialog<?> dialog) {
+    static void setDialogIcons(Dialog<?> dialog) {
         ((Stage) dialog.getDialogPane().getScene().getWindow()).getIcons().setAll(AUTOPSY_ICON);
     }
 

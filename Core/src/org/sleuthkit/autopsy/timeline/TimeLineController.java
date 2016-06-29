@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline;
 
+import com.google.common.eventbus.EventBus;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -81,6 +83,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.db.EventsRepository;
+import org.sleuthkit.autopsy.timeline.events.ViewInTimelineRequestedEvent;
 import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
@@ -89,6 +92,8 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.zooming.TimeUnits;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  * Controller in the MVC design along with FilteredEventsModel TimeLineView.
@@ -141,6 +146,7 @@ public class TimeLineController {
     private final ReadOnlyStringWrapper taskTitle = new ReadOnlyStringWrapper();
 
     private final ReadOnlyStringWrapper statusMessage = new ReadOnlyStringWrapper();
+    private EventBus eventbus = new EventBus("TimeLineController_EventBus");
 
     /**
      * Status is a string that will be displayed in the status bar as a kind of
@@ -218,7 +224,7 @@ public class TimeLineController {
 
     //selected events (ie shown in the result viewer)
     @GuardedBy("this")
-    private final ObservableList<Long> selectedEventIDs = FXCollections.<Long>synchronizedObservableList(FXCollections.<Long>observableArrayList());
+    private final ObservableList<Long> selectedEventIDs = FXCollections.<Long>observableArrayList();
 
     @GuardedBy("this")
     private final ReadOnlyObjectWrapper<Interval> selectedTimeRange = new ReadOnlyObjectWrapper<>();
@@ -384,7 +390,9 @@ public class TimeLineController {
     /**
      * Rebuild the repo using the given repoBuilder (expected to be a member
      * reference to EventsRepository.rebuildRepository() or
-     * EventsRepository.rebuildTags()) and display the ui when it is done.
+     * EventsRepository.rebuildTags()) and display the UI when it is done. If
+     * either file or artifact is not null the user will be prompted to choose a
+     * derived event and time range to show in the Timeline List View.
      *
      * @param repoBuilder    A Function from Consumer<Worker.State> to
      *                       CancellationProgressTask<?>. Ie a function that
@@ -395,12 +403,16 @@ public class TimeLineController {
      *                       EventsRepository.rebuildTags()
      * @param markDBNotStale After the repo is rebuilt should it be marked not
      *                       stale
+     * @param file           The AbstractFile from which to choose an event to
+     *                       show in the List View.
+     * @param artifact       The BlackboardArtifact to show in the List View.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     @NbBundle.Messages({
         "TimeLineController.setIngestRunning.errMsgRunning=Failed to mark the timeline db as populated while ingest was running. Some results may be out of date or missing.",
         "TimeLinecontroller.setIngestRunning.errMsgNotRunning=Failed to mark the timeline db as populated while ingest was not running. Some results may be out of date or missing."})
-    private void rebuildRepoHelper(Function<Consumer<Worker.State>, CancellationProgressTask<?>> repoBuilder, Boolean markDBNotStale) {
+    private void rebuildRepoHelper(Function<Consumer<Worker.State>, CancellationProgressTask<?>> repoBuilder, Boolean markDBNotStale, AbstractFile file, BlackboardArtifact artifact) {
+
         boolean ingestRunning = IngestManager.getInstance().isIngestRunning();
         //if there is an existing prompt or progressdialog, just show that
         if (promptDialogManager.bringCurrentDialogToFront()) {
@@ -412,34 +424,51 @@ public class TimeLineController {
             return;  //if they cancel, do nothing.
         }
 
-        //get a task that rebuilds the repo with the bellow state listener attached
-        final CancellationProgressTask<?> rebuildRepositoryTask = repoBuilder.apply(newSate -> {
-            //this will be on JFX thread
-            switch (newSate) {
-                case SUCCEEDED:
-                    /*
-                     * Record if ingest was running the last time the db was
-                     * rebuilt, and hence it might stale.
-                     */
-                    try {
-                        perCaseTimelineProperties.setIngestRunning(ingestRunning);
-                    } catch (IOException ex) {
-                        MessageNotifyUtil.Notify.error(Bundle.Timeline_dialogs_title(),
-                                ingestRunning ? Bundle.TimeLineController_setIngestRunning_errMsgRunning()
-                                        : Bundle.TimeLinecontroller_setIngestRunning_errMsgNotRunning());
-                        LOGGER.log(Level.SEVERE, "Error marking the ingest state while the timeline db was populated.", ex); //NON-NLS
-                    }
-                    if (markDBNotStale) {
-                        setEventsDBStale(false);
-                        filteredEvents.postDBUpdated();
-                    }
-                    SwingUtilities.invokeLater(this::showWindow);
-                    break;
-
-                case FAILED:
-                case CANCELLED:
-                    setEventsDBStale(true);
-                    break;
+        //get a task that rebuilds the repo with the below state listener attached
+        final CancellationProgressTask<?> rebuildRepositoryTask;
+        rebuildRepositoryTask = repoBuilder.apply(new Consumer<Worker.State>() {
+            @Override
+            public void accept(Worker.State newSate) {
+                //this will be on JFX thread
+                switch (newSate) {
+                    case SUCCEEDED:
+                        /*
+                         * Record if ingest was running the last time the db was
+                         * rebuilt, and hence it might stale.
+                         */
+                        try {
+                            perCaseTimelineProperties.setIngestRunning(ingestRunning);
+                        } catch (IOException ex) {
+                            MessageNotifyUtil.Notify.error(Bundle.Timeline_dialogs_title(),
+                                    ingestRunning ? Bundle.TimeLineController_setIngestRunning_errMsgRunning()
+                                            : Bundle.TimeLinecontroller_setIngestRunning_errMsgNotRunning());
+                            LOGGER.log(Level.SEVERE, "Error marking the ingest state while the timeline db was populated.", ex); //NON-NLS
+                        }
+                        if (markDBNotStale) {
+                            setEventsDBStale(false);
+                            filteredEvents.postDBUpdated();
+                        }
+                        if (file == null && artifact == null) {
+                            SwingUtilities.invokeLater(TimeLineController.this::showWindow);
+                            TimeLineController.this.showFullRange();
+                        } else {
+                            //prompt user to pick specific event and time range
+                            ShowInTimelineDialog showInTimelineDilaog =
+                                    (file == null)
+                                            ? new ShowInTimelineDialog(TimeLineController.this, artifact)
+                                            : new ShowInTimelineDialog(TimeLineController.this, file);
+                            Optional<ViewInTimelineRequestedEvent> dialogResult = showInTimelineDilaog.showAndWait();
+                            dialogResult.ifPresent(viewInTimelineRequestedEvent -> {
+                                SwingUtilities.invokeLater(TimeLineController.this::showWindow);
+                                showInListView(viewInTimelineRequestedEvent); //show requested event in list view
+                            });
+                        }
+                        break;
+                    case FAILED:
+                    case CANCELLED:
+                        setEventsDBStale(true);
+                        break;
+                }
             }
         });
 
@@ -456,24 +485,59 @@ public class TimeLineController {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     public void rebuildRepo() {
-        rebuildRepoHelper(eventsRepository::rebuildRepository, true);
+        rebuildRepo(null, null);
+    }
+
+    /**
+     * Rebuild the entire repo in the background, and show the timeline when
+     * done.
+     *
+     * @param file     The AbstractFile from which to choose an event to show in
+     *                 the List View.
+     * @param artifact The BlackboardArtifact to show in the List View.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private void rebuildRepo(AbstractFile file, BlackboardArtifact artifact) {
+        rebuildRepoHelper(eventsRepository::rebuildRepository, true, file, artifact);
     }
 
     /**
      * Drop the tags table and rebuild it in the background, and show the
      * timeline when done.
+     *
+     * @param file     The AbstractFile from which to choose an event to show in
+     *                 the List View.
+     * @param artifact The BlackboardArtifact to show in the List View.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    void rebuildTagsTable() {
-        rebuildRepoHelper(eventsRepository::rebuildTags, false);
+    private void rebuildTagsTable(AbstractFile file, BlackboardArtifact artifact) {
+        rebuildRepoHelper(eventsRepository::rebuildTags, false, file, artifact);
     }
 
     /**
      * Show the entire range of the timeline.
      */
-    public boolean showFullRange() {
+    private boolean showFullRange() {
         synchronized (filteredEvents) {
             return pushTimeRange(filteredEvents.getSpanningInterval());
+        }
+    }
+
+    /**
+     * Show the events and the amount of time indicated in the given
+     * ViewInTimelineRequestedEvent in the List View.
+     *
+     * @param requestEvent Contains the ID of the requested events and the
+     *                     timerange to show.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private void showInListView(ViewInTimelineRequestedEvent requestEvent) {
+        synchronized (filteredEvents) {
+            setViewMode(ViewMode.LIST);
+            selectEventIDs(requestEvent.getEventIDs());
+            if (pushTimeRange(requestEvent.getInterval()) == false) {
+                eventbus.post(requestEvent);
+            }
         }
     }
 
@@ -497,9 +561,13 @@ public class TimeLineController {
     /**
      * Add the case and ingest listeners, prompt for rebuilding the database if
      * necessary, and show the timeline window.
+     *
+     * @param file     The AbstractFile from which to choose an event to show in
+     *                 the List View.
+     * @param artifact The BlackboardArtifact to show in the List View.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    void openTimeLine() {
+    void showTimeLine(AbstractFile file, BlackboardArtifact artifact) {
         // listen for case changes (specifically images being added, and case changes).
         if (Case.isCaseOpen() && !listeningToAutopsy) {
             IngestManager.getInstance().addIngestModuleEventListener(ingestModuleListener);
@@ -508,18 +576,21 @@ public class TimeLineController {
             listeningToAutopsy = true;
         }
 
-        Platform.runLater(this::promptForRebuild);
+        Platform.runLater(() -> promptForRebuild(file, artifact));
     }
 
     /**
      * Prompt the user to confirm rebuilding the db. Checks if a database
      * rebuild is necessary and includes the reasons in the prompt. If the user
      * confirms, rebuilds the database. Shows the timeline window when the
-     * rebuild is done, or immediately if the rebuild is not confirmed. F
+     * rebuild is done, or immediately if the rebuild is not confirmed.
+     *
+     * @param file     The AbstractFile from which to choose an event to show in
+     *                 the List View.
+     * @param artifact The BlackboardArtifact to show in the List View.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private void promptForRebuild() {
-
+    private void promptForRebuild(AbstractFile file, BlackboardArtifact artifact) {
         //if there is an existing prompt or progressdialog, just show that
         if (promptDialogManager.bringCurrentDialogToFront()) {
             return;
@@ -527,7 +598,7 @@ public class TimeLineController {
 
         //if the repo is empty just (re)build it with out asking, the user can always cancel part way through
         if (eventsRepository.countAllEvents() == 0) {
-            rebuildRepo();
+            rebuildRepo(file, artifact);
             return;
         }
 
@@ -535,7 +606,7 @@ public class TimeLineController {
         List<String> rebuildReasons = getRebuildReasons();
         if (false == rebuildReasons.isEmpty()) {
             if (promptDialogManager.confirmRebuild(rebuildReasons)) {
-                rebuildRepo();
+                rebuildRepo(file, artifact);
                 return;
             }
         }
@@ -547,7 +618,7 @@ public class TimeLineController {
          *
          * //TODO: can we check the tags to see if we need to do this?
          */
-        rebuildTagsTable();
+        rebuildTagsTable(file, artifact);
     }
 
     /**
@@ -599,8 +670,7 @@ public class TimeLineController {
      */
     synchronized public void pushPeriod(ReadablePeriod period) {
         synchronized (filteredEvents) {
-            final DateTime middleOf = IntervalUtils.middleOf(filteredEvents.timeRangeProperty().get());
-            pushTimeRange(IntervalUtils.getIntervalAround(middleOf, period));
+            pushTimeRange(IntervalUtils.getIntervalAroundMiddle(filteredEvents.getTimeRange(), period));
         }
     }
 
@@ -618,31 +688,6 @@ public class TimeLineController {
         DateTime start = timeRange.getStart().plus(toDurationMillis);
         DateTime end = timeRange.getEnd().minus(toDurationMillis);
         pushTimeRange(new Interval(start, end));
-    }
-
-    public void selectEventIDs(Collection<Long> events) {
-        final LoggedTask<Interval> selectEventIDsTask = new LoggedTask<Interval>("Select Event IDs", true) { //NON-NLS
-            @Override
-            protected Interval call() throws Exception {
-                return filteredEvents.getSpanningInterval(events);
-            }
-
-            @Override
-            protected void succeeded() {
-                super.succeeded();
-                try {
-                    synchronized (TimeLineController.this) {
-                        selectedTimeRange.set(get());
-                        selectedEventIDs.setAll(events);
-
-                    }
-                } catch (InterruptedException | ExecutionException ex) {
-                    LOGGER.log(Level.SEVERE, getTitle() + " Unexpected error", ex); //NON-NLS
-                }
-            }
-        };
-
-        monitorTask(selectEventIDsTask);
     }
 
     /**
@@ -672,15 +717,35 @@ public class TimeLineController {
         }
     }
 
-    @SuppressWarnings("AssignmentToMethodParameter") //clamp timerange to case
+    /**
+     * Set the new interval to view, and record it in the history. The interval
+     * will be clamped to the span of events in the current case.
+     *
+     * @param timeRange The Interval to view.
+     *
+     * @return True if the interval was changed. False if the interval was the
+     *         same as the existing one and no change happened.
+     */
     synchronized public boolean pushTimeRange(Interval timeRange) {
-        timeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
+        //clamp timerange to case
+        Interval clampedTimeRange;
+        if (timeRange == null) {
+            clampedTimeRange = this.filteredEvents.getSpanningInterval();
+        } else {
+            Interval spanningInterval = this.filteredEvents.getSpanningInterval();
+            if (spanningInterval.overlaps(timeRange)) {
+                clampedTimeRange = spanningInterval.overlap(timeRange);
+            } else {
+                clampedTimeRange = spanningInterval;
+            }
+        }
+
         ZoomParams currentZoom = filteredEvents.zoomParametersProperty().get();
         if (currentZoom == null) {
-            advance(InitialZoomState.withTimeRange(timeRange));
+            advance(InitialZoomState.withTimeRange(clampedTimeRange));
             return true;
-        } else if (currentZoom.hasTimeRange(timeRange) == false) {
-            advance(currentZoom.withTimeRange(timeRange));
+        } else if (currentZoom.hasTimeRange(clampedTimeRange) == false) {
+            advance(currentZoom.withTimeRange(clampedTimeRange));
             return true;
         } else {
             return false;
@@ -746,6 +811,17 @@ public class TimeLineController {
 
     synchronized private void advance(ZoomParams newState) {
         historyManager.advance(newState);
+    }
+
+    /**
+     * Select the given event IDs and set their spanning interval as the
+     * selected time range.
+     *
+     * @param eventIDs The eventIDs to select
+     */
+    synchronized public void selectEventIDs(Collection<Long> eventIDs) {
+        selectedTimeRange.set(filteredEvents.getSpanningInterval(eventIDs));
+        selectedEventIDs.setAll(eventIDs);
     }
 
     public void selectTimeAndType(Interval interval, EventType type) {
@@ -833,8 +909,28 @@ public class TimeLineController {
         }
     }
 
+    /**
+     * Register the given object to receive events.
+     *
+     * @param o The object to register. Must implement public methods annotated
+     *          with Subscribe.
+     */
+    synchronized public void registerForEvents(Object o) {
+        eventbus.register(o);
+    }
+
+    /**
+     * Un-register the given object, so it no longer receives events.
+     *
+     * @param o The object to un-register.
+     */
+    synchronized public void unRegisterForEvents(Object o) {
+        eventbus.unregister(0);
+    }
+
     static synchronized public void setTimeZone(TimeZone timeZone) {
         TimeLineController.timeZone.set(timeZone);
+
     }
 
     /**

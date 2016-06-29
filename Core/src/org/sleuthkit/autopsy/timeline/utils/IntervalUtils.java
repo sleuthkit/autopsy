@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.timeline.utils;
 
+import java.time.Instant;
+import java.time.temporal.TemporalAmount;
 import java.util.Collection;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -65,6 +67,13 @@ public class IntervalUtils {
         DateTime middleOf = IntervalUtils.middleOf(range);
         long halfRange = range.toDurationMillis() / 4;
         final Interval newInterval = new Interval(middleOf.minus(halfRange), middleOf.plus(halfRange));
+        return newInterval;
+    }
+
+    static public Interval getIntervalAround(Instant aroundInstant, TemporalAmount temporalAmount) {
+        long start = aroundInstant.minus(temporalAmount).toEpochMilli();
+        long end = aroundInstant.plusMillis(1).plus(temporalAmount).toEpochMilli();
+        final Interval newInterval = new Interval(start, Math.max(start + 1, end));
         return newInterval;
     }
 
