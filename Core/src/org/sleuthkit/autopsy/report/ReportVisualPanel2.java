@@ -39,6 +39,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListDataListener;
 import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -50,7 +51,7 @@ final class ReportVisualPanel2 extends JPanel {
     private ReportWizardPanel2 wizPanel;
     private Map<String, Boolean> tagStates = new LinkedHashMap<>();
     private List<String> tags = new ArrayList<>();
-    ArtifactSelectionDialog dialog = new ArtifactSelectionDialog(new JFrame(), true);
+    ArtifactSelectionDialog dialog = new ArtifactSelectionDialog((JFrame) WindowManager.getDefault().getMainWindow(), true);
     private Map<BlackboardArtifact.Type, Boolean> artifactStates = new HashMap<>();
     private List<BlackboardArtifact.Type> artifacts = new ArrayList<>();
     private TagsListModel tagsModel;
