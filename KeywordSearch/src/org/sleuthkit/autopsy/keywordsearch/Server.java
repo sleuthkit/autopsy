@@ -1207,15 +1207,6 @@ public class Server {
 
         }
 
-        /**
-         * Get the name of the core
-         *
-         * @return the String name of the core
-         */
-        String getName() {
-            return name;
-        }
-
         private QueryResponse query(SolrQuery sq) throws SolrServerException {
             return solrCore.query(sq);
         }
