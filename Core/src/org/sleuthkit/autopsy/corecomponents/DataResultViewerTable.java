@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import javax.swing.Action;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
@@ -146,15 +145,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2) {
-                    Node[] nodes = DataResultViewerTable.this.em.getSelectedNodes();
-                    for (Node node : nodes) {
-                        Action action = node.getPreferredAction();
-                        if (action != null) {
-                            action.actionPerformed(null);
-                        }
-                    }
-                }
             }
         });
     }
@@ -509,7 +499,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 //        return Case.getCurrentCase().getName() + "." + type + "."
 //                + prop.getName().replaceAll("[^a-zA-Z0-9_]", "") + ".columnOrder";
 //    }
-
     // Populate a two-dimensional array with rows of property values for up 
     // to maxRows children of the node passed in. 
     private static Object[][] getRowValues(Node node, int maxRows) {
