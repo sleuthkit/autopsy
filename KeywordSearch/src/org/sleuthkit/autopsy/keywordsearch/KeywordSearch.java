@@ -119,15 +119,6 @@ public class KeywordSearch {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-            /*
-             * TODO (AUT-2081): There is a Solr core unloading bug, fixed in
-             * Solr 5.4, that results in the co-existence of a core.properties
-             * file and a core.properties.unloaded file in the core instance
-             * directory when a core is closed/unloaded. When this happens,
-             * subsequent core open/load attempts will fail. The workaround for
-             * single-user cases is to close and reopen Autopsy so that a new
-             * server instance gets spun up.
-             */
             if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
                 if (null != evt.getOldValue()) {
                     /*
