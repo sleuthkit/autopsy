@@ -87,7 +87,7 @@ public class SaveSnapshotAsReport extends Action {
         "# {0} - generated default report name",
         "SaveSnapShotAsReport.reportName.prompt=leave empty for default report name: {0}.",
         "SaveSnapShotAsReport.reportName.header=Enter a report name for the Timeline Snapshot Report.",
-        "SaveSnapShotAsReport.duplicateReportNameError.text=A report with that name alredy exists."
+        "SaveSnapShotAsReport.duplicateReportNameError.text=A report with that name already exists."
     })
     public SaveSnapshotAsReport(TimeLineController controller, Supplier<Node> nodeSupplier) {
         super(Bundle.SaveSnapShotAsReport_action_name_text());
