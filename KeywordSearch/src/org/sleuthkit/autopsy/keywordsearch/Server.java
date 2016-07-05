@@ -79,76 +79,76 @@ public class Server {
     public static enum Schema {
 
         ID {
-                    @Override
-                    public String toString() {
-                        return "id"; //NON-NLS
-                    }
-                },
+            @Override
+            public String toString() {
+                return "id"; //NON-NLS
+            }
+        },
         IMAGE_ID {
-                    @Override
-                    public String toString() {
-                        return "image_id"; //NON-NLS
-                    }
-                },
+            @Override
+            public String toString() {
+                return "image_id"; //NON-NLS
+            }
+        },
         // This is not stored or index . it is copied to Text and Content_Ws
         CONTENT {
-                    @Override
-                    public String toString() {
-                        return "content"; //NON-NLS
-                    }
-                },
+            @Override
+            public String toString() {
+                return "content"; //NON-NLS
+            }
+        },
         TEXT {
-                    @Override
-                    public String toString() {
-                        return "text"; //NON-NLS
-                    }
-                },
+            @Override
+            public String toString() {
+                return "text"; //NON-NLS
+            }
+        },
         CONTENT_WS {
-                    @Override
-                    public String toString() {
-                        return "content_ws"; //NON-NLS
-                    }
-                },
+            @Override
+            public String toString() {
+                return "content_ws"; //NON-NLS
+            }
+        },
         FILE_NAME {
-                    @Override
-                    public String toString() {
-                        return "file_name"; //NON-NLS
-                    }
-                },
+            @Override
+            public String toString() {
+                return "file_name"; //NON-NLS
+            }
+        },
         // note that we no longer index this field
         CTIME {
-                    @Override
-                    public String toString() {
-                        return "ctime"; //NON-NLS
-                    }
-                },
+            @Override
+            public String toString() {
+                return "ctime"; //NON-NLS
+            }
+        },
         // note that we no longer index this field
         ATIME {
-                    @Override
-                    public String toString() {
-                        return "atime"; //NON-NLS
-                    }
-                },
+            @Override
+            public String toString() {
+                return "atime"; //NON-NLS
+            }
+        },
         // note that we no longer index this field
         MTIME {
-                    @Override
-                    public String toString() {
-                        return "mtime"; //NON-NLS
-                    }
-                },
+            @Override
+            public String toString() {
+                return "mtime"; //NON-NLS
+            }
+        },
         // note that we no longer index this field
         CRTIME {
-                    @Override
-                    public String toString() {
-                        return "crtime"; //NON-NLS
-                    }
-                },
+            @Override
+            public String toString() {
+                return "crtime"; //NON-NLS
+            }
+        },
         NUM_CHUNKS {
-                    @Override
-                    public String toString() {
-                        return "num_chunks"; //NON-NLS
-                    }
-                },
+            @Override
+            public String toString() {
+                return "num_chunks"; //NON-NLS
+            }
+        },
     };
 
     public static final String HL_ANALYZE_CHARS_UNLIMITED = "500000"; //max 1MB in a chunk. use -1 for unlimited, but -1 option may not be supported (not documented)
@@ -173,6 +173,8 @@ public class Server {
     private int currentSolrStopPort = 0;
     private static final boolean DEBUG = false;//(Version.getBuildType() == Version.Type.DEVELOPMENT);
     private UNCPathUtilities uncPathUtilities = null;
+    private static final String SOLR = "solr";
+    private static final String CORE_PROPERTIES = "core.properties";
 
     public enum CORE_EVT_STATES {
 
@@ -635,15 +637,6 @@ public class Server {
         currentCoreLock.writeLock().lock();
         try {
             if (null != currentCore) {
-                /*
-                 * TODO (AUT-2081): There is a Solr core unloading bug, fixed in
-                 * Solr 5.4, that will result in the co-existence of a
-                 * core.properties file and a core.properties.unloaded file in
-                 * the core instance directory when the following code executes.
-                 * When this happens, subsequent open/load attempts will fail.
-                 * The workaround for single-user cases is to close and reopen
-                 * Autopsy so that a new server instance gets spun up.
-                 */
                 currentCore.close();
                 currentCore = null;
                 serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STOPPED);
@@ -1097,15 +1090,21 @@ public class Server {
                  * The core either does not exist or it is not loaded. Make a
                  * request that will cause the core to be created if it does not
                  * exist or loaded if it already exists.
-                 *
-                 * TODO (AUT-2081): There is a Solr core unloading bug, fixed in
-                 * Solr 5.4, that results in the co-existence of a
-                 * core.properties file and a core.properties.unloaded file in
-                 * the core instance directory when a core is unloaded. When
-                 * this happens, this code will fail. The workaround for
-                 * single-user cases is to close and reopen Autopsy so that a
-                 * new server instance gets spun up.
                  */
+
+                // In single user mode, if there is a core.properties file already,
+                // we've hit a solr bug. Compensate by deleting it.
+                if (caseType == CaseType.SINGLE_USER_CASE) {
+                    Path corePropertiesFile = Paths.get(solrFolder.toString(), SOLR, coreName, CORE_PROPERTIES);
+                    if (corePropertiesFile.toFile().exists()) {
+                        try {
+                            corePropertiesFile.toFile().delete();
+                        } catch (Exception ex) {
+                            logger.log(Level.INFO, "Could not delete pre-existing core.properties prior to opening the core."); //NON-NLS
+                        }
+                    }
+                }
+
                 CoreAdminRequest.Create createCoreRequest = new CoreAdminRequest.Create();
                 createCoreRequest.setDataDir(dataDir.getAbsolutePath());
                 createCoreRequest.setCoreName(coreName);

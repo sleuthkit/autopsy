@@ -28,6 +28,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
+import org.sleuthkit.autopsy.casemodule.Case;
 
 @ActionID(
         category = "Tools",
@@ -41,9 +42,13 @@ import org.openide.util.actions.Presenter;
 public final class RunIngestAction extends CallableSystemAction implements Presenter.Menu, ActionListener {
 
     private static final long serialVersionUID = 1L;
+    private static RunIngestAction action;
 
     static public RunIngestAction getInstance() {
-        return new RunIngestAction();
+        if (action == null) {
+            action = new RunIngestAction();
+        }
+        return action;
     }
 
     @Override
@@ -71,5 +76,10 @@ public final class RunIngestAction extends CallableSystemAction implements Prese
     @Override
     public void actionPerformed(ActionEvent e) {
         performAction();
+    }
+    
+    @Override
+    public boolean isEnabled() {
+        return Case.isCaseOpen();// && Case.getCurrentCase().hasData();
     }
 }

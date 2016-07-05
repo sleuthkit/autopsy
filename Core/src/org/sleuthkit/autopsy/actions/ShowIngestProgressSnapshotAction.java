@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.actions;
 
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
@@ -26,7 +25,8 @@ import org.openide.awt.ActionRegistration;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
-import org.openide.util.actions.SystemAction;
+import org.openide.util.actions.CallableSystemAction;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotDialog;
 
 @ActionID(
@@ -39,12 +39,12 @@ import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotDialog;
 )
 @ActionReference(path = "Menu/Help", position = 1125)
 @Messages("CTL_ShowIngestProgressSnapshotAction=Ingest Status Details")
-public final class ShowIngestProgressSnapshotAction extends SystemAction implements ActionListener {
+public final class ShowIngestProgressSnapshotAction extends CallableSystemAction implements ActionListener {
 
     private static final String ACTION_NAME = NbBundle.getMessage(ShowIngestProgressSnapshotAction.class, "ShowIngestProgressSnapshotAction.actionName.text");
 
     @Override
-    public void actionPerformed(ActionEvent e) {
+    public void performAction() {
         IngestProgressSnapshotDialog dialog = new IngestProgressSnapshotDialog();
     }
 
@@ -56,5 +56,15 @@ public final class ShowIngestProgressSnapshotAction extends SystemAction impleme
     @Override
     public HelpCtx getHelpCtx() {
         return HelpCtx.DEFAULT_HELP;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return Case.isCaseOpen();
+    }
+
+    @Override
+    public boolean asynchronous() {
+        return false; // run on edt
     }
 }

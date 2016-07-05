@@ -131,10 +131,10 @@
             <Property name="editable" type="boolean" value="false"/>
             <Property name="autoscrolls" type="boolean" value="false"/>
             <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-              <Dimension value="[2000, 2000000]"/>
+              <Dimension value="[2000, 2000]"/>
             </Property>
             <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-              <Dimension value="null"/>
+              <Dimension value="[700, 400]"/>
             </Property>
           </Properties>
           <AuxValues>
