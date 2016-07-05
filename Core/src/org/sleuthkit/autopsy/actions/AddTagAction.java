@@ -121,7 +121,7 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
             // The "Quick Tag" menu also gets an "Choose Tag..." menu item.
             // Selecting this item initiates a dialog that can be used to create
             // or select a tag name and adds a tag with the resulting name.
-            JMenuItem newTagMenuItem = new JMenuItem(NbBundle.getMessage(this.getClass(), "AddTagAction.newTag"));
+            JMenuItem newTagMenuItem = new JMenuItem(NbBundle.getMessage(this.getClass(), "AddTagAction.manageTagNames"));
             newTagMenuItem.addActionListener((ActionEvent e) -> {
                 TagName tagName = GetTagNameDialog.doDialog();
                 if (null != tagName) {

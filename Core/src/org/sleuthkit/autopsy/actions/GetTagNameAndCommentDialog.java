@@ -29,8 +29,10 @@ import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
@@ -45,6 +47,7 @@ public class GetTagNameAndCommentDialog extends JDialog {
             "GetTagNameAndCommentDialog.noTags");
     private final HashMap<String, TagName> tagNames = new HashMap<>();
     private TagNameAndComment tagNameAndComment = null;
+    static final Logger logger = Logger.getLogger(GetTagNameAndCommentDialog.class.getName());
 
     public static class TagNameAndComment {
 
@@ -68,7 +71,7 @@ public class GetTagNameAndCommentDialog extends JDialog {
     /**
      * Show the Tag Name and Comment Dialog and return the TagNameAndContent
      * chosen by the user. The dialog will be centered with the main autopsy
-     * window as its owner. 
+     * window as its owner.
      *
      * @return a TagNameAndComment instance containing the TagName selected by
      *         the user and the entered comment, or null if the user canceled
@@ -150,7 +153,7 @@ public class GetTagNameAndCommentDialog extends JDialog {
         tagLabel = new javax.swing.JLabel();
         commentLabel = new javax.swing.JLabel();
         commentText = new javax.swing.JTextField();
-        newTagButton = new javax.swing.JButton();
+        manageTagsButton = new javax.swing.JButton();
 
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
@@ -181,10 +184,10 @@ public class GetTagNameAndCommentDialog extends JDialog {
         commentText.setText(org.openide.util.NbBundle.getMessage(GetTagNameAndCommentDialog.class, "GetTagNameAndCommentDialog.commentText.text")); // NOI18N
         commentText.setToolTipText(org.openide.util.NbBundle.getMessage(GetTagNameAndCommentDialog.class, "GetTagNameAndCommentDialog.commentText.toolTipText")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(newTagButton, org.openide.util.NbBundle.getMessage(GetTagNameAndCommentDialog.class, "GetTagNameAndCommentDialog.newTagButton.text")); // NOI18N
-        newTagButton.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(manageTagsButton, org.openide.util.NbBundle.getMessage(GetTagNameAndCommentDialog.class, "GetTagNameAndCommentDialog.manageTagsButton.text")); // NOI18N
+        manageTagsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                newTagButtonActionPerformed(evt);
+                manageTagsButtonActionPerformed(evt);
             }
         });
 
@@ -196,8 +199,8 @@ public class GetTagNameAndCommentDialog extends JDialog {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(newTagButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 78, Short.MAX_VALUE)
+                        .addComponent(manageTagsButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 26, Short.MAX_VALUE)
                         .addComponent(okButton, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cancelButton))
@@ -230,7 +233,7 @@ public class GetTagNameAndCommentDialog extends JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cancelButton)
                     .addComponent(okButton)
-                    .addComponent(newTagButton))
+                    .addComponent(manageTagsButton))
                 .addContainerGap())
         );
 
@@ -254,20 +257,32 @@ public class GetTagNameAndCommentDialog extends JDialog {
         dispose();
     }//GEN-LAST:event_closeDialog
 
-    private void newTagButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newTagButtonActionPerformed
-        TagName newTagName = GetTagNameDialog.doDialog(this);
-        if (newTagName != null) {
-            tagNames.put(newTagName.getDisplayName(), newTagName);
-            tagCombo.addItem(newTagName.getDisplayName());
-            tagCombo.setSelectedItem(newTagName.getDisplayName());
+    @Messages({"GetTagNameAndCommentDialog.newTagButtonAction.failure.message=Failed to load tags.",
+        "GetTagNameAndCommentDialog.newTagButtonAction.failure.header=Load Failure"})
+    private void manageTagsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_manageTagsButtonActionPerformed
+        GetTagNameDialog.doDialog(this);
+        try {
+            List<TagName> currentTagNames = Case.getCurrentCase().getServices().getTagsManager().getAllTagNames();
+            tagNames.clear();
+            for (TagName tagName : currentTagNames) {
+                tagNames.put(tagName.getDisplayName(), tagName);
+            }
+            tagCombo.removeAllItems();
+            for (TagName tagName : currentTagNames) {
+                tagCombo.addItem(tagName.getDisplayName());
+            }
+        } catch (TskCoreException ex) {
+            JOptionPane.showMessageDialog(this, Bundle.GetTagNameAndCommentDialog_newTagButtonAction_failure_message(), Bundle.GetTagNameAndCommentDialog_newTagButtonAction_failure_header(), JOptionPane.ERROR_MESSAGE);
+            logger.log(Level.SEVERE, "Failed to load tags.", ex);
         }
-    }//GEN-LAST:event_newTagButtonActionPerformed
+
+    }//GEN-LAST:event_manageTagsButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancelButton;
     private javax.swing.JLabel commentLabel;
     private javax.swing.JTextField commentText;
-    private javax.swing.JButton newTagButton;
+    private javax.swing.JButton manageTagsButton;
     private javax.swing.JButton okButton;
     private javax.swing.JComboBox<String> tagCombo;
     private javax.swing.JLabel tagLabel;
