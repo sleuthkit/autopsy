@@ -276,10 +276,11 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
                 int curTerm = 0;
                 for (String term : hitTerms) {
                     //escape subqueries, they shouldn't be escaped again later
-                    final String termS = KeywordSearchUtil.escapeLuceneQuery(term);
+                    /*final String termS = KeywordSearchUtil.escapeLuceneQuery(term);
                     highlightQuery.append("\"");
                     highlightQuery.append(termS);
-                    highlightQuery.append("\"");
+                    highlightQuery.append("\"");*/
+                    highlightQuery.append(term);    // ELDEBUG
                     if (lastTerm != curTerm) {
                         highlightQuery.append(" "); //acts as OR ||
                         //force HIGHLIGHT_FIELD_REGEX index and stored content
