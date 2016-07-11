@@ -219,7 +219,7 @@ public class RegressionTest extends TestCase {
         WizardOperator wo = new WizardOperator("Add Data");
         JTableOperator jto = new JTableOperator(wo, 0);
         int row = jto.findCellRow("Hash Lookup", 1, 0);
-        jto.clickOnCell(row, 2);
+        jto.clickOnCell(row, 1);
         JButtonOperator jbo1 = new JButtonOperator(wo, "Global Settings");
         jbo1.pushNoBlock();
     }
@@ -259,7 +259,7 @@ public class RegressionTest extends TestCase {
         WizardOperator wo = new WizardOperator("Add Data");
         JTableOperator jto = new JTableOperator(wo, 0);
         int row = jto.findCellRow("Keyword Search", 1, 0);
-        jto.clickOnCell(row, 2);
+        jto.clickOnCell(row, 1);
         JButtonOperator jbo1 = new JButtonOperator(wo, "Global Settings");
         jbo1.pushNoBlock();
     }
