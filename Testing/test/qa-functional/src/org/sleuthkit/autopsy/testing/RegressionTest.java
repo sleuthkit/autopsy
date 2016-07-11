@@ -224,7 +224,7 @@ public class RegressionTest extends TestCase {
         logger.info("Looking for hash lookup module in ingest job settings panel");
         WizardOperator wo = new WizardOperator("Add Data");
         JTableOperator jto = new JTableOperator(wo, 0);
-        int row = jto.findCellRow("Hash Lookup", 1, 0);
+        int row = jto.findCellRow("Hash Lookup", 2, 0);
         jto.clickOnCell(row, 1);
         logger.info("Selected hash lookup module in ingest job settings panel");
         JButtonOperator jbo1 = new JButtonOperator(wo, "Global Settings");
@@ -266,7 +266,7 @@ public class RegressionTest extends TestCase {
         logger.info("Looking for keyword search module in ingest job settings panel");
         WizardOperator wo = new WizardOperator("Add Data");
         JTableOperator jto = new JTableOperator(wo, 0);
-        int row = jto.findCellRow("Keyword Search", 1, 0);
+        int row = jto.findCellRow("Keyword Search", 2, 0);
         jto.clickOnCell(row, 1);
         logger.info("Selected keyword search module in ingest job settings panel");
         JButtonOperator jbo1 = new JButtonOperator(wo, "Global Settings");
