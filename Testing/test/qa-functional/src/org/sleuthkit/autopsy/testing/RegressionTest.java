@@ -215,13 +215,15 @@ public class RegressionTest extends TestCase {
     }
 
     public void testConfigureIngest1() {
-        logger.info("Ingest 1");
+        logger.info("Looking for hash lookup module in ingest job settings panel");
         WizardOperator wo = new WizardOperator("Add Data");
         JTableOperator jto = new JTableOperator(wo, 0);
         int row = jto.findCellRow("Hash Lookup", 1, 0);
         jto.clickOnCell(row, 1);
+        logger.info("Selected hash lookup module in ingest job settings panel");
         JButtonOperator jbo1 = new JButtonOperator(wo, "Global Settings");
         jbo1.pushNoBlock();
+        logger.info("Pushed Global Settings button for hash lookup module in ingest job settings panel");
     }
 
     public void testConfigureHash() {
@@ -255,13 +257,15 @@ public class RegressionTest extends TestCase {
     }
 
     public void testConfigureIngest2() {
-        logger.info("Ingest 2");
+        logger.info("Looking for keyword search module in ingest job settings panel");
         WizardOperator wo = new WizardOperator("Add Data");
         JTableOperator jto = new JTableOperator(wo, 0);
         int row = jto.findCellRow("Keyword Search", 1, 0);
         jto.clickOnCell(row, 1);
+        logger.info("Selected keyword search module in ingest job settings panel");
         JButtonOperator jbo1 = new JButtonOperator(wo, "Global Settings");
         jbo1.pushNoBlock();
+        logger.info("Pushed Global Settings button for keyword search module in ingest job settings panel");
     }
 
     public void testConfigureSearch() {
