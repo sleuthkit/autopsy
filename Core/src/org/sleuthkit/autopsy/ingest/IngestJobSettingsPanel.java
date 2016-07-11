@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2011-2014 Basis Technology Corp.
+ *
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,12 +56,15 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public final class IngestJobSettingsPanel extends javax.swing.JPanel {
 
+    private static final long serialVersionUID = 1L;
+    private static ImageIcon warningIcon = new ImageIcon(IngestJobSettingsPanel.class.getResource("/org/sleuthkit/autopsy/images/warning_triangle.png"));
+    private static ImageIcon infoIcon = new ImageIcon(IngestJobSettingsPanel.class.getResource("/org/sleuthkit/autopsy/images/information-frame.png"));
     private final IngestJobSettings settings;
+    private final List<Content> dataSources;
     private final List<IngestModuleModel> modules;
+    private List<IngestJobInfo> ingestJobs;
     private IngestModuleModel selectedModule;
     private IngestModulesTableModel tableModel = new IngestModulesTableModel();
-    private List<IngestJobInfo> ingestJobs;
-    private List<Content> dataSources;
     private static final Logger logger = Logger.getLogger(IngestJobSettingsPanel.class.getName());
 
     /**
@@ -156,25 +159,22 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         // Add a selection listener to the table model that will display the  
         // ingest job options panel of the currently selected module model and 
         // enable or disable the resources configuration panel invocation button.
-        modulesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                ListSelectionModel listSelectionModel = (ListSelectionModel) e.getSource();
-                if (!listSelectionModel.isSelectionEmpty()) {
-                    int index = listSelectionModel.getMinSelectionIndex();
-                    selectedModule = modules.get(index);
-                    ingestSettingsPanel.removeAll();
-                    if (null != selectedModule.getModuleSettingsPanel()) {
-                        ingestSettingsPanel.add(selectedModule.getModuleSettingsPanel());
-                    } else {
-                        ingestSettingsPanel.add(new JLabel(Bundle.IngestJobSettingsPanel_noPerRunSettings()));
-                    }
-                    ingestSettingsPanel.revalidate();
-                    ingestSettingsPanel.repaint();
-                    globalSettingsButton.setEnabled(null != selectedModule.getGlobalSettingsPanel());
-                    descriptionLabel.setText(selectedModule.getDescription());
-                    descriptionLabel.setToolTipText(selectedModule.getDescription());
+        modulesTable.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
+            ListSelectionModel listSelectionModel = (ListSelectionModel) e.getSource();
+            if (!listSelectionModel.isSelectionEmpty()) {
+                int index = listSelectionModel.getMinSelectionIndex();
+                selectedModule = modules.get(index);
+                ingestSettingsPanel.removeAll();
+                if (null != selectedModule.getModuleSettingsPanel()) {
+                    ingestSettingsPanel.add(selectedModule.getModuleSettingsPanel());
+                } else {
+                    ingestSettingsPanel.add(new JLabel(Bundle.IngestJobSettingsPanel_noPerRunSettings()));
                 }
+                ingestSettingsPanel.revalidate();
+                ingestSettingsPanel.repaint();
+                globalSettingsButton.setEnabled(null != selectedModule.getGlobalSettingsPanel());
+                descriptionLabel.setText(selectedModule.getDescription());
+                descriptionLabel.setToolTipText(selectedModule.getDescription());
             }
         });
         modulesTable.setRowSelectionInterval(0, 0);
@@ -354,14 +354,11 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
     private void globalSettingsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_globalSettingsButtonActionPerformed
         final AdvancedConfigurationDialog dialog = new AdvancedConfigurationDialog(true);
 
-        dialog.addApplyButtonListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (selectedModule.hasGlobalSettingsPanel()) {
-                    selectedModule.saveResourcesConfig();
-                }
-                dialog.close();
+        dialog.addApplyButtonListener((ActionEvent e) -> {
+            if (selectedModule.hasGlobalSettingsPanel()) {
+                selectedModule.saveResourcesConfig();
             }
+            dialog.close();
         });
 
         dialog.addWindowListener(new WindowAdapter() {
@@ -491,9 +488,6 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
      */
     private class IngestModulesTableModel extends AbstractTableModel {
 
-        ImageIcon warningIcon = new ImageIcon("Core\\src\\org\\sleuthkit\\autopsy\\images\\warning_triangle.png");
-        ImageIcon infoIcon = new ImageIcon("Core\\src\\org\\sleuthkit\\autopsy\\images\\information-frame.png");
-
         @Override
         public int getRowCount() {
             return modules.size();
@@ -507,12 +501,13 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             IngestModuleModel module = modules.get(rowIndex);
-            if (columnIndex == 0) {
-                return module.isEnabled();
-            } else if (columnIndex == 1) {
-                return getIcon(module);
-            } else {
-                return module.getName();
+            switch (columnIndex) {
+                case 0:
+                    return module.isEnabled();
+                case 1:
+                    return getIcon(module);
+                default:
+                    return module.getName();
             }
         }
 
@@ -596,6 +591,8 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         "IngestJobSettingsPanel.IngestModulesTableRenderer.info.message=A previous version of this ingest module has been run before on this data source."})
     private class IngestModulesTableRenderer extends DefaultTableCellRenderer {
 
+        private static final long serialVersionUID = 1L;
+
         List<String> tooltips = new ArrayList<>();
 
         public IngestModulesTableRenderer() {
@@ -613,9 +610,9 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
             } else if (1 == column) {
                 setIcon((Icon) value);
                 setText("");
-                if (tableModel.warningIcon.equals(value)) {
+                if (warningIcon.equals(value)) {
                     setToolTipText(Bundle.IngestJobSettingsPanel_IngestModulesTableRenderer_warning_message());
-                } else if (tableModel.infoIcon.equals(value)) {
+                } else if (infoIcon.equals(value)) {
                     setToolTipText(Bundle.IngestJobSettingsPanel_IngestModulesTableRenderer_info_message());
                 }
             }
