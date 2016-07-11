@@ -140,6 +140,8 @@ public class EmailExtracted implements AutopsyVisitableItem {
             } catch (TskCoreException | SQLException ex) {
                 logger.log(Level.WARNING, "Cannot initialize email extraction: ", ex); //NON-NLS
             }
+            setChanged();
+            notifyObservers();
         }
 
         private Map<String, String> parsePath(String path) {
