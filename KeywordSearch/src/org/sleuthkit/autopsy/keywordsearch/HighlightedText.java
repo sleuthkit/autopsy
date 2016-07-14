@@ -379,7 +379,7 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
 
                 return "<html><pre>" + highlightedContent + "</pre></html>"; //NON-NLS
             }
-        } catch (NoOpenCoreException | KeywordSearchModuleException ex) {
+        } catch (Exception ex) {
             return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.getMarkup.queryFailedMsg");
         }
     }
