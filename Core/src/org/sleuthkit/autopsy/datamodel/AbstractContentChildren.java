@@ -191,6 +191,11 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         }
 
         @Override
+        public AbstractNode visit(Accounts accountsItem) {
+            return accountsItem.new AccountsNode();
+        }
+
+        @Override
         protected AbstractNode defaultVisit(AutopsyVisitableItem di) {
             throw new UnsupportedOperationException(
                     NbBundle.getMessage(this.getClass(),

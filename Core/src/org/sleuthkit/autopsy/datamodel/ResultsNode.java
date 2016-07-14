@@ -28,33 +28,34 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  * Node for the results section of the tree.
  */
 public class ResultsNode extends DisplayableItemNode {
-
+    
     @NbBundle.Messages("ResultsNode.name.text=Results")
     public static final String NAME = Bundle.ResultsNode_name_text();
-
+    
     public ResultsNode(SleuthkitCase sleuthkitCase) {
         super(new RootContentChildren(Arrays.asList(
                 new ExtractedContent(sleuthkitCase),
                 new KeywordHits(sleuthkitCase),
                 new HashsetHits(sleuthkitCase),
                 new EmailExtracted(sleuthkitCase),
-                new InterestingHits(sleuthkitCase)
+                new InterestingHits(sleuthkitCase),
+                new Accounts(sleuthkitCase)
         )), Lookups.singleton(NAME));
         setName(NAME);
         setDisplayName(NAME);
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/results.png"); //NON-NLS
     }
-
+    
     @Override
     public boolean isLeafTypeNode() {
         return false;
     }
-
+    
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
     }
-
+    
     @Override
     @NbBundle.Messages({
         "ResultsNode.createSheet.name.name=Name",
@@ -67,7 +68,7 @@ public class ResultsNode extends DisplayableItemNode {
             ss = Sheet.createPropertiesSet();
             s.put(ss);
         }
-
+        
         ss.put(new NodeProperty<>(Bundle.ResultsNode_createSheet_name_name(),
                 Bundle.ResultsNode_createSheet_name_displayName(),
                 Bundle.ResultsNode_createSheet_name_desc(),
