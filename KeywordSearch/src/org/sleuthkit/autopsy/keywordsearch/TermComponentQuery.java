@@ -91,7 +91,7 @@ final class TermComponentQuery implements KeywordSearchQuery {
             + "(?:\\?" // end sentinal: ? //NON-NLS
             + "(?<LRC>.)" //longitudinal redundancy check //NON-NLS
             + "?)?)?)?)?)?");//close nested optional groups //NON-NLS
-
+    private static final Pattern CCN_PATTERN = Pattern.compile("(?<ccn>\\d{12,19})");
     private static final LuhnCheckDigit LUHN_CHECK = new LuhnCheckDigit();
 
     //corresponds to field in Solr schema, analyzed with white-space tokenizer only
@@ -235,11 +235,13 @@ final class TermComponentQuery implements KeywordSearchQuery {
     @Override
     public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(String termHit, KeywordHit hit, String snippet, String listName) {
         try {
-            BlackboardArtifact bba = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);;
+            BlackboardArtifact bba;
+
             Collection<BlackboardAttribute> attributes = new ArrayList<>();
 
             //if the keyword hit matched the  credit card number keyword/regex...
             if (keyword.getType() == ATTRIBUTE_TYPE.TSK_CREDIT_CARD_NUMBER) {
+                bba = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_ACCOUNT);
                 //TODO: make account artifact
                 //try to match it against the track 1 regex
                 Matcher matcher = TRACK1_PATTERN.matcher(hit.getSnippet());
@@ -253,18 +255,19 @@ final class TermComponentQuery implements KeywordSearchQuery {
                 }
             } else {
                 //TODO: keyword hit artifact
+                bba = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
+                //TODO: move most of the following into the if branch for non-account keyword hits
+                //regex match
+                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, termHit));
+
+                if (StringUtils.isNotEmpty(listName)) {
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
+                }
+
+                //regex keyword
+                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, keyword.getQuery()));
             }
 
-            //TODO: move most of the following into the if branch for non-account keyword hits
-            //regex match
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, termHit));
-
-            if (StringUtils.isNotEmpty(listName)) {
-                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
-            }
-
-            //regex keyword
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, keyword.getQuery()));
             //preview
             if (snippet != null) {
                 attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW, MODULE_NAME, snippet));
@@ -329,7 +332,9 @@ final class TermComponentQuery implements KeywordSearchQuery {
 
             if (keyword.getType() == ATTRIBUTE_TYPE.TSK_CREDIT_CARD_NUMBER) {
                 //If the keyword is a credit card number, pass it through luhn validator
-                if (false == LUHN_CHECK.isValid(term.getTerm())) {
+                Matcher matcher = CCN_PATTERN.matcher(term.getTerm());
+                matcher.find();
+                if (false == LUHN_CHECK.isValid(matcher.group("ccn"))) {
                     continue; //if the hit does not pass the luhn check, skip it.
                 }
             }
