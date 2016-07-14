@@ -189,6 +189,10 @@
                 <package>org.sleuthkit.autopsy.keywordsearch</package>
             </public-packages>
             <class-path-extension>
+                <runtime-relative-path>ext/commons-validator-1.5.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-validator-1.5.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/bcmail-jdk15-1.45.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/bcmail-jdk15-1.45.jar</binary-origin>
             </class-path-extension>
