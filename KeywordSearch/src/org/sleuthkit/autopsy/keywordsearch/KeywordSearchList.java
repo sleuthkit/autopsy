@@ -37,15 +37,17 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
  */
 abstract class KeywordSearchList {
 
+    protected static final Logger LOGGER = Logger.getLogger(KeywordSearchList.class.getName());
+
     private static final String PHONE_NUMBER_REGEX = "[(]{0,1}\\d\\d\\d[)]{0,1}[\\.-]\\d\\d\\d[\\.-]\\d\\d\\d\\d";  //NON-NLS
     private static final String IP_ADDRESS_REGEX = "(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])";  //NON-NLS
     private static final String EMAIL_ADDRESS_REGEX = "(?=.{8})[a-z0-9%+_-]+(?:\\.[a-z0-9%+_-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z]{2,4}(?<!\\.txt|\\.exe|\\.dll|\\.jpg|\\.xml)";  //NON-NLS
     private static final String URL_REGEX = "((((ht|f)tp(s?))\\://)|www\\.)[a-zA-Z0-9\\-\\.]+\\.([a-zA-Z]{2,5})(\\:[0-9]+)*(/($|[a-zA-Z0-9\\.\\,\\;\\?\\'\\\\+&amp;%\\$#\\=~_\\-]+))*";  //NON-NLS
-    private static final String CCN_REGEX = "\\d{13,19}";  //NON-NLS
+    private static final String CCN_REGEX = "\\d{12,19}";  //12-19 digits //NON-NLS
 
     protected String filePath;
     Map<String, KeywordList> theLists; //the keyword data 
-    protected static final Logger logger = Logger.getLogger(KeywordSearchList.class.getName());
+
     PropertyChangeSupport changeSupport;
     protected List<String> lockedLists;
 
@@ -78,7 +80,7 @@ abstract class KeywordSearchList {
         try {
             changeSupport.firePropertyChange(event.toString(), null, null);
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e); //NON-NLS
+            LOGGER.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e); //NON-NLS
         }
     }
 
@@ -97,32 +99,32 @@ abstract class KeywordSearchList {
         //phone number
         List<Keyword> phones = new ArrayList<>();
         phones.add(new Keyword(PHONE_NUMBER_REGEX, false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER));
-        lockedLists.add("Phone Numbers"); //NON-NLS
-        addList("Phone Numbers", phones, false, false, true); //NON-NLS
+        lockedLists.add("Phone Numbers");
+        addList("Phone Numbers", phones, false, false, true);
 
         //IP address
         List<Keyword> ips = new ArrayList<>();
         ips.add(new Keyword(IP_ADDRESS_REGEX, false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IP_ADDRESS));
-        lockedLists.add("IP Addresses"); //NON-NLS
-        addList("IP Addresses", ips, false, false, true); //NON-NLS
+        lockedLists.add("IP Addresses");
+        addList("IP Addresses", ips, false, false, true);
 
         //email
         List<Keyword> emails = new ArrayList<>();
         emails.add(new Keyword(EMAIL_ADDRESS_REGEX, false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL));
-        lockedLists.add("Email Addresses"); //NON-NLS
-        addList("Email Addresses", emails, true, false, true); //NON-NLS
+        lockedLists.add("Email Addresses");
+        addList("Email Addresses", emails, true, false, true);
 
         //URL
         List<Keyword> urls = new ArrayList<>();
         urls.add(new Keyword(URL_REGEX, false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL));
-        lockedLists.add("URLs"); //NON-NLS
-        addList("URLs", urls, false, false, true); //NON-NLS
+        lockedLists.add("URLs");
+        addList("URLs", urls, false, false, true);
 
         //CCN
         List<Keyword> ccns = new ArrayList<>();
         ccns.add(new Keyword(CCN_REGEX, false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CREDIT_CARD_NUMBER));
-        lockedLists.add("Credit Card Numbers"); //NON-NLS
-        addList("Credit Card Numbers", ccns, true, false, true); //NON-NLS
+        lockedLists.add("Credit Card Numbers");
+        addList("Credit Card Numbers", ccns, true, false, true);
     }
 
     /**
@@ -293,7 +295,7 @@ abstract class KeywordSearchList {
             try {
                 changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, name);
             } catch (Exception e) {
-                logger.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e); //NON-NLS
+                LOGGER.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e); //NON-NLS
                 MessageNotifyUtil.Notify.show(
                         NbBundle.getMessage(this.getClass(), "KeywordSearchListsAbstract.moduleErr"),
                         NbBundle.getMessage(this.getClass(), "KeywordSearchListsAbstract.addList.errMsg1.msg"),
@@ -306,7 +308,7 @@ abstract class KeywordSearchList {
             try {
                 changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, name);
             } catch (Exception e) {
-                logger.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e); //NON-NLS
+                LOGGER.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e); //NON-NLS
                 MessageNotifyUtil.Notify.show(
                         NbBundle.getMessage(this.getClass(), "KeywordSearchListsAbstract.moduleErr"),
                         NbBundle.getMessage(this.getClass(), "KeywordSearchListsAbstract.addList.errMsg2.msg"),
@@ -355,7 +357,7 @@ abstract class KeywordSearchList {
                 try {
                     changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, list.getName());
                 } catch (Exception e) {
-                    logger.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e); //NON-NLS
+                    LOGGER.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e); //NON-NLS
                     MessageNotifyUtil.Notify.show(
                             NbBundle.getMessage(this.getClass(), "KeywordSearchListsAbstract.moduleErr"),
                             NbBundle.getMessage(this.getClass(), "KeywordSearchListsAbstract.saveList.errMsg1.msg"),
@@ -366,7 +368,7 @@ abstract class KeywordSearchList {
                 try {
                     changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, over.getName());
                 } catch (Exception e) {
-                    logger.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e); //NON-NLS
+                    LOGGER.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e); //NON-NLS
                     MessageNotifyUtil.Notify.show(
                             NbBundle.getMessage(this.getClass(), "KeywordSearchListsAbstract.moduleErr"),
                             NbBundle.getMessage(this.getClass(), "KeywordSearchListsAbstract.saveList.errMsg2.msg"),
@@ -402,7 +404,7 @@ abstract class KeywordSearchList {
             try {
                 changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, list.getName());
             } catch (Exception e) {
-                logger.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e); //NON-NLS
+                LOGGER.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e); //NON-NLS
                 MessageNotifyUtil.Notify.show(
                         NbBundle.getMessage(this.getClass(), "KeywordSearchListsAbstract.moduleErr"),
                         NbBundle.getMessage(this.getClass(), "KeywordSearchListsAbstract.writeLists.errMsg1.msg"),
@@ -415,7 +417,7 @@ abstract class KeywordSearchList {
             try {
                 changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, over.getName());
             } catch (Exception e) {
-                logger.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e); //NON-NLS
+                LOGGER.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e); //NON-NLS
                 MessageNotifyUtil.Notify.show(
                         NbBundle.getMessage(this.getClass(), "KeywordSearchListsAbstract.moduleErr"),
                         NbBundle.getMessage(this.getClass(), "KeywordSearchListsAbstract.writeLists.errMsg2.msg"),
@@ -442,7 +444,7 @@ abstract class KeywordSearchList {
         try {
             changeSupport.firePropertyChange(ListsEvt.LIST_DELETED.toString(), null, name);
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e); //NON-NLS
+            LOGGER.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e); //NON-NLS
             MessageNotifyUtil.Notify.show(
                     NbBundle.getMessage(this.getClass(), "KeywordSearchListsAbstract.moduleErr"),
                     NbBundle.getMessage(this.getClass(), "KeywordSearchListsAbstract.deleteList.errMsg1.msg"),
