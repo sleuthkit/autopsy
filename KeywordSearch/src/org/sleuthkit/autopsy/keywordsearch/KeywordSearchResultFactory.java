@@ -260,14 +260,15 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
                 //simple case, no need to process subqueries and do special escaping
                 Keyword term = queryResults.getKeywords().iterator().next();
                 //highlightQuery.append(term.toString());
-                highlightQuery.append(LuceneQuery.HIGHLIGHT_FIELD_REGEX).append(":").append(KeywordSearchUtil.escapeLuceneQuery(term.toString()));
+                //highlightQuery.append(LuceneQuery.HIGHLIGHT_FIELD_REGEX).append(":").append(KeywordSearchUtil.escapeLuceneQuery(term.toString()));
+                highlightQuery.append(LuceneQuery.HIGHLIGHT_FIELD_REGEX).append(":").append(KeywordSearchUtil.escapeLuceneQuery(term.getQuery()));
             } else {
                 //find terms for this content hit
-                List<String> hitTerms = new ArrayList<>();
+                List<Keyword> hitTerms = new ArrayList<>();
                 for (Keyword keyword : queryResults.getKeywords()) {
                     for (KeywordHit hit : queryResults.getResults(keyword)) {
                         if (hit.getContent().equals(content)) {
-                            hitTerms.add(keyword.toString());
+                            hitTerms.add(keyword);
                             break; //go to next term
                         }
                     }
@@ -275,13 +276,13 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
 
                 final int lastTerm = hitTerms.size() - 1;
                 int curTerm = 0;
-                for (String term : hitTerms) {
+                for (Keyword term : hitTerms) {
                     //escape subqueries, they shouldn't be escaped again later
                     //StringBuilder currentKeywordQuery = new StringBuilder();
                     //currentKeywordQuery.append(LuceneQuery.HIGHLIGHT_FIELD_REGEX).append(":").append(KeywordSearchUtil.escapeLuceneQuery(term));                    
                     //highlightQuery.append(KeywordSearchUtil.quoteQuery(currentKeywordQuery.toString()));
                     
-                    highlightQuery.append(LuceneQuery.HIGHLIGHT_FIELD_REGEX).append(":").append(KeywordSearchUtil.escapeLuceneQuery(term));    
+                    highlightQuery.append(LuceneQuery.HIGHLIGHT_FIELD_REGEX).append(":").append("\"").append(KeywordSearchUtil.escapeLuceneQuery(term.getQuery())).append("\"");    
                     
                     /*final String termS = KeywordSearchUtil.escapeLuceneQuery(term);
                     highlightQuery.append("\"");
