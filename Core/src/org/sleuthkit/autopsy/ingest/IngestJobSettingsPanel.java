@@ -58,7 +58,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
     private static ImageIcon warningIcon = new ImageIcon(IngestJobSettingsPanel.class.getResource("/org/sleuthkit/autopsy/images/warning_triangle.png"));
     private static ImageIcon infoIcon = new ImageIcon(IngestJobSettingsPanel.class.getResource("/org/sleuthkit/autopsy/images/information-frame.png"));
     private final IngestJobSettings settings;
-    private final List<Content> dataSources;
+    private final List<Content> dataSources = new ArrayList<>();
     private final List<IngestJobInfo> ingestJobs = new ArrayList<>();
     private final List<IngestModuleModel> modules = new ArrayList<>();
     private final IngestModulesTableModel tableModel = new IngestModulesTableModel();
@@ -72,7 +72,6 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
      */
     public IngestJobSettingsPanel(IngestJobSettings settings) {
         this.settings = settings;
-        dataSources = new ArrayList<>();
         for (IngestModuleTemplate moduleTemplate : settings.getIngestModuleTemplates()) {
             modules.add(new IngestModuleModel(moduleTemplate));
         }
@@ -88,7 +87,6 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
      */
     IngestJobSettingsPanel(IngestJobSettings settings, List<Content> dataSources) {
         this.settings = settings;
-        this.dataSources = dataSources;
         try {
             SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
             ingestJobs.addAll(skCase.getIngestJobs());
