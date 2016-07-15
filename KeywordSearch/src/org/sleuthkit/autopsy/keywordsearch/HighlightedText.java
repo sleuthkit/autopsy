@@ -339,7 +339,6 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
             Map<String, List<String>> responseHighlightID = responseHighlight.get(contentIdStr);
             if (responseHighlightID == null) {
                 return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.getMarkup.noMatchMsg");
-
             }
             List<String> contentHighlights = responseHighlightID.get(highLightField);
             if (contentHighlights == null) {
@@ -352,6 +351,7 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
                 return "<html><pre>" + highlightedContent + "</pre></html>"; //NON-NLS
             }
         } catch (Exception ex) {
+            logger.log(Level.WARNING, "Error executing Solr highlighting query: " + keywordHitQuery, ex); //NON-NLS
             return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.getMarkup.queryFailedMsg");
         }
     }
