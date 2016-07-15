@@ -250,14 +250,14 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
         StringBuilder highlightQuery = new StringBuilder();
         if (literal_query) {
             //literal, treat as non-regex, non-term component query
-            highlightQuery.append(LuceneQuery.HIGHLIGHT_FIELD_LITERAL).append(":").append(KeywordSearchUtil.escapeLuceneQuery(query.getQueryString()));
+            highlightQuery.append(LuceneQuery.HIGHLIGHT_FIELD_LITERAL).append(":").append("\"").append(KeywordSearchUtil.escapeLuceneQuery(query.getQueryString())).append("\"");
         } else {
             //construct a Solr query using aggregated terms to get highlighting
             //the query is executed later on demand
             if (queryResults.getKeywords().size() == 1) {
                 //simple case, no need to process subqueries and do special escaping
                 Keyword term = queryResults.getKeywords().iterator().next();
-                highlightQuery.append(LuceneQuery.HIGHLIGHT_FIELD_REGEX).append(":").append(KeywordSearchUtil.escapeLuceneQuery(term.getQuery()));
+                highlightQuery.append(LuceneQuery.HIGHLIGHT_FIELD_REGEX).append(":").append("\"").append(KeywordSearchUtil.escapeLuceneQuery(term.getQuery())).append("\"");
             } else {
                 //find terms for this content hit
                 List<Keyword> hitTerms = new ArrayList<>();
