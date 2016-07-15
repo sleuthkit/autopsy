@@ -129,11 +129,13 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(Accounts.AccountTypeNode accountTypeNode);
 
-    T visit(Accounts.ByArtifactNode byArtifactNode);
+    T visit(Accounts.ByBINNode byArtifactNode);
 
     T visit(Accounts.ByFileNode byFileNode);
 
     T visit(Accounts.FileWithCCNNode byFileNode);
+
+    T visit(Accounts.BINNode binNode);
 
     /**
      * Visitor with an implementable default behavior for all types. Override
@@ -358,7 +360,7 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(Accounts.ByArtifactNode node) {
+        public T visit(Accounts.ByBINNode node) {
             return defaultVisit(node);
         }
 
@@ -369,6 +371,11 @@ public interface DisplayableItemNodeVisitor<T> {
 
         @Override
         public T visit(Accounts.FileWithCCNNode node) {
+            return defaultVisit(node);
+        }
+        
+        @Override
+        public T visit(Accounts.BINNode node) {
             return defaultVisit(node);
         }
     }
