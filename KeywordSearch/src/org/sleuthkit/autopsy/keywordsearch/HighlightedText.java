@@ -298,26 +298,28 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
 
         String highLightField = null;
 
-        String highlightQuery = keywordHitQuery;
+        //String highlightQuery = keywordHitQuery;
 
         if (isRegex) {
             highLightField = LuceneQuery.HIGHLIGHT_FIELD_REGEX;
             //escape special lucene chars if not already escaped (if not a compound query)
             //TODO a better way to mark it a compound highlight query
-            final String findSubstr = LuceneQuery.HIGHLIGHT_FIELD_REGEX + ":";
-            if (!highlightQuery.contains(findSubstr)) {
-                highlightQuery = KeywordSearchUtil.escapeLuceneQuery(highlightQuery);
-            }
+            
+            // ELDEBUG:
+            //final String findSubstr = LuceneQuery.HIGHLIGHT_FIELD_REGEX + ":";
+            //if (!highlightQuery.contains(findSubstr)) {
+            //    highlightQuery = KeywordSearchUtil.escapeLuceneQuery(highlightQuery);
+            //}
         } else {
             highLightField = LuceneQuery.HIGHLIGHT_FIELD_LITERAL;
             //escape special lucene chars always for literal queries query
-            highlightQuery = KeywordSearchUtil.escapeLuceneQuery(highlightQuery);
+            //highlightQuery = KeywordSearchUtil.escapeLuceneQuery(highlightQuery);
         }
 
         SolrQuery q = new SolrQuery();
         q.setShowDebugInfo(DEBUG); //debug
 
-        String queryStr = null;
+        /*String queryStr = null;
 
         if (isRegex) {
             StringBuilder sb = new StringBuilder();
@@ -334,9 +336,10 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
             //use default field, simplifies query
             //always force grouping/quotes
             queryStr = KeywordSearchUtil.quoteQuery(highlightQuery);
-        }
+        }*/
 
-        q.setQuery(queryStr);
+        //q.setQuery(queryStr);
+        q.setQuery(keywordHitQuery);
 
         String contentIdStr = Long.toString(this.objectId);
         if (hasChunks) {
