@@ -307,7 +307,7 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
         SolrQuery q = new SolrQuery();
         q.setShowDebugInfo(DEBUG); //debug
 
-        // input query has already been escaped
+        // input query has already been properly constructed and escaped
         q.setQuery(keywordHitQuery);
 
         String contentIdStr = Long.toString(this.objectId);
