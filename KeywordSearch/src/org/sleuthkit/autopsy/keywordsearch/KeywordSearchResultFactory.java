@@ -247,7 +247,6 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
      * @return
      */
     private String getHighlightQuery(KeywordSearchQuery query, boolean literal_query, QueryResults queryResults, Content content) {
-        //String highlightQueryEscaped;
         StringBuilder highlightQuery = new StringBuilder();
         if (literal_query) {
             //literal, treat as non-regex, non-term component query
@@ -255,12 +254,9 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
         } else {
             //construct a Solr query using aggregated terms to get highlighting
             //the query is executed later on demand
-
             if (queryResults.getKeywords().size() == 1) {
                 //simple case, no need to process subqueries and do special escaping
                 Keyword term = queryResults.getKeywords().iterator().next();
-                //highlightQuery.append(term.toString());
-                //highlightQuery.append(LuceneQuery.HIGHLIGHT_FIELD_REGEX).append(":").append(KeywordSearchUtil.escapeLuceneQuery(term.toString()));
                 highlightQuery.append(LuceneQuery.HIGHLIGHT_FIELD_REGEX).append(":").append(KeywordSearchUtil.escapeLuceneQuery(term.getQuery()));
             } else {
                 //find terms for this content hit
@@ -277,33 +273,15 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
                 final int lastTerm = hitTerms.size() - 1;
                 int curTerm = 0;
                 for (Keyword term : hitTerms) {
-                    //escape subqueries, they shouldn't be escaped again later
-                    //StringBuilder currentKeywordQuery = new StringBuilder();
-                    //currentKeywordQuery.append(LuceneQuery.HIGHLIGHT_FIELD_REGEX).append(":").append(KeywordSearchUtil.escapeLuceneQuery(term));                    
-                    //highlightQuery.append(KeywordSearchUtil.quoteQuery(currentKeywordQuery.toString()));
-                    
+                    //escape subqueries, MAKE SURE they are not escaped again later
                     highlightQuery.append(LuceneQuery.HIGHLIGHT_FIELD_REGEX).append(":").append("\"").append(KeywordSearchUtil.escapeLuceneQuery(term.getQuery())).append("\"");    
-                    
-                    /*final String termS = KeywordSearchUtil.escapeLuceneQuery(term);
-                    highlightQuery.append("\"");
-                    highlightQuery.append(termS);
-                    highlightQuery.append("\"");*/
-                    
-                    //highlightQuery.append(term);    // ELDEBUG
                     if (lastTerm != curTerm) {
                         highlightQuery.append(" "); //acts as OR ||
-                        //force HIGHLIGHT_FIELD_REGEX index and stored content
-                        //in each term after first. First term taken care by HighlightedMatchesSource
-                       
-                        //highlightQuery.append(LuceneQuery.HIGHLIGHT_FIELD_REGEX).append(":");
                     }
 
                     ++curTerm;
                 }
             }
-            //String highlightQueryEscaped = KeywordSearchUtil.escapeLuceneQuery(highlightQuery.toString());
-            
-            //highlightQueryEscaped = highlightQuery.toString();
         }
 
         return highlightQuery.toString();
