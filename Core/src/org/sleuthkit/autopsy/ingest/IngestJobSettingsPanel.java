@@ -22,7 +22,6 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
@@ -37,7 +36,6 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
@@ -61,10 +59,10 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
     private static ImageIcon infoIcon = new ImageIcon(IngestJobSettingsPanel.class.getResource("/org/sleuthkit/autopsy/images/information-frame.png"));
     private final IngestJobSettings settings;
     private final List<Content> dataSources;
+    private final List<IngestJobInfo> ingestJobs;
     private final List<IngestModuleModel> modules;
-    private List<IngestJobInfo> ingestJobs;
+    private final IngestModulesTableModel tableModel = new IngestModulesTableModel();
     private IngestModuleModel selectedModule;
-    private IngestModulesTableModel tableModel = new IngestModulesTableModel();
     private static final Logger logger = Logger.getLogger(IngestJobSettingsPanel.class.getName());
 
     /**
@@ -75,18 +73,12 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
      */
     public IngestJobSettingsPanel(IngestJobSettings settings) {
         this.settings = settings;
-        this.modules = new ArrayList<>();
+        dataSources = new ArrayList<>();
+        ingestJobs = new ArrayList<>();
+        modules = new ArrayList<>();
         for (IngestModuleTemplate moduleTemplate : settings.getIngestModuleTemplates()) {
-            this.modules.add(new IngestModuleModel(moduleTemplate));
+            modules.add(new IngestModuleModel(moduleTemplate));
         }
-        SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-        try {
-            ingestJobs = skCase.getIngestJobs();
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to load ingest job information.", ex);
-            ingestJobs = new ArrayList<>();
-        }
-        this.dataSources = new ArrayList<>();
         initComponents();
         customizeComponents();
     }
@@ -100,18 +92,20 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
      */
     IngestJobSettingsPanel(IngestJobSettings settings, List<Content> dataSources) {
         this.settings = settings;
-        this.modules = new ArrayList<>();
+        this.dataSources = dataSources;
+        ingestJobs = new ArrayList<>();
+        try {
+            SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+            ingestJobs.addAll(skCase.getIngestJobs());
+        } catch (IllegalStateException ex) {
+            logger.log(Level.SEVERE, "No open case", ex);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Failed to load ingest job information", ex);
+        }
+        modules = new ArrayList<>();
         for (IngestModuleTemplate moduleTemplate : settings.getIngestModuleTemplates()) {
             this.modules.add(new IngestModuleModel(moduleTemplate));
         }
-        SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-        try {
-            ingestJobs = skCase.getIngestJobs();
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to load ingest job information.", ex);
-            ingestJobs = new ArrayList<>();
-        }
-        this.dataSources = dataSources;
         initComponents();
         customizeComponents();
     }
@@ -488,6 +482,8 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
      */
     private class IngestModulesTableModel extends AbstractTableModel {
 
+        private static final long serialVersionUID = 1L;
+
         @Override
         public int getRowCount() {
             return modules.size();
@@ -529,7 +525,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         }
 
         private ImageIcon getIcon(IngestModuleModel module) {
-            if (dataSources.isEmpty()) {
+            if (dataSources.isEmpty() || ingestJobs.isEmpty()) {
                 return null;
             }
             boolean previousVersionRun = false;
