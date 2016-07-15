@@ -298,45 +298,17 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
 
         String highLightField = null;
 
-        String highlightQuery = keywordHitQuery;
-
         if (isRegex) {
             highLightField = LuceneQuery.HIGHLIGHT_FIELD_REGEX;
-            //escape special lucene chars if not already escaped (if not a compound query)
-            //TODO a better way to mark it a compound highlight query
-            final String findSubstr = LuceneQuery.HIGHLIGHT_FIELD_REGEX + ":";
-            if (!highlightQuery.contains(findSubstr)) {
-                highlightQuery = KeywordSearchUtil.escapeLuceneQuery(highlightQuery);
-            }
         } else {
             highLightField = LuceneQuery.HIGHLIGHT_FIELD_LITERAL;
-            //escape special lucene chars always for literal queries query
-            highlightQuery = KeywordSearchUtil.escapeLuceneQuery(highlightQuery);
         }
 
         SolrQuery q = new SolrQuery();
         q.setShowDebugInfo(DEBUG); //debug
 
-        String queryStr = null;
-
-        if (isRegex) {
-            StringBuilder sb = new StringBuilder();
-            sb.append(highLightField).append(":");
-            if (group) {
-                sb.append("\"");
-            }
-            sb.append(highlightQuery);
-            if (group) {
-                sb.append("\"");
-            }
-            queryStr = sb.toString();
-        } else {
-            //use default field, simplifies query
-            //always force grouping/quotes
-            queryStr = KeywordSearchUtil.quoteQuery(highlightQuery);
-        }
-
-        q.setQuery(queryStr);
+        // input query has already been properly constructed and escaped
+        q.setQuery(keywordHitQuery);
 
         String contentIdStr = Long.toString(this.objectId);
         if (hasChunks) {
@@ -367,7 +339,6 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
             Map<String, List<String>> responseHighlightID = responseHighlight.get(contentIdStr);
             if (responseHighlightID == null) {
                 return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.getMarkup.noMatchMsg");
-
             }
             List<String> contentHighlights = responseHighlightID.get(highLightField);
             if (contentHighlights == null) {
@@ -379,7 +350,8 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
 
                 return "<html><pre>" + highlightedContent + "</pre></html>"; //NON-NLS
             }
-        } catch (NoOpenCoreException | KeywordSearchModuleException ex) {
+        } catch (Exception ex) {
+            logger.log(Level.WARNING, "Error executing Solr highlighting query: " + keywordHitQuery, ex); //NON-NLS
             return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.getMarkup.queryFailedMsg");
         }
     }
