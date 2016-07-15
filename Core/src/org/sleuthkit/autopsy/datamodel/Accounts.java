@@ -62,57 +62,6 @@ public class Accounts implements AutopsyVisitableItem {
         return v.visit(this);
     }
 
-    class BINNode extends DisplayableItemNode {
-
-        BINNode(Integer key) {
-            super(Children.create(new AccountFactory(key), true));
-            setName(key.toString());
-            setDisplayName(key.toString());
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/bank.png"); //NON-NLS
-        }
-
-        @Override
-        public boolean isLeafTypeNode() {
-            return true;
-        }
-
-        @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this);
-        }
-    }
-
-    private class BINFactory extends ChildFactory.Detachable<Integer> {
-
-        @Override
-        protected boolean createKeys(List<Integer> list) {
-            String query =
-                    "select substr(blackboard_attributes.value_text,1,6) as BIN"
-                    //                    + "     count(blackboard_artifacts.artifact_type_id) as count "
-                    + " from blackboard_artifacts,"
-                    + "      blackboard_attributes "
-                    + " where blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()
-                    + "     and blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id "
-                    + "     and blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CREDIT_CARD_NUMBER.getTypeID()
-                    + " GROUP BY BIN "
-                    + " ORDER BY BIN ";
-            try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query)) {
-                ResultSet rs = results.getResultSet();
-                while (rs.next()) {
-                    list.add(rs.getInt("BIN"));
-                }
-            } catch (TskCoreException | SQLException ex) {
-                Exceptions.printStackTrace(ex);
-            }
-            return true;
-        }
-
-        @Override
-        protected Node createNodeForKey(Integer key) {
-            return new BINNode(key);
-        }
-    }
-
     /**
      * Top-level node for all accounts
      */
@@ -246,7 +195,7 @@ public class Accounts implements AutopsyVisitableItem {
 
     }
 
-    class ByFileNode extends DisplayableItemNode {
+    public class ByFileNode extends DisplayableItemNode {
 
         private ByFileNode() {
             super(Children.create(new FileFactory(), true));
@@ -273,7 +222,7 @@ public class Accounts implements AutopsyVisitableItem {
         }
     }
 
-    class ByBINNode extends DisplayableItemNode {
+    public class ByBINNode extends DisplayableItemNode {
 
         private ByBINNode() {
             super(Children.create(new BINFactory(), true));
@@ -415,7 +364,7 @@ public class Accounts implements AutopsyVisitableItem {
         }
     }
 
-    class FileWithCCNNode extends DisplayableItemNode {
+    public class FileWithCCNNode extends DisplayableItemNode {
 
         private final FileWithCCN key;
         private final Content content;
@@ -453,6 +402,59 @@ public class Accounts implements AutopsyVisitableItem {
             ss.put(new NodeProperty<>("Status", "Status", "no description", key.getStatus()));
 
             return s;
+        }
+    }
+
+    public class BINNode extends DisplayableItemNode {
+
+        BINNode(Integer key) {
+            super(Children.create(new AccountFactory(key), true));
+            setName(key.toString());
+            setDisplayName(key.toString());
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/bank.png"); //NON-NLS
+        }
+
+        @Override
+        public boolean isLeafTypeNode() {
+            return true;
+        }
+
+        @Override
+        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
+            return v.visit(this);
+        }
+    }
+
+    private class BINFactory extends ChildFactory.Detachable<Integer> {
+
+        @Override
+        protected boolean createKeys(List<Integer> list) {
+            String query =
+                    "select substr(blackboard_attributes.value_text,1,6) as BIN, "
+                    + "     count(blackboard_artifacts.artifact_type_id) as count "
+                    + " from blackboard_artifacts,"
+                    + "      blackboard_attributes "
+                    + " where blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()
+                    + "     and blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id "
+                    + "     and blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CREDIT_CARD_NUMBER.getTypeID()
+                    + " GROUP BY BIN "
+                    + " ORDER BY BIN ";
+            try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query)) {
+                ResultSet rs = results.getResultSet();
+                while (rs.next()) {
+                    String string = rs.getString("BIN");
+                    Integer valueOf = Integer.valueOf(string);
+                    list.add(valueOf);
+                }
+            } catch (TskCoreException | SQLException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+            return true;
+        }
+
+        @Override
+        protected Node createNodeForKey(Integer key) {
+            return new BINNode(key);
         }
     }
 
@@ -497,7 +499,7 @@ public class Accounts implements AutopsyVisitableItem {
 
             try {
                 BlackboardArtifact art = skCase.getBlackboardArtifact(id);
-                return new BlackboardArtifactNode(art,"org/sleuthkit/autopsy/images/credit-card.png" );
+                return new BlackboardArtifactNode(art, "org/sleuthkit/autopsy/images/credit-card.png");
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.WARNING, "TSK Exception occurred", ex); //NON-NLS
             }
