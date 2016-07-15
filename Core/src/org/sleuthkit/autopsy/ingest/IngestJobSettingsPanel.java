@@ -87,6 +87,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
      */
     IngestJobSettingsPanel(IngestJobSettings settings, List<Content> dataSources) {
         this.settings = settings;
+        this.dataSources.addAll(dataSources);
         try {
             SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
             ingestJobs.addAll(skCase.getIngestJobs());
