@@ -247,17 +247,16 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
      * @return
      */
     private String getHighlightQuery(KeywordSearchQuery query, boolean literal_query, QueryResults queryResults, Content content) {
-        StringBuilder highlightQuery = new StringBuilder();
         if (literal_query) {
             //literal, treat as non-regex, non-term component query
-            highlightQuery.append(LuceneQuery.HIGHLIGHT_FIELD_LITERAL).append(":").append("\"").append(KeywordSearchUtil.escapeLuceneQuery(query.getQueryString())).append("\"");
+            return constructEscapedSolrQuery(query.getQueryString(), literal_query);
         } else {
             //construct a Solr query using aggregated terms to get highlighting
             //the query is executed later on demand
             if (queryResults.getKeywords().size() == 1) {
                 //simple case, no need to process subqueries and do special escaping
                 Keyword term = queryResults.getKeywords().iterator().next();
-                highlightQuery.append(LuceneQuery.HIGHLIGHT_FIELD_REGEX).append(":").append("\"").append(KeywordSearchUtil.escapeLuceneQuery(term.getQuery())).append("\"");
+                return constructEscapedSolrQuery(term.getQuery(), literal_query);
             } else {
                 //find terms for this content hit
                 List<Keyword> hitTerms = new ArrayList<>();
@@ -270,20 +269,39 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
                     }
                 }
 
+                StringBuilder highlightQuery = new StringBuilder();
                 final int lastTerm = hitTerms.size() - 1;
                 int curTerm = 0;
                 for (Keyword term : hitTerms) {
                     //escape subqueries, MAKE SURE they are not escaped again later
-                    highlightQuery.append(LuceneQuery.HIGHLIGHT_FIELD_REGEX).append(":").append("\"").append(KeywordSearchUtil.escapeLuceneQuery(term.getQuery())).append("\"");    
+                    highlightQuery.append(constructEscapedSolrQuery(term.getQuery(), literal_query));
                     if (lastTerm != curTerm) {
                         highlightQuery.append(" "); //acts as OR ||
                     }
 
                     ++curTerm;
                 }
+                return highlightQuery.toString();
             }
         }
-
+    }
+    
+    /**
+     * Constructs a complete, escaped Solr query that is ready to be used.
+     * 
+     * @param query keyword term to be searched for
+     * @param literal_query flag whether query is literal or regex
+     * @return Solr query string
+     */
+    private String constructEscapedSolrQuery(String query, boolean literal_query) {
+        StringBuilder highlightQuery = new StringBuilder();
+        String highLightField;
+        if (literal_query) {
+            highLightField = LuceneQuery.HIGHLIGHT_FIELD_LITERAL;
+        } else {
+            highLightField = LuceneQuery.HIGHLIGHT_FIELD_REGEX;
+        }
+        highlightQuery.append(highLightField).append(":").append("\"").append(KeywordSearchUtil.escapeLuceneQuery(query)).append("\"");
         return highlightQuery.toString();
     }
 
