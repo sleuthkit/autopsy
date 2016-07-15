@@ -50,7 +50,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * User interface component to allow a user to make ingest job settings.
+ * A panel to allow a user to make ingest job settings.
  */
 public final class IngestJobSettingsPanel extends javax.swing.JPanel {
 
@@ -59,23 +59,20 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
     private static ImageIcon infoIcon = new ImageIcon(IngestJobSettingsPanel.class.getResource("/org/sleuthkit/autopsy/images/information-frame.png"));
     private final IngestJobSettings settings;
     private final List<Content> dataSources;
-    private final List<IngestJobInfo> ingestJobs;
-    private final List<IngestModuleModel> modules;
+    private final List<IngestJobInfo> ingestJobs = new ArrayList<>();
+    private final List<IngestModuleModel> modules = new ArrayList<>();
     private final IngestModulesTableModel tableModel = new IngestModulesTableModel();
     private IngestModuleModel selectedModule;
     private static final Logger logger = Logger.getLogger(IngestJobSettingsPanel.class.getName());
 
     /**
-     * Construct a user interface component to allow a user to make ingest job
-     * settings.
+     * Construct a panel to allow a user to make ingest job settings.
      *
      * @param settings The initial settings for the ingest job.
      */
     public IngestJobSettingsPanel(IngestJobSettings settings) {
         this.settings = settings;
         dataSources = new ArrayList<>();
-        ingestJobs = new ArrayList<>();
-        modules = new ArrayList<>();
         for (IngestModuleTemplate moduleTemplate : settings.getIngestModuleTemplates()) {
             modules.add(new IngestModuleModel(moduleTemplate));
         }
@@ -84,8 +81,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Construct a user interface component to allow a user to make ingest job
-     * settings.
+     * Construct a panel to allow a user to make ingest job settings.
      *
      * @param settings    The initial settings for the ingest job.
      * @param dataSources The data sources ingest is being run on.
@@ -93,7 +89,6 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
     IngestJobSettingsPanel(IngestJobSettings settings, List<Content> dataSources) {
         this.settings = settings;
         this.dataSources = dataSources;
-        ingestJobs = new ArrayList<>();
         try {
             SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
             ingestJobs.addAll(skCase.getIngestJobs());
@@ -102,7 +97,6 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed to load ingest job information", ex);
         }
-        modules = new ArrayList<>();
         for (IngestModuleTemplate moduleTemplate : settings.getIngestModuleTemplates()) {
             this.modules.add(new IngestModuleModel(moduleTemplate));
         }
@@ -177,6 +171,12 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         this.modulesTable.getColumnModel().getColumn(1).setMaxWidth(20);
         this.modulesTable.getColumnModel().getColumn(1).setMinWidth(20);
         modulesTable.setRowHeight(20);
+
+        /*
+         * Only enable the ingest jobs history panel if there are data sources
+         * and jobs for which to display the history.
+         */
+        pastJobsButton.setEnabled(!dataSources.isEmpty() && !ingestJobs.isEmpty());
     }
 
     /**
