@@ -102,16 +102,15 @@ final class TermComponentQuery implements KeywordSearchQuery {
     private static final int MAX_TERMS_RESULTS = 20000;
 
     private String escapedQuery;
-    private boolean isEscaped = false;
     private final KeywordList keywordList;
     private final Keyword keyword;
+    private boolean isEscaped;
     private final List<KeywordQueryFilter> filters = new ArrayList<>();
 
     TermComponentQuery(KeywordList keywordList, Keyword keyword) {
         this.keyword = keyword;
         this.keywordList = keywordList;
         this.escapedQuery = keyword.getQuery();
-        isEscaped = false;
     }
 
     @Override
@@ -175,6 +174,137 @@ final class TermComponentQuery implements KeywordSearchQuery {
     }
 
     @Override
+    public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(String termHit, KeywordHit hit, String snippet, String listName) {
+        BlackboardArtifact bba;
+        Collection<BlackboardAttribute> attributes = new ArrayList<>();
+        try {
+            //if the keyword hit matched the  credit card number keyword/regex...
+            if (keyword.getType() == ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER) {
+                bba = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT);
+                // make account artifact
+                //try to match it against the track 1 regex
+                Matcher matcher = TRACK1_PATTERN.matcher(hit.getSnippet());
+                if (matcher.find()) {
+                    parseTrackData(bba, matcher, hit, true);
+                }
+                //then try to match it against the track 2 regex
+                matcher = TRACK2_PATTERN.matcher(hit.getSnippet());
+                if (matcher.find()) {
+                    parseTrackData(bba, matcher, hit, false);
+                }
+            } else {
+                //make keyword hit artifact
+                bba = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
+
+                //regex match
+                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, termHit));
+                //regex keyword
+                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, keyword.getQuery()));
+
+                if (StringUtils.isNotEmpty(listName)) {
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
+                }
+            }
+        } catch (TskCoreException e) {
+            LOGGER.log(Level.WARNING, "Error adding bb artifact for keyword hit", e); //NON-NLS
+            return null;
+        }
+        //preview
+        if (snippet != null) {
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW, MODULE_NAME, snippet));
+        }
+
+        if (hit.isArtifactHit()) {
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, hit.getArtifact().getArtifactID()));
+        }
+
+        try {
+            //TODO: do we still/really need this KeywordCachedArtifact class? 
+            bba.addAttributes(attributes);
+            KeywordCachedArtifact writeResult = new KeywordCachedArtifact(bba);
+            writeResult.add(attributes);
+            return writeResult;
+        } catch (TskCoreException e) {
+            LOGGER.log(Level.WARNING, "Error adding bb attributes for terms search artifact", e); //NON-NLS
+            return null;
+        }
+    }
+
+    @Override
+    public QueryResults performQuery() throws NoOpenCoreException {
+        /*
+         * Execute the regex query to get a list of terms that match the regex.
+         * Note that the field that is being searched is tokenized based on
+         * whitespace.
+         */
+        //create the query
+        final SolrQuery q = new SolrQuery();
+        q.setRequestHandler(TERMS_HANDLER);
+        q.setTerms(true);
+        q.setTermsRegexFlag(CASE_INSENSITIVE);
+        q.setTermsRegex(escapedQuery);
+        q.addTermsField(TERMS_SEARCH_FIELD);
+        q.setTimeAllowed(TERMS_TIMEOUT);
+        q.setShowDebugInfo(DEBUG);
+        q.setTermsLimit(MAX_TERMS_RESULTS);
+        LOGGER.log(Level.INFO, "Query: {0}", q.toString()); //NON-NLS
+
+        //execute the query
+        List<Term> terms = null;
+        try {
+            terms = KeywordSearch.getServer().queryTerms(q).getTerms(TERMS_SEARCH_FIELD);
+        } catch (KeywordSearchModuleException ex) {
+            LOGGER.log(Level.WARNING, "Error executing the regex terms query: " + keyword.getQuery(), ex); //NON-NLS
+            //TODO: this is almost certainly wrong and guaranteed to throw a NPE at some point!!!!
+        }
+
+        /*
+         * For each term that matched the regex, query for full set of document
+         * hits for that term.
+         */
+        QueryResults results = new QueryResults(this, keywordList);
+        int resultSize = 0;
+        for (Term term : terms) {
+            final String termStr = KeywordSearchUtil.escapeLuceneQuery(term.getTerm());
+
+            if (keyword.getType() == ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER) {
+                //If the keyword is a credit card number, pass it through luhn validator
+                Matcher matcher = CCN_PATTERN.matcher(term.getTerm());
+                matcher.find();
+                if (false == LUHN_CHECK.isValid(matcher.group("ccn"))) {
+                    continue; //if the hit does not pass the luhn check, skip it.
+                }
+            }
+
+            /*
+             * Note: we can't set filter query on terms query but setting filter
+             * query on fileResults query will yield the same result
+             */
+            LuceneQuery filesQuery = new LuceneQuery(keywordList, new Keyword(termStr, true));
+            filters.forEach(filesQuery::addFilter);
+
+            try {
+                QueryResults fileQueryResults = filesQuery.performQuery();
+                Set<KeywordHit> filesResults = new HashSet<>();
+                for (Keyword key : fileQueryResults.getKeywords()) {                //flatten results into a single list
+                    List<KeywordHit> keyRes = fileQueryResults.getResults(key);
+                    resultSize += keyRes.size();
+                    filesResults.addAll(keyRes);
+                }
+                results.addResult(new Keyword(term.getTerm(), false), new ArrayList<>(filesResults));
+            } catch (NoOpenCoreException | RuntimeException e) {
+                LOGGER.log(Level.WARNING, "Error executing Solr query,", e); //NON-NLS
+                throw e;
+            }
+        }
+
+        //TODO limit how many results we store, not to hit memory limits
+        LOGGER.log(Level.INFO, "Regex # results: {0}", resultSize); //NON-NLS
+
+        return results;
+    }
+
+    @Override
     public KeywordList getKeywordList() {
         return keywordList;
     }
@@ -230,144 +360,5 @@ final class TermComponentQuery implements KeywordSearchQuery {
         if (artifact.getAttribute(SOLR_DOCUMENT_ID_TYPE) == null) {
             artifact.addAttribute(new BlackboardAttribute(SOLR_DOCUMENT_ID_TYPE, MODULE_NAME, hit.getSolrDocumentId()));
         }
-    }
-
-    @Override
-    public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(String termHit, KeywordHit hit, String snippet, String listName) {
-        try {
-            BlackboardArtifact bba;
-
-            Collection<BlackboardAttribute> attributes = new ArrayList<>();
-
-            //if the keyword hit matched the  credit card number keyword/regex...
-            if (keyword.getType() == ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER) {
-                bba = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT);
-                // make account artifact
-                //try to match it against the track 1 regex
-                Matcher matcher = TRACK1_PATTERN.matcher(hit.getSnippet());
-                if (matcher.find()) {
-                    parseTrackData(bba, matcher, hit, true);
-                }
-                //then try to match it against the track 2 regex
-                matcher = TRACK2_PATTERN.matcher(hit.getSnippet());
-                if (matcher.find()) {
-                    parseTrackData(bba, matcher, hit, false);
-                }
-            } else {
-                //make keyword hit artifact
-                bba = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
-                //TODO: move most of the following into the if branch for non-account keyword hits
-                //regex match
-                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, termHit));
-
-                if (StringUtils.isNotEmpty(listName)) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
-                }
-
-                //regex keyword
-                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, keyword.getQuery()));
-            }
-
-            //preview
-            if (snippet != null) {
-                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW, MODULE_NAME, snippet));
-            }
-
-            if (hit.isArtifactHit()) {
-                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, hit.getArtifact().getArtifactID()));
-            }
-
-            try {
-                //TODO: do we still/really need this KeywordCachedArtifact class? 
-                bba.addAttributes(attributes);
-                KeywordCachedArtifact writeResult = new KeywordCachedArtifact(bba);
-                writeResult.add(attributes);
-                return writeResult;
-            } catch (TskCoreException e) {
-                LOGGER.log(Level.WARNING, "Error adding bb attributes for terms search artifact", e); //NON-NLS
-            }
-        } catch (TskCoreException e) {
-            LOGGER.log(Level.WARNING, "Error adding bb artifact for keyword hit", e); //NON-NLS
-        }
-
-        return null;
-    }
-
-    @Override
-    public QueryResults performQuery() throws NoOpenCoreException {
-
-        /*
-         * Execute the regex query to get a list of terms that match the regex.
-         * Note that the field that is being searched is tokenized based on
-         * whitespace.
-         */
-        final SolrQuery termsQuery = new SolrQuery();
-        termsQuery.setShowDebugInfo(DEBUG);
-        termsQuery.setRequestHandler(TERMS_HANDLER);
-        termsQuery.setTerms(true);
-        termsQuery.setTermsRegexFlag(CASE_INSENSITIVE);
-        termsQuery.setTermsRegex(escapedQuery);
-        termsQuery.addTermsField(TERMS_SEARCH_FIELD);
-        termsQuery.setTimeAllowed(TERMS_TIMEOUT);
-        termsQuery.setTermsLimit(MAX_TERMS_RESULTS);
-        LOGGER.log(Level.INFO, "Query: {0}", termsQuery.toString()); //NON-NLS
-
-        List<Term> terms;
-        try {
-            terms = KeywordSearch.getServer().queryTerms(termsQuery).getTerms(TERMS_SEARCH_FIELD);
-        } catch (KeywordSearchModuleException ex) {
-            LOGGER.log(Level.WARNING, "Error executing the regex terms query: " + keyword.getQuery(), ex); //NON-NLS
-            //TODO: this is almost certainly wrong and guaranteed to throw a NPE at some point!!!!
-            return null;  //no need to create result view, just display error dialog
-        }
-
-        /*
-         * For each term that matched the regex, query to get the full set of
-         * document hits for that term.
-         */
-        QueryResults results = new QueryResults(this, keywordList);
-        int resultSize = 0;
-        for (Term term : terms) {
-            String escapedTermString = null;
-
-            if (keyword.getType() == ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER) {
-                //If the keyword is a credit card number, pass it through luhn validator
-                Matcher matcher = CCN_PATTERN.matcher(term.getTerm());
-                matcher.find();
-                if (false == LUHN_CHECK.isValid(matcher.group("ccn"))) {
-                    continue; //if the hit does not pass the luhn check, skip it.
-                }
-            }
-
-            escapedTermString = KeywordSearchUtil.escapeLuceneQuery(term.getTerm());
-
-            /*
-             * Note: we can't set filter query on terms query but setting filter
-             * query on fileResults query will yield the same result
-             */
-            LuceneQuery filesQuery = new LuceneQuery(keywordList, new Keyword(escapedTermString, true));
-            filters.forEach(filesQuery::addFilter);
-
-            try {
-                QueryResults fileQueryResults = filesQuery.performQuery();
-                Set<KeywordHit> filesResults = new HashSet<>();
-
-                //flatten results into a single list
-                for (Keyword key : fileQueryResults.getKeywords()) {
-                    List<KeywordHit> keyRes = fileQueryResults.getResults(key);
-                    resultSize += keyRes.size();
-                    filesResults.addAll(keyRes);
-                }
-                results.addResult(new Keyword(escapedTermString, false), new ArrayList<>(filesResults));
-            } catch (NoOpenCoreException | RuntimeException e) {
-                LOGGER.log(Level.WARNING, "Error executing Solr query,", e); //NON-NLS
-                throw e;
-            }
-        }
-
-        //TODO limit how many results we store, not to hit memory limits
-        LOGGER.log(Level.INFO, "Regex # results: {0}", resultSize); //NON-NLS
-
-        return results;
     }
 }
