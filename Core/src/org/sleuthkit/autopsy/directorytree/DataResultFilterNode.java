@@ -492,7 +492,7 @@ public class DataResultFilterNode extends FilterNode {
         }
 
         @Override
-        public AbstractAction visit(Accounts.AccountsNode node) {
+        public AbstractAction visit(Accounts.AccountsRootNode node) {
             return openChild(node);
         }
 

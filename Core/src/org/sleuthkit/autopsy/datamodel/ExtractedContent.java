@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,6 +37,13 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
@@ -188,20 +195,13 @@ public class ExtractedContent implements AutopsyVisitableItem {
             super();
 
             // these are shown in other parts of the UI tree
-            doNotShow.add(new BlackboardArtifact.Type(
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO));
-            doNotShow.add(new BlackboardArtifact.Type(
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG));
-            doNotShow.add(new BlackboardArtifact.Type(
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT));
-            doNotShow.add(new BlackboardArtifact.Type(
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT));
-            doNotShow.add(new BlackboardArtifact.Type(
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT));
-            doNotShow.add(new BlackboardArtifact.Type(
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT));
-            doNotShow.add(new BlackboardArtifact.Type(
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT));
+            doNotShow.add(new BlackboardArtifact.Type(TSK_GEN_INFO));
+            doNotShow.add(new BlackboardArtifact.Type(TSK_EMAIL_MSG));
+            doNotShow.add(new BlackboardArtifact.Type(TSK_HASHSET_HIT));
+            doNotShow.add(new BlackboardArtifact.Type(TSK_KEYWORD_HIT));
+            doNotShow.add(new BlackboardArtifact.Type(TSK_INTERESTING_FILE_HIT));
+            doNotShow.add(new BlackboardArtifact.Type(TSK_INTERESTING_ARTIFACT_HIT));
+            doNotShow.add(new BlackboardArtifact.Type(TSK_CREDIT_CARD_ACCOUNT));
         }
 
         private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
@@ -276,11 +276,11 @@ public class ExtractedContent implements AutopsyVisitableItem {
                     types.removeAll(doNotShow);
                     Collections.sort(types,
                             new Comparator<BlackboardArtifact.Type>() {
-                                @Override
-                                public int compare(BlackboardArtifact.Type a, BlackboardArtifact.Type b) {
-                                    return a.getDisplayName().compareTo(b.getDisplayName());
-                                }
-                            });
+                        @Override
+                        public int compare(BlackboardArtifact.Type a, BlackboardArtifact.Type b) {
+                            return a.getDisplayName().compareTo(b.getDisplayName());
+                        }
+                    });
                     list.addAll(types);
 
                     // the create node method will get called only for new types

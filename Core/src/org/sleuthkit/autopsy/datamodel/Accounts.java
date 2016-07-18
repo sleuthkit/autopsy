@@ -22,6 +22,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Observable;
@@ -43,6 +44,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -54,7 +56,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class Accounts extends Observable implements AutopsyVisitableItem {
 
-    private static final Logger LOGGER = Logger.getLogger(HashsetHits.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(Accounts.class.getName());
+    private static final BlackboardArtifact.Type CREDIT_CARD_ACCOUNT_TYPE = new BlackboardArtifact.Type(TSK_CREDIT_CARD_ACCOUNT);
 
     private SleuthkitCase skCase;
 
@@ -72,17 +75,38 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         return v.visit(this);
     }
 
+    private abstract class ObservingChildFactory<X> extends ChildFactory.Detachable<X> implements Observer {
+
+        @Override
+        public void update(Observable o, Object arg) {
+            refresh(true);
+        }
+
+        @Override
+        protected void removeNotify() {
+            super.removeNotify();
+            deleteObserver(this);
+        }
+
+        @Override
+        protected void addNotify() {
+            super.addNotify();
+            Accounts.this.update();
+            addObserver(this);
+        }
+    }
+
     /**
-     * Top-level node for all accounts
+     * Top-level node for the accounts tree
      */
     @NbBundle.Messages({"Accounts.RootNode.displayName=Accounts"})
-    public class AccountsNode extends DisplayableItemNode {
+    public class AccountsRootNode extends DisplayableItemNode {
 
-        AccountsNode() {
+        AccountsRootNode() {
             super(Children.create(new AccountTypeFactory(), true));
-            super.setName(BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getLabel());
+            super.setName("Accounts");  //NON-NLS
             super.setDisplayName(Bundle.Accounts_RootNode_displayName());
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/account_menu.png"); //NON-NLS
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/account_menu.png");
         }
 
         @Override
@@ -100,7 +124,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
      * Creates child nodes for each account type (currently hard coded to make
      * one for Credit Cards)
      */
-    private class AccountTypeFactory extends ChildFactory.Detachable<String> implements Observer {
+    private class AccountTypeFactory extends ObservingChildFactory<String> {
 
         /*
          * The pcl is in the class because it has the easiest mechanisms to add
@@ -126,7 +150,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                          * for the event to have a null oldValue.
                          */
                         ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
-                        if (null != eventData && eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
+                        if (null != eventData && CREDIT_CARD_ACCOUNT_TYPE.equals(eventData.getBlackboardArtifactType())) {
                             Accounts.this.update();
                         }
                     } catch (IllegalStateException notUsed) {
@@ -157,13 +181,9 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         };
 
         @Override
-        public void update(Observable o, Object arg) {
-            refresh(true);
-        }
-
-        @Override
+        @NbBundle.Messages({"Accounts.AccountTypeFactory.accountType.creditCards=Credit Card Numbers"})
         protected boolean createKeys(List<String> list) {
-            list.add("Credit Card Numbers");
+            list.add(Bundle.Accounts_AccountTypeFactory_accountType_creditCards());
             return true;
         }
 
@@ -174,32 +194,30 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
         @Override
         protected void removeNotify() {
-            super.removeNotify();
             IngestManager.getInstance().removeIngestJobEventListener(pcl);
             IngestManager.getInstance().removeIngestModuleEventListener(pcl);
             Case.removePropertyChangeListener(pcl);
-            deleteObserver(this);
+            super.removeNotify();
         }
 
         @Override
         protected void addNotify() {
-            super.addNotify();
             IngestManager.getInstance().addIngestJobEventListener(pcl);
             IngestManager.getInstance().addIngestModuleEventListener(pcl);
             Case.addPropertyChangeListener(pcl);
-            Accounts.this.update();
-            addObserver(this);
+            super.addNotify();
         }
     }
 
     /**
-     * Node for an account type, TODO: currently hard coded to work for Credit
-     * Card only
+     * Node for an account type.
+     *
+     * NOTE: currently hard coded to work for Credit Card only
      */
     public class AccountTypeNode extends DisplayableItemNode {
 
         private AccountTypeNode(String accountTypeName) {
-            super(Children.create(new ViewModeFactory(), true), Lookups.singleton(accountTypeName));
+            super(Children.create(new ViewModeFactory(), true));
             super.setName(accountTypeName);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/credit-cards.png"); //NON-NLS
         }
@@ -209,45 +227,25 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             return false;
         }
 
-//        @Override
-//        protected Sheet createSheet() {
-//            Sheet s = super.createSheet();
-//            Sheet.Set ss = s.get(Sheet.PROPERTIES);
-//            if (ss == null) {
-//                ss = Sheet.createPropertiesSet();
-//                s.put(ss);
-//            }
-//
-//            ss.put(new NodeProperty<>(Bundle.Accounts_createSheet_name(),
-//                    Bundle.Accounts_createSheet_displayName(),
-//                    Bundle.Accounts_createSheet_desc(),
-//                    getName()));
-//
-//            return s;
-//        }
-
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
         }
     }
 
-    private enum CreditCardViewMode {
+    /**
+     * Enum for the children under the credit card AccountTypeNode.
+     */
+    static private enum CreditCardViewMode {
         BY_FILE,
         BY_BIN;
     }
 
-    private class ViewModeFactory extends ChildFactory.Detachable<CreditCardViewMode> implements Observer {
-
-        @Override
-        public void update(Observable o, Object arg) {
-            refresh(true);
-        }
+    private class ViewModeFactory extends ObservingChildFactory<CreditCardViewMode> {
 
         @Override
         protected boolean createKeys(List<CreditCardViewMode> list) {
-            list.add(CreditCardViewMode.BY_FILE);
-            list.add(CreditCardViewMode.BY_BIN);
+            list.addAll(Arrays.asList(CreditCardViewMode.values()));
             return true;
         }
 
@@ -261,19 +259,6 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                 default:
                     return null;
             }
-        }
-
-        @Override
-        protected void removeNotify() {
-            super.removeNotify();
-            deleteObserver(this);
-        }
-
-        @Override
-        protected void addNotify() {
-            super.addNotify();
-            Accounts.this.update();
-            addObserver(this);
         }
     }
 
@@ -401,30 +386,30 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
     }
 
-    private class FileFactory extends ChildFactory.Detachable<FileWithCCN> implements Observer {
+    private class FileFactory extends ObservingChildFactory<FileWithCCN> {
 
         @Override
         protected boolean createKeys(List<FileWithCCN> list) {
             String query =
                     "select distinct blackboard_artifacts.obj_id as obj_id,"
-                    + "	    blackboard_attributes.value_int32 as chunk_id,"
+                    + "	    blackboard_attributes.value_int32 as solr_document_id,"
                     + "     group_concat(blackboard_artifacts.artifact_id),"
                     + "     count(blackboard_artifacts.artifact_id) as hits "
                     //                    + "     count (case when blackboard_artifacts.status like \"accepted\" then 1 else Null end) as accepted"
                     + " from blackboard_artifacts, "
                     + "     blackboard_attributes "
-                    + " where blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()
+                    + " where blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT.getTypeID()
                     //                    + "     and not (blackboard_artifacts.status like  \"rejected\")  "
                     + "     and blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id "
-                    + "     and blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CHUNK_ID.getTypeID()
-                    + " group by blackboard_artifacts.obj_id, chunk_id"
+                    + "     and blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SOLR_DOCUMENT_ID.getTypeID()
+                    + " group by blackboard_artifacts.obj_id, solr_document_id"
                     + " order by hits desc";//, accepted desc";
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
                     ResultSet rs = results.getResultSet();) {
                 while (rs.next()) {
                     list.add(new FileWithCCN(
                             rs.getLong("obj_id"),
-                            rs.getLong("chunk_id"),
+                            rs.getLong("solr_document_id"),
                             unGroupConcat(rs.getString("group_concat(blackboard_artifacts.artifact_id)"), Long::valueOf),
                             rs.getLong("hits"),
                             0,
@@ -449,19 +434,6 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         @Override
         public void update(Observable o, Object arg) {
             refresh(true);
-        }
-
-        @Override
-        protected void removeNotify() {
-            super.removeNotify();
-            deleteObserver(this);
-        }
-
-        @Override
-        protected void addNotify() {
-            super.addNotify();
-            Accounts.this.update();
-            addObserver(this);
         }
     }
 
@@ -544,12 +516,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         }
     }
 
-    private class BINFactory extends ChildFactory.Detachable<BIN> implements Observer {
-
-        @Override
-        public void update(Observable o, Object arg) {
-            refresh(true);
-        }
+    private class BINFactory extends ObservingChildFactory<BIN> {
 
         @Override
         protected boolean createKeys(List<BIN> list) {
@@ -558,9 +525,9 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                     + "     count(blackboard_artifacts.artifact_type_id) as count "
                     + " from blackboard_artifacts,"
                     + "      blackboard_attributes "
-                    + " where blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()
+                    + " where blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT.getTypeID()
                     + "     and blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id "
-                    + "     and blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CREDIT_CARD_NUMBER.getTypeID()
+                    + "     and blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER.getTypeID()
                     + " GROUP BY BIN "
                     + " ORDER BY BIN ";
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query)) {
@@ -578,19 +545,6 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         @Override
         protected Node createNodeForKey(BIN key) {
             return new BINNode(key);
-        }
-
-        @Override
-        protected void removeNotify() {
-            super.removeNotify();
-            deleteObserver(this);
-        }
-
-        @Override
-        protected void addNotify() {
-            super.addNotify();
-            Accounts.this.update();
-            addObserver(this);
         }
     }
 
@@ -616,12 +570,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
     /**
      * Creates the nodes for the accounts of a given type
      */
-    private class AccountFactory extends ChildFactory.Detachable<Long> implements Observer {
-
-        @Override
-        public void update(Observable o, Object arg) {
-            refresh(true);
-        }
+    private class AccountFactory extends ObservingChildFactory<Long> {
 
         private final BIN bin;
 
@@ -635,9 +584,9 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                     "select blackboard_artifacts.artifact_id "
                     + " from blackboard_artifacts, "
                     + "      blackboard_attributes "
-                    + " where blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()
+                    + " where blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT.getTypeID()
                     + "     and blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id "
-                    + "     and blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CREDIT_CARD_NUMBER.getTypeID()
+                    + "     and blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER.getTypeID()
                     + "     and blackboard_attributes.value_text LIKE \"" + bin.getBIN() + "%\" "
                     + " ORDER BY blackboard_attributes.value_text";
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
@@ -664,19 +613,6 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                 LOGGER.log(Level.WARNING, "TSK Exception occurred", ex); //NON-NLS
             }
             return null;
-        }
-
-        @Override
-        protected void removeNotify() {
-            super.removeNotify();
-            deleteObserver(this);
-        }
-
-        @Override
-        protected void addNotify() {
-            super.addNotify();
-            Accounts.this.update();
-            addObserver(this);
         }
     }
 }
