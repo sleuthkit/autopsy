@@ -185,12 +185,12 @@ final class TermComponentQuery implements KeywordSearchQuery {
                 //try to match it against the track 1 regex
                 Matcher matcher = TRACK1_PATTERN.matcher(hit.getSnippet());
                 if (matcher.find()) {
-                    parseTrackData(bba, matcher, hit, true);
+                    parseTrack1Data(bba, matcher, hit);
                 }
                 //then try to match it against the track 2 regex
                 matcher = TRACK2_PATTERN.matcher(hit.getSnippet());
                 if (matcher.find()) {
-                    parseTrackData(bba, matcher, hit, false);
+                    parseTrack2Data(bba, matcher, hit);
                 }
             } else {
                 //make keyword hit artifact
@@ -206,7 +206,7 @@ final class TermComponentQuery implements KeywordSearchQuery {
                 }
             }
         } catch (TskCoreException e) {
-            LOGGER.log(Level.WARNING, "Error adding bb artifact for keyword hit", e); //NON-NLS
+            LOGGER.log(Level.SEVERE, "Error adding bb artifact for keyword hit", e); //NON-NLS
             return null;
         }
         //preview
@@ -225,7 +225,7 @@ final class TermComponentQuery implements KeywordSearchQuery {
             writeResult.add(attributes);
             return writeResult;
         } catch (TskCoreException e) {
-            LOGGER.log(Level.WARNING, "Error adding bb attributes for terms search artifact", e); //NON-NLS
+            LOGGER.log(Level.SEVERE, "Error adding bb attributes for terms search artifact", e); //NON-NLS
             return null;
         }
     }
@@ -254,7 +254,7 @@ final class TermComponentQuery implements KeywordSearchQuery {
         try {
             terms = KeywordSearch.getServer().queryTerms(q).getTerms(TERMS_SEARCH_FIELD);
         } catch (KeywordSearchModuleException ex) {
-            LOGGER.log(Level.WARNING, "Error executing the regex terms query: " + keyword.getQuery(), ex); //NON-NLS
+            LOGGER.log(Level.SEVERE, "Error executing the regex terms query: " + keyword.getQuery(), ex); //NON-NLS
             //TODO: this is almost certainly wrong and guaranteed to throw a NPE at some point!!!!
         }
 
@@ -333,19 +333,17 @@ final class TermComponentQuery implements KeywordSearchQuery {
     }
 
     /**
-     * Parse the track 1/2 data from a KeywordHit and add it to the given
+     * Parse the track 2 data from a KeywordHit and add it to the given
      * artifact.
      *
      * @param artifact
      * @param matcher
      * @param hit
-     * @param tryName  True if this mehtod should try to parse the name
-     *                 attribute.
      *
      * @throws IllegalArgumentException
      * @throws TskCoreException
      */
-    static private void parseTrackData(BlackboardArtifact artifact, Matcher matcher, KeywordHit hit, boolean tryName) throws IllegalArgumentException, TskCoreException {
+    static private void parseTrack2Data(BlackboardArtifact artifact, Matcher matcher, KeywordHit hit) throws IllegalArgumentException, TskCoreException {
         //try to add all the attrributes common to track 1 and 2
         addAttributeIfNotAlreadyCaptured(artifact, ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER, "accountNumber", matcher);
         addAttributeIfNotAlreadyCaptured(artifact, ATTRIBUTE_TYPE.TSK_CREDIT_CARD_EXPIRATION, "expiration", matcher);
@@ -353,12 +351,26 @@ final class TermComponentQuery implements KeywordSearchQuery {
         addAttributeIfNotAlreadyCaptured(artifact, ATTRIBUTE_TYPE.TSK_CREDIT_CARD_DISCRETIONARY, "discretionary", matcher);
         addAttributeIfNotAlreadyCaptured(artifact, ATTRIBUTE_TYPE.TSK_CREDIT_CARD_LRC, "LRC", matcher);
 
-        if (tryName) {
-            //only try to add the name for track 1
-            addAttributeIfNotAlreadyCaptured(artifact, ATTRIBUTE_TYPE.TSK_NAME_PERSON, "name", matcher);
-        }
         if (artifact.getAttribute(SOLR_DOCUMENT_ID_TYPE) == null) {
             artifact.addAttribute(new BlackboardAttribute(SOLR_DOCUMENT_ID_TYPE, MODULE_NAME, hit.getSolrDocumentId()));
         }
+    }
+
+    /**
+     * Parse the track 1 data from a KeywordHit and add it to the given
+     * artifact.
+     *
+     * @param artifact
+     * @param matcher
+     * @param hit
+     *
+     * @throws IllegalArgumentException
+     * @throws TskCoreException
+     */
+    static private void parseTrack1Data(BlackboardArtifact artifact, Matcher matcher, KeywordHit hit) throws IllegalArgumentException, TskCoreException {
+        // track 1 has all the fields present in track 2
+        parseTrack2Data(artifact, matcher, hit);
+        //plus it also has the account holders name
+        addAttributeIfNotAlreadyCaptured(artifact, ATTRIBUTE_TYPE.TSK_NAME_PERSON, "name", matcher);
     }
 }
