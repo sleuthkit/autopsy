@@ -530,10 +530,13 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
     public class BINNode extends DisplayableItemNode {
 
-        BINNode(Integer key) {
+        private final BIN bin;
+
+        BINNode(BIN key) {
             super(Children.create(new AccountFactory(key), true));
+            this.bin = key;
             setName(key.toString());
-            setDisplayName(key.toString());
+            setDisplayName(key.getBIN().toString() + " (" + key.getCount() + ")");
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/bank.png"); //NON-NLS
         }
 
@@ -546,9 +549,24 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
         }
+
+        @Override
+        protected Sheet createSheet() {
+            Sheet s = super.createSheet();
+            Sheet.Set ss = s.get(Sheet.PROPERTIES);
+            if (ss == null) {
+                ss = Sheet.createPropertiesSet();
+                s.put(ss);
+            }
+
+            ss.put(new NodeProperty<>("Bank Identifier Number", "Bank Identifier Number", "no description", bin.getBIN()));
+            ss.put(new NodeProperty<>("Accounts ", "Accounts", "no description", bin.getCount()));
+
+            return s;
+        }
     }
 
-    private class BINFactory extends ChildFactory.Detachable<Integer> implements Observer {
+    private class BINFactory extends ChildFactory.Detachable<BIN> implements Observer {
 
         @Override
         public void update(Observable o, Object arg) {
@@ -556,7 +574,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         }
 
         @Override
-        protected boolean createKeys(List<Integer> list) {
+        protected boolean createKeys(List<BIN> list) {
             String query =
                     "select substr(blackboard_attributes.value_text,1,6) as BIN, "
                     + "     count(blackboard_artifacts.artifact_type_id) as count "
@@ -568,11 +586,10 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                     + " GROUP BY BIN "
                     + " ORDER BY BIN ";
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query)) {
-                ResultSet rs = results.getResultSet();
-                while (rs.next()) {
-                    String string = rs.getString("BIN");
-                    Integer valueOf = Integer.valueOf(string);
-                    list.add(valueOf);
+                ResultSet resultSet = results.getResultSet();
+                while (resultSet.next()) {
+                    list.add(new BIN(Integer.valueOf(resultSet.getString("BIN")),
+                            resultSet.getLong("count")));
                 }
             } catch (TskCoreException | SQLException ex) {
                 Exceptions.printStackTrace(ex);
@@ -581,7 +598,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         }
 
         @Override
-        protected Node createNodeForKey(Integer key) {
+        protected Node createNodeForKey(BIN key) {
             return new BINNode(key);
         }
 
@@ -599,6 +616,25 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         }
     }
 
+    private class BIN {
+
+        private final Integer bin;
+        private final Long count;
+
+        public BIN(Integer bin, Long count) {
+            this.bin = bin;
+            this.count = count;
+        }
+
+        public Integer getBIN() {
+            return bin;
+        }
+
+        public Long getCount() {
+            return count;
+        }
+    }
+
     /**
      * Creates the nodes for the accounts of a given type
      */
@@ -609,9 +645,9 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             refresh(true);
         }
 
-        private final Integer bin;
+        private final BIN bin;
 
-        private AccountFactory(Integer bin) {
+        private AccountFactory(BIN bin) {
             this.bin = bin;
         }
 
@@ -624,7 +660,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                     + " where blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()
                     + "     and blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id "
                     + "     and blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CREDIT_CARD_NUMBER.getTypeID()
-                    + "     and blackboard_attributes.value_text LIKE \"" + bin + "%\" "
+                    + "     and blackboard_attributes.value_text LIKE \"" + bin.getBIN() + "%\" "
                     + " ORDER BY blackboard_attributes.value_text";
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
                     ResultSet rs = results.getResultSet();) {
