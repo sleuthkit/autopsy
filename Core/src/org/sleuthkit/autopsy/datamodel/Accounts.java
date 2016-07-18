@@ -49,15 +49,13 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
- * Node support for accounts. Inner classes have all of the nodes in the tree.
- *
+ * AutopsyVisitableItem for the Accounts section of the tree. All nodes and
+ * factories are inner classes.
  */
 public class Accounts extends Observable implements AutopsyVisitableItem {
 
-    private static final String ACCOUNT = BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getLabel();
-    private static final String DISPLAY_NAME = BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getDisplayName();
     private static final Logger LOGGER = Logger.getLogger(HashsetHits.class.getName());
+
     private SleuthkitCase skCase;
 
     private void update() {
@@ -65,7 +63,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         notifyObservers();
     }
 
-    public Accounts(SleuthkitCase skCase) {
+    Accounts(SleuthkitCase skCase) {
         this.skCase = skCase;
     }
 
@@ -81,8 +79,8 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
     public class AccountsNode extends DisplayableItemNode {
 
         AccountsNode() {
-            super(Children.create(new AccountTypeFactory(), true), Lookups.singleton(DISPLAY_NAME));
-            super.setName(ACCOUNT);
+            super(Children.create(new AccountTypeFactory(), true));
+            super.setName(BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getLabel());
             super.setDisplayName(Bundle.Accounts_RootNode_displayName());
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/account_menu.png"); //NON-NLS
         }
@@ -95,26 +93,6 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
-        }
-
-        @Override
-        @NbBundle.Messages({"Accounts.createSheet.name=name",
-            "Accounts.createSheet.displayName=name",
-            "Accounts.createSheet.desc=mo description"})
-        protected Sheet createSheet() {
-            Sheet s = super.createSheet();
-            Sheet.Set ss = s.get(Sheet.PROPERTIES);
-            if (ss == null) {
-                ss = Sheet.createPropertiesSet();
-                s.put(ss);
-            }
-
-            ss.put(new NodeProperty<>(Bundle.Accounts_createSheet_name(),
-                    Bundle.Accounts_createSheet_displayName(),
-                    Bundle.Accounts_createSheet_desc(),
-                    getName()));
-
-            return s;
         }
     }
 
@@ -148,7 +126,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                          * for the event to have a null oldValue.
                          */
                         ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
-                        if (null != eventData && eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+                        if (null != eventData && eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
                             Accounts.this.update();
                         }
                     } catch (IllegalStateException notUsed) {
@@ -231,22 +209,22 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             return false;
         }
 
-        @Override
-        protected Sheet createSheet() {
-            Sheet s = super.createSheet();
-            Sheet.Set ss = s.get(Sheet.PROPERTIES);
-            if (ss == null) {
-                ss = Sheet.createPropertiesSet();
-                s.put(ss);
-            }
-
-            ss.put(new NodeProperty<>(Bundle.Accounts_createSheet_name(),
-                    Bundle.Accounts_createSheet_displayName(),
-                    Bundle.Accounts_createSheet_desc(),
-                    getName()));
-
-            return s;
-        }
+//        @Override
+//        protected Sheet createSheet() {
+//            Sheet s = super.createSheet();
+//            Sheet.Set ss = s.get(Sheet.PROPERTIES);
+//            if (ss == null) {
+//                ss = Sheet.createPropertiesSet();
+//                s.put(ss);
+//            }
+//
+//            ss.put(new NodeProperty<>(Bundle.Accounts_createSheet_name(),
+//                    Bundle.Accounts_createSheet_displayName(),
+//                    Bundle.Accounts_createSheet_desc(),
+//                    getName()));
+//
+//            return s;
+//        }
 
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
@@ -254,7 +232,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         }
     }
 
-    enum CreditCardViewMode {
+    private enum CreditCardViewMode {
         BY_FILE,
         BY_BIN;
     }
@@ -364,7 +342,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         final long accepted;
         private final String status;
 
-        FileWithCCN(long objID, long chunkID, List<Long> artifactIDS, long hits, long accepted, String status) {
+        private FileWithCCN(long objID, long chunkID, List<Long> artifactIDS, long hits, long accepted, String status) {
 
             this.objID = objID;
             this.chunkID = chunkID;
@@ -492,7 +470,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         private final FileWithCCN key;
         private final Content content;
 
-        FileWithCCNNode(FileWithCCN key, Content content) {
+        private FileWithCCNNode(FileWithCCN key, Content content) {
             super(Children.LEAF, Lookups.singleton(content));
 
             setName(content.getName() + "_" + key.getChunkID());
@@ -532,7 +510,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
         private final BIN bin;
 
-        BINNode(BIN key) {
+        private BINNode(BIN key) {
             super(Children.create(new AccountFactory(key), true));
             this.bin = key;
             setName(key.toString());
@@ -621,7 +599,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         private final Integer bin;
         private final Long count;
 
-        public BIN(Integer bin, Long count) {
+        private BIN(Integer bin, Long count) {
             this.bin = bin;
             this.count = count;
         }
