@@ -166,9 +166,9 @@ class EnCaseKeywordSearchList extends KeywordSearchList {
             return true;
 
         } catch (FileNotFoundException ex) {
-            logger.log(Level.INFO, "File at " + filePath + " does not exist!", ex); //NON-NLS
+            LOGGER.log(Level.INFO, "File at " + filePath + " does not exist!", ex); //NON-NLS
         } catch (IOException ex) {
-            logger.log(Level.INFO, "Failed to read file at " + filePath, ex); //NON-NLS
+            LOGGER.log(Level.INFO, "Failed to read file at " + filePath, ex); //NON-NLS
         }
         return false;
     }
