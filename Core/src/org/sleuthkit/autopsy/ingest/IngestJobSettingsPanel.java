@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2011-2014 Basis Technology Corp.
+ *
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,6 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
@@ -37,7 +36,6 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
@@ -52,63 +50,55 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * User interface component to allow a user to make ingest job settings.
+ * A panel to allow a user to make ingest job settings.
  */
 public final class IngestJobSettingsPanel extends javax.swing.JPanel {
 
+    private static final long serialVersionUID = 1L;
+    private static ImageIcon warningIcon = new ImageIcon(IngestJobSettingsPanel.class.getResource("/org/sleuthkit/autopsy/images/warning_triangle.png"));
+    private static ImageIcon infoIcon = new ImageIcon(IngestJobSettingsPanel.class.getResource("/org/sleuthkit/autopsy/images/information-frame.png"));
     private final IngestJobSettings settings;
-    private final List<IngestModuleModel> modules;
+    private final List<Content> dataSources = new ArrayList<>();
+    private final List<IngestJobInfo> ingestJobs = new ArrayList<>();
+    private final List<IngestModuleModel> modules = new ArrayList<>();
+    private final IngestModulesTableModel tableModel = new IngestModulesTableModel();
     private IngestModuleModel selectedModule;
-    private IngestModulesTableModel tableModel = new IngestModulesTableModel();
-    private List<IngestJobInfo> ingestJobs;
-    private List<Content> dataSources;
     private static final Logger logger = Logger.getLogger(IngestJobSettingsPanel.class.getName());
 
     /**
-     * Construct a user interface component to allow a user to make ingest job
-     * settings.
+     * Construct a panel to allow a user to make ingest job settings.
      *
      * @param settings The initial settings for the ingest job.
      */
     public IngestJobSettingsPanel(IngestJobSettings settings) {
         this.settings = settings;
-        this.modules = new ArrayList<>();
         for (IngestModuleTemplate moduleTemplate : settings.getIngestModuleTemplates()) {
-            this.modules.add(new IngestModuleModel(moduleTemplate));
+            modules.add(new IngestModuleModel(moduleTemplate));
         }
-        SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-        try {
-            ingestJobs = skCase.getIngestJobs();
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to load ingest job information.", ex);
-            ingestJobs = new ArrayList<>();
-        }
-        this.dataSources = new ArrayList<>();
         initComponents();
         customizeComponents();
     }
 
     /**
-     * Construct a user interface component to allow a user to make ingest job
-     * settings.
+     * Construct a panel to allow a user to make ingest job settings.
      *
      * @param settings    The initial settings for the ingest job.
      * @param dataSources The data sources ingest is being run on.
      */
     IngestJobSettingsPanel(IngestJobSettings settings, List<Content> dataSources) {
         this.settings = settings;
-        this.modules = new ArrayList<>();
+        this.dataSources.addAll(dataSources);
+        try {
+            SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+            ingestJobs.addAll(skCase.getIngestJobs());
+        } catch (IllegalStateException ex) {
+            logger.log(Level.SEVERE, "No open case", ex);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Failed to load ingest job information", ex);
+        }
         for (IngestModuleTemplate moduleTemplate : settings.getIngestModuleTemplates()) {
             this.modules.add(new IngestModuleModel(moduleTemplate));
         }
-        SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-        try {
-            ingestJobs = skCase.getIngestJobs();
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to load ingest job information.", ex);
-            ingestJobs = new ArrayList<>();
-        }
-        this.dataSources = dataSources;
         initComponents();
         customizeComponents();
     }
@@ -156,25 +146,22 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         // Add a selection listener to the table model that will display the  
         // ingest job options panel of the currently selected module model and 
         // enable or disable the resources configuration panel invocation button.
-        modulesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                ListSelectionModel listSelectionModel = (ListSelectionModel) e.getSource();
-                if (!listSelectionModel.isSelectionEmpty()) {
-                    int index = listSelectionModel.getMinSelectionIndex();
-                    selectedModule = modules.get(index);
-                    ingestSettingsPanel.removeAll();
-                    if (null != selectedModule.getModuleSettingsPanel()) {
-                        ingestSettingsPanel.add(selectedModule.getModuleSettingsPanel());
-                    } else {
-                        ingestSettingsPanel.add(new JLabel(Bundle.IngestJobSettingsPanel_noPerRunSettings()));
-                    }
-                    ingestSettingsPanel.revalidate();
-                    ingestSettingsPanel.repaint();
-                    globalSettingsButton.setEnabled(null != selectedModule.getGlobalSettingsPanel());
-                    descriptionLabel.setText(selectedModule.getDescription());
-                    descriptionLabel.setToolTipText(selectedModule.getDescription());
+        modulesTable.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
+            ListSelectionModel listSelectionModel = (ListSelectionModel) e.getSource();
+            if (!listSelectionModel.isSelectionEmpty()) {
+                int index = listSelectionModel.getMinSelectionIndex();
+                selectedModule = modules.get(index);
+                ingestSettingsPanel.removeAll();
+                if (null != selectedModule.getModuleSettingsPanel()) {
+                    ingestSettingsPanel.add(selectedModule.getModuleSettingsPanel());
+                } else {
+                    ingestSettingsPanel.add(new JLabel(Bundle.IngestJobSettingsPanel_noPerRunSettings()));
                 }
+                ingestSettingsPanel.revalidate();
+                ingestSettingsPanel.repaint();
+                globalSettingsButton.setEnabled(null != selectedModule.getGlobalSettingsPanel());
+                descriptionLabel.setText(selectedModule.getDescription());
+                descriptionLabel.setToolTipText(selectedModule.getDescription());
             }
         });
         modulesTable.setRowSelectionInterval(0, 0);
@@ -183,6 +170,12 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         this.modulesTable.getColumnModel().getColumn(1).setMaxWidth(20);
         this.modulesTable.getColumnModel().getColumn(1).setMinWidth(20);
         modulesTable.setRowHeight(20);
+
+        /*
+         * Only enable the ingest jobs history panel if there are data sources
+         * and jobs for which to display the history.
+         */
+        pastJobsButton.setEnabled(!dataSources.isEmpty() && !ingestJobs.isEmpty());
     }
 
     /**
@@ -354,14 +347,11 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
     private void globalSettingsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_globalSettingsButtonActionPerformed
         final AdvancedConfigurationDialog dialog = new AdvancedConfigurationDialog(true);
 
-        dialog.addApplyButtonListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (selectedModule.hasGlobalSettingsPanel()) {
-                    selectedModule.saveResourcesConfig();
-                }
-                dialog.close();
+        dialog.addApplyButtonListener((ActionEvent e) -> {
+            if (selectedModule.hasGlobalSettingsPanel()) {
+                selectedModule.saveResourcesConfig();
             }
+            dialog.close();
         });
 
         dialog.addWindowListener(new WindowAdapter() {
@@ -491,8 +481,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
      */
     private class IngestModulesTableModel extends AbstractTableModel {
 
-        ImageIcon warningIcon = new ImageIcon("Core\\src\\org\\sleuthkit\\autopsy\\images\\warning_triangle.png");
-        ImageIcon infoIcon = new ImageIcon("Core\\src\\org\\sleuthkit\\autopsy\\images\\information-frame.png");
+        private static final long serialVersionUID = 1L;
 
         @Override
         public int getRowCount() {
@@ -507,12 +496,13 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             IngestModuleModel module = modules.get(rowIndex);
-            if (columnIndex == 0) {
-                return module.isEnabled();
-            } else if (columnIndex == 1) {
-                return getIcon(module);
-            } else {
-                return module.getName();
+            switch (columnIndex) {
+                case 0:
+                    return module.isEnabled();
+                case 1:
+                    return getIcon(module);
+                default:
+                    return module.getName();
             }
         }
 
@@ -534,7 +524,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         }
 
         private ImageIcon getIcon(IngestModuleModel module) {
-            if (dataSources.isEmpty()) {
+            if (dataSources.isEmpty() || ingestJobs.isEmpty()) {
                 return null;
             }
             boolean previousVersionRun = false;
@@ -596,6 +586,8 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         "IngestJobSettingsPanel.IngestModulesTableRenderer.info.message=A previous version of this ingest module has been run before on this data source."})
     private class IngestModulesTableRenderer extends DefaultTableCellRenderer {
 
+        private static final long serialVersionUID = 1L;
+
         List<String> tooltips = new ArrayList<>();
 
         public IngestModulesTableRenderer() {
@@ -613,9 +605,9 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
             } else if (1 == column) {
                 setIcon((Icon) value);
                 setText("");
-                if (tableModel.warningIcon.equals(value)) {
+                if (warningIcon.equals(value)) {
                     setToolTipText(Bundle.IngestJobSettingsPanel_IngestModulesTableRenderer_warning_message());
-                } else if (tableModel.infoIcon.equals(value)) {
+                } else if (infoIcon.equals(value)) {
                     setToolTipText(Bundle.IngestJobSettingsPanel_IngestModulesTableRenderer_info_message());
                 }
             }
