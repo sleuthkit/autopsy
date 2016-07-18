@@ -247,54 +247,62 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
      * @return
      */
     private String getHighlightQuery(KeywordSearchQuery query, boolean literal_query, QueryResults queryResults, Content content) {
-        String highlightQueryEscaped;
         if (literal_query) {
             //literal, treat as non-regex, non-term component query
-            highlightQueryEscaped = query.getQueryString();
+            return constructEscapedSolrQuery(query.getQueryString(), literal_query);
         } else {
             //construct a Solr query using aggregated terms to get highlighting
             //the query is executed later on demand
-            StringBuilder highlightQuery = new StringBuilder();
-
             if (queryResults.getKeywords().size() == 1) {
                 //simple case, no need to process subqueries and do special escaping
                 Keyword term = queryResults.getKeywords().iterator().next();
-                highlightQuery.append(term.toString());
+                return constructEscapedSolrQuery(term.getQuery(), literal_query);
             } else {
                 //find terms for this content hit
-                List<String> hitTerms = new ArrayList<>();
+                List<Keyword> hitTerms = new ArrayList<>();
                 for (Keyword keyword : queryResults.getKeywords()) {
                     for (KeywordHit hit : queryResults.getResults(keyword)) {
                         if (hit.getContent().equals(content)) {
-                            hitTerms.add(keyword.toString());
+                            hitTerms.add(keyword);
                             break; //go to next term
                         }
                     }
                 }
 
+                StringBuilder highlightQuery = new StringBuilder();
                 final int lastTerm = hitTerms.size() - 1;
                 int curTerm = 0;
-                for (String term : hitTerms) {
-                    //escape subqueries, they shouldn't be escaped again later
-                    final String termS = KeywordSearchUtil.escapeLuceneQuery(term);
-                    highlightQuery.append("\"");
-                    highlightQuery.append(termS);
-                    highlightQuery.append("\"");
+                for (Keyword term : hitTerms) {
+                    //escape subqueries, MAKE SURE they are not escaped again later
+                    highlightQuery.append(constructEscapedSolrQuery(term.getQuery(), literal_query));
                     if (lastTerm != curTerm) {
                         highlightQuery.append(" "); //acts as OR ||
-                        //force HIGHLIGHT_FIELD_REGEX index and stored content
-                        //in each term after first. First term taken care by HighlightedMatchesSource
-                        highlightQuery.append(LuceneQuery.HIGHLIGHT_FIELD_REGEX).append(":");
                     }
 
                     ++curTerm;
                 }
+                return highlightQuery.toString();
             }
-            //String highlightQueryEscaped = KeywordSearchUtil.escapeLuceneQuery(highlightQuery.toString());
-            highlightQueryEscaped = highlightQuery.toString();
         }
-
-        return highlightQueryEscaped;
+    }
+    
+    /**
+     * Constructs a complete, escaped Solr query that is ready to be used.
+     * 
+     * @param query keyword term to be searched for
+     * @param literal_query flag whether query is literal or regex
+     * @return Solr query string
+     */
+    private String constructEscapedSolrQuery(String query, boolean literal_query) {
+        StringBuilder highlightQuery = new StringBuilder();
+        String highLightField;
+        if (literal_query) {
+            highLightField = LuceneQuery.HIGHLIGHT_FIELD_LITERAL;
+        } else {
+            highLightField = LuceneQuery.HIGHLIGHT_FIELD_REGEX;
+        }
+        highlightQuery.append(highLightField).append(":").append("\"").append(KeywordSearchUtil.escapeLuceneQuery(query)).append("\"");
+        return highlightQuery.toString();
     }
 
     @Override

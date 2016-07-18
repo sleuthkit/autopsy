@@ -38,7 +38,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * Action in menu to open the folder containing the output files
  */
 @ActionRegistration(
-        displayName = "#CTL_OpenOutputFolder", iconInMenu = true)
+        displayName = "#CTL_OpenOutputFolder", iconInMenu = true, lazy=true)
 @ActionReference(path = "Menu/Tools", position = 1850, separatorBefore = 1849)
 @ActionID(id = "org.sleuthkit.autopsy.actions.OpenOutputFolderAction", category = "Help")
 public final class OpenOutputFolderAction extends CallableSystemAction {
