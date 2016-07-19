@@ -33,11 +33,13 @@ import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Performs a regular expression query to the SOLR/Lucene instance.
@@ -185,12 +187,19 @@ final class TermComponentQuery implements KeywordSearchQuery {
                 //try to match it against the track 1 regex
                 Matcher matcher = TRACK1_PATTERN.matcher(hit.getSnippet());
                 if (matcher.find()) {
-                    parseTrack1Data(bba, matcher, hit);
+                    parseTrack1Data(bba, matcher);
                 }
                 //then try to match it against the track 2 regex
                 matcher = TRACK2_PATTERN.matcher(hit.getSnippet());
                 if (matcher.find()) {
-                    parseTrack2Data(bba, matcher, hit);
+                    parseTrack2Data(bba, matcher);
+                }
+                if (hit.getContent() instanceof AbstractFile) {
+                    AbstractFile file = (AbstractFile) hit.getContent();
+                    if (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS
+                            || file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) {
+                        bba.addAttribute(new BlackboardAttribute(SOLR_DOCUMENT_ID_TYPE, MODULE_NAME, hit.getSolrDocumentId()));
+                    }
                 }
             } else {
                 //make keyword hit artifact
@@ -344,7 +353,7 @@ final class TermComponentQuery implements KeywordSearchQuery {
      * @throws IllegalArgumentException
      * @throws TskCoreException
      */
-    static private void parseTrack2Data(BlackboardArtifact artifact, Matcher matcher, KeywordHit hit) throws IllegalArgumentException, TskCoreException {
+    static private void parseTrack2Data(BlackboardArtifact artifact, Matcher matcher) throws IllegalArgumentException, TskCoreException {
         //try to add all the attrributes common to track 1 and 2
         addAttributeIfNotAlreadyCaptured(artifact, ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER, "accountNumber", matcher);
         addAttributeIfNotAlreadyCaptured(artifact, ATTRIBUTE_TYPE.TSK_CREDIT_CARD_EXPIRATION, "expiration", matcher);
@@ -352,9 +361,6 @@ final class TermComponentQuery implements KeywordSearchQuery {
         addAttributeIfNotAlreadyCaptured(artifact, ATTRIBUTE_TYPE.TSK_CREDIT_CARD_DISCRETIONARY, "discretionary", matcher);
         addAttributeIfNotAlreadyCaptured(artifact, ATTRIBUTE_TYPE.TSK_CREDIT_CARD_LRC, "LRC", matcher);
 
-        if (artifact.getAttribute(SOLR_DOCUMENT_ID_TYPE) == null) {
-            artifact.addAttribute(new BlackboardAttribute(SOLR_DOCUMENT_ID_TYPE, MODULE_NAME, hit.getSolrDocumentId()));
-        }
     }
 
     /**
@@ -368,9 +374,9 @@ final class TermComponentQuery implements KeywordSearchQuery {
      * @throws IllegalArgumentException
      * @throws TskCoreException
      */
-    static private void parseTrack1Data(BlackboardArtifact artifact, Matcher matcher, KeywordHit hit) throws IllegalArgumentException, TskCoreException {
+    static private void parseTrack1Data(BlackboardArtifact artifact, Matcher matcher) throws IllegalArgumentException, TskCoreException {
         // track 1 has all the fields present in track 2
-        parseTrack2Data(artifact, matcher, hit);
+        parseTrack2Data(artifact, matcher);
         //plus it also has the account holders name
         addAttributeIfNotAlreadyCaptured(artifact, ATTRIBUTE_TYPE.TSK_NAME_PERSON, "name", matcher);
     }
