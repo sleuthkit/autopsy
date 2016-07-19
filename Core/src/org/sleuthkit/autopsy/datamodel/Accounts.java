@@ -91,7 +91,6 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         @Override
         protected void addNotify() {
             super.addNotify();
-            Accounts.this.update();
             addObserver(this);
         }
     }
@@ -206,6 +205,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             IngestManager.getInstance().addIngestModuleEventListener(pcl);
             Case.addPropertyChangeListener(pcl);
             super.addNotify();
+            Accounts.this.update();
         }
     }
 
