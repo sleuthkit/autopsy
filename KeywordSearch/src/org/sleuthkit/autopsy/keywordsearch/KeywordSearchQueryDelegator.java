@@ -69,7 +69,6 @@ class KeywordSearchQueryDelegator {
                 } // regexp
                 else {
                     query = new TermComponentQuery(keywordList, keyword);
-                    query.setSubstringQuery();
                 }
                 queryDelegates.add(query);
             }
