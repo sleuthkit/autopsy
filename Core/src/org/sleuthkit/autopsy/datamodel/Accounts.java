@@ -22,6 +22,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -37,7 +38,6 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -75,6 +75,11 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         return v.visit(this);
     }
 
+    /**
+     * Base class for factories that are also observers.
+     *
+     * @param <X> The type of keys used by this factory.
+     */
     private abstract class ObservingChildFactory<X> extends ChildFactory.Detachable<X> implements Observer {
 
         @Override
@@ -103,9 +108,9 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
         AccountsRootNode() {
             super(Children.create(new AccountTypeFactory(), true));
-            super.setName("Accounts");  //NON-NLS
+            super.setName("Accounts");    //NON-NLS
             super.setDisplayName(Bundle.Accounts_RootNode_displayName());
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/account_menu.png");
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/account_menu.png");    //NON-NLS
         }
 
         @Override
@@ -126,7 +131,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
     private class AccountTypeFactory extends ObservingChildFactory<String> {
 
         /*
-         * The pcl is in the class because it has the easiest mechanisms to add
+         * The pcl is in this class because it has the easiest mechanisms to add
          * and remove itself during its life cycles.
          */
         private final PropertyChangeListener pcl = new PropertyChangeListener() {
@@ -219,7 +224,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         private AccountTypeNode(String accountTypeName) {
             super(Children.create(new ViewModeFactory(), true));
             super.setName(accountTypeName);
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/credit-cards.png"); //NON-NLS
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/credit-cards.png");   //NON-NLS
         }
 
         @Override
@@ -241,6 +246,10 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         BY_BIN;
     }
 
+    /**
+     * ChildFactory that makes nodes for the different account organizations (by
+     * file, by BIN)
+     */
     private class ViewModeFactory extends ObservingChildFactory<CreditCardViewMode> {
 
         @Override
@@ -262,20 +271,31 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         }
     }
 
-    public class ByFileNode extends DisplayableItemNode {
+    /**
+     * Node that is the root of the "by file" accounts tree. Its children are
+     * FileWithCCNNodes.
+     */
+    public class ByFileNode extends DisplayableItemNode implements Observer {
+
+        private final FileWithCCNFactory fileFactory;
 
         private ByFileNode() {
-            super(Children.create(new FileFactory(), true));
-            setName("By File");
+            super(Children.LEAF);
+            fileFactory = new FileWithCCNFactory();
+            setChildren(Children.create(fileFactory, true));
+            setName("By File");   //NON-NLS
             updateDisplayName();
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon.png"); //NON-NLS
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon.png");   //NON-NLS
+            Accounts.this.addObserver(this);
         }
 
-        /**
-         * TODO: Update the count in the display name
-         */
+        @NbBundle.Messages({
+            "# {0} - number of children",
+            "Accounts.ByFileNode.displayName=By File ({0})"})
         private void updateDisplayName() {
-            setDisplayName("By File");
+            ArrayList<FileWithCCN> keys = new ArrayList<>();
+            fileFactory.createKeys(keys);
+            setDisplayName(Bundle.Accounts_ByFileNode_displayName(keys.size()));
         }
 
         @Override
@@ -287,16 +307,38 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
         }
+
+        @Override
+        public void update(Observable o, Object arg) {
+            updateDisplayName();
+        }
     }
 
-    public class ByBINNode extends DisplayableItemNode {
+    /**
+     * Node that is the root of the "By BIN" accounts tree. Its children are
+     * BINNodes.
+     */
+    public class ByBINNode extends DisplayableItemNode implements Observer {
+
+        private final BINFactory binFactory;
 
         private ByBINNode() {
-            super(Children.create(new BINFactory(), true));
-            setName("By BIN");
-
+            super(Children.LEAF);
+            binFactory = new BINFactory();
+            setChildren(Children.create(binFactory, true));
+            setName("By BIN");  //NON-NLS
             updateDisplayName();
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/bank.png"); //NON-NLS
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/bank.png");   //NON-NLS
+            Accounts.this.addObserver(this);
+        }
+
+        @NbBundle.Messages({
+            "# {0} - number of children",
+            "Accounts.ByBINNode.displayName=By BIN ({0})"})
+        private void updateDisplayName() {
+            ArrayList<BINInfo> keys = new ArrayList<>();
+            binFactory.createKeys(keys);
+            setDisplayName(Bundle.Accounts_ByBINNode_displayName(keys.size()));
         }
 
         @Override
@@ -309,31 +351,29 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             return v.visit(this);
         }
 
-        /**
-         * TODO: Update the count in the display name
-         */
-        private void updateDisplayName() {
-            setDisplayName("By BIN");
+        @Override
+        public void update(Observable o, Object arg) {
+            updateDisplayName();
         }
-
     }
 
+    /**
+     * DataModel for a child of the ByFileNode. Represents a file(chunk) and its
+     * associated accounts.
+     */
     private static class FileWithCCN {
 
-        final long objID;
-        final long chunkID;
-        final List<Long> artifactIDS;
-        final long hits;
-        final long accepted;
+        private final long objID;
+        private final String solrDocumentId;
+        private final List<Long> artifactIDS;
+        private final long hits;
         private final String status;
 
-        private FileWithCCN(long objID, long chunkID, List<Long> artifactIDS, long hits, long accepted, String status) {
-
+        private FileWithCCN(long objID, String solrDocID, List<Long> artifactIDS, long hits, String status) {
             this.objID = objID;
-            this.chunkID = chunkID;
+            this.solrDocumentId = solrDocID;
             this.artifactIDS = artifactIDS;
             this.hits = hits;
-            this.accepted = accepted;
             this.status = status;
         }
 
@@ -341,8 +381,8 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             return objID;
         }
 
-        public long getChunkID() {
-            return chunkID;
+        public String getSolrDocmentID() {
+            return solrDocumentId;
         }
 
         public List<Long> getArtifactIDS() {
@@ -351,10 +391,6 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
         public long getHits() {
             return hits;
-        }
-
-        public long getAccepted() {
-            return accepted;
         }
 
         public String getStatus() {
@@ -386,38 +422,37 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
     }
 
-    private class FileFactory extends ObservingChildFactory<FileWithCCN> {
+    /**
+     * Factory for the children of the ByFiles Node.
+     */
+    private class FileWithCCNFactory extends ObservingChildFactory<FileWithCCN> {
 
         @Override
         protected boolean createKeys(List<FileWithCCN> list) {
             String query =
-                    "select distinct blackboard_artifacts.obj_id as obj_id,"
-                    + "	    blackboard_attributes.value_int32 as solr_document_id,"
-                    + "     group_concat(blackboard_artifacts.artifact_id),"
-                    + "     count(blackboard_artifacts.artifact_id) as hits "
-                    //                    + "     count (case when blackboard_artifacts.status like \"accepted\" then 1 else Null end) as accepted"
-                    + " from blackboard_artifacts, "
-                    + "     blackboard_attributes "
-                    + " where blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT.getTypeID()
-                    //                    + "     and not (blackboard_artifacts.status like  \"rejected\")  "
-                    + "     and blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id "
-                    + "     and blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SOLR_DOCUMENT_ID.getTypeID()
-                    + " group by blackboard_artifacts.obj_id, solr_document_id"
-                    + " order by hits desc";//, accepted desc";
+                    "SELECT blackboard_artifacts.obj_id," //NON-NLS
+                    + "      blackboard_attributes.value_text AS solr_document_id, " //NON-NLS
+                    + "      GROUP_CONCAT(blackboard_artifacts.artifact_id) AS artifact_IDs, " //NON-NLS
+                    + "      COUNT( blackboard_artifacts.artifact_id) AS hits " //NON-NLS
+                    + " FROM blackboard_artifacts " //NON-NLS
+                    + " LEFT JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id " //NON-NLS
+                    + "                                AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SOLR_DOCUMENT_ID.getTypeID() //NON-NLS
+                    + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT.getTypeID() //NON-NLS
+                    + " GROUP BY blackboard_artifacts.obj_id, solr_document_id " //NON-NLS
+                    + " ORDER BY hits DESC ";  //NON-NLS
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
                     ResultSet rs = results.getResultSet();) {
                 while (rs.next()) {
                     list.add(new FileWithCCN(
-                            rs.getLong("obj_id"),
-                            rs.getLong("solr_document_id"),
-                            unGroupConcat(rs.getString("group_concat(blackboard_artifacts.artifact_id)"), Long::valueOf),
-                            rs.getLong("hits"),
-                            0,
-                            "unreviewed"));
-
+                            rs.getLong("obj_id"), //NON-NLS
+                            rs.getString("solr_document_id"), //NON-NLS
+                            unGroupConcat(rs.getString("artifact_IDs"), Long::valueOf), //NON-NLS
+                            rs.getLong("hits"), //NON-NLS
+                            "unreviewed"));  //NON-NLS
                 }
             } catch (TskCoreException | SQLException ex) {
-                Exceptions.printStackTrace(ex);
+                LOGGER.log(Level.SEVERE, "Error querying for files with ccn hits.", ex); //NON-NLS
+                return false;
             }
             return true;
         }
@@ -427,6 +462,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             try {
                 return new FileWithCCNNode(key, skCase.getAbstractFileById(key.getObjID()));
             } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Error getting content for file with ccn hits.", ex); //NON-NLS
                 return null;
             }
         }
@@ -437,17 +473,26 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         }
     }
 
+    /**
+     * Node that represents a file or chunk of an unallocated space file.
+     */
     public class FileWithCCNNode extends DisplayableItemNode {
 
-        private final FileWithCCN key;
-        private final Content content;
+        private final FileWithCCN fileKey;
+        private final String fileName;
 
+        @NbBundle.Messages({
+            "# {0} - raw file name",
+            "# {1} - solr chunk id",
+            "Accounts.FileWithCCNNode.unallocatedSpaceFile.displayName={0}_chunk_{1}"})
         private FileWithCCNNode(FileWithCCN key, Content content) {
             super(Children.LEAF, Lookups.singleton(content));
-
-            setName(content.getName() + "_" + key.getChunkID());
-            this.key = key;
-            this.content = content;
+            this.fileKey = key;
+            this.fileName = (key.getSolrDocmentID() == null)
+                    ? content.getName()
+                    : Bundle.Accounts_FileWithCCNNode_unallocatedSpaceFile_displayName(content.getName(), StringUtils.substringAfter(key.getSolrDocmentID(), "_"));
+            setName(fileName);
+            setDisplayName(fileName);
         }
 
         @Override
@@ -461,6 +506,11 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         }
 
         @Override
+        @NbBundle.Messages({
+            "Accounts.FileWithCCNNode.nameProperty.displayName=File",
+            "Accounts.FileWithCCNNode.accountsProperty.displayName=Accounts",
+            "Accounts.FileWithCCNNode.statusProperty.displayName=Status",
+            "Accounts.FileWithCCNNode.noDescription=no description"})
         protected Sheet createSheet() {
             Sheet s = super.createSheet();
             Sheet.Set ss = s.get(Sheet.PROPERTIES);
@@ -469,25 +519,51 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty<>("File Name", "File Name", "no description", content.getName() + "_" + key.getChunkID()));
-            ss.put(new NodeProperty<>("Hits", "Hits", "no description", key.getHits()));
-            ss.put(new NodeProperty<>("Accepted", "Accepted", "no description", key.getAccepted()));
-            ss.put(new NodeProperty<>("Status", "Status", "no description", key.getStatus()));
+            ss.put(new NodeProperty<>(Bundle.Accounts_FileWithCCNNode_nameProperty_displayName(),
+                    Bundle.Accounts_FileWithCCNNode_nameProperty_displayName(),
+                    Bundle.Accounts_FileWithCCNNode_noDescription(),
+                    fileName));
+            ss.put(new NodeProperty<>(Bundle.Accounts_FileWithCCNNode_accountsProperty_displayName(),
+                    Bundle.Accounts_FileWithCCNNode_accountsProperty_displayName(),
+                    Bundle.Accounts_FileWithCCNNode_noDescription(),
+                    fileKey.getHits()));
+            ss.put(new NodeProperty<>(Bundle.Accounts_FileWithCCNNode_statusProperty_displayName(),
+                    Bundle.Accounts_FileWithCCNNode_statusProperty_displayName(),
+                    Bundle.Accounts_FileWithCCNNode_noDescription(),
+                    fileKey.getStatus()));
 
             return s;
         }
     }
 
-    public class BINNode extends DisplayableItemNode {
+    /**
+     * Node that represents a BIN (Bank Identification Number)
+     */
+    public class BINNode extends DisplayableItemNode implements Observer {
 
-        private final BIN bin;
+        private final BINInfo bin;
+        private final AccountFactory accountFactory;
 
-        private BINNode(BIN key) {
-            super(Children.create(new AccountFactory(key), true));
-            this.bin = key;
-            setName(key.toString());
-            setDisplayName(key.getBIN().toString() + " (" + key.getCount() + ")");
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/bank.png"); //NON-NLS
+        private BINNode(BINInfo bin) {
+            super(Children.LEAF);
+            this.bin = bin;
+            accountFactory = new AccountFactory(bin);
+            setChildren(Children.create(accountFactory, true));
+            setName(bin.toString());
+            updateDisplayName();
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/bank.png");   //NON-NLS
+            Accounts.this.addObserver(this);
+        }
+
+        @Override
+        public void update(Observable o, Object arg) {
+            updateDisplayName();
+        }
+
+        private void updateDisplayName() {
+            ArrayList<Long> keys = new ArrayList<>();
+            accountFactory.createKeys(keys);
+            setDisplayName(bin.getBIN().toString() + " (" + keys.size() + ")");
         }
 
         @Override
@@ -501,6 +577,10 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         }
 
         @Override
+        @NbBundle.Messages({
+            "Accounts.BINNode.binProperty.displayName=Bank Identifier Number",
+            "Accounts.BINNode.accountsProperty.displayName=Accounts",
+            "Accounts.BINNode.noDescription=no description"})
         protected Sheet createSheet() {
             Sheet s = super.createSheet();
             Sheet.Set ss = s.get(Sheet.PROPERTIES);
@@ -509,51 +589,66 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty<>("Bank Identifier Number", "Bank Identifier Number", "no description", bin.getBIN()));
-            ss.put(new NodeProperty<>("Accounts ", "Accounts", "no description", bin.getCount()));
+            ss.put(new NodeProperty<>(Bundle.Accounts_BINNode_binProperty_displayName(),
+                    Bundle.Accounts_BINNode_binProperty_displayName(),
+                    Bundle.Accounts_BINNode_noDescription(),
+                    bin.getBIN()));
+            ss.put(new NodeProperty<>(Bundle.Accounts_BINNode_accountsProperty_displayName(),
+                    Bundle.Accounts_BINNode_accountsProperty_displayName(), Bundle.Accounts_BINNode_noDescription(),
+                    bin.getCount()));
 
             return s;
         }
     }
 
-    private class BINFactory extends ObservingChildFactory<BIN> {
+    /**
+     * Factory that generates the children of the ByBin node.
+     */
+    private class BINFactory extends ObservingChildFactory<BINInfo> {
 
         @Override
-        protected boolean createKeys(List<BIN> list) {
+        protected boolean createKeys(List<BINInfo> list) {
             String query =
-                    "select substr(blackboard_attributes.value_text,1,6) as BIN, "
-                    + "     count(blackboard_artifacts.artifact_type_id) as count "
-                    + " from blackboard_artifacts,"
-                    + "      blackboard_attributes "
-                    + " where blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT.getTypeID()
-                    + "     and blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id "
-                    + "     and blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER.getTypeID()
-                    + " GROUP BY BIN "
-                    + " ORDER BY BIN ";
+                    "SELECT SUBSTR(blackboard_attributes.value_text,1,6) AS BIN, " //NON-NLS
+                    + "     COUNT(blackboard_artifacts.artifact_id) AS count " //NON-NLS
+                    + " FROM blackboard_artifacts " //NON-NLS
+                    + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id" //NON-NLS
+                    + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT.getTypeID() //NON-NLS
+                    + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER.getTypeID() //NON-NLS
+                    + " GROUP BY BIN " //NON-NLS
+                    + " ORDER BY BIN "; //NON-NLS
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query)) {
                 ResultSet resultSet = results.getResultSet();
                 while (resultSet.next()) {
-                    list.add(new BIN(Integer.valueOf(resultSet.getString("BIN")),
-                            resultSet.getLong("count")));
+                    list.add(new BINInfo(Integer.valueOf(resultSet.getString("BIN")), //NON-NLS
+                            resultSet.getLong("count"))); //NON-NLS
                 }
             } catch (TskCoreException | SQLException ex) {
-                Exceptions.printStackTrace(ex);
+                LOGGER.log(Level.SEVERE, "Error querying for BINs.", ex); //NON-NLS
+                return false;
             }
             return true;
         }
 
         @Override
-        protected Node createNodeForKey(BIN key) {
+        protected Node createNodeForKey(BINInfo key) {
             return new BINNode(key);
         }
     }
 
-    private class BIN {
+    /**
+     * Data model item to back the BINNodes in the tree. Has basic info about a
+     * BIN.
+     */
+    private class BINInfo {
 
         private final Integer bin;
+        /**
+         * The number of accounts with this BIN
+         */
         private final Long count;
 
-        private BIN(Integer bin, Long count) {
+        private BINInfo(Integer bin, Long count) {
             this.bin = bin;
             this.count = count;
         }
@@ -572,47 +667,47 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
      */
     private class AccountFactory extends ObservingChildFactory<Long> {
 
-        private final BIN bin;
+        private final BINInfo bin;
 
-        private AccountFactory(BIN bin) {
+        private AccountFactory(BINInfo bin) {
             this.bin = bin;
         }
 
         @Override
         protected boolean createKeys(List<Long> list) {
             String query =
-                    "select blackboard_artifacts.artifact_id "
-                    + " from blackboard_artifacts, "
-                    + "      blackboard_attributes "
-                    + " where blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT.getTypeID()
-                    + "     and blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id "
-                    + "     and blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER.getTypeID()
-                    + "     and blackboard_attributes.value_text LIKE \"" + bin.getBIN() + "%\" "
-                    + " ORDER BY blackboard_attributes.value_text";
+                    "SELECT blackboard_artifacts.artifact_id " //NON-NLS
+                    + " FROM blackboard_artifacts " //NON-NLS
+                    + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id " //NON-NLS
+                    + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT.getTypeID() //NON-NLS
+                    + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER.getTypeID() //NON-NLS
+                    + "     AND blackboard_attributes.value_text LIKE \"" + bin.getBIN() + "%\" " //NON-NLS
+                    + " ORDER BY blackboard_attributes.value_text"; //NON-NLS
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
                     ResultSet rs = results.getResultSet();) {
                 while (rs.next()) {
-                    list.add(rs.getLong("artifact_id"));
+                    list.add(rs.getLong("artifact_id")); //NON-NLS
                 }
             } catch (TskCoreException | SQLException ex) {
-                Exceptions.printStackTrace(ex);
+                LOGGER.log(Level.SEVERE, "Error querying for account artifacts.", ex); //NON-NLS
+                return false;
             }
             return true;
         }
 
         @Override
-        protected Node createNodeForKey(Long id) {
+        protected Node createNodeForKey(Long artifactID) {
             if (skCase == null) {
                 return null;
             }
 
             try {
-                BlackboardArtifact art = skCase.getBlackboardArtifact(id);
-                return new BlackboardArtifactNode(art, "org/sleuthkit/autopsy/images/credit-card.png");
+                BlackboardArtifact art = skCase.getBlackboardArtifact(artifactID);
+                return new BlackboardArtifactNode(art, "org/sleuthkit/autopsy/images/credit-card.png");   //NON-NLS 
             } catch (TskCoreException ex) {
-                LOGGER.log(Level.WARNING, "TSK Exception occurred", ex); //NON-NLS
+                LOGGER.log(Level.WARNING, "Error creating BlackboardArtifactNode for artifact with ID " + artifactID, ex);   //NON-NLS
+                return null;
             }
-            return null;
         }
     }
 }
