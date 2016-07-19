@@ -37,6 +37,7 @@ import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
+import org.sleuthkit.autopsy.datamodel.Accounts;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsChildren.DeletedContentNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsNode;
@@ -468,6 +469,36 @@ public class DataResultFilterNode extends FilterNode {
         @Override
         public AbstractAction visit(Reports.ReportNode reportNode) {
             return reportNode.getPreferredAction();
+        }
+
+        @Override
+        public AbstractAction visit(Accounts.BINNode node) {
+            return openChild(node);
+        }
+
+        @Override
+        public AbstractAction visit(Accounts.FileWithCCNNode node) {
+            return openChild(node);
+        }
+
+        @Override
+        public AbstractAction visit(Accounts.ByFileNode node) {
+            return openChild(node);
+        }
+
+        @Override
+        public AbstractAction visit(Accounts.ByBINNode node) {
+            return openChild(node);
+        }
+
+        @Override
+        public AbstractAction visit(Accounts.AccountsRootNode node) {
+            return openChild(node);
+        }
+
+        @Override
+        public AbstractAction visit(Accounts.AccountTypeNode node) {
+            return openChild(node);
         }
 
         @Override

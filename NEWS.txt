@@ -1,18 +1,18 @@
 ---------------- VERSION 4.1.0  --------------
 Improvements:
+- New list view in Timeline tool
 - VMWare virtual machine files (vmdk) and Microsoft Virtual Hard Drives (vhd) can be added as data sources.
 - New core ingest module detects vmdk and vhd files embedded in other data sources and adds them as data sources.  
 - Text associated with artifacts posted to the blackboard is indexed and searched for keywords.
-- Custom (user-defined) blackboard artifact and attribute types displayed in UI and included in reports.
-- File size and MIME type conditions can be specified for interesting files rules.
-- File size and MIME type conditions can be specified for file search by attributes. 
+- Custom (user-defined) blackboard artifact and attribute types are displayed in the UI and included in reports.
+- Additional Autopsy-defined custom file type definitions for assorted media file types have been added.
+- The File Metadata content viewer displays MIME type.
+- File size and MIME type conditions can be specified for interesting files set membership rules.
+- File size and MIME type conditions can be specified for file searches by attributes. 
 - Local/GMT time preference is used in reports. 
 - User has option to choose display name for logical/local file set data sources.
-- Global settings panel behavior is more consistent and the panels handle resizing better.
-- Additional Autopsy-defined custom file type definitions for assorted media file types have been added.
-- The precedence of user-defined custom file type definitions has been restored.
-- The File Metadata content viewer displays MIME type.
 - Virtual directories can be tagged.
+- Improved KML reports that include all geospatial artifacts posted to the blackboard. 
 - Assorted bug fixes and minor enhancements. 
 
 ---------------- VERSION 4.0.0  --------------
