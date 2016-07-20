@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 - 2015 Basis Technology Corp.
+ * Copyright 2011 - 2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -373,7 +373,7 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(Accounts.FileWithCCNNode node) {
             return defaultVisit(node);
         }
-        
+
         @Override
         public T visit(Accounts.BINNode node) {
             return defaultVisit(node);
