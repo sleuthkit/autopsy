@@ -24,20 +24,25 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.TskException;
 
 /**
  * A content viewer that displays the indexed text associated with a file or an
@@ -101,15 +106,41 @@ public class ExtractedContentViewer implements DataContentViewer {
          * keyword hit artifact.
          */
         sources.addAll(node.getLookup().lookupAll(IndexedText.class));
+        Content content = currentNode.getLookup().lookup(Content.class);
         if (!sources.isEmpty()) {
             highlightedHitText = sources.get(0);
-        }
+        } else {
+            try {
+                long objectId = content.getId();
+                Set<String> keywords = new HashSet<>();
+                ArrayList<BlackboardArtifact> artifacts = content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT);
+                for (BlackboardArtifact artifact : artifacts) {
 
+                    try {
+
+                        BlackboardAttribute keyWordAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER));
+                        if (keyWordAttr != null) {
+                            keywords.add(keyWordAttr.getValueString());
+                        }
+
+//                        BlackboardAttribute assocArtAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
+//                        if (assocArtAttr != null) {
+//                            objectId = assocArtAttr.getValueLong();
+//                        }
+                    } catch (TskException ex) {
+                        logger.log(Level.WARNING, "Failed to retrieve Blackboard Attributes", ex); //NON-NLS
+                    }
+                }
+                sources.add(new HighlightedText(objectId, String.join(" ", keywords), false, false, null));
+            } catch (TskCoreException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        }
         /*
          * Next, add the "raw" (not highlighted) text, if any, for any content
          * associated with the node.
          */
-        Content content = currentNode.getLookup().lookup(Content.class);
+
         if (null != content && solrHasContent(content.getId())) {
             rawContentText = new RawText(content, content.getId());
             sources.add(rawContentText);
@@ -136,7 +167,7 @@ public class ExtractedContentViewer implements DataContentViewer {
                         BlackboardArtifact associatedArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(artifactId);
                         rawArtifactText = new RawText(associatedArtifact, associatedArtifact.getArtifactID());
                         sources.add(rawArtifactText);
-                    } 
+                    }
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error getting associated artifact attributes", ex); //NON-NLS
                 }
@@ -161,8 +192,8 @@ public class ExtractedContentViewer implements DataContentViewer {
             int currentPage = source.getCurrentPage();
             if (currentPage == 0 && source.hasNextPage()) {
                 source.nextPage();
-            }            
-        }        
+            }
+        }
         updatePageControls();
         setPanel(sources);
     }
