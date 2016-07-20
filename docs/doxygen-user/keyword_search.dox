@@ -21,7 +21,9 @@ The keyword search configuration dialog has three tabs, each with it's own purpo
 \li The String Extraction tab is used to enable language scripts and extraction type.
 \li The General tab is used to configure the ingest timings and display information.
 
-To create a list, select the 'New List' button and choose a name for the new Keyword List. Once the list has been created, keywords can be added to it. Regular expressions are supported using Java Regex Syntax. Lists can be added to the keyword search ingest process; searches will happen at regular intervals as content is added to the index.
+To create a list, select the 'New List' button and choose a name for the new Keyword List. Once the list has been created, keywords can be added to it. Lists can be added to the keyword search ingest process; searches will happen at regular intervals as content is added to the index.
+
+Regular expressions are supported using Java Regex Syntax, with one caveat: Solr treats regular expressions as if they begin and end with the anchoring tags "^" and "$", which match the start and the end of a string respectively. If you do not want this behavior, you can put .* at the start and/or end of the regex.
 
 <b>List Import and Export</b> \n
 Autopsy supports importing Encase tab-delimited lists as well as lists created previously with Autopsy. For Encase lists, folder structure and hierarchy is currently ignored. This will be fixed in a future version. There is currently no way to export lists for use with Encase. This will also be added in future releases.
