@@ -131,7 +131,7 @@ public class ExtractedContentViewer implements DataContentViewer {
                         logger.log(Level.WARNING, "Failed to retrieve Blackboard Attributes", ex); //NON-NLS
                     }
                 }
-                sources.add(new HighlightedText(objectId, String.join(" ", keywords), false, false, null));
+                sources.add(new HighlightedText(objectId, String.join(" ", keywords), false));
             } catch (TskCoreException ex) {
                 Exceptions.printStackTrace(ex);
             }
@@ -279,7 +279,8 @@ public class ExtractedContentViewer implements DataContentViewer {
 
         if (art == null) {
             return 4;
-        } else if (art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+        } else if (art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()
+                || art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT.getTypeID()) {
             return 6;
         } else {
             return 4;

@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -134,8 +136,8 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
                 String[] keywords = keywordHitQuery.split(" ");
                 for (String keywordString : keywords) {
                     Keyword keyword = new Keyword(KeywordSearchUtil.escapeLuceneQuery(keywordString), !isRegex);
-                    KeywordSearchQuery chunksQuery = new LuceneQuery(new KeywordList(Arrays.asList(keyword)), keyword);
-
+                    KeywordSearchQuery chunksQuery = new TermComponentQuery(new KeywordList(Arrays.asList(keyword)), keyword);
+                    chunksQuery.setSubstringQuery();
                     chunksQuery.addFilter(new KeywordQueryFilter(FilterType.CHUNK, this.objectId));
                     try {
                         hits = chunksQuery.performQuery();
@@ -301,19 +303,19 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
     public String getText() {
         loadPageInfo(); //inits once
 
-        String highLightField = null;
-
+        String highLightField = LuceneQuery.HIGHLIGHT_FIELD_REGEX;
+        String query;
         if (isRegex) {
-            highLightField = LuceneQuery.HIGHLIGHT_FIELD_REGEX;
+            String[] keywords = keywordHitQuery.split(" ");
+            query = Stream.of(keywords).map((String t) -> "/.*" + t + ".*/").collect(Collectors.joining(" "));
         } else {
-            highLightField = LuceneQuery.HIGHLIGHT_FIELD_LITERAL;
+            query = keywordHitQuery;
         }
 
         SolrQuery q = new SolrQuery();
         q.setShowDebugInfo(DEBUG); //debug
-
         // input query has already been properly constructed and escaped
-        q.setQuery(keywordHitQuery);
+        q.setQuery(query);
 
         String contentIdStr = Long.toString(this.objectId);
         if (hasChunks) {
@@ -329,6 +331,7 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
         q.setParam("hl.tag.pre", HIGHLIGHT_PRE); //makes sense for FastVectorHighlighter only NON-NLS
         q.setParam("hl.tag.post", HIGHLIGHT_POST); //makes sense for FastVectorHighlighter only NON-NLS
         q.setParam("hl.fragListBuilder", "single"); //makes sense for FastVectorHighlighter only NON-NLS
+//        q.setParam("hl.usePhraseHighlighter", "true"); //makes sense for FastVectorHighlighter only NON-NLS
 
         //docs says makes sense for the original Highlighter only, but not really
         q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); //NON-NLS
