@@ -87,7 +87,7 @@ public final class CaseCloseAction extends CallableSystemAction implements Prese
             }
         }
 
-        if (Case.existsCurrentCase() == false) {
+        if (Case.isCaseOpen() == false) {
             return;
         }
         WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));

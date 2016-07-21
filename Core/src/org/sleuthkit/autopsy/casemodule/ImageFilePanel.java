@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.DriveUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
 
@@ -272,9 +273,9 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         // display warning if there is one (but don't disable "next" button)
         warnIfPathIsInvalid(path);
 
-        boolean isExist = Case.pathExists(path);
-        boolean isPhysicalDrive = Case.isPhysicalDrive(path);
-        boolean isPartition = Case.isPartition(path);
+        boolean isExist = new File(path).isFile();
+        boolean isPhysicalDrive = DriveUtils.isPhysicalDrive(path);
+        boolean isPartition = DriveUtils.isPartition(path);
 
         return (isExist || isPhysicalDrive || isPartition);
     }
