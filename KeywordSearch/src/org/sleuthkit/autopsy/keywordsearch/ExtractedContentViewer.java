@@ -42,7 +42,6 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskException;
 
 /**
  * A content viewer that displays the indexed text associated with a file or an
@@ -115,7 +114,6 @@ public class ExtractedContentViewer implements DataContentViewer {
                 Set<String> keywords = new HashSet<>();
                 ArrayList<BlackboardArtifact> artifacts = content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT);
                 for (BlackboardArtifact artifact : artifacts) {
-
                     try {
 
                         BlackboardAttribute keyWordAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER));
@@ -127,11 +125,11 @@ public class ExtractedContentViewer implements DataContentViewer {
 //                        if (assocArtAttr != null) {
 //                            objectId = assocArtAttr.getValueLong();
 //                        }
-                    } catch (TskException ex) {
+                    } catch (TskCoreException ex) {
                         logger.log(Level.WARNING, "Failed to retrieve Blackboard Attributes", ex); //NON-NLS
                     }
                 }
-                sources.add(new HighlightedText(objectId, String.join(" ", keywords), false));
+                sources.add(new HighlightedText(objectId, String.join(" ", keywords), true));
             } catch (TskCoreException ex) {
                 Exceptions.printStackTrace(ex);
             }

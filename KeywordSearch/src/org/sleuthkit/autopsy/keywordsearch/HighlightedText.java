@@ -331,7 +331,6 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
         q.setParam("hl.tag.pre", HIGHLIGHT_PRE); //makes sense for FastVectorHighlighter only NON-NLS
         q.setParam("hl.tag.post", HIGHLIGHT_POST); //makes sense for FastVectorHighlighter only NON-NLS
         q.setParam("hl.fragListBuilder", "single"); //makes sense for FastVectorHighlighter only NON-NLS
-//        q.setParam("hl.usePhraseHighlighter", "true"); //makes sense for FastVectorHighlighter only NON-NLS
 
         //docs says makes sense for the original Highlighter only, but not really
         q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); //NON-NLS
