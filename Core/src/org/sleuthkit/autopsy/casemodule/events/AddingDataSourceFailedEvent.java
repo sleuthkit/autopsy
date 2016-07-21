@@ -47,11 +47,23 @@ public final class AddingDataSourceFailedEvent extends AutopsyEvent implements S
     }
 
     /**
-     * Gets the unique id for the data source used to pair this
-     * AddingDataSourceFailedEvent with a AddingDataSourceEvent.
+     * Gets the unique id used to pair this AddingDataSourceFailedEvent with the
+     * corresponding AddingDataSourceEvent.
      *
-     * @return The unique id.
+     * @return The unique event id.
      */
+    public UUID getAddingDataSourceEventId() {
+        return dataSourceId;
+    }
+
+    /**
+     * Gets the unique id used to pair this AddingDataSourceFailedEvent with the
+     * corresponding AddingDataSourceEvent.
+     *
+     * @return The unique event id.
+     * @deprecated Use getAddingDataSourceEventId instead.
+     */
+    @Deprecated
     public UUID getDataSourceId() {
         return dataSourceId;
     }
