@@ -33,6 +33,8 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 @ServiceProvider(service = IngestModuleFactory.class)
 public class PhotoRecCarverIngestModuleFactory extends IngestModuleFactoryAdapter {
 
+    private static String VERSION = "7.0";
+    
     /**
      * Gets the ingest module name for use within this package.
      *
@@ -63,7 +65,7 @@ public class PhotoRecCarverIngestModuleFactory extends IngestModuleFactoryAdapte
      */
     @Override
     public String getModuleVersionNumber() {
-        return Version.getVersion();
+        return VERSION;
     }
 
     /**
