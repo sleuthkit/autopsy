@@ -185,6 +185,9 @@ public final class OpenTimelineAction extends CallableSystemAction implements Pr
      */
     @Override
     public Component getToolbarPresenter() {
+        ImageIcon icon = new ImageIcon(getClass().getResource("images/btn_icon_timeline_colorized_26.png")); //NON-NLS
+        toolbarButton.setIcon(icon);
+        toolbarButton.setText(this.getName());
         return toolbarButton;
     }
 }

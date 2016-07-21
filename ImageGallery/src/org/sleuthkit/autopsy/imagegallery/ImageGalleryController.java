@@ -221,7 +221,7 @@ public final class ImageGalleryController implements Executor {
 
         listeningEnabled.addListener((observable, oldValue, newValue) -> {
             //if we just turned on listening and a case is open and that case is not up to date
-            if (newValue && !oldValue && Case.existsCurrentCase() && ImageGalleryModule.isDrawableDBStale(Case.getCurrentCase())) {
+            if (newValue && !oldValue && Case.isCaseOpen() && ImageGalleryModule.isDrawableDBStale(Case.getCurrentCase())) {
                 //populate the db
                 queueDBWorkerTask(new CopyAnalyzedFiles(instance, db, sleuthKitCase));
             }

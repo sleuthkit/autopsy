@@ -80,7 +80,7 @@ public final class OpenAction extends CallableSystemAction {
     public void performAction() {
 
         //check case
-        if (!Case.existsCurrentCase()) {
+        if (!Case.isCaseOpen()) {
             return;
         }
         final Case currentCase = Case.getCurrentCase();
