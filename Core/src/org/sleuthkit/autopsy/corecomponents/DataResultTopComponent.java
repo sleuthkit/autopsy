@@ -310,7 +310,7 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
 
     @Override
     public boolean canClose() {
-        return (!this.isMain) || !Case.existsCurrentCase() || Case.getCurrentCase().hasData() == false; // only allow this window to be closed when there's no case opened or no image in this case
+        return (!this.isMain) || !Case.isCaseOpen() || Case.getCurrentCase().hasData() == false; // only allow this window to be closed when there's no case opened or no image in this case
     }
 
     /**
