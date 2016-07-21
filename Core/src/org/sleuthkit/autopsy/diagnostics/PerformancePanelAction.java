@@ -32,7 +32,8 @@ import org.sleuthkit.autopsy.casemodule.Case;
         id = "org.sleuthkit.autopsy.diagnostics.PerformancePanelAction"
 )
 @ActionRegistration(
-        displayName = "#CTL_PerformancePanelAction"
+        displayName = "#CTL_PerformancePanelAction",
+        lazy=true
 )
 @ActionReference(path = "Menu/Help", position = 1437)
 public final class PerformancePanelAction extends CallableSystemAction {

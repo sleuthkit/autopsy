@@ -62,7 +62,7 @@ final class CollaborationMonitor {
     private static final String PERIODIC_TASK_THREAD_NAME = "collab-monitor-periodic-tasks-%d"; //NON-NLS
     private static final long HEARTBEAT_INTERVAL_MINUTES = 1;
     private static final long MAX_MISSED_HEARTBEATS = 5;
-    private static final long STALE_TASKS_DETECTION_INTERVAL_MINUTES = 2;
+    private static final long STALE_TASKS_DETECT_INTERVAL_MINS = 2;
     private static final long EXECUTOR_TERMINATION_WAIT_SECS = 30;
     private static final Logger logger = Logger.getLogger(CollaborationMonitor.class.getName());
     private final String hostName;
@@ -120,7 +120,7 @@ final class CollaborationMonitor {
          */
         periodicTasksExecutor = new ScheduledThreadPoolExecutor(NUMBER_OF_PERIODIC_TASK_THREADS, new ThreadFactoryBuilder().setNameFormat(PERIODIC_TASK_THREAD_NAME).build());
         periodicTasksExecutor.scheduleAtFixedRate(new HeartbeatTask(), HEARTBEAT_INTERVAL_MINUTES, HEARTBEAT_INTERVAL_MINUTES, TimeUnit.MINUTES);
-        periodicTasksExecutor.scheduleAtFixedRate(new StaleTaskDetectionTask(), STALE_TASKS_DETECTION_INTERVAL_MINUTES, STALE_TASKS_DETECTION_INTERVAL_MINUTES, TimeUnit.MINUTES);
+        periodicTasksExecutor.scheduleAtFixedRate(new StaleTaskDetectionTask(), STALE_TASKS_DETECT_INTERVAL_MINS, STALE_TASKS_DETECT_INTERVAL_MINS, TimeUnit.MINUTES);
     }
 
     /**
@@ -159,7 +159,7 @@ final class CollaborationMonitor {
     private final class LocalTasksManager implements PropertyChangeListener {
 
         private long nextTaskId;
-        private final Map<Integer, Task> uuidsToAddDataSourceTasks;
+        private final Map<Integer, Task> eventIdsToAddDataSourceTasks;
         private final Map<Long, Task> jobIdsTodataSourceAnalysisTasks;
 
         /**
@@ -169,7 +169,7 @@ final class CollaborationMonitor {
          */
         LocalTasksManager() {
             nextTaskId = 0;
-            uuidsToAddDataSourceTasks = new HashMap<>();
+            eventIdsToAddDataSourceTasks = new HashMap<>();
             jobIdsTodataSourceAnalysisTasks = new HashMap<>();
         }
 
@@ -186,9 +186,9 @@ final class CollaborationMonitor {
                 if (eventName.equals(Case.Events.ADDING_DATA_SOURCE.toString())) {
                     addDataSourceAddTask((AddingDataSourceEvent) event);
                 } else if (eventName.equals(Case.Events.ADDING_DATA_SOURCE_FAILED.toString())) {
-                    removeDataSourceAddTask(((AddingDataSourceFailedEvent) event).getDataSourceId());
+                    removeDataSourceAddTask(((AddingDataSourceFailedEvent) event).getAddingDataSourceEventId());
                 } else if (eventName.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
-                    removeDataSourceAddTask(((DataSourceAddedEvent) event).getDataSourceId());
+                    removeDataSourceAddTask(((DataSourceAddedEvent) event).getAddingDataSourceEventId());
                 } else if (eventName.equals(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_STARTED.toString())) {
                     addDataSourceAnalysisTask((DataSourceAnalysisStartedEvent) event);
                 } else if (eventName.equals(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_COMPLETED.toString())) {
@@ -205,7 +205,7 @@ final class CollaborationMonitor {
          */
         synchronized void addDataSourceAddTask(AddingDataSourceEvent event) {
             String status = NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.addingDataSourceStatus.msg", hostName);
-            uuidsToAddDataSourceTasks.put(event.getDataSourceId().hashCode(), new Task(++nextTaskId, status));
+            eventIdsToAddDataSourceTasks.put(event.getEventId().hashCode(), new Task(++nextTaskId, status));
             eventPublisher.publishRemotely(new CollaborationEvent(hostName, getCurrentTasks()));
         }
 
@@ -213,12 +213,11 @@ final class CollaborationMonitor {
          * Removes an adding data source task from the collection of local tasks
          * and publishes the updated collection to any collaborating nodes.
          *
-         * @param dataSourceId A data source id to pair a data source added or
-         *                     adding data source failed event with an adding
-         *                     data source event.
+         * @param eventId An event id to pair a data source added or adding data
+         *                source failed event with an adding data source event.
          */
-        synchronized void removeDataSourceAddTask(UUID dataSourceId) {
-            uuidsToAddDataSourceTasks.remove(dataSourceId.hashCode());
+        synchronized void removeDataSourceAddTask(UUID eventId) {
+            eventIdsToAddDataSourceTasks.remove(eventId.hashCode());
             eventPublisher.publishRemotely(new CollaborationEvent(hostName, getCurrentTasks()));
         }
 
@@ -253,7 +252,7 @@ final class CollaborationMonitor {
          */
         synchronized Map<Long, Task> getCurrentTasks() {
             Map<Long, Task> currentTasks = new HashMap<>();
-            uuidsToAddDataSourceTasks.values().stream().forEach((task) -> {
+            eventIdsToAddDataSourceTasks.values().stream().forEach((task) -> {
                 currentTasks.put(task.getId(), task);
             });
             jobIdsTodataSourceAnalysisTasks.values().stream().forEach((task) -> {
