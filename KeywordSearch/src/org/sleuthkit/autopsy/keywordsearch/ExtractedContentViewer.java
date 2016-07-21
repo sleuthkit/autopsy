@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -115,8 +114,31 @@ public class ExtractedContentViewer implements DataContentViewer {
                 ArrayList<BlackboardArtifact> artifacts = content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT);
                 for (BlackboardArtifact artifact : artifacts) {
                     try {
-
                         BlackboardAttribute keyWordAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER));
+                        if (keyWordAttr != null) {
+                            keywords.add(keyWordAttr.getValueString());
+                        }
+
+//                        BlackboardAttribute assocArtAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
+//                        if (assocArtAttr != null) {
+//                            objectId = assocArtAttr.getValueLong();
+//                        }
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.SEVERE, "Failed to retrieve Blackboard Attributes", ex); //NON-NLS
+                    }
+                }
+                sources.add(new HighlightedText(objectId, String.join(" ", keywords), true));
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Failed to retrieve Blackboard Artifacts", ex); //NON-NLS
+            }
+            try {
+                long objectId = content.getId();
+                Set<String> keywords = new HashSet<>();
+                ArrayList<BlackboardArtifact> artifacts = content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT);
+                for (BlackboardArtifact artifact : artifacts) {
+                    try {
+
+                        BlackboardAttribute keyWordAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_KEYWORD));
                         if (keyWordAttr != null) {
                             keywords.add(keyWordAttr.getValueString());
                         }
@@ -131,7 +153,7 @@ public class ExtractedContentViewer implements DataContentViewer {
                 }
                 sources.add(new HighlightedText(objectId, String.join(" ", keywords), true));
             } catch (TskCoreException ex) {
-                Exceptions.printStackTrace(ex);
+                logger.log(Level.SEVERE, "Failed to retrieve Blackboard Artifacts", ex); //NON-NLS
             }
         }
         /*
