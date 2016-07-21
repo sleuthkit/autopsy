@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2011-2014 Basis Technology Corp.
+ *
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,18 +25,21 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- * Node for the results view
+ * Node for the results section of the tree.
  */
 public class ResultsNode extends DisplayableItemNode {
 
-    public static final String NAME = NbBundle.getMessage(ResultsNode.class, "ResultsNode.name.text");
+    @NbBundle.Messages("ResultsNode.name.text=Results")
+    public static final String NAME = Bundle.ResultsNode_name_text();
 
     public ResultsNode(SleuthkitCase sleuthkitCase) {
-        super(new RootContentChildren(Arrays.asList(new ExtractedContent(sleuthkitCase),
+        super(new RootContentChildren(Arrays.asList(
+                new ExtractedContent(sleuthkitCase),
                 new KeywordHits(sleuthkitCase),
                 new HashsetHits(sleuthkitCase),
                 new EmailExtracted(sleuthkitCase),
-                new InterestingHits(sleuthkitCase)
+                new InterestingHits(sleuthkitCase),
+                new Accounts(sleuthkitCase)
         )), Lookups.singleton(NAME));
         setName(NAME);
         setDisplayName(NAME);
@@ -54,6 +57,10 @@ public class ResultsNode extends DisplayableItemNode {
     }
 
     @Override
+    @NbBundle.Messages({
+        "ResultsNode.createSheet.name.name=Name",
+        "ResultsNode.createSheet.name.displayName=Name",
+        "ResultsNode.createSheet.name.desc=no description"})
     protected Sheet createSheet() {
         Sheet s = super.createSheet();
         Sheet.Set ss = s.get(Sheet.PROPERTIES);
@@ -62,10 +69,11 @@ public class ResultsNode extends DisplayableItemNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ResultsNode.createSheet.name.name"),
-                NbBundle.getMessage(this.getClass(), "ResultsNode.createSheet.name.displayName"),
-                NbBundle.getMessage(this.getClass(), "ResultsNode.createSheet.name.desc"),
-                NAME));
+        ss.put(new NodeProperty<>(Bundle.ResultsNode_createSheet_name_name(),
+                Bundle.ResultsNode_createSheet_name_displayName(),
+                Bundle.ResultsNode_createSheet_name_desc(),
+                NAME
+        ));
         return s;
     }
 

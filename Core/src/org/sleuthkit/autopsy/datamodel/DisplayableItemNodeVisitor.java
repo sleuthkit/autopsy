@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2011 - 2015 Basis Technology Corp.
+ *
+ * Copyright 2011 - 2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -121,6 +121,21 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(Reports.ReportsListNode reportsNode);
 
     T visit(Reports.ReportNode reportNode);
+
+    /*
+     * Accounts
+     */
+    T visit(Accounts.AccountsRootNode accountRootNode);
+
+    T visit(Accounts.AccountTypeNode accountTypeNode);
+
+    T visit(Accounts.ByBINNode byArtifactNode);
+
+    T visit(Accounts.ByFileNode byFileNode);
+
+    T visit(Accounts.FileWithCCNNode byFileNode);
+
+    T visit(Accounts.BINNode binNode);
 
     /**
      * Visitor with an implementable default behavior for all types. Override
@@ -331,6 +346,36 @@ public interface DisplayableItemNodeVisitor<T> {
 
         @Override
         public T visit(Reports.ReportNode node) {
+            return defaultVisit(node);
+        }
+
+        @Override
+        public T visit(Accounts.AccountTypeNode node) {
+            return defaultVisit(node);
+        }
+
+        @Override
+        public T visit(Accounts.AccountsRootNode node) {
+            return defaultVisit(node);
+        }
+
+        @Override
+        public T visit(Accounts.ByBINNode node) {
+            return defaultVisit(node);
+        }
+
+        @Override
+        public T visit(Accounts.ByFileNode node) {
+            return defaultVisit(node);
+        }
+
+        @Override
+        public T visit(Accounts.FileWithCCNNode node) {
+            return defaultVisit(node);
+        }
+
+        @Override
+        public T visit(Accounts.BINNode node) {
             return defaultVisit(node);
         }
     }
