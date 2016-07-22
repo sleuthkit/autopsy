@@ -104,7 +104,8 @@ class SevenZipExtractor {
         XGZIP("application/x-gzip"), //NON-NLS
         XBZIP2("application/x-bzip2"), //NON-NLS
         XTAR("application/x-tar"), //NON-NLS
-        XGTAR("application/x-gtar"); //NON-NLS
+        XGTAR("application/x-gtar"),
+        XRAR("application/x-rar-compressed"); //NON-NLS
 
         private final String mimeType;
 
