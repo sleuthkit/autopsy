@@ -28,6 +28,7 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.commons.lang.StringUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -65,6 +66,19 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
     private String originalQuery = null; //or original query if hits are not available
     private boolean isPageInfoLoaded = false;
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
+    private String displayName;
+
+    synchronized String getDisplayName() {
+        if (StringUtils.isBlank(displayName)) {
+            return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.toString");
+        } else {
+            return displayName;
+        }
+    }
+
+    synchronized void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
 
     HighlightedText(long objectId, String keywordHitQuery, boolean isRegex) {
         this.objectId = objectId;
@@ -78,8 +92,6 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
         this.solrServer = KeywordSearch.getServer();
         this.numberPages = 0;
         this.currentPage = 0;
-        //hits are unknown
-
     }
 
     //when the results are not known and need to requery to get hits
@@ -267,8 +279,7 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
     @Override
     public int nextItem() {
         if (!hasNextItem()) {
-            throw new IllegalStateException(
-                    NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.nextItem.exception.msg"));
+            throw new IllegalStateException(NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.nextItem.exception.msg"));
         }
         int cur = pagesToHits.get(currentPage) + 1;
         pagesToHits.put(currentPage, cur);
@@ -278,8 +289,7 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
     @Override
     public int previousItem() {
         if (!hasPreviousItem()) {
-            throw new IllegalStateException(
-                    NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.previousItem.exception.msg"));
+            throw new IllegalStateException(NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.previousItem.exception.msg"));
         }
         int cur = pagesToHits.get(currentPage) - 1;
         pagesToHits.put(currentPage, cur);
@@ -361,7 +371,7 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
 
     @Override
     public String toString() {
-        return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.toString");
+        return getDisplayName();
     }
 
     @Override

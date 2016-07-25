@@ -411,8 +411,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
     }
 
     private static TextMarkupLookup getHighlightLookup(BlackboardArtifact artifact, Content content) {
-        if (artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()
-                && artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT.getTypeID()) {
+        if (artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
             return null;
         }
 
@@ -429,9 +428,6 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 final int attributeTypeID = att.getAttributeType().getTypeID();
                 if (attributeTypeID == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()) {
                     keyword = att.getValueString();
-                } else if (attributeTypeID == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER.getTypeID()) {
-                    keyword = att.getValueString();
-                    isRegexp = true;
                 } else if (attributeTypeID == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID()) {
                     regexp = att.getValueString();
                     isRegexp = StringUtils.isNotBlank(regexp);
