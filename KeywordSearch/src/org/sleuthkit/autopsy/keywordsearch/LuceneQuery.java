@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -36,6 +35,7 @@ import org.apache.solr.common.SolrDocumentList;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -313,7 +313,7 @@ class LuceneQuery implements KeywordSearchQuery {
      *
      * @return
      */
-    private Set<SolrDocument> filterOneHitPerDocument(SolrDocumentList resultList) {
+    static Set<SolrDocument> filterOneHitPerDocument(SolrDocumentList resultList) {
         // sort the list so that we consistently pick the same chunk each time.
         // note this sort is doing a string comparison and not an integer comparison, so 
         // chunk 10 will be smaller than chunk 9. 
@@ -481,7 +481,7 @@ class LuceneQuery implements KeywordSearchQuery {
      * Compares SolrDocuments based on their ID's. Two SolrDocuments with
      * different chunk numbers are considered equal.
      */
-    private class SolrDocumentComparatorIgnoresChunkId implements Comparator<SolrDocument> {
+    static private class SolrDocumentComparatorIgnoresChunkId implements Comparator<SolrDocument> {
 
         @Override
         public int compare(SolrDocument left, SolrDocument right) {

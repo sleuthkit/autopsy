@@ -19,11 +19,11 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -32,11 +32,11 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.common.SolrDocument;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.datamodel.TextMarkupLookup;
-import org.sleuthkit.autopsy.keywordsearch.KeywordQueryFilter.FilterType;
 
 /**
  * Highlights hits for a given document. Knows about pages and such for the
@@ -145,29 +145,58 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
              */
             if (hits == null) {
 
-                String[] keywords = keywordHitQuery.split(" ");
-                for (String keywordString : keywords) {
-                    Keyword keyword = new Keyword(KeywordSearchUtil.escapeLuceneQuery(keywordString), !isRegex);
-                    KeywordSearchQuery chunksQuery = new TermComponentQuery(new KeywordList(Arrays.asList(keyword)), keyword);
-                    chunksQuery.setSubstringQuery();
-                    chunksQuery.addFilter(new KeywordQueryFilter(FilterType.CHUNK, this.objectId));
-                    try {
-                        hits = chunksQuery.performQuery();
-                        //organize the hits by page, filter as needed
-                        for (Keyword k : hits.getKeywords()) {
-                            for (KeywordHit hit : hits.getResults(k)) {
-                                int chunkID = hit.getChunkId();
-                                if (chunkID != 0 && this.objectId == hit.getSolrObjectId()) {
-                                    pagesSorted.add(chunkID);
-                                }
-                            }
-                        }
-
-                    } catch (NoOpenCoreException ex) {
-                        logger.log(Level.INFO, "Could not get chunk info and get highlights", ex); //NON-NLS
-                        return;
-                    }
+                String highLightField = LuceneQuery.HIGHLIGHT_FIELD_REGEX;
+                String query;
+                if (isRegex) {
+                    String[] keywords = keywordHitQuery.split(" ");
+                    query = Stream.of(keywords).map((String t) -> "/.*" + t + ".*/").collect(Collectors.joining(" "));
+                } else {
+                    query = keywordHitQuery;
                 }
+
+                SolrQuery q = new SolrQuery();
+                q.setShowDebugInfo(DEBUG); //debug
+                // input query has already been properly constructed and escaped
+                q.setQuery(highLightField + ":" + query);
+                q.setFields("id");
+                q.addFilterQuery(Server.Schema.ID.toString() + ":" + this.objectId + "_*");
+
+//                //tune the highlighter
+//                q.addHighlightField(highLightField); //for exact highlighting, try content_ws field (with stored="true" in Solr schema)
+//                q.setParam("hl.useFastVectorHighlighter", "true"); //fast highlighter scales better than standard one NON-NLS
+//                q.setParam("hl.tag.pre", HIGHLIGHT_PRE); //makes sense for FastVectorHighlighter only NON-NLS
+//                q.setParam("hl.tag.post", HIGHLIGHT_POST); //makes sense for FastVectorHighlighter only NON-NLS
+//                q.setParam("hl.fragListBuilder", "single"); //makes sense for FastVectorHighlighter only NON-NLS
+                //docs says makes sense for the original Highlighter only, but not really
+//                q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); //NON-NLS
+                try {
+                    QueryResponse response = solrServer.query(q, METHOD.POST);
+
+                    Set<SolrDocument> docs = LuceneQuery.filterOneHitPerDocument(response.getResults());
+                    for (SolrDocument resultDoc : docs) {
+                        final String solrDocumentId = resultDoc.getFieldValue(Server.Schema.ID.toString()).toString();
+                        /**
+                         * Parse the Solr document id to get the Solr object id
+                         * and chunk id. The Solr object id will either be a
+                         * file id or an artifact id from the case database.
+                         *
+                         * For every object (file or artifact) there will at
+                         * least two Solr documents. One contains object
+                         * metadata (chunk #1) and the second and subsequent
+                         * documents contain chunks of the text.
+                         */
+                        final int separatorIndex = solrDocumentId.indexOf(Server.ID_CHUNK_SEP);
+                        if (-1 != separatorIndex) {
+                            pagesSorted.add(Integer.parseInt(solrDocumentId.substring(separatorIndex + 1)));
+                        } else {
+                            pagesSorted.add(0);
+                        }
+                    }
+
+                } catch (KeywordSearchModuleException | NoOpenCoreException | NumberFormatException ex) {
+                    logger.log(Level.WARNING, "Error executing Solr highlighting query: " + keywordHitQuery, ex); //NON-NLS
+                }
+
             } else {
                 for (Keyword k : hits.getKeywords()) {
                     for (KeywordHit hit : hits.getResults(k)) {
