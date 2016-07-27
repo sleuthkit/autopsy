@@ -29,6 +29,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Base64;
 import java.util.List;
 import java.util.logging.Level;
 import net.sf.sevenzipjbinding.ArchiveFormat;
@@ -624,8 +625,11 @@ class SevenZipExtractor {
         UnpackStream(String localAbsPath) {
             this.localAbsPath = localAbsPath;
             try {
-                output = new BufferedOutputStream(new FileOutputStream(localAbsPath));
-            } catch (FileNotFoundException ex) {
+                //output = Base64.getEncoder().wrap(
+                //    new BufferedOutputStream(new FileOutputStream(localAbsPath)));
+                output = new xorTest(new BufferedOutputStream(new FileOutputStream(localAbsPath)));
+                //output = new BufferedOutputStream(new FileOutputStream(localAbsPath));
+            } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Error writing extracted file: " + localAbsPath, ex); //NON-NLS
             }
 
