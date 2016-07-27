@@ -98,7 +98,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
         Lookup nodeLookup = node.getLookup();
         Content content = nodeLookup.lookup(Content.class);
-        Collection<? extends BlackboardArtifact> artifacts = node.getLookup().lookupAll(BlackboardArtifact.class);
+        Collection<? extends BlackboardArtifact> artifacts = nodeLookup.lookupAll(BlackboardArtifact.class);
 
         /*
          * Assemble a collection of all of the indexed text "sources" associated
@@ -193,50 +193,12 @@ public class ExtractedContentViewer implements DataContentViewer {
         }
         return rawArtifactText;
     }
-// private static TextMarkupLookup getHighlightLookup(BlackboardArtifact artifact, Content content) {
-//        if (artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()
-//                && artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT.getTypeID()) {
-//            return null;
-//        }
-//
-//        long objectId = content.getId();
-//
-//        Lookup lookup = Lookup.getDefault();
-//        TextMarkupLookup highlightFactory = lookup.lookup(TextMarkupLookup.class);
-//        try {
-//            List<BlackboardAttribute> attributes = artifact.getAttributes();
-//            String keyword = null;
-//            String regexp = null;
-//            boolean isRegexp = false;
-//            for (BlackboardAttribute att : attributes) {
-//                final int attributeTypeID = att.getAttributeType().getTypeID();
-//                if (attributeTypeID == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()) {
-//                    keyword = att.getValueString();
-//                } else if (attributeTypeID == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER.getTypeID()) {
-//                    keyword = att.getValueString();
-//                    isRegexp = true;
-//                } else if (attributeTypeID == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID()) {
-//                    regexp = att.getValueString();
-//                    isRegexp = StringUtils.isNotBlank(regexp);
-//                } else if (attributeTypeID == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
-//                    objectId = att.getValueLong();
-//                }
-//            }
-//            if (keyword != null) {
-//                String origQuery = isRegexp ? regexp : keyword;
-//                return highlightFactory.createInstance(objectId, keyword, isRegexp, origQuery);
-//            }
-//        } catch (TskCoreException ex) {
-//            LOGGER.log(Level.WARNING, "Failed to retrieve Blackboard Attributes", ex); //NON-NLS
-//        }
-//        return null;
-//    }
 
     @NbBundle.Messages({
         "ExtractedContentViewer.creditCardNumber=Credit Card Number",
         "ExtractedContentViewer.creditCardNumbers=Credit Card Numbers"})
-    private HighlightedText addAccountHighlightedText(Collection<? extends BlackboardArtifact> artifacts, @NotNull Content content) {
-        long objectId = content.getId();
+    private AccountsText addAccountHighlightedText(Collection<? extends BlackboardArtifact> artifacts, @NotNull Content content) {
+        String objectId = String.valueOf(content.getId());
         Set<String> keywords = new HashSet<>();
         try {
             if (artifacts == null || artifacts.isEmpty()) {
@@ -244,6 +206,14 @@ public class ExtractedContentViewer implements DataContentViewer {
             }
             for (BlackboardArtifact artifact : artifacts) {
                 try {
+                    BlackboardAttribute solrIDAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SOLR_DOCUMENT_ID));
+                    if (solrIDAttr != null) {
+                        String valueString = solrIDAttr.getValueString();
+                        if (StringUtils.isNotBlank(valueString)) {
+                           objectId = valueString;
+                        }
+                    }
+
                     BlackboardAttribute keyWordAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER));
                     if (keyWordAttr != null) {
                         String valueString = keyWordAttr.getValueString();
@@ -261,7 +231,7 @@ public class ExtractedContentViewer implements DataContentViewer {
                 }
             }
             if (keywords.isEmpty() == false) {
-                HighlightedText highlightedAccountText = new HighlightedText(objectId, String.join(" ", keywords), true);
+                AccountsText highlightedAccountText = new AccountsText(objectId,keywords);
                 highlightedAccountText.setDisplayName(keywords.size() == 1
                         ? Bundle.ExtractedContentViewer_creditCardNumber()
                         : Bundle.ExtractedContentViewer_creditCardNumbers());

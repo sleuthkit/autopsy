@@ -43,6 +43,7 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -460,7 +461,13 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         @Override
         protected Node createNodeForKey(FileWithCCN key) {
             try {
-                return new FileWithCCNNode(key, skCase.getAbstractFileById(key.getObjID()));
+                List<Object> artifacts = new ArrayList<>();
+                for (long artId : key.artifactIDS) {
+                    artifacts.add(skCase.getBlackboardArtifact(artId));
+                }
+                AbstractFile abstractFileById = skCase.getAbstractFileById(key.getObjID());
+                artifacts.add(abstractFileById);
+                return new FileWithCCNNode(key, abstractFileById, artifacts.toArray());
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Error getting content for file with ccn hits.", ex); //NON-NLS
                 return null;
@@ -485,8 +492,8 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             "# {0} - raw file name",
             "# {1} - solr chunk id",
             "Accounts.FileWithCCNNode.unallocatedSpaceFile.displayName={0}_chunk_{1}"})
-        private FileWithCCNNode(FileWithCCN key, Content content) {
-            super(Children.LEAF, Lookups.singleton(content));
+        private FileWithCCNNode(FileWithCCN key, Content content, Object[] lookupContents) {
+            super(Children.LEAF, Lookups.fixed(lookupContents));
             this.fileKey = key;
             this.fileName = (key.getSolrDocmentID() == null)
                     ? content.getName()

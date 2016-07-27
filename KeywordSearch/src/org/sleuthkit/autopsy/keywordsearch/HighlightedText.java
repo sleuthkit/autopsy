@@ -23,20 +23,17 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import org.apache.commons.lang.StringUtils;
+
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
-import org.apache.solr.common.SolrDocument;
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.datamodel.TextMarkupLookup;
+import org.sleuthkit.autopsy.keywordsearch.KeywordQueryFilter.FilterType;
 
 /**
  * Highlights hits for a given document. Knows about pages and such for the
@@ -66,19 +63,6 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
     private String originalQuery = null; //or original query if hits are not available
     private boolean isPageInfoLoaded = false;
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
-    private String displayName;
-
-    synchronized String getDisplayName() {
-        if (StringUtils.isBlank(displayName)) {
-            return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.toString");
-        } else {
-            return displayName;
-        }
-    }
-
-    synchronized void setDisplayName(String displayName) {
-        this.displayName = displayName;
-    }
 
     HighlightedText(long objectId, String keywordHitQuery, boolean isRegex) {
         this.objectId = objectId;
@@ -92,6 +76,8 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
         this.solrServer = KeywordSearch.getServer();
         this.numberPages = 0;
         this.currentPage = 0;
+        //hits are unknown
+
     }
 
     //when the results are not known and need to requery to get hits
@@ -136,7 +122,6 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
 
         //if has chunks, get pages with hits
         if (hasChunks) {
-            TreeSet<Integer> pagesSorted = new TreeSet<>();
             //extract pages of interest, sorted
 
             /*
@@ -144,66 +129,33 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
              * need to perform the search to get the highlights.
              */
             if (hits == null) {
-
-                String highLightField = LuceneQuery.HIGHLIGHT_FIELD_REGEX;
-                String query;
+                String queryStr = KeywordSearchUtil.escapeLuceneQuery(this.keywordHitQuery);
                 if (isRegex) {
-                    String[] keywords = keywordHitQuery.split(" ");
-                    query = Stream.of(keywords).map((String t) -> "/.*" + t + ".*/").collect(Collectors.joining(" "));
-                } else {
-                    query = keywordHitQuery;
+                    //use white-space sep. field to get exact matches only of regex query result
+                    queryStr = Server.Schema.CONTENT_WS + ":" + "\"" + queryStr + "\"";
                 }
 
-                SolrQuery q = new SolrQuery();
-                q.setShowDebugInfo(DEBUG); //debug
-                // input query has already been properly constructed and escaped
-                q.setQuery(highLightField + ":" + query);
-                q.setFields("id");
-                q.addFilterQuery(Server.Schema.ID.toString() + ":" + this.objectId + "_*");
+                Keyword keywordQuery = new Keyword(queryStr, !isRegex);
+                List<Keyword> keywords = new ArrayList<>();
+                keywords.add(keywordQuery);
+                KeywordSearchQuery chunksQuery = new LuceneQuery(new KeywordList(keywords), keywordQuery);
 
-//                //tune the highlighter
-//                q.addHighlightField(highLightField); //for exact highlighting, try content_ws field (with stored="true" in Solr schema)
-//                q.setParam("hl.useFastVectorHighlighter", "true"); //fast highlighter scales better than standard one NON-NLS
-//                q.setParam("hl.tag.pre", HIGHLIGHT_PRE); //makes sense for FastVectorHighlighter only NON-NLS
-//                q.setParam("hl.tag.post", HIGHLIGHT_POST); //makes sense for FastVectorHighlighter only NON-NLS
-//                q.setParam("hl.fragListBuilder", "single"); //makes sense for FastVectorHighlighter only NON-NLS
-                //docs says makes sense for the original Highlighter only, but not really
-//                q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); //NON-NLS
+                chunksQuery.addFilter(new KeywordQueryFilter(FilterType.CHUNK, this.objectId));
                 try {
-                    QueryResponse response = solrServer.query(q, METHOD.POST);
-
-                    Set<SolrDocument> docs = LuceneQuery.filterOneHitPerDocument(response.getResults());
-                    for (SolrDocument resultDoc : docs) {
-                        final String solrDocumentId = resultDoc.getFieldValue(Server.Schema.ID.toString()).toString();
-                        /**
-                         * Parse the Solr document id to get the Solr object id
-                         * and chunk id. The Solr object id will either be a
-                         * file id or an artifact id from the case database.
-                         *
-                         * For every object (file or artifact) there will at
-                         * least two Solr documents. One contains object
-                         * metadata (chunk #1) and the second and subsequent
-                         * documents contain chunks of the text.
-                         */
-                        final int separatorIndex = solrDocumentId.indexOf(Server.ID_CHUNK_SEP);
-                        if (-1 != separatorIndex) {
-                            pagesSorted.add(Integer.parseInt(solrDocumentId.substring(separatorIndex + 1)));
-                        } else {
-                            pagesSorted.add(0);
-                        }
-                    }
-
-                } catch (KeywordSearchModuleException | NoOpenCoreException | NumberFormatException ex) {
-                    logger.log(Level.WARNING, "Error executing Solr highlighting query: " + keywordHitQuery, ex); //NON-NLS
+                    hits = chunksQuery.performQuery();
+                } catch (NoOpenCoreException ex) {
+                    logger.log(Level.INFO, "Could not get chunk info and get highlights", ex); //NON-NLS
+                    return;
                 }
+            }
 
-            } else {
-                for (Keyword k : hits.getKeywords()) {
-                    for (KeywordHit hit : hits.getResults(k)) {
-                        int chunkID = hit.getChunkId();
-                        if (chunkID != 0 && this.objectId == hit.getSolrObjectId()) {
-                            pagesSorted.add(chunkID);
-                        }
+            //organize the hits by page, filter as needed
+            TreeSet<Integer> pagesSorted = new TreeSet<>();
+            for (Keyword k : hits.getKeywords()) {
+                for (KeywordHit hit : hits.getResults(k)) {
+                    int chunkID = hit.getChunkId();
+                    if (chunkID != 0 && this.objectId == hit.getSolrObjectId()) {
+                        pagesSorted.add(chunkID);
                     }
                 }
             }
@@ -308,7 +260,8 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
     @Override
     public int nextItem() {
         if (!hasNextItem()) {
-            throw new IllegalStateException(NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.nextItem.exception.msg"));
+            throw new IllegalStateException(
+                    NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.nextItem.exception.msg"));
         }
         int cur = pagesToHits.get(currentPage) + 1;
         pagesToHits.put(currentPage, cur);
@@ -318,7 +271,8 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
     @Override
     public int previousItem() {
         if (!hasPreviousItem()) {
-            throw new IllegalStateException(NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.previousItem.exception.msg"));
+            throw new IllegalStateException(
+                    NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.previousItem.exception.msg"));
         }
         int cur = pagesToHits.get(currentPage) - 1;
         pagesToHits.put(currentPage, cur);
@@ -342,19 +296,19 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
     public String getText() {
         loadPageInfo(); //inits once
 
-        String highLightField = LuceneQuery.HIGHLIGHT_FIELD_REGEX;
-        String query;
+        String highLightField = null;
+
         if (isRegex) {
-            String[] keywords = keywordHitQuery.split(" ");
-            query = Stream.of(keywords).map((String t) -> "/.*" + t + ".*/").collect(Collectors.joining(" "));
+            highLightField = LuceneQuery.HIGHLIGHT_FIELD_REGEX;
         } else {
-            query = keywordHitQuery;
+            highLightField = LuceneQuery.HIGHLIGHT_FIELD_LITERAL;
         }
 
         SolrQuery q = new SolrQuery();
         q.setShowDebugInfo(DEBUG); //debug
+
         // input query has already been properly constructed and escaped
-        q.setQuery(query);
+        q.setQuery(keywordHitQuery);
 
         String contentIdStr = Long.toString(this.objectId);
         if (hasChunks) {
@@ -365,8 +319,12 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
         q.addFilterQuery(filterQuery);
         q.addHighlightField(highLightField); //for exact highlighting, try content_ws field (with stored="true" in Solr schema)
 
+        //q.setHighlightSimplePre(HIGHLIGHT_PRE); //original highlighter only
+        //q.setHighlightSimplePost(HIGHLIGHT_POST); //original highlighter only
+        q.setHighlightFragsize(0); // don't fragment the highlight, works with original highlighter, or needs "single" list builder with FVH
+
         //tune the highlighter
-        q.setParam("hl.useFastVectorHighlighter", "true"); //fast highlighter scales better than standard one NON-NLS
+        q.setParam("hl.useFastVectorHighlighter", "on"); //fast highlighter scales better than standard one NON-NLS
         q.setParam("hl.tag.pre", HIGHLIGHT_PRE); //makes sense for FastVectorHighlighter only NON-NLS
         q.setParam("hl.tag.post", HIGHLIGHT_POST); //makes sense for FastVectorHighlighter only NON-NLS
         q.setParam("hl.fragListBuilder", "single"); //makes sense for FastVectorHighlighter only NON-NLS
@@ -400,7 +358,7 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
 
     @Override
     public String toString() {
-        return getDisplayName();
+        return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.toString");
     }
 
     @Override
