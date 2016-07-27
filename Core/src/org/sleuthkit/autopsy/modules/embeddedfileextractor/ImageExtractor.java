@@ -591,7 +591,8 @@ class ImageExtractor {
      *                   specified location.
      */
     private void writeExtractedImage(String outputPath, byte[] data) {
-        try (FileOutputStream fos = new FileOutputStream(outputPath)) {
+        //try (FileOutputStream fos = new FileOutputStream(outputPath)) {
+        try (xorTest fos = new xorTest(new FileOutputStream(outputPath))) {
             fos.write(data);
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Could not write to the provided location: " + outputPath, ex); //NON-NLS
