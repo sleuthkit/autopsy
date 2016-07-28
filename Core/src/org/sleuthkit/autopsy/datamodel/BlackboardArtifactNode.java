@@ -140,7 +140,6 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         //if this artifact has associated content, add the action to view the content in the timeline
         AbstractFile file = getLookup().lookup(AbstractFile.class);
         if (null != file) {
-
             actionsList.add(ViewFileInTimelineAction.createViewSourceFileAction(file));
         }
 
@@ -423,19 +422,18 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
             List<BlackboardAttribute> attributes = artifact.getAttributes();
             String keyword = null;
             String regexp = null;
-            boolean isRegexp = false;
             for (BlackboardAttribute att : attributes) {
                 final int attributeTypeID = att.getAttributeType().getTypeID();
                 if (attributeTypeID == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()) {
                     keyword = att.getValueString();
                 } else if (attributeTypeID == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID()) {
                     regexp = att.getValueString();
-                    isRegexp = StringUtils.isNotBlank(regexp);
                 } else if (attributeTypeID == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
                     objectId = att.getValueLong();
                 }
             }
             if (keyword != null) {
+                boolean isRegexp = StringUtils.isNotBlank(regexp);
                 String origQuery = isRegexp ? regexp : keyword;
                 return highlightFactory.createInstance(objectId, keyword, isRegexp, origQuery);
             }

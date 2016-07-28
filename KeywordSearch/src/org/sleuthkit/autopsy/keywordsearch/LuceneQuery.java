@@ -313,7 +313,7 @@ class LuceneQuery implements KeywordSearchQuery {
      *
      * @return
      */
-    static Set<SolrDocument> filterOneHitPerDocument(SolrDocumentList resultList) {
+    private Set<SolrDocument> filterOneHitPerDocument(SolrDocumentList resultList) {
         // sort the list so that we consistently pick the same chunk each time.
         // note this sort is doing a string comparison and not an integer comparison, so 
         // chunk 10 will be smaller than chunk 9. 
@@ -481,7 +481,7 @@ class LuceneQuery implements KeywordSearchQuery {
      * Compares SolrDocuments based on their ID's. Two SolrDocuments with
      * different chunk numbers are considered equal.
      */
-    static private class SolrDocumentComparatorIgnoresChunkId implements Comparator<SolrDocument> {
+    private class SolrDocumentComparatorIgnoresChunkId implements Comparator<SolrDocument> {
 
         @Override
         public int compare(SolrDocument left, SolrDocument right) {

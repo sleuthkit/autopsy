@@ -667,10 +667,10 @@ class ExtractedContentPanel extends javax.swing.JPanel {
      * thread and then set the panel text in the EDT Helps not to block the UI
      * while content from Solr is retrieved.
      */
-    private final class SetMarkupWorker extends SwingWorker<Object, Void> {
+    private final class SetMarkupWorker extends SwingWorker<String, Void> {
 
-        private IndexedText source;
-        private String markup;
+        private final IndexedText source;
+
         private ProgressHandle progress;
 
         SetMarkupWorker(IndexedText source) {
@@ -678,36 +678,38 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         }
 
         @Override
-        protected Object doInBackground() throws Exception {
+        protected String doInBackground() throws Exception {
             progress = ProgressHandle.createHandle(NbBundle.getMessage(this.getClass(), "ExtractedContentPanel.SetMarkup.progress.loading"));
             progress.setDisplayName(NbBundle.getMessage(this.getClass(), "ExtractedContentPanel.SetMarkup.progress.displayName"));
             progress.start();
             progress.switchToIndeterminate();
 
-            markup = source.getText();
-            return null;
+            return source.getText();
         }
 
+        @NbBundle.Messages({
+            "ExtractedContentPanel.SetMarkup.error=There was an error getting the text for the selected source."})
         @Override
         protected void done() {
-            //super.done();
+            super.done();
             progress.finish();
 
             // see if there are any errors
-            // @@@ BC: Display the errors to the user somehow
             try {
-                get();
+                String markup = get();
+                if (markup != null) {
+                    setPanelText(markup, true);
+                } else {
+                    setPanelText("", false);
+                }
+
             } catch (InterruptedException | ExecutionException ex) {
                 logger.log(Level.SEVERE, "Error getting marked up text", ex); //NON-NLS
+                setPanelText(Bundle.ExtractedContentPanel_SetMarkup_error(), true);
             } // catch and ignore if we were cancelled
             catch (java.util.concurrent.CancellationException ex) {
             }
 
-            if (markup != null) {
-                setPanelText(markup, true);
-            } else {
-                setPanelText("", false);
-            }
             updateControls(source);
 
             scrollToCurrentHit(source);

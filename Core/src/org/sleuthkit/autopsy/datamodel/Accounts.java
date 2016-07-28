@@ -460,14 +460,15 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
         @Override
         protected Node createNodeForKey(FileWithCCN key) {
+            //add all account artifacts for the file and the file itself to th elookup
             try {
-                List<Object> artifacts = new ArrayList<>();
+                List<Object> lookupContents = new ArrayList<>();
                 for (long artId : key.artifactIDS) {
-                    artifacts.add(skCase.getBlackboardArtifact(artId));
+                    lookupContents.add(skCase.getBlackboardArtifact(artId));
                 }
                 AbstractFile abstractFileById = skCase.getAbstractFileById(key.getObjID());
-                artifacts.add(abstractFileById);
-                return new FileWithCCNNode(key, abstractFileById, artifacts.toArray());
+                lookupContents.add(abstractFileById);
+                return new FileWithCCNNode(key, abstractFileById, lookupContents.toArray());
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Error getting content for file with ccn hits.", ex); //NON-NLS
                 return null;
@@ -488,6 +489,15 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         private final FileWithCCN fileKey;
         private final String fileName;
 
+        /**
+         * Constructor
+         *
+         * @param key            The FileWithCCN that backs this node.
+         * @param content        The Content object the key represents.
+         * @param lookupContents The contents of this Node's lookup. It should
+         *                       contain the content object and the account
+         *                       artifacts.
+         */
         @NbBundle.Messages({
             "# {0} - raw file name",
             "# {1} - solr chunk id",

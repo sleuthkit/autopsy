@@ -72,6 +72,9 @@ class AccountsText implements IndexedText, TextMarkupLookup {
         return displayName;
     }
 
+    @NbBundle.Messages({
+        "AccountsText.creditCardNumber=Credit Card Number",
+        "AccountsText.creditCardNumbers=Credit Card Numbers"})
     AccountsText(String objectId, Set<String> keywords) {
         this.solrDocumentId = objectId;
         this.keywords.addAll(keywords);
@@ -89,8 +92,8 @@ class AccountsText implements IndexedText, TextMarkupLookup {
         }
 
         displayName = keywords.size() == 1
-                ? Bundle.ExtractedContentViewer_creditCardNumber()
-                : Bundle.ExtractedContentViewer_creditCardNumbers();
+                ? Bundle.AccountsText_creditCardNumber()
+                : Bundle.AccountsText_creditCardNumbers();
     }
 
     long getObjectId() {
