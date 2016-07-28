@@ -184,7 +184,7 @@ public class ExtractedContentViewer implements DataContentViewer {
          */
         BlackboardArtifact artifact = nodeLookup.lookup(BlackboardArtifact.class);
         if (null != artifact) {
-            /**
+            /*
              * For keyword hit artifacts, add the text of the artifact that hit,
              * not the hit artifact; otherwise add the text for the artifact.
              */
