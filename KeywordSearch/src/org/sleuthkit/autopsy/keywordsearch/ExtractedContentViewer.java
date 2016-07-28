@@ -222,19 +222,13 @@ public class ExtractedContentViewer implements DataContentViewer {
                         }
                     }
 
-                    //BlackboardAttribute assocArtAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
-                    //if (assocArtAttr != null) {
-                    //  objectId = assocArtAttr.getValueLong();
-                    //}
-                } catch (TskCoreException ex) {
+                          } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Failed to retrieve Blackboard Attributes", ex); //NON-NLS
                 }
             }
             if (keywords.isEmpty() == false) {
                 AccountsText highlightedAccountText = new AccountsText(objectId,keywords);
-                highlightedAccountText.setDisplayName(keywords.size() == 1
-                        ? Bundle.ExtractedContentViewer_creditCardNumber()
-                        : Bundle.ExtractedContentViewer_creditCardNumbers());
+              
                 sources.add(highlightedAccountText);
                 return highlightedAccountText;
             }

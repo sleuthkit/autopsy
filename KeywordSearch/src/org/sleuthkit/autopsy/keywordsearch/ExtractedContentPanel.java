@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -648,12 +648,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         }
 
         //scrolling required invokeLater to enqueue in EDT
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                scrollToAnchor(source.getAnchorPrefix() + Integer.toString(source.currentItem()));
-            }
-        });
+        EventQueue.invokeLater(() -> scrollToAnchor(source.getAnchorPrefix() + source.currentItem()));
 
     }
 
@@ -684,10 +679,8 @@ class ExtractedContentPanel extends javax.swing.JPanel {
 
         @Override
         protected Object doInBackground() throws Exception {
-            progress = ProgressHandle.createHandle(
-                    NbBundle.getMessage(this.getClass(), "ExtractedContentPanel.SetMarkup.progress.loading"));
-            progress.setDisplayName(
-                    NbBundle.getMessage(this.getClass(), "ExtractedContentPanel.SetMarkup.progress.displayName"));
+            progress = ProgressHandle.createHandle(NbBundle.getMessage(this.getClass(), "ExtractedContentPanel.SetMarkup.progress.loading"));
+            progress.setDisplayName(NbBundle.getMessage(this.getClass(), "ExtractedContentPanel.SetMarkup.progress.displayName"));
             progress.start();
             progress.switchToIndeterminate();
 
@@ -705,7 +698,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
             try {
                 get();
             } catch (InterruptedException | ExecutionException ex) {
-                logger.log(Level.SEVERE, "Error getting marked up text"); //NON-NLS
+                logger.log(Level.SEVERE, "Error getting marked up text", ex); //NON-NLS
             } // catch and ignore if we were cancelled
             catch (java.util.concurrent.CancellationException ex) {
             }

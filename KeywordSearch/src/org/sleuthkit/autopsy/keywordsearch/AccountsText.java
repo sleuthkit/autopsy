@@ -31,7 +31,6 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import org.apache.commons.lang.StringUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -65,20 +64,12 @@ class AccountsText implements IndexedText, TextMarkupLookup {
     private final List<Integer> pages = new ArrayList<>();
     private boolean isPageInfoLoaded = false;
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
-    private String displayName;
+    private final String displayName;
     private final long solrObjectId;
     private final Integer chunkId;
 
-    synchronized String getDisplayName() {
-        if (StringUtils.isBlank(displayName)) {
-            return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.toString");
-        } else {
-            return displayName;
-        }
-    }
-
-    synchronized void setDisplayName(String displayName) {
-        this.displayName = displayName;
+    String getDisplayName() {
+        return displayName;
     }
 
     AccountsText(String objectId, Set<String> keywords) {
@@ -87,13 +78,19 @@ class AccountsText implements IndexedText, TextMarkupLookup {
         this.solrServer = KeywordSearch.getServer();
 
         final int separatorIndex = solrDocumentId.indexOf(Server.ID_CHUNK_SEP);
-        if (-1 != separatorIndex) {
-            this.solrObjectId = Long.parseLong(solrDocumentId.substring(0, separatorIndex));
-            this.chunkId = Integer.parseInt(solrDocumentId.substring(separatorIndex + 1));
-        } else {
+        if (-1 == separatorIndex) {
+            //no chunk id in solrDocumentId
             this.solrObjectId = Long.parseLong(solrDocumentId);
             this.chunkId = null;
+        } else {
+            //solrDocumentId includes chunk id
+            this.solrObjectId = Long.parseLong(solrDocumentId.substring(0, separatorIndex));
+            this.chunkId = Integer.parseInt(solrDocumentId.substring(separatorIndex + 1));
         }
+
+        displayName = keywords.size() == 1
+                ? Bundle.ExtractedContentViewer_creditCardNumber()
+                : Bundle.ExtractedContentViewer_creditCardNumbers();
     }
 
     long getObjectId() {
@@ -201,17 +198,8 @@ class AccountsText implements IndexedText, TextMarkupLookup {
             return;
         }
         if (chunkId != null) {
+            //if a chunk is specified, only show that chunk/page
             this.numberPagesForFile = 1;
-        } else {
-            try {
-                this.numberPagesForFile = solrServer.queryNumFileChunks(this.solrObjectId);
-            } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
-                LOGGER.log(Level.WARNING, "Could not get number pages for content: " + this.solrDocumentId); //NON-NLS
-                return;
-            }
-        }
-
-        if (this.numberPagesForFile <= 1) {
             hasChunks = false;
             //no chunks
             this.numberPagesForFile = 1;
@@ -221,6 +209,13 @@ class AccountsText implements IndexedText, TextMarkupLookup {
             currentHitPerPage.put(chunkId, 0);
         } else {
             hasChunks = true;
+            try {
+                this.numberPagesForFile = solrServer.queryNumFileChunks(this.solrObjectId);
+            } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
+                LOGGER.log(Level.WARNING, "Could not get number pages for content: {0}", this.solrDocumentId); //NON-NLS
+                return;
+            }
+
             //if has chunks, get pages with hits
             TreeSet<Integer> sortedPagesWithHits = new TreeSet<>();
             //extract pages of interest, sorted
