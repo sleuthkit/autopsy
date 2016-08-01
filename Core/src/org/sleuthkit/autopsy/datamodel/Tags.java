@@ -244,7 +244,7 @@ public class Tags implements AutopsyVisitableItem {
             } catch (TskCoreException ex) {
                 Logger.getLogger(TagNameNode.class.getName()).log(Level.SEVERE, "Failed to get tags count for " + tagName.getDisplayName() + " tag name", ex); //NON-NLS
             }
-            setDisplayName(tagName.getDisplayName() + " (" + tagsCount + ")");
+            setDisplayName(tagName.getDisplayName() + " \u200E(\u200E" + tagsCount + ")\u200E");
         }
 
         @Override
