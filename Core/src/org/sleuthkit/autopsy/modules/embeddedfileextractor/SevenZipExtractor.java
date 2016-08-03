@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.modules.embeddedfileextractor;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -29,7 +28,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.Base64;
 import java.util.List;
 import java.util.logging.Level;
 import net.sf.sevenzipjbinding.ArchiveFormat;
@@ -61,6 +59,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.DerivedFile;
+import org.sleuthkit.datamodel.EncodedFileStream;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -625,10 +624,7 @@ class SevenZipExtractor {
         UnpackStream(String localAbsPath) {
             this.localAbsPath = localAbsPath;
             try {
-                //output = Base64.getEncoder().wrap(
-                //    new BufferedOutputStream(new FileOutputStream(localAbsPath)));
-                output = new xorTest(new BufferedOutputStream(new FileOutputStream(localAbsPath)));
-                //output = new BufferedOutputStream(new FileOutputStream(localAbsPath));
+                output = new EncodedFileStream(new FileOutputStream(localAbsPath));
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Error writing extracted file: " + localAbsPath, ex); //NON-NLS
             }

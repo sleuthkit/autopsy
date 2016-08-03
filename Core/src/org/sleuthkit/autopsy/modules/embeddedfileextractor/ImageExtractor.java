@@ -46,6 +46,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.EncodedFileStream;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -591,8 +592,7 @@ class ImageExtractor {
      *                   specified location.
      */
     private void writeExtractedImage(String outputPath, byte[] data) {
-        //try (FileOutputStream fos = new FileOutputStream(outputPath)) {
-        try (xorTest fos = new xorTest(new FileOutputStream(outputPath))) {
+        try (EncodedFileStream fos = new EncodedFileStream(new FileOutputStream(outputPath))) {
             fos.write(data);
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Could not write to the provided location: " + outputPath, ex); //NON-NLS
