@@ -148,7 +148,6 @@ class SevenZipExtractor {
                     return true;
                 }
             }
-
             return false;
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error executing FileTypeDetector.getFileType()", ex); // NON-NLS
