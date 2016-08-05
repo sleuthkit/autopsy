@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.modules.embeddedfileextractor;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -59,7 +58,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.DerivedFile;
-import org.sleuthkit.datamodel.EncodedFileStream;
+import org.sleuthkit.datamodel.EncodedFileOutputStream;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -624,7 +623,7 @@ class SevenZipExtractor {
         UnpackStream(String localAbsPath) {
             this.localAbsPath = localAbsPath;
             try {
-                output = new EncodedFileStream(new FileOutputStream(localAbsPath));
+                output = new EncodedFileOutputStream(new FileOutputStream(localAbsPath), TskData.EncodingType.XOR1);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Error writing extracted file: " + localAbsPath, ex); //NON-NLS
             }
@@ -869,7 +868,8 @@ class SevenZipExtractor {
             try {
                 DerivedFile df = fileManager.addDerivedFile(fileName, node.getLocalRelPath(), node.getSize(),
                         node.getCtime(), node.getCrtime(), node.getAtime(), node.getMtime(),
-                        node.isIsFile(), node.getParent().getFile(), "", EmbeddedFileExtractorModuleFactory.getModuleName(), "", "");
+                        node.isIsFile(), node.getParent().getFile(), "", EmbeddedFileExtractorModuleFactory.getModuleName(),
+                        "", "", TskData.EncodingType.XOR1);
                 node.setFile(df);
 
             } catch (TskCoreException ex) {

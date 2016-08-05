@@ -489,9 +489,10 @@ public class SingleUserCaseConverter {
                 if (value > biggestPK) {
                     biggestPK = value;
                 }
-                outputStatement.executeUpdate("INSERT INTO tsk_files_path (obj_id, path) VALUES (" //NON-NLS
+                outputStatement.executeUpdate("INSERT INTO tsk_files_path (obj_id, path, encoding_type) VALUES (" //NON-NLS
                         + value + ", '"
-                        + SleuthkitCase.escapeSingleQuotes(inputResultSet.getString(2)) + "')"); //NON-NLS
+                        + SleuthkitCase.escapeSingleQuotes(inputResultSet.getString(2)) + ", "
+                        + inputResultSet.getInt(3)+ "')"); //NON-NLS
             } catch (SQLException ex) {
                 if (ex.getErrorCode() != 0) { // 0 if the entry already exists
                     throw new SQLException(ex);
