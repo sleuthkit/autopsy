@@ -120,8 +120,6 @@ public final class UserPreferences {
         preferences.removePreferenceChangeListener(listener);
     }
     
-    
-    // EL CHANGE:
     /**
      * Get mode from persistent storage.
      *
@@ -245,23 +243,6 @@ public final class UserPreferences {
         return AUTO_MODE_CONTEXT_STRING;
     }
 
-    /**
-     * Save whether tools warning dialog should be shown on startup.
-     *
-     * @param showToolsWarning true = show warning dialog, false = don't show
-     */
-    public static void setShowToolsWarning(boolean showToolsWarning) {
-        preferences.putBoolean(SHOW_TOOLS_WARNING, showToolsWarning);
-    }
-
-    /**
-     * Retrieve tools warning dialog setting.
-     *
-     * @return
-     */
-    public static boolean getShowToolsWarning() {
-        return preferences.getBoolean(SHOW_TOOLS_WARNING, true);
-    }
 
     /**
      * Get source folder for Copy Mode from persistent storage.
