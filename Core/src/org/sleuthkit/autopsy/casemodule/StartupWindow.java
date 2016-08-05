@@ -22,12 +22,18 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
-
+import javax.swing.JTabbedPane;
+import javax.swing.WindowConstants;
+import org.openide.LifecycleManager;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 
 /**
  * The default implementation of the Autopsy startup window
@@ -39,6 +45,10 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
     private static final String TITLE = NbBundle.getMessage(StartupWindow.class, "StartupWindow.title.text");
     private static Dimension DIMENSIONS = new Dimension(750, 400);
     private static CueBannerPanel welcomeWindow;
+//    private ReviewModeCasePanel caseManagementPanel = null;
+//    private CaseImportPanel caseImportPanel = null;
+    private JTabbedPane copyPane = new JTabbedPane();
+    private static final String localHostName = NetworkUtils.getLocalHostName();
 
     public StartupWindow() {
         super(WindowManager.getDefault().getMainWindow(), TITLE, true);
@@ -61,18 +71,7 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
         setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
 
-        welcomeWindow = new CueBannerPanel();
-
-        // add the command to close the window to the button on the Volume Detail Panel
-        welcomeWindow.setCloseButtonActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                close();
-            }
-        });
-
-        add(welcomeWindow);
+        addPanelForMode();
         pack();
         setResizable(false);
 
@@ -91,5 +90,56 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
     @Override
     public void close() {
         this.setVisible(false);
+    }
+
+    /**
+     * Adds a panel to the dialog based on operational mode selected by the
+     * user.
+     */
+    private void addPanelForMode() {
+        UserPreferences.SelectedMode mode = UserPreferences.getMode();
+
+        switch (mode) {
+            case AUTOMATED:
+                this.setTitle(NbBundle.getMessage(StartupWindow.class, "StartupWindow.AutoIngestMode") + " (" + localHostName + ")");
+                this.addWindowListener(new WindowAdapter() {
+                    @Override
+                    public void windowClosing(WindowEvent e) {
+//                        AutoIngestDashboard.getInstance().shutdown();
+                    }
+                });
+                setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+//                add(AutoIngestDashboard.getInstance());
+                break;
+            case REVIEW:
+                this.setTitle(NbBundle.getMessage(StartupWindow.class, "StartupWindow.ReviewMode") + " (" + localHostName + ")");
+//                caseManagementPanel = new ReviewModeCasePanel(this);
+//                add(caseManagementPanel);
+                break;
+            case COPYFILES:
+                this.setTitle(NbBundle.getMessage(StartupWindow.class, "StartupWindow.CopyAndImportMode") + " (" + localHostName + ")");
+//                caseImportPanel = new CaseImportPanel();
+//                copyPane.add(NbBundle.getMessage(StartupWindow.class, "StartupWindow.CaseImportMode"), caseImportPanel);
+                this.addWindowListener(new WindowAdapter() {
+                    @Override
+                    public void windowClosing(WindowEvent e) {
+                        LifecycleManager.getDefault().exit();
+                    }
+                });
+                setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+                add(copyPane);
+                break;
+            default:                
+                welcomeWindow = new CueBannerPanel();
+                // add the command to close the window to the button on the Volume Detail Panel
+                welcomeWindow.setCloseButtonActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        close();
+                    }
+                });
+                add(welcomeWindow);
+                break;
+        }
     }
 }
