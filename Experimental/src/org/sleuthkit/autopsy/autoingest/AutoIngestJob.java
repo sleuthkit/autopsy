@@ -232,7 +232,7 @@ class AutoIngestJob implements Comparable<AutoIngestJob> {
      *                        ingest manager.
      * @param nodeName        Name of the node that is processing the job
      */
-    AutoIngestJob(Path imageFolderPath, String caseName, Path caseFolderName, AutoIngestManager.JobIngestStatus ingestStatus, String nodeName) {
+    AutoIngestJob(Path imageFolderPath, String caseName, Path caseFolderName, /* //ELTODO AutoIngestManager.*/JobIngestStatus ingestStatus, String nodeName) {
         this.caseName = caseName;
         this.imageFolderPath = imageFolderPath;
         this.caseFolderName = caseFolderName;
@@ -293,7 +293,8 @@ class AutoIngestJob implements Comparable<AutoIngestJob> {
         return ingestStatus.getStatus();
     }
 
-    AutoIngestManager.JobIngestStatus getIngestStatus() {
+    // ELTODO AutoIngestManager.JobIngestStatus getIngestStatus() {
+    JobIngestStatus getIngestStatus() {
         return ingestStatus;
     }
 

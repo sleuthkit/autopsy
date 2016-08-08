@@ -5,7 +5,7 @@
  *  Copyright (c) 2013-2015 Basis Technology Corporation.
  *  Contact: brianc@basistech.com
  */
-package viking.autoingest;
+package org.sleuthkit.autopsy.autoingest;
 
 import java.awt.Component;
 import java.time.Duration;
