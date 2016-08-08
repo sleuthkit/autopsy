@@ -1473,7 +1473,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                 String caseOutputFolderPath = completedTableModel.getValueAt(completedTable.getSelectedRow(), JobsTableModelColumns.CASE_FOLDER.ordinal()).toString();
                 String caseAutFilePath = completedTableModel.getValueAt(completedTable.getSelectedRow(), JobsTableModelColumns.CASE.ordinal()).toString() + CaseMetadata.getFileExtension();
                 completedTable.clearSelection();
-                this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                /* ELTODO this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                 AutoIngestManager.CaseDeletionResult deletionResult = manager.deleteCase(Paths.get(caseOutputFolderPath), deleteInputChk.isSelected(), caseAutFilePath);
                 this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                 if (deletionResult.getCaseDeletionStatus() == AutoIngestManager.CaseDeletionResult.Status.FAILED) {
@@ -1484,7 +1484,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                             + caseOutputFolderPath + "\nand \n" + deletionResult.getCaseImageFolderPath() + "\nif present.";
                     JOptionPane.showMessageDialog(this, str,
                             org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.DeletionFailed"), JOptionPane.INFORMATION_MESSAGE);
-                }
+                }*/
                 /**
                  * Need to update both the pending jobs table and the completed
                  * jobs table since pending jobs for the deleted case are also
@@ -1519,8 +1519,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
              * see it).
              */
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            List<AutoIngestJob> runningJobs = manager.cancelCurrentJob();
-            refreshTable(runningJobs, runningTableModel, null);
+            //ELTODO List<AutoIngestJob> runningJobs = manager.cancelCurrentJob();
+            //ELTODO refreshTable(runningJobs, runningTableModel, null);
             this.setCursor(Cursor.getDefaultCursor());
         }
     }//GEN-LAST:event_bnCancelJobActionPerformed
@@ -1558,7 +1558,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
      */
     private void bnOptionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOptionsActionPerformed
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        VikingOptionsDialog dialog = new VikingOptionsDialog(this.getTopLevelAncestor(), true);
+        //ELTODO VikingOptionsDialog dialog = new VikingOptionsDialog(this.getTopLevelAncestor(), true);
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }//GEN-LAST:event_bnOptionsActionPerformed
 
@@ -1586,8 +1586,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
              * see it).
              */
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            List<AutoIngestJob> runningJobs = manager.cancelCurrentDataSourceLevelIngestModule();
-            refreshTable(runningJobs, runningTableModel, null);
+            //ELTODO List<AutoIngestJob> runningJobs = manager.cancelCurrentDataSourceLevelIngestModule();
+            //ELTODO refreshTable(runningJobs, runningTableModel, null);
             this.setCursor(Cursor.getDefaultCursor());
         }
     }//GEN-LAST:event_bnCancelModuleActionPerformed
@@ -1612,10 +1612,10 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             String caseName = (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.CASE.ordinal())).toString();
             try {
-                List<AutoIngestJob> prioritizedQueue = manager.prioritizeCase(caseName);
-                refreshTable(prioritizedQueue, pendingTableModel, null);
-            } catch (IOException ex) {
-                logger.log(Level.SEVERE, String.format("Error while prioritizing case %s", caseName), ex);
+                //ELTODO List<AutoIngestJob> prioritizedQueue = manager.prioritizeCase(caseName);
+                //ELTODO refreshTable(prioritizedQueue, pendingTableModel, null);
+            //ELTODO } catch (IOException ex) {
+                //ELTODO logger.log(Level.SEVERE, String.format("Error while prioritizing case %s", caseName), ex);
                 MessageNotifyUtil.Message.error("An error occurred while prioritizing the case.");
             } finally {
                 pendingTable.clearSelection();
@@ -1636,7 +1636,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
             int selectedRow = completedTable.getSelectedRow();
             if (selectedRow != -1) {
                 String outputFolderPath = (String) completedTableModel.getValueAt(selectedRow, JobsTableModelColumns.CASE_FOLDER.ordinal());
-                Path pathToLog = AutoIngestJobLogger.getLogPath(Paths.get(outputFolderPath));
+                //ELTODO Path pathToLog = AutoIngestJobLogger.getLogPath(Paths.get(outputFolderPath));
+                Path pathToLog = Paths.get(""); //ELTODO remove line
                 if (pathToLog.toFile().exists()) {
                     Desktop.getDesktop().edit(pathToLog.toFile());
                 } else {
@@ -1664,10 +1665,10 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
             String caseName = (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.CASE.ordinal())).toString();
             String folderName = (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.IMAGE_FOLDER.ordinal())).toString();
             try {
-                List<AutoIngestJob> prioritizedQueue = manager.prioritizeFolder(caseName, folderName);
-                refreshTable(prioritizedQueue, pendingTableModel, null);
-            } catch (IOException ex) {
-                logger.log(Level.SEVERE, String.format("Error while prioritizing folder %s", folderName), ex);
+                //ELTODO List<AutoIngestJob> prioritizedQueue = manager.prioritizeFolder(caseName, folderName);
+                //ELTODO refreshTable(prioritizedQueue, pendingTableModel, null);
+            //ELTODO } catch (IOException ex) {
+                //ELTODO logger.log(Level.SEVERE, String.format("Error while prioritizing folder %s", folderName), ex);
                 MessageNotifyUtil.Message.error("An error occurred while prioritizing the folder.");
             } finally {
                 pendingTable.clearSelection();
