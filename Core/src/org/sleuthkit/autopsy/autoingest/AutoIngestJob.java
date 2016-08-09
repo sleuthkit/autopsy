@@ -546,7 +546,7 @@ class AutoIngestJob implements Comparable<AutoIngestJob> {
      * Custom comparator that sorts the pending list with prioritized cases
      * first, then nonprioritized cases. Prioritized cases are last in, first
      * out. Nonprioritized cases are first in, first out. Prioritized times are
-     * from the creation time of the viking.prioritized file. Non prioritized
+     * from the creation time of the ".prioritized" state file. Non prioritized
      * are from the folder creation time.
      */
     public static class PrioritizedPendingListComparator implements Comparator<AutoIngestJob> {

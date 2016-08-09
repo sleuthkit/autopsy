@@ -27,15 +27,15 @@ final class StateFile {
 
     enum Type {
 
-        READY("viking.ready"),
-        PROCESSING("viking.processing"),
-        CANCELLED("viking.cancelled"),
-        DONE("viking.done"),
-        ERROR("viking.error"),
-        COPY_ERROR("viking.copyerror"),
-        DELETED("viking.deleted"),
-        INTERRUPTED("viking.interrupted"),
-        PRIORITIZED("viking.prioritized");
+        READY("state.ready"),
+        PROCESSING("state.processing"),
+        CANCELLED("state.cancelled"),
+        DONE("state.done"),
+        ERROR("state.error"),
+        COPY_ERROR("state.copyerror"),
+        DELETED("state.deleted"),
+        INTERRUPTED("state.interrupted"),
+        PRIORITIZED("state.prioritized");
 
         private final String fileName;
 

@@ -56,12 +56,12 @@ import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotDialog;
-//ELTODO import viking.configuration.VikingOptionsDialog;
+//ELTODO import 3RDPARTY.configuration.3RDPARTYOptionsDialog;
 
 /**
- * A panel for monitoring automated ingest by a Viking cluster, and for
- * controlling automated ingest for a single node within the cluster. There can
- * be at most one such panel per node.
+ * A panel for monitoring automated ingest by a cluster, and for controlling
+ * automated ingest for a single node within the cluster. There can be at most
+ * one such panel per node.
  */
 public final class AutoIngestDashboard extends JPanel implements Observer {
 
@@ -104,7 +104,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
      * The enum is used in conjunction with the DefaultTableModel class to
      * provide table models for the JTables used to display a view of the
      * pending jobs queue, running jobs list, and completed jobs list for this
-     * Viking cluster. The enum allows the columns of the table model to be
+     * cluster. The enum allows the columns of the table model to be
      * described by either an enum ordinal or a column header.
      */
     private enum JobsTableModelColumns {
@@ -147,7 +147,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
 
     /**
      * Gets the singleton automated ingest control and monitoring panel for this
-     * Viking cluster node.
+     * cluster node.
      *
      * @return The panel.
      */
@@ -165,9 +165,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     }
 
     /**
-     * Constructs a panel for monitoring automated ingest by a Viking cluster,
-     * and for controlling automated ingest for a single node within the
-     * cluster.
+     * Constructs a panel for monitoring automated ingest by a cluster, and for
+     * controlling automated ingest for a single node within the cluster.
      */
     private AutoIngestDashboard() {
         //ELTODO manager = AutoIngestManager.getInstance();
@@ -378,7 +377,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         column.setWidth(RUNNING_TABLE_COL_PREFERRED_WIDTH);
 
         /*
-         * Set up a column to display the host names of the Viking cluster nodes
+         * Set up a column to display the host names of the cluster nodes
          * processing the jobs.
          */
         column = runningTable.getColumn(JobsTableModelColumns.HOST_NAME.getColumnHeader());
@@ -592,7 +591,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
 
         /*
          * Attempt to connect the AIM to any other auto ingest nodes (AINs) if
-         * this is a Viking cluster.
+         * this is a cluster.
          */
         try {
             //ELTODO manager.establishRemoteCommunications();
@@ -630,7 +629,6 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
          * event after a scan? Need to check this.
          */
         //ELTODO manager.scanImageFoldersNow();
-
         bnPause.setEnabled(true);
         bnRefresh.setEnabled(true);
     }
@@ -681,11 +679,11 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
             /*
              * Stop observing the auto ingest manager (AIM).
              */
-            /*//ELTODO if (null != manager) {
+ /*//ELTODO if (null != manager) {
                 manager.deleteObserver(this);
             }*/
 
-            /*
+ /*
              * Shut down the AIM and close.
              */
             new SwingWorker<Void, Void>() {
@@ -1558,7 +1556,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
      */
     private void bnOptionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOptionsActionPerformed
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        //ELTODO VikingOptionsDialog dialog = new VikingOptionsDialog(this.getTopLevelAncestor(), true);
+        //ELTODO 3RDPARTYOptionsDialog dialog = new 3RDPARTYOptionsDialog(this.getTopLevelAncestor(), true);
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }//GEN-LAST:event_bnOptionsActionPerformed
 
@@ -1614,7 +1612,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
             try {
                 //ELTODO List<AutoIngestJob> prioritizedQueue = manager.prioritizeCase(caseName);
                 //ELTODO refreshTable(prioritizedQueue, pendingTableModel, null);
-            //ELTODO } catch (IOException ex) {
+                //ELTODO } catch (IOException ex) {
                 //ELTODO logger.log(Level.SEVERE, String.format("Error while prioritizing case %s", caseName), ex);
                 MessageNotifyUtil.Message.error("An error occurred while prioritizing the case.");
             } finally {
@@ -1667,7 +1665,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
             try {
                 //ELTODO List<AutoIngestJob> prioritizedQueue = manager.prioritizeFolder(caseName, folderName);
                 //ELTODO refreshTable(prioritizedQueue, pendingTableModel, null);
-            //ELTODO } catch (IOException ex) {
+                //ELTODO } catch (IOException ex) {
                 //ELTODO logger.log(Level.SEVERE, String.format("Error while prioritizing folder %s", folderName), ex);
                 MessageNotifyUtil.Message.error("An error occurred while prioritizing the folder.");
             } finally {
