@@ -693,7 +693,7 @@
                                       <Component id="multiUserErrorTextField" alignment="0" max="32767" attributes="0"/>
                                   </Group>
                                   <EmptySpace max="32767" attributes="0"/>
-                                  <Component id="jLabelVikingDiagram" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jLabelAimDiagram" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <Group type="102" attributes="0">
                                   <Group type="103" groupAlignment="0" attributes="0">
@@ -736,7 +736,7 @@
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="multiUserErrorTextField" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <Component id="jLabelVikingDiagram" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="jLabelAimDiagram" alignment="0" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
@@ -898,13 +898,13 @@
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="browseOutputFolderButtonActionPerformed"/>
                   </Events>
                 </Component>
-                <Component class="javax.swing.JLabel" name="jLabelVikingDiagram">
+                <Component class="javax.swing.JLabel" name="jLabelAimDiagram">
                   <Properties>
                     <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                      <Image iconType="3" name="/viking/images/viking.png"/>
+                      <Image iconType="3" name="/org/sleuthkit/autopsy/images/AIM.png"/>
                     </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                      <ResourceString bundle="org/sleuthkit/autopsy/configuration/Bundle.properties" key="OptionsPanel.jLabelVikingDiagram.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                      <ResourceString bundle="org/sleuthkit/autopsy/configuration/Bundle.properties" key="OptionsPanel.jLabelAimDiagram.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
                   </Properties>
                 </Component>

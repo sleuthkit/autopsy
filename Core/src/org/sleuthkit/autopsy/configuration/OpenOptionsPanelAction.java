@@ -30,22 +30,22 @@ import org.openide.util.actions.SystemAction;
 import java.awt.Cursor;
 import org.openide.windows.WindowManager;
 
-@ActionID(category = "Tools", id = "viking.configuration.OpenVikingOptionsPanelAction")
+@ActionID(category = "Tools", id = "org.sleuthkit.autopsy.configuration.OpenOptionsPanelAction")
 @ActionRegistration(
-        displayName = "#CTL_OpenVikingOptionsPanelAction",
+        displayName = "#CTL_OpenOptionsPanelAction",
         lazy = false)
 @ActionReferences({
     @ActionReference(path = "Menu/Tools", position = 1600)
 })
-@NbBundle.Messages(value = "CTL_OpenVikingOptionsPanelAction=Viking Options")
+@NbBundle.Messages(value = "CTL_OpenOptionsPanelAction=Options")
 
 /**
- * Custom Viking options action that opens up the Viking options panel.
+ * Custom options action that opens up the options panel.
  * Contributes an entry in Tools menu
  */
 public final class OpenOptionsPanelAction extends SystemAction implements ActionListener {
 
-    private static final String ACTION_NAME = NbBundle.getMessage(OpenOptionsPanelAction.class, "OpenVikingOptionsPanelAction.name");
+    private static final String ACTION_NAME = NbBundle.getMessage(OpenOptionsPanelAction.class, "OpenOptionsPanelAction.name");
 
     @Override
     public void actionPerformed(ActionEvent e) {

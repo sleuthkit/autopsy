@@ -57,7 +57,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.autopsy.events.MessageServiceException;
-import viking.autoingest.FileExporterSettingsPanel;
+//ELTODO import viking.autoingest.FileExporterSettingsPanel;
 import javax.swing.JScrollPane;
 
 /**
@@ -69,21 +69,20 @@ public class OptionsPanel extends javax.swing.JPanel {
     private final JFileChooser fc = new JFileChooser();
     private final Collection<JTextField> textBoxes = new ArrayList<>();
     private TextBoxChangedListener textBoxChangedListener;
-    private static final String HOST_NAME_OR_IP_PROMPT = NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.tbDbHostname.toolTipText");
-    private static final String PORT_PROMPT = NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.tbDbPort.toolTipText");
-    private static final String USER_NAME_PROMPT = NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.tbDbUsername.toolTipText");
-    private static final String PASSWORD_PROMPT = NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.tbDbPassword.toolTipText");
-    private static final String USER_NAME_PROMPT_OPT = NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.tbMsgUsername.toolTipText");
-    private static final String PASSWORD_PROMPT_OPT = NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.tbMsgPassword.toolTipText");
-    private static final String INCOMPLETE_SETTINGS_MSG = NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.validationErrMsg.incomplete");
-    private static final String INVALID_DB_PORT_MSG = NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.validationErrMsg.invalidDatabasePort");
-    private static final String INVALID_MESSAGE_SERVICE_PORT_MSG = NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.validationErrMsg.invalidMessageServicePort");
-    private static final String INVALID_INDEXING_SERVER_PORT_MSG = NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.validationErrMsg.invalidIndexingServerPort");
+    private static final String HOST_NAME_OR_IP_PROMPT = NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.tbDbHostname.toolTipText");
+    private static final String PORT_PROMPT = NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.tbDbPort.toolTipText");
+    private static final String USER_NAME_PROMPT = NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.tbDbUsername.toolTipText");
+    private static final String PASSWORD_PROMPT = NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.tbDbPassword.toolTipText");
+    private static final String USER_NAME_PROMPT_OPT = NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.tbMsgUsername.toolTipText");
+    private static final String PASSWORD_PROMPT_OPT = NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.tbMsgPassword.toolTipText");
+    private static final String INCOMPLETE_SETTINGS_MSG = NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.validationErrMsg.incomplete");
+    private static final String INVALID_DB_PORT_MSG = NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.validationErrMsg.invalidDatabasePort");
+    private static final String INVALID_MESSAGE_SERVICE_PORT_MSG = NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.validationErrMsg.invalidMessageServicePort");
+    private static final String INVALID_INDEXING_SERVER_PORT_MSG = NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.validationErrMsg.invalidIndexingServerPort");
     private static final long serialVersionUID = 1L;
     private final ImageIcon goodIcon;
     private final ImageIcon badIcon;
     private static final Logger logger = Logger.getLogger(OptionsPanel.class.getName());
-    private final TranslationSettingsPanel translationSettingsPanel;
     private Integer oldIngestThreads;
 
     enum OptionsUiMode {
@@ -92,14 +91,12 @@ public class OptionsPanel extends javax.swing.JPanel {
     };
 
     /**
-     * Creates new form VikingOptionsPanel
+     * Creates new form OptionsPanel
      */
     public OptionsPanel(JDialog parent) {
         this.parent = parent;
         initComponents();
         initMultiUserPanel();
-        translationSettingsPanel = new TranslationSettingsPanel();
-        mainTabPane.addTab("Machine Translation", translationSettingsPanel);
 
         load(true);
         sharedSettingsTextField.getDocument().addDocumentListener(new MyDocumentListener());
@@ -145,38 +142,43 @@ public class OptionsPanel extends javax.swing.JPanel {
     };
 
     /**
-     * Load Viking mode from persistent storage.
+     * Load mode from persistent storage.
      *
      * @param inStartup True if we're doing the initial population of the UI
      */
     final void load(boolean inStartup) {
         loadMultiUserSettings();
         if (inStartup) {
-            VikingUserPreferences.SelectedVikingMode storedVikingMode = VikingUserPreferences.getVikingMode();
+            UserPreferences.SelectedMode storedMode = UserPreferences.getMode();
             inputPathTextField.requestFocusInWindow();
-            if (storedVikingMode == VikingUserPreferences.SelectedVikingMode.REVIEW) {
-                jRadioButtonReview.setSelected(true);
-                enableOptionsBasedOnMode(OptionsUiMode.REVIEW);
-            } else if (storedVikingMode == VikingUserPreferences.SelectedVikingMode.AUTOMATED) {
-                jRadioButtonAutomated.setSelected(true);
-                enableOptionsBasedOnMode(OptionsUiMode.AIM);
-            } else if (storedVikingMode == VikingUserPreferences.SelectedVikingMode.COPYFILES) {
-                jRadioButtonCopyFilesMode.setSelected(true);
-                enableOptionsBasedOnMode(OptionsUiMode.UTILITY);
-            } else {
-                jRadioButtonStandalone.setSelected(true);
-                enableOptionsBasedOnMode(OptionsUiMode.STANDALONE);
+            if (null != storedMode) switch (storedMode) {
+                case REVIEW:
+                    jRadioButtonReview.setSelected(true);
+                    enableOptionsBasedOnMode(OptionsUiMode.REVIEW);
+                    break;
+                case AUTOMATED:
+                    jRadioButtonAutomated.setSelected(true);
+                    enableOptionsBasedOnMode(OptionsUiMode.AIM);
+                    break;
+                case COPYFILES:
+                    jRadioButtonCopyFilesMode.setSelected(true);
+                    enableOptionsBasedOnMode(OptionsUiMode.UTILITY);
+                    break;
+                default:
+                    jRadioButtonStandalone.setSelected(true);
+                    enableOptionsBasedOnMode(OptionsUiMode.STANDALONE);
+                    break;
             }
         }
 
-        String images = VikingUserPreferences.getAutoModeImageFolder();
+        String images = UserPreferences.getAutoModeImageFolder();
         if (images != null) {
             inputPathTextField.setText(images);
         } else {
             inputPathTextField.setText("");
         }
 
-        String results = VikingUserPreferences.getAutoModeResultsFolder();
+        String results = UserPreferences.getAutoModeResultsFolder();
         if (results != null) {
             outputPathTextField.setText(results);
         } else {
@@ -184,8 +186,8 @@ public class OptionsPanel extends javax.swing.JPanel {
         }
 
         if (inStartup) {
-            sharedConfigCheckbox.setSelected(VikingUserPreferences.getSharedConfigEnabled());
-            String sharedSettingsFolder = VikingUserPreferences.getSharedConfigFolder();
+            sharedConfigCheckbox.setSelected(UserPreferences.getSharedConfigEnabled());
+            String sharedSettingsFolder = UserPreferences.getSharedConfigFolder();
             if (sharedSettingsFolder != null) {
                 sharedSettingsTextField.setText(sharedSettingsFolder);
             } else {
@@ -193,7 +195,7 @@ public class OptionsPanel extends javax.swing.JPanel {
                 sharedSettingsTextField.setText(folder);
             }
 
-            masterNodeCheckBox.setSelected(VikingUserPreferences.getSharedConfigMaster());
+            masterNodeCheckBox.setSelected(UserPreferences.getSharedConfigMaster());
             setEnabledStateForSharedConfiguration();
         }
 
@@ -219,7 +221,7 @@ public class OptionsPanel extends javax.swing.JPanel {
                 sharedFolder.mkdir();
                 return sharedFolder.getAbsolutePath();
             } catch (Exception ex) {
-                sharedSettingsErrorTextField.setText(NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.ErrorSettingDefaultFolder"));
+                sharedSettingsErrorTextField.setText(NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.ErrorSettingDefaultFolder"));
                 return "";
             }
         }
@@ -227,81 +229,80 @@ public class OptionsPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Save Viking mode to persistent storage.
+     * Save mode to persistent storage.
      */
     void store() {
-        translationSettingsPanel.store();
         if (jRadioButtonStandalone.isSelected()) {
-            VikingUserPreferences.setVikingMode(VikingUserPreferences.SelectedVikingMode.STANDALONE);
+            UserPreferences.setMode(UserPreferences.SelectedMode.STANDALONE);
         } else if (jRadioButtonAutomated.isSelected()) {
             boolean needsSaving = false;
-            String thePath = VikingUserPreferences.getAutoModeImageFolder();
+            String thePath = UserPreferences.getAutoModeImageFolder();
             if (thePath != null && 0 != inputPathTextField.getText().compareTo(thePath)) {
                 needsSaving = true;
             }
-            thePath = VikingUserPreferences.getAutoModeResultsFolder();
+            thePath = UserPreferences.getAutoModeResultsFolder();
             if (thePath != null && 0 != outputPathTextField.getText().compareTo(thePath)) {
                 needsSaving = true;
             }
             if (needsSaving) {
                 JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.MustRestart"),
-                        NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.restartRequiredLabel.text"),
+                        NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.MustRestart"),
+                        NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.restartRequiredLabel.text"),
                         JOptionPane.WARNING_MESSAGE);
             }
 
-            VikingUserPreferences.setVikingMode(VikingUserPreferences.SelectedVikingMode.AUTOMATED);
+            UserPreferences.setMode(UserPreferences.SelectedMode.AUTOMATED);
             String imageFolderPath = getNormalizedFolderPath(inputPathTextField.getText().trim());
-            VikingUserPreferences.setAutoModeImageFolder(imageFolderPath);
+            UserPreferences.setAutoModeImageFolder(imageFolderPath);
             String resultsFolderPath = getNormalizedFolderPath(outputPathTextField.getText().trim());
-            VikingUserPreferences.setAutoModeResultsFolder(resultsFolderPath);
-            VikingUserPreferences.setSharedConfigEnabled(sharedConfigCheckbox.isSelected());
+            UserPreferences.setAutoModeResultsFolder(resultsFolderPath);
+            UserPreferences.setSharedConfigEnabled(sharedConfigCheckbox.isSelected());
             if (sharedConfigCheckbox.isSelected()) {
                 String globalSettingsPath = getNormalizedFolderPath(sharedSettingsTextField.getText().trim());
-                VikingUserPreferences.setSharedConfigFolder(globalSettingsPath);
-                VikingUserPreferences.setSharedConfigMaster(masterNodeCheckBox.isSelected());
+                UserPreferences.setSharedConfigFolder(globalSettingsPath);
+                UserPreferences.setSharedConfigMaster(masterNodeCheckBox.isSelected());
             }
         } else if (jRadioButtonCopyFilesMode.isSelected()) {
 
             boolean needsSaving = false;
-            String thePath = VikingUserPreferences.getAutoModeImageFolder();
+            String thePath = UserPreferences.getAutoModeImageFolder();
             if (thePath != null && 0 != inputPathTextField.getText().compareTo(thePath)) {
                 needsSaving = true;
             }
-            thePath = VikingUserPreferences.getAutoModeResultsFolder();
+            thePath = UserPreferences.getAutoModeResultsFolder();
             if (thePath != null && 0 != outputPathTextField.getText().compareTo(thePath)) {
                 needsSaving = true;
             }
             if (needsSaving) {
                 JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.MustRestart"),
-                        NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.restartRequiredLabel.text"),
+                        NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.MustRestart"),
+                        NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.restartRequiredLabel.text"),
                         JOptionPane.WARNING_MESSAGE);
             }
 
-            VikingUserPreferences.setVikingMode(VikingUserPreferences.SelectedVikingMode.COPYFILES);
+            UserPreferences.setMode(UserPreferences.SelectedMode.COPYFILES);
             String imageFolderPath = getNormalizedFolderPath(inputPathTextField.getText().trim());
-            VikingUserPreferences.setAutoModeImageFolder(imageFolderPath);
+            UserPreferences.setAutoModeImageFolder(imageFolderPath);
             String resultsFolderPath = getNormalizedFolderPath(outputPathTextField.getText().trim());
-            VikingUserPreferences.setAutoModeResultsFolder(resultsFolderPath);
-            VikingUserPreferences.setSharedConfigEnabled(sharedConfigCheckbox.isSelected());
+            UserPreferences.setAutoModeResultsFolder(resultsFolderPath);
+            UserPreferences.setSharedConfigEnabled(sharedConfigCheckbox.isSelected());
             if (sharedConfigCheckbox.isSelected()) {
                 String globalSettingsPath = getNormalizedFolderPath(sharedSettingsTextField.getText().trim());
-                VikingUserPreferences.setSharedConfigFolder(globalSettingsPath);
-                VikingUserPreferences.setSharedConfigMaster(masterNodeCheckBox.isSelected());
+                UserPreferences.setSharedConfigFolder(globalSettingsPath);
+                UserPreferences.setSharedConfigMaster(masterNodeCheckBox.isSelected());
             }
         } else if (jRadioButtonReview.isSelected()) {
-            String thePath = VikingUserPreferences.getAutoModeResultsFolder();
+            String thePath = UserPreferences.getAutoModeResultsFolder();
             if (thePath != null && 0 != outputPathTextField.getText().compareTo(thePath)) {
                 JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.MustRestart"),
-                        NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.restartRequiredLabel.text"),
+                        NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.MustRestart"),
+                        NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.restartRequiredLabel.text"),
                         JOptionPane.WARNING_MESSAGE);
             }
 
-            VikingUserPreferences.setVikingMode(VikingUserPreferences.SelectedVikingMode.REVIEW);
+            UserPreferences.setMode(UserPreferences.SelectedMode.REVIEW);
             String resultsFolderPath = getNormalizedFolderPath(outputPathTextField.getText().trim());
-            VikingUserPreferences.setAutoModeResultsFolder(resultsFolderPath);
+            UserPreferences.setAutoModeResultsFolder(resultsFolderPath);
         }
 
         storeMultiUserSettings();
@@ -533,21 +534,21 @@ public class OptionsPanel extends javax.swing.JPanel {
 
         if (inputPath.isEmpty()) {
             jLabelInvalidImageFolder.setVisible(true);
-            jLabelInvalidImageFolder.setText(NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.ImageDirectoryUnspecified"));
+            jLabelInvalidImageFolder.setText(NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.ImageDirectoryUnspecified"));
             return false;
         }
 
         if (!isFolderPathValid(inputPath)) {
             jLabelInvalidImageFolder.setVisible(true);
-            jLabelInvalidImageFolder.setText(NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.PathInvalid"));
+            jLabelInvalidImageFolder.setText(NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.PathInvalid"));
             return false;
         }
 
         if (false == permissionsAppropriate(inputPath)) {
             jLabelInvalidImageFolder.setVisible(true);
-            jLabelInvalidImageFolder.setText(NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.CannotAccess")
+            jLabelInvalidImageFolder.setText(NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.CannotAccess")
                     + " " + inputPath + "   "
-                    + NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.CheckPermissions"));
+                    + NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.CheckPermissions"));
             return false;
         }
 
@@ -564,21 +565,21 @@ public class OptionsPanel extends javax.swing.JPanel {
 
         if (outputPath.isEmpty()) {
             jLabelInvalidResultsFolder.setVisible(true);
-            jLabelInvalidResultsFolder.setText(NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.ResultsDirectoryUnspecified"));
+            jLabelInvalidResultsFolder.setText(NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.ResultsDirectoryUnspecified"));
             return false;
         }
 
         if (!isFolderPathValid(outputPath)) {
             jLabelInvalidResultsFolder.setVisible(true);
-            jLabelInvalidResultsFolder.setText(NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.PathInvalid"));
+            jLabelInvalidResultsFolder.setText(NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.PathInvalid"));
             return false;
         }
 
         if (false == permissionsAppropriate(outputPath)) {
             jLabelInvalidResultsFolder.setVisible(true);
-            jLabelInvalidResultsFolder.setText(NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.CannotAccess")
+            jLabelInvalidResultsFolder.setText(NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.CannotAccess")
                     + " " + outputPath + "   "
-                    + NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.CheckPermissions"));
+                    + NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.CheckPermissions"));
             return false;
         }
 
@@ -599,21 +600,21 @@ public class OptionsPanel extends javax.swing.JPanel {
 
         if (sharedSettingsPath.isEmpty()) {
             sharedSettingsErrorTextField.setVisible(true);
-            sharedSettingsErrorTextField.setText(NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.EmptySettingsDirectory"));
+            sharedSettingsErrorTextField.setText(NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.EmptySettingsDirectory"));
             return false;
         }
 
         if (!isFolderPathValid(sharedSettingsPath)) {
             sharedSettingsErrorTextField.setVisible(true);
-            sharedSettingsErrorTextField.setText(NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.PathInvalid"));
+            sharedSettingsErrorTextField.setText(NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.PathInvalid"));
             return false;
         }
 
         if (false == permissionsAppropriate(sharedSettingsPath)) {
             sharedSettingsErrorTextField.setVisible(true);
-            sharedSettingsErrorTextField.setText(NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.CannotAccess")
+            sharedSettingsErrorTextField.setText(NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.CannotAccess")
                     + " " + sharedSettingsPath + " "
-                    + NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.CheckPermissions"));
+                    + NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.CheckPermissions"));
             return false;
         }
 
@@ -623,7 +624,7 @@ public class OptionsPanel extends javax.swing.JPanel {
 
     private void displayIngestJobSettingsPanel() {
 
-        IngestJobSettings ingestJobSettings = new IngestJobSettings(VikingUserPreferences.getAutoModeIngestModuleContextString());
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(UserPreferences.getAutoModeIngestModuleContextString());
         showWarnings(ingestJobSettings);
         IngestJobSettingsPanel ingestJobSettingsPanel = new IngestJobSettingsPanel(ingestJobSettings);
 
@@ -1130,7 +1131,7 @@ public class OptionsPanel extends javax.swing.JPanel {
         jLabelSelectOutputFolder = new javax.swing.JLabel();
         outputPathTextField = new javax.swing.JTextField();
         browseOutputFolderButton = new javax.swing.JButton();
-        jLabelVikingDiagram = new javax.swing.JLabel();
+        jLabelAimDiagram = new javax.swing.JLabel();
         jLabelInvalidImageFolder = new javax.swing.JLabel();
         jLabelInvalidResultsFolder = new javax.swing.JLabel();
         multiUserErrorTextField = new javax.swing.JTextField();
@@ -1513,8 +1514,8 @@ public class OptionsPanel extends javax.swing.JPanel {
             }
         });
 
-        jLabelVikingDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/viking/images/viking.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(jLabelVikingDiagram, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.jLabelVikingDiagram.text")); // NOI18N
+        jLabelAimDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/viking/images/viking.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabelAimDiagram, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.jLabelAimDiagram.text")); // NOI18N
 
         jLabelInvalidImageFolder.setForeground(new java.awt.Color(255, 0, 0));
         org.openide.awt.Mnemonics.setLocalizedText(jLabelInvalidImageFolder, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.jLabelInvalidImageFolder.text")); // NOI18N
@@ -1554,7 +1555,7 @@ public class OptionsPanel extends javax.swing.JPanel {
                                 .addComponent(restartRequiredNodeLabel))
                             .addComponent(multiUserErrorTextField))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabelVikingDiagram))
+                        .addComponent(jLabelAimDiagram))
                     .addGroup(jPanelNodeTypeLayout.createSequentialGroup()
                         .addGroup(jPanelNodeTypeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(jPanelNodeTypeLayout.createSequentialGroup()
@@ -1587,7 +1588,7 @@ public class OptionsPanel extends javax.swing.JPanel {
                         .addComponent(jRadioButtonReview)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(multiUserErrorTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jLabelVikingDiagram))
+                    .addComponent(jLabelAimDiagram))
                 .addGap(6, 6, 6)
                 .addGroup(jPanelNodeTypeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabelSelectInputFolder, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -2010,7 +2011,7 @@ public class OptionsPanel extends javax.swing.JPanel {
     private void downloadButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_downloadButtonActionPerformed
         // First save the shared config folder and solr settings to the properties
         String globalSettingsPath = getNormalizedFolderPath(sharedSettingsTextField.getText().trim());
-        VikingUserPreferences.setSharedConfigFolder(globalSettingsPath);
+        UserPreferences.setSharedConfigFolder(globalSettingsPath);
         UserPreferences.setIndexingServerHost(tbSolrHostname.getText().trim());
         UserPreferences.setIndexingServerPort(Integer.parseInt(tbSolrPort.getText().trim()));
 
@@ -2124,11 +2125,11 @@ public class OptionsPanel extends javax.swing.JPanel {
                 lbTestSolrWarning.setText("");
             } else {
                 lbTestSolr.setIcon(badIcon);
-                lbTestSolrWarning.setText(NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.KeywordSearchNull"));
+                lbTestSolrWarning.setText(NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.KeywordSearchNull"));
             }
         } catch (NumberFormatException ex) {
             lbTestSolr.setIcon(badIcon);
-            lbTestSolrWarning.setText(NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.InvalidPortNumber"));
+            lbTestSolrWarning.setText(NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.InvalidPortNumber"));
         } catch (KeywordSearchServiceException ex) {
             lbTestSolr.setIcon(badIcon);
             lbTestSolrWarning.setText(ex.getMessage());
@@ -2147,7 +2148,7 @@ public class OptionsPanel extends javax.swing.JPanel {
             port = Integer.parseInt(this.tbMsgPort.getText().trim());
         } catch (NumberFormatException ex) {
             lbTestMessageService.setIcon(badIcon);
-            lbTestMessageWarning.setText(NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.InvalidPortNumber"));
+            lbTestMessageWarning.setText(NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.InvalidPortNumber"));
             return;
         }
 
@@ -2171,7 +2172,7 @@ public class OptionsPanel extends javax.swing.JPanel {
     private void bnAdvancedSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnAdvancedSettingsActionPerformed
         AdvancedOptionsPanel advancedOptionsPanel = new AdvancedOptionsPanel(getModeFromRadioButtons());
         if (JOptionPane.showConfirmDialog(null, advancedOptionsPanel,
-                NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.AdvancedOptionsPanel.Title"),
+                NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.AdvancedOptionsPanel.Title"),
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
             advancedOptionsPanel.store();
         }
@@ -2179,7 +2180,7 @@ public class OptionsPanel extends javax.swing.JPanel {
 
     private void bnFileExportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnFileExportActionPerformed
         JDialog jDialog = new JDialog();
-        FileExporterSettingsPanel fileExporterSettingsPanel = new FileExporterSettingsPanel(jDialog);
+        /*ELTODO FileExporterSettingsPanel fileExporterSettingsPanel = new FileExporterSettingsPanel(jDialog);
         jDialog.addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosing(java.awt.event.WindowEvent windowEvent) {
@@ -2191,12 +2192,12 @@ public class OptionsPanel extends javax.swing.JPanel {
         jScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         jScrollPane.setMinimumSize(new Dimension(100, 100));
         jDialog.add(jScrollPane);
-        jDialog.setTitle(NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.FileExportRules.text"));
-        jDialog.setIconImage(ImageUtilities.loadImage("/viking/images/viking32.gif"));
+        jDialog.setTitle(NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.FileExportRules.text"));
+        //ELTODO jDialog.setIconImage(ImageUtilities.loadImage("/viking/images/viking32.gif"));
         jDialog.setModalityType(java.awt.Dialog.ModalityType.APPLICATION_MODAL);
         jDialog.pack();
         jDialog.setLocationRelativeTo(this);
-        jDialog.setVisible(true);
+        jDialog.setVisible(true);*/
     }//GEN-LAST:event_bnFileExportActionPerformed
 
     private void disableUI() {
@@ -2291,15 +2292,14 @@ public class OptionsPanel extends javax.swing.JPanel {
                 JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), errorMessage, "Error copying configuration", JOptionPane.ERROR_MESSAGE);
             } else {
                 jLabelTaskDescription.setText("Shared configuration copied successfully");
-                translationSettingsPanel.populateIpAddress(VikingUserPreferences.getMachineTranslationIpAddress()); // populate other panel's settings
                 bnSave.setEnabled(true);
             }
 
             // Check if anything requiring a reset has changed and update the UI
             if (isResetNeeded()) {
                 JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.MustRestart"),
-                        NbBundle.getMessage(OptionsPanel.class, "VikingOptionsPanel.restartRequiredLabel.text"),
+                        NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.MustRestart"),
+                        NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.restartRequiredLabel.text"),
                         JOptionPane.WARNING_MESSAGE);
             }
 
@@ -2322,7 +2322,6 @@ public class OptionsPanel extends javax.swing.JPanel {
     }
 
     void setEnabledState(boolean enabled) {
-        translationSettingsPanel.setEnabled(enabled);
         bnAdvancedSettings.setEnabled(enabled);
         bnEditIngestSettings.setEnabled(enabled);
         bnFileExport.setEnabled(enabled);
@@ -2377,6 +2376,7 @@ public class OptionsPanel extends javax.swing.JPanel {
     private javax.swing.JTextField configButtonErrorTextField;
     private javax.swing.JButton downloadButton;
     private javax.swing.JTextField inputPathTextField;
+    private javax.swing.JLabel jLabelAimDiagram;
     private javax.swing.JLabel jLabelCurrentTask;
     private javax.swing.JLabel jLabelInvalidImageFolder;
     private javax.swing.JLabel jLabelInvalidResultsFolder;
@@ -2384,7 +2384,6 @@ public class OptionsPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jLabelSelectMode;
     private javax.swing.JLabel jLabelSelectOutputFolder;
     private javax.swing.JLabel jLabelTaskDescription;
-    private javax.swing.JLabel jLabelVikingDiagram;
     private javax.swing.JPanel jPanelIngestSettings;
     private javax.swing.JPanel jPanelNodeType;
     private javax.swing.JPanel jPanelSharedConfig;

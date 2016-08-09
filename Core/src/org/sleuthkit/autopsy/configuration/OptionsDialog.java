@@ -48,7 +48,7 @@ public class OptionsDialog extends JDialog {
      */
     public OptionsDialog(Container owner, Boolean shouldBeModal) {
         super((Window) owner, TITLE, Dialog.ModalityType.MODELESS);
-        setIconImage(ImageUtilities.loadImage("viking/images/viking16.gif", false)); //NON-NLS
+        //ELTODO setIconImage(ImageUtilities.loadImage("viking/images/viking16.gif", false)); //NON-NLS
         if (shouldBeModal && owner instanceof JDialog) { // if called from a modal dialog, manipulate the parent be just under this in z order, and not modal.
             final JDialog pseudoOwner = (JDialog) owner;
             addWindowListener(new WindowAdapter() {
