@@ -43,6 +43,7 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -459,8 +460,15 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
         @Override
         protected Node createNodeForKey(FileWithCCN key) {
+            //add all account artifacts for the file and the file itself to th elookup
             try {
-                return new FileWithCCNNode(key, skCase.getAbstractFileById(key.getObjID()));
+                List<Object> lookupContents = new ArrayList<>();
+                for (long artId : key.artifactIDS) {
+                    lookupContents.add(skCase.getBlackboardArtifact(artId));
+                }
+                AbstractFile abstractFileById = skCase.getAbstractFileById(key.getObjID());
+                lookupContents.add(abstractFileById);
+                return new FileWithCCNNode(key, abstractFileById, lookupContents.toArray());
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Error getting content for file with ccn hits.", ex); //NON-NLS
                 return null;
@@ -481,12 +489,21 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         private final FileWithCCN fileKey;
         private final String fileName;
 
+        /**
+         * Constructor
+         *
+         * @param key            The FileWithCCN that backs this node.
+         * @param content        The Content object the key represents.
+         * @param lookupContents The contents of this Node's lookup. It should
+         *                       contain the content object and the account
+         *                       artifacts.
+         */
         @NbBundle.Messages({
             "# {0} - raw file name",
             "# {1} - solr chunk id",
             "Accounts.FileWithCCNNode.unallocatedSpaceFile.displayName={0}_chunk_{1}"})
-        private FileWithCCNNode(FileWithCCN key, Content content) {
-            super(Children.LEAF, Lookups.singleton(content));
+        private FileWithCCNNode(FileWithCCN key, Content content, Object[] lookupContents) {
+            super(Children.LEAF, Lookups.fixed(lookupContents));
             this.fileKey = key;
             this.fileName = (key.getSolrDocmentID() == null)
                     ? content.getName()

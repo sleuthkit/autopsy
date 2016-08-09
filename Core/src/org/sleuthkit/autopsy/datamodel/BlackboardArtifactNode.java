@@ -140,7 +140,6 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         //if this artifact has associated content, add the action to view the content in the timeline
         AbstractFile file = getLookup().lookup(AbstractFile.class);
         if (null != file) {
-            
             actionsList.add(ViewFileInTimelineAction.createViewSourceFileAction(file));
         }
 
@@ -410,8 +409,6 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.getAssocCont.exception.msg"));
     }
 
-    
-
     private static TextMarkupLookup getHighlightLookup(BlackboardArtifact artifact, Content content) {
         if (artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
             return null;
@@ -437,12 +434,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
             }
             if (keyword != null) {
                 boolean isRegexp = StringUtils.isNotBlank(regexp);
-                String origQuery;
-                if (isRegexp) {
-                    origQuery = regexp;
-                } else {
-                    origQuery = keyword;
-                }
+                String origQuery = isRegexp ? regexp : keyword;
                 return highlightFactory.createInstance(objectId, keyword, isRegexp, origQuery);
             }
         } catch (TskCoreException ex) {
