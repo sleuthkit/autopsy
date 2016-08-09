@@ -26,7 +26,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import javax.swing.JDialog;
-import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 import javax.swing.WindowConstants;
 import org.openide.LifecycleManager;
@@ -43,18 +42,16 @@ import org.sleuthkit.autopsy.autoingest.AutoIngestDashboard;
 @ServiceProvider(service = StartupWindowInterface.class)
 public final class StartupWindow extends JDialog implements StartupWindowInterface {
 
-    private static StartupWindow instance;
     private static final String TITLE = NbBundle.getMessage(StartupWindow.class, "StartupWindow.title.text");
     private static Dimension DIMENSIONS = new Dimension(750, 400);
     private static CueBannerPanel welcomeWindow;
 //ELTODO     private ReviewModeCasePanel caseManagementPanel = null;
 //ELTODO     private CaseImportPanel caseImportPanel = null;
     private JTabbedPane copyPane = new JTabbedPane();
-    private static final String localHostName = NetworkUtils.getLocalHostName();
+    private static final String LOCAL_HOST_NAME = NetworkUtils.getLocalHostName();
 
     public StartupWindow() {
-        //ELTODO super(WindowManager.getDefault().getMainWindow(), TITLE, true); // ELTODO do we need this??
-        super(new JFrame(TITLE), TITLE, true); // ELTODO last parameter - modal - used to be set to "false"
+        super(WindowManager.getDefault().getMainWindow(), TITLE, true);
         init();
     }
 
@@ -62,9 +59,6 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
      * Shows the startup window.
      */
     private void init() {
-
-        setModalityType(ModalityType.APPLICATION_MODAL); // ELTODO this was moved over, do we need this?
-
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
 
         // set the popUp window / JFrame
@@ -74,7 +68,7 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
 
         // set the location of the popUp Window on the center of the screen
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
-        //ELTODO setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
+        setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         
         addPanelForMode();
         pack();
@@ -113,7 +107,7 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
 
         switch (mode) {
             case AUTOMATED:
-                this.setTitle(NbBundle.getMessage(StartupWindow.class, "StartupWindow.AutoIngestMode") + " (" + localHostName + ")");
+                this.setTitle(NbBundle.getMessage(StartupWindow.class, "StartupWindow.AutoIngestMode") + " (" + LOCAL_HOST_NAME + ")");
                 this.addWindowListener(new WindowAdapter() {
                     @Override
                     public void windowClosing(WindowEvent e) {
@@ -124,12 +118,12 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
                 add(AutoIngestDashboard.getInstance());
                 break;
             case REVIEW:
-                this.setTitle(NbBundle.getMessage(StartupWindow.class, "StartupWindow.ReviewMode") + " (" + localHostName + ")");
+                this.setTitle(NbBundle.getMessage(StartupWindow.class, "StartupWindow.ReviewMode") + " (" + LOCAL_HOST_NAME + ")");
 //ELTODO                 caseManagementPanel = new ReviewModeCasePanel(this);
 //ELTODO                 add(caseManagementPanel);
                 break;
             case COPYFILES:
-                this.setTitle(NbBundle.getMessage(StartupWindow.class, "StartupWindow.CopyAndImportMode") + " (" + localHostName + ")");
+                this.setTitle(NbBundle.getMessage(StartupWindow.class, "StartupWindow.CopyAndImportMode") + " (" + LOCAL_HOST_NAME + ")");
 //ELTODO                 caseImportPanel = new CaseImportPanel();
 //ELTODO                 copyPane.add(NbBundle.getMessage(StartupWindow.class, "StartupWindow.CaseImportMode"), caseImportPanel);
                 this.addWindowListener(new WindowAdapter() {
