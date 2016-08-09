@@ -4,7 +4,7 @@
     <configuration>
         <data xmlns="http://www.netbeans.org/ns/nb-module-project/3">
             <code-name-base>org.sleuthkit.autopsy.experimental</code-name-base>
-            <suite-component/>
+            <standalone/>
             <module-dependencies>
                 <dependency>
                     <code-name-base>org.openide.actions</code-name-base>
@@ -46,26 +46,10 @@
                         <specification-version>9.4.1</specification-version>
                     </run-dependency>
                 </dependency>
-                <dependency>
-                    <code-name-base>org.sleuthkit.autopsy.core</code-name-base>
-                    <build-prerequisite/>
-                    <compile-dependency/>
-                    <run-dependency>
-                        <release-version>10</release-version>
-                        <specification-version>10.5</specification-version>
-                    </run-dependency>
-                </dependency>
-                <dependency>
-                    <code-name-base>org.sleuthkit.autopsy.corelibs</code-name-base>
-                    <build-prerequisite/>
-                    <compile-dependency/>
-                    <run-dependency>
-                        <release-version>3</release-version>
-                        <specification-version>1.1</specification-version>
-                    </run-dependency>
-                </dependency>
             </module-dependencies>
-            <public-packages/>
+            <public-packages>
+                <package>org.sleuthkit.autopsy.autoingest</package>
+            </public-packages>
         </data>
     </configuration>
 </project>

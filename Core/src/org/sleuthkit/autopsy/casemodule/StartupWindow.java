@@ -34,6 +34,7 @@ import org.openide.util.lookup.ServiceProvider;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
+import org.sleuthkit.autopsy.autoingest.AutoIngestDashboard;
 
 /**
  * The default implementation of the Autopsy startup window
@@ -45,8 +46,8 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
     private static final String TITLE = NbBundle.getMessage(StartupWindow.class, "StartupWindow.title.text");
     private static Dimension DIMENSIONS = new Dimension(750, 400);
     private static CueBannerPanel welcomeWindow;
-//    private ReviewModeCasePanel caseManagementPanel = null;
-//    private CaseImportPanel caseImportPanel = null;
+//ELTODO     private ReviewModeCasePanel caseManagementPanel = null;
+//ELTODO     private CaseImportPanel caseImportPanel = null;
     private JTabbedPane copyPane = new JTabbedPane();
     private static final String localHostName = NetworkUtils.getLocalHostName();
 
@@ -105,21 +106,21 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
                 this.addWindowListener(new WindowAdapter() {
                     @Override
                     public void windowClosing(WindowEvent e) {
-//                        AutoIngestDashboard.getInstance().shutdown();
+                        AutoIngestDashboard.getInstance().shutdown();
                     }
                 });
                 setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-//                add(AutoIngestDashboard.getInstance());
+                add(AutoIngestDashboard.getInstance());
                 break;
             case REVIEW:
                 this.setTitle(NbBundle.getMessage(StartupWindow.class, "StartupWindow.ReviewMode") + " (" + localHostName + ")");
-//                caseManagementPanel = new ReviewModeCasePanel(this);
-//                add(caseManagementPanel);
+//ELTODO                 caseManagementPanel = new ReviewModeCasePanel(this);
+//ELTODO                 add(caseManagementPanel);
                 break;
             case COPYFILES:
                 this.setTitle(NbBundle.getMessage(StartupWindow.class, "StartupWindow.CopyAndImportMode") + " (" + localHostName + ")");
-//                caseImportPanel = new CaseImportPanel();
-//                copyPane.add(NbBundle.getMessage(StartupWindow.class, "StartupWindow.CaseImportMode"), caseImportPanel);
+//ELTODO                 caseImportPanel = new CaseImportPanel();
+//ELTODO                 copyPane.add(NbBundle.getMessage(StartupWindow.class, "StartupWindow.CaseImportMode"), caseImportPanel);
                 this.addWindowListener(new WindowAdapter() {
                     @Override
                     public void windowClosing(WindowEvent e) {
