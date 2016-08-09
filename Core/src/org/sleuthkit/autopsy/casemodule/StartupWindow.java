@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -52,7 +53,8 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
     private static final String localHostName = NetworkUtils.getLocalHostName();
 
     public StartupWindow() {
-        super(WindowManager.getDefault().getMainWindow(), TITLE, true);
+        //ELTODO super(WindowManager.getDefault().getMainWindow(), TITLE, true); // ELTODO do we need this??
+        super(new JFrame(TITLE), TITLE, true); // ELTODO last parameter - modal - used to be set to "false"
         init();
     }
 
@@ -61,27 +63,36 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
      */
     private void init() {
 
+        setModalityType(ModalityType.APPLICATION_MODAL); // ELTODO this was moved over, do we need this?
+
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
 
         // set the popUp window / JFrame
         setSize(DIMENSIONS);
-        int w = this.getSize().width;
-        int h = this.getSize().height;
+        int w = getSize().width;
+        int h = getSize().height;
 
         // set the location of the popUp Window on the center of the screen
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
-        setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
-
+        //ELTODO setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
+        
         addPanelForMode();
         pack();
         setResizable(false);
-
     }
 
     @Override
     public void open() {
-        welcomeWindow.refresh();
-        setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
+        
+        //ELTODO if (caseManagementPanel != null) {
+        //ELTODO     caseManagementPanel.updateView();
+        //ELTODO     caseManagementPanel.setCursor(Cursor.getDefaultCursor());
+        //ELTODO }
+        
+        if (welcomeWindow != null) {
+            welcomeWindow.refresh();
+        }
+        this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         setVisible(true);
     }
 
@@ -128,7 +139,7 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
                     }
                 });
                 setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-                add(copyPane);
+                //ELTODO add(copyPane);
                 break;
             default:                
                 welcomeWindow = new CueBannerPanel();
