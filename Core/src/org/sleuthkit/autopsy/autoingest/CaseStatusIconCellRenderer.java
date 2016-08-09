@@ -31,8 +31,8 @@ import org.openide.util.ImageUtilities;
 class CaseStatusIconCellRenderer extends GrayableCellRenderer {
 
     private static final long serialVersionUID = 1L;
-    static final ImageIcon checkedIcon = new ImageIcon(ImageUtilities.loadImage("viking/images/tick.png", false));
-    static final ImageIcon warningIcon = new ImageIcon(ImageUtilities.loadImage("viking/images/warning16.png", false));
+    static final ImageIcon checkedIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/tick.png", false));
+    static final ImageIcon warningIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/warning16.png", false));
 
     CaseStatusIconCellRenderer() {
         setHorizontalAlignment(CENTER);

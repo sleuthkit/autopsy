@@ -55,7 +55,6 @@ public final class UserPreferences {
     private static final String SHARED_CONFIG_ENABLED = "SharedSettingsEnabled"; // NON-NLS
     private static final String SHARED_CONFIG_MASTER = "SharedSettingsMaster"; // NON-NLS
     private static final String AUTO_MODE_CONTEXT_STRING = "AutoModeContext"; // NON-NLS
-    private static final String SHOW_TOOLS_WARNING = "ShowToolsWarning"; // NON-NLS
     private static final String COPY_MODE_SOURCE_FOLDER = "CopyModeSourceFolder"; // NON-NLS
     private static final String SLEEP_BETWEEN_CASES_TIME = "SleepBetweenCasesTime"; // NON-NLS
     private static final String MAX_NUM_TIMES_TO_PROCESS_IMAGE = "MaxNumTimesToAttemptToProcessImage"; // NON-NLS
