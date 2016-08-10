@@ -38,12 +38,13 @@ import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.prefs.BackingStoreException;
 import org.apache.commons.io.FileUtils;
+import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
-//ELTODO import org.sleuthkit.autopsy.keywordsearch.KeywordListsManager;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
@@ -686,7 +687,13 @@ public class SharedConfiguration {
         copyToLocalFolder(KEYWORD_SEARCH_NSRL_LEGACY, moduleDirPath, remoteFolder, true);
         copyToLocalFolder(KEYWORD_SEARCH_OPTIONS_LEGACY, moduleDirPath, remoteFolder, true);
         copyToLocalFolder(KEYWORD_SEARCH_SCRIPTS_LEGACY, moduleDirPath, remoteFolder, true);
-//ELTODO         KeywordListsManager.reloadKeywordLists();
+        
+        // reload key word lists
+        KeywordSearchService searchService = Lookup.getDefault().lookup(KeywordSearchService.class);
+        if (null == searchService) {
+            throw new SharedConfigurationException("Keyword search service not found");
+        }
+        searchService.reloadConfiguration();
     }
 
     /**
