@@ -73,7 +73,6 @@ public class SharedConfiguration {
     private static final String FILE_EXT_MISMATCH_SETTINGS = "mismatch_config.settings"; //NON-NLS
     private static final String FILE_EXT_MISMATCH_SETTINGS_LEGACY = "mismatch_config.xml"; //NON-NLS
     private static final String ANDROID_TRIAGE = "AndroidTriage_Options.properties"; //NON-NLS
-    private static final String VIKING_PROPERTIES = "viking.properties"; //NON-NLS
     private static final String GENERAL_PROPERTIES = "core.properties"; //NON-NLS
     private static final String HASHDB_CONFIG_FILE_NAME = "hashLookup.settings"; //NON-NLS
     private static final String HASHDB_CONFIG_FILE_NAME_LEGACY = "hashsets.xml"; //NON-NLS
@@ -86,17 +85,16 @@ public class SharedConfiguration {
     private static final String PREFERENCES_FOLDER = "Preferences"; //NON-NLS
     public static final String FILE_EXPORTER_FOLDER = "Automated File Exporter"; //NON-NLS
 
-    private static final String LOCK_ROOT = "/viking"; // NON-NLS
+    private static final String LOCK_ROOT = "/autopsy"; // NON-NLS
     private static final String UPLOAD_IN_PROGRESS_FILE = "uploadInProgress"; // NON-NLS
     private static final String moduleDirPath = PlatformUtil.getUserConfigDirectory();
     private static final Logger logger = Logger.getLogger(SharedConfiguration.class.getName());
 
     private final UpdateConfigSwingWorker swingWorker;
-    private VikingUserPreferences.SelectedVikingMode vikingMode;
+    private UserPreferences.SelectedMode mode;
     private String sharedConfigFolder;
     private int fileIngestThreads;
     private boolean sharedConfigMaster;
-    private boolean showToolsWarning;
     private boolean displayLocalTime;
     private boolean hideKnownFilesInDataSource;
     private boolean hideKnownFilesInViews;
@@ -189,7 +187,6 @@ public class SharedConfiguration {
                 // Current testing suggests that we do not need to do this for the ingest settings
                 // because there is a longer delay between setting them and copying the files.
                 UserPreferences.saveToStorage();
-                VikingUserPreferences.saveToStorage();
             } catch (BackingStoreException ex) {
                 throw new SharedConfigurationException("Failed to save shared configuration settings", ex);
             }
@@ -201,7 +198,6 @@ public class SharedConfiguration {
             uploadKeywordSearchSettings(remoteFolder);
             uploadFileExtMismatchSettings(remoteFolder);
             uploadAndroidTriageSettings(remoteFolder);
-            uploadVikingSettings(remoteFolder);
             uploadMultiUserAndGeneralSettings(remoteFolder);
             uploadHashDbSettings(remoteFolder);
             uploadFileExporterSettings(remoteFolder);
@@ -258,7 +254,6 @@ public class SharedConfiguration {
                  sticking around after shared configuration has seemingly been successfully 
                  updated. */
                 UserPreferences.saveToStorage();
-                VikingUserPreferences.saveToStorage();
             } catch (BackingStoreException ex) {
                 throw new SharedConfigurationException("Failed to save shared configuration settings", ex);
             }
@@ -272,13 +267,11 @@ public class SharedConfiguration {
             downloadAndroidTriageSettings(remoteFolder);
             downloadFileExporterSettings(remoteFolder);
 
-            // Download the Viking and general settings, then restore the current
+            // Download general settings, then restore the current
             // values for the unshared fields
-            downloadVikingSettings(remoteFolder);
             downloadMultiUserAndGeneralSettings(remoteFolder);
             try {
                 UserPreferences.reloadFromStorage();
-                VikingUserPreferences.reloadFromStorage();
             } catch (BackingStoreException ex) {
                 throw new SharedConfigurationException("Failed to read shared configuration settings", ex);
             }
@@ -303,13 +296,13 @@ public class SharedConfiguration {
         }
 
         // Check input folder permissions
-        String inputFolder = VikingUserPreferences.getAutoModeImageFolder();
+        String inputFolder = UserPreferences.getAutoModeImageFolder();
         if (!FileUtil.hasReadWriteAccess(Paths.get(inputFolder))) {
             throw new SharedConfigurationException("Cannot read input folder " + inputFolder + ". Check that the folder exists and that you have permissions to access it.");
         }
 
         // Check output folder permissions
-        String outputFolder = VikingUserPreferences.getAutoModeResultsFolder();
+        String outputFolder = UserPreferences.getAutoModeResultsFolder();
         if (!FileUtil.hasReadWriteAccess(Paths.get(outputFolder))) {
             throw new SharedConfigurationException("Cannot read output folder " + outputFolder + ". Check that the folder exists and that you have permissions to access it.");
         }
@@ -338,10 +331,9 @@ public class SharedConfiguration {
      * configuration.
      */
     private void saveNonSharedSettings() {
-        sharedConfigMaster = VikingUserPreferences.getSharedConfigMaster();
-        sharedConfigFolder = VikingUserPreferences.getSharedConfigFolder();
-        showToolsWarning = VikingUserPreferences.getShowToolsWarning();
-        vikingMode = VikingUserPreferences.getVikingMode();
+        sharedConfigMaster = UserPreferences.getSharedConfigMaster();
+        sharedConfigFolder = UserPreferences.getSharedConfigFolder();
+        mode = UserPreferences.getMode();
         displayLocalTime = UserPreferences.displayTimesInLocalTime();
         hideKnownFilesInDataSource = UserPreferences.hideKnownFilesInDataSourcesTree();
         hideKnownFilesInViews = UserPreferences.hideKnownFilesInViewsTree();
@@ -353,10 +345,9 @@ public class SharedConfiguration {
      * Restore the settings that may have been overwritten.
      */
     private void restoreNonSharedSettings() {
-        VikingUserPreferences.setSharedConfigFolder(sharedConfigFolder);
-        VikingUserPreferences.setSharedConfigMaster(sharedConfigMaster);
-        VikingUserPreferences.setShowToolsWarning(showToolsWarning);
-        VikingUserPreferences.setVikingMode(vikingMode);
+        UserPreferences.setSharedConfigFolder(sharedConfigFolder);
+        UserPreferences.setSharedConfigMaster(sharedConfigMaster);
+        UserPreferences.setMode(mode);
         UserPreferences.setDisplayTimesInLocalTime(displayLocalTime);
         UserPreferences.setHideKnownFilesInDataSourcesTree(hideKnownFilesInDataSource);
         UserPreferences.setHideKnownFilesInViewsTree(hideKnownFilesInViews);
@@ -373,7 +364,7 @@ public class SharedConfiguration {
      */
     private static File getSharedFolder() throws SharedConfigurationException {
         // Check that the shared folder is set and exists
-        String remoteConfigFolderPath = VikingUserPreferences.getSharedConfigFolder();
+        String remoteConfigFolderPath = UserPreferences.getSharedConfigFolder();
         if (remoteConfigFolderPath.isEmpty()) {
             logger.log(Level.SEVERE, "Shared configuration folder is not set.");
             throw new SharedConfigurationException("Shared configuration folder is not set.");
@@ -412,7 +403,7 @@ public class SharedConfiguration {
         if (isSharedFolder) {
             contextDir = new File(folder, AUTO_MODE_FOLDER);
         } else {
-            IngestJobSettings ingestJobSettings = new IngestJobSettings(VikingUserPreferences.getAutoModeIngestModuleContextString());
+            IngestJobSettings ingestJobSettings = new IngestJobSettings(UserPreferences.getAutoModeIngestModuleContextString());
             contextDir = ingestJobSettings.getSavedModuleSettingsFolder().toFile();
         }
 
@@ -533,7 +524,7 @@ public class SharedConfiguration {
             throw new SharedConfigurationException("Failed to create clean shared configuration subfolder " + remoteAutoConfFolder.getAbsolutePath());
         }
 
-        IngestJobSettings ingestJobSettings = new IngestJobSettings(VikingUserPreferences.getAutoModeIngestModuleContextString());
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(UserPreferences.getAutoModeIngestModuleContextString());
         File localFolder = ingestJobSettings.getSavedModuleSettingsFolder().toFile();
 
         if (!localFolder.exists()) {
@@ -567,7 +558,7 @@ public class SharedConfiguration {
         }
 
         // Get/create the local subfolder
-        IngestJobSettings ingestJobSettings = new IngestJobSettings(VikingUserPreferences.getAutoModeIngestModuleContextString());
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(UserPreferences.getAutoModeIngestModuleContextString());
         File localFolder = ingestJobSettings.getSavedModuleSettingsFolder().toFile();
 
         try {
@@ -749,32 +740,6 @@ public class SharedConfiguration {
     }
 
     /**
-     * Upload Viking settings.
-     *
-     * @param remoteFolder Shared settings folder
-     *
-     * @throws SharedConfigurationException
-     */
-    private void uploadVikingSettings(File remoteFolder) throws SharedConfigurationException {
-        publishTask("Uploading Viking configuration");
-        File vikingFolder = new File(moduleDirPath, PREFERENCES_FOLDER);
-        copyToRemoteFolder(VIKING_PROPERTIES, vikingFolder.getAbsolutePath(), remoteFolder, false);
-    }
-
-    /**
-     * Download Viking settings.
-     *
-     * @param remoteFolder Shared settings folder
-     *
-     * @throws SharedConfigurationException
-     */
-    private void downloadVikingSettings(File remoteFolder) throws SharedConfigurationException {
-        publishTask("Downloading Viking configuration");
-        File vikingFolder = new File(moduleDirPath, PREFERENCES_FOLDER);
-        copyToLocalFolder(VIKING_PROPERTIES, vikingFolder.getAbsolutePath(), remoteFolder, false);
-    }
-
-    /**
      * Upload File Exporter settings.
      *
      * @param remoteFolder Shared settings folder
@@ -934,7 +899,7 @@ public class SharedConfiguration {
      * @param dbFile       File object of the file to copy
      *
      * @throws
-     * viking.configuration.SharedConfiguration.SharedConfigurationException
+     * org.sleuthkit.autopsy.configuration.SharedConfiguration.SharedConfigurationException
      */
     private void copyFile(File sharedDbPath, File dbFile) throws SharedConfigurationException {
         try {
