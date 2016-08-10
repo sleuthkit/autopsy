@@ -1,3 +1,7 @@
+---------------- VERSION 4.1.1  --------------
+Bug Fixes:
+- Restored ability of Python modules to import standard Python libraries. 
+
 ---------------- VERSION 4.1.0  --------------
 Improvements:
 - New list view in Timeline tool
