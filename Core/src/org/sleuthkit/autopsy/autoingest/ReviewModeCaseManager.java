@@ -66,6 +66,8 @@ final class ReviewModeCaseManager implements PropertyChangeListener {
         }
 
     }
+    
+    static final String ROOT_NAMESPACE = "autopsy"; //ELTODO - remove this after AIM is moved into Autopsy. It belongs there.
 
     private static final Logger logger = Logger.getLogger(ReviewModeCaseManager.class.getName());
     private static ReviewModeCaseManager instance;
@@ -167,7 +169,8 @@ final class ReviewModeCaseManager implements PropertyChangeListener {
              * Acquire a lock on the case folder. If the lock cannot be
              * acquired, the case cannot be opened.
              */
-            currentCaseLock = CoordinationService.getInstance(AutoIngestManager.ROOT_NAMESPACE).tryGetSharedLock(CoordinationService.CategoryNode.CASES, caseFolderPath.toString());
+//ELTODO            currentCaseLock = CoordinationService.getInstance(AutoIngestManager.ROOT_NAMESPACE).tryGetSharedLock(CoordinationService.CategoryNode.CASES, caseFolderPath.toString());
+            currentCaseLock = CoordinationService.getInstance(ROOT_NAMESPACE).tryGetSharedLock(CoordinationService.CategoryNode.CASES, caseFolderPath.toString());
             if (null == currentCaseLock) {
                 throw new ReviewModeCaseManagerException("Could not get shared access to multi-user case folder");
             }
