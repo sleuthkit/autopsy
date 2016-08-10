@@ -51,14 +51,14 @@ import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import java.util.logging.Level;
+import javax.swing.JScrollPane;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.autopsy.events.MessageServiceException;
-//ELTODO import viking.autoingest.FileExporterSettingsPanel;
-import javax.swing.JScrollPane;
+import org.sleuthkit.autopsy.autoingest.FileExporterSettingsPanel;
 
 /**
  *
@@ -2180,7 +2180,7 @@ public class OptionsPanel extends javax.swing.JPanel {
 
     private void bnFileExportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnFileExportActionPerformed
         JDialog jDialog = new JDialog();
-        /*ELTODO FileExporterSettingsPanel fileExporterSettingsPanel = new FileExporterSettingsPanel(jDialog);
+        FileExporterSettingsPanel fileExporterSettingsPanel = new FileExporterSettingsPanel(jDialog);
         jDialog.addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosing(java.awt.event.WindowEvent windowEvent) {
@@ -2197,7 +2197,7 @@ public class OptionsPanel extends javax.swing.JPanel {
         jDialog.setModalityType(java.awt.Dialog.ModalityType.APPLICATION_MODAL);
         jDialog.pack();
         jDialog.setLocationRelativeTo(this);
-        jDialog.setVisible(true);*/
+        jDialog.setVisible(true);
     }//GEN-LAST:event_bnFileExportActionPerformed
 
     private void disableUI() {

@@ -222,6 +222,15 @@
                 </dependency>
             </module-dependencies>
             <public-packages>
+                <package>org.apache.curator.framework.recipes</package>
+                <package>org.apache.curator.framework.recipes.atomic</package>
+                <package>org.apache.curator.framework.recipes.barriers</package>
+                <package>org.apache.curator.framework.recipes.cache</package>
+                <package>org.apache.curator.framework.recipes.leader</package>
+                <package>org.apache.curator.framework.recipes.locks</package>
+                <package>org.apache.curator.framework.recipes.nodes</package>
+                <package>org.apache.curator.framework.recipes.queue</package>
+                <package>org.apache.curator.framework.recipes.shared</package>
                 <package>org.sleuthkit.autopsy.actions</package>
                 <package>org.sleuthkit.autopsy.casemodule</package>
                 <package>org.sleuthkit.autopsy.casemodule.events</package>
@@ -257,10 +266,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/jdom-2.0.5.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jdom-2.0.5.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/curator-recipes-2.8.0-sources.jar</runtime-relative-path>
-                <binary-origin>C:\cygwin64\home\elivis\autopsy\Core\release\modules\ext\curator-recipes-2.8.0-sources.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/postgresql-9.4-1201-jdbc41.jar</runtime-relative-path>
@@ -311,6 +316,10 @@
                 <binary-origin>release/modules/ext/mchange-commons-java-0.2.9.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/LGoodDatePicker-4.3.1.jar</runtime-relative-path>
+                <binary-origin>C:\cygwin64\home\elivis\autopsy\Core\release\modules\ext\LGoodDatePicker-4.3.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/sevenzipjbinding-AllPlatforms.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/sevenzipjbinding-AllPlatforms.jar</binary-origin>
             </class-path-extension>
@@ -329,6 +338,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/curator-recipes-2.8.0.jar</runtime-relative-path>
                 <binary-origin>C:\cygwin64\home\elivis\autopsy\Core\release\modules\ext\curator-recipes-2.8.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jackson-core-2.7.0.jar</runtime-relative-path>
+                <binary-origin>C:\cygwin64\home\elivis\autopsy\Core\release\modules\ext\jackson-core-2.7.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/c3p0-0.9.5.jar</runtime-relative-path>
