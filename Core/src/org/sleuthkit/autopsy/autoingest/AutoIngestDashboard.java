@@ -56,7 +56,7 @@ import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotDialog;
-//ELTODO import 3RDPARTY.configuration.3RDPARTYOptionsDialog;
+import org.sleuthkit.autopsy.configuration.OptionsDialog;
 
 /**
  * A panel for monitoring automated ingest by a cluster, and for controlling
@@ -527,7 +527,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
      * Sets the initial state of the buttons on the panel.
      */
     private void initButtons() {
-        bnOptions.setEnabled(false);
+        //ELTODO bnOptions.setEnabled(false); // uncomment after AIM event processing is moved over to Autopsy
+        bnOptions.setEnabled(true); // ELTODO remove after AIM event processing is moved over to Autopsy
         bnDeleteCase.setEnabled(false);
         enablePendingTableButtons(false);
         bnShowCaseLog.setEnabled(false);
@@ -1556,7 +1557,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
      */
     private void bnOptionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOptionsActionPerformed
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        //ELTODO 3RDPARTYOptionsDialog dialog = new 3RDPARTYOptionsDialog(this.getTopLevelAncestor(), true);
+        OptionsDialog dialog = new OptionsDialog(this.getTopLevelAncestor(), true);
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }//GEN-LAST:event_bnOptionsActionPerformed
 

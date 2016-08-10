@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.configuration;
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.Dialog;
-import java.awt.Dimension;
 import java.awt.Cursor;
 import java.awt.Window;
 import java.awt.event.KeyEvent;
@@ -37,7 +36,7 @@ import org.openide.util.ImageUtilities;
 public class OptionsDialog extends JDialog {
 
     private static final String TITLE = "Options";
-    private static final Dimension DIMENSIONS = new Dimension(791, 763);
+    private static final long serialVersionUID = 1L;
 
     /**
      * Constructs an instance of the dialog with its own frame. Could be modal.
@@ -48,7 +47,7 @@ public class OptionsDialog extends JDialog {
      */
     public OptionsDialog(Container owner, Boolean shouldBeModal) {
         super((Window) owner, TITLE, Dialog.ModalityType.MODELESS);
-        //ELTODO setIconImage(ImageUtilities.loadImage("viking/images/viking16.gif", false)); //NON-NLS
+        setIconImage(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/frame.gif", false)); //NON-NLS
         if (shouldBeModal && owner instanceof JDialog) { // if called from a modal dialog, manipulate the parent be just under this in z order, and not modal.
             final JDialog pseudoOwner = (JDialog) owner;
             addWindowListener(new WindowAdapter() {

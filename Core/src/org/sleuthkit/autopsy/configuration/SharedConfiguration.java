@@ -43,7 +43,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
-import org.sleuthkit.autopsy.keywordsearch.KeywordListsManager;
+//ELTODO import org.sleuthkit.autopsy.keywordsearch.KeywordListsManager;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
@@ -686,7 +686,7 @@ public class SharedConfiguration {
         copyToLocalFolder(KEYWORD_SEARCH_NSRL_LEGACY, moduleDirPath, remoteFolder, true);
         copyToLocalFolder(KEYWORD_SEARCH_OPTIONS_LEGACY, moduleDirPath, remoteFolder, true);
         copyToLocalFolder(KEYWORD_SEARCH_SCRIPTS_LEGACY, moduleDirPath, remoteFolder, true);
-        KeywordListsManager.reloadKeywordLists();
+//ELTODO         KeywordListsManager.reloadKeywordLists();
     }
 
     /**

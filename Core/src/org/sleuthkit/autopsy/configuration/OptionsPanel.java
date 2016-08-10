@@ -1514,7 +1514,7 @@ public class OptionsPanel extends javax.swing.JPanel {
             }
         });
 
-        jLabelAimDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/viking/images/viking.png"))); // NOI18N
+        jLabelAimDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/AIM.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(jLabelAimDiagram, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.jLabelAimDiagram.text")); // NOI18N
 
         jLabelInvalidImageFolder.setForeground(new java.awt.Color(255, 0, 0));
@@ -2193,7 +2193,7 @@ public class OptionsPanel extends javax.swing.JPanel {
         jScrollPane.setMinimumSize(new Dimension(100, 100));
         jDialog.add(jScrollPane);
         jDialog.setTitle(NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.FileExportRules.text"));
-        //ELTODO jDialog.setIconImage(ImageUtilities.loadImage("/viking/images/viking32.gif"));
+        jDialog.setIconImage(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/frame32.gif"));
         jDialog.setModalityType(java.awt.Dialog.ModalityType.APPLICATION_MODAL);
         jDialog.pack();
         jDialog.setLocationRelativeTo(this);

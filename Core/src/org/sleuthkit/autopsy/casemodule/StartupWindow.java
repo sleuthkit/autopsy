@@ -29,6 +29,7 @@ import javax.swing.JDialog;
 import javax.swing.JTabbedPane;
 import javax.swing.WindowConstants;
 import org.openide.LifecycleManager;
+import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.windows.WindowManager;
@@ -103,11 +104,13 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
      * user.
      */
     private void addPanelForMode() {
+        UserPreferences.setMode(UserPreferences.SelectedMode.AUTOMATED); // ELTODO remove
         UserPreferences.SelectedMode mode = UserPreferences.getMode();
 
         switch (mode) {
             case AUTOMATED:
                 this.setTitle(NbBundle.getMessage(StartupWindow.class, "StartupWindow.AutoIngestMode") + " (" + LOCAL_HOST_NAME + ")");
+                setIconImage(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/frame.gif", false)); //NON-NLS
                 this.addWindowListener(new WindowAdapter() {
                     @Override
                     public void windowClosing(WindowEvent e) {
@@ -120,11 +123,13 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
             case REVIEW:
                 this.setTitle(NbBundle.getMessage(StartupWindow.class, "StartupWindow.ReviewMode") + " (" + LOCAL_HOST_NAME + ")");
 //ELTODO                 caseManagementPanel = new ReviewModeCasePanel(this);
+                setIconImage(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/frame.gif", false)); //NON-NLS
 //ELTODO                 add(caseManagementPanel);
                 break;
             case COPYFILES:
                 this.setTitle(NbBundle.getMessage(StartupWindow.class, "StartupWindow.CopyAndImportMode") + " (" + LOCAL_HOST_NAME + ")");
 //ELTODO                 caseImportPanel = new CaseImportPanel();
+                setIconImage(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/frame.gif", false)); //NON-NLS
 //ELTODO                 copyPane.add(NbBundle.getMessage(StartupWindow.class, "StartupWindow.CaseImportMode"), caseImportPanel);
                 this.addWindowListener(new WindowAdapter() {
                     @Override
