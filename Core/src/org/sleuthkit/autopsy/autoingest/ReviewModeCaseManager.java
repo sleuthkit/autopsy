@@ -37,8 +37,8 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseNewAction;
 import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.autopsy.application.CoordinationService;
-import org.sleuthkit.autopsy.application.CoordinationService.CoordinationServiceException;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 
 
 /**
