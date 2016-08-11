@@ -25,6 +25,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -571,34 +572,11 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             ArrayList<Action> arrayList = new ArrayList<>();
             arrayList.addAll(Arrays.asList(actions));
 
-            arrayList.add(new AbstractAction(Bundle.ApproveAccountsAction_name()) {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    try {
-                        for (BlackboardArtifact artifact : getLookup().lookupAll(BlackboardArtifact.class)) {
-                            skCase.setReviewStatus(artifact, ReviewStatus.APPROVED);
-                        }
-                        Accounts.this.update();
-                    } catch (TskCoreException ex) {
-                        LOGGER.log(Level.SEVERE, "Error approving artifacts.", ex); //NON-NLS
-                    }
-                }
-            });
-            arrayList.add(new AbstractAction(Bundle.RejectAccountsAction_name()) {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    try {
-                        for (BlackboardArtifact artifact : getLookup().lookupAll(BlackboardArtifact.class)) {
-                            skCase.setReviewStatus(artifact, ReviewStatus.REJECTED);
-                        }
-                        Accounts.this.update();
-                    } catch (TskCoreException ex) {
-                        LOGGER.log(Level.SEVERE, "Error approving artifacts.", ex); //NON-NLS
-                    }
-                }
-            });
+            arrayList.add(new ApproveAccounts(getLookup().lookupAll(BlackboardArtifact.class)));
+            arrayList.add(new RejectAccounts(getLookup().lookupAll(BlackboardArtifact.class)));
             return arrayList.toArray(new Action[arrayList.size()]);
         }
+
     }
 
     /**
@@ -770,10 +748,91 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
             try {
                 BlackboardArtifact art = skCase.getBlackboardArtifact(artifactID);
-                return new BlackboardArtifactNode(art, "org/sleuthkit/autopsy/images/credit-card.png");   //NON-NLS
+                return new AccountArtifactNode(art);
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.WARNING, "Error creating BlackboardArtifactNode for artifact with ID " + artifactID, ex);   //NON-NLS
                 return null;
+            }
+        }
+    }
+
+    private class AccountArtifactNode extends BlackboardArtifactNode {
+
+        private final BlackboardArtifact artifact;
+
+        private AccountArtifactNode(BlackboardArtifact artifact) {
+            super(artifact, "org/sleuthkit/autopsy/images/credit-card.png");   //NON-NLS
+            this.artifact = artifact;
+        }
+
+        @Override
+        public Action[] getActions(boolean context) {
+            List<Action> actionsList = new ArrayList<>();
+            actionsList.addAll(Arrays.asList(super.getActions(context)));
+            actionsList.add(new ApproveAccounts(Collections.singleton(artifact)));
+            actionsList.add(new RejectAccounts(Collections.singleton(artifact)));
+            return actionsList.toArray(new Action[actionsList.size()]);
+        }
+
+        @Override
+        protected Sheet createSheet() {
+            Sheet sheet = super.createSheet(); //To change body of generated methods, choose Tools | Templates.
+            Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+            if (sheetSet == null) {
+                sheetSet = Sheet.createPropertiesSet();
+                sheet.put(sheetSet);
+            }
+            sheetSet.put(new NodeProperty<>(Bundle.Accounts_FileWithCCNNode_statusProperty_displayName(),
+                    Bundle.Accounts_FileWithCCNNode_statusProperty_displayName(),
+                    Bundle.Accounts_FileWithCCNNode_noDescription(),
+                    artifact.getReviewStatus().getDisplayName()));
+
+            return sheet;
+        }
+    }
+
+    private class ApproveAccounts extends AbstractAction {
+
+        private final Collection<? extends BlackboardArtifact> artifacts;
+
+        ApproveAccounts(Collection<? extends BlackboardArtifact> artifacts) {
+            super(Bundle.ApproveAccountsAction_name());
+            this.artifacts = artifacts;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            try {
+                for (BlackboardArtifact artifact : artifacts) {
+                    skCase.setReviewStatus(artifact, ReviewStatus.APPROVED);
+                }
+                Accounts.this.update();
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Error approving artifacts.", ex); //NON-NLS
+            }
+        }
+    }
+
+    private class RejectAccounts extends AbstractAction {
+
+        private final Collection<? extends BlackboardArtifact> artifacts;
+
+        RejectAccounts(Collection<? extends BlackboardArtifact> artifacts) {
+            super(Bundle.RejectAccountsAction_name());
+
+            this.artifacts = artifacts;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            try {
+                for (BlackboardArtifact artifact : artifacts) {
+                    skCase.setReviewStatus(artifact, ReviewStatus.REJECTED);
+                }
+                Accounts.this.update();
+
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Error approving artifacts.", ex); //NON-NLS
             }
         }
     }
