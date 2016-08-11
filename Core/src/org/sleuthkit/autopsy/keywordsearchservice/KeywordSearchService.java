@@ -51,4 +51,8 @@ public interface KeywordSearchService extends Closeable {
      */
     public void tryConnect(String host, int port) throws KeywordSearchServiceException;
 
+    /**
+     * Force reload of the KeywordSearchService configuration.
+     */
+    public void reloadConfiguration();
 }
