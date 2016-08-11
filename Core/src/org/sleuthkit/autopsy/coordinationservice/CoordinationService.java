@@ -45,10 +45,10 @@ public final class CoordinationService {
      * Category nodes are the immediate children of the root node of a shared
      * hierarchical namespace managed by the coordination service.
      */
-    public enum CategoryNode {
+    public enum CategoryNode { // RJCTODO: Move this
 
         CASES("cases"),
-        IMAGES("images"),
+        MANIFESTS("images"),
         CONFIG("config");
 
         private final String displayName;
@@ -120,8 +120,8 @@ public final class CoordinationService {
     private final Map<String, String> categoryNodeToPath = new HashMap<>();
     private static final int SESSION_TIMEOUT_MILLISECONDS = 300000;
     private static final int CONNECTION_TIMEOUT_MILLISECONDS = 300000;
-    private static final int ZOOKEEPER_SESSION_TIMEOUT_MILLISECONDS = 3000;
-    private static final int ZOOKEEPER_CONNECTION_TIMEOUT_MILLISECONDS = 15000;
+    private static final int ZOOKEEPER_SESSION_TIMEOUT_MILLIS = 3000;
+    private static final int ZOOKEEPER_CONNECTION_TIMEOUT_MILLIS = 15000;
     private static final int PORT_OFFSET = 1000;
 
     /**
@@ -391,7 +391,7 @@ public final class CoordinationService {
         String connectString = UserPreferences.getIndexingServerHost() + ":" + zooKeeperServerPort;
 
         try {
-            ZooKeeper zooKeeper = new ZooKeeper(connectString, ZOOKEEPER_SESSION_TIMEOUT_MILLISECONDS,
+            ZooKeeper zooKeeper = new ZooKeeper(connectString, ZOOKEEPER_SESSION_TIMEOUT_MILLIS,
                     (WatchedEvent event) -> {
 
                         synchronized (workerThreadWaitNotifyLock) {
@@ -399,7 +399,7 @@ public final class CoordinationService {
                         }
                     });
             synchronized (workerThreadWaitNotifyLock) {
-                workerThreadWaitNotifyLock.wait(ZOOKEEPER_CONNECTION_TIMEOUT_MILLISECONDS);
+                workerThreadWaitNotifyLock.wait(ZOOKEEPER_CONNECTION_TIMEOUT_MILLIS);
             }
             ZooKeeper.States state = zooKeeper.getState();
             if (state == ZooKeeper.States.CONNECTED || state == ZooKeeper.States.CONNECTEDREADONLY) {
