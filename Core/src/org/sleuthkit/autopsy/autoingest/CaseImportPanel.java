@@ -34,7 +34,6 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
-import org.sleuthkit.autopsy.configuration.OptionsDialog;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import java.util.logging.Level;
@@ -84,8 +83,8 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
         tbImageDestination.setText(UserPreferences.getAutoModeImageFolder());
         cbCopyImages.setSelected(true);
         cbDeleteCase.setSelected(false);
-        badDatabaseCredentials = new ImageIcon(ImageUtilities.loadImage("viking/images/warning16.png", false)); //NON-NLS
-        goodDatabaseCredentials = new ImageIcon(ImageUtilities.loadImage("viking/images/tick.png", false)); //NON-NLS
+        badDatabaseCredentials = new ImageIcon(ImageUtilities.loadImage("src/org/sleuthkit/autopsy/images/warning16.png", false)); //NON-NLS
+        goodDatabaseCredentials = new ImageIcon(ImageUtilities.loadImage("src/org/sleuthkit/autopsy/images/tick.png", false)); //NON-NLS
         picDbStatus.setText(""); //NON-NLS
         tbDeleteWarning.setText(""); //NON-NLS
         tbInputNotification.setText(""); //NON-NLS
@@ -142,7 +141,7 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
         bnStart = new javax.swing.JButton();
         bnCancel = new javax.swing.JButton();
         bnShowLog = new javax.swing.JButton();
-        bnVikingOptions = new javax.swing.JButton();
+        bnOptions = new javax.swing.JButton();
         bnBrowseCaseSource = new javax.swing.JButton();
         bnBrowseImageSource = new javax.swing.JButton();
         pbShowProgress = new javax.swing.JProgressBar();
@@ -162,7 +161,7 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
 
         lbDbConnection.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         lbDbConnection.setText("Database");
-        lbDbConnection.setToolTipText("Set database credentials via 'Viking Options'");
+        lbDbConnection.setToolTipText("Set database credentials via 'Options'");
         lbDbConnection.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
         lbDbConnection.setFocusable(false);
 
@@ -216,10 +215,10 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
             }
         });
 
-        bnVikingOptions.setText("Options");
-        bnVikingOptions.addActionListener(new java.awt.event.ActionListener() {
+        bnOptions.setText("Options");
+        bnOptions.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnVikingOptionsActionPerformed(evt);
+                bnOptionsActionPerformed(evt);
             }
         });
 
@@ -342,7 +341,7 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
                                 .addComponent(bnBrowseImageSource, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE))))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(bnVikingOptions, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(bnOptions, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(37, 37, 37)
                         .addComponent(lbCaption)
@@ -409,7 +408,7 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
                     .addComponent(tbDeleteWarning, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(35, 35, 35)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                    .addComponent(bnVikingOptions)
+                    .addComponent(bnOptions)
                     .addComponent(tbCaseDestination, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(lbCaseDestination))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -476,7 +475,7 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
         cbCopyImages.setEnabled(!setting);
         cbDeleteCase.setEnabled(!setting);
         bnStart.setEnabled(!setting);
-        bnVikingOptions.setEnabled(!setting);
+        bnOptions.setEnabled(!setting);
         bnCancel.setEnabled(setting);
     }
 
@@ -542,11 +541,11 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
     }
 
     /**
-     * Handles pressing the Viking Options button
+     * Handles pressing the Options button
      *
      * @param evt
      */
-    private void bnVikingOptionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnVikingOptionsActionPerformed
+    private void bnOptionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOptionsActionPerformed
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         String caseDestinationResult = "";
@@ -574,7 +573,7 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
         setNotificationText(NotificationLabel.OUTPUT, result, false);
         showDbStatus();
         enableStartButton();
-    }//GEN-LAST:event_bnVikingOptionsActionPerformed
+    }//GEN-LAST:event_bnOptionsActionPerformed
 
     /**
      * Handles pressing the Show Log button
@@ -701,9 +700,9 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
     private javax.swing.JButton bnBrowseCaseSource;
     private javax.swing.JButton bnBrowseImageSource;
     private javax.swing.JButton bnCancel;
+    private javax.swing.JButton bnOptions;
     private javax.swing.JButton bnShowLog;
     private javax.swing.JButton bnStart;
-    private javax.swing.JButton bnVikingOptions;
     private javax.swing.JCheckBox cbCopyImages;
     private javax.swing.JCheckBox cbDeleteCase;
     private javax.swing.JLabel lbCaption;
