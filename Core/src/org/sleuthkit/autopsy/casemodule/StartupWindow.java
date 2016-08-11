@@ -36,6 +36,8 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.autoingest.AutoIngestDashboard;
+import org.sleuthkit.autopsy.autoingest.CaseImportPanel;
+import org.sleuthkit.autopsy.autoingest.ReviewModeCasePanel;
 
 /**
  * The default implementation of the Autopsy startup window
@@ -46,8 +48,8 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
     private static final String TITLE = NbBundle.getMessage(StartupWindow.class, "StartupWindow.title.text");
     private static Dimension DIMENSIONS = new Dimension(750, 400);
     private static CueBannerPanel welcomeWindow;
-//ELTODO     private ReviewModeCasePanel caseManagementPanel = null;
-//ELTODO     private CaseImportPanel caseImportPanel = null;
+    private ReviewModeCasePanel caseManagementPanel = null;
+    private CaseImportPanel caseImportPanel = null;
     private JTabbedPane copyPane = new JTabbedPane();
     private static final String LOCAL_HOST_NAME = NetworkUtils.getLocalHostName();
 
@@ -79,10 +81,10 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
     @Override
     public void open() {
         
-        //ELTODO if (caseManagementPanel != null) {
-        //ELTODO     caseManagementPanel.updateView();
-        //ELTODO     caseManagementPanel.setCursor(Cursor.getDefaultCursor());
-        //ELTODO }
+        if (caseManagementPanel != null) {
+            caseManagementPanel.updateView();
+            caseManagementPanel.setCursor(Cursor.getDefaultCursor());
+        }
         
         if (welcomeWindow != null) {
             welcomeWindow.refresh();
@@ -104,7 +106,7 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
      * user.
      */
     private void addPanelForMode() {
-        UserPreferences.setMode(UserPreferences.SelectedMode.AUTOMATED); // ELTODO remove
+        //UserPreferences.setMode(UserPreferences.SelectedMode.AUTOMATED); // ELTODO remove
         UserPreferences.SelectedMode mode = UserPreferences.getMode();
 
         switch (mode) {
@@ -122,15 +124,15 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
                 break;
             case REVIEW:
                 this.setTitle(NbBundle.getMessage(StartupWindow.class, "StartupWindow.ReviewMode") + " (" + LOCAL_HOST_NAME + ")");
-//ELTODO                 caseManagementPanel = new ReviewModeCasePanel(this);
+                caseManagementPanel = new ReviewModeCasePanel(this);
                 setIconImage(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/frame.gif", false)); //NON-NLS
-//ELTODO                 add(caseManagementPanel);
+                add(caseManagementPanel);
                 break;
             case COPYFILES:
                 this.setTitle(NbBundle.getMessage(StartupWindow.class, "StartupWindow.CopyAndImportMode") + " (" + LOCAL_HOST_NAME + ")");
-//ELTODO                 caseImportPanel = new CaseImportPanel();
+                caseImportPanel = new CaseImportPanel();
                 setIconImage(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/frame.gif", false)); //NON-NLS
-//ELTODO                 copyPane.add(NbBundle.getMessage(StartupWindow.class, "StartupWindow.CaseImportMode"), caseImportPanel);
+                copyPane.add(NbBundle.getMessage(StartupWindow.class, "StartupWindow.CaseImportMode"), caseImportPanel);
                 this.addWindowListener(new WindowAdapter() {
                     @Override
                     public void windowClosing(WindowEvent e) {
@@ -138,7 +140,7 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
                     }
                 });
                 setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-                //ELTODO add(copyPane);
+                add(copyPane);
                 break;
             default:                
                 welcomeWindow = new CueBannerPanel();

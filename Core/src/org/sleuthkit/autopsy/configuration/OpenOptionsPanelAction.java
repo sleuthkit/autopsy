@@ -37,7 +37,7 @@ import org.openide.windows.WindowManager;
 @ActionReferences({
     @ActionReference(path = "Menu/Tools", position = 1600)
 })
-@NbBundle.Messages(value = "CTL_OpenOptionsPanelAction=Options")
+@NbBundle.Messages(value = "CTL_OpenOptionsPanelAction=Autoingest Options")
 
 /**
  * Custom options action that opens up the options panel.
