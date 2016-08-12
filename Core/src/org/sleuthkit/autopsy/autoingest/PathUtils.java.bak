@@ -183,15 +183,21 @@ final class PathUtils {
             File file = new File(folder, fileName);
             if (file.isDirectory() && fileName.length() > TimeStampUtils.getTimeStampLength()) {
                 Path filePath = Paths.get(file.getPath());
-                if (TimeStampUtils.endsWithTimeStamp(fileName)) {
-                    if (null != caseName) {
-                        String fileNamePrefix = fileName.substring(0, fileName.length() - TimeStampUtils.getTimeStampLength());
-                        if (fileNamePrefix.equals(caseName)) {
-                            return hasCaseMetadataFile(filePath);
+                try {
+                    if (!StateFile.exists(filePath, StateFile.Type.DELETED)) {
+                        if (TimeStampUtils.endsWithTimeStamp(fileName)) {
+                            if (null != caseName) {
+                                String fileNamePrefix = fileName.substring(0, fileName.length() - TimeStampUtils.getTimeStampLength());
+                                if (fileNamePrefix.equals(caseName)) {
+                                    return hasCaseMetadataFile(filePath);
+                                }
+                            } else {
+                                return hasCaseMetadataFile(filePath);
+                            }
                         }
-                    } else {
-                        return hasCaseMetadataFile(filePath);
                     }
+                } catch (IOException ex) {
+                    logger.log(Level.SEVERE, String.format("Failed to access %s", file.getPath()), ex);
                 }
             }
             return false;

@@ -18,447 +18,236 @@
  */
 package org.sleuthkit.autopsy.autoingest;
 
-import java.io.IOException;
-import java.nio.file.Files;
+import java.io.Serializable;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.Objects;
-import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import javax.annotation.concurrent.GuardedBy;
+import javax.annotation.concurrent.Immutable;
+import javax.annotation.concurrent.ThreadSafe;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
-import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.ingest.IngestJob;
-import org.joda.time.DateTime;
 
 /**
- * An automated ingest job completed by, or to be completed by, the automated
- * ingest manager.
+ * An automated ingest job auto ingest jobs associated with a manifest file. A
+ * manifest file specifies a co-located data source and a case to which the data
+ * source is to be added.
  */
-class AutoIngestJob implements Comparable<AutoIngestJob> {
+@ThreadSafe
+public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializable {
 
-    // ELTODO: move JobIngestStatus back into AIM
-    /**
-     * Represents the state of an auto ingest job at any given moment during its
-     * lifecycle as it moves from waiting to be processed, through the various
-     * stages of processing, to its final completed state.
-     */
-    static final class JobIngestStatus {
-
-        private enum IngestStatus {
-
-            PENDING("Pending"),
-            STARTING("Starting"),
-            UPDATING_SHARED_CONFIG("Updating shared configuration"),
-            CHECKING_SERVICES("Checking services"),
-            OPENING_CASE("Opening case"),
-            IDENTIFYING_IMAGES("Identifying images"),
-            ADDING_IMAGES("Adding images"),
-            ANALYZING_IMAGES("Analyzing images"),
-            ANALYZING_FILES("Analyzing files"),
-            EXPORTING_FILES("Exporting files"),
-            CANCELLING_MODULE("Cancelling module"),
-            CANCELLING("Cancelling"),
-            COMPLETED("Completed");
-
-            private final String displayText;
-
-            private IngestStatus(String displayText) {
-                this.displayText = displayText;
-            }
-
-            String getDisplayText() {
-                return displayText;
-            }
-
-        }
-
-        private IngestStatus ingestStatus;
-        private String statusDisplayName;
-        private Date startDate;
-        private IngestJob ingestJob;
-        private boolean cancelled;
-        private Date dateCompleted;
-
-        private JobIngestStatus(Date dateCompleted) {
-            ingestStatus = IngestStatus.PENDING;
-            statusDisplayName = ingestStatus.getDisplayText();
-            startDate = DateTime.now().toDate();
-            this.dateCompleted = dateCompleted;
-        }
-
-        /**
-         * Updates displayed status and start fileTime of auto ingest job. Used
-         * primarily to display status of remote running jobs.
-         *
-         * @param newDisplayName Displayed status of the auto ingest job.
-         * @param startTime      Start fileTime of the current activity.
-         */
-        synchronized private void setStatus(String newDisplayName, Date startTime) {
-            statusDisplayName = newDisplayName;
-            startDate = startTime;
-        }
-
-        /**
-         * Updates status of auto ingest job. Sets current fileTime as activity
-         * start fileTime. Used to update status of local running job.
-         *
-         * @param newStatus Status of the auto ingest job.
-         */
-        synchronized private void setStatus(IngestStatus newStatus) {
-            if (ingestStatus == IngestStatus.CANCELLING && newStatus != IngestStatus.COMPLETED) {
-                /**
-                 * Do not overwrite canceling status with anything other than
-                 * completed status.
-                 */
-                return;
-            }
-            ingestStatus = newStatus;
-            statusDisplayName = ingestStatus.getDisplayText();
-            startDate = Date.from(Instant.now());
-            if (ingestStatus == IngestStatus.COMPLETED) {
-                /**
-                 * Release the reference for garbage collection since this
-                 * object may live for a long time within a completed job.
-                 */
-                ingestJob = null;
-            }
-            if (ingestStatus == IngestStatus.COMPLETED) {
-                dateCompleted = startDate;
-            }
-        }
-
-        synchronized private void setIngestJob(IngestJob ingestJob) {
-            /**
-             * Once this field is set, the ingest job should be used to
-             * determine the current activity up until the the job is completed.
-             */
-            this.ingestJob = ingestJob;
-        }
-
-        synchronized AutoIngestJob.Status getStatus() {
-            if (null != ingestJob && ingestStatus != IngestStatus.CANCELLING && ingestStatus != IngestStatus.EXPORTING_FILES) {
-                String activityDisplayText;
-                IngestJob.ProgressSnapshot progress = ingestJob.getSnapshot();
-                IngestJob.DataSourceIngestModuleHandle ingestModuleHandle = progress.runningDataSourceIngestModule();
-                if (null != ingestModuleHandle) {
-                    /**
-                     * A first or second stage data source level ingest module
-                     * is running. Reporting this takes precedence over
-                     * reporting generic file analysis.
-                     */
-                    startDate = ingestModuleHandle.startTime();
-                    if (!ingestModuleHandle.isCancelled()) {
-                        activityDisplayText = ingestModuleHandle.displayName();
-                    } else {
-                        activityDisplayText = String.format(IngestStatus.CANCELLING_MODULE.getDisplayText(), ingestModuleHandle.displayName());
-                    }
-                } else {
-                    /**
-                     * If no data source level ingest module is running, then
-                     * either it is still the first stage of analysis and file
-                     * level ingest modules are running or another ingest job is
-                     * still running. Note that there can be multiple ingest
-                     * jobs running in parallel. For example, there is an ingest
-                     * job created to ingest each extracted virtual machine.
-                     */
-                    activityDisplayText = IngestStatus.ANALYZING_FILES.getDisplayText();
-                    startDate = progress.fileIngestStartTime();
-                }
-                return new AutoIngestJob.Status(activityDisplayText, startDate);
-            } else {
-                return new AutoIngestJob.Status(statusDisplayName, startDate);
-            }
-        }
-
-        synchronized private IngestJob setStatusCancelled() {
-            cancelled = true;
-            setStatus(JobIngestStatus.IngestStatus.CANCELLING);
-            return ingestJob;
-        }
-
-        synchronized private IngestJob cancelModule() {
-            setStatus(JobIngestStatus.IngestStatus.CANCELLING_MODULE);
-            return ingestJob;
-        }
-
-        synchronized private boolean isCancelled() {
-            return cancelled;
-        }
-
-        synchronized Date getDateCompleted() {
-            return dateCompleted;
-        }
-
-        synchronized Date getDateStarted() {
-            return startDate;
-        }
-    }
-
-    private static final Logger logger = Logger.getLogger(AutoIngestJob.class.getName());
-    private final String caseName;
-    private final Path imageFolderPath;
-    private final Date imageFolderCreateDate;
-    private Path caseFolderName;
-    private final String jobDisplayName;
-    private String nodeName;
-//ELTODO    private final AutoIngestManager.JobIngestStatus ingestStatus;
-    private final JobIngestStatus ingestStatus;
-    private static final String localHostName = NetworkUtils.getLocalHostName();
+    private static final long serialVersionUID = 1L;
+    private static final String LOCAL_HOST_NAME = NetworkUtils.getLocalHostName();
+    private final Manifest manifest;
+    private final String nodeName;
+    @GuardedBy("this")
+    private String caseDirectoryPath;
+    @GuardedBy("this")
+    private Integer priority;
+    @GuardedBy("this")
+    private Stage stage;
+    @GuardedBy("this")
+    private Date stageStartDate;
+    @GuardedBy("this")
+    transient private IngestJob ingestJob;
 
     /**
-     * This variable is being accessed by AID as well as JMS thread
-     */
-    private volatile boolean isLocalJob;
-    private Date readyFileTimeStamp;
-    private Date prioritizedFileTimeStamp;
-
-    /**
-     * Constructs an automated ingest job completed by, or to be completed by,
-     * the automated ingest manager.
+     * RJCTODO
      *
-     * @param imageFolderPath The fully qualified path to the case input folder
-     *                        for the job.
-     * @param caseName        The case to which this job belongs. Note that this
-     *                        is the original case name (and not the timestamped
-     *                        case name).
-     * @param caseFolderName  The fully qualified path to the case output folder
-     *                        for the job, if known.
-     * @param ingestStatus    Ingest status details provided by the automated
-     *                        ingest manager.
-     * @param nodeName        Name of the node that is processing the job
+     * @param manifest
      */
-    AutoIngestJob(Path imageFolderPath, String caseName, Path caseFolderName, /* //ELTODO AutoIngestManager.*/JobIngestStatus ingestStatus, String nodeName) {
-        this.caseName = caseName;
-        this.imageFolderPath = imageFolderPath;
-        this.caseFolderName = caseFolderName;
-        this.ingestStatus = ingestStatus;
-        this.jobDisplayName = resolveJobDisplayName(imageFolderPath);
-        this.isLocalJob = true; // jobs are set to "local" by default
+    AutoIngestJob(Manifest manifest, Path caseDirectoryPath, int priority, String nodeName) {
+        this.manifest = manifest;
+        if (null != caseDirectoryPath) {
+            this.caseDirectoryPath = caseDirectoryPath.toString();
+        } else {
+            this.caseDirectoryPath = "";
+        }
+        this.priority = priority;
         this.nodeName = nodeName;
-
-        /**
-         * Either initialize to the folder creation date or the current date.
-         * Note that the way this is coded allows the folder creation date field
-         * to be final.
-         */
-        BasicFileAttributes attrs = null;
-        try {
-            attrs = Files.readAttributes(imageFolderPath, BasicFileAttributes.class);
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, String.format("Failed to read attributes of input folder %s", imageFolderPath), ex);
-        }
-        this.imageFolderCreateDate = attrs == null ? new Date() : new Date(attrs.creationTime().toMillis());
-
-        try {
-            attrs = Files.readAttributes(Paths.get(imageFolderPath.toString(), StateFile.Type.READY.fileName()), BasicFileAttributes.class);
-            this.readyFileTimeStamp = new Date(attrs.creationTime().toMillis());
-        } catch (IOException ex) {
-            // Auto ingest job may be created for a remotely running job so no need to log exception if we don't find READY file
-            this.readyFileTimeStamp = new Date();
-        }
-
-        try {
-            attrs = Files.readAttributes(Paths.get(imageFolderPath.toString(), StateFile.Type.PRIORITIZED.fileName()), BasicFileAttributes.class);
-            this.prioritizedFileTimeStamp = new Date(attrs.creationTime().toMillis());
-        } catch (IOException ex) {
-            this.prioritizedFileTimeStamp = null;
-        }
-    }
-
-    static final class Status {
-
-        private final String activity;
-        private final Date activityStartDate;
-
-        Status(String activity, Date activityStartTime) {
-            this.activity = activity;
-            this.activityStartDate = activityStartTime;
-        }
-
-        String getActivity() {
-            return this.activity;
-        }
-
-        Date getActivityStartDate() {
-            return this.activityStartDate;
-        }
-    }
-
-    Status getStatus() {
-        return ingestStatus.getStatus();
-    }
-
-    // ELTODO AutoIngestManager.JobIngestStatus getIngestStatus() {
-    JobIngestStatus getIngestStatus() {
-        return ingestStatus;
+        this.stage = Stage.PENDING;
+        this.stageStartDate = manifest.getDateFileCreated();
     }
 
     /**
-     * Determine auto ingest job's display name. Display name is a relative path
-     * from case folder down to auto ingest job's folder.
-     *
-     * @param jobFolderPath Full path to auto ingest job's directory
-     *
-     * @return Auto ingest job's display name
-     */
-    private String resolveJobDisplayName(Path jobFolderPath) {
-        Path pathRelative;
-        try {
-            Path rootInputFolderPath = Paths.get(UserPreferences.getAutoModeImageFolder());
-            Path casePath = PathUtils.caseImagesPathFromImageFolderPath(rootInputFolderPath, jobFolderPath);
-            pathRelative = casePath.relativize(jobFolderPath);
-        } catch (Exception ignore) {
-            // job folder is not a subpath of case folder, return entire job folder path
-            return jobFolderPath.toString();
-        }
-        return pathRelative.toString();
-    }
-
-    /**
-     * Returns the fully qualified path to the input folder.
-     */
-    Path getImageFolderPath() {
-        return imageFolderPath;
-    }
-
-    /**
-     * Returns the name of the case to which the ingest job belongs. Note that
-     * this is the original case name (not the timestamped Autopsy case name).
-     */
-    String getCaseName() {
-        return this.caseName;
-    }
-
-    /**
-     * Returns the display name for current auto ingest job.
-     */
-    String getJobDisplayName() {
-        return this.jobDisplayName;
-    }
-
-    /**
-     * Returns the fully qualified path to the case results folder.
-     */
-    Path getCaseFolderPath() {
-        return this.caseFolderName;
-    }
-
-    /**
-     * Set the fully qualifies path to the case results folder.
-     *
-     * @param resultsPath
-     */
-    void setCaseFolderPath(Path resultsPath) {
-        this.caseFolderName = resultsPath;
-    }
-
-    /**
-     * Get the date processing completed on the job.
-     */
-    Date getDateCompleted() {
-        return ingestStatus.getDateCompleted();
-    }
-
-    /**
-     * Get the ready file created date
-     */
-    Date getReadyFileTimeStamp() {
-        return this.readyFileTimeStamp;
-    }
-
-    /**
-     * Get the prioritized file created date.
-     */
-    Date getPrioritizedFileTimeStamp() {
-        return this.prioritizedFileTimeStamp;
-    }
-
-    /**
-     * Sets the created date of the prirotized state file for this job.
-     */
-    void setPrioritizedFileTimeStamp(Date timeStamp) {
-        /*
-         * RJC: This method is a bit of a hack to support a quick and dirty way
-         * of giving user feedback when an input folder or a case is
-         * prioritized. It can be removed when a better solution is found, or
-         * replaced with a method that looks up the state file time stamp.
-         */
-        this.prioritizedFileTimeStamp = timeStamp;
-    }
-
-    /**
-     * Gets case status based on the state files that exist in the job folder.
-     *
-     * @return See CaseStatus enum definition.
-     */
-    CaseStatus getCaseStatus() {
-        try {
-            if (StateFile.exists(imageFolderPath, StateFile.Type.CANCELLED)) {
-                return CaseStatus.CANCELLATIONS;
-            } else if (StateFile.exists(imageFolderPath, StateFile.Type.ERROR)) {
-                return CaseStatus.ERRORS;
-            } else if (StateFile.exists(imageFolderPath, StateFile.Type.INTERRUPTED)) {
-                return CaseStatus.INTERRUPTS;
-            } else {
-                return CaseStatus.OK;
-            }
-        } catch (IOException | SecurityException ex) {
-            logger.log(Level.SEVERE, String.format("Failed to determine status of case at %s", imageFolderPath), ex);
-            return CaseStatus.ERRORS;
-        }
-    }
-
-    /**
-     * Returns the date the input folder was created.
+     * RJCTODO
      *
      * @return
      */
-    Date getDateCreated() {
-        return this.imageFolderCreateDate;
+    Manifest getManifest() {
+        return this.manifest;
     }
 
     /**
-     * Updates flag whether the auto ingest job is running on local AIM node or
-     * remote one.
+     * Queries whether or not a case directory path has been set for this auto
+     * ingest job.
      *
-     * @param isLocal true if job is local, false otherwise.
+     * @return True or false
      */
-    void setIsLocalJob(boolean isLocal) {
-        this.isLocalJob = isLocal;
+    synchronized boolean hasCaseDirectoryPath() {
+        return (false == this.caseDirectoryPath.isEmpty());
     }
 
     /**
-     * Gets flag whether the auto ingest job is running on local AIM node or
-     * remote one.
+     * Sets the path to the case directory of the case associated with this job.
      *
-     * @return True if job is local, false otherwise.
+     * @param caseDirectoryPath The path to the case directory.
      */
-    boolean getIsLocalJob() {
-        return this.isLocalJob;
+    synchronized void setCaseDirectoryPath(Path caseDirectoryPath) {
+        this.caseDirectoryPath = caseDirectoryPath.toString();
     }
 
     /**
-     * Gets name of AIN that is processing the job.
+     * Gets the path to the case directory of the case associated with this job,
+     * may be null.
      *
-     * @return Name of the node that is processing the job.
+     * @return The case directory path or null if the case directory has not
+     *         been created yet.
      */
-    public String getNodeName() {
+    synchronized Path getCaseDirectoryPath() {
+        return Paths.get(caseDirectoryPath); // RJCTODO: This may not be such a good idea, perhaps a null is better if the path is empty string
+    }
+
+    synchronized void setPriority(Integer priority) {
+        this.priority = priority;
+    }
+
+    /**
+     * RJCTODO
+     *
+     * @return
+     */
+    synchronized Integer getPriority() {
+        return this.priority;
+    }
+
+    /**
+     * RJCTODO
+     *
+     * @param newState
+     */
+    synchronized void setStage(Stage newState) {
+        setStage(newState, Date.from(Instant.now()));
+    }
+
+    /**
+     * RJCTODO
+     *
+     * @param state
+     * @param stateStartedDate
+     */
+    synchronized void setStage(Stage newState, Date stateStartedDate) {
+        if (Stage.CANCELLED == this.stage && Stage.COMPLETED != newState) {
+            /**
+             * Do not overwrite canceling status with anything other than
+             * completed status.
+             */
+            return;
+        }
+        this.stage = newState;
+        this.stageStartDate = stateStartedDate;
+    }
+
+    /**
+     * RJCTODO:
+     *
+     * @return
+     */
+    synchronized Stage getStage() {
+        return this.stage;
+    }
+
+    /**
+     * RJCTODO
+     *
+     * @return
+     */
+    synchronized Date getStageStartDate() {
+        return this.stageStartDate;
+    }
+
+    /**
+     * RJCTODO
+     *
+     * @return
+     */
+    synchronized StageDetails getStageDetails() {
+        String description;
+        Date startDate;
+        if (null != this.ingestJob) {
+            IngestJob.ProgressSnapshot progress = this.ingestJob.getSnapshot();
+            IngestJob.DataSourceIngestModuleHandle ingestModuleHandle = progress.runningDataSourceIngestModule();
+            if (null != ingestModuleHandle) {
+                /**
+                 * A first or second stage data source level ingest module is
+                 * running. Reporting this takes precedence over reporting
+                 * generic file analysis.
+                 */
+                startDate = ingestModuleHandle.startTime();
+                if (!ingestModuleHandle.isCancelled()) {
+                    description = ingestModuleHandle.displayName();
+                } else {
+                    description = String.format(Stage.CANCELLING_MODULE.getDisplayText(), ingestModuleHandle.displayName()); // RJCTODO: FIx this
+                }
+            } else {
+                /**
+                 * If no data source level ingest module is running, then either
+                 * it is still the first stage of analysis and file level ingest
+                 * modules are running or another ingest job is still running.
+                 * Note that there can be multiple ingest jobs running in
+                 * parallel. For example, there is an ingest job created to
+                 * ingest each extracted virtual machine.
+                 */
+                description = Stage.ANALYZING_FILES.getDisplayText();
+                startDate = progress.fileIngestStartTime();
+            }
+        } else {
+            description = this.stage.getDisplayText();
+            startDate = this.stageStartDate;
+        }
+        return new StageDetails(description, startDate);
+    }
+
+    /**
+     * RJCTODO
+     *
+     * @param ingestStatus
+     */
+    // RJCTODO: Consider moving this class into AIM and making this private
+    synchronized void setIngestJob(IngestJob ingestJob) {
+        this.ingestJob = ingestJob;
+    }
+
+    /**
+     * RJCTODO
+     *
+     * @return
+     */
+    // RJCTODO: Consider moving this class into AIM and making this private. 
+    // Or move the AID into a separate package. Or do not worry about it.
+    synchronized IngestJob getIngestJob() {
+        return this.ingestJob;
+    }
+
+    /**
+     * RJCTODO Gets name of the node associated with the job, possibly a remote
+     * hose if the job is in progress.
+     *
+     * @return The node name.
+     */
+    String getNodeName() {
         return nodeName;
     }
 
     /**
-     * Sets name of AIN that is processing the job.
+     * RJCTODO
      *
-     * @param nodeName Name of the node that is processing the job.
+     * @param obj
+     *
+     * @return
      */
-    public void setNodeName(String nodeName) {
-        this.nodeName = nodeName;
-    }
-
     @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof AutoIngestJob)) {
@@ -467,43 +256,32 @@ class AutoIngestJob implements Comparable<AutoIngestJob> {
         if (obj == this) {
             return true;
         }
-        AutoIngestJob rhs = (AutoIngestJob) obj;
-
-        return this.imageFolderPath.toString().equals(rhs.imageFolderPath.toString());
+        return this.getManifest().getFilePath().equals(((AutoIngestJob) obj).getManifest().getFilePath());
     }
 
+    /**
+     * RJCTODO
+     *
+     * @return
+     */
     @Override
     public int hashCode() {
+        // RJCTODO: Update this
         int hash = 7;
-        hash = 71 * hash + Objects.hashCode(this.imageFolderPath);
-        hash = 71 * hash + Objects.hashCode(this.imageFolderCreateDate);
-        hash = 71 * hash + Objects.hashCode(this.caseName);
+//        hash = 71 * hash + Objects.hashCode(this.dateCreated);
         return hash;
     }
 
     /**
-     * Default sorting is by ready file creation date, descending
+     * RJCTODO Default sorting is by ready file creation date, descending
+     *
+     * @param o
+     *
+     * @return
      */
     @Override
     public int compareTo(AutoIngestJob o) {
-        return -this.imageFolderCreateDate.compareTo(o.getDateCreated());
-    }
-
-    /**
-     * Determine if this job object is a higher priority than the otherJob.
-     *
-     * @param otherJob The job to compare against.
-     *
-     * @return true if this job is a higher priority, otherwise false.
-     */
-    boolean isHigherPriorityThan(AutoIngestJob otherJob) {
-        if (this.prioritizedFileTimeStamp == null) {
-            return false;
-        }
-        if (otherJob.prioritizedFileTimeStamp == null) {
-            return true;
-        }
-        return (this.prioritizedFileTimeStamp.compareTo(otherJob.prioritizedFileTimeStamp) > 0);
+        return -this.getManifest().getDateFileCreated().compareTo(o.getManifest().getDateFileCreated());
     }
 
     /**
@@ -512,33 +290,17 @@ class AutoIngestJob implements Comparable<AutoIngestJob> {
      */
     static class ReverseDateCompletedComparator implements Comparator<AutoIngestJob> {
 
+        /**
+         * RJCTODO
+         *
+         * @param o1
+         * @param o2
+         *
+         * @return
+         */
         @Override
         public int compare(AutoIngestJob o1, AutoIngestJob o2) {
-            return -o1.getDateCompleted().compareTo(o2.getDateCompleted());
-        }
-    }
-
-    /**
-     * Custom comparator that allows us to sort List<AutoIngestJob> on reverse
-     * chronological date created (descending)
-     */
-    static class ReverseDateCreatedComparator implements Comparator<AutoIngestJob> {
-
-        @Override
-        public int compare(AutoIngestJob o1, AutoIngestJob o2) {
-            return -o1.getDateCreated().compareTo(o2.getDateCreated());
-        }
-    }
-
-    /**
-     * Custom comparator that allows us to sort List<AutoIngestJob> on reverse
-     * chronological date started (descending)
-     */
-    static class ReverseDateStartedComparator implements Comparator<AutoIngestJob> {
-
-        @Override
-        public int compare(AutoIngestJob o1, AutoIngestJob o2) {
-            return -o1.getStatus().getActivityStartDate().compareTo(o2.getStatus().getActivityStartDate());
+            return -o1.getStageStartDate().compareTo(o2.getStageStartDate());
         }
     }
 
@@ -546,32 +308,29 @@ class AutoIngestJob implements Comparable<AutoIngestJob> {
      * Custom comparator that sorts the pending list with prioritized cases
      * first, then nonprioritized cases. Prioritized cases are last in, first
      * out. Nonprioritized cases are first in, first out. Prioritized times are
-     * from the creation time of the ".prioritized" state file. Non prioritized
+     * from the creation time of the "prioritized" state file. Non prioritized
      * are from the folder creation time.
      */
-    public static class PrioritizedPendingListComparator implements Comparator<AutoIngestJob> {
+    public static class PriorityComparator implements Comparator<AutoIngestJob> {
 
+        /**
+         * RJCTODO
+         *
+         * @param o1
+         * @param o2
+         *
+         * @return
+         */
         @Override
         public int compare(AutoIngestJob o1, AutoIngestJob o2) {
-            Date dateCreated1 = o1.getDateCreated();
-            Date dateCreated2 = o2.getDateCreated();
-            Date datePrioritized1 = o1.getPrioritizedFileTimeStamp();
-            Date datePrioritized2 = o2.getPrioritizedFileTimeStamp();
-
-            if (datePrioritized1 != null && datePrioritized2 != null) {
-                // both are prioritized, sort on prioritized file date, last in first out   
-                return datePrioritized2.compareTo(datePrioritized1);
-            } else if (datePrioritized1 == null && datePrioritized2 == null) {
-                // both are not prioritized, sort on folder creation date, first in first out
-                return dateCreated1.compareTo(dateCreated2);
-            } else if (datePrioritized1 != null) {
-                // left hand side is prioritized
-                return -1;
+            Integer result = o1.getPriority().compareTo(o2.getPriority());
+            if (0 != result) {
+                return result;
             } else {
-                // datePrioritized2 != null, so right hand side is prioritized
-                return 1;
+                return o1.getManifest().getDateFileCreated().compareTo(o2.getManifest().getDateFileCreated());
             }
         }
+
     }
 
     /**
@@ -581,15 +340,92 @@ class AutoIngestJob implements Comparable<AutoIngestJob> {
      */
     static class AlphabeticalComparator implements Comparator<AutoIngestJob> {
 
+        /**
+         * RJCTODO
+         *
+         * @param o1
+         * @param o2
+         *
+         * @return
+         */
         @Override
         public int compare(AutoIngestJob o1, AutoIngestJob o2) {
-            if (o1.getNodeName().equalsIgnoreCase(localHostName)) {
+            if (o1.getNodeName().equalsIgnoreCase(LOCAL_HOST_NAME)) {
                 return -1; // o1 is for current case, float to top
-            } else if (o2.getNodeName().equalsIgnoreCase(localHostName)) {
+            } else if (o2.getNodeName().equalsIgnoreCase(LOCAL_HOST_NAME)) {
                 return 1; // o2 is for current case, float to top
             } else {
-                return o1.getCaseName().compareToIgnoreCase(o2.getCaseName());
+                return o1.getManifest().getCaseName().compareToIgnoreCase(o2.getManifest().getCaseName());
             }
         }
     }
+
+    enum Stage {
+
+        PENDING("Pending"),
+        STARTING("Starting"),
+        UPDATING_SHARED_CONFIG("Updating shared configuration"),
+        CHECKING_SERVICES("Checking services"),
+        OPENING_CASE("Opening case"),
+        IDENTIFYING_DATA_SOURCE("Identifying data source type"),
+        ADDING_DATA_SOURCE("Adding data source"),
+        ANALYZING_DATA_SOURCE("Analyzing data source"),
+        ANALYZING_FILES("Analyzing files"),
+        EXPORTING_FILES("Exporting files"),
+        CANCELLING_MODULE("Cancelling module"),
+        CANCELLED("Cancelling"),
+        COMPLETED("Completed");
+
+        private final String displayText;
+
+        private Stage(String displayText) {
+            this.displayText = displayText;
+        }
+
+        String getDisplayText() {
+            return displayText;
+        }
+
+    }
+
+    /**
+     * RJCTODO
+     */
+    @Immutable
+    static final class StageDetails {
+
+        private final String description;
+        private final Date startDate;
+
+        /**
+         * RJCTODO
+         *
+         * @param description
+         * @param startDate
+         */
+        private StageDetails(String description, Date startDate) {
+            this.description = description;
+            this.startDate = startDate;
+        }
+
+        /**
+         * RJCTODO
+         *
+         * @return
+         */
+        String getDescription() {
+            return this.description;
+        }
+
+        /**
+         * RJCTODO
+         *
+         * @return
+         */
+        Date getStartDate() {
+            return this.startDate;
+        }
+
+    }
+
 }

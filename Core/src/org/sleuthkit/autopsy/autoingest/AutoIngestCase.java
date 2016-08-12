@@ -30,44 +30,49 @@ import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * A representation of case created by automated ingest.
+ * A representation of a case created by automated ingest.
  */
 class AutoIngestCase implements Comparable<AutoIngestCase> {
 
     private static final Logger logger = Logger.getLogger(AutoIngestCase.class.getName());
-    private final Path caseFolderPath;
+    private final Path caseDirectoryPath;
     private final String caseName;
     private final Path metadataFilePath;
-    private Date createDate;
+    private final Date createDate;
     private Date lastModfiedDate;
 
     /**
-     * Constructs s representation of case created by automated ingest.
+     * Constructs a representation of case created by automated ingest.
      *
-     * @param caseFolderPath The case folder path.
+     * @param caseDirectoryPath The case directory path.
      */
-    AutoIngestCase(Path caseFolderPath) {
-        this.caseFolderPath = caseFolderPath;
-        caseName = PathUtils.caseNameFromCaseFolderPath(caseFolderPath);
-        metadataFilePath = caseFolderPath.resolve(caseName + CaseMetadata.getFileExtension());
+    // RJCTODO: Throw instead of reporting error, let client decide what to do.
+    AutoIngestCase(Path caseDirectoryPath) {
+        this.caseDirectoryPath = caseDirectoryPath;
+        caseName = PathUtils.caseNameFromCaseDirectoryPath(caseDirectoryPath);
+        metadataFilePath = caseDirectoryPath.resolve(caseName + CaseMetadata.getFileExtension());
+        BasicFileAttributes fileAttrs = null;
         try {
-            BasicFileAttributes fileAttrs = Files.readAttributes(metadataFilePath, BasicFileAttributes.class);
+            fileAttrs = Files.readAttributes(metadataFilePath, BasicFileAttributes.class);
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, String.format("Error reading file attributes of case metadata file in %s, will use current time for case createDate/lastModfiedDate", caseDirectoryPath), ex);
+        }
+        if (null != fileAttrs) {
             createDate = new Date(fileAttrs.creationTime().toMillis());
             lastModfiedDate = new Date(fileAttrs.lastModifiedTime().toMillis());
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, String.format("Error reading file attributes of case metadata file in %s, will use current time for case createDate/lastModfiedDate", caseFolderPath), ex);
+        } else {
             createDate = new Date();
             lastModfiedDate = new Date();
         }
     }
 
     /**
-     * Gets the case folder path.
+     * Gets the case directory path.
      *
-     * @return The case folder path.
+     * @return The case directory path.
      */
-    Path getCaseFolderPath() {
-        return this.caseFolderPath;
+    Path getCaseDirectoryPath() {
+        return this.caseDirectoryPath;
     }
 
     /**
@@ -83,7 +88,7 @@ class AutoIngestCase implements Comparable<AutoIngestCase> {
      * Gets the creation date for the case, defined as the create time of the
      * case metadata file.
      *
-     * @return The creation date.
+     * @return The case creation date.
      */
     Date getCreationDate() {
         return this.createDate;
@@ -95,98 +100,98 @@ class AutoIngestCase implements Comparable<AutoIngestCase> {
      *
      * @return The last accessed date.
      */
+    // RJCTODO: Throw instead of reporting error, let client decide what to do.
     Date getLastAccessedDate() {
         try {
             BasicFileAttributes fileAttrs = Files.readAttributes(metadataFilePath, BasicFileAttributes.class);
-            createDate = new Date(fileAttrs.creationTime().toMillis());
             lastModfiedDate = new Date(fileAttrs.lastModifiedTime().toMillis());
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, String.format("Error reading file attributes of case metadata file in %s, lastModfiedDate time not updated", caseFolderPath), ex);
+            logger.log(Level.SEVERE, String.format("Error reading file attributes of case metadata file in %s, lastModfiedDate time not updated", caseDirectoryPath), ex);
         }
         return lastModfiedDate;
     }
 
     /**
-     * Gets the status of this case based on state files in the case folder.
+     * Gets the status of this case based on the auto ingest result file in the
+     * case directory.
      *
      * @return See CaseStatus enum definition.
      */
     CaseStatus getStatus() {
-        try {
-            if (StateFile.exists(caseFolderPath, StateFile.Type.CANCELLED)) {
-                return CaseStatus.CANCELLATIONS;
-            } else if (StateFile.exists(caseFolderPath, StateFile.Type.ERROR)) {
-                return CaseStatus.ERRORS;
-            } else if (StateFile.exists(caseFolderPath, StateFile.Type.INTERRUPTED)) {
-                return CaseStatus.INTERRUPTS;
-            } else {
-                return CaseStatus.OK;
-            }
-        } catch (IOException | SecurityException ex) {
-            logger.log(Level.SEVERE, String.format("Failed to determine status of case at %s", caseFolderPath), ex);
-            return CaseStatus.ERRORS;
+        if (AutoIngestAlertFile.exists(caseDirectoryPath)) {
+            return CaseStatus.ALERT;
+        } else {
+            return CaseStatus.OK;
         }
     }
 
     /**
-     * @inheritDoc
+     * Indicates whether or not some other object is "equal to" this
+     * AutoIngestCase object.
+     *
+     * @param other The other object.
+     *
+     * @return True or false.
      */
     @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof AutoIngestCase)) {
+    public boolean equals(Object other) {
+        if (!(other instanceof AutoIngestCase)) {
             return false;
         }
-        if (obj == this) {
+        if (other == this) {
             return true;
         }
-        AutoIngestCase rhs = (AutoIngestCase) obj;
-
-        return this.caseFolderPath.toString().equals(rhs.caseFolderPath.toString());
+        return this.caseDirectoryPath.toString().equals(((AutoIngestCase) other).caseDirectoryPath.toString());
     }
 
     /**
-     * @inheritDoc
+     * Returns a hash code value for this AutoIngestCase object.
+     *
+     * @return The has code.
      */
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 71 * hash + Objects.hashCode(this.caseFolderPath);
+        hash = 71 * hash + Objects.hashCode(this.caseDirectoryPath);
         hash = 71 * hash + Objects.hashCode(this.createDate);
         hash = 71 * hash + Objects.hashCode(this.caseName);
         return hash;
     }
 
     /**
-     * Default sorting is by last accessed date, descending.
+     * Compares this AutopIngestCase object with abnother AutoIngestCase object
+     * for order.
      */
     @Override
-    public int compareTo(AutoIngestCase o) {
-        return -this.lastModfiedDate.compareTo(o.getLastAccessedDate());
+    public int compareTo(AutoIngestCase other) {
+        return -this.lastModfiedDate.compareTo(other.getLastAccessedDate());
     }
 
     /**
-     * Custom comparator that allows us to sort List<AutoIngestCase> on reverse
-     * chronological date created (descending)
-     *
+     * Comparator for a descending order sort on date created.
      */
-    static class ReverseDateLastAccessedComparator implements Comparator<AutoIngestCase> {
+    static class LastAccessedDateDescendingComparator implements Comparator<AutoIngestCase> {
 
+        /**
+         * Compares two AutoIngestCase objects for order based on last accessed
+         * date (descending).
+         *
+         * @param object      The first AutoIngestCase object
+         * @param otherObject The second AuotIngestCase object.
+         *
+         * @return A negative integer, zero, or a positive integer as the first
+         *         argument is less than, equal to, or greater than the second.
+         */
         @Override
-        public int compare(AutoIngestCase o1, AutoIngestCase o2) {
-            return -o1.getLastAccessedDate().compareTo(o2.getLastAccessedDate());
+        public int compare(AutoIngestCase object, AutoIngestCase otherObject) {
+            return -object.getLastAccessedDate().compareTo(otherObject.getLastAccessedDate());
         }
     }
 
-    /**
-     * Custom comparator that allows us to sort List<AutoIngestCase> on reverse
-     * chronological date created (descending)
-     *
-     */
-    static class ReverseDateCreatedComparator implements Comparator<AutoIngestCase> {
+    enum CaseStatus {
 
-        @Override
-        public int compare(AutoIngestCase o1, AutoIngestCase o2) {
-            return -o1.getCreationDate().compareTo(o2.getCreationDate());
-        }
+        OK,
+        ALERT
     }
+
 }
