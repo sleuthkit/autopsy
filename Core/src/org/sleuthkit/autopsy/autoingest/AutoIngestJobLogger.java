@@ -151,7 +151,7 @@ final class AutoIngestJobLogger {
     /**
      * RJCTODO
      * @throws InterruptedException
-     * @throws viking.autoingest.AutoIngestJobLogger.AutoIngestJobLoggerException 
+     * @throws org.sleuthkit.autopsy.autoingest.AutoIngestJobLogger.AutoIngestJobLoggerException 
      */
     void logFailedToIdentifyDataSource() throws InterruptedException, AutoIngestJobLoggerException {
         log(MessageCategory.ERROR, String.format("Failed to identifying data source type, cannot ingest"));        
@@ -161,7 +161,7 @@ final class AutoIngestJobLogger {
      * RJCTODO
      * @param dataSourceType
      * @throws InterruptedException
-     * @throws viking.autoingest.AutoIngestJobLogger.AutoIngestJobLoggerException 
+     * @throws org.sleuthkit.autopsy.autoingest.AutoIngestJobLogger.AutoIngestJobLoggerException 
      */
     void logDataSourceTypeId(String dataSourceType) throws InterruptedException, AutoIngestJobLoggerException {
         log(MessageCategory.INFO, String.format("Identified data source as %s", dataSourceType));        
@@ -266,7 +266,7 @@ final class AutoIngestJobLogger {
      * RJCTODO: Document and homogenize messages
      * @param errors
      * @throws InterruptedException
-     * @throws viking.autoingest.AutoIngestJobLogger.AutoIngestJobLoggerException 
+     * @throws org.sleuthkit.autopsy.autoingest.AutoIngestJobLogger.AutoIngestJobLoggerException 
      */
     void logIngestJobSettingsErrors(List<String> errors) throws InterruptedException, AutoIngestJobLoggerException {
         for (String error : errors) {
@@ -387,7 +387,7 @@ final class AutoIngestJobLogger {
     /**
      * RJCTODO
      * @throws InterruptedException
-     * @throws viking.autoingest.AutoIngestJobLogger.AutoIngestJobLoggerException 
+     * @throws org.sleuthkit.autopsy.autoingest.AutoIngestJobLogger.AutoIngestJobLoggerException 
      */
     void logFileExportCompleted() throws InterruptedException, AutoIngestJobLoggerException {
         log(MessageCategory.INFO, "Automated file export completed");
@@ -397,7 +397,7 @@ final class AutoIngestJobLogger {
      * RJCTODO
      * @param ex
      * @throws InterruptedException
-     * @throws viking.autoingest.AutoIngestJobLogger.AutoIngestJobLoggerException 
+     * @throws org.sleuthkit.autopsy.autoingest.AutoIngestJobLogger.AutoIngestJobLoggerException 
      */
     void logFileExportError(Exception ex) throws InterruptedException, AutoIngestJobLoggerException {
         log(MessageCategory.ERROR, String.format("Error exporting files: %s", ex.getMessage()));
@@ -482,7 +482,7 @@ final class AutoIngestJobLogger {
      * @param createAlertFile Whether or not to create an alert file.
      *
      * @throws
-     * viking.autoingest.AutoIngestJobLogger.AutoIngestJobLoggerException
+     * org.sleuthkit.autopsy.autoingest.AutoIngestJobLogger.AutoIngestJobLoggerException
      * @throws InterruptedException
      */
     private void log(MessageCategory category, String message) throws AutoIngestJobLoggerException, InterruptedException {

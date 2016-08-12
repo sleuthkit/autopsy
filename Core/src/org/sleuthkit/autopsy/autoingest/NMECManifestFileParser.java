@@ -78,7 +78,7 @@ public final class NMECManifestFileParser implements ManifestFileParser {
      *
      * @return
      *
-     * @throws viking.autoingest.ManifestFileParser.ManifestFileParserException
+     * @throws org.sleuthkit.autopsy.autoingest.ManifestFileParser.ManifestFileParserException
      */
     @Override
     public Manifest parse(Path filePath) throws ManifestFileParserException {
