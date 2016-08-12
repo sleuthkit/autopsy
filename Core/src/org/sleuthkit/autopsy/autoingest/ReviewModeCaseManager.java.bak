@@ -133,7 +133,18 @@ final class ReviewModeCaseManager implements PropertyChangeListener {
         List<AutoIngestCase> cases = new ArrayList<>();
         List<Path> caseFolders = PathUtils.findCaseFolders(Paths.get(UserPreferences.getAutoModeResultsFolder()));
         for (Path caseFolderPath : caseFolders) {
-            cases.add(new AutoIngestCase(caseFolderPath));
+            try {
+                /*
+                 * Skip case folders that have been logically deleted, i.e.,
+                 * case folders where DELETED state file were written because
+                 * physical deletion of the case folder failed.
+                 */
+                if (!StateFile.exists(caseFolderPath, StateFile.Type.DELETED)) {
+                    cases.add(new AutoIngestCase(caseFolderPath));
+                }
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, String.format("Error checking for LOCKED state file in %s", caseFolderPath), ex);
+            }
         }
         return cases;
     }
@@ -147,8 +158,8 @@ final class ReviewModeCaseManager implements PropertyChangeListener {
      * @throws ReviewModeCaseManagerException
      */
     /*
-     * TODO (RC): With a little work, the lock acquisition/release could be done
-     * by a thread in a single thread executor, removing the "do it in the EDT"
+     * TODO (RC): With a little work, the lock acquisition/release could be done by
+     * a thread in a single thread executor, removing the "do it in the EDT"
      * requirement
      */
     synchronized void openCaseInEDT(Path caseMetadataFilePath) throws ReviewModeCaseManagerException {
@@ -158,7 +169,8 @@ final class ReviewModeCaseManager implements PropertyChangeListener {
              * Acquire a lock on the case folder. If the lock cannot be
              * acquired, the case cannot be opened.
              */
-            currentCaseLock = CoordinationService.getInstance(CoordinationServiceNamespace.getRoot()).tryGetSharedLock(CoordinationService.CategoryNode.CASES, caseFolderPath.toString());
+//ELTODO            currentCaseLock = CoordinationService.getInstance(AutoIngestManager.ROOT_NAMESPACE).tryGetSharedLock(CoordinationService.CategoryNode.CASES, caseFolderPath.toString());
+            currentCaseLock = CoordinationService.getInstance(ROOT_NAMESPACE).tryGetSharedLock(CoordinationService.CategoryNode.CASES, caseFolderPath.toString());
             if (null == currentCaseLock) {
                 throw new ReviewModeCaseManagerException("Could not get shared access to multi-user case folder");
             }
@@ -171,10 +183,9 @@ final class ReviewModeCaseManager implements PropertyChangeListener {
             /**
              * Disable the add data source action in review mode. This has to be
              * done here because Case.open() calls Case.doCaseChange() and the
-             * latter method enables the action. Since Case.doCaseChange()
-             * enables the menus on EDT by calling SwingUtilities.invokeLater(),
-             * we have to do the same thing here to maintain the order of
-             * execution.
+             * latter method enables the action. Since Case.doCaseChange() enables
+             * the menus on EDT by calling SwingUtilities.invokeLater(), we have 
+             * to do the same thing here to maintain the order of execution. 
              */
             SwingUtilities.invokeLater(() -> {
                 CallableSystemAction.get(AddImageAction.class).setEnabled(false);

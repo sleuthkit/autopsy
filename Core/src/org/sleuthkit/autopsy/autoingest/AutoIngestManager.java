@@ -75,4 +75,18 @@ public class AutoIngestManager {
             COMPLETED;
         }    
     }
+    
+    static final class AutoIngestManagerStartupException extends Exception {
+
+        private static final long serialVersionUID = 1L;
+
+        private AutoIngestManagerStartupException(String message) {
+            super(message);
+        }
+
+        private AutoIngestManagerStartupException(String message, Throwable cause) {
+            super(message, cause);
+        }
+
+    }
 }

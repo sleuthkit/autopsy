@@ -51,7 +51,7 @@ public final class ReviewModeCasePanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(ReviewModeCasePanel.class.getName());
-    private static final AutoIngestCase.LastAccessedDateDescendingComparator reverseDateModifiedComparator = new AutoIngestCase.LastAccessedDateDescendingComparator();
+    private static final AutoIngestCase.ReverseDateLastAccessedComparator reverseDateModifiedComparator = new AutoIngestCase.ReverseDateLastAccessedComparator();
     private static final int CASE_COL_MIN_WIDTH = 30;
     private static final int CASE_COL_MAX_WIDTH = 2000;
     private static final int CASE_COL_PREFERRED_WIDTH = 300;
@@ -326,7 +326,7 @@ public final class ReviewModeCasePanel extends JPanel {
                         autoIngestCase.getCreationDate(),
                         autoIngestCase.getLastAccessedDate(),
                         autoIngestCase.getStatus(),
-                        autoIngestCase.getCaseDirectoryPath().toString()});
+                        autoIngestCase.getCaseFolderPath().toString()});
                 }
             }
             setSelectedCase(currentlySelectedCase);
