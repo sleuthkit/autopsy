@@ -53,6 +53,7 @@ import org.sleuthkit.autopsy.experimental.configuration.OptionsPanel.UpdateConfi
 import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService.Lock;
 import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService.CoordinationServiceException;
+import org.sleuthkit.autopsy.keywordsearch.KeywordListsManager;
 
 /*
  * A utility class for loading and saving shared configuration data
@@ -693,7 +694,7 @@ public class SharedConfiguration {
         if (null == searchService) {
             throw new SharedConfigurationException("Keyword search service not found");
         }
-        searchService.reloadConfiguration();
+        KeywordListsManager.reloadKeywordLists();
     }
 
     /**
