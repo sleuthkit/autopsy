@@ -1401,7 +1401,7 @@ public class OptionsPanel extends javax.swing.JPanel {
             }
         });
 
-        multiUserRestartLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/warning16.png"))); // NOI18N
+        multiUserRestartLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/experimental/images/warning16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(multiUserRestartLabel, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.multiUserRestartLabel.text")); // NOI18N
 
         javax.swing.GroupLayout multiUserPanelLayout = new javax.swing.GroupLayout(multiUserPanel);
@@ -1450,7 +1450,7 @@ public class OptionsPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabelSelectMode, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.jLabelSelectMode.text")); // NOI18N
 
-        restartRequiredNodeLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/warning16.png"))); // NOI18N
+        restartRequiredNodeLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/experimental/images/warning16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(restartRequiredNodeLabel, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.restartRequiredNodeLabel.text")); // NOI18N
 
         modeRadioButtons.add(jRadioButtonStandalone);

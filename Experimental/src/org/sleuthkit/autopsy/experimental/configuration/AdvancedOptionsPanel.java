@@ -164,7 +164,7 @@ class AdvancedOptionsPanel extends javax.swing.JPanel {
             }
         });
 
-        lbRestartRequired.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/warning16.png"))); // NOI18N
+        lbRestartRequired.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/experimental/images/warning16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(lbRestartRequired, org.openide.util.NbBundle.getMessage(AdvancedOptionsPanel.class, "AdvancedOptionsPanel.lbRestartRequired.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(lbRetriesAllowed, org.openide.util.NbBundle.getMessage(AdvancedOptionsPanel.class, "AdvancedOptionsPanel.lbRetriesAllowed.text")); // NOI18N

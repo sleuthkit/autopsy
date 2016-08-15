@@ -756,7 +756,7 @@ public final class FileExporterSettingsPanel extends JPanel {
             }
         });
 
-        bnSaveRule.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/save-icon.png"))); // NOI18N
+        bnSaveRule.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/experimental/images/save-icon.png"))); // NOI18N
         bnSaveRule.setText(org.openide.util.NbBundle.getMessage(FileExporterSettingsPanel.class, "FileExporterSettingsPanel.SaveText")); // NOI18N
         bnSaveRule.setToolTipText(org.openide.util.NbBundle.getMessage(FileExporterSettingsPanel.class, "FileExporterSettingsPanel.SaveTooltip_1")); // NOI18N
         bnSaveRule.setEnabled(false);
@@ -792,7 +792,7 @@ public final class FileExporterSettingsPanel extends JPanel {
         tbAttributeValue.setMinimumSize(new java.awt.Dimension(6, 23));
         tbAttributeValue.setPreferredSize(new java.awt.Dimension(6, 23));
 
-        bnAddAttribute.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/left-arrow-16-icon.png"))); // NOI18N
+        bnAddAttribute.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/experimental/images/left-arrow-16-icon.png"))); // NOI18N
         bnAddAttribute.setText("Add Attribute");
         bnAddAttribute.setToolTipText("Click to add an attribute to the current rule");
         bnAddAttribute.setEnabled(false);
@@ -1043,7 +1043,7 @@ public final class FileExporterSettingsPanel extends JPanel {
             }
         });
 
-        bnNewRule.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/plus-icon.png"))); // NOI18N
+        bnNewRule.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/experimental/images/plus-icon.png"))); // NOI18N
         bnNewRule.setText(org.openide.util.NbBundle.getMessage(FileExporterSettingsPanel.class, "FileExporterSettingsPanel.NewText")); // NOI18N
         bnNewRule.setToolTipText(org.openide.util.NbBundle.getMessage(FileExporterSettingsPanel.class, "FileExporterSettingsPanel.NewRuleTooltip_1")); // NOI18N
         bnNewRule.setLabel(org.openide.util.NbBundle.getMessage(FileExporterSettingsPanel.class, "FileExporterSettingsPanel.NewText")); // NOI18N
@@ -1053,7 +1053,7 @@ public final class FileExporterSettingsPanel extends JPanel {
             }
         });
 
-        bnDeleteRule.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/minus-icon.png"))); // NOI18N
+        bnDeleteRule.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/experimental/images/minus-icon.png"))); // NOI18N
         bnDeleteRule.setText(org.openide.util.NbBundle.getMessage(FileExporterSettingsPanel.class, "FileExporterSettingsPanel.DeleteText")); // NOI18N
         bnDeleteRule.setToolTipText(org.openide.util.NbBundle.getMessage(FileExporterSettingsPanel.class, "FileExporterSettingsPanel.DeleteTooltip_1")); // NOI18N
         bnDeleteRule.setEnabled(false);

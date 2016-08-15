@@ -432,7 +432,7 @@
             <Component class="javax.swing.JButton" name="bnSaveRule">
               <Properties>
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                  <Image iconType="3" name="/org/sleuthkit/autopsy/images/save-icon.png"/>
+                  <Image iconType="3" name="/org/sleuthkit/autopsy/experimental/images/save-icon.png"/>
                 </Property>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="FileExporterSettingsPanel.SaveText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
@@ -509,7 +509,7 @@
             <Component class="javax.swing.JButton" name="bnAddAttribute">
               <Properties>
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                  <Image iconType="3" name="/org/sleuthkit/autopsy/images/left-arrow-16-icon.png"/>
+                  <Image iconType="3" name="/org/sleuthkit/autopsy/experimental/images/left-arrow-16-icon.png"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="Add Attribute"/>
                 <Property name="toolTipText" type="java.lang.String" value="Click to add an attribute to the current rule"/>
@@ -694,7 +694,7 @@
     <Component class="javax.swing.JButton" name="bnNewRule">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/org/sleuthkit/autopsy/images/plus-icon.png"/>
+          <Image iconType="3" name="/org/sleuthkit/autopsy/experimental/images/plus-icon.png"/>
         </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="FileExporterSettingsPanel.NewText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
@@ -713,7 +713,7 @@
     <Component class="javax.swing.JButton" name="bnDeleteRule">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/org/sleuthkit/autopsy/images/minus-icon.png"/>
+          <Image iconType="3" name="/org/sleuthkit/autopsy/experimental/images/minus-icon.png"/>
         </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="FileExporterSettingsPanel.DeleteText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
