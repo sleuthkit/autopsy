@@ -39,7 +39,7 @@ import org.sleuthkit.datamodel.TskData.DbType;
  * default values.
  */
 public final class UserPreferences {
-   
+
     private static final boolean isWindowsOS = PlatformUtil.isWindowsOS();
     private static final Preferences preferences = NbPreferences.forModule(UserPreferences.class);
     public static final String KEEP_PREFERRED_VIEWER = "KeepPreferredViewer"; // NON-NLS    
@@ -98,7 +98,6 @@ public final class UserPreferences {
     public static void removeChangeListener(PreferenceChangeListener listener) {
         preferences.removePreferenceChangeListener(listener);
     }
-       
 
     public static boolean keepPreferredContentViewer() {
         return preferences.getBoolean(KEEP_PREFERRED_VIEWER, false);
