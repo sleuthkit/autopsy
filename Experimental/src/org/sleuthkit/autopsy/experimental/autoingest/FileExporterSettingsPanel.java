@@ -247,12 +247,12 @@ public final class FileExporterSettingsPanel extends JPanel {
         load();
         trRuleList.setCellRenderer(new DefaultTreeCellRenderer() {
             private static final long serialVersionUID = 1L;
-            private final ImageIcon ruleSetIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/ruleset-icon.png", false));
-            private final ImageIcon ruleIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/extracted_content.png", false));
-            private final ImageIcon sizeIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/file-size-16.png", false));
-            private final ImageIcon artifactIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/artifact-icon.png", false));
-            private final ImageIcon mimetypeIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/mime-icon.png", false));
-            private final ImageIcon otherIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/knownbad-icon.png", false));
+            private final ImageIcon ruleSetIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/ruleset-icon.png", false));
+            private final ImageIcon ruleIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/extracted_content.png", false));
+            private final ImageIcon sizeIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/file-size-16.png", false));
+            private final ImageIcon artifactIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/artifact-icon.png", false));
+            private final ImageIcon mimetypeIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/mime-icon.png", false));
+            private final ImageIcon otherIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/knownbad-icon.png", false));
 
             @Override
             public Component getTreeCellRendererComponent(javax.swing.JTree tree,

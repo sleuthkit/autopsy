@@ -116,8 +116,8 @@ public class OptionsPanel extends javax.swing.JPanel {
         jLabelCurrentTask.setEnabled(false);
         jLabelTaskDescription.setEnabled(false);
 
-        goodIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/good.png", false));
-        badIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/bad.png", false));
+        goodIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/good.png", false));
+        badIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/bad.png", false));
 
         this.oldIngestThreads = UserPreferences.numberOfFileIngestThreads();
         cbEnableMultiUserItemStateChanged(null);
@@ -2193,7 +2193,7 @@ public class OptionsPanel extends javax.swing.JPanel {
         jScrollPane.setMinimumSize(new Dimension(100, 100));
         jDialog.add(jScrollPane);
         jDialog.setTitle(NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.FileExportRules.text"));
-        jDialog.setIconImage(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/frame32.gif"));
+        jDialog.setIconImage(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/frame32.gif"));
         jDialog.setModalityType(java.awt.Dialog.ModalityType.APPLICATION_MODAL);
         jDialog.pack();
         jDialog.setLocationRelativeTo(this);

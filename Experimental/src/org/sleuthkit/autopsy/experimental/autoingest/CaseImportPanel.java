@@ -84,8 +84,8 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
         tbImageDestination.setText(AutoIngestUserPreferences.getAutoModeImageFolder());
         cbCopyImages.setSelected(true);
         cbDeleteCase.setSelected(false);
-        badDatabaseCredentials = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/warning16.png", false)); //NON-NLS
-        goodDatabaseCredentials = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/tick.png", false)); //NON-NLS
+        badDatabaseCredentials = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/warning16.png", false)); //NON-NLS
+        goodDatabaseCredentials = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/tick.png", false)); //NON-NLS
         picDbStatus.setText(""); //NON-NLS
         tbDeleteWarning.setText(""); //NON-NLS
         tbInputNotification.setText(""); //NON-NLS
