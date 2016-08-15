@@ -23,6 +23,14 @@
                     </run-dependency>
                 </dependency>
                 <dependency>
+                    <code-name-base>org.openide.filesystems</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <specification-version>9.8.1</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
                     <code-name-base>org.openide.util</code-name-base>
                     <build-prerequisite/>
                     <compile-dependency/>
@@ -63,8 +71,53 @@
                         <specification-version>10.5</specification-version>
                     </run-dependency>
                 </dependency>
+                <dependency>
+                    <code-name-base>org.sleuthkit.autopsy.corelibs</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <release-version>3</release-version>
+                        <specification-version>1.1</specification-version>
+                    </run-dependency>
+                </dependency>
             </module-dependencies>
             <public-packages/>
+            <class-path-extension>
+                <runtime-relative-path>ext/zookeeper-3.4.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/zookeeper-3.4.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/curator-client-2.8.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/curator-client-2.8.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/mchange-commons-java-0.2.9.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/mchange-commons-java-0.2.9.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/LGoodDatePicker-4.3.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/LGoodDatePicker-4.3.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/tika-core-1.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/tika-core-1.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/curator-recipes-2.8.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/curator-recipes-2.8.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jackson-core-2.7.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jackson-core-2.7.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/c3p0-0.9.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/c3p0-0.9.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/curator-framework-2.8.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/curator-framework-2.8.0.jar</binary-origin>
+            </class-path-extension>
         </data>
     </configuration>
 </project>
