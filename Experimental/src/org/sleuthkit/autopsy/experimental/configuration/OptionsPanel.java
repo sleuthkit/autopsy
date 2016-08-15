@@ -149,7 +149,7 @@ public class OptionsPanel extends javax.swing.JPanel {
     final void load(boolean inStartup) {
         loadMultiUserSettings();
         if (inStartup) {
-            UserPreferences.SelectedMode storedMode = UserPreferences.getMode();
+            AutoIngestUserPreferences.SelectedMode storedMode = AutoIngestUserPreferences.getMode();
             inputPathTextField.requestFocusInWindow();
             if (null != storedMode) switch (storedMode) {
                 case REVIEW:
@@ -171,14 +171,14 @@ public class OptionsPanel extends javax.swing.JPanel {
             }
         }
 
-        String images = UserPreferences.getAutoModeImageFolder();
+        String images = AutoIngestUserPreferences.getAutoModeImageFolder();
         if (images != null) {
             inputPathTextField.setText(images);
         } else {
             inputPathTextField.setText("");
         }
 
-        String results = UserPreferences.getAutoModeResultsFolder();
+        String results = AutoIngestUserPreferences.getAutoModeResultsFolder();
         if (results != null) {
             outputPathTextField.setText(results);
         } else {
@@ -186,8 +186,8 @@ public class OptionsPanel extends javax.swing.JPanel {
         }
 
         if (inStartup) {
-            sharedConfigCheckbox.setSelected(UserPreferences.getSharedConfigEnabled());
-            String sharedSettingsFolder = UserPreferences.getSharedConfigFolder();
+            sharedConfigCheckbox.setSelected(AutoIngestUserPreferences.getSharedConfigEnabled());
+            String sharedSettingsFolder = AutoIngestUserPreferences.getSharedConfigFolder();
             if (sharedSettingsFolder != null) {
                 sharedSettingsTextField.setText(sharedSettingsFolder);
             } else {
@@ -195,7 +195,7 @@ public class OptionsPanel extends javax.swing.JPanel {
                 sharedSettingsTextField.setText(folder);
             }
 
-            masterNodeCheckBox.setSelected(UserPreferences.getSharedConfigMaster());
+            masterNodeCheckBox.setSelected(AutoIngestUserPreferences.getSharedConfigMaster());
             setEnabledStateForSharedConfiguration();
         }
 
@@ -233,14 +233,14 @@ public class OptionsPanel extends javax.swing.JPanel {
      */
     void store() {
         if (jRadioButtonStandalone.isSelected()) {
-            UserPreferences.setMode(UserPreferences.SelectedMode.STANDALONE);
+            AutoIngestUserPreferences.setMode(AutoIngestUserPreferences.SelectedMode.STANDALONE);
         } else if (jRadioButtonAutomated.isSelected()) {
             boolean needsSaving = false;
-            String thePath = UserPreferences.getAutoModeImageFolder();
+            String thePath = AutoIngestUserPreferences.getAutoModeImageFolder();
             if (thePath != null && 0 != inputPathTextField.getText().compareTo(thePath)) {
                 needsSaving = true;
             }
-            thePath = UserPreferences.getAutoModeResultsFolder();
+            thePath = AutoIngestUserPreferences.getAutoModeResultsFolder();
             if (thePath != null && 0 != outputPathTextField.getText().compareTo(thePath)) {
                 needsSaving = true;
             }
@@ -251,25 +251,25 @@ public class OptionsPanel extends javax.swing.JPanel {
                         JOptionPane.WARNING_MESSAGE);
             }
 
-            UserPreferences.setMode(UserPreferences.SelectedMode.AUTOMATED);
+            AutoIngestUserPreferences.setMode(AutoIngestUserPreferences.SelectedMode.AUTOMATED);
             String imageFolderPath = getNormalizedFolderPath(inputPathTextField.getText().trim());
-            UserPreferences.setAutoModeImageFolder(imageFolderPath);
+            AutoIngestUserPreferences.setAutoModeImageFolder(imageFolderPath);
             String resultsFolderPath = getNormalizedFolderPath(outputPathTextField.getText().trim());
-            UserPreferences.setAutoModeResultsFolder(resultsFolderPath);
-            UserPreferences.setSharedConfigEnabled(sharedConfigCheckbox.isSelected());
+            AutoIngestUserPreferences.setAutoModeResultsFolder(resultsFolderPath);
+            AutoIngestUserPreferences.setSharedConfigEnabled(sharedConfigCheckbox.isSelected());
             if (sharedConfigCheckbox.isSelected()) {
                 String globalSettingsPath = getNormalizedFolderPath(sharedSettingsTextField.getText().trim());
-                UserPreferences.setSharedConfigFolder(globalSettingsPath);
-                UserPreferences.setSharedConfigMaster(masterNodeCheckBox.isSelected());
+                AutoIngestUserPreferences.setSharedConfigFolder(globalSettingsPath);
+                AutoIngestUserPreferences.setSharedConfigMaster(masterNodeCheckBox.isSelected());
             }
         } else if (jRadioButtonCopyFilesMode.isSelected()) {
 
             boolean needsSaving = false;
-            String thePath = UserPreferences.getAutoModeImageFolder();
+            String thePath = AutoIngestUserPreferences.getAutoModeImageFolder();
             if (thePath != null && 0 != inputPathTextField.getText().compareTo(thePath)) {
                 needsSaving = true;
             }
-            thePath = UserPreferences.getAutoModeResultsFolder();
+            thePath = AutoIngestUserPreferences.getAutoModeResultsFolder();
             if (thePath != null && 0 != outputPathTextField.getText().compareTo(thePath)) {
                 needsSaving = true;
             }
@@ -280,19 +280,19 @@ public class OptionsPanel extends javax.swing.JPanel {
                         JOptionPane.WARNING_MESSAGE);
             }
 
-            UserPreferences.setMode(UserPreferences.SelectedMode.COPYFILES);
+            AutoIngestUserPreferences.setMode(AutoIngestUserPreferences.SelectedMode.COPYFILES);
             String imageFolderPath = getNormalizedFolderPath(inputPathTextField.getText().trim());
-            UserPreferences.setAutoModeImageFolder(imageFolderPath);
+            AutoIngestUserPreferences.setAutoModeImageFolder(imageFolderPath);
             String resultsFolderPath = getNormalizedFolderPath(outputPathTextField.getText().trim());
-            UserPreferences.setAutoModeResultsFolder(resultsFolderPath);
-            UserPreferences.setSharedConfigEnabled(sharedConfigCheckbox.isSelected());
+            AutoIngestUserPreferences.setAutoModeResultsFolder(resultsFolderPath);
+            AutoIngestUserPreferences.setSharedConfigEnabled(sharedConfigCheckbox.isSelected());
             if (sharedConfigCheckbox.isSelected()) {
                 String globalSettingsPath = getNormalizedFolderPath(sharedSettingsTextField.getText().trim());
-                UserPreferences.setSharedConfigFolder(globalSettingsPath);
-                UserPreferences.setSharedConfigMaster(masterNodeCheckBox.isSelected());
+                AutoIngestUserPreferences.setSharedConfigFolder(globalSettingsPath);
+                AutoIngestUserPreferences.setSharedConfigMaster(masterNodeCheckBox.isSelected());
             }
         } else if (jRadioButtonReview.isSelected()) {
-            String thePath = UserPreferences.getAutoModeResultsFolder();
+            String thePath = AutoIngestUserPreferences.getAutoModeResultsFolder();
             if (thePath != null && 0 != outputPathTextField.getText().compareTo(thePath)) {
                 JOptionPane.showMessageDialog(null,
                         NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.MustRestart"),
@@ -300,9 +300,9 @@ public class OptionsPanel extends javax.swing.JPanel {
                         JOptionPane.WARNING_MESSAGE);
             }
 
-            UserPreferences.setMode(UserPreferences.SelectedMode.REVIEW);
+            AutoIngestUserPreferences.setMode(AutoIngestUserPreferences.SelectedMode.REVIEW);
             String resultsFolderPath = getNormalizedFolderPath(outputPathTextField.getText().trim());
-            UserPreferences.setAutoModeResultsFolder(resultsFolderPath);
+            AutoIngestUserPreferences.setAutoModeResultsFolder(resultsFolderPath);
         }
 
         storeMultiUserSettings();
@@ -624,7 +624,7 @@ public class OptionsPanel extends javax.swing.JPanel {
 
     private void displayIngestJobSettingsPanel() {
 
-        IngestJobSettings ingestJobSettings = new IngestJobSettings(UserPreferences.getAutoModeIngestModuleContextString());
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(AutoIngestUserPreferences.getAutoModeIngestModuleContextString());
         showWarnings(ingestJobSettings);
         IngestJobSettingsPanel ingestJobSettingsPanel = new IngestJobSettingsPanel(ingestJobSettings);
 
@@ -2011,7 +2011,7 @@ public class OptionsPanel extends javax.swing.JPanel {
     private void downloadButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_downloadButtonActionPerformed
         // First save the shared config folder and solr settings to the properties
         String globalSettingsPath = getNormalizedFolderPath(sharedSettingsTextField.getText().trim());
-        UserPreferences.setSharedConfigFolder(globalSettingsPath);
+        AutoIngestUserPreferences.setSharedConfigFolder(globalSettingsPath);
         UserPreferences.setIndexingServerHost(tbSolrHostname.getText().trim());
         UserPreferences.setIndexingServerPort(Integer.parseInt(tbSolrPort.getText().trim()));
 

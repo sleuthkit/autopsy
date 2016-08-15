@@ -92,7 +92,7 @@ public class SharedConfiguration {
     private static final Logger logger = Logger.getLogger(SharedConfiguration.class.getName());
 
     private final UpdateConfigSwingWorker swingWorker;
-    private UserPreferences.SelectedMode mode;
+    private AutoIngestUserPreferences.SelectedMode mode;
     private String sharedConfigFolder;
     private int fileIngestThreads;
     private boolean sharedConfigMaster;
@@ -297,13 +297,13 @@ public class SharedConfiguration {
         }
 
         // Check input folder permissions
-        String inputFolder = UserPreferences.getAutoModeImageFolder();
+        String inputFolder = AutoIngestUserPreferences.getAutoModeImageFolder();
         if (!FileUtil.hasReadWriteAccess(Paths.get(inputFolder))) {
             throw new SharedConfigurationException("Cannot read input folder " + inputFolder + ". Check that the folder exists and that you have permissions to access it.");
         }
 
         // Check output folder permissions
-        String outputFolder = UserPreferences.getAutoModeResultsFolder();
+        String outputFolder = AutoIngestUserPreferences.getAutoModeResultsFolder();
         if (!FileUtil.hasReadWriteAccess(Paths.get(outputFolder))) {
             throw new SharedConfigurationException("Cannot read output folder " + outputFolder + ". Check that the folder exists and that you have permissions to access it.");
         }
@@ -332,9 +332,9 @@ public class SharedConfiguration {
      * configuration.
      */
     private void saveNonSharedSettings() {
-        sharedConfigMaster = UserPreferences.getSharedConfigMaster();
-        sharedConfigFolder = UserPreferences.getSharedConfigFolder();
-        mode = UserPreferences.getMode();
+        sharedConfigMaster = AutoIngestUserPreferences.getSharedConfigMaster();
+        sharedConfigFolder = AutoIngestUserPreferences.getSharedConfigFolder();
+        mode = AutoIngestUserPreferences.getMode();
         displayLocalTime = UserPreferences.displayTimesInLocalTime();
         hideKnownFilesInDataSource = UserPreferences.hideKnownFilesInDataSourcesTree();
         hideKnownFilesInViews = UserPreferences.hideKnownFilesInViewsTree();
@@ -346,9 +346,9 @@ public class SharedConfiguration {
      * Restore the settings that may have been overwritten.
      */
     private void restoreNonSharedSettings() {
-        UserPreferences.setSharedConfigFolder(sharedConfigFolder);
-        UserPreferences.setSharedConfigMaster(sharedConfigMaster);
-        UserPreferences.setMode(mode);
+        AutoIngestUserPreferences.setSharedConfigFolder(sharedConfigFolder);
+        AutoIngestUserPreferences.setSharedConfigMaster(sharedConfigMaster);
+        AutoIngestUserPreferences.setMode(mode);
         UserPreferences.setDisplayTimesInLocalTime(displayLocalTime);
         UserPreferences.setHideKnownFilesInDataSourcesTree(hideKnownFilesInDataSource);
         UserPreferences.setHideKnownFilesInViewsTree(hideKnownFilesInViews);
@@ -365,7 +365,7 @@ public class SharedConfiguration {
      */
     private static File getSharedFolder() throws SharedConfigurationException {
         // Check that the shared folder is set and exists
-        String remoteConfigFolderPath = UserPreferences.getSharedConfigFolder();
+        String remoteConfigFolderPath = AutoIngestUserPreferences.getSharedConfigFolder();
         if (remoteConfigFolderPath.isEmpty()) {
             logger.log(Level.SEVERE, "Shared configuration folder is not set.");
             throw new SharedConfigurationException("Shared configuration folder is not set.");
@@ -404,7 +404,7 @@ public class SharedConfiguration {
         if (isSharedFolder) {
             contextDir = new File(folder, AUTO_MODE_FOLDER);
         } else {
-            IngestJobSettings ingestJobSettings = new IngestJobSettings(UserPreferences.getAutoModeIngestModuleContextString());
+            IngestJobSettings ingestJobSettings = new IngestJobSettings(AutoIngestUserPreferences.getAutoModeIngestModuleContextString());
             contextDir = ingestJobSettings.getSavedModuleSettingsFolder().toFile();
         }
 
@@ -525,7 +525,7 @@ public class SharedConfiguration {
             throw new SharedConfigurationException("Failed to create clean shared configuration subfolder " + remoteAutoConfFolder.getAbsolutePath());
         }
 
-        IngestJobSettings ingestJobSettings = new IngestJobSettings(UserPreferences.getAutoModeIngestModuleContextString());
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(AutoIngestUserPreferences.getAutoModeIngestModuleContextString());
         File localFolder = ingestJobSettings.getSavedModuleSettingsFolder().toFile();
 
         if (!localFolder.exists()) {
@@ -559,7 +559,7 @@ public class SharedConfiguration {
         }
 
         // Get/create the local subfolder
-        IngestJobSettings ingestJobSettings = new IngestJobSettings(UserPreferences.getAutoModeIngestModuleContextString());
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(AutoIngestUserPreferences.getAutoModeIngestModuleContextString());
         File localFolder = ingestJobSettings.getSavedModuleSettingsFolder().toFile();
 
         try {

@@ -37,6 +37,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseNewAction;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.experimental.configuration.AutoIngestUserPreferences;
 import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService.CoordinationServiceException;
 
@@ -131,7 +132,7 @@ final class ReviewModeCaseManager implements PropertyChangeListener {
      */
     List<AutoIngestCase> getCases() {
         List<AutoIngestCase> cases = new ArrayList<>();
-        List<Path> caseFolders = PathUtils.findCaseFolders(Paths.get(UserPreferences.getAutoModeResultsFolder()));
+        List<Path> caseFolders = PathUtils.findCaseFolders(Paths.get(AutoIngestUserPreferences.getAutoModeResultsFolder()));
         for (Path caseFolderPath : caseFolders) {
             cases.add(new AutoIngestCase(caseFolderPath));
         }

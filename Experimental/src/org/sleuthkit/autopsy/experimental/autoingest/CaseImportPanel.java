@@ -37,6 +37,7 @@ import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import java.util.logging.Level;
+import org.sleuthkit.autopsy.experimental.configuration.AutoIngestUserPreferences;
 
 /**
  * This panel shows up in a tab pane next to the copy files panel for the
@@ -79,8 +80,8 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
         imageSourceFolderChooser.setAcceptAllFileFilterUsed(false);
         imageSourceFolderChooser.setDialogTitle(NbBundle.getMessage(CaseImportPanel.class, "CaseImportPanel.ChooseSource"));
         imageSourceFolderChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        tbCaseDestination.setText(UserPreferences.getAutoModeResultsFolder());
-        tbImageDestination.setText(UserPreferences.getAutoModeImageFolder());
+        tbCaseDestination.setText(AutoIngestUserPreferences.getAutoModeResultsFolder());
+        tbImageDestination.setText(AutoIngestUserPreferences.getAutoModeImageFolder());
         cbCopyImages.setSelected(true);
         cbDeleteCase.setSelected(false);
         badDatabaseCredentials = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/warning16.png", false)); //NON-NLS
@@ -549,7 +550,7 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         String caseDestinationResult = "";
-        String output = UserPreferences.getAutoModeResultsFolder();
+        String output = AutoIngestUserPreferences.getAutoModeResultsFolder();
         if (output.isEmpty() || !(new File(output).exists())) {
             setNotificationText(NotificationLabel.OUTPUT, NbBundle.getMessage(CaseImportPanel.class, "CaseImportPanel.BadCaseDestinationFolder"), false);
         } else {
@@ -558,7 +559,7 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
         }
 
         String imageDestinationResult = "";
-        String imageFolder = UserPreferences.getAutoModeImageFolder();
+        String imageFolder = AutoIngestUserPreferences.getAutoModeImageFolder();
         if (imageFolder.isEmpty() || !(new File(imageFolder).exists())) {
             setNotificationText(NotificationLabel.OUTPUT, NbBundle.getMessage(CaseImportPanel.class, "CaseImportPanel.BadImageDestinationFolder"), false);
         } else {

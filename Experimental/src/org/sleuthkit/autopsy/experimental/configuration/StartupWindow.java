@@ -110,7 +110,7 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
      */
     private void addPanelForMode() {
         //UserPreferences.setMode(UserPreferences.SelectedMode.AUTOMATED); // ELTODO remove
-        UserPreferences.SelectedMode mode = UserPreferences.getMode();
+        AutoIngestUserPreferences.SelectedMode mode = AutoIngestUserPreferences.getMode();
 
         switch (mode) {
             case AUTOMATED:

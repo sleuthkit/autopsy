@@ -60,9 +60,9 @@ class AdvancedOptionsPanel extends javax.swing.JPanel {
 
     private void load(OptionsPanel.OptionsUiMode mode) {
         initThreadCount();
-        spSecondsBetweenJobs.setValue(UserPreferences.getSecondsToSleepBetweenCases());
-        spMaximumRetryAttempts.setValue(UserPreferences.getMaxNumTimesToProcessImage());
-        int maxJobsPerCase = UserPreferences.getMaxConcurrentJobsForOneCase();
+        spSecondsBetweenJobs.setValue(AutoIngestUserPreferences.getSecondsToSleepBetweenCases());
+        spMaximumRetryAttempts.setValue(AutoIngestUserPreferences.getMaxNumTimesToProcessImage());
+        int maxJobsPerCase = AutoIngestUserPreferences.getMaxConcurrentJobsForOneCase();
         spConcurrentJobsPerCase.setValue(maxJobsPerCase);
         spSecondsBetweenJobs.setEnabled(mode == OptionsPanel.OptionsUiMode.UTILITY || mode == OptionsPanel.OptionsUiMode.AIM);
         spMaximumRetryAttempts.setEnabled(mode == OptionsPanel.OptionsUiMode.UTILITY || mode == OptionsPanel.OptionsUiMode.AIM);
@@ -99,9 +99,9 @@ class AdvancedOptionsPanel extends javax.swing.JPanel {
     }
 
     void store() {
-        UserPreferences.setSecondsToSleepBetweenCases((int) spSecondsBetweenJobs.getValue());
-        UserPreferences.setMaxNumTimesToProcessImage((int) spMaximumRetryAttempts.getValue());
-        UserPreferences.setMaxConcurrentIngestNodesForOneCase((int) spConcurrentJobsPerCase.getValue());
+        AutoIngestUserPreferences.setSecondsToSleepBetweenCases((int) spSecondsBetweenJobs.getValue());
+        AutoIngestUserPreferences.setMaxNumTimesToProcessImage((int) spMaximumRetryAttempts.getValue());
+        AutoIngestUserPreferences.setMaxConcurrentIngestNodesForOneCase((int) spConcurrentJobsPerCase.getValue());
         UserPreferences.setNumberOfFileIngestThreads((Integer) numberOfFileIngestThreadsComboBox.getSelectedItem());
         boolean isChecked = cbTimeoutEnabled.isSelected();
         UserPreferences.setIsTimeOutEnabled(isChecked);
