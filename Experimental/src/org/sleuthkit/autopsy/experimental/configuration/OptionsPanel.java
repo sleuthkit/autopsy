@@ -1514,7 +1514,7 @@ public class OptionsPanel extends javax.swing.JPanel {
             }
         });
 
-        jLabelAimDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/AIM.png"))); // NOI18N
+        jLabelAimDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/experimental/images/AIM.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(jLabelAimDiagram, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.jLabelAimDiagram.text")); // NOI18N
 
         jLabelInvalidImageFolder.setForeground(new java.awt.Color(255, 0, 0));
