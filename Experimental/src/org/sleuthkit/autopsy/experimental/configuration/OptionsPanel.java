@@ -58,7 +58,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.autopsy.events.MessageServiceException;
-import org.sleuthkit.experimental.autoingest.FileExporterSettingsPanel;
+import org.sleuthkit.autopsy.experimental.autoingest.FileExporterSettingsPanel;
 
 /**
  *

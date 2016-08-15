@@ -37,9 +37,9 @@ import org.sleuthkit.autopsy.casemodule.CueBannerPanel;
 import org.sleuthkit.autopsy.casemodule.StartupWindowInterface;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
-import org.sleuthkit.experimental.autoingest.AutoIngestDashboard;
-import org.sleuthkit.experimental.autoingest.CaseImportPanel;
-import org.sleuthkit.experimental.autoingest.ReviewModeCasePanel;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestDashboard;
+import org.sleuthkit.autopsy.experimental.autoingest.CaseImportPanel;
+import org.sleuthkit.autopsy.experimental.autoingest.ReviewModeCasePanel;
 
 /**
  * The default implementation of the Autopsy startup window
