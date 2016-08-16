@@ -245,7 +245,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
     /**
      * Gets the path to the copy of the SleuthKit executable that is used to
      * determine whether or not a drive image has a file system. The tool is
-     * installed during Viking installation, so it is assumed that it only needs
+     * installed during Autopsy installation, so it is assumed that it only needs
      * to be found on start up.
      *
      * @return The path to the executable.
