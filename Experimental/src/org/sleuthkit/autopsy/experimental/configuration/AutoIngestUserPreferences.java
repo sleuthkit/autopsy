@@ -39,7 +39,7 @@ public final class AutoIngestUserPreferences {
     };
 
     private static final Preferences preferences = NbPreferences.forModule(AutoIngestUserPreferences.class);
-    private static final String MODE = "Mode"; // NON-NLS
+    private static final String MODE = "AutopsyMode"; // NON-NLS
     private static final String AUTO_MODE_IMAGES_FOLDER = "AutoModeImageFolder"; // NON-NLS
     private static final String AUTO_MODE_RESULTS_FOLDER = "AutoModeResultsFolder"; // NON-NLS
     private static final String SHARED_CONFIG_FOLDER = "SharedSettingsFolder"; // NON-NLS

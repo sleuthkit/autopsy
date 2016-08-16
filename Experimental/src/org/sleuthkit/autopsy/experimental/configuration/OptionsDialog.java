@@ -35,7 +35,7 @@ import org.openide.util.ImageUtilities;
  */
 public class OptionsDialog extends JDialog {
 
-    private static final String TITLE = "Options";
+    private static final String TITLE = "Auto Ingest Options";
     private static final long serialVersionUID = 1L;
 
     /**
