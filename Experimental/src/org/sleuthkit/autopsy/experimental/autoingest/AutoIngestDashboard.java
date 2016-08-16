@@ -96,7 +96,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     private final DefaultTableModel pendingTableModel;
     private final DefaultTableModel runningTableModel;
     private final DefaultTableModel completedTableModel;
-    //ELTODO private AutoIngestManager manager;
+    private AutoIngestManager manager;
     private ExecutorService updateExecutor;
     private boolean isPaused;
     private Color pendingTableBackground;
@@ -171,7 +171,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
      * controlling automated ingest for a single node within the cluster.
      */
     private AutoIngestDashboard() {
-        //ELTODO manager = AutoIngestManager.getInstance();
+        manager = AutoIngestManager.getInstance();
 
         pendingTableModel = new DefaultTableModel(JobsTableModelColumns.headers, 0) {
             private static final long serialVersionUID = 1L;
@@ -529,8 +529,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
      * Sets the initial state of the buttons on the panel.
      */
     private void initButtons() {
-        //ELTODO bnOptions.setEnabled(false); // uncomment after AIM event processing is moved over to Autopsy
-        bnOptions.setEnabled(true); // ELTODO remove after AIM event processing is moved over to Autopsy
+        bnOptions.setEnabled(false);
         bnDeleteCase.setEnabled(false);
         enablePendingTableButtons(false);
         bnShowCaseLog.setEnabled(false);
@@ -577,11 +576,11 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
          * Start up the auto ingest manager (AIM).
          */
         try {
-            //ELTODO manager.startUp();
-        } catch (/*ELTODO AutoIngestManager.AutoIngestManagerStartupException*/ Exception ex) {
+            manager.startUp();
+        } catch (AutoIngestManager.AutoIngestManagerStartupException ex) {
             LOGGER.log(Level.SEVERE, "Dashboard error starting up auto ingest", ex);
             tbStatusMessage.setText(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.AutoIngestStartupError"));
-            //ELTODO manager = null;
+            manager = null;
 
             JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.AutoIngestStartupFailed.Message"),
@@ -600,7 +599,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
          * this is a cluster.
          */
         try {
-            //ELTODO manager.establishRemoteCommunications();
+            manager.establishRemoteCommunications();
         } catch (Exception ex) {
             LOGGER.log(Level.SEVERE, "Dashboard error establishing remote communications for auto ingest", ex);
             JOptionPane.showMessageDialog(this,
@@ -619,7 +618,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         /*
          * Register with the AIM as an observer.
          */
-        //ELTODO manager.addObserver(this);
+        manager.addObserver(this);
 
         /*
          * Populate the pending, running, and completed auto ingest tables.
@@ -634,7 +633,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
          * and the scan both acquire the job lists manager. Does the AIM send an
          * event after a scan? Need to check this.
          */
-        //ELTODO manager.scanImageFoldersNow();
+        manager.scanInputDirsNow();
         bnPause.setEnabled(true);
         bnRefresh.setEnabled(true);
     }
@@ -657,7 +656,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
             NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.Cancel")};
         int reply = JOptionPane.OK_OPTION;
 
-        if (/*//ELTODO null != manager && */IngestManager.getInstance().isIngestRunning()) {
+        if (null != manager && IngestManager.getInstance().isIngestRunning()) {
             reply = JOptionPane.showOptionDialog(this,
                     NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.ExitConsequences"),
                     NbBundle.getMessage(AutoIngestDashboard.class, "ConfirmationDialog.ConfirmExitHeader"),
@@ -685,9 +684,9 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
             /*
              * Stop observing the auto ingest manager (AIM).
              */
- /*//ELTODO if (null != manager) {
+            if (null != manager) {
                 manager.deleteObserver(this);
-            }*/
+            }
 
             /*
              * Shut down the AIM and close.
@@ -696,9 +695,9 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
 
                 @Override
                 protected Void doInBackground() throws Exception {
-                    /*//ELTODO if (null != manager) {
+                    if (null != manager) {
                         manager.shutDown();
-                    }*/
+                    }
                     return null;
                 }
 
@@ -800,7 +799,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
              * Ask the auto ingest manager to pause when it completes the
              * currently running job, if any.
              */
-            //ELTODO manager.pause();
+            manager.pause();
         }
     }
 
@@ -830,7 +829,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         /**
          * Ask the auto ingest manager to resume processing.
          */
-        //ELTODO manager.resume();
+        manager.resume();
     }
 
     /**
@@ -846,7 +845,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         @Override
         public void run() {
             List<AutoIngestJob> pendingJobs = new ArrayList<>();
-            //ELTODO manager.getJobs(pendingJobs, null, null);
+            manager.getJobs(pendingJobs, null, null);
             EventQueue.invokeLater(new RefreshComponentsTask(pendingJobs, null, null));
         }
     }
@@ -864,7 +863,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         @Override
         public void run() {
             List<AutoIngestJob> runningJobs = new ArrayList<>();
-            //ELTODO manager.getJobs(null, runningJobs, null);
+            manager.getJobs(null, runningJobs, null);
             EventQueue.invokeLater(new RefreshComponentsTask(null, runningJobs, null));
         }
     }
@@ -888,7 +887,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
             List<AutoIngestJob> pendingJobs = new ArrayList<>();
             List<AutoIngestJob> runningJobs = new ArrayList<>();
             List<AutoIngestJob> completedJobs = new ArrayList<>();
-            //ELTODO manager.getJobs(pendingJobs, runningJobs, completedJobs);
+            manager.getJobs(pendingJobs, runningJobs, completedJobs);
             // Sort the completed jobs list by completed date
             Collections.sort(completedJobs, new AutoIngestJob.ReverseDateCompletedComparator());
             EventQueue.invokeLater(new RefreshComponentsTask(pendingJobs, runningJobs, completedJobs));
@@ -1407,7 +1406,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
      * @param evt - The button click event.
      */
     private void bnRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnRefreshActionPerformed
-        //ELTODO manager.scanImageFoldersNow();
+        manager.scanInputDirsNow();
         updateExecutor.submit(new UpdateAllJobsTablesTask());
     }//GEN-LAST:event_bnRefreshActionPerformed
 
@@ -1494,8 +1493,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
              * see it).
              */
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            //ELTODO List<AutoIngestJob> runningJobs = manager.cancelCurrentJob();
-            //ELTODO refreshTable(runningJobs, runningTableModel, null);
+            List<AutoIngestJob> runningJobs = manager.cancelCurrentJob();
+            refreshTable(runningJobs, runningTableModel, null);
             this.setCursor(Cursor.getDefaultCursor());
         }
     }//GEN-LAST:event_bnCancelJobActionPerformed
@@ -1561,8 +1560,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
              * see it).
              */
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            //ELTODO List<AutoIngestJob> runningJobs = manager.cancelCurrentDataSourceLevelIngestModule();
-            //ELTODO refreshTable(runningJobs, runningTableModel, null);
+            List<AutoIngestJob> runningJobs = manager.cancelCurrentDataSourceLevelIngestModule();
+            refreshTable(runningJobs, runningTableModel, null);
             this.setCursor(Cursor.getDefaultCursor());
         }
     }//GEN-LAST:event_bnCancelModuleActionPerformed

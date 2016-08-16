@@ -65,8 +65,6 @@ final class ReviewModeCaseManager implements PropertyChangeListener {
         }
 
     }
-    
-    static final String ROOT_NAMESPACE = "autopsy"; //ELTODO - remove this after AIM is moved into Autopsy. It belongs there.
 
     private static final Logger logger = Logger.getLogger(ReviewModeCaseManager.class.getName());
     private static ReviewModeCaseManager instance;
