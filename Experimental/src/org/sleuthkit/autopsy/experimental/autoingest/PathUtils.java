@@ -20,14 +20,12 @@ package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.io.File;
 import java.io.FilenameFilter;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.casemodule.GeneralFilter;
 import org.sleuthkit.autopsy.coreutils.Logger;

@@ -56,7 +56,7 @@
                   <Component id="lbExplanation" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace min="-2" pref="7" max="-2" attributes="0"/>
-              <Component id="mainPanel" pref="453" max="32767" attributes="0"/>
+              <Component id="mainPanel" pref="455" max="32767" attributes="0"/>
               <EmptySpace min="-2" pref="1" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="bnDeleteRule" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -299,7 +299,7 @@
                                   <Component id="lbArtifact" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jScrollPane1" pref="185" max="32767" attributes="0"/>
+                              <Component id="jScrollPane1" pref="187" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
@@ -333,9 +333,6 @@
                 </Property>
                 <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="FileExporterSettingsPanel.MimetypeCheckboxTooltip_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-                </Property>
-                <Property name="label" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="FileExporterSettingsPanel.MimetypeText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Events>
@@ -372,9 +369,6 @@
                 </Property>
                 <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="FileExporterSettingsPanel.FileSize_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-                </Property>
-                <Property name="label" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="FileExporterSettingsPanel.FileSize" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Events>
@@ -441,9 +435,6 @@
                   <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="FileExporterSettingsPanel.SaveTooltip_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
                 <Property name="enabled" type="boolean" value="false"/>
-                <Property name="label" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="FileExporterSettingsPanel.SaveText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-                </Property>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bnSaveRuleActionPerformed"/>
@@ -612,9 +603,6 @@
             <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="FileExporterSettingsPanel.BrowseReportTooltip_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
-            <Property name="label" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="FileExporterSettingsPanel.BrowseText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-            </Property>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bnBrowseReportDirectoryActionPerformed"/>
@@ -672,9 +660,6 @@
             <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="FileExporterSettingsPanel.BrowseRootOutputFolder_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
-            <Property name="label" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="FileExporterSettingsPanel.BrowseText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-            </Property>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bnBrowseRootDirectoryActionPerformed"/>
@@ -702,9 +687,6 @@
         <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="FileExporterSettingsPanel.NewRuleTooltip_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
-        <Property name="label" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="FileExporterSettingsPanel.NewText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-        </Property>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bnNewRuleActionPerformed"/>
@@ -722,9 +704,6 @@
           <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="FileExporterSettingsPanel.DeleteTooltip_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
         <Property name="enabled" type="boolean" value="false"/>
-        <Property name="label" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="FileExporterSettingsPanel.DeleteText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-        </Property>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bnDeleteRuleActionPerformed"/>
