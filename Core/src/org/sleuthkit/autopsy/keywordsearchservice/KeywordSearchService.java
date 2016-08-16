@@ -50,5 +50,5 @@ public interface KeywordSearchService extends Closeable {
      * @throws KeywordSearchServiceException
      */
     public void tryConnect(String host, int port) throws KeywordSearchServiceException;
-    
+
 }
