@@ -110,9 +110,9 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.ingest.IngestJobStartResult;
 import org.sleuthkit.autopsy.ingest.IngestModuleError;
-import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobLogger.AutoIngestJobLoggerException;
 import org.sleuthkit.autopsy.experimental.autoingest.FileExporter.FileExportException;
 import org.sleuthkit.autopsy.experimental.autoingest.ManifestFileParser.ManifestFileParserException;
+import org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.ProcessingStatus;
 import static org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.ProcessingStatus.PENDING;
 import static org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.ProcessingStatus.PROCESSING;
 import static org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.ProcessingStatus.COMPLETED;
@@ -1264,7 +1264,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                             int numberOfCrashes = nodeData.getNumberOfCrashes();
                             ++numberOfCrashes;
                             nodeData.setNumberOfCrashes(numberOfCrashes);
-                            if (numberOfCrashes <= VikingUserPreferences.getMaxNumTimesToProcessImage()) {
+                            if (numberOfCrashes <= AutoIngestUserPreferences.getMaxNumTimesToProcessImage()) {
                                 nodeData.setStatus(PENDING);
                                 Path caseDirectoryPath = PathUtils.findCaseDirectory(rootOutputDirectory, manifest.getCaseName());
                                 newPendingJobsList.add(new AutoIngestJob(manifest, caseDirectoryPath, nodeData.getPriority(), LOCAL_HOST_NAME, AutoIngestJob.Stage.PENDING));
@@ -1800,7 +1800,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                                 ++currentJobsForCase;
                             }
                         }
-                        if (currentJobsForCase >= VikingUserPreferences.getMaxConcurrentJobsForOneCase()) {
+                        if (currentJobsForCase >= AutoIngestUserPreferences.getMaxConcurrentJobsForOneCase()) {
                             manifestLock.release();
                             manifestLock = null;
                             continue;
@@ -1827,7 +1827,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
          *                                      ingest is shutting down.
          */
         private void updateConfiguration() throws SharedConfigurationException, InterruptedException {
-            if (VikingUserPreferences.getSharedConfigEnabled()) {
+            if (AutoIngestUserPreferences.getSharedConfigEnabled()) {
                 Manifest manifest = currentJob.getManifest();
                 Path manifestPath = manifest.getFilePath();
                 LOGGER.log(Level.INFO, "Downloading shared configuration for {0}", manifestPath);
@@ -1912,7 +1912,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                              * that the new case folder is visible on the
                              * network.
                              */
-                            Thread.sleep(VikingUserPreferences.getSecondsToSleepBetweenCases() * 1000);
+                            Thread.sleep(AutoIngestUserPreferences.getSecondsToSleepBetweenCases() * 1000);
                         }
                         currentJob.setCaseDirectoryPath(caseDirectoryPath);
                         Case caseForJob = Case.getCurrentCase();
@@ -1973,7 +1973,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                              * Sleep to allow ingest event subscribers to do
                              * their event handling.
                              */
-                            Thread.sleep(VikingUserPreferences.getSecondsToSleepBetweenCases() * 1000); // RJCTODO: Change the setting description to be more generic
+                            Thread.sleep(AutoIngestUserPreferences.getSecondsToSleepBetweenCases() * 1000); // RJCTODO: Change the setting description to be more generic
                         }
                         if (!handleCancellation()) {
                             exportFiles(dataSource);
@@ -2042,13 +2042,13 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                     LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, DataSource.Type.CELLEBRITE_PHYSICAL_REPORT});
                     jobLogger.logDataSourceTypeId(DataSource.Type.CELLEBRITE_PHYSICAL_REPORT.toString());
                     return new DataSource(deviceId, extractedDataSource, DataSource.Type.CELLEBRITE_PHYSICAL_REPORT);
-                } else if (FileFilters.isAcceptedByFilter(dataSource, FileFilters.cellebriteLogicalReportFilters)) {
+                /* ELTODO } else if (FileFilters.isAcceptedByFilter(dataSource, FileFilters.cellebriteLogicalReportFilters)) {
                     DataSource.Type type = parseCellebriteLogicalReportType(dataSourcePath);
                     if (null != type) {
                         LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, type});
                         jobLogger.logDataSourceTypeId(type.toString());
                         return new DataSource(deviceId, dataSourcePath, type);
-                    }
+                    }*/
                 } else if (VirtualMachineFinder.isVirtualMachine(manifest.getDataSourceFileName())) {
                     LOGGER.log(Level.INFO, "Identified data source type for {0} as {1} (VM)", new Object[]{manifestPath, DataSource.Type.DRIVE_IMAGE});
                     jobLogger.logDataSourceTypeId(DataSource.Type.DRIVE_IMAGE.toString());
@@ -2062,9 +2062,9 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                     jobLogger.logDataSourceTypeId(DataSource.Type.PHONE_IMAGE.toString());
                     return new DataSource(deviceId, dataSourcePath, DataSource.Type.PHONE_IMAGE);
                 }
-                LOGGER.log(Level.INFO, "Failed to identify data source type for {0}", manifestPath);
-                jobLogger.logFailedToIdentifyDataSource();
-                return null;
+                // ELTODO LOGGER.log(Level.INFO, "Failed to identify data source type for {0}", manifestPath);
+                // ELTODO jobLogger.logFailedToIdentifyDataSource();
+                // ELTODO return null;
 
             } catch (IOException ex) {
                 LOGGER.log(Level.SEVERE, String.format("Error identifying data source for %s", manifestPath), ex);
