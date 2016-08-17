@@ -41,5 +41,9 @@
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="jcl-over-slf4j" rev="1.7.10"/>
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="jul-to-slf4j" rev="1.7.10"/>
         
+        <dependency org="org.apache.commons" name="commons-csv" rev="1.4">
+            <artifact name="commons-csv" type="jar" />
+        </dependency> 
+        
     </dependencies>
 </ivy-module>

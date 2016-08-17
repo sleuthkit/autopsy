@@ -122,6 +122,15 @@
                         <specification-version>10.5</specification-version>
                     </run-dependency>
                 </dependency>
+                <dependency>
+                    <code-name-base>org.sleuthkit.autopsy.corelibs</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <release-version>3</release-version>
+                        <specification-version>1.1</specification-version>
+                    </run-dependency>
+                </dependency>
             </module-dependencies>
             <public-packages>
                 <package>org.apache.commons.lang</package>
@@ -188,10 +197,6 @@
                 <package>org.apache.tika.utils</package>
                 <package>org.sleuthkit.autopsy.keywordsearch</package>
             </public-packages>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-validator-1.5.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-validator-1.5.1.jar</binary-origin>
-            </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/bcmail-jdk15-1.45.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/bcmail-jdk15-1.45.jar</binary-origin>
@@ -293,6 +298,10 @@
                 <binary-origin>release/modules/ext/tika-core-1.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/commons-csv-1.4.jar</runtime-relative-path>
+                <binary-origin>C:\Basistech\dev\autopsy\KeywordSearch\release\modules\ext\commons-csv-1.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/jericho-html-3.3-javadoc.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jericho-html-3.3-javadoc.jar</binary-origin>
             </class-path-extension>
@@ -311,10 +320,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/poi-scratchpad-3.10-beta2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/poi-scratchpad-3.10-beta2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-logging-1.1.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-logging-1.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/netcdf-4.2-min.jar</runtime-relative-path>
@@ -363,6 +368,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/httpcore-4.3.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/httpcore-4.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-validator-1.5.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-validator-1.5.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-lang-2.4.jar</runtime-relative-path>
