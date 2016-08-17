@@ -86,7 +86,10 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
     @GuardedBy("Accounts.class")
     private static boolean iinsLoaded = false;
 
+
     private SleuthkitCase skCase;
+
+    private boolean showRejected = false;
 
     /**
      * Load the IIN range information from disk. If the map has already been
@@ -225,6 +228,15 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
+        }
+
+        @Override
+        public Action[] getActions(boolean context) {
+            Action[] actions = super.getActions(context);
+            ArrayList<Action> actionsList = new ArrayList<>();
+            actionsList.addAll(Arrays.asList(actions));
+            actionsList.add(new SetShowRejected(!showRejected));
+            return actionsList.toArray(new Action[actionsList.size()]);
         }
     }
 
@@ -542,7 +554,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                     + " LEFT JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id " //NON-NLS
                     + "                                AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SOLR_DOCUMENT_ID.getTypeID() //NON-NLS
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT.getTypeID() //NON-NLS
-                    + "     AND blackboard_artifacts.review_status_id != " + BlackboardArtifact.ReviewStatus.REJECTED.getID() //NON-NLS
+                    + (showRejected ? "" : "  AND blackboard_artifacts.review_status_id != " + BlackboardArtifact.ReviewStatus.REJECTED.getID()) //NON-NLS
                     + " GROUP BY blackboard_artifacts.obj_id, solr_document_id " //NON-NLS
                     + " ORDER BY hits DESC ";  //NON-NLS
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
@@ -804,7 +816,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                     + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id" //NON-NLS
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER.getTypeID() //NON-NLS
-                    + "     AND blackboard_artifacts.review_status_id != " + BlackboardArtifact.ReviewStatus.REJECTED.getID() //NON-NLS
+                    + (showRejected ? "" : "     AND blackboard_artifacts.review_status_id != " + BlackboardArtifact.ReviewStatus.REJECTED.getID()) //NON-NLS
                     + " GROUP BY BIN " //NON-NLS
                     + " ORDER BY BIN "; //NON-NLS
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query)) {
@@ -872,7 +884,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.value_text LIKE \"" + bin.getBIN() + "%\" " //NON-NLS
-                    + "     AND blackboard_artifacts.review_status_id != " + BlackboardArtifact.ReviewStatus.REJECTED.getID() //NON-NLS
+                    + (showRejected ? "" : "     AND blackboard_artifacts.review_status_id != " + BlackboardArtifact.ReviewStatus.REJECTED.getID()) //NON-NLS
                     + " ORDER BY blackboard_attributes.value_text"; //NON-NLS
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
                     ResultSet rs = results.getResultSet();) {
@@ -956,6 +968,22 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Error approving artifacts.", ex); //NON-NLS
             }
+        }
+    }
+
+    private class SetShowRejected extends AbstractAction {
+
+        private final boolean show;
+
+        public SetShowRejected(boolean show) {
+            super(show ? "Show Rejected Results" : "Hide Rejected Results");
+            this.show = show;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            showRejected = show;
+            update();
         }
     }
 

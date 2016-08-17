@@ -114,7 +114,6 @@ final class TermComponentQuery implements KeywordSearchQuery {
     TermComponentQuery(KeywordList keywordList, Keyword keyword) {
         this.keyword = keyword;
 
-
         this.keywordList = keywordList;
         this.escapedQuery = keyword.getQuery();
     }
@@ -210,8 +209,13 @@ final class TermComponentQuery implements KeywordSearchQuery {
                 final int iin = Integer.parseInt(ccn.substring(0, 8));
 
                 Accounts.IINInfo iinRange = Accounts.getIINInfo(iin);
-                newArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_CREDIT_CARD_SCHEME, MODULE_NAME, iinRange.getScheme()));
-                newArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PAYMENT_CARD_TYPE, MODULE_NAME, iinRange.getCardType()));
+
+                if (StringUtils.isNotBlank(iinRange.getScheme())) {
+                    newArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_CREDIT_CARD_SCHEME, MODULE_NAME, iinRange.getScheme()));
+                }
+                if (StringUtils.isNotBlank(iinRange.getCardType())) {
+                    newArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PAYMENT_CARD_TYPE, MODULE_NAME, iinRange.getCardType()));
+                }
                 if (StringUtils.isNotBlank(iinRange.getBrand())) {
                     newArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_BRAND, MODULE_NAME, iinRange.getBrand()));
                 }
