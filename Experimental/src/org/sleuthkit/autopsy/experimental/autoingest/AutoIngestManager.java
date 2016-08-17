@@ -116,6 +116,7 @@ import org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.Processing
 import static org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.ProcessingStatus.PENDING;
 import static org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.ProcessingStatus.PROCESSING;
 import static org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.ProcessingStatus.COMPLETED;
+import org.sleuthkit.autopsy.experimental.cellex.datasourceprocessors.CellebriteXMLProcessor;
 import org.sleuthkit.autopsy.experimental.configuration.SharedConfiguration.SharedConfigurationException;
 
 /**
@@ -2042,13 +2043,13 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                     LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, DataSource.Type.CELLEBRITE_PHYSICAL_REPORT});
                     jobLogger.logDataSourceTypeId(DataSource.Type.CELLEBRITE_PHYSICAL_REPORT.toString());
                     return new DataSource(deviceId, extractedDataSource, DataSource.Type.CELLEBRITE_PHYSICAL_REPORT);
-                /* ELTODO } else if (FileFilters.isAcceptedByFilter(dataSource, FileFilters.cellebriteLogicalReportFilters)) {
+                } else if (FileFilters.isAcceptedByFilter(dataSource, FileFilters.cellebriteLogicalReportFilters)) {
                     DataSource.Type type = parseCellebriteLogicalReportType(dataSourcePath);
                     if (null != type) {
                         LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, type});
                         jobLogger.logDataSourceTypeId(type.toString());
                         return new DataSource(deviceId, dataSourcePath, type);
-                    }*/
+                    }
                 } else if (VirtualMachineFinder.isVirtualMachine(manifest.getDataSourceFileName())) {
                     LOGGER.log(Level.INFO, "Identified data source type for {0} as {1} (VM)", new Object[]{manifestPath, DataSource.Type.DRIVE_IMAGE});
                     jobLogger.logDataSourceTypeId(DataSource.Type.DRIVE_IMAGE.toString());
@@ -2062,9 +2063,9 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                     jobLogger.logDataSourceTypeId(DataSource.Type.PHONE_IMAGE.toString());
                     return new DataSource(deviceId, dataSourcePath, DataSource.Type.PHONE_IMAGE);
                 }
-                // ELTODO LOGGER.log(Level.INFO, "Failed to identify data source type for {0}", manifestPath);
-                // ELTODO jobLogger.logFailedToIdentifyDataSource();
-                // ELTODO return null;
+                LOGGER.log(Level.INFO, "Failed to identify data source type for {0}", manifestPath);
+                jobLogger.logFailedToIdentifyDataSource();
+                return null;
 
             } catch (IOException ex) {
                 LOGGER.log(Level.SEVERE, String.format("Error identifying data source for %s", manifestPath), ex);
@@ -2704,7 +2705,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
 
     private static final class FileFilters {
 
-        //ELTODO private static final List<FileFilter> cellebriteLogicalReportFilters = CellebriteXMLProcessor.getFileFilterList();
+        private static final List<FileFilter> cellebriteLogicalReportFilters = CellebriteXMLProcessor.getFileFilterList();
         private static final GeneralFilter zipFilter = new GeneralFilter(Arrays.asList(new String[]{".zip"}), "");
         private static final List<FileFilter> archiveFilters = new ArrayList<>();
 
