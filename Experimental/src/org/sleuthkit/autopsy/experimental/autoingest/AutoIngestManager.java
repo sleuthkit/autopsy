@@ -47,6 +47,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Enumeration;
@@ -116,6 +117,7 @@ import org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.Processing
 import static org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.ProcessingStatus.PENDING;
 import static org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.ProcessingStatus.PROCESSING;
 import static org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.ProcessingStatus.COMPLETED;
+import org.sleuthkit.autopsy.corecomponentinterfaces.AutomatedIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.experimental.cellex.datasourceprocessors.CellebriteXMLProcessor;
 import org.sleuthkit.autopsy.experimental.configuration.SharedConfiguration.SharedConfigurationException;
 
@@ -2262,8 +2264,29 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                 final UUID taskId = UUID.randomUUID();
                 try {
                     caseForJob.notifyAddingDataSource(taskId);
+                    
+                    // lookup all AutomatedIngestDataSourceProcessors 
+                    Collection <? extends AutomatedIngestDataSourceProcessor> processorCandidates = Lookup.getDefault().lookupAll(AutomatedIngestDataSourceProcessor.class);
+                    AutomatedIngestDataSourceProcessor selectedProcessor = null;
+                    int selectedProcessorConfidence = 0;
+                    for (AutomatedIngestDataSourceProcessor processor : processorCandidates) {
+                        int confidence = processor.canProcess(dataSource.getPath());
+                        if (confidence > selectedProcessorConfidence)  {
+                            selectedProcessor = processor;
+                            selectedProcessorConfidence = confidence;
+                        }
+                    }
+                    
+                    // did we find a data source processor that can process the data source
+                    if (selectedProcessor == null) {
+                        // ELTODO
+                        LOGGER.log(Level.SEVERE, "Unsupported data source type {0} for {1}", new Object[]{dataSource.getType(), manifestPath});  // NON-NLS
+                        return;
+                    }
+                    
                     synchronized (ingestLock) {
-                        switch (dataSource.type) {
+                        selectedProcessor.process(dataSource.getDeviceId(), dataSource.getPath(), progressMonitor, callBack);
+                        /*switch (dataSource.type) {
                             case DRIVE_IMAGE:
                                 new ImageDSProcessor().run(dataSource.getDeviceId(),
                                         dataSource.getPath().toString(),
@@ -2280,7 +2303,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                             case CELLEBRITE_PHYSICAL_REPORT:
                             default:
                                 LOGGER.log(Level.SEVERE, "Unsupported data source type {0} for {1}", new Object[]{dataSource.getType(), manifestPath});  // NON-NLS
-                        }
+                        }*/
                         ingestLock.wait();
                     }
                 } finally {

@@ -18,12 +18,19 @@
  */
 package org.sleuthkit.autopsy.experimental.cellex.datasourceprocessors;
 
+import org.sleuthkit.autopsy.corecomponentinterfaces.AutomatedIngestDataSourceProcessor;
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import javax.swing.JPanel;
+import javax.swing.filechooser.FileFilter;
 import org.openide.util.lookup.ServiceProvider;
+import org.openide.util.lookup.ServiceProviders;
+import org.sleuthkit.autopsy.casemodule.GeneralFilter;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
@@ -34,15 +41,25 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
  * add data source wizard. It also provides a run method overload to allow it to
  * be used independently of the wizard.
  */
-@ServiceProvider(service = DataSourceProcessor.class)
-public class CellebriteAndroidImageProcessor implements DataSourceProcessor {
+@ServiceProviders(value={
+    @ServiceProvider(service=DataSourceProcessor.class),
+    @ServiceProvider(service=AutomatedIngestDataSourceProcessor.class)}
+)
+public class CellebriteAndroidImageProcessor implements DataSourceProcessor, AutomatedIngestDataSourceProcessor {
 
     private static final String DATA_SOURCE_TYPE = "Cellebrite Android";
     private final CellebriteAndroidInputPanel configPanel;
     private AddCellebriteAndroidImageTask addImagesTask;
+    
+    private static final List<String> CELLEBRITE_EXTS = Arrays.asList(new String[]{".bin"});
+    private static final GeneralFilter binImageFilter = new GeneralFilter(CELLEBRITE_EXTS, "");
+    private static final List<FileFilter> cellebriteImageFiltersList = new ArrayList<>();
+    static {
+        cellebriteImageFiltersList.add(binImageFilter);
+    }
 
     /**
-     * Contructs a Cellebrite UFED output folder data source processor that
+     * Constructs a Cellebrite UFED output folder data source processor that
      * implements the DataSourceProcessor service provider interface to allow
      * integration with the add data source wizard. It also provides a run
      * method overload to allow it to be used independently of the wizard.
@@ -163,31 +180,61 @@ public class CellebriteAndroidImageProcessor implements DataSourceProcessor {
         File folder = new File(folderPath);
         File[] listOfFiles = folder.listFiles();
         for (File file : listOfFiles) {
-            if (file.isFile()) {
-                String fName = file.getName().toLowerCase();
-                int lastPeriod = fName.lastIndexOf('.');
-                if (-1 == lastPeriod) {
-                    continue;
-                }
-                String fNameNoExt = fName.substring(0, lastPeriod);
-                String ext = fName.substring(lastPeriod + 1);
-                String filePathName = folderPath + File.separator + fName;
-                if (ext.equalsIgnoreCase("bin")) {
-                    // this needs to identify and handle different Cellebrite scenarios:
-                    //  i  single image in a single file
-                    // ii. Single image spilt over multiple files - just need to pass the first to TSK and it will combine the split image files.
-                    //       Note there may be more than  than one split images in a single dir, 
-                    //       e.g. blk0_mmcblk0.bin, blk0_mmcblk0(1).bin......, and blk24_mmcblk1.bin, blk24_mmcblk1(1).bin......
-                    //iii. Multiple image files - one per volume - need to handle each one separately
-                    //       e.g. blk0_mmcblk0.bin, mtd0_system.bin, mtd1_cache.bin, mtd2_userdata.bin
-                    // if the file name ends with something like (001).bin then its part of a split image,
-                    if (!fNameNoExt.matches("\\w+\\(\\d+\\)")) {
-                        imageFilePaths.add(filePathName);
-                    }
-                }
+            if (file.isFile() && isValidDataSource(file.getName())){
+                Path filePathName = Paths.get(folderPath, file.getName());
+                imageFilePaths.add(filePathName.toString());
             }
         }
         return imageFilePaths;
+    }
+    
+    private static boolean isValidDataSource(String fileName) {
+        // only need to worry about ".bin" images
+        if (!isAcceptedByFiler(new File(fileName), cellebriteImageFiltersList)) {
+            return false;
+        }
+
+        // this needs to identify and handle different Cellebrite scenarios:
+        //  i  single image in a single file
+        // ii. Single image split over multiple files - just need to pass the first to TSK and it will combine the split image files.
+        //       Note there may be more than  than one split images in a single dir, 
+        //       e.g. blk0_mmcblk0.bin, blk0_mmcblk0(1).bin......, and blk24_mmcblk1.bin, blk24_mmcblk1(1).bin......
+        //iii. Multiple image files - one per volume - need to handle each one separately
+        //       e.g. blk0_mmcblk0.bin, mtd0_system.bin, mtd1_cache.bin, mtd2_userdata.bin
+        String fName = fileName.toLowerCase();
+        int lastPeriod = fName.lastIndexOf('.');
+        if (-1 == lastPeriod) {
+            return false;
+        }
+        String fNameNoExt = fName.substring(0, lastPeriod);
+        return fNameNoExt.matches("\\w+\\(\\d+\\)");
+    }
+    
+    private static boolean isAcceptedByFiler(File file, List<FileFilter> filters) {
+
+        for (FileFilter filter : filters) {
+            if (filter.accept(file)) {
+                return true;
+            }
+        }
+        return false;
+    }    
+
+    @Override
+    public int canProcess(Path dataSourcePath) {
+        // check whether this is a ".bin" file
+        if (isValidDataSource(dataSourcePath.getFileName().toString())) {
+            // return "high confidence" value
+            return 90;
+        }
+        return 0;
+    }
+
+    @Override
+    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
+        List<String> dataSourcePathList = Arrays.asList(new String[]{dataSourcePath.toString()});
+        addImagesTask = new AddCellebriteAndroidImageTask(deviceId, dataSourcePathList, "", progressMonitor, callBack);
+        new Thread(addImagesTask).start();
     }
 
 }
