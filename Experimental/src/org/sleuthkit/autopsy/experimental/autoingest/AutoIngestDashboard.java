@@ -634,6 +634,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
          * event after a scan? Need to check this.
          */
         manager.scanInputDirsNow();
+
         bnPause.setEnabled(true);
         bnRefresh.setEnabled(true);
     }
@@ -1059,7 +1060,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                     job.getStageStartDate(), // STARTED_TIME
                     job.getStageStartDate(), // COMPLETED_TIME
                     status.getDescription(), // ACTIVITY
-                    AutoIngestAlertFile.exists(job.getCaseDirectoryPath()), // STATUS      // RJCTODO: Will case dir always be non-null?
+                    (null != job.getCaseDirectoryPath()) ? AutoIngestAlertFile.exists(job.getCaseDirectoryPath()) : false, // STATUS  // RJCTODO: awkward?
                     ((Date.from(Instant.now()).getTime()) - (status.getStartDate().getTime())), // ACTIVITY_TIME
                     job.getCaseDirectoryPath(), // CASE_DIRECTORY_PATH // RJCTODO: What about nulls? 
                     job.getNodeName().equals(LOCAL_HOST_NAME)}); // IS_LOCAL_JOB           // RJCTODO: move method that also does this

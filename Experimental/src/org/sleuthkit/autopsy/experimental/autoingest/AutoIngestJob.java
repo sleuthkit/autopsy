@@ -58,7 +58,7 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
      *
      * @param manifest
      */
-    AutoIngestJob(Manifest manifest, Path caseDirectoryPath, int priority, String nodeName) {
+    AutoIngestJob(Manifest manifest, Path caseDirectoryPath, int priority, String nodeName, Stage stage) {
         this.manifest = manifest;
         if (null != caseDirectoryPath) {
             this.caseDirectoryPath = caseDirectoryPath.toString();
@@ -67,7 +67,7 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
         }
         this.priority = priority;
         this.nodeName = nodeName;
-        this.stage = Stage.PENDING;
+        this.stage = stage;
         this.stageStartDate = manifest.getDateFileCreated();
     }
 
@@ -107,7 +107,11 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
      *         been created yet.
      */
     synchronized Path getCaseDirectoryPath() {
-        return Paths.get(caseDirectoryPath); // RJCTODO: This may not be such a good idea, perhaps a null is better if the path is empty string
+        if (!caseDirectoryPath.isEmpty()) {
+            return Paths.get(caseDirectoryPath);
+        } else {
+            return null;
+        }
     }
 
     synchronized void setPriority(Integer priority) {
@@ -126,10 +130,10 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
     /**
      * RJCTODO
      *
-     * @param newState
+     * @param newStage
      */
-    synchronized void setStage(Stage newState) {
-        setStage(newState, Date.from(Instant.now()));
+    synchronized void setStage(Stage newStage) {
+        setStage(newStage, Date.from(Instant.now()));
     }
 
     /**
@@ -373,7 +377,8 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
         ANALYZING_FILES("Analyzing files"),
         EXPORTING_FILES("Exporting files"),
         CANCELLING_MODULE("Cancelling module"),
-        CANCELLED("Cancelling"),
+        CANCELLED("Cancelled"),
+        INTERRUPTED("Cancelled"),
         COMPLETED("Completed");
 
         private final String displayText;

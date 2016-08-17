@@ -34,6 +34,7 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import java.io.IOException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.KeeperException.NoNodeException;
 
 /**
  * A centralized service for maintaining configuration information and providing
@@ -45,10 +46,10 @@ public final class CoordinationService {
      * Category nodes are the immediate children of the root node of a shared
      * hierarchical namespace managed by the coordination service.
      */
-    public enum CategoryNode { // RJCTODO: Move this
+    public enum CategoryNode { // RJCTODO: Move this to CoordinationServiceNamespace
 
         CASES("cases"),
-        MANIFESTS("images"),
+        MANIFESTS("manifests"),
         CONFIG("config");
 
         private final String displayName;
@@ -321,7 +322,8 @@ public final class CoordinationService {
      * @param category The desired category in the namespace.
      * @param nodePath The node to retrieve the data for.
      *
-     * @return The data associated with the node, if any.
+     * @return The data associated with the node, if any, or null if the node
+     *         has not been created yet.
      *
      * @throws CoordinationServiceException If there is an error setting the
      *                                      node data.
@@ -332,6 +334,8 @@ public final class CoordinationService {
         String fullNodePath = getFullyQualifiedNodePath(category, nodePath);
         try {
             return curator.getData().forPath(fullNodePath);
+        } catch (NoNodeException ex) {
+            return null;
         } catch (Exception ex) {
             if (ex instanceof InterruptedException) {
                 throw (InterruptedException) ex;

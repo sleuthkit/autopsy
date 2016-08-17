@@ -38,13 +38,12 @@ import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.prefs.BackingStoreException;
 import org.apache.commons.io.FileUtils;
-import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
-import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
+import org.sleuthkit.autopsy.keywordsearch.KeywordListsManager;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
@@ -53,7 +52,6 @@ import org.sleuthkit.autopsy.experimental.configuration.OptionsPanel.UpdateConfi
 import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService.Lock;
 import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService.CoordinationServiceException;
-import org.sleuthkit.autopsy.keywordsearch.KeywordListsManager;
 
 /*
  * A utility class for loading and saving shared configuration data
@@ -219,9 +217,8 @@ public class SharedConfiguration {
      *
      * @throws SharedConfigurationException
      * @throws InterruptedException
-     * @throws CoordinationServiceException
      */
-    public synchronized SharedConfigResult downloadConfiguration() throws SharedConfigurationException, InterruptedException, CoordinationServiceException {
+    public synchronized SharedConfigResult downloadConfiguration() throws SharedConfigurationException, InterruptedException {
         publishTask("Starting shared configuration download");
 
         // Save local settings that should not get overwritten
@@ -280,6 +277,8 @@ public class SharedConfiguration {
 
             restoreNonSharedSettings();
             downloadHashDbSettings(remoteFolder);
+        } catch (CoordinationServiceException ex) {
+            throw new SharedConfigurationException(String.format("Coordination service error acquiring exclusive lock on shared configuration source %s", remoteFolder.getAbsolutePath()), ex);
         }
 
         // Check Solr service
@@ -688,12 +687,6 @@ public class SharedConfiguration {
         copyToLocalFolder(KEYWORD_SEARCH_NSRL_LEGACY, moduleDirPath, remoteFolder, true);
         copyToLocalFolder(KEYWORD_SEARCH_OPTIONS_LEGACY, moduleDirPath, remoteFolder, true);
         copyToLocalFolder(KEYWORD_SEARCH_SCRIPTS_LEGACY, moduleDirPath, remoteFolder, true);
-        
-        // reload key word lists
-        KeywordSearchService searchService = Lookup.getDefault().lookup(KeywordSearchService.class);
-        if (null == searchService) {
-            throw new SharedConfigurationException("Keyword search service not found");
-        }
         KeywordListsManager.reloadKeywordLists();
     }
 

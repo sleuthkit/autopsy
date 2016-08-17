@@ -30,8 +30,8 @@ import javax.annotation.concurrent.GuardedBy;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
- * A logger for the auto ingest system log, separate from both the case auto
- * ingest log and the application log.
+ * A logger for the auto ingest system log, a separate log from both the case
+ * auto ingest log and the application log.
  */
 final class AutoIngestSystemLogger {
 

@@ -22,17 +22,18 @@ import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import java.util.logging.Level;
 
 /**
  * Utility for creating and checking for the existence of an automated ingest
  * alert file. The purpose of the file is to put a marker in the case directory
  * when an error or warning occurs in connection with an automated ingest job.
+ * If there is an error creating an alert file, it is logged to the auto ingest
+ * system log.
  */
 final class AutoIngestAlertFile {
 
     private static final String ERROR_FILE_NAME = "autoingest.alert";
-    private static final Logger logger = Logger.getLogger(AutoIngestAlertFile.class.getName());
 
     /**
      * Checks whether an automated ingest alert file exists in a case directory.
@@ -52,10 +53,8 @@ final class AutoIngestAlertFile {
      * @param caseDirectoryPath The case directory path.
      *
      * @return True or false.
-     *
-     * @throws AutoIngestAlertFileException if there is a problem creating the file.
      */
-    static void create(Path caseDirectoryPath) throws AutoIngestAlertFileException {
+    static void create(Path caseDirectoryPath) {
         try {
             Files.createFile(caseDirectoryPath.resolve(ERROR_FILE_NAME));
         } catch (FileAlreadyExistsException ignored) {
@@ -68,30 +67,15 @@ final class AutoIngestAlertFile {
              * for that case.
              */
             if (!exists(caseDirectoryPath)) {
-                throw new AutoIngestAlertFileException(String.format("Error creating automated ingest alert file in %s", caseDirectoryPath), ex);
+                AutoIngestSystemLogger.getLogger().log(Level.SEVERE, String.format("Error creating automated ingest alert file in %s", caseDirectoryPath), ex);
             }
         }
     }
 
     /**
-     * Private, do-nothing constructor to suppress creation of instances of this
-     * class.
+     * Prevents instantiation of this utility class.
      */
     private AutoIngestAlertFile() {
     }
-
-    static final class AutoIngestAlertFileException extends Exception {
-
-        private static final long serialVersionUID = 1L;
-
-        private AutoIngestAlertFileException(String message) {
-            super(message);
-        }
-
-        private AutoIngestAlertFileException(String message, Throwable cause) {
-            super(message, cause);
-        }
-
-    }
-
+    
 }

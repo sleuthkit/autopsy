@@ -30,19 +30,26 @@ public final class AutoIngestJobCompletedEvent extends AutoIngestJobEvent implem
     private final boolean retry;
 
     /**
-     * RJCTODO
+     * Constructs an event published when an automated ingest manager completes
+     * processing an automated ingest job.
+     *
+     * @param job         The completed job.
+     * @param shouldRetry Whether or not the job actually completed or needs to
+     *                    be attempted again.
      */
     public AutoIngestJobCompletedEvent(AutoIngestJob job, boolean shouldRetry) {
         super(AutoIngestManager.Event.JOB_COMPLETED, job);
         this.retry = shouldRetry;
     }
-    
+
     /**
-     * RJCTODO
-     * @return 
+     * Queries whether or not the job actually completed or needs to be
+     * attempted again.
+     *
+     * @return True or false.
      */
     public boolean shouldRetry() {
         return this.retry;
     }
-    
+
 }
