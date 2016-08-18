@@ -18,17 +18,29 @@
  */
 package org.sleuthkit.autopsy.experimental.cellex.datasourceprocessors;
 
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import javax.swing.JPanel;
 import javax.swing.filechooser.FileFilter;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathFactory;
 import org.openide.util.lookup.ServiceProvider;
+import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.casemodule.GeneralFilter;
+import org.sleuthkit.autopsy.corecomponentinterfaces.AutomatedIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
+import org.w3c.dom.Document;
 
 /**
  * A Cellebrite XML report file data source processor that implements the
@@ -36,19 +48,27 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
  * add data source wizard. It also provides a run method overload to allow it to
  * be used independently of the wizard.
  */
-@ServiceProvider(service = DataSourceProcessor.class)
-public class CellebriteXMLProcessor implements DataSourceProcessor {
+@ServiceProviders(value={
+    @ServiceProvider(service=DataSourceProcessor.class),
+    @ServiceProvider(service=AutomatedIngestDataSourceProcessor.class)}
+)
+public class CellebriteXMLProcessor implements DataSourceProcessor, AutomatedIngestDataSourceProcessor {
 
     private static final String DATA_SOURCE_TYPE = "Cellebrite XML";
     private static final List<String> CELLEBRITE_EXTS = Arrays.asList(new String[]{".xml"});
     private static final String CELLEBRITE_DESC = "Cellebrite XML Files (*.xml)";
     private static final GeneralFilter xmlFilter = new GeneralFilter(CELLEBRITE_EXTS, CELLEBRITE_DESC);
-    private static final List<FileFilter> filtersList = new ArrayList<>();
+    private static final List<FileFilter> cellebriteLogicalReportFilters = new ArrayList<>();
     private final CellebriteXMLFilePanel configPanel;
     private AddCellebriteXMLTask addCellebriteXMLTask;
-
     static {
-        filtersList.add(xmlFilter);
+        cellebriteLogicalReportFilters.add(xmlFilter);
+    }
+
+    private enum ReportType {
+        CELLEBRITE_LOGICAL_HANDSET,
+        CELLEBRITE_LOGICAL_SIM,
+        INVALID_REPORT,
     }
 
     /**
@@ -58,7 +78,7 @@ public class CellebriteXMLProcessor implements DataSourceProcessor {
      * @return List<FileFilter> List of FileFilter objects
      */
     public static final List<FileFilter> getFileFilterList() {
-        return filtersList;
+        return cellebriteLogicalReportFilters;
     }
 
     /*
@@ -68,7 +88,7 @@ public class CellebriteXMLProcessor implements DataSourceProcessor {
      * method overload to allow it to be used independently of the wizard.
      */
     public CellebriteXMLProcessor() {
-        configPanel = CellebriteXMLFilePanel.createInstance(CellebriteXMLProcessor.class.getName(), filtersList);
+        configPanel = CellebriteXMLFilePanel.createInstance(CellebriteXMLProcessor.class.getName(), cellebriteLogicalReportFilters);
     }
 
     /**
@@ -184,5 +204,80 @@ public class CellebriteXMLProcessor implements DataSourceProcessor {
     public void reset() {
         configPanel.reset();
     }
+    
+    /**
+     * Attempts to parse a data source as a Cellebrite logical report.
+     *
+     * @param dataSourcePath The path to the data source.
+     *
+     * @return Type of Cellebrite logical report if the data source is a valid
+     *         Cellebrite logical report file, null otherwise.
+     */
+    private ReportType parseCellebriteLogicalReportType(Path dataSourcePath) {
 
+        if (!isAcceptedByFiler(dataSourcePath.toFile(), cellebriteLogicalReportFilters)) {
+            return ReportType.INVALID_REPORT;
+        }
+
+        String report_type;
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(dataSourcePath.toFile());
+            XPathFactory xPathfactory = XPathFactory.newInstance();
+            XPath xpath = xPathfactory.newXPath();
+            XPathExpression expr = xpath.compile("/reports/report/general_information/report_type/text()");
+            report_type = (String) expr.evaluate(doc, XPathConstants.STRING);
+            if (report_type.equalsIgnoreCase("sim")) {
+                return ReportType.CELLEBRITE_LOGICAL_SIM;
+            } else if (report_type.equalsIgnoreCase("cell")) {
+                return ReportType.CELLEBRITE_LOGICAL_HANDSET;
+            } else {
+                return ReportType.INVALID_REPORT;
+            }
+        } catch (Exception ignore) {
+            // Not a valid Cellebrite logical report file.
+            return ReportType.INVALID_REPORT;
+        }
+    }
+    
+    private static boolean isAcceptedByFiler(File file, List<FileFilter> filters) {
+        for (FileFilter filter : filters) {
+            if (filter.accept(file)) {
+                return true;
+            }
+        }
+        return false;
+    }       
+
+    @Override
+    public int canProcess(Path dataSourcePath) {
+        ReportType type = parseCellebriteLogicalReportType(dataSourcePath);
+        switch (type) {
+            case CELLEBRITE_LOGICAL_HANDSET:
+            case CELLEBRITE_LOGICAL_SIM:
+                return 100;
+            case INVALID_REPORT:
+            default:
+                return 0;
+        }
+    }
+
+    @Override
+    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
+        ReportType type = parseCellebriteLogicalReportType(dataSourcePath);
+        boolean isHandsetFile = false;
+        switch (type) {
+            case CELLEBRITE_LOGICAL_HANDSET:
+                isHandsetFile = true;
+                break;
+            case CELLEBRITE_LOGICAL_SIM:
+                isHandsetFile = false;
+                break;
+            case INVALID_REPORT:
+            default:
+                // ELTODO : should we attempt to process XML reports even though we could identify report type?
+        } 
+        run(deviceId, deviceId, dataSourcePath.toString(), isHandsetFile, progressMonitor, callBack);
+    }
 }

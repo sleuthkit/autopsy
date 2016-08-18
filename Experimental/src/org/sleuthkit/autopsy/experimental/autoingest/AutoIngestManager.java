@@ -71,12 +71,6 @@ import java.util.zip.ZipFile;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.swing.filechooser.FileFilter;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathFactory;
 import org.apache.commons.io.FilenameUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
@@ -84,7 +78,6 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.openide.modules.InstalledFileLocator;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.GeneralFilter;
-import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
@@ -98,7 +91,6 @@ import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.datamodel.Content;
-import org.w3c.dom.Document;
 import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService.CoordinationServiceException;
 import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService.Lock;
@@ -118,7 +110,6 @@ import static org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.Pro
 import static org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.ProcessingStatus.PROCESSING;
 import static org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.ProcessingStatus.COMPLETED;
 import org.sleuthkit.autopsy.corecomponentinterfaces.AutomatedIngestDataSourceProcessor;
-import org.sleuthkit.autopsy.experimental.cellex.datasourceprocessors.CellebriteXMLProcessor;
 import org.sleuthkit.autopsy.experimental.configuration.SharedConfiguration.SharedConfigurationException;
 
 /**
@@ -2045,14 +2036,14 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                     LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, DataSource.Type.CELLEBRITE_PHYSICAL_REPORT});
                     jobLogger.logDataSourceTypeId(DataSource.Type.CELLEBRITE_PHYSICAL_REPORT.toString());
                     return new DataSource(deviceId, extractedDataSource, DataSource.Type.CELLEBRITE_PHYSICAL_REPORT);
-                } else if (FileFilters.isAcceptedByFilter(dataSource, FileFilters.cellebriteLogicalReportFilters)) {
+                } /*else if (FileFilters.isAcceptedByFilter(dataSource, FileFilters.cellebriteLogicalReportFilters)) {
                     DataSource.Type type = parseCellebriteLogicalReportType(dataSourcePath);
                     if (null != type) {
                         LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, type});
                         jobLogger.logDataSourceTypeId(type.toString());
                         return new DataSource(deviceId, dataSourcePath, type);
                     }
-                } else if (VirtualMachineFinder.isVirtualMachine(manifest.getDataSourceFileName())) {
+                }*/ else if (VirtualMachineFinder.isVirtualMachine(manifest.getDataSourceFileName())) {
                     LOGGER.log(Level.INFO, "Identified data source type for {0} as {1} (VM)", new Object[]{manifestPath, DataSource.Type.DRIVE_IMAGE});
                     jobLogger.logDataSourceTypeId(DataSource.Type.DRIVE_IMAGE.toString());
                     return new DataSource(deviceId, dataSourcePath, DataSource.Type.DRIVE_IMAGE);
@@ -2065,9 +2056,9 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                     jobLogger.logDataSourceTypeId(DataSource.Type.PHONE_IMAGE.toString());
                     return new DataSource(deviceId, dataSourcePath, DataSource.Type.PHONE_IMAGE);
                 }
-                LOGGER.log(Level.INFO, "Failed to identify data source type for {0}", manifestPath);
-                jobLogger.logFailedToIdentifyDataSource();
-                return null;
+                // ELTODO LOGGER.log(Level.INFO, "Failed to identify data source type for {0}", manifestPath);
+                // ELTODO jobLogger.logFailedToIdentifyDataSource();
+                // ELTODO return null;
 
             } catch (IOException ex) {
                 LOGGER.log(Level.SEVERE, String.format("Error identifying data source for %s", manifestPath), ex);
@@ -2125,36 +2116,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             return destinationFolder;
         }
 
-        /**
-         * Attempts to parse a data source as a Cellebrite logical report.
-         *
-         * @param dataSourcePath The path to the data source.
-         *
-         * @return Type of Cellebrite logical report if the data source is a
-         *         valid Cellebrite logical report file, null otherwise.
-         */
-        private DataSource.Type parseCellebriteLogicalReportType(Path dataSourcePath) {
-            String report_type;
-            try {
-                DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-                DocumentBuilder builder = factory.newDocumentBuilder();
-                Document doc = builder.parse(dataSourcePath.toFile());
-                XPathFactory xPathfactory = XPathFactory.newInstance();
-                XPath xpath = xPathfactory.newXPath();
-                XPathExpression expr = xpath.compile("/reports/report/general_information/report_type/text()");
-                report_type = (String) expr.evaluate(doc, XPathConstants.STRING);
-                if (report_type.equalsIgnoreCase("sim")) {
-                    return DataSource.Type.CELLEBRITE_LOGICAL_SIM;
-                } else if (report_type.equalsIgnoreCase("cell")) {
-                    return DataSource.Type.CELLEBRITE_LOGICAL_HANDSET;
-                } else {
-                    return null;
-                }
-            } catch (Exception ignore) {
-                // Not a valid Cellebrite logical report file.
-                return null;
-            }
-        }
 
         /**
          * Uses the installed tsk_isImageTool executable to determine whether a
@@ -2264,6 +2225,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                 final UUID taskId = UUID.randomUUID();
                 try {
                     caseForJob.notifyAddingDataSource(taskId);
+                    // ELTODO - if it's an archive, extract it first, then identify AutomatedIngestDataSourceProcessor
                     
                     // lookup all AutomatedIngestDataSourceProcessors 
                     Collection <? extends AutomatedIngestDataSourceProcessor> processorCandidates = Lookup.getDefault().lookupAll(AutomatedIngestDataSourceProcessor.class);
@@ -2286,24 +2248,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                     
                     synchronized (ingestLock) {
                         selectedProcessor.process(dataSource.getDeviceId(), dataSource.getPath(), progressMonitor, callBack);
-                        /*switch (dataSource.type) {
-                            case DRIVE_IMAGE:
-                                new ImageDSProcessor().run(dataSource.getDeviceId(),
-                                        dataSource.getPath().toString(),
-                                        "",
-                                        false,
-                                        progressMonitor,
-                                        callBack);
-                                break;
-
-                            // ELTODO plug in data source processor lookup
-                            case CELLEBRITE_LOGICAL_HANDSET:
-                            case CELLEBRITE_LOGICAL_SIM:
-                            case PHONE_IMAGE:
-                            case CELLEBRITE_PHYSICAL_REPORT:
-                            default:
-                                LOGGER.log(Level.SEVERE, "Unsupported data source type {0} for {1}", new Object[]{dataSource.getType(), manifestPath});  // NON-NLS
-                        }*/
                         ingestLock.wait();
                     }
                 } finally {
@@ -2728,7 +2672,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
 
     private static final class FileFilters {
 
-        private static final List<FileFilter> cellebriteLogicalReportFilters = CellebriteXMLProcessor.getFileFilterList();
         private static final GeneralFilter zipFilter = new GeneralFilter(Arrays.asList(new String[]{".zip"}), "");
         private static final List<FileFilter> archiveFilters = new ArrayList<>();
 
