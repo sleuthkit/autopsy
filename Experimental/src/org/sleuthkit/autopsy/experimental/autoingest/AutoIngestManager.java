@@ -2003,11 +2003,11 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                         jobLogger.logDataSourceTypeId(type.toString());
                         return new DataSource(deviceId, dataSourcePath, type);
                     }
-                }*/ else if (VirtualMachineFinder.isVirtualMachine(manifest.getDataSourceFileName())) {
+                }*//* else if (VirtualMachineFinder.isVirtualMachine(manifest.getDataSourceFileName())) {
                     LOGGER.log(Level.INFO, "Identified data source type for {0} as {1} (VM)", new Object[]{manifestPath, DataSource.Type.DRIVE_IMAGE});
                     jobLogger.logDataSourceTypeId(DataSource.Type.DRIVE_IMAGE.toString());
                     return new DataSource(deviceId, dataSourcePath, DataSource.Type.DRIVE_IMAGE);
-                } /*else if (imageHasFileSystem(caseForJob, dataSourcePath)) {
+                } else if (imageHasFileSystem(caseForJob, dataSourcePath)) {
                     LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, DataSource.Type.DRIVE_IMAGE});
                     jobLogger.logDataSourceTypeId(DataSource.Type.DRIVE_IMAGE.toString());
                     return new DataSource(deviceId, dataSourcePath, DataSource.Type.DRIVE_IMAGE);

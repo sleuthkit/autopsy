@@ -45,7 +45,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
     @ServiceProvider(service=DataSourceProcessor.class),
     @ServiceProvider(service=AutomatedIngestDataSourceProcessor.class)}
 )
-public class CellebriteAndroidImageProcessor implements AutomatedIngestDataSourceProcessor {
+public class CellebritePhysicalReportProcessor implements AutomatedIngestDataSourceProcessor {
 
     private static final String DATA_SOURCE_TYPE = "Cellebrite Android";
     private final CellebriteAndroidInputPanel configPanel;
@@ -64,8 +64,8 @@ public class CellebriteAndroidImageProcessor implements AutomatedIngestDataSourc
      * integration with the add data source wizard. It also provides a run
      * method overload to allow it to be used independently of the wizard.
      */
-    public CellebriteAndroidImageProcessor() {
-        configPanel = CellebriteAndroidInputPanel.createInstance(CellebriteAndroidImageProcessor.class.getName());
+    public CellebritePhysicalReportProcessor() {
+        configPanel = CellebriteAndroidInputPanel.createInstance(CellebritePhysicalReportProcessor.class.getName());
     }
 
     /**
