@@ -20,8 +20,37 @@ package org.sleuthkit.autopsy.corecomponentinterfaces;
 
 import java.nio.file.Path;
 
+/**
+ * Interface implemented by DataSourceProcessors in order to be supported by
+ * automated ingest capability.
+ *
+ * @author elivis
+ */
 public interface AutomatedIngestDataSourceProcessor extends DataSourceProcessor{
 
-   int canProcess(Path dataSourcePath);
-   void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack); 
+    /**
+     * Indicates whether the DataSourceProcessor is capable of processing the
+     * data source. Returns a confidence value.
+     *
+     * @param dataSourcePath Path to the data source.
+     *
+     * @return Confidence value. Values between 0 and 100 are recommended. Zero
+     *         or less means the data source is not supported by the
+     *         DataSourceProcessor. Value of 100 indicates high certainty in
+     *         being able to process the data source.
+     */
+    int canProcess(Path dataSourcePath);
+
+    /**
+     *
+     * @param deviceId        An ASCII-printable identifier for the device
+     *                        associated with the data source that is intended
+     *                        to be unique across multiple cases (e.g., a UUID).
+     * @param dataSourcePath  Path to the data source.
+     * @param progressMonitor Progress monitor that will be used by the
+     *                        background task to report progress.
+     * @param callBack        Callback that will be used by the background task
+     *                        to return results.
+     */
+    void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack);
 }

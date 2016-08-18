@@ -275,7 +275,8 @@ public class CellebriteXMLProcessor implements AutomatedIngestDataSourceProcesso
                 break;
             case INVALID_REPORT:
             default:
-                // ELTODO : should we attempt to process XML reports even though we could identify report type?
+                // ELTODO : should we attempt to process XML reports even though we couldn't identify report type?
+                break;
         } 
         run(deviceId, deviceId, dataSourcePath.toString(), isHandsetFile, progressMonitor, callBack);
     }
