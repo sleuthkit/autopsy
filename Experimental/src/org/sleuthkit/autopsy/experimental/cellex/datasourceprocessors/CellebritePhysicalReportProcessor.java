@@ -18,22 +18,34 @@
  */
 package org.sleuthkit.autopsy.experimental.cellex.datasourceprocessors;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import org.sleuthkit.autopsy.corecomponentinterfaces.AutomatedIngestDataSourceProcessor;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.UUID;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import javax.swing.JPanel;
 import javax.swing.filechooser.FileFilter;
+import org.apache.commons.io.FilenameUtils;
+import org.openide.util.Exceptions;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.GeneralFilter;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
+import org.sleuthkit.autopsy.experimental.autoingest.TimeStampUtils;
 
 /**
  * An Cellebrite UFED output folder data source processor that implements the
@@ -57,6 +69,14 @@ public class CellebritePhysicalReportProcessor implements AutomatedIngestDataSou
     static {
         cellebriteImageFiltersList.add(binImageFilter);
     }
+
+    private static final GeneralFilter zipFilter = new GeneralFilter(Arrays.asList(new String[]{".zip"}), "");
+    private static final List<FileFilter> archiveFilters = new ArrayList<>();
+    static {
+        archiveFilters.add(zipFilter);
+    }
+    
+    private static final String AUTO_INGEST_MODULE_OUTPUT_DIR = "AutoIngest";
 
     /**
      * Constructs a Cellebrite UFED output folder data source processor that
@@ -180,16 +200,76 @@ public class CellebritePhysicalReportProcessor implements AutomatedIngestDataSou
         File folder = new File(folderPath);
         File[] listOfFiles = folder.listFiles();
         for (File file : listOfFiles) {
-            if (file.isFile() && isValidDataSource(file.getName())){
+            if (file.isFile() && isValidDataSource(file.toPath())){
                 Path filePathName = Paths.get(folderPath, file.getName());
                 imageFilePaths.add(filePathName.toString());
             }
         }
         return imageFilePaths;
     }
-    
-    private static boolean isValidDataSource(String fileName) {
-        // only need to worry about ".bin" images
+
+    /**
+     * Extracts the contents of a ZIP archive submitted as a data source to a
+     * subdirectory of the auto ingest module output directory.
+     *
+     * @throws IOException if there is a problem extracting the data source from
+     *                     the archive.
+     */
+    private static Path extractDataSource(Path outputDirectoryPath, Path dataSourcePath) throws IOException {
+        String dataSourceFileNameNoExt = FilenameUtils.removeExtension(dataSourcePath.getFileName().toString());
+        Path destinationFolder = Paths.get(outputDirectoryPath.toString(),
+                AUTO_INGEST_MODULE_OUTPUT_DIR,
+                dataSourceFileNameNoExt + "_" + TimeStampUtils.createTimeStamp());
+        Files.createDirectories(destinationFolder);
+
+        int BUFFER_SIZE = 524288; // Read/write 500KB at a time
+        File sourceZipFile = dataSourcePath.toFile();
+        ZipFile zipFile;
+        zipFile = new ZipFile(sourceZipFile, ZipFile.OPEN_READ);
+        Enumeration<? extends ZipEntry> zipFileEntries = zipFile.entries();
+        try {
+            while (zipFileEntries.hasMoreElements()) {
+                ZipEntry entry = zipFileEntries.nextElement();
+                String currentEntry = entry.getName();
+                File destFile = new File(destinationFolder.toString(), currentEntry);
+                destFile = new File(destinationFolder.toString(), destFile.getName());
+                File destinationParent = destFile.getParentFile();
+                destinationParent.mkdirs();
+                if (!entry.isDirectory()) {
+                    BufferedInputStream is = new BufferedInputStream(zipFile.getInputStream(entry));
+                    int currentByte;
+                    byte data[] = new byte[BUFFER_SIZE];
+                    try (FileOutputStream fos = new FileOutputStream(destFile); BufferedOutputStream dest = new BufferedOutputStream(fos, BUFFER_SIZE)) {
+                        currentByte = is.read(data, 0, BUFFER_SIZE);
+                        while (currentByte != -1) {
+                            dest.write(data, 0, currentByte);
+                            currentByte = is.read(data, 0, BUFFER_SIZE);
+                        }
+                    }
+                }
+            }
+        } finally {
+            zipFile.close();
+        }
+        return destinationFolder;
+    }
+   
+    private static boolean isValidDataSource(Path dataSourcePath) {        
+                
+        String fileName = dataSourcePath.getFileName().toString();
+
+        // check whether it's a zip archive file
+        if (isAcceptedByFiler(new File(fileName), archiveFilters)) {
+            try {            
+                Case currentCase = Case.getCurrentCase();
+                Path extractedDataSource = extractDataSource(Paths.get(currentCase.getModuleDirectory()), dataSourcePath);
+            } catch (Exception ex) {
+                // ELTODO add log here?
+                return false;
+            }
+        }
+        
+        // is it a ".bin" image
         if (!isAcceptedByFiler(new File(fileName), cellebriteImageFiltersList)) {
             return false;
         }
@@ -221,9 +301,9 @@ public class CellebritePhysicalReportProcessor implements AutomatedIngestDataSou
     }    
 
     @Override
-    public int canProcess(Path dataSourcePath) {
+    public int canProcess(Path dataSourcePath) {        
         // check whether this is a ".bin" file
-        if (isValidDataSource(dataSourcePath.getFileName().toString())) {
+        if (isValidDataSource(dataSourcePath)) {
             // return "high confidence" value
             return 90;
         }

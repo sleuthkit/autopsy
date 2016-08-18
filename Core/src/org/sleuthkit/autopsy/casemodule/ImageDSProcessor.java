@@ -263,6 +263,7 @@ public class ImageDSProcessor implements AutomatedIngestDataSourceProcessor {
                 return 0;
             }
         } catch (Exception ignore) {
+            // ELTODO do we want to have error message here?
             return 0;
         }
         

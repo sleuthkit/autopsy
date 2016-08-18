@@ -21,11 +21,8 @@ package org.sleuthkit.autopsy.experimental.autoingest;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import org.sleuthkit.autopsy.experimental.configuration.AutoIngestUserPreferences;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
@@ -40,7 +37,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
-import org.sleuthkit.autopsy.modules.vmextractor.VirtualMachineFinder;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import java.time.Duration;
@@ -50,7 +46,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -66,23 +61,17 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
-import javax.swing.filechooser.FileFilter;
-import org.apache.commons.io.FilenameUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
-import org.sleuthkit.autopsy.casemodule.GeneralFilter;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
-import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
@@ -1343,7 +1332,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
      */
     private final class JobProcessingTask implements Runnable {
 
-        private static final String AUTO_INGEST_MODULE_OUTPUT_DIR = "AutoIngest";
         private final Object ingestLock;
         private final Object pauseLock;
         @GuardedBy("pauseLock")
@@ -1991,12 +1979,12 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                     return null;
                 }
                 String deviceId = manifest.getDeviceId();
-                if (FileFilters.isAcceptedByFilter(dataSource, FileFilters.archiveFilters)) {
+                /*if (FileFilters.isAcceptedByFilter(dataSource, FileFilters.archiveFilters)) {
                     Path extractedDataSource = extractDataSource(caseForJob, dataSourcePath);
                     LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, DataSource.Type.CELLEBRITE_PHYSICAL_REPORT});
                     jobLogger.logDataSourceTypeId(DataSource.Type.CELLEBRITE_PHYSICAL_REPORT.toString());
                     return new DataSource(deviceId, extractedDataSource, DataSource.Type.CELLEBRITE_PHYSICAL_REPORT);
-                } /*else if (FileFilters.isAcceptedByFilter(dataSource, FileFilters.cellebriteLogicalReportFilters)) {
+                } else if (FileFilters.isAcceptedByFilter(dataSource, FileFilters.cellebriteLogicalReportFilters)) {
                     DataSource.Type type = parseCellebriteLogicalReportType(dataSourcePath);
                     if (null != type) {
                         LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, type});
@@ -2011,7 +1999,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                     LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, DataSource.Type.DRIVE_IMAGE});
                     jobLogger.logDataSourceTypeId(DataSource.Type.DRIVE_IMAGE.toString());
                     return new DataSource(deviceId, dataSourcePath, DataSource.Type.DRIVE_IMAGE);
-                } */ else {
+                }  else {
                     LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, DataSource.Type.PHONE_IMAGE});
                     jobLogger.logDataSourceTypeId(DataSource.Type.PHONE_IMAGE.toString());
                     return new DataSource(deviceId, dataSourcePath, DataSource.Type.PHONE_IMAGE);
@@ -2023,57 +2011,12 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             } catch (IOException ex) {
                 LOGGER.log(Level.SEVERE, String.format("Error identifying data source for %s", manifestPath), ex);
                 jobLogger.logDataSourceTypeIdError(ex);
-                return null;
+                return null;*/
 
             } finally {
                 LOGGER.log(Level.INFO, "Finished identifying data source stage for {0}", manifestPath);
             }
-        }
-
-        /**
-         * Extracts the contents of a ZIP archive submitted as a data source to
-         * a subdirectory of the auto ingest module output directory.
-         *
-         * @throws IOException if there is a problem extracting the data source
-         *                     from the archive.
-         */
-        private Path extractDataSource(Case caseForJob, Path dataSourcePath) throws IOException {
-            String dataSourceFileNameNoExt = FilenameUtils.removeExtension(dataSourcePath.getFileName().toString());
-            Path destinationFolder = Paths.get(caseForJob.getModuleDirectory(),
-                    AUTO_INGEST_MODULE_OUTPUT_DIR,
-                    dataSourceFileNameNoExt + "_" + TimeStampUtils.createTimeStamp());
-            Files.createDirectories(destinationFolder);
-
-            int BUFFER_SIZE = 524288; // Read/write 500KB at a time
-            File sourceZipFile = dataSourcePath.toFile();
-            ZipFile zipFile;
-            zipFile = new ZipFile(sourceZipFile, ZipFile.OPEN_READ);
-            Enumeration<? extends ZipEntry> zipFileEntries = zipFile.entries();
-            try {
-                while (zipFileEntries.hasMoreElements()) {
-                    ZipEntry entry = zipFileEntries.nextElement();
-                    String currentEntry = entry.getName();
-                    File destFile = new File(destinationFolder.toString(), currentEntry);
-                    destFile = new File(destinationFolder.toString(), destFile.getName());
-                    File destinationParent = destFile.getParentFile();
-                    destinationParent.mkdirs();
-                    if (!entry.isDirectory()) {
-                        BufferedInputStream is = new BufferedInputStream(zipFile.getInputStream(entry));
-                        int currentByte;
-                        byte data[] = new byte[BUFFER_SIZE];
-                        try (FileOutputStream fos = new FileOutputStream(destFile); BufferedOutputStream dest = new BufferedOutputStream(fos, BUFFER_SIZE)) {
-                            currentByte = is.read(data, 0, BUFFER_SIZE);
-                            while (currentByte != -1) {
-                                dest.write(data, 0, currentByte);
-                                currentByte = is.read(data, 0, BUFFER_SIZE);
-                            }
-                        }
-                    }
-                }
-            } finally {
-                zipFile.close();
-            }
-            return destinationFolder;
+            return null;
         }
 
         /**
@@ -2154,7 +2097,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                 final UUID taskId = UUID.randomUUID();
                 try {
                     caseForJob.notifyAddingDataSource(taskId);
-                    // ELTODO - if it's an archive, extract it first, then identify AutomatedIngestDataSourceProcessor
                     
                     // lookup all AutomatedIngestDataSourceProcessors 
                     Collection <? extends AutomatedIngestDataSourceProcessor> processorCandidates = Lookup.getDefault().lookupAll(AutomatedIngestDataSourceProcessor.class);
@@ -2170,12 +2112,14 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                     
                     // did we find a data source processor that can process the data source
                     if (selectedProcessor == null) {
-                        // ELTODO
+                        // ELTODO add sys log and possibly case log entries here
                         LOGGER.log(Level.SEVERE, "Unsupported data source type {0} for {1}", new Object[]{dataSource.getType(), manifestPath});  // NON-NLS
                         return;
                     }
                     
                     synchronized (ingestLock) {
+                        LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, selectedProcessor.getDataSourceType()});
+                        // ELTODO add sys log and possibly case log entries here
                         selectedProcessor.process(dataSource.getDeviceId(), dataSource.getPath(), progressMonitor, callBack);
                         ingestLock.wait();
                     }
@@ -2597,28 +2541,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             return status;
         }
 
-    }
-
-    private static final class FileFilters {
-
-        private static final GeneralFilter zipFilter = new GeneralFilter(Arrays.asList(new String[]{".zip"}), "");
-        private static final List<FileFilter> archiveFilters = new ArrayList<>();
-
-        static {
-            archiveFilters.add(zipFilter);
-        }
-
-        private static boolean isAcceptedByFilter(File file, List<FileFilter> filters) {
-            for (FileFilter filter : filters) {
-                if (filter.accept(file)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        private FileFilters() {
-        }
     }
 
     @ThreadSafe
