@@ -75,7 +75,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.openide.modules.InstalledFileLocator;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.GeneralFilter;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
@@ -85,7 +84,6 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.ingest.IngestJob;
@@ -144,8 +142,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
     private static final long JOB_STATUS_EVENT_INTERVAL_SECONDS = 10;
     private static final String JOB_STATUS_PUBLISHING_THREAD_NAME = "AIM-job-status-event-publisher-%d";
     private static final long MAX_MISSED_JOB_STATUS_UPDATES = 10;
-    private static final String TSK_IS_DRIVE_IMAGE_TOOL_DIR = "tsk_isImageTool";
-    private static final String TSK_IS_DRIVE_IMAGE_TOOL_EXE = "tsk_isImageTool.exe";
     private static final int PRIORITIZATION_LOCK_TIME_OUT = 10;
     private static final TimeUnit PRIORITIZATION_LOCK_TIME_OUT_UNIT = TimeUnit.SECONDS;
     private static final java.util.logging.Logger LOGGER = AutoIngestSystemLogger.getLogger(); // RJCTODO: Rename to systemLogger
@@ -172,7 +168,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
     private CoordinationService coordinationService;
     private JobProcessingTask jobProcessingTask;
     private Future<?> jobProcessingTaskFuture;
-    private Path tskIsImageToolExePath;
     private Path rootInputDirectory;
     private Path rootOutputDirectory;
 
@@ -226,7 +221,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
         }
         rootInputDirectory = Paths.get(AutoIngestUserPreferences.getAutoModeImageFolder());
         rootOutputDirectory = Paths.get(AutoIngestUserPreferences.getAutoModeResultsFolder());
-        tskIsImageToolExePath = locateTskIsImageToolExecutable();
         inputScanSchedulingExecutor.scheduleAtFixedRate(new InputDirScanSchedulingTask(), 0, INPUT_SCAN_INTERVAL, TimeUnit.MILLISECONDS);
         jobProcessingTask = new JobProcessingTask();
         jobProcessingTaskFuture = jobProcessingExecutor.submit(jobProcessingTask);
@@ -234,40 +228,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
         eventPublisher.addSubscriber(EVENT_LIST, instance);
         RuntimeProperties.setCoreComponentsActive(false);
         state = State.RUNNING;
-    }
-
-    /**
-     * Gets the path to the copy of the SleuthKit executable that is used to
-     * determine whether or not a drive image has a file system. The tool is
-     * installed during Autopsy installation, so it is assumed that it only needs
-     * to be found on start up.
-     *
-     * @return The path to the executable.
-     *
-     * @throws AutoIngestManagerStartupException if the executable cannot be
-     *                                           found or cannot be executed.
-     */
-    private static Path locateTskIsImageToolExecutable() throws AutoIngestManagerStartupException {
-        if (!PlatformUtil.isWindowsOS()) {
-            throw new AutoIngestManagerStartupException("Auto ingest requires a Windows operating system to run");
-        }
-
-        final File folder = InstalledFileLocator.getDefault().locate(TSK_IS_DRIVE_IMAGE_TOOL_DIR, AutoIngestManager.class.getPackage().getName(), false);
-        if (null == folder) {
-            throw new AutoIngestManagerStartupException("Unable to locate SleuthKit image tool installation folder");
-        }
-
-        Path executablePath = Paths.get(folder.getAbsolutePath(), TSK_IS_DRIVE_IMAGE_TOOL_EXE);
-        File executable = executablePath.toFile();
-        if (!executable.exists()) {
-            throw new AutoIngestManagerStartupException("Unable to locate SleuthKit image tool");
-        }
-
-        if (!executable.canExecute()) {
-            throw new AutoIngestManagerStartupException("Unable to run SleuthKit image tool");
-        }
-
-        return executablePath;
     }
 
     /**
@@ -2114,37 +2074,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                 zipFile.close();
             }
             return destinationFolder;
-        }
-
-
-        /**
-         * Uses the installed tsk_isImageTool executable to determine whether a
-         * potential data source has a file system.
-         *
-         * @param dataSourcePath The path to the data source.
-         *
-         * @return True or false.
-         *
-         * @throws IOException if an error occurs while trying to determine if
-         *                     the data source has a file system.
-         */
-        private boolean imageHasFileSystem(Case caseForJob, Path dataSourcePath) throws IOException {
-            Path logFileName = Paths.get(caseForJob.getTempDirectory(), "tsk_isImageTool.log"); // RJCTODO: Pass case through to avoid these calls
-            File logFile = new File(logFileName.toString());
-            Path errFileName = Paths.get(caseForJob.getTempDirectory(), "tsk_isImageTool_err.log");
-            File errFile = new File(errFileName.toString());
-            ProcessBuilder processBuilder = new ProcessBuilder(
-                    "\"" + tskIsImageToolExePath.toString() + "\"",
-                    "\"" + dataSourcePath + "\"");
-            File directory = new File(tskIsImageToolExePath.getParent().toString());
-            processBuilder.directory(directory);
-            processBuilder.redirectError(ProcessBuilder.Redirect.appendTo(errFile));
-            processBuilder.redirectOutput(ProcessBuilder.Redirect.appendTo(logFile));
-            int exitValue = ExecUtil.execute(processBuilder);
-            Files.delete(logFileName);
-            Files.delete(errFileName);
-            return (exitValue == 0);
-
         }
 
         /**
