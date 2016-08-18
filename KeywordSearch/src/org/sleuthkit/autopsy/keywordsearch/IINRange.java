@@ -1,93 +1,89 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 /**
- * Representation of a range of Issuer Identifiaction Numbers for the same bank.
+ * Representation of a range of Issuer/Bank Identifiaction Numbers (IIN/BIN) for
+ * the * same bank.
  */
-public class IINRange {
+class IINRange {
 
-    private final int IIN_start;
-    private final int IIN_end;
-    private final int number_length;
-    private final CreditCardScheme scheme;
+    private final int IINStart;
+    private final int IINEnd;
+    private final int numberLength;
+    private final PaymentCardScheme scheme;
     private final String brand;
     private final PaymentCardType type;
 
     private final String country;
-    private final String bank_name;
-    private final String bank_logo;
-    private final String bank_url;
-    private final String bank_phone;
-    private final String bank_city;
+    private final String bankName;
+    private final String bankURL;
+    private final String bankPhoneNumber;
+    private final String bankCity;
 
     enum PaymentCardType {
         DEBIT, DREDIT;
     }
 
-    enum CreditCardScheme {
+    enum PaymentCardScheme {
         AMEX, VISA, MASTERCARD, DINERS, DISCOVER
     }
 
-    IINRange(int IIN_start, int IIN_end, int number_length, CreditCardScheme scheme, String brand, PaymentCardType type, String country, String bank_name, String bank_logo, String bank_url, String bank_phone, String bank_city) {
-        this.IIN_start = IIN_start;
-        this.IIN_end = IIN_end;
-        this.number_length = number_length;
+    IINRange(int IIN_start, int IIN_end, int number_length, PaymentCardScheme scheme, String brand, PaymentCardType type, String country, String bank_name, String bank_url, String bank_phone, String bank_city) {
+        this.IINStart = IIN_start;
+        this.IINEnd = IIN_end;
+        this.numberLength = number_length;
         this.scheme = scheme;
         this.brand = brand;
         this.type = type;
         this.country = country;
-        this.bank_name = bank_name;
-        this.bank_logo = bank_logo;
-        this.bank_url = bank_url;
-        this.bank_phone = bank_phone;
-        this.bank_city = bank_city;
+        this.bankName = bank_name;
+
+        this.bankURL = bank_url;
+        this.bankPhoneNumber = bank_phone;
+        this.bankCity = bank_city;
     }
 
-    public int getIIN_start() {
-        return IIN_start;
+    int getIINstart() {
+        return IINStart;
     }
 
-    public int getIIN_end() {
-        return IIN_end;
+    int getIINend() {
+        return IINEnd;
     }
 
-    public int getNumber_length() {
-        return number_length;
+    int getNumber_length() {
+        return numberLength;
     }
 
-    public CreditCardScheme getScheme() {
+    PaymentCardScheme getPaymentCardScheme() {
         return scheme;
     }
 
-    public String getBrand() {
+    String getBrand() {
         return brand;
     }
 
-    public PaymentCardType getType() {
+    PaymentCardType getPaymentCardType() {
         return type;
     }
 
-    public String getCountry() {
+    String getCountry() {
         return country;
     }
 
-    public String getBank_name() {
-        return bank_name;
+    String getBankName() {
+        return bankName;
     }
 
-    public String getBank_logo() {
-        return bank_logo;
+    String getBankURL() {
+        return bankURL;
     }
 
-    public String getBank_url() {
-        return bank_url;
+    String getBankPhoneNumber() {
+        return bankPhoneNumber;
     }
 
-    public String getBank_phone() {
-        return bank_phone;
-    }
-
-    public String getBank_city() {
-        return bank_city;
+    String getBankCity() {
+        return bankCity;
     }
 
 }

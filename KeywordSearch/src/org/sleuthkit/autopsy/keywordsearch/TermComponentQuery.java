@@ -19,6 +19,7 @@
 //
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -31,6 +32,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.validator.routines.checkdigit.LuhnCheckDigit;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -51,6 +53,7 @@ final class TermComponentQuery implements KeywordSearchQuery {
 
     private static final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
     private static final BlackboardAttribute.Type SOLR_DOCUMENT_ID_TYPE = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SOLR_DOCUMENT_ID);
+    private static final BlackboardAttribute.Type ACCOUNT_NUMBER_TYPE = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER);
 
     //TODO: move these regex and the luhn check to a new class, something like: CreditCardNumberValidator
     /*
@@ -108,9 +111,19 @@ final class TermComponentQuery implements KeywordSearchQuery {
     private final Keyword keyword;
     private boolean isEscaped;
     private final List<KeywordQueryFilter> filters = new ArrayList<>();
+    private IINValidator iinValidator;
 
     TermComponentQuery(KeywordList keywordList, Keyword keyword) {
         this.keyword = keyword;
+
+        if (keyword.getType() == ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER) {
+            try {
+                iinValidator = new IINValidator();
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        }
+
         this.keywordList = keywordList;
         this.escapedQuery = keyword.getQuery();
     }
@@ -177,33 +190,59 @@ final class TermComponentQuery implements KeywordSearchQuery {
 
     @Override
     public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(String termHit, KeywordHit hit, String snippet, String listName) {
-        BlackboardArtifact bba;
+        BlackboardArtifact newArtifact;
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
         try {
-            //if the keyword hit matched the  credit card number keyword/regex...
+            //if the keyword hit matched the credit card number keyword/regex...
             if (keyword.getType() == ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER) {
-                bba = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT);
+                newArtifact = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT);
                 // make account artifact
                 //try to match it against the track 1 regex
                 Matcher matcher = TRACK1_PATTERN.matcher(hit.getSnippet());
                 if (matcher.find()) {
-                    parseTrack1Data(bba, matcher);
+                    parseTrack1Data(newArtifact, matcher);
                 }
                 //then try to match it against the track 2 regex
                 matcher = TRACK2_PATTERN.matcher(hit.getSnippet());
                 if (matcher.find()) {
-                    parseTrack2Data(bba, matcher);
+                    parseTrack2Data(newArtifact, matcher);
                 }
                 if (hit.getContent() instanceof AbstractFile) {
                     AbstractFile file = (AbstractFile) hit.getContent();
                     if (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS
                             || file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) {
-                        bba.addAttribute(new BlackboardAttribute(SOLR_DOCUMENT_ID_TYPE, MODULE_NAME, hit.getSolrDocumentId()));
+                        newArtifact.addAttribute(new BlackboardAttribute(SOLR_DOCUMENT_ID_TYPE, MODULE_NAME, hit.getSolrDocumentId()));
                     }
                 }
+
+                String ccn = newArtifact.getAttribute(ACCOUNT_NUMBER_TYPE).getValueString();
+                final int iin = Integer.parseInt(ccn.substring(0, 7));
+
+                IINRange iinRange = iinValidator.getIINRange(iin);
+                newArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_CREDIT_CARD_SCHEME, MODULE_NAME, iinRange.getPaymentCardScheme().name()));
+                newArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PAYMENT_CARD_TYPE, MODULE_NAME, iinRange.getPaymentCardType().name()));
+                if (StringUtils.isNotBlank(iinRange.getBrand())) {
+                    newArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_BRAND, MODULE_NAME, iinRange.getBrand()));
+                }
+                if (StringUtils.isNotBlank(iinRange.getBankName())) {
+                    newArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_BANK_NAME, MODULE_NAME, iinRange.getBankName()));
+                }
+                if (StringUtils.isNotBlank(iinRange.getBankPhoneNumber())) {
+                    newArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, MODULE_NAME, iinRange.getBankPhoneNumber()));
+                }
+                if (StringUtils.isNotBlank(iinRange.getBankURL())) {
+                    newArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL, MODULE_NAME, iinRange.getBankURL()));
+                }
+                if (StringUtils.isNotBlank(iinRange.getCountry())) {
+                    newArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNTRY, MODULE_NAME, iinRange.getCountry()));
+                }
+                if (StringUtils.isNotBlank(iinRange.getBankCity())) {
+                    newArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_CITY, MODULE_NAME, iinRange.getBankCity()));
+                }
+
             } else {
                 //make keyword hit artifact
-                bba = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
+                newArtifact = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
 
                 //regex match
                 attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, termHit));
@@ -229,8 +268,8 @@ final class TermComponentQuery implements KeywordSearchQuery {
 
         try {
             //TODO: do we still/really need this KeywordCachedArtifact class? 
-            bba.addAttributes(attributes);
-            KeywordCachedArtifact writeResult = new KeywordCachedArtifact(bba);
+            newArtifact.addAttributes(attributes);
+            KeywordCachedArtifact writeResult = new KeywordCachedArtifact(newArtifact);
             writeResult.add(attributes);
             return writeResult;
         } catch (TskCoreException e) {
@@ -273,6 +312,7 @@ final class TermComponentQuery implements KeywordSearchQuery {
          */
         QueryResults results = new QueryResults(this, keywordList);
         int resultSize = 0;
+
         for (Term term : terms) {
             final String termStr = KeywordSearchUtil.escapeLuceneQuery(term.getTerm());
 
@@ -280,8 +320,14 @@ final class TermComponentQuery implements KeywordSearchQuery {
                 //If the keyword is a credit card number, pass it through luhn validator
                 Matcher matcher = CCN_PATTERN.matcher(term.getTerm());
                 matcher.find();
-                if (false == LUHN_CHECK.isValid(matcher.group("ccn"))) {
+                final String ccn = matcher.group("ccn");
+                if (false == LUHN_CHECK.isValid(ccn)) {
                     continue; //if the hit does not pass the luhn check, skip it.
+                }
+                final int iin = Integer.parseInt(ccn.substring(0, 7));
+
+                if (false == iinValidator.contains(iin)) {
+                    continue;
                 }
             }
 
