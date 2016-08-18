@@ -42,9 +42,9 @@ import org.sleuthkit.datamodel.TskDataException;
  * a case database. If SleuthKit fails to find a filesystem in any of input
  * image files, the file is added to the case as a local/logical file instead.
  */
-class AddCellebriteAndroidImageTask implements Runnable {
+class AddCellebritePhysicalReportTask implements Runnable {
 
-    private static final Logger logger = Logger.getLogger(AddCellebriteAndroidImageTask.class.getName());
+    private static final Logger logger = Logger.getLogger(AddCellebritePhysicalReportTask.class.getName());
     public static final String MODULE_NAME = "Cellebrite UFED Output Data Source Processor";
     public static final String TSK_FS_TYPE_UNKNOWN_ERR_MSG = "Cannot determine file system type";
     private final String deviceId;
@@ -73,7 +73,7 @@ class AddCellebriteAndroidImageTask implements Runnable {
      *                        processing.
      * @param callback        Callback to call when processing is done.
      */
-    AddCellebriteAndroidImageTask(String deviceId, List<String> imageFilePaths, String timeZone, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+    AddCellebritePhysicalReportTask(String deviceId, List<String> imageFilePaths, String timeZone, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         this.deviceId = deviceId;
         this.imageFilePaths = imageFilePaths;
         this.timeZone = timeZone;

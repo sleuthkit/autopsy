@@ -58,8 +58,8 @@ public class CellebriteLogicalReportProcessor implements AutomatedIngestDataSour
     private static final String CELLEBRITE_DESC = "Cellebrite XML Files (*.xml)";
     private static final GeneralFilter xmlFilter = new GeneralFilter(CELLEBRITE_EXTS, CELLEBRITE_DESC);
     private static final List<FileFilter> cellebriteLogicalReportFilters = new ArrayList<>();
-    private final CellebriteXMLFilePanel configPanel;
-    private AddCellebriteXMLTask addCellebriteXMLTask;
+    private final CellebriteLogicalReportPanel configPanel;
+    private AddCellebriteLogicalReportTask addCellebriteXMLTask;
     static {
         cellebriteLogicalReportFilters.add(xmlFilter);
     }
@@ -87,7 +87,7 @@ public class CellebriteLogicalReportProcessor implements AutomatedIngestDataSour
      * method overload to allow it to be used independently of the wizard.
      */
     public CellebriteLogicalReportProcessor() {
-        configPanel = CellebriteXMLFilePanel.createInstance(CellebriteLogicalReportProcessor.class.getName(), cellebriteLogicalReportFilters);
+        configPanel = CellebriteLogicalReportPanel.createInstance(CellebriteLogicalReportProcessor.class.getName(), cellebriteLogicalReportFilters);
     }
 
     /**
@@ -173,13 +173,13 @@ public class CellebriteLogicalReportProcessor implements AutomatedIngestDataSour
      * @param callback                 Callback to call when processing is done.
      */
     public void run(String deviceId, String rootVirtualDirectoryName, String cellebriteXmlFilePath, boolean isHandsetFile, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        AddCellebriteXMLTask.CellebriteInputType inputType;
+        AddCellebriteLogicalReportTask.CellebriteInputType inputType;
         if (isHandsetFile) {
-            inputType = AddCellebriteXMLTask.CellebriteInputType.handset;
+            inputType = AddCellebriteLogicalReportTask.CellebriteInputType.handset;
         } else {
-            inputType = AddCellebriteXMLTask.CellebriteInputType.SIM;
+            inputType = AddCellebriteLogicalReportTask.CellebriteInputType.SIM;
         }
-        addCellebriteXMLTask = new AddCellebriteXMLTask(deviceId, rootVirtualDirectoryName, cellebriteXmlFilePath, inputType, progressMonitor, callback);
+        addCellebriteXMLTask = new AddCellebriteLogicalReportTask(deviceId, rootVirtualDirectoryName, cellebriteXmlFilePath, inputType, progressMonitor, callback);
         new Thread(addCellebriteXMLTask).start();
     }
 

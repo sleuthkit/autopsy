@@ -48,7 +48,7 @@ import org.sleuthkit.autopsy.experimental.cellex.cellxml.CellXMLParser;
  * source. The Cellebrite XML report is converted to a DFXML/CellXML report and
  * the CellXML report is parsed to generate artifacts.
  */
-class AddCellebriteXMLTask implements Runnable {
+class AddCellebriteLogicalReportTask implements Runnable {
 
     public enum CellebriteInputType {
 
@@ -87,7 +87,7 @@ class AddCellebriteXMLTask implements Runnable {
      *                                 progressMonitor during processing.
      * @param callback                 Callback to call when processing is done.
      */
-    AddCellebriteXMLTask(String deviceId, String rootVirtualDirectoryName, String cellebriteXmlFilePath, CellebriteInputType cellebriteXmlFileType, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+    AddCellebriteLogicalReportTask(String deviceId, String rootVirtualDirectoryName, String cellebriteXmlFilePath, CellebriteInputType cellebriteXmlFileType, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         this.deviceId = deviceId;
         this.rootVirtualDirectoryName = rootVirtualDirectoryName;
         this.cellebriteXmlFilePath = cellebriteXmlFilePath;
@@ -112,7 +112,7 @@ class AddCellebriteXMLTask implements Runnable {
             /*
              * Locate the Cellebrite XML to DFXML/CellXML converter.
              */
-            final File converterHome = InstalledFileLocator.getDefault().locate(FilenameUtils.removeExtension(CONVERTOR_EXE), AddCellebriteXMLTask.class.getPackage().getName(), false);
+            final File converterHome = InstalledFileLocator.getDefault().locate(FilenameUtils.removeExtension(CONVERTOR_EXE), AddCellebriteLogicalReportTask.class.getPackage().getName(), false);
             if (null == converterHome) {
                 errorMessages.add(String.format("Critical error adding %s for device %s: %s not found", cellebriteXmlFilePath, deviceId, CONVERTOR_EXE));
                 return;

@@ -48,8 +48,8 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 public class CellebritePhysicalReportProcessor implements AutomatedIngestDataSourceProcessor {
 
     private static final String DATA_SOURCE_TYPE = "Cellebrite Android";
-    private final CellebriteAndroidInputPanel configPanel;
-    private AddCellebriteAndroidImageTask addImagesTask;
+    private final CellebritePhysicalReportInputPanel configPanel;
+    private AddCellebritePhysicalReportTask addImagesTask;
     
     private static final List<String> CELLEBRITE_EXTS = Arrays.asList(new String[]{".bin"});
     private static final GeneralFilter binImageFilter = new GeneralFilter(CELLEBRITE_EXTS, "");
@@ -65,7 +65,7 @@ public class CellebritePhysicalReportProcessor implements AutomatedIngestDataSou
      * method overload to allow it to be used independently of the wizard.
      */
     public CellebritePhysicalReportProcessor() {
-        configPanel = CellebriteAndroidInputPanel.createInstance(CellebritePhysicalReportProcessor.class.getName());
+        configPanel = CellebritePhysicalReportInputPanel.createInstance(CellebritePhysicalReportProcessor.class.getName());
     }
 
     /**
@@ -143,7 +143,7 @@ public class CellebritePhysicalReportProcessor implements AutomatedIngestDataSou
      */
     public void run(String deviceId, String imageFolderPath, String timeZone, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         List<String> imageFilePaths = getImageFilePaths(imageFolderPath);
-        addImagesTask = new AddCellebriteAndroidImageTask(deviceId, imageFilePaths, timeZone, progressMonitor, callback);
+        addImagesTask = new AddCellebritePhysicalReportTask(deviceId, imageFilePaths, timeZone, progressMonitor, callback);
         new Thread(addImagesTask).start();
     }
 
@@ -233,7 +233,7 @@ public class CellebritePhysicalReportProcessor implements AutomatedIngestDataSou
     @Override
     public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
         List<String> dataSourcePathList = Arrays.asList(new String[]{dataSourcePath.toString()});
-        addImagesTask = new AddCellebriteAndroidImageTask(deviceId, dataSourcePathList, "", progressMonitor, callBack);
+        addImagesTask = new AddCellebritePhysicalReportTask(deviceId, dataSourcePathList, "", progressMonitor, callBack);
         new Thread(addImagesTask).start();
     }
 
