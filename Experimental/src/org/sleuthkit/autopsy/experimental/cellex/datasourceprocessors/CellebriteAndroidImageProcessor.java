@@ -45,7 +45,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
     @ServiceProvider(service=DataSourceProcessor.class),
     @ServiceProvider(service=AutomatedIngestDataSourceProcessor.class)}
 )
-public class CellebriteAndroidImageProcessor implements DataSourceProcessor, AutomatedIngestDataSourceProcessor {
+public class CellebriteAndroidImageProcessor implements AutomatedIngestDataSourceProcessor {
 
     private static final String DATA_SOURCE_TYPE = "Cellebrite Android";
     private final CellebriteAndroidInputPanel configPanel;

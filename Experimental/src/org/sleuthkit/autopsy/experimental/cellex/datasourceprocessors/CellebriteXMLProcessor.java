@@ -51,7 +51,7 @@ import org.w3c.dom.Document;
     @ServiceProvider(service=DataSourceProcessor.class),
     @ServiceProvider(service=AutomatedIngestDataSourceProcessor.class)}
 )
-public class CellebriteXMLProcessor implements DataSourceProcessor, AutomatedIngestDataSourceProcessor {
+public class CellebriteXMLProcessor implements AutomatedIngestDataSourceProcessor {
 
     private static final String DATA_SOURCE_TYPE = "Cellebrite XML";
     private static final List<String> CELLEBRITE_EXTS = Arrays.asList(new String[]{".xml"});

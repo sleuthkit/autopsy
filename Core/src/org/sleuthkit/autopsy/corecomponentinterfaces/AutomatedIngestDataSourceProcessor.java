@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.corecomponentinterfaces;
 
 import java.nio.file.Path;
 
-public interface AutomatedIngestDataSourceProcessor {
+public interface AutomatedIngestDataSourceProcessor extends DataSourceProcessor{
 
    int canProcess(Path dataSourcePath);
    void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack); 

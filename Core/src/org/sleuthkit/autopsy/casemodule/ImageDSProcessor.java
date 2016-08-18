@@ -46,7 +46,7 @@ import org.sleuthkit.autopsy.coreutils.DataSourceUtils;
     @ServiceProvider(service=DataSourceProcessor.class),
     @ServiceProvider(service=AutomatedIngestDataSourceProcessor.class)}
 )
-public class ImageDSProcessor implements DataSourceProcessor, AutomatedIngestDataSourceProcessor {
+public class ImageDSProcessor implements AutomatedIngestDataSourceProcessor {
 
     private final static String DATA_SOURCE_TYPE = NbBundle.getMessage(ImageDSProcessor.class, "ImageDSProcessor.dsType.text");
     private static final List<String> allExt = new ArrayList<>();
