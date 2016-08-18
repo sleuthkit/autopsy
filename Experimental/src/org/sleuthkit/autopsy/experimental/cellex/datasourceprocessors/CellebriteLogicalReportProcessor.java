@@ -51,7 +51,7 @@ import org.w3c.dom.Document;
     @ServiceProvider(service=DataSourceProcessor.class),
     @ServiceProvider(service=AutomatedIngestDataSourceProcessor.class)}
 )
-public class CellebriteXMLProcessor implements AutomatedIngestDataSourceProcessor {
+public class CellebriteLogicalReportProcessor implements AutomatedIngestDataSourceProcessor {
 
     private static final String DATA_SOURCE_TYPE = "Cellebrite XML";
     private static final List<String> CELLEBRITE_EXTS = Arrays.asList(new String[]{".xml"});
@@ -86,8 +86,8 @@ public class CellebriteXMLProcessor implements AutomatedIngestDataSourceProcesso
      * integration with the add data source wizard. It also provides a run
      * method overload to allow it to be used independently of the wizard.
      */
-    public CellebriteXMLProcessor() {
-        configPanel = CellebriteXMLFilePanel.createInstance(CellebriteXMLProcessor.class.getName(), cellebriteLogicalReportFilters);
+    public CellebriteLogicalReportProcessor() {
+        configPanel = CellebriteXMLFilePanel.createInstance(CellebriteLogicalReportProcessor.class.getName(), cellebriteLogicalReportFilters);
     }
 
     /**

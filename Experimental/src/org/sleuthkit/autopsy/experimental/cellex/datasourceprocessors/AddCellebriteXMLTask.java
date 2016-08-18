@@ -56,7 +56,7 @@ class AddCellebriteXMLTask implements Runnable {
         SIM,
     };
 
-    private static final Logger logger = Logger.getLogger(CellebriteXMLProcessor.class.getName());
+    private static final Logger logger = Logger.getLogger(CellebriteLogicalReportProcessor.class.getName());
     private static final String MODULE_NAME = "Cellebrite XML Processor";
     private static final String CONVERTOR_EXE = "CellebriteToDFXMLConv.exe";
     private final String deviceId;
