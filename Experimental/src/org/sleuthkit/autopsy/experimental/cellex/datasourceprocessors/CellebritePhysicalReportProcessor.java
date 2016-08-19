@@ -313,7 +313,7 @@ public class CellebritePhysicalReportProcessor implements AutomatedIngestDataSou
                 Case currentCase = Case.getCurrentCase();
                 extractedDataSourcePath = extractDataSource(Paths.get(currentCase.getModuleDirectory()), dataSourcePath);
             } catch (Exception ex) {
-                throw new AutomatedIngestDataSourceProcessorException(NbBundle.getMessage(CellebritePhysicalReportProcessor.class, "CellebritePhysicalReportProcessor.canProcess.exception.text"), ex);
+                throw new AutomatedIngestDataSourceProcessorException(NbBundle.getMessage(CellebritePhysicalReportProcessor.class, "CellebritePhysicalReportProcessor.process.exception.text"), ex);
             }
             run(deviceId, extractedDataSourcePath.toString(), "", progressMonitor, callBack);
         } else if (isValidDataSource(dataSourcePath)) {
