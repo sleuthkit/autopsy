@@ -270,17 +270,11 @@ public class CellebritePhysicalReportProcessor implements AutomatedIngestDataSou
         //       e.g. blk0_mmcblk0.bin, blk0_mmcblk0(1).bin......, and blk24_mmcblk1.bin, blk24_mmcblk1(1).bin......
         //iii. Multiple image files - one per volume - need to handle each one separately
         //       e.g. blk0_mmcblk0.bin, mtd0_system.bin, mtd1_cache.bin, mtd2_userdata.bin
-        String fName = fileName.toLowerCase();
-        int lastPeriod = fName.lastIndexOf('.');
-        if (-1 == lastPeriod) {
-            return false;
-        }
-        String fNameNoExt = fName.substring(0, lastPeriod);
-        return fNameNoExt.matches("\\w+\\(\\d+\\)");
+        String fNameNoExt = FilenameUtils.removeExtension(fileName);
+        return fNameNoExt.toLowerCase().matches("\\w+\\(\\d+\\)");
     }
     
     private static boolean isAcceptedByFiler(File file, List<FileFilter> filters) {
-
         for (FileFilter filter : filters) {
             if (filter.accept(file)) {
                 return true;
@@ -290,19 +284,12 @@ public class CellebritePhysicalReportProcessor implements AutomatedIngestDataSou
     }
     
     private static boolean isArchive(Path dataSourcePath) throws AutomatedIngestDataSourceProcessorException {
-
         String fileName = dataSourcePath.getFileName().toString();
         // check whether it's a zip archive file that can be extracted
         if (isAcceptedByFiler(new File(fileName), archiveFilters)) {
-            try {
-                Case currentCase = Case.getCurrentCase();
-                Path extractedDataSourcePath = extractDataSource(Paths.get(currentCase.getModuleDirectory()), dataSourcePath);
-            } catch (Exception ex) {
-                throw new AutomatedIngestDataSourceProcessorException(NbBundle.getMessage(CellebritePhysicalReportProcessor.class, "CellebritePhysicalReportProcessor.canProcess.exception.text"), ex);
-            }
+            return true;
         }
-        // ELTODO delete extracted archive contents
-        return true;
+        return false;
     }
 
     @Override
@@ -320,8 +307,15 @@ public class CellebritePhysicalReportProcessor implements AutomatedIngestDataSou
         
         List<String> dataSourcePathList = Collections.emptyList();
         if (isArchive(dataSourcePath)) {
-            // ELTODO extract the archive and pass the extracted folder as input
-            run(deviceId, String imageFolderPath, "", progressMonitor, callBack)
+            // extract the archive and pass the extracted folder as input
+            Path extractedDataSourcePath = Paths.get("");
+            try {
+                Case currentCase = Case.getCurrentCase();
+                extractedDataSourcePath = extractDataSource(Paths.get(currentCase.getModuleDirectory()), dataSourcePath);
+            } catch (Exception ex) {
+                throw new AutomatedIngestDataSourceProcessorException(NbBundle.getMessage(CellebritePhysicalReportProcessor.class, "CellebritePhysicalReportProcessor.canProcess.exception.text"), ex);
+            }
+            run(deviceId, extractedDataSourcePath.toString(), "", progressMonitor, callBack);
         } else if (isValidDataSource(dataSourcePath)) {
             // pass the single ".bin" file as input
             dataSourcePathList = Arrays.asList(new String[]{dataSourcePath.toString()});
