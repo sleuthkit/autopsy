@@ -313,6 +313,7 @@ public class CellebritePhysicalReportProcessor implements AutomatedIngestDataSou
     @Override
     public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
         List<String> dataSourcePathList = Arrays.asList(new String[]{dataSourcePath.toString()});
+        // in this particular case we don't want to call run() method as it will try to identify and process all ".bin" files in data source folder
         addImagesTask = new AddCellebritePhysicalReportTask(deviceId, dataSourcePathList, "", progressMonitor, callBack);
         new Thread(addImagesTask).start();
     }
