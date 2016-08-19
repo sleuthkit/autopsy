@@ -18,12 +18,15 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import javax.swing.JPanel;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
+import org.openide.util.lookup.ServiceProviders;
+import org.sleuthkit.autopsy.corecomponentinterfaces.AutomatedIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
@@ -34,10 +37,14 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
  * integration with the add data source wizard. It also provides a run method
  * overload to allow it to be used independently of the wizard.
  */
-@ServiceProvider(service = DataSourceProcessor.class)
-public class LocalFilesDSProcessor implements DataSourceProcessor {
+@ServiceProviders(value={
+    @ServiceProvider(service=DataSourceProcessor.class),
+    @ServiceProvider(service=AutomatedIngestDataSourceProcessor.class)}
+)
+public class LocalFilesDSProcessor implements AutomatedIngestDataSourceProcessor {
 
     private static final String DATA_SOURCE_TYPE = NbBundle.getMessage(LocalFilesDSProcessor.class, "LocalFilesDSProcessor.dsType");
+    private static final String AUTO_INGEST_VIRTUAL_DIR_NAME = NbBundle.getMessage(LocalFilesDSProcessor.class, "LocalFilesDSProcessor.DefaultAutoIngestVirtualDirName");
     private final LocalFilesPanel configPanel;
     /*
      * TODO: Remove the setDataSourceOptionsCalled flag and the settings fields
@@ -195,6 +202,20 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
         //LocalFilesPanel.FILES_SEP is currently ","
         this.localFilePaths = Arrays.asList(paths.split(LocalFilesPanel.FILES_SEP));
         setDataSourceOptionsCalled = true;
+    }
+
+    @Override
+    public int canProcess(Path dataSourcePath) {
+        // Local files DSP can process any file by simply adding it as a logical file.
+        // It should return lowest possible non-zero confidence level and be treated 
+        // as the "option of last resort" for auto ingest purposes
+        return 1;
+    }
+
+    @Override
+    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
+        this.localFilePaths = Arrays.asList(new String[]{dataSourcePath.toString()});
+        run(deviceId, AUTO_INGEST_VIRTUAL_DIR_NAME, this.localFilePaths, progressMonitor, callBack);
     }
 
 }
