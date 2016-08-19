@@ -1,6 +1,6 @@
-                  Last Updated: 04 August 2016
+                  Last Updated: 30 October 2015
 
-This file outlines what it takes to build Autopsy 4.1.0 from source.
+This file outlines what it takes to build Autopsy from source.
 
 Note that it currently only works out-of-the-box on Windows.  We
 are working on getting the process working under non-Windows systems.
@@ -9,177 +9,116 @@ correct C libraries.
 
 
 STEPS:
-1)  Get Java Setup
+1) Get Java Setup
 
 1a) Download and install JDK version 1.8.  For the current version of JavaFX 
-	that we use, you'll need 1.8.0_66 or greater. You can now use 32-bit or
-	64-bit, but special work is needed to get The Sleuth Kit to compile as
-	64-bit.
+that we use, you'll need 1.8.0_66 or greater. You can now use 32-bit or 64-bit, 
+but special work is needed to get The Sleuth Kit to compile as 64-bit.
 
-	Autopsy has been used and tested with Oracle JavaSE and the included JavaFX
-	support:
-	(http://www.oracle.com/technetwork/java/javase/downloads/index.html)
+Autopsy has been used and tested with Oracle JavaSE and the included JavaFX support
+(http://www.oracle.com/technetwork/java/javase/downloads/index.html).
 
-	OpenJDK and OpenJFX might work, but they are not fully tested with Autopsy.
+OpenJDK and OpenJFX might work, but they are not fully tested with Autopsy.
 
-1b) Ensure that JDK_HOME is set to the root JDK directory. On FHS-compliant UNIX
-	systems, add the following to the bottom of your ~/.bashrc:
+1b) Ensure that JDK_HOME is set to the root JDK directory.
 
-	# Java specific
-	export JAVA_HOME=/usr/lib/jvm/java-1.8.0-oracle
-	export PATH=$PATH:$JAVA_HOME
-	export JDK_HOME=/usr/lib/jvm/java-1.8.0-oracle
-	export PATH=$PATH:$JDK_HOME
-
-	This file will be read at the next login. To re-load without logout/login,
-	run the following command from a terminal:
-
-	source ~/.bashrc
-
-1c) (optional) Download and install Netbeans IDE (https://netbeans.org/)
-	Note: Netbeans IDE is not required to build and run Autopsy,
-	but it is a recommended IDE to use for development of Autopsy modules.
+1c) (optional) Download and install Netbeans IDE (http://netbeans.org/)
+Note: Netbeans IDE is not required to build and run Autopsy,
+but it is a recommended IDE to use for development of Autopsy modules.
 
 1d) (optional) If you are going to package Autopsy, then you'll also
-	need to set JRE_HOME_32 to the root 32-bit JRE directory and/or JRE_HOME_64
-	to the root 64-bit JRE directory. On FHS-compliant UNIX systems, add the
-	following in the Java specific section of your ~/.bashrc that you added
-	earlier and re-load bashrc as above:
-
-	export JRE_HOME_64=/usr/lib/jvm/java-1.8.0-oracle/jre
-	export PATH=$PATH:$JRE_HOME_64
+need to set JRE_HOME_32 to the root 32-bit JRE directory and/or JRE_HOME_64
+to the root 64-bit JRE directory. 
 
 1e) (optional) For some Autopsy features to be functional, you need to add the 
-	java executable to the system PATH. For UNIX, add the following to the Java
-	section of your ~/.bashrc and re-load:
-    
-    export JAVA_HOME=/usr/lib/jvm/java-1.8.0-oracle
-	export PATH=$PATH:$JAVA_HOME
+    java executable to the system PATH.
 
 
-2) 	Get The Sleuth Kit Setup
+2) Get Sleuth Kit Setup
+2a) Download and build a Release version of Sleuth Kit (TSK) 4.0. See
+    win32\BUILDING.txt in the TSK package for more information. You need to 
+    build the tsk_jni project. Select the Release_PostgreSQL Win32 or x64 target,
+    depending upon your target build. You can use a released version or download 
+    the latest from github:
+- git://github.com/sleuthkit/sleuthkit.git
 
-2a) Download and build a Release version of The Sleuth Kit (TSK) 4.3. For
-	Windows systems,see win32\BUILDING.txt in the TSK package for more
-	information. UNIX systems are explained below.You need to build the tsk_jni
-	project. Select the Release_PostgreSQL Win32 or x64 target, depending upon
-	your target build. You can use a released version or download the latest
-	from GitHub:
-	
-	git://github.com/sleuthkit/sleuthkit.git
+2b) Build the TSK JAR file by typing 'ant dist-PostgreSQL' in
+    bindings/java in the
+    TSK source code folder from a command line. Note it is case
+    sensitive. You can also add the code to a NetBeans project and build
+    it from there, selecting the dist-PostgreSQL target.
 
-2b) Build the TSK JAR file by typing 'ant dist-PostgreSQL' in bindings/java in
-	the TSK source code folder from a command line. Note it is case sensitive.
-	You can also add the code to a NetBeans project and build it from there,
-	selecting the dist-PostgreSQL target.
+2c) Set TSK_HOME environment variable to the root directory of TSK
 
-2c) Set TSK_HOME environment variable to the root directory of TSK.
-
-2d) On UNIX systems, you will need to make sure AFFLIB and libewf are installed.
-	For Ubuntu 16.04 and Linux Mint 18, these are .deb packaqges in the Xenial
-	repositories as afflib-dbg and libewf-dbg. Be sure that these installations
-	also pull in afflib-tools, libafflib-dev, libafflib0v5, libewf-dev,
-	python-libewf, and libewf2. They should install in the proper directories
-	under /usr/.
-	
-	Run 'configure' from the TSK root directory, adding options for AFFLIB and
-	libewf support:
-	
-	./configure --with-afflib=/usr --with-libewf=/usr
-	
-	Run 'make' from the TSK root directory. If you want the standalone TSK
-	tools, run 'make install' after that. TSK components will be installed to
-	the appropriate directories in /usr/local.
-	
-	You'll need to rename a file. At the folowing path:
-	
-	your-tsk-source-directory/bindings/java/dist/
-	
-	...you'll find a file named 'Tsk_DataModel.jar'. Rename this to
-	'Tsk_DataModel_PostgreSQL.jar' to prevent 'file not found' errors when
-	compiling Autopsy later.
-
-	Add the following lines to the bottom of your bashrc and re-load:
-
-	# TSK specific
-	export TSK_HOME=path-to-tsk*
-	export PATH=$PATH:$TSK_HOME
-
-	* = ...such as ~/tsk/ or /usr/local/src/tsk/
+2d) On Non-Windows systems, you will need to do a 'make install'
+from the TSK root directory to install the libraries and such in
+the needed places (i.e. '/usr/local').
 
 
-3) For 32-bit targets, get GStreamer Setup. GStreamer is used to view video
-	files. You can either download it and install it or manually by unzipping
-	the version that is included in the 'thirdparty/gstreamer' folder. You will
-	need the 'bin' and 'lib/gstreamer-0.10' folders to be in your Windows PATH
-	environment variable.
+3) For 32-bit targets, get GStreamer Setup. GStreamer is used to view video files.
+You can either download it and install it or manually by unzipping the
+version that is included in the 'thirdparty/gstreamer' folder.  You
+will need the 'bin' and 'lib/gstreamer-0.10' folders to be in your
+Windows PATH environment variable.
 
-	NOTE: This has not been fully tested in non-Windows environments yet, so we
-	don't have instructions for that yet.
+NOTE: This has not been fully tested in non-Windows environments
+yet, so we don't have instructions for that yet.
 
 
-4)  Get Autopsy source.
+4) Get Autopsy source.
+4a) If you are not planning to contribute to Autopsy development, clone a read-only repository:
 
-4a) If you are not planning to contribute to Autopsy development, either clone a
-	read-only repository:
+git clone https://github.com/sleuthkit/autopsy.git
 
-	git clone https://github.com/sleuthkit/autopsy.git
-	
-	...or download the zip (Windows) or tarball (UNIX) and unpack to the
-	development directory of your choice:
-	
-	https://github.com/sleuthkit/autopsy/archive/autopsy-4.1.0.tar.gz
+4b) If you plan to contribute and submit patches, login to Github and create your own Autopsy fork.
+Then, clone your fork and work on that source-tree:
 
-4b) If you plan to contribute and submit patches, login to Github and create
-	your own Autopsy fork. Then, clone your fork and work on that source-tree:
+git clone https://github.com/YOUR_USERNAME/autopsy.git
 
-	git clone https://github.com/YOUR_USERNAME/autopsy.git
+You will be able to submit patches by committing and pushing changes to your fork 
+and by submitting pull requests to the main Autopsy repository.
 
-	You will be able to submit patches by committing and pushing changes to your
-	fork and by submitting pull requests to the main Autopsy repository.
-
-5)  Compile Autopsy
-
+5) Compile Autopsy
 5a) Using Netbeans IDE:
-	- Start NetBeans IDE and open the Autopsy project.
-	- Choose to build the Autopsy project / module. It is the highest level
-	project that will cause the other modules to be compiled.
+- Start NetBeans IDE and open the Autopsy project.
+- Choose to build the Autopsy project / module. It is the highest level project
+    that will cause the other modules to be compiled.
 
-5b) Without NetBeans IDE (requires JDK and ant >= 1.7.1):
-	- From root directory of Autopsy source execute:
-
-	ant
-	(to build Autopsy)
-
-	ant run
-	(to run Autopsy)
+5b) Without Netbeans IDE (requires JDK and ant >= 1.7.1):
+- From root directory of Autopsy source execute:
+ant
+(to build Autopsy)
+ant run
+(to run Autopsy)
 
 
 BACKGROUND:
-Here are some notes to shed some light on what is going on during the build
-process:
+Here are some notes to shed some light on what is going on during
+the build process.
 
-	- The Sleuth Kit Java datamodel JAR file has native JNI libraries that are
-	copied into it. These JNI libraries have dependencies on libewf, zlib,
-	libpq, libintl-8, libeay32, and ssleay32 DLL files. On UNIX platforms, the
-	JNI library also has a dependency on libtsk (on Windows, it is compiled into
-	libtsk_jni).
+- The Sleuth Kit Java datamodel JAR file has native JNI libraries
+that are copied into it. These JNI libraries have dependencies on
+libewf, zlib, libpq, libintl-8, libeay32, and ssleay32 DLL files. On non-Windows 
+platforms, the JNI library also has a dependency on libtsk (on Windows, 
+it is compiled into libtsk_jni).
 
-	- NetBeans uses ant to build Autopsy. The build target copies the TSK
-	datamodel JAR file into the project.
+- NetBeans uses ant to build Autopsy. The build target copies the
+TSK datamodel JAR file into the project.
 
-	- On a Windows system, the compile-time ant target copies the dependency
-	libraries into the Autopsy code structure so that they can be found when
-	Autopsy is run and packaged.  At runtime, the native library inside of the
-	JAR file will be extracted and used.
+- On a Windows system, the compile-time ant target copies the 
+dependency libraries into the Autopsy code structure so that they can
+be found when Autopsy is run and packaged.  At run-time, the native
+library inside of the JAR file will be extracted and used. 
 
-	- On a UNIX system, the ant target copies only the JNI library and then
-	relies on the other libraries (libtsk, libewf, zilb, etc.) to be installed
-	on the system in their standard locations (i.e. /usr/local).
+- On a Unix system, the ant target copies only the JNI library and
+then relies on the other libraries (libtsk, libewf, zilb, etc.) to
+be installed on the system in their standard locations (i.e.
+/usr/local).
 
-	- Every time that you do a source code update of TSK, make sure you rebuild
-	both the libtsk_dll, the JAR file, and then rebuild Autopsy so that it
-	copies the latest data model JAR file.
+- Every time that you do a source code update of TSK, make sure you
+rebuild both the libtsk_dll, the JAR file, and then rebuild Autopsy 
+so that it copies the latest data model JAR file. 
+
 
 ---------------
 Brian Carrier
