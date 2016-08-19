@@ -205,7 +205,7 @@ public class LocalFilesDSProcessor implements AutomatedIngestDataSourceProcessor
     }
 
     @Override
-    public int canProcess(Path dataSourcePath) {
+    public int canProcess(Path dataSourcePath) throws AutomatedIngestDataSourceProcessorException {
         // Local files DSP can process any file by simply adding it as a logical file.
         // It should return lowest possible non-zero confidence level and be treated 
         // as the "option of last resort" for auto ingest purposes
@@ -213,7 +213,7 @@ public class LocalFilesDSProcessor implements AutomatedIngestDataSourceProcessor
     }
 
     @Override
-    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
+    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) throws AutomatedIngestDataSourceProcessorException {
         this.localFilePaths = Arrays.asList(new String[]{dataSourcePath.toString()});
         run(deviceId, AUTO_INGEST_VIRTUAL_DIR_NAME, this.localFilePaths, progressMonitor, callBack);
     }

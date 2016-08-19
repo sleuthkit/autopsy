@@ -2103,7 +2103,12 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                     AutomatedIngestDataSourceProcessor selectedProcessor = null;
                     int selectedProcessorConfidence = 0;
                     for (AutomatedIngestDataSourceProcessor processor : processorCandidates) {
-                        int confidence = processor.canProcess(dataSource.getPath());
+                        int confidence = 0;
+                        try {
+                            confidence = processor.canProcess(dataSource.getPath());
+                        } catch (AutomatedIngestDataSourceProcessor.AutomatedIngestDataSourceProcessorException ex) {
+                            // ELTODO : log and auto-pause
+                        }
                         if (confidence > selectedProcessorConfidence)  {
                             selectedProcessor = processor;
                             selectedProcessorConfidence = confidence;
@@ -2119,8 +2124,12 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                     
                     synchronized (ingestLock) {
                         LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, selectedProcessor.getDataSourceType()});
-                        // ELTODO add sys log and possibly case log entries here
-                        selectedProcessor.process(dataSource.getDeviceId(), dataSource.getPath(), progressMonitor, callBack);
+                        try {
+                            // ELTODO add sys log and possibly case log entries here
+                            selectedProcessor.process(dataSource.getDeviceId(), dataSource.getPath(), progressMonitor, callBack);
+                        } catch (AutomatedIngestDataSourceProcessor.AutomatedIngestDataSourceProcessorException ex) {
+                            // ELTODO : log and auto-pause
+                        }
                         ingestLock.wait();
                     }
                 } finally {

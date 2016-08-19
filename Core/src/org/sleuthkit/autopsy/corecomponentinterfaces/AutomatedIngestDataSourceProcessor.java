@@ -26,7 +26,7 @@ import java.nio.file.Path;
  *
  * @author elivis
  */
-public interface AutomatedIngestDataSourceProcessor extends DataSourceProcessor{
+public interface AutomatedIngestDataSourceProcessor extends DataSourceProcessor {
 
     /**
      * Indicates whether the DataSourceProcessor is capable of processing the
@@ -38,8 +38,11 @@ public interface AutomatedIngestDataSourceProcessor extends DataSourceProcessor{
      *         or less means the data source is not supported by the
      *         DataSourceProcessor. Value of 100 indicates high certainty in
      *         being able to process the data source.
+     *
+     * @throws
+     * org.sleuthkit.autopsy.corecomponentinterfaces.AutomatedIngestDataSourceProcessor.AutomatedIngestDataSourceProcessorException
      */
-    int canProcess(Path dataSourcePath);
+    int canProcess(Path dataSourcePath) throws AutomatedIngestDataSourceProcessorException;
 
     /**
      *
@@ -51,6 +54,25 @@ public interface AutomatedIngestDataSourceProcessor extends DataSourceProcessor{
      *                        background task to report progress.
      * @param callBack        Callback that will be used by the background task
      *                        to return results.
+     *
+     * @throws
+     * org.sleuthkit.autopsy.corecomponentinterfaces.AutomatedIngestDataSourceProcessor.AutomatedIngestDataSourceProcessorException
      */
-    void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack);
+    void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) throws AutomatedIngestDataSourceProcessorException;
+
+    /**
+     * A custom exception for the use of AutomatedIngestDataSourceProcessor.
+     */
+    public class AutomatedIngestDataSourceProcessorException extends Exception {
+
+        private static final long serialVersionUID = 1L;
+
+        public AutomatedIngestDataSourceProcessorException(String message) {
+            super(message);
+        }
+
+        public AutomatedIngestDataSourceProcessorException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
 }

@@ -248,7 +248,7 @@ public class ImageDSProcessor implements AutomatedIngestDataSourceProcessor {
     }
 
     @Override
-    public int canProcess(Path dataSourcePath) {
+    public int canProcess(Path dataSourcePath) throws AutomatedIngestDataSourceProcessorException {
         
         // check file extension for supported types
         if (!isAcceptedByFiler(dataSourcePath.toFile(), filtersList)) {
@@ -262,9 +262,8 @@ public class ImageDSProcessor implements AutomatedIngestDataSourceProcessor {
                 // image does not have a file system that TSK can process
                 return 0;
             }
-        } catch (Exception ignore) {
-            // ELTODO do we want to have error message here?
-            return 0;
+        } catch (Exception ex) {
+            throw new AutomatedIngestDataSourceProcessorException(NbBundle.getMessage(ImageDSProcessor.class, "ImageDSProcessor.canProcess.exception.text"), ex);
         }
         
         // able to process the data source
@@ -272,8 +271,7 @@ public class ImageDSProcessor implements AutomatedIngestDataSourceProcessor {
     }
 
     @Override
-    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
-        
+    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) throws AutomatedIngestDataSourceProcessorException {
         this.deviceId = deviceId;
         this.imagePath = dataSourcePath.toString();
         this.timeZone = Calendar.getInstance().getTimeZone().getID();

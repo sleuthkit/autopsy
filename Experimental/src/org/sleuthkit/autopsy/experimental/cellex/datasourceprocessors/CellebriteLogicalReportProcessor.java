@@ -250,7 +250,7 @@ public class CellebriteLogicalReportProcessor implements AutomatedIngestDataSour
     }       
 
     @Override
-    public int canProcess(Path dataSourcePath) {
+    public int canProcess(Path dataSourcePath) throws AutomatedIngestDataSourceProcessorException {
         ReportType type = parseCellebriteLogicalReportType(dataSourcePath);
         switch (type) {
             case CELLEBRITE_LOGICAL_HANDSET:
@@ -263,7 +263,7 @@ public class CellebriteLogicalReportProcessor implements AutomatedIngestDataSour
     }
 
     @Override
-    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
+    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) throws AutomatedIngestDataSourceProcessorException {
         ReportType type = parseCellebriteLogicalReportType(dataSourcePath);
         boolean isHandsetFile = false;
         switch (type) {

@@ -37,7 +37,7 @@ import java.util.zip.ZipFile;
 import javax.swing.JPanel;
 import javax.swing.filechooser.FileFilter;
 import org.apache.commons.io.FilenameUtils;
-import org.openide.util.Exceptions;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -256,19 +256,7 @@ public class CellebritePhysicalReportProcessor implements AutomatedIngestDataSou
    
     private static boolean isValidDataSource(Path dataSourcePath) {        
                 
-        String fileName = dataSourcePath.getFileName().toString();
-
-        // check whether it's a zip archive file
-        if (isAcceptedByFiler(new File(fileName), archiveFilters)) {
-            try {            
-                Case currentCase = Case.getCurrentCase();
-                Path extractedDataSource = extractDataSource(Paths.get(currentCase.getModuleDirectory()), dataSourcePath);
-            } catch (Exception ex) {
-                // ELTODO add log here?
-                return false;
-            }
-        }
-        
+        String fileName = dataSourcePath.getFileName().toString();        
         // is it a ".bin" image
         if (!isAcceptedByFiler(new File(fileName), cellebriteImageFiltersList)) {
             return false;
@@ -298,12 +286,27 @@ public class CellebritePhysicalReportProcessor implements AutomatedIngestDataSou
             }
         }
         return false;
-    }    
+    }
+    
+    private static boolean isArchive(Path dataSourcePath) throws AutomatedIngestDataSourceProcessorException {
+
+        String fileName = dataSourcePath.getFileName().toString();
+        // check whether it's a zip archive file
+        if (isAcceptedByFiler(new File(fileName), archiveFilters)) {
+            try {
+                Case currentCase = Case.getCurrentCase();
+                Path extractedDataSource = extractDataSource(Paths.get(currentCase.getModuleDirectory()), dataSourcePath);
+            } catch (Exception ex) {
+                throw new AutomatedIngestDataSourceProcessorException(NbBundle.getMessage(CellebritePhysicalReportProcessor.class, "CellebritePhysicalReportProcessor.canProcess.exception.text"), ex);
+            }
+        }
+        return true;
+    }
 
     @Override
-    public int canProcess(Path dataSourcePath) {        
-        // check whether this is a ".bin" file
-        if (isValidDataSource(dataSourcePath)) {
+    public int canProcess(Path dataSourcePath) throws AutomatedIngestDataSourceProcessorException {      
+        // check whether this is an archive or a ".bin" file
+        if (isArchive(dataSourcePath) || isValidDataSource(dataSourcePath)) {
             // return "high confidence" value
             return 90;
         }
@@ -311,7 +314,7 @@ public class CellebritePhysicalReportProcessor implements AutomatedIngestDataSou
     }
 
     @Override
-    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
+    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) throws AutomatedIngestDataSourceProcessorException {
         List<String> dataSourcePathList = Arrays.asList(new String[]{dataSourcePath.toString()});
         // in this particular case we don't want to call run() method as it will try to identify and process all ".bin" files in data source folder
         addImagesTask = new AddCellebritePhysicalReportTask(deviceId, dataSourcePathList, "", progressMonitor, callBack);
