@@ -29,6 +29,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.UUID;
@@ -291,15 +292,16 @@ public class CellebritePhysicalReportProcessor implements AutomatedIngestDataSou
     private static boolean isArchive(Path dataSourcePath) throws AutomatedIngestDataSourceProcessorException {
 
         String fileName = dataSourcePath.getFileName().toString();
-        // check whether it's a zip archive file
+        // check whether it's a zip archive file that can be extracted
         if (isAcceptedByFiler(new File(fileName), archiveFilters)) {
             try {
                 Case currentCase = Case.getCurrentCase();
-                Path extractedDataSource = extractDataSource(Paths.get(currentCase.getModuleDirectory()), dataSourcePath);
+                Path extractedDataSourcePath = extractDataSource(Paths.get(currentCase.getModuleDirectory()), dataSourcePath);
             } catch (Exception ex) {
                 throw new AutomatedIngestDataSourceProcessorException(NbBundle.getMessage(CellebritePhysicalReportProcessor.class, "CellebritePhysicalReportProcessor.canProcess.exception.text"), ex);
             }
         }
+        // ELTODO delete extracted archive contents
         return true;
     }
 
@@ -315,10 +317,17 @@ public class CellebritePhysicalReportProcessor implements AutomatedIngestDataSou
 
     @Override
     public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) throws AutomatedIngestDataSourceProcessorException {
-        List<String> dataSourcePathList = Arrays.asList(new String[]{dataSourcePath.toString()});
-        // in this particular case we don't want to call run() method as it will try to identify and process all ".bin" files in data source folder
-        addImagesTask = new AddCellebritePhysicalReportTask(deviceId, dataSourcePathList, "", progressMonitor, callBack);
-        new Thread(addImagesTask).start();
+        
+        List<String> dataSourcePathList = Collections.emptyList();
+        if (isArchive(dataSourcePath)) {
+            // ELTODO extract the archive and pass the extracted folder as input
+            run(deviceId, String imageFolderPath, "", progressMonitor, callBack)
+        } else if (isValidDataSource(dataSourcePath)) {
+            // pass the single ".bin" file as input
+            dataSourcePathList = Arrays.asList(new String[]{dataSourcePath.toString()});
+            // in this particular case we don't want to call run() method as it will try to identify and process all ".bin" files in data source folder
+            addImagesTask = new AddCellebritePhysicalReportTask(deviceId, dataSourcePathList, "", progressMonitor, callBack);
+            new Thread(addImagesTask).start();
+        }
     }
-
 }
