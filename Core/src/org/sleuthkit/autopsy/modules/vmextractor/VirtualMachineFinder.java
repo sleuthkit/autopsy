@@ -58,7 +58,7 @@ public final class VirtualMachineFinder {
         vmdkFiltersList.add(vmdkFilter);
     }
 
-    private static boolean isVirtualMachine(String fileName) {
+    public static boolean isVirtualMachine(String fileName) {
         // is file a virtual machine
         if (!isAcceptedByFiler(new File(fileName), vmFiltersList)) {
             return false;

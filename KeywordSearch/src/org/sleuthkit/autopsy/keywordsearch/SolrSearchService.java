@@ -226,12 +226,4 @@ public class SolrSearchService implements KeywordSearchService {
     @Override
     public void close() throws IOException {
     }
-
-    /**
-     * Reload key word lists.
-     */
-    @Override
-    public void reloadConfiguration() {
-        KeywordListsManager.reloadKeywordLists();
-    }
 }
