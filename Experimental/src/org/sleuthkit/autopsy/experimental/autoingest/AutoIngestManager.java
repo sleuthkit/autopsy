@@ -2074,6 +2074,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             currentJob.setStage(AutoIngestJob.Stage.ADDING_DATA_SOURCE);
             Path caseDirectoryPath = currentJob.getCaseDirectoryPath();
             AutoIngestJobLogger jobLogger = new AutoIngestJobLogger(manifestPath, manifest.getDataSourceFileName(), caseDirectoryPath);
+            AutomatedIngestDataSourceProcessor selectedProcessor = null;
             try {
                 final DataSourceProcessorProgressMonitor progressMonitor = new DataSourceProcessorProgressMonitor() {
                     /*
@@ -2100,7 +2101,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                     
                     // lookup all AutomatedIngestDataSourceProcessors 
                     Collection <? extends AutomatedIngestDataSourceProcessor> processorCandidates = Lookup.getDefault().lookupAll(AutomatedIngestDataSourceProcessor.class);
-                    AutomatedIngestDataSourceProcessor selectedProcessor = null;
+
                     int selectedProcessorConfidence = 0;
                     for (AutomatedIngestDataSourceProcessor processor : processorCandidates) {
                         int confidence = 0;
@@ -2118,7 +2119,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                     // did we find a data source processor that can process the data source
                     if (selectedProcessor == null) {
                         // ELTODO add sys log and possibly case log entries here
-                        LOGGER.log(Level.SEVERE, "Unsupported data source type {0} for {1}", new Object[]{dataSource.getType(), manifestPath});  // NON-NLS
+                        LOGGER.log(Level.SEVERE, "Unsupported data source {0} for {1}", new Object[]{dataSource.getPath(), manifestPath});  // NON-NLS
                         return;
                     }
                     
@@ -2133,16 +2134,21 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                         ingestLock.wait();
                     }
                 } finally {
-                    String imageType = dataSource.getType().toString();
+                    String imageType;
+                    if (selectedProcessor != null) {
+                        imageType = selectedProcessor.getDataSourceType();
+                    } else {
+                        imageType = dataSource.getPath().toString();
+                    }
                     DataSourceProcessorResult resultCode = dataSource.getResultDataSourceProcessorResultCode();
                     if (null != resultCode) {
                         switch (resultCode) {
                             case NO_ERRORS:
-                                jobLogger.logDataSourceAdded(dataSource.getType().toString());
+                                jobLogger.logDataSourceAdded(imageType);
                                 break;
 
                             case NONCRITICAL_ERRORS:
-                                jobLogger.logDataSourceAdded(dataSource.getType().toString());
+                                jobLogger.logDataSourceAdded(imageType);
                                 for (String errorMessage : dataSource.getDataSourceProcessorErrorMessages()) {
                                     LOGGER.log(Level.WARNING, "Non-critical error running data source processor for {0}: {1}", new Object[]{manifestPath, errorMessage});
                                 }
@@ -2555,26 +2561,15 @@ public final class AutoIngestManager extends Observable implements PropertyChang
     @ThreadSafe
     private static final class DataSource {
 
-        private enum Type {
-
-            CELLEBRITE_PHYSICAL_REPORT,
-            CELLEBRITE_LOGICAL_HANDSET,
-            CELLEBRITE_LOGICAL_SIM,
-            DRIVE_IMAGE,
-            PHONE_IMAGE,
-        }
-
         private final String deviceId;
         private final Path path;
-        private final Type type;
         private DataSourceProcessorResult resultCode;
         private List<String> errorMessages;
         private List<Content> content;
 
-        DataSource(String deviceId, Path path, Type type) {
+        DataSource(String deviceId, Path path) {
             this.deviceId = deviceId;
             this.path = path;
-            this.type = type;
         }
 
         String getDeviceId() {
@@ -2583,10 +2578,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
 
         Path getPath() {
             return this.path;
-        }
-
-        Type getType() {
-            return type;
         }
 
         synchronized void setDataSourceProcessorOutput(DataSourceProcessorResult result, List<String> errorMessages, List<Content> content) {
