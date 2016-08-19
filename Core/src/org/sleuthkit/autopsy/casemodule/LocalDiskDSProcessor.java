@@ -221,11 +221,14 @@ public class LocalDiskDSProcessor implements AutomatedIngestDataSourceProcessor 
         
         // verify that the data source is not a file or a directory
         File file = dataSourcePath.toFile();
+        // ELTODO this needs to be tested more. should I keep isDirectory or just test for isFile?
         if (file.isFile() || file.isDirectory()) {
             return 0;
         }
         
         // check whether data source is an existing disk or partition
+        // ELTODO this needs to be tested more. do these methods actually work correctly? 
+        // or should I use PlatformUtil.getPhysicalDrives() and PlatformUtil.getPartitions() instead?
         String path = dataSourcePath.toString();
         if ( (DriveUtils.isPhysicalDrive(path) || DriveUtils.isPartition(path)) && DriveUtils.driveExists(path) ) {
             return 90;
