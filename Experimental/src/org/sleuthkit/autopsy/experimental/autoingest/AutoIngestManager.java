@@ -1904,7 +1904,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
          */
         private void ingestDataSource(Case caseForJob) throws InterruptedException {
             if (!handleCancellation()) {
-                DataSource dataSource = identifyDataSource(caseForJob);
+                DataSource dataSource = identifyDataSource();
                 if (!handleCancellation() && null != dataSource) {
                     runDataSourceProcessor(caseForJob, dataSource);
                     if (!handleCancellation() && !dataSource.getContent().isEmpty()) {
@@ -1963,7 +1963,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
          *                              blocked, i.e., if auto ingest is
          *                              shutting down.
          */
-        private DataSource identifyDataSource(Case caseForJob) throws InterruptedException {
+        private DataSource identifyDataSource() throws InterruptedException {
             Manifest manifest = currentJob.getManifest();
             Path manifestPath = manifest.getFilePath();
             LOGGER.log(Level.INFO, "Starting identifying data source stage for {0} ", manifestPath);
@@ -1979,44 +1979,10 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                     return null;
                 }
                 String deviceId = manifest.getDeviceId();
-                /*if (FileFilters.isAcceptedByFilter(dataSource, FileFilters.archiveFilters)) {
-                    Path extractedDataSource = extractDataSource(caseForJob, dataSourcePath);
-                    LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, DataSource.Type.CELLEBRITE_PHYSICAL_REPORT});
-                    jobLogger.logDataSourceTypeId(DataSource.Type.CELLEBRITE_PHYSICAL_REPORT.toString());
-                    return new DataSource(deviceId, extractedDataSource, DataSource.Type.CELLEBRITE_PHYSICAL_REPORT);
-                } else if (FileFilters.isAcceptedByFilter(dataSource, FileFilters.cellebriteLogicalReportFilters)) {
-                    DataSource.Type type = parseCellebriteLogicalReportType(dataSourcePath);
-                    if (null != type) {
-                        LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, type});
-                        jobLogger.logDataSourceTypeId(type.toString());
-                        return new DataSource(deviceId, dataSourcePath, type);
-                    }
-                }*//* else if (VirtualMachineFinder.isVirtualMachine(manifest.getDataSourceFileName())) {
-                    LOGGER.log(Level.INFO, "Identified data source type for {0} as {1} (VM)", new Object[]{manifestPath, DataSource.Type.DRIVE_IMAGE});
-                    jobLogger.logDataSourceTypeId(DataSource.Type.DRIVE_IMAGE.toString());
-                    return new DataSource(deviceId, dataSourcePath, DataSource.Type.DRIVE_IMAGE);
-                } else if (imageHasFileSystem(caseForJob, dataSourcePath)) {
-                    LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, DataSource.Type.DRIVE_IMAGE});
-                    jobLogger.logDataSourceTypeId(DataSource.Type.DRIVE_IMAGE.toString());
-                    return new DataSource(deviceId, dataSourcePath, DataSource.Type.DRIVE_IMAGE);
-                }  else {
-                    LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, DataSource.Type.PHONE_IMAGE});
-                    jobLogger.logDataSourceTypeId(DataSource.Type.PHONE_IMAGE.toString());
-                    return new DataSource(deviceId, dataSourcePath, DataSource.Type.PHONE_IMAGE);
-                }
-                // ELTODO LOGGER.log(Level.INFO, "Failed to identify data source type for {0}", manifestPath);
-                // ELTODO jobLogger.logFailedToIdentifyDataSource();
-                // ELTODO return null;
-
-            } catch (IOException ex) {
-                LOGGER.log(Level.SEVERE, String.format("Error identifying data source for %s", manifestPath), ex);
-                jobLogger.logDataSourceTypeIdError(ex);
-                return null;*/
-
+                return new DataSource(deviceId, dataSourcePath);
             } finally {
                 LOGGER.log(Level.INFO, "Finished identifying data source stage for {0}", manifestPath);
             }
-            return null;
         }
 
         /**
@@ -2108,7 +2074,11 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                         try {
                             confidence = processor.canProcess(dataSource.getPath());
                         } catch (AutomatedIngestDataSourceProcessor.AutomatedIngestDataSourceProcessorException ex) {
-                            // ELTODO : log and auto-pause
+                            LOGGER.log(Level.SEVERE, "Exception while determining whether data source processor {0} can process {1}", new Object[]{processor.getDataSourceType(), dataSource.getPath()});
+                            // ELTODO - should we auto-pause if one of DSP.canProcess() threw an exception? Probably so...
+                            // On the other hand what if we simply weren't able to extract an archive or something?
+                            pauseForSystemError();
+                            return;
                         }
                         if (confidence > selectedProcessorConfidence)  {
                             selectedProcessor = processor;
@@ -2118,7 +2088,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                     
                     // did we find a data source processor that can process the data source
                     if (selectedProcessor == null) {
-                        // ELTODO add sys log and possibly case log entries here
+                        jobLogger.logDataSourceTypeIdError("Unsupported data source " + dataSource.getPath() + " for " + manifestPath);
                         LOGGER.log(Level.SEVERE, "Unsupported data source {0} for {1}", new Object[]{dataSource.getPath(), manifestPath});  // NON-NLS
                         return;
                     }
@@ -2126,10 +2096,12 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                     synchronized (ingestLock) {
                         LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, selectedProcessor.getDataSourceType()});
                         try {
-                            // ELTODO add sys log and possibly case log entries here
                             selectedProcessor.process(dataSource.getDeviceId(), dataSource.getPath(), progressMonitor, callBack);
                         } catch (AutomatedIngestDataSourceProcessor.AutomatedIngestDataSourceProcessorException ex) {
-                            // ELTODO : log and auto-pause
+                            LOGGER.log(Level.SEVERE, "Exception while processing {0} with data source processor {1}", new Object[]{dataSource.getPath(), selectedProcessor.getDataSourceType()});
+                            jobLogger.logDataSourceProcessorError(selectedProcessor.getDataSourceType(), ex.getMessage());
+                            pauseForSystemError();
+                            return;
                         }
                         ingestLock.wait();
                     }

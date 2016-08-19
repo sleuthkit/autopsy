@@ -97,7 +97,7 @@ public class DataSourceUtils {
         File errFile = new File(errFileName.toString());
 
         if (!locateTskIsImageToolExecutable()) {
-            // ELTODO how to let user know? throw exception?
+            // ELTODO how to let user know? throw exception? All this logic will move to JNI anyway...
             return false;
         }
 

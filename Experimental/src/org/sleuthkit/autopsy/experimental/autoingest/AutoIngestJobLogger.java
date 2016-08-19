@@ -73,7 +73,7 @@ final class AutoIngestJobLogger {
          */
         INFO,
         /**
-         * Qualifies a log message about an unexpected event or condtion during
+         * Qualifies a log message about an unexpected event or condition during
          * automated ingest processing.
          */
         WARNING,
@@ -140,14 +140,14 @@ final class AutoIngestJobLogger {
      * Logs an error identifying the type of a data source.
      *
      * @param dataSource The data source.
-     * @param ex         The error.
+     * @param errorMessage The error.
      *
      * @throws InterruptedException if interrupted while blocked waiting to
      *                              acquire an exclusive lock on the log file
      *                              path.
      */
-    void logDataSourceTypeIdError(Exception ex) throws InterruptedException {
-        log(MessageCategory.ERROR, String.format("Error identifying data source type: %s", ex.getLocalizedMessage()));
+    void logDataSourceTypeIdError(String errorMessage) throws InterruptedException {
+        log(MessageCategory.ERROR, String.format("Error identifying data source type: %s", errorMessage));
     }
 
     /**
