@@ -358,7 +358,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
                 Logger.getLogger(TypeNode.class.getName())
                         .log(Level.WARNING, "Error getting child count", ex); //NON-NLS
             }
-            super.setDisplayName(type.getDisplayName() + " (" + childCount + ")");
+            super.setDisplayName(type.getDisplayName() + " \u200E(\u200E" + childCount + ")\u200E");
         }
 
         @Override
