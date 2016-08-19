@@ -56,6 +56,7 @@ final class LocalDiskPanel extends JPanel {
     private static final Logger logger = Logger.getLogger(LocalDiskPanel.class.getName());
 
     private static LocalDiskPanel instance;
+    private static final long serialVersionUID = 1L;
 
     private PropertyChangeSupport pcs = null;
 
