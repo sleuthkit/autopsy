@@ -23,7 +23,7 @@
     <target name="-download-ivy" unless="ivy.available">
         <mkdir dir="${ivy.jar.dir}"/>
         <get src="http://repo2.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar" 
-         dest="${ivy.jar.file}" usetimestamp="true"/>
+             dest="${ivy.jar.file}" usetimestamp="true"/>
     </target>
 
     <!-- init-ivy will bootstrap Ivy if the user doesn't have it already -->
@@ -32,12 +32,17 @@
             <fileset dir="${ivy.jar.dir}" includes="*.jar"/>
         </path>
         <taskdef resource="org/apache/ivy/ant/antlib.xml"
-             uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
+                 uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
     </target>
-
+    
+    <target name="download-binlist">
+        <get src="https://raw.githubusercontent.com/binlist/data/master/ranges.csv" 
+              dest="src\org\sleuthkit\autopsy\keywordsearch" 
+              verbose="true"/>
+    </target>
  
 
-    <target name="init" depends="basic-init,files-init,build-init,-javac-init,init-ivy">
+    <target name="init" depends="basic-init,files-init,build-init,-javac-init,init-ivy,download-binlist">
         
         <!-- fetch all the dependencies from Ivy and stick them in the right places -->
         <ivy:resolve/>

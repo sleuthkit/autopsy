@@ -77,3 +77,4 @@ Core/src/org/sleuthkit/autopsy/casemodule/docs/screenshot.png
 .DS_Store
 .*.swp
 KeywordSearch/src/org/sleuthkit/autopsy/keywordsearch/.~lock.ranges.csv#
+KeywordSearch/src/org/sleuthkit/autopsy/keywordsearch/ranges.csv
