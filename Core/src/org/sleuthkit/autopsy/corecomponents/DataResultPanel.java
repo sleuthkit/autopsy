@@ -329,11 +329,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * listeners.
      */
     void close() {
-        // try to remove any references to this class
-        PropertyChangeListener[] pcls = getPropertyChangeListeners();
-        for (PropertyChangeListener pcl : pcls) {
-            removePropertyChangeListener(pcl);
-        }
 
         if (null != explorerManager && null != emNodeSelectionListener) {
             explorerManager.removePropertyChangeListener(emNodeSelectionListener);
