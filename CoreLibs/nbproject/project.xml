@@ -919,8 +919,8 @@
                 <binary-origin>release/modules/ext/gstreamer-java-1.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/controlsfx-8.40.10.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/controlsfx-8.40.10.jar</binary-origin>
+                <runtime-relative-path>ext/controlsfx-8.40.11.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/controlsfx-8.40.11.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/dom4j-1.6.1.jar</runtime-relative-path>
