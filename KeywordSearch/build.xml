@@ -38,6 +38,7 @@
     <target name="download-binlist">
         <get src="https://raw.githubusercontent.com/binlist/data/master/ranges.csv" 
               dest="src\org\sleuthkit\autopsy\keywordsearch" 
+              ignoreerrors="true"
               verbose="true"/>
     </target>
  
