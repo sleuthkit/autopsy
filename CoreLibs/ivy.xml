@@ -36,7 +36,7 @@
         <dependency conf="autopsy_core->*" org="org.imgscalr" name="imgscalr-lib" rev="4.2" />
         
         <!-- timeline and image analyzer -->
-        <dependency conf="autopsy_core->*" org="org.controlsfx" name="controlsfx" rev="8.40.10" />
+        <dependency conf="autopsy_core->*" org="org.controlsfx" name="controlsfx" rev="8.40.11" />
 
         <!-- timeline  -->
         <dependency conf="autopsy_core->*" org="joda-time" name="joda-time" rev="2.4" />
