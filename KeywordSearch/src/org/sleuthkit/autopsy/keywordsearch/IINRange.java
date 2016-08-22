@@ -1,5 +1,7 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.util.Optional;
+
 /**
  * Representation of a range of Issuer/Bank Identifiaction Numbers (IIN/BIN) for
  * the * same bank.
@@ -8,7 +10,7 @@ class IINRange {
 
     private final int IINStart;
     private final int IINEnd;
-    private final int numberLength;
+    private final Integer numberLength;
     private final PaymentCardScheme scheme;
     private final String brand;
     private final PaymentCardType type;
@@ -20,14 +22,14 @@ class IINRange {
     private final String bankCity;
 
     enum PaymentCardType {
-        DEBIT, DREDIT;
+        DEBIT, CREDIT;
     }
 
     enum PaymentCardScheme {
-        AMEX, VISA, MASTERCARD, DINERS, DISCOVER
+        AMEX, VISA, MASTERCARD, DINERS, DISCOVER, UNIONPAY;
     }
 
-    IINRange(int IIN_start, int IIN_end, int number_length, PaymentCardScheme scheme, String brand, PaymentCardType type, String country, String bank_name, String bank_url, String bank_phone, String bank_city) {
+    IINRange(int IIN_start, int IIN_end, Integer number_length, PaymentCardScheme scheme, String brand, PaymentCardType type, String country, String bank_name, String bank_url, String bank_phone, String bank_city) {
         this.IINStart = IIN_start;
         this.IINEnd = IIN_end;
         this.numberLength = number_length;
@@ -49,9 +51,8 @@ class IINRange {
     int getIINend() {
         return IINEnd;
     }
-
-    int getNumber_length() {
-        return numberLength;
+    Optional<Integer> getNumber_length() {
+        return Optional.ofNullable(numberLength);
     }
 
     PaymentCardScheme getPaymentCardScheme() {

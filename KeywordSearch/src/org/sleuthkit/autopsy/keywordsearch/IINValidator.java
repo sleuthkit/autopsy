@@ -9,11 +9,11 @@ import com.google.common.collect.Range;
 import com.google.common.collect.RangeMap;
 import com.google.common.collect.TreeRangeMap;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.Reader;
+import java.io.InputStreamReader;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.lang.StringUtils;
 
 /**
  *
@@ -23,13 +23,20 @@ public class IINValidator {
     RangeMap<Integer, IINRange> iinRanges = TreeRangeMap.create();
 
     IINValidator() throws FileNotFoundException, IOException {
-        Reader in = new FileReader("ranges.csv");
+
+        InputStreamReader in = new InputStreamReader(getClass().getResourceAsStream("ranges.csv"));
         Iterable<CSVRecord> records = CSVFormat.RFC4180.withFirstRecordAsHeader().parse(in);
         for (CSVRecord record : records) {
+            String start = record.get("iin_start");
+            String end = StringUtils.defaultIfBlank(record.get("iin_end"), start);
+            start = StringUtils.rightPad(start, 8, "0");
+            end = StringUtils.rightPad(end, 8, "99");
+            final String numberLength = record.get("number_length");
+
             //iin_start,iin_end,number_length,scheme,brand,type,prepaid,country,bank_name,bank_logo,bank_url,bank_phone,bank_city
-            IINRange iinRange = new IINRange(Integer.parseInt(record.get("iin_start")),
-                    Integer.parseInt(record.get("iin_end")),
-                    Integer.parseInt(record.get("number_length")),
+            IINRange iinRange = new IINRange(Integer.parseInt(start),
+                    Integer.parseInt(end),
+                    StringUtils.isBlank(numberLength) ? null : Integer.parseInt(numberLength),
                     IINRange.PaymentCardScheme.valueOf(record.get("scheme")),
                     record.get("brand"),
                     IINRange.PaymentCardType.valueOf(record.get("type")),

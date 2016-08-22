@@ -216,7 +216,7 @@ final class TermComponentQuery implements KeywordSearchQuery {
                 }
 
                 String ccn = newArtifact.getAttribute(ACCOUNT_NUMBER_TYPE).getValueString();
-                final int iin = Integer.parseInt(ccn.substring(0, 7));
+                final int iin = Integer.parseInt(ccn.substring(0, 8));
 
                 IINRange iinRange = iinValidator.getIINRange(iin);
                 newArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_CREDIT_CARD_SCHEME, MODULE_NAME, iinRange.getPaymentCardScheme().name()));
@@ -324,8 +324,7 @@ final class TermComponentQuery implements KeywordSearchQuery {
                 if (false == LUHN_CHECK.isValid(ccn)) {
                     continue; //if the hit does not pass the luhn check, skip it.
                 }
-                final int iin = Integer.parseInt(ccn.substring(0, 7));
-
+                final int iin = Integer.parseInt(ccn.substring(0, 8));
                 if (false == iinValidator.contains(iin)) {
                     continue;
                 }
