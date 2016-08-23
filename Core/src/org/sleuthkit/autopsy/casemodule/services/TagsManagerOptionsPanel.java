@@ -13,6 +13,7 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import javax.swing.DefaultListModel;
 import org.netbeans.spi.options.OptionsPanelController;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
@@ -22,10 +23,6 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
  * @author smori
  */
 public class TagsManagerOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
-
-    private static final String TAG_NAME_EMPTY = "Tag name text is empty.";
-    private static final String TAG_NAME_ALREADY_EXISTS = "Tag name already exists.";
-    private static final String TAG_NAME_COMMA = "Tag name may not contain commas.";
 
     private static final String TAGS_SETTINGS_NAME = "Tags"; //NON-NLS
     private static final String TAG_NAMES_SETTING_KEY = "TagNames"; //NON-NLS
@@ -40,17 +37,19 @@ public class TagsManagerOptionsPanel extends javax.swing.JPanel implements Optio
      * Creates new form TagsManagerPanel
      */
     public TagsManagerOptionsPanel() {
+        initComponents();
+        
         tagNamesListModel = new DefaultListModel<>();
         tagNamesList.setModel(tagNamesListModel);
         tagNames = new TreeSet<>();
         
-        initComponents();
         customizeComponents();
     }
     
     private void customizeComponents() {
         addTagNamesFromTagsSettings();
         
+        tagNameErrLabel.setText("");
     }
     
     private void addTagNamesFromTagsSettings() {
@@ -214,18 +213,18 @@ public class TagsManagerOptionsPanel extends javax.swing.JPanel implements Optio
         String newTagName = userTagNameTextField.getText();
         
         if (newTagName.isEmpty()) {
-            tagNameErrLabel.setText(TAG_NAME_EMPTY);
+            tagNameErrLabel.setText(NbBundle.getMessage(TagsManagerOptionsPanel.class, "TagsManagerOptionsPanel.addTagNameButton.empty"));
             return;
         }
         if (newTagName.contains(",")) {
-            tagNameErrLabel.setText(TAG_NAME_COMMA);
+            tagNameErrLabel.setText(NbBundle.getMessage(TagsManagerOptionsPanel.class, "TagsManagerOptionsPanel.addTagNameButton.containComma"));
             return;
         }
         
         CustomTagName tagName = new CustomTagName(newTagName, DEFAULT_DESCRIPTION, DEFAULT_COLOR_STRING);
         boolean added = tagNames.add(tagName);
         if (!added) {
-            tagNameErrLabel.setText(TAG_NAME_ALREADY_EXISTS);
+            tagNameErrLabel.setText(NbBundle.getMessage(TagsManagerOptionsPanel.class, "TagsManagerOptionsPanel.addTagNameButton.alreadyExists"));
             return;
         }
 
@@ -238,14 +237,16 @@ public class TagsManagerOptionsPanel extends javax.swing.JPanel implements Optio
 
     private void deleteTagNameButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteTagNameButtonActionPerformed
         CustomTagName tagName = tagNamesList.getSelectedValue();
-        tagNames.remove(tagName);
-        updateTagNamesListModel();
-        
-        if (!tagNamesListModel.isEmpty()) {
-            tagNamesList.setSelectedIndex(0);
+            if (tagName != null) {
+            tagNames.remove(tagName);
+            updateTagNamesListModel();
+
+            if (!tagNamesListModel.isEmpty()) {
+                tagNamesList.setSelectedIndex(0);
+            }
+
+            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
-        
-        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);       
     }//GEN-LAST:event_deleteTagNameButtonActionPerformed
 
 
@@ -272,7 +273,7 @@ public class TagsManagerOptionsPanel extends javax.swing.JPanel implements Optio
                 if (builder.length() != 0) {
                     builder.append(";");
                 }
-                builder.append(tagName.toString());
+                builder.append(tagName.toSettingsFormat());
             }
             ModuleSettings.setConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY, builder.toString());
         }
@@ -280,7 +281,9 @@ public class TagsManagerOptionsPanel extends javax.swing.JPanel implements Optio
 
     @Override
     public void load() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        addTagNamesFromTagsSettings();
+        updateTagNamesListModel();
+        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     
     /**
@@ -305,7 +308,7 @@ public class TagsManagerOptionsPanel extends javax.swing.JPanel implements Optio
         
         @Override
 	public int compareTo(CustomTagName other) {
-		return this.getDisplayName().compareTo(other.getDisplayName());
+		return this.getDisplayName().toLowerCase().compareTo(other.getDisplayName().toLowerCase());
 	}
         
         @Override
@@ -326,6 +329,10 @@ public class TagsManagerOptionsPanel extends javax.swing.JPanel implements Optio
     
         @Override
         public String toString() {
+            return displayName;
+        }
+        
+        public String toSettingsFormat() {
             return displayName + "," + description + "," + colorName;
         }
         
