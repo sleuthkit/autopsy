@@ -184,6 +184,28 @@ public class TagsManager implements Closeable {
 
         return newTagName;
     }
+    
+    /**
+     * Deletes a tag name from the tags settings.
+     * 
+     * @param displayName The display name for the tag name to be deleted.
+     * 
+     * @throws TagNameDoesNotExistException
+     * 
+     * @throws TskCoreException 
+     */
+    public synchronized void deleteTagName(String displayName) throws TagNameDoesNotExistException, TskCoreException {
+        if (null == caseDb) {
+            throw new TskCoreException("Tags manager has been closed");
+        }
+        lazyLoadExistingTagNames();
+        if (!uniqueTagNames.containsKey(displayName)) {
+            throw new TagNameDoesNotExistException();
+        } else {
+            uniqueTagNames.remove(displayName);
+            saveTagNamesToTagsSettings();
+        }
+    }
 
     /**
      * Tags a content object.
@@ -582,7 +604,7 @@ public class TagsManager implements Closeable {
      */
     private void lazyLoadExistingTagNames() {
         if (!tagNamesLoaded) {
-            addTagNamesFromCurrentCase();
+            //addTagNamesFromCurrentCase();
             addTagNamesFromTagsSettings();
             addPredefinedTagNames();
             saveTagNamesToTagsSettings();
@@ -672,6 +694,13 @@ public class TagsManager implements Closeable {
     public static class TagNameAlreadyExistsException extends Exception {
 
         private static final long serialVersionUID = 1L;
+    }
+    
+    /**
+     * Exception thrown if there is an attempt to delete a nonexistent tag name.
+     */
+    public static class TagNameDoesNotExistException extends Exception {
+        
     }
 
 }
