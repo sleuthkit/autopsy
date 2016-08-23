@@ -21,7 +21,7 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
  *
  * @author smori
  */
-public class TagsManagerPanel extends javax.swing.JPanel implements OptionsPanel {
+public class TagsManagerOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
 
     private static final String TAG_NAME_EMPTY = "Tag name text is empty.";
     private static final String TAG_NAME_ALREADY_EXISTS = "Tag name already exists.";
@@ -39,7 +39,7 @@ public class TagsManagerPanel extends javax.swing.JPanel implements OptionsPanel
     /**
      * Creates new form TagsManagerPanel
      */
-    public TagsManagerPanel() {
+    public TagsManagerOptionsPanel() {
         tagNamesListModel = new DefaultListModel<>();
         tagNamesList.setModel(tagNamesListModel);
         tagNames = new TreeSet<>();
@@ -96,19 +96,19 @@ public class TagsManagerPanel extends javax.swing.JPanel implements OptionsPanel
 
         jPanel1.setPreferredSize(new java.awt.Dimension(750, 500));
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(TagsManagerPanel.class, "TagsManagerPanel.jLabel1.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(TagsManagerOptionsPanel.class, "TagsManagerOptionsPanel.jLabel1.text")); // NOI18N
 
         jSplitPane1.setDividerLocation(-100);
         jSplitPane1.setDividerSize(1);
 
-        org.openide.awt.Mnemonics.setLocalizedText(tagNamesListLabel, org.openide.util.NbBundle.getMessage(TagsManagerPanel.class, "TagsManagerPanel.tagNamesListLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(tagNamesListLabel, org.openide.util.NbBundle.getMessage(TagsManagerOptionsPanel.class, "TagsManagerOptionsPanel.tagNamesListLabel.text")); // NOI18N
 
         jScrollPane1.setViewportView(tagNamesList);
 
-        userTagNameTextField.setText(org.openide.util.NbBundle.getMessage(TagsManagerPanel.class, "TagsManagerPanel.userTagNameTextField.text")); // NOI18N
+        userTagNameTextField.setText(org.openide.util.NbBundle.getMessage(TagsManagerOptionsPanel.class, "TagsManagerOptionsPanel.userTagNameTextField.text")); // NOI18N
 
         addTagNameButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add16.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(addTagNameButton, org.openide.util.NbBundle.getMessage(TagsManagerPanel.class, "TagsManagerPanel.addTagNameButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(addTagNameButton, org.openide.util.NbBundle.getMessage(TagsManagerOptionsPanel.class, "TagsManagerOptionsPanel.addTagNameButton.text")); // NOI18N
         addTagNameButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 addTagNameButtonActionPerformed(evt);
@@ -116,7 +116,7 @@ public class TagsManagerPanel extends javax.swing.JPanel implements OptionsPanel
         });
 
         deleteTagNameButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/delete16.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(deleteTagNameButton, org.openide.util.NbBundle.getMessage(TagsManagerPanel.class, "TagsManagerPanel.deleteTagNameButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(deleteTagNameButton, org.openide.util.NbBundle.getMessage(TagsManagerOptionsPanel.class, "TagsManagerOptionsPanel.deleteTagNameButton.text")); // NOI18N
         deleteTagNameButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 deleteTagNameButtonActionPerformed(evt);
@@ -124,7 +124,7 @@ public class TagsManagerPanel extends javax.swing.JPanel implements OptionsPanel
         });
 
         tagNameErrLabel.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(tagNameErrLabel, org.openide.util.NbBundle.getMessage(TagsManagerPanel.class, "TagsManagerPanel.tagNameErrLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(tagNameErrLabel, org.openide.util.NbBundle.getMessage(TagsManagerOptionsPanel.class, "TagsManagerOptionsPanel.tagNameErrLabel.text")); // NOI18N
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -284,9 +284,9 @@ public class TagsManagerPanel extends javax.swing.JPanel implements OptionsPanel
     }
     
     /**
-     * TagName constructor is not public, CustomTagName is for the purposes of
-     * preserving description and color information that may be in the user tags
-     * settings files.
+     * Because TagName constructor is not public, CustomTagName is used in this
+     * tags managers panel for the purpose of preserving description and color 
+     * information that is tracked by the user tag settings file.
      */
     private class CustomTagName implements Comparable<CustomTagName> {
         private final String displayName;
