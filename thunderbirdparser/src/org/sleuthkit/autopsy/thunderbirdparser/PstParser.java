@@ -236,6 +236,7 @@ class PstParser {
                 attachment.setmTime(mTime);
                 attachment.setLocalPath(relPath);
                 attachment.setSize(attach.getFilesize());
+                attachment.setEncodingType(TskData.EncodingType.XOR1);
                 email.addAttachment(attachment);
             } catch (PSTException | IOException | NullPointerException ex) {
                 /**
