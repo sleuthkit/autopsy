@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.sleuthkit.autopsy.keywordsearch;
+package org.sleuthkit.autopsy.datamodel;
 
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeMap;
@@ -18,9 +18,9 @@ import org.apache.commons.lang.StringUtils;
 /**
  *
  */
-public class IINValidator {
+class IINValidator {
 
-    RangeMap<Integer, IINRange> iinRanges = TreeRangeMap.create();
+    static RangeMap<Integer, IINRange> iinRanges = TreeRangeMap.create();
 
     IINValidator() throws FileNotFoundException, IOException {
 
@@ -37,9 +37,9 @@ public class IINValidator {
             IINRange iinRange = new IINRange(Integer.parseInt(start),
                     Integer.parseInt(end),
                     StringUtils.isBlank(numberLength) ? null : Integer.parseInt(numberLength),
-                    IINRange.PaymentCardScheme.valueOf(record.get("scheme")),
+                    record.get("scheme"),
                     record.get("brand"),
-                    IINRange.PaymentCardType.valueOf(record.get("type")),
+                    record.get("type"),
                     record.get("country"),
                     record.get("bank_name"),
                     record.get("bank_url"),

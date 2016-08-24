@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.datamodel;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -65,6 +66,15 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
     private static final Logger LOGGER = Logger.getLogger(Accounts.class.getName());
     private static final BlackboardArtifact.Type CREDIT_CARD_ACCOUNT_TYPE = new BlackboardArtifact.Type(TSK_CREDIT_CARD_ACCOUNT);
+    private static IINValidator validator;
+
+    static {
+        try {
+            validator = new IINValidator();
+        } catch (IOException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to create IIN Validator.", ex);
+        }
+    }
 
     private SleuthkitCase skCase;
 
@@ -75,6 +85,14 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
     Accounts(SleuthkitCase skCase) {
         this.skCase = skCase;
+    }
+
+    public static IINRange getIINRange(int IIN) {
+        return validator.getIINRange(IIN);
+    }
+
+    public static boolean isKnownIIN(int IIN) {
+        return validator.contains(IIN);
     }
 
     @Override
@@ -585,10 +603,27 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
         private final BINInfo bin;
         private final AccountFactory accountFactory;
+        private final IINRange iinRange;
+        private String brand;
+        private String city;
+        private String bankName;
+        private String phoneNumber;
+        private String url;
+        private String country;
 
         private BINNode(BINInfo bin) {
             super(Children.LEAF);
             this.bin = bin;
+            iinRange = validator.getIINRange(bin.getBIN());
+
+            if (iinRange != null) {
+                brand = iinRange.getBrand();
+                city = iinRange.getBankCity();
+                bankName = iinRange.getBankName();
+                phoneNumber = iinRange.getBankPhoneNumber();
+                url = iinRange.getBankURL();
+                country = iinRange.getCountry();
+            }
             accountFactory = new AccountFactory(bin);
             setChildren(Children.create(accountFactory, true));
             setName(bin.toString());
@@ -638,7 +673,36 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             ss.put(new NodeProperty<>(Bundle.Accounts_BINNode_accountsProperty_displayName(),
                     Bundle.Accounts_BINNode_accountsProperty_displayName(), Bundle.Accounts_BINNode_noDescription(),
                     bin.getCount()));
+            ss.put(new NodeProperty<>(Bundle.Accounts_BINNode_accountsProperty_displayName(),
+                    Bundle.Accounts_BINNode_accountsProperty_displayName(), Bundle.Accounts_BINNode_noDescription(),
+                    bin.getCount()));
+            ss.put(new NodeProperty<>(Bundle.Accounts_BINNode_accountsProperty_displayName(),
+                    Bundle.Accounts_BINNode_accountsProperty_displayName(), Bundle.Accounts_BINNode_noDescription(),
+                    bin.getCount()));
 
+            ss.put(new NodeProperty<>("Payment Card Type", "Payment Card Type", Bundle.Accounts_BINNode_noDescription(),
+                    iinRange.getCardType()));
+            ss.put(new NodeProperty<>("Credit Card Scheme", "Credit Card Scheme", Bundle.Accounts_BINNode_noDescription(),
+                    iinRange.getScheme()));
+
+            if (StringUtils.isNotBlank(brand)) {
+                ss.put(new NodeProperty<>("Brand", "Brand", Bundle.Accounts_BINNode_noDescription(), brand));
+            }
+            if (StringUtils.isNotBlank(bankName)) {
+                ss.put(new NodeProperty<>("Bank", "Bank", Bundle.Accounts_BINNode_noDescription(), bankName));
+            }
+            if (StringUtils.isNotBlank(city)) {
+                ss.put(new NodeProperty<>("Bank City", "Bank City", Bundle.Accounts_BINNode_noDescription(), city));
+            }
+            if (StringUtils.isNotBlank(country)) {
+                ss.put(new NodeProperty<>("Bank Country", "Bank Country", Bundle.Accounts_BINNode_noDescription(), country));
+            }
+            if (StringUtils.isNotBlank(phoneNumber)) {
+                ss.put(new NodeProperty<>("Bank Phone #", "Bank Phone #", Bundle.Accounts_BINNode_noDescription(), phoneNumber));
+            }
+            if (StringUtils.isNotBlank(url)) {
+                ss.put(new NodeProperty<>("Bank URL", "Bank URL", Bundle.Accounts_BINNode_noDescription(), url));
+            }
             return s;
         }
     }
@@ -651,7 +715,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         @Override
         protected boolean createKeys(List<BINInfo> list) {
             String query
-                    = "SELECT SUBSTR(blackboard_attributes.value_text,1,6) AS BIN, " //NON-NLS
+                    = "SELECT SUBSTR(blackboard_attributes.value_text,1,8) AS BIN, " //NON-NLS
                     + "     COUNT(blackboard_artifacts.artifact_id) AS count " //NON-NLS
                     + " FROM blackboard_artifacts " //NON-NLS
                     + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id" //NON-NLS

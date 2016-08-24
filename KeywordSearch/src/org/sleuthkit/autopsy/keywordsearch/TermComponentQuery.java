@@ -19,7 +19,6 @@
 //
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -32,9 +31,10 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.validator.routines.checkdigit.LuhnCheckDigit;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
+import org.sleuthkit.autopsy.datamodel.Accounts;
+import org.sleuthkit.autopsy.datamodel.IINRange;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -111,18 +111,10 @@ final class TermComponentQuery implements KeywordSearchQuery {
     private final Keyword keyword;
     private boolean isEscaped;
     private final List<KeywordQueryFilter> filters = new ArrayList<>();
-    private IINValidator iinValidator;
 
     TermComponentQuery(KeywordList keywordList, Keyword keyword) {
         this.keyword = keyword;
 
-        if (keyword.getType() == ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER) {
-            try {
-                iinValidator = new IINValidator();
-            } catch (IOException ex) {
-                Exceptions.printStackTrace(ex);
-            }
-        }
 
         this.keywordList = keywordList;
         this.escapedQuery = keyword.getQuery();
@@ -218,9 +210,9 @@ final class TermComponentQuery implements KeywordSearchQuery {
                 String ccn = newArtifact.getAttribute(ACCOUNT_NUMBER_TYPE).getValueString();
                 final int iin = Integer.parseInt(ccn.substring(0, 8));
 
-                IINRange iinRange = iinValidator.getIINRange(iin);
-                newArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_CREDIT_CARD_SCHEME, MODULE_NAME, iinRange.getPaymentCardScheme().name()));
-                newArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PAYMENT_CARD_TYPE, MODULE_NAME, iinRange.getPaymentCardType().name()));
+                IINRange iinRange = Accounts.getIINRange(iin);
+                newArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_CREDIT_CARD_SCHEME, MODULE_NAME, iinRange.getScheme()));
+                newArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PAYMENT_CARD_TYPE, MODULE_NAME, iinRange.getCardType()));
                 if (StringUtils.isNotBlank(iinRange.getBrand())) {
                     newArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_BRAND, MODULE_NAME, iinRange.getBrand()));
                 }
@@ -325,7 +317,7 @@ final class TermComponentQuery implements KeywordSearchQuery {
                     continue; //if the hit does not pass the luhn check, skip it.
                 }
                 final int iin = Integer.parseInt(ccn.substring(0, 8));
-                if (false == iinValidator.contains(iin)) {
+                if (false == Accounts.isKnownIIN(iin)) {
                     continue;
                 }
             }

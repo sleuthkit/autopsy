@@ -1,4 +1,4 @@
-package org.sleuthkit.autopsy.keywordsearch;
+package org.sleuthkit.autopsy.datamodel;
 
 import java.util.Optional;
 
@@ -6,14 +6,20 @@ import java.util.Optional;
  * Representation of a range of Issuer/Bank Identifiaction Numbers (IIN/BIN) for
  * the * same bank.
  */
-class IINRange {
+public class IINRange {
 
     private final int IINStart;
     private final int IINEnd;
     private final Integer numberLength;
-    private final PaymentCardScheme scheme;
+    /**
+     * AMEX, VISA, MASTERCARD, DINERS, DISCOVER, UNIONPAY
+     */
+    private final String scheme;
     private final String brand;
-    private final PaymentCardType type;
+    /**
+     * DEBIT, CREDIT
+     */
+    private final String type;
 
     private final String country;
     private final String bankName;
@@ -21,15 +27,7 @@ class IINRange {
     private final String bankPhoneNumber;
     private final String bankCity;
 
-    enum PaymentCardType {
-        DEBIT, CREDIT;
-    }
-
-    enum PaymentCardScheme {
-        AMEX, VISA, MASTERCARD, DINERS, DISCOVER, UNIONPAY;
-    }
-
-    IINRange(int IIN_start, int IIN_end, Integer number_length, PaymentCardScheme scheme, String brand, PaymentCardType type, String country, String bank_name, String bank_url, String bank_phone, String bank_city) {
+    IINRange(int IIN_start, int IIN_end, Integer number_length, String scheme, String brand, String type, String country, String bank_name, String bank_url, String bank_phone, String bank_city) {
         this.IINStart = IIN_start;
         this.IINEnd = IIN_end;
         this.numberLength = number_length;
@@ -51,40 +49,40 @@ class IINRange {
     int getIINend() {
         return IINEnd;
     }
-    Optional<Integer> getNumber_length() {
+
+    public Optional<Integer> getNumber_length() {
         return Optional.ofNullable(numberLength);
     }
 
-    PaymentCardScheme getPaymentCardScheme() {
+    public String getScheme() {
         return scheme;
     }
 
-    String getBrand() {
+    public String getBrand() {
         return brand;
     }
 
-    PaymentCardType getPaymentCardType() {
+    public String getCardType() {
         return type;
     }
 
-    String getCountry() {
+    public String getCountry() {
         return country;
     }
 
-    String getBankName() {
+    public String getBankName() {
         return bankName;
     }
 
-    String getBankURL() {
+    public String getBankURL() {
         return bankURL;
     }
 
-    String getBankPhoneNumber() {
+    public String getBankPhoneNumber() {
         return bankPhoneNumber;
     }
 
-    String getBankCity() {
+    public String getBankCity() {
         return bankCity;
     }
-
 }
