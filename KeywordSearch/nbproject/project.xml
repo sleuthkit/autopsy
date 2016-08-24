@@ -298,10 +298,6 @@
                 <binary-origin>release/modules/ext/tika-core-1.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-csv-1.4.jar</runtime-relative-path>
-                <binary-origin>C:\Basistech\dev\autopsy\KeywordSearch\release\modules\ext\commons-csv-1.4.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/jericho-html-3.3-javadoc.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jericho-html-3.3-javadoc.jar</binary-origin>
             </class-path-extension>

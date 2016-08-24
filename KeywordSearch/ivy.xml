@@ -22,7 +22,6 @@
         <dependency conf="autopsy->*" org="org.apache.solr" name="solr-solrj" rev="4.9.1"/>
         <dependency conf="autopsy->*" org="commons-lang" name="commons-lang" rev="2.4"/>
         <dependency conf="autopsy->*" org="commons-validator" name="commons-validator" rev="1.5.1"/>
-        <dependency conf="autopsy->*" org="org.apache.commons" name="commons-csv" rev="1.4"/>
         <dependency conf="autopsy->*" org="org.apache.tika" name="tika-parsers" rev="1.5"/>
         
         <!-- metadata-extractor is required by Tika but it depends on version 2.6.2 which suffers
