@@ -42,7 +42,10 @@ public final class TagsManagerOptionsPanelController extends OptionsPanelControl
 
     @Override
     public void cancel() {
-        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (changed) {
+            getPanel().cancelChanges();
+            changed = false;
+        }
     }
 
     @Override

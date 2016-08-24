@@ -180,8 +180,8 @@ public class TagsManager implements Closeable {
          * Add the tag name to the tags settings.
          */
         uniqueTagNames.put(newTagName.getDisplayName(), newTagName);
-        saveTagNamesToTagsSettings();
-
+        addNewTagNameToTagsSettings(newTagName);
+        
         return newTagName;
     }
     
@@ -585,7 +585,7 @@ public class TagsManager implements Closeable {
     }
 
     /**
-     * Closes the tags manager, saving the avaialble tag names to secondary
+     * Closes the tags manager, saving the available tag names to secondary
      * storage.
      *
      * @throws IOException If there is a problem closing the tags manager.
@@ -594,7 +594,7 @@ public class TagsManager implements Closeable {
     @Override
     @Deprecated
     public synchronized void close() throws IOException {
-        saveTagNamesToTagsSettings();
+        //saveTagNamesToTagsSettings();
         caseDb = null;
     }
 
@@ -604,10 +604,10 @@ public class TagsManager implements Closeable {
      */
     private void lazyLoadExistingTagNames() {
         if (!tagNamesLoaded) {
-            //addTagNamesFromCurrentCase();
             addTagNamesFromTagsSettings();
             addPredefinedTagNames();
             saveTagNamesToTagsSettings();
+            addTagNamesFromCurrentCase();
             tagNamesLoaded = true;
         }
     }
@@ -687,7 +687,22 @@ public class TagsManager implements Closeable {
             ModuleSettings.setConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY, setting.toString());
         }
     }
-
+    
+    /**
+     * 
+     */
+    private void addNewTagNameToTagsSettings(TagName tagName) {
+        String setting = ModuleSettings.getConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY);
+        if (setting == null || setting.isEmpty()) {
+            setting = "";
+        }
+        else {
+            setting += ";";
+        }
+        setting += tagName.getDisplayName() + "," + tagName.getDescription() + "," + tagName.getColor().name();
+        ModuleSettings.setConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY, setting);
+    }
+    
     /**
      * Exception thrown if there is an attempt to add a duplicate tag name.
      */
