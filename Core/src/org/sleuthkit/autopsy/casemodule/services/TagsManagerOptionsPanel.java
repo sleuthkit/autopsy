@@ -215,8 +215,8 @@ public class TagsManagerOptionsPanel extends javax.swing.JPanel implements Optio
             tagNameErrLabel.setText(NbBundle.getMessage(TagsManagerOptionsPanel.class, "TagsManagerOptionsPanel.addTagNameButton.empty"));
             return;
         }
-        if (newTagName.contains(",")) {
-            tagNameErrLabel.setText(NbBundle.getMessage(TagsManagerOptionsPanel.class, "TagsManagerOptionsPanel.addTagNameButton.containComma"));
+        if (newTagName.contains(",") || newTagName.contains(";")) {
+            tagNameErrLabel.setText(NbBundle.getMessage(TagsManagerOptionsPanel.class, "TagsManagerOptionsPanel.addTagNameButton.containCommaSemicolon"));
             return;
         }
         
@@ -241,7 +241,6 @@ public class TagsManagerOptionsPanel extends javax.swing.JPanel implements Optio
             } else {
                 tagNames.remove(tagName);
                 updateTagNamesListModel();
-                
                 
                 if (!tagNamesListModel.isEmpty()) {
                     tagNamesList.setSelectedIndex(0);
