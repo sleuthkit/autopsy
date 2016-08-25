@@ -14,7 +14,6 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import javax.swing.DefaultListModel;
 import org.netbeans.spi.options.OptionsPanelController;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
