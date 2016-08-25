@@ -18,7 +18,7 @@ import org.openide.util.Lookup;
         iconBase = "org/sleuthkit/autopsy/modules/filetypeid/user-defined-file-types-settings.png",
         keywords = "#OptionsCategory_Keywords_TagsManager",
         keywordsCategory = "TagsManager",
-        position = 10
+        position = 8
 )
 public final class TagsManagerOptionsPanelController extends OptionsPanelController {
 
@@ -26,12 +26,20 @@ public final class TagsManagerOptionsPanelController extends OptionsPanelControl
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
     
+    /**
+     * Component should load its data here.
+     */
     @Override
     public void update() {
         getPanel().load();
         changed = false;
     }
 
+    /**
+     * This method is called when both the Ok and Apply buttons are pressed. It
+     * applies to any of the panels that have been opened in the process of
+     * using the options pane.
+     */
     @Override
     public void applyChanges() {
         if (changed) {
@@ -40,6 +48,11 @@ public final class TagsManagerOptionsPanelController extends OptionsPanelControl
         }
     }
 
+    /**
+     * This method is called when the Cancel button is pressed. It applies to
+     * any of the panels that have been opened in the process of using the
+     * options pane.
+     */
     @Override
     public void cancel() {
         if (changed) {
@@ -51,9 +64,14 @@ public final class TagsManagerOptionsPanelController extends OptionsPanelControl
     @Override
     public boolean isValid() {
         return true;
-        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
+    /**
+     * Used to determine whether any changes have been made to this controller's
+     * panel.
+     *
+     * @return Whether or not a change has been made.
+     */
     @Override
     public boolean isChanged() {
         return changed;
