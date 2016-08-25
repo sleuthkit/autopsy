@@ -1,8 +1,8 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+* To change this license header, choose License Headers in Project Properties.
+* To change this template file, choose Tools | Templates
+* and open the template in the editor.
+*/
 package org.sleuthkit.autopsy.casemodule.services;
 
 import java.util.Arrays;
@@ -26,15 +26,16 @@ import org.sleuthkit.datamodel.TskCoreException;
  * @author smori
  */
 public class TagsManagerOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
-
+    
     private static final String TAGS_SETTINGS_NAME = "Tags"; //NON-NLS
     private static final String TAG_NAMES_SETTING_KEY = "TagNames"; //NON-NLS
     
     private static final String DEFAULT_DESCRIPTION = "";
     private static final String DEFAULT_COLOR_STRING = "NONE";
-        
+    
     private final DefaultListModel<CustomTagName> tagNamesListModel;
     private Set<CustomTagName> tagNames;
+    
     
     /**
      * Creates new form TagsManagerPanel
@@ -69,7 +70,7 @@ public class TagsManagerOptionsPanel extends javax.swing.JPanel implements Optio
             tagNamesListModel.addElement(tagName);
         });
     }
-
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -207,7 +208,7 @@ public class TagsManagerOptionsPanel extends javax.swing.JPanel implements Optio
                 .addGap(0, 0, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
-
+    
     private void addTagNameButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addTagNameButtonActionPerformed
         String newTagName = userTagNameTextField.getText();
         
@@ -226,31 +227,32 @@ public class TagsManagerOptionsPanel extends javax.swing.JPanel implements Optio
             tagNameErrLabel.setText(NbBundle.getMessage(TagsManagerOptionsPanel.class, "TagsManagerOptionsPanel.addTagNameButton.alreadyExists"));
             return;
         }
-
+        
         updateTagNamesListModel();
+        
         userTagNameTextField.setText("");
         tagNameErrLabel.setText("");
         
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_addTagNameButtonActionPerformed
-
+    
     private void deleteTagNameButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteTagNameButtonActionPerformed
         CustomTagName tagName = tagNamesList.getSelectedValue();
-            if (tagName == null) {
-                tagNameErrLabel.setText("No tag name selected.");
-            } else {
-                tagNames.remove(tagName);
-                updateTagNamesListModel();
-                
-                if (!tagNamesListModel.isEmpty()) {
-                    tagNamesList.setSelectedIndex(0);
-                }
-
-                firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        if (tagName == null) {
+            tagNameErrLabel.setText("No tag name selected.");
+        } else {
+            tagNames.remove(tagName);
+            updateTagNamesListModel();
+            
+            if (!tagNamesListModel.isEmpty()) {
+                tagNamesList.setSelectedIndex(0);
             }
+            
+            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        }
     }//GEN-LAST:event_deleteTagNameButtonActionPerformed
-
-
+    
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addTagNameButton;
     private javax.swing.JButton deleteTagNameButton;
@@ -265,21 +267,19 @@ public class TagsManagerOptionsPanel extends javax.swing.JPanel implements Optio
     private javax.swing.JLabel tagNamesListLabel;
     private javax.swing.JTextField userTagNameTextField;
     // End of variables declaration//GEN-END:variables
-
+    
     @Override
     public void store() {
-        if (!tagNames.isEmpty()) {
-            StringBuilder builder = new StringBuilder();
-            for (CustomTagName tagName : tagNames) {
-                if (builder.length() != 0) {
-                    builder.append(";");
-                }
-                builder.append(tagName.toSettingsFormat());
+        StringBuilder builder = new StringBuilder();
+        for (CustomTagName tagName : tagNames) {
+            if (builder.length() != 0) {
+                builder.append(";");
             }
-            ModuleSettings.setConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY, builder.toString());
+            builder.append(tagName.toSettingsFormat());
         }
+        ModuleSettings.setConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY, builder.toString());
     }
-
+    
     @Override
     public void load() {
         tagNames = getTagNamesFromTagsSettings();
@@ -296,7 +296,7 @@ public class TagsManagerOptionsPanel extends javax.swing.JPanel implements Optio
     
     /**
      * Because TagName constructor is not public, CustomTagName is used in this
-     * tags managers panel for the purpose of preserving description and color 
+     * tags managers panel for the purpose of preserving description and color
      * information that is tracked by the user tag settings file.
      */
     private class CustomTagName implements Comparable<CustomTagName> {
@@ -315,9 +315,9 @@ public class TagsManagerOptionsPanel extends javax.swing.JPanel implements Optio
         }
         
         @Override
-	public int compareTo(CustomTagName other) {
-		return this.getDisplayName().toLowerCase().compareTo(other.getDisplayName().toLowerCase());
-	}
+        public int compareTo(CustomTagName other) {
+            return this.getDisplayName().toLowerCase().compareTo(other.getDisplayName().toLowerCase());
+        }
         
         @Override
         public int hashCode() {
@@ -334,7 +334,7 @@ public class TagsManagerOptionsPanel extends javax.swing.JPanel implements Optio
             CustomTagName thatTagName = (CustomTagName) obj;
             return this.getDisplayName().equals(thatTagName.getDisplayName());
         }
-    
+        
         @Override
         public String toString() {
             return displayName;

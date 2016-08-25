@@ -20,9 +20,13 @@ package org.sleuthkit.autopsy.casemodule.services;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -74,7 +78,11 @@ public class TagsManager implements Closeable {
             throw new TskCoreException("Tags manager has been closed");
         }
         lazyLoadExistingTagNames();
-        return caseDb.getAllTagNames();
+        //return caseDb.getAllTagNames();
+        Set<TagName> tagNameSet = new HashSet<>();
+        tagNameSet.addAll(getTagNamesInUse());
+        tagNameSet.addAll(getTagNamesForPropertyFile());
+        return new ArrayList<>(tagNameSet);
     }
 
     /**
@@ -92,6 +100,26 @@ public class TagsManager implements Closeable {
         }
         lazyLoadExistingTagNames();
         return caseDb.getTagNamesInUse();
+    }
+    
+    public synchronized List<TagName> getTagNamesForPropertyFile() throws TskCoreException {
+        if (null == caseDb) {
+            throw new TskCoreException("Tags manager has been closed.");
+        }
+        lazyLoadExistingTagNames();
+        addTagNamesFromTagsSettings();
+        List<TagName> propertyFileTagNames = new ArrayList<>();
+        
+        String setting = ModuleSettings.getConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY);
+        if (null != setting && !setting.isEmpty()) {
+            List<String> tagNameTuples = Arrays.asList(setting.split(";"));
+            for (String tagNameTuple : tagNameTuples) {
+                String[] tagNameAttributes = tagNameTuple.split(",");
+                String displayName = tagNameAttributes[0];
+                propertyFileTagNames.add(uniqueTagNames.get(displayName));
+            }
+        }
+        return propertyFileTagNames;
     }
 
     /**
