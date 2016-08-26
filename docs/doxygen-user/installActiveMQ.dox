@@ -5,7 +5,7 @@ To install ActiveMQ, perform the following steps:
 
 You will need:
 - 64-bit version of the Java Runtime Environment (JRE) from http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html. 
-- Download ActiveMQ from: http://activemq.apache.org/download.html . Autopsy has been tested with ActiveMQ version 5.13.3.
+- Download ActiveMQ from: http://activemq.apache.org/download.html . Autopsy has been tested with ActiveMQ version 5.14.0.
 
 
 \section install_activemq_install Installation
