@@ -1,9 +1,9 @@
 /*! \page install_postgresql Install and Configure PostgreSQL
 To install PostgreSQL, perform the following steps:
 
-1.	Download a 64-bit PostgreSQL version 9.5.3 installer from  http://www.enterprisedb.com/products-services-training/pgdownload#windows  Choose the one that says _Win X86-64_.
+1.	Download a 64-bit PostgreSQL installer from  http://www.enterprisedb.com/products-services-training/pgdownload#windows  Choose the one that says _Win X86-64_. Autopsy has been tested with PostgreSQL version 9.5.
 
-2.	Run _postgresql-9.5.3-1-windows-x64.exe_
+2.	Run the installer. The name will be similar to _postgresql-9.5.3-1-windows-x64.exe_.
 
 3.	You may accept defaults for all items except for the password as you work through the wizard. Do not lose the password you enter in. This is the PostgreSQL administrator login password.
 
