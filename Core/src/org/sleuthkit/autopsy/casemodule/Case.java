@@ -278,13 +278,14 @@ public class Case implements SleuthkitCase.ErrorObserver {
     private static final int MIN_SECS_BETWEEN_TSK_ERROR_REPORTS = 60;
     private static final Logger logger = Logger.getLogger(Case.class.getName());
     private static final AutopsyEventPublisher eventPublisher = new AutopsyEventPublisher();
-    private static Case currentCase = null;
+    private static String appName;
+    private static Case currentCase;
     private final CaseMetadata caseMetadata;
     private final SleuthkitCase db;
     private final Services services;
     private CollaborationMonitor collaborationMonitor;
-    private boolean hasDataSources = false;
-    private volatile IntervalErrorReportData tskErrorReporter = null;
+    private boolean hasDataSources;
+    private volatile IntervalErrorReportData tskErrorReporter;
 
     /**
      * Constructs an Autopsy case. Currently, only one case at a time may be
@@ -493,10 +494,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     /**
-     * Gets the root case output directory for this case, creating it if it does not exist. If the case is a
-     * single-user case, this is the case directory. If the case is a multi-user
-     * case, this is a subdirectory of the case directory specific to the host
-     * machine.
+     * Gets the root case output directory for this case, creating it if it does
+     * not exist. If the case is a single-user case, this is the case directory.
+     * If the case is a multi-user case, this is a subdirectory of the case
+     * directory specific to the host machine.
      *
      * @return the path to the host output directory.
      */
@@ -515,7 +516,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     /**
-     * Gets the full path to the temp directory for this case, creating it if it does not exist.
+     * Gets the full path to the temp directory for this case, creating it if it
+     * does not exist.
      *
      * @return The temp subdirectory path.
      */
@@ -524,7 +526,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     /**
-     * Gets the full path to the cache directory for this case, creating it if it does not exist.
+     * Gets the full path to the cache directory for this case, creating it if
+     * it does not exist.
      *
      * @return The cache directory path.
      */
@@ -533,7 +536,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     /**
-     * Gets the full path to the export directory for this case, creating it if it does not exist.
+     * Gets the full path to the export directory for this case, creating it if
+     * it does not exist.
      *
      * @return The export directory path.
      */
@@ -542,7 +546,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     /**
-     * Gets the full path to the log directory for this case, creating it if it does not exist.
+     * Gets the full path to the log directory for this case, creating it if it
+     * does not exist.
      *
      * @return The log directory path.
      */
@@ -551,7 +556,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     /**
-     * Gets the full path to the reports directory for this case, creating it if it does not exist.
+     * Gets the full path to the reports directory for this case, creating it if
+     * it does not exist.
      *
      * @return The report directory path.
      */
@@ -560,7 +566,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     /**
-     * Gets the full path to the module output directory for this case, creating it if it does not exist.
+     * Gets the full path to the module output directory for this case, creating
+     * it if it does not exist.
      *
      * @return The module output directory path.
      */
@@ -863,6 +870,18 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     /**
+     * Gets the application name.
+     *
+     * @return The application name.
+     */
+    public static String getAppName() {
+        if ((appName == null) || appName.equals("")) {
+            appName = WindowManager.getDefault().getMainWindow().getTitle();
+        }
+        return appName;
+    }
+
+    /**
      * Checks if a string is a valid case name.
      *
      * TODO( AUT-2221): This should incorporate the vlaidity checks of
@@ -872,7 +891,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      *
      * @return True or false.
      */
-    static public boolean isValidName(String caseName) {
+    public static boolean isValidName(String caseName) {
         return !(caseName.contains("\\") || caseName.contains("/") || caseName.contains(":")
                 || caseName.contains("*") || caseName.contains("?") || caseName.contains("\"")
                 || caseName.contains("<") || caseName.contains(">") || caseName.contains("|"));
@@ -1189,7 +1208,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     if (!fileExists) {
                         int ret = JOptionPane.showConfirmDialog(
                                 WindowManager.getDefault().getMainWindow(),
-                                NbBundle.getMessage(Case.class, "Case.checkImgExist.confDlg.doesntExist.msg", WindowManager.getDefault().getMainWindow().getTitle(), path),
+                                NbBundle.getMessage(Case.class, "Case.checkImgExist.confDlg.doesntExist.msg", getAppName(), path),
                                 NbBundle.getMessage(Case.class, "Case.checkImgExist.confDlg.doesntExist.title"),
                                 JOptionPane.YES_NO_OPTION);
                         if (ret == JOptionPane.YES_OPTION) {
@@ -1343,7 +1362,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             } else {
                 SwingUtilities.invokeLater(() -> {
                     Frame f = WindowManager.getDefault().getMainWindow();
-                    f.setTitle(WindowManager.getDefault().getMainWindow().getTitle()); // set the window name to just application name           
+                    f.setTitle(getAppName()); // set the window name to just application name           
                 });
             }
 
@@ -1365,7 +1384,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                 //clear pending notifications
                 MessageNotifyUtil.Notify.clear();
                 Frame f = WindowManager.getDefault().getMainWindow();
-                f.setTitle(WindowManager.getDefault().getMainWindow().getTitle()); // set the window name to just application name
+                f.setTitle(getAppName()); // set the window name to just application name
             });
 
             //try to force gc to happen
@@ -1405,7 +1424,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
     private static void addCaseNameToMainWindowTitle(String newCaseName) {
         if (!newCaseName.equals("")) {
             Frame f = WindowManager.getDefault().getMainWindow();
-            f.setTitle(newCaseName + " - " + WindowManager.getDefault().getMainWindow().getTitle());
+            f.setTitle(newCaseName + " - " + getAppName());
         }
     }
 
@@ -1517,19 +1536,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
     @Deprecated
     public static boolean pathExists(String filePath) {
         return new File(filePath).isFile();
-    }
-
-    /**
-     * Gets the application name from the main window title.
-     *
-     * @return appName
-     *
-     * @deprecated Use WindowManager.getDefault().getMainWindow().getTitle()
-     * instead.
-     */
-    @Deprecated
-    public static String getAppName() {
-        return WindowManager.getDefault().getMainWindow().getTitle();
     }
 
     /**

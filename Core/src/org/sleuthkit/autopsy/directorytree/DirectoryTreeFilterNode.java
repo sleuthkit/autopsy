@@ -75,7 +75,10 @@ class DirectoryTreeFilterNode extends FilterNode {
             if (file != null) {
                 try {
                     final int numChildren = file.getChildrenCount();
-                    name = name + " (" + numChildren + ")";
+                    
+                    // left-to-right marks here are necessary to keep the count and parens together
+                    // for mixed right-to-left and left-to-right names
+                    name = name + " \u200E(\u200E" + numChildren + ")\u200E";
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error getting children count to display for file: " + file, ex); //NON-NLS
                 }
