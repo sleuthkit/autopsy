@@ -486,14 +486,5 @@ public final class IngestJob {
         }
 
     }
-    
-    enum CancelledState {
-        NOT_CANCELLED,
-        CANCELLED_BY_USER,
-        CANCELLED_FOR_INGEST_MODULES_STARTUP_ERRORS,
-        CANCELLED_FOR_OUT_OF_DISK_SPACE,
-        CANCELLED_FOR_SERVICES_DOWN,
-        CANCELLED_FOR_CASE_CLOSED;        
-    }
 
 }
