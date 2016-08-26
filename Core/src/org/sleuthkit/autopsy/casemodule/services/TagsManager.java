@@ -143,7 +143,7 @@ public class TagsManager implements Closeable {
      * @return A TagName data transfer object (DTO) representing the new tag
      *         name.
      *
-     * @throws TagNameAlreadyExistsException If the tag name would be a
+     * @throws TagNameAlreadyExistsException If the tag name would be a 
      *                                       duplicate.
      * @throws TskCoreException              If there is an error adding the tag
      *                                       to the case database.
@@ -164,7 +164,7 @@ public class TagsManager implements Closeable {
      * @return A TagName data transfer object (DTO) representing the new tag
      *         name.
      *
-     * @throws TagNameAlreadyExistsException If the tag name would be a
+     * @throws TagNameAlreadyExistsException If the tag name would be a 
      *                                       duplicate.
      * @throws TskCoreException              If there is an error adding the tag
      *                                       to the case database.
@@ -186,7 +186,7 @@ public class TagsManager implements Closeable {
      * @return A TagName data transfer object (DTO) representing the new tag
      *         name.
      *
-     * @throws TagNameAlreadyExistsException If the tag name would be a
+     * @throws TagNameAlreadyExistsException If the tag name would be a 
      *                                       duplicate.
      * @throws TskCoreException              If there is an error adding the tag
      *                                       to the case database.
@@ -195,6 +195,7 @@ public class TagsManager implements Closeable {
         if (null == caseDb) {
             throw new TskCoreException("Tags manager has been closed");
         }
+        
         lazyLoadExistingTagNames();
         
         //The tag name already exists in the database, user either
@@ -724,6 +725,26 @@ public class TagsManager implements Closeable {
     }
     
     /**
+     * Returns true if the tag display name contains an illegal character. Used
+     * after a tag display name is retrieved from user input.
+     * 
+     * @param content Display name of the tag being added.
+     * @return boolean indicating whether the name has an invalid character.
+     */
+    public static boolean containsIllegalCharacters(String content) {
+        return (content.contains("\\")
+                || content.contains(":")
+                || content.contains("*")
+                || content.contains("?")
+                || content.contains("\"")
+                || content.contains("<")
+                || content.contains(">")
+                || content.contains("|")
+                || content.contains(",")
+                || content.contains(";"));
+    }
+    
+    /**
      * Exception thrown if there is an attempt to add a duplicate tag name.
      */
     public static class TagNameAlreadyExistsException extends Exception {
@@ -733,6 +754,7 @@ public class TagsManager implements Closeable {
     
     /**
      * Exception thrown if there is an attempt to delete a nonexistent tag name.
+     * Unused for current implementation of tag name deletion.
      */
     public static class TagNameDoesNotExistException extends Exception {
         

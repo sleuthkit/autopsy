@@ -122,17 +122,6 @@ public class GetTagNameDialog extends JDialog {
         setVisible(true);
     }
 
-    private boolean containsIllegalCharacters(String content) {
-        return (content.contains("\\")
-                || content.contains(":")
-                || content.contains("*")
-                || content.contains("?")
-                || content.contains("\"")
-                || content.contains("<")
-                || content.contains(">")
-                || content.contains("|"));
-    }
-
     private class TagsTableModel extends AbstractTableModel {
 
         private final ArrayList<TagName> tagNames = new ArrayList<>();
@@ -305,7 +294,7 @@ public class GetTagNameDialog extends JDialog {
                             "GetTagNameDialog.mustSupplyTtagName.msg"),
                     NbBundle.getMessage(this.getClass(), "GetTagNameDialog.tagNameErr"),
                     JOptionPane.ERROR_MESSAGE);
-        } else if (containsIllegalCharacters(tagDisplayName)) {
+        } else if (TagsManager.containsIllegalCharacters(tagDisplayName)) {
             JOptionPane.showMessageDialog(null,
                     NbBundle.getMessage(this.getClass(), "GetTagNameDialog.illegalChars.msg"),
                     NbBundle.getMessage(this.getClass(), "GetTagNameDialog.illegalCharsErr"),

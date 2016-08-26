@@ -14,6 +14,7 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import javax.swing.DefaultListModel;
 import org.netbeans.spi.options.OptionsPanelController;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
@@ -49,7 +50,7 @@ public class TagsManagerOptionsPanel extends javax.swing.JPanel implements Optio
         tagNamesListModel = new DefaultListModel<>();
         tagNamesList.setModel(tagNamesListModel);
         tagNames = getTagNamesFromTagsSettings();
-        newDisplayNames = new ArrayList<String>();
+        newDisplayNames = new ArrayList<>();
         
         userTagNameTextField.setText("");
         tagNameErrLabel.setText("");
@@ -240,8 +241,8 @@ public class TagsManagerOptionsPanel extends javax.swing.JPanel implements Optio
             tagNameErrLabel.setText(NbBundle.getMessage(TagsManagerOptionsPanel.class, "TagsManagerOptionsPanel.addTagNameButton.empty"));
             return;
         }
-        if (newDisplayName.contains(",") || newDisplayName.contains(";")) {
-            tagNameErrLabel.setText(NbBundle.getMessage(TagsManagerOptionsPanel.class, "TagsManagerOptionsPanel.addTagNameButton.containCommaSemicolon"));
+        if (TagsManager.containsIllegalCharacters(newDisplayName)) {
+            tagNameErrLabel.setText(NbBundle.getMessage(TagsManagerOptionsPanel.class, "TagsManagerOptionsPanel.addTagNameButton.containInvalidCharacter"));
             return;
         }
         
@@ -280,6 +281,8 @@ public class TagsManagerOptionsPanel extends javax.swing.JPanel implements Optio
             if (!tagNamesListModel.isEmpty()) {
                 tagNamesList.setSelectedIndex(0);
             }
+            
+            newDisplayNames.remove(tagName.getDisplayName());
             
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
@@ -409,8 +412,8 @@ public class TagsManagerOptionsPanel extends javax.swing.JPanel implements Optio
         }
         
         /**
-         * @return A String with of the tag name in the format that is used by
-         * the properties file.
+         * @return A string representation of the tag name in the format that is
+         *         used by the properties file.
          */
         public String toSettingsFormat() {
             return displayName + "," + description + "," + colorName;
