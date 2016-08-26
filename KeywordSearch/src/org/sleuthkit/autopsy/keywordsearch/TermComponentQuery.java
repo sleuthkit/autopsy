@@ -34,7 +34,6 @@ import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.datamodel.Accounts;
-import org.sleuthkit.autopsy.datamodel.IINRange;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -210,7 +209,7 @@ final class TermComponentQuery implements KeywordSearchQuery {
                 String ccn = newArtifact.getAttribute(ACCOUNT_NUMBER_TYPE).getValueString();
                 final int iin = Integer.parseInt(ccn.substring(0, 8));
 
-                IINRange iinRange = Accounts.getIINRange(iin);
+                Accounts.IINInfo iinRange = Accounts.getIINInfo(iin);
                 newArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_CREDIT_CARD_SCHEME, MODULE_NAME, iinRange.getScheme()));
                 newArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PAYMENT_CARD_TYPE, MODULE_NAME, iinRange.getCardType()));
                 if (StringUtils.isNotBlank(iinRange.getBrand())) {
@@ -317,7 +316,7 @@ final class TermComponentQuery implements KeywordSearchQuery {
                     continue; //if the hit does not pass the luhn check, skip it.
                 }
                 final int iin = Integer.parseInt(ccn.substring(0, 8));
-                if (false == Accounts.isKnownIIN(iin)) {
+                if (false == Accounts.isIINKnown(iin)) {
                     continue;
                 }
             }

@@ -18,10 +18,14 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import com.google.common.collect.Range;
+import com.google.common.collect.RangeMap;
+import com.google.common.collect.TreeRangeMap;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -32,14 +36,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.concurrent.GuardedBy;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -48,6 +57,7 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -59,24 +69,77 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * AutopsyVisitableItem for the Accounts section of the tree. All nodes and
- * factories are inner classes.
+ * AutopsyVisitableItem for the Accounts section of the tree. All nodes,
+ * factories, and data objects related to accounts are inner classes.
  */
 public class Accounts extends Observable implements AutopsyVisitableItem {
 
     private static final Logger LOGGER = Logger.getLogger(Accounts.class.getName());
     private static final BlackboardArtifact.Type CREDIT_CARD_ACCOUNT_TYPE = new BlackboardArtifact.Type(TSK_CREDIT_CARD_ACCOUNT);
-    private static IINValidator validator;
 
-    static {
-        try {
-            validator = new IINValidator();
-        } catch (IOException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to create IIN Validator.", ex);
-        }
-    }
+    /**
+     * Range Map from a (ranges of) B/IINs to data model object with details of
+     * the B/IIN, ie, bank name, phone, url, visa/amex/mastercard/...,
+     */
+    @GuardedBy("Accounts.class")
+    private final static RangeMap<Integer, IINInfo> iinRanges = TreeRangeMap.create();
+    @GuardedBy("Accounts.class")
+    private static boolean iinsLoaded = false;
 
     private SleuthkitCase skCase;
+
+    /**
+     * Load the IIN range information from disk. If the map has already been
+     * initialized, don't load again.
+     */
+    synchronized private static void loadIINRanges() {
+        if (iinsLoaded == false) {
+            try {
+                InputStreamReader in = new InputStreamReader(Accounts.class.getResourceAsStream("ranges.csv"));
+                CSVParser rangesParser = CSVFormat.RFC4180.withFirstRecordAsHeader().parse(in);
+
+                //parse each row and add to range map
+                for (CSVRecord record : rangesParser) {
+
+                    /**
+                     * Because ranges.csv allows both 6 and (the newer) 8 digit
+                     * IINs, but we need a consistent length for the range map,
+                     * we pad all the numbers out to 8 digits
+                     */
+                    String start = StringUtils.rightPad(record.get("iin_start"), 8, "0"); //pad start with 0's
+
+                    //if there is no end listed, use start, since ranges will be closed.
+                    String end = StringUtils.defaultIfBlank(record.get("iin_end"), start);
+                    end = StringUtils.rightPad(end, 8, "99"); //pad end with 9's
+
+                    final String numberLength = record.get("number_length");
+
+                    try {
+                        IINInfo iinRange = new IINInfo(Integer.parseInt(start),
+                                Integer.parseInt(end),
+                                StringUtils.isBlank(numberLength) ? null : Integer.valueOf(numberLength),
+                                record.get("scheme"),
+                                record.get("brand"),
+                                record.get("type"),
+                                record.get("country"),
+                                record.get("bank_name"),
+                                record.get("bank_url"),
+                                record.get("bank_phone"),
+                                record.get("bank_city"));
+
+                        iinRanges.put(Range.closed(iinRange.getIINstart(), iinRange.getIINend()), iinRange);
+
+                    } catch (NumberFormatException numberFormatException) {
+                        LOGGER.log(Level.WARNING, "Failed to parse IIN range: " + record.toString(), numberFormatException);
+                    }
+                    iinsLoaded = true;
+                }
+            } catch (IOException ex) {
+                LOGGER.log(Level.WARNING, "Failed to load IIN ranges form ranges.csv", ex);
+                MessageNotifyUtil.Notify.warn("Credit Card Number Discovery", "There was an error loading Bank Identification Number information.  Accounts will not have their BINs identified.");
+            }
+        }
+    }
 
     private void update() {
         setChanged();
@@ -87,12 +150,28 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         this.skCase = skCase;
     }
 
-    public static IINRange getIINRange(int IIN) {
-        return validator.getIINRange(IIN);
+    /**
+     * Are there details available about the given IIN?
+     *
+     * @param iin the IIN to check.
+     *
+     * @return true if th given IIN is known, false otherwise.
+     */
+    synchronized static public boolean isIINKnown(int iin) {
+        loadIINRanges();
+        return iinRanges.get(iin) != null;
     }
 
-    public static boolean isKnownIIN(int IIN) {
-        return validator.contains(IIN);
+    /**
+     * Get an IINInfo object with details about the given IIN
+     *
+     * @param iin the IIN to get details of.
+     *
+     * @return
+     */
+    synchronized static public IINInfo getIINInfo(int iin) {
+        loadIINRanges();
+        return iinRanges.get(iin);
     }
 
     @Override
@@ -444,7 +523,6 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                 : Stream.of(groupConcat.split(","))
                 .map(mapper::apply)
                 .collect(Collectors.toList());
-
     }
 
     /**
@@ -603,20 +681,24 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
         private final BINInfo bin;
         private final AccountFactory accountFactory;
-        private final IINRange iinRange;
+        private final IINInfo iinRange;
         private String brand;
         private String city;
         private String bankName;
         private String phoneNumber;
         private String url;
         private String country;
+        private String scheme;
+        private String cardType;
 
         private BINNode(BINInfo bin) {
             super(Children.LEAF);
             this.bin = bin;
-            iinRange = validator.getIINRange(bin.getBIN());
+            iinRange = getIINInfo(bin.getBIN());
 
             if (iinRange != null) {
+                cardType = iinRange.getCardType();
+                scheme = iinRange.getScheme();
                 brand = iinRange.getBrand();
                 city = iinRange.getBankCity();
                 bankName = iinRange.getBankName();
@@ -680,11 +762,12 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                     Bundle.Accounts_BINNode_accountsProperty_displayName(), Bundle.Accounts_BINNode_noDescription(),
                     bin.getCount()));
 
-            ss.put(new NodeProperty<>("Payment Card Type", "Payment Card Type", Bundle.Accounts_BINNode_noDescription(),
-                    iinRange.getCardType()));
-            ss.put(new NodeProperty<>("Credit Card Scheme", "Credit Card Scheme", Bundle.Accounts_BINNode_noDescription(),
-                    iinRange.getScheme()));
-
+            if (StringUtils.isNotBlank(cardType)) {
+                ss.put(new NodeProperty<>("Payment Card Type", "Payment Card Type", Bundle.Accounts_BINNode_noDescription(), cardType));
+            }
+            if (StringUtils.isNotBlank(scheme)) {
+                ss.put(new NodeProperty<>("Credit Card Scheme", "Credit Card Scheme", Bundle.Accounts_BINNode_noDescription(), scheme));
+            }
             if (StringUtils.isNotBlank(brand)) {
                 ss.put(new NodeProperty<>("Brand", "Brand", Bundle.Accounts_BINNode_noDescription(), brand));
             }
@@ -897,6 +980,167 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Error approving artifacts.", ex); //NON-NLS
             }
+        }
+    }
+
+    /**
+     * Details of a (range of) Issuer/Bank Identifiaction Number(s) * (IIN/BIN)
+     * used by a bank.
+     */
+    static public class IINInfo {
+
+        private final int IINStart; //start of IIN range, 8 digits
+        private final int IINEnd; // end (incluse ) of IIN rnage, 8 digits
+        private final Integer numberLength; // the length of accounts numbers with this IIN, currently unused
+
+        /**
+         * AMEX, VISA, MASTERCARD, DINERS, DISCOVER, UNIONPAY
+         */
+        private final String scheme;
+        private final String brand;
+
+        /**
+         * DEBIT, CREDIT
+         */
+        private final String cardType;
+        private final String country;
+        private final String bankName;
+        private final String bankCity;
+        private final String bankURL;
+        private final String bankPhoneNumber;
+
+        /**
+         * Constructor
+         *
+         * @param IIN_start     the first IIN in the range, must be 8 digits
+         * @param IIN_end       the last(inclusive) IIN in the range, must be 8
+         *                      digits
+         * @param number_length the length of account numbers in this IIN range
+         * @param scheme        amex/visa/mastercard/etc
+         * @param brand         the brand of this IIN range
+         * @param type          credit vs debit
+         * @param country       the country of the issuer
+         * @param bank_name     the name of the issuer
+         * @param bank_url      the url of the issuer
+         * @param bank_phone    the phone number of the issuer
+         * @param bank_city     the city of the issuer
+         */
+        private IINInfo(int IIN_start, int IIN_end, Integer number_length, String scheme, String brand, String type, String country, String bank_name, String bank_url, String bank_phone, String bank_city) {
+            this.IINStart = IIN_start;
+            this.IINEnd = IIN_end;
+            this.numberLength = number_length;
+            this.scheme = scheme;
+            this.brand = brand;
+            this.cardType = type;
+            this.country = country;
+            this.bankName = bank_name;
+            this.bankURL = bank_url;
+            this.bankPhoneNumber = bank_phone;
+            this.bankCity = bank_city;
+        }
+
+        /**
+         * Get the first IIN in this range
+         *
+         * @return the first IIN in this range.
+         */
+        int getIINstart() {
+            return IINStart;
+        }
+
+        /**
+         * Get the last (inclusive) IIN in this range.
+         *
+         * @return the last (inclusive) IIN in this range.
+         */
+        int getIINend() {
+            return IINEnd;
+        }
+
+        /**
+         * Get the length of account numbers in this IIN range.
+         *
+         * NOTE: the length is currently unused, and not in the data file for
+         * any ranges. It could be quite helpfull for validation...
+         *
+         * @return the length of account numbers in this IIN range. Or an empty
+         *         Optional if the length is unknown.
+         *
+         */
+        public Optional<Integer> getNumberLength() {
+            return Optional.ofNullable(numberLength);
+        }
+
+        /**
+         * Get the scheme this IIN range uses to, eg amex,visa,mastercard, etc
+         *
+         * @return the scheme this IIN range uses.
+         */
+        public String getScheme() {
+            return scheme;
+        }
+
+        /**
+         * Get the brand of this IIN range.
+         *
+         * @return the brand of this IIN range.
+         */
+        public String getBrand() {
+            return brand;
+        }
+
+        /**
+         * Get the type of card (credit vs debit) for this IIN range.
+         *
+         * @return the type of cards in this IIN range.
+         */
+        public String getCardType() {
+            return cardType;
+        }
+
+        /**
+         * Get the country of the issuer.
+         *
+         * @return the country of the issuer.
+         */
+        public String getCountry() {
+            return country;
+        }
+
+        /**
+         * Get the name of the issuer.
+         *
+         * @return the name of the issuer.
+         */
+        public String getBankName() {
+            return bankName;
+        }
+
+        /**
+         * Get the URL of the issuer.
+         *
+         * @return the URL of the issuer.
+         */
+        public String getBankURL() {
+            return bankURL;
+        }
+
+        /**
+         * Get the phone number of the issuer.
+         *
+         * @return the phone number of the issuer.
+         */
+        public String getBankPhoneNumber() {
+            return bankPhoneNumber;
+        }
+
+        /**
+         * Get the city of the issuer.
+         *
+         * @return the city of the issuer.
+         */
+        public String getBankCity() {
+            return bankCity;
         }
     }
 }
