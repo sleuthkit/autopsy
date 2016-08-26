@@ -19,8 +19,6 @@
 package org.sleuthkit.autopsy.modules.fileextmismatch;
 
 import java.awt.Color;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -57,7 +55,6 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
     private String selectedExt = "";
     ListSelectionModel lsm = null;
     private FileTypeDetector fileTypeDetector;
-    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     public FileExtMismatchSettingsPanel() {
         mimeTableModel = new MimeTableModel();
@@ -134,16 +131,6 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         removeExtButton.setEnabled(false);
         removeTypeButton.setEnabled(false);
         addExtButton.setEnabled(false);
-    }
-
-    @Override
-    public void addPropertyChangeListener(PropertyChangeListener l) {
-        pcs.addPropertyChangeListener(l);
-    }
-
-    @Override
-    public void removePropertyChangeListener(PropertyChangeListener l) {
-        pcs.removePropertyChangeListener(l);
     }
 
     private void clearErrLabels() {
@@ -394,7 +381,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         updateExtList();
         extTableModel.resync();
         this.userExtTextField.setText("");
-        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_addExtButtonActionPerformed
 
     private void addTypeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addTypeButtonActionPerformed
@@ -442,7 +429,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         mimeTableModel.resync();
         userTypeTextField.setText("");
         this.clearErrLabels();
-        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_addTypeButtonActionPerformed
 
     private void userExtTextFieldFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_userExtTextFieldFocusGained
@@ -467,7 +454,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         // Refresh table
         updateMimeList();
         mimeTableModel.resync();
-        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_removeTypeButtonActionPerformed
 
     private void removeExtButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeExtButtonActionPerformed
@@ -495,7 +482,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         // Refresh tables        
         updateExtList();
         extTableModel.resync();
-        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_removeExtButtonActionPerformed
 
     private void updateMimeList() {

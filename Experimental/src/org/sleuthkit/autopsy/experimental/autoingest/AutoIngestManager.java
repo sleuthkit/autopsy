@@ -21,11 +21,8 @@ package org.sleuthkit.autopsy.experimental.autoingest;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import org.sleuthkit.autopsy.experimental.configuration.AutoIngestUserPreferences;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
@@ -40,16 +37,15 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
-import org.sleuthkit.autopsy.modules.vmextractor.VirtualMachineFinder;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -65,39 +61,23 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
-import javax.swing.filechooser.FileFilter;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathFactory;
-import org.apache.commons.io.FilenameUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.openide.modules.InstalledFileLocator;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
-import org.sleuthkit.autopsy.casemodule.GeneralFilter;
-import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
-import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.datamodel.Content;
-import org.w3c.dom.Document;
 import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService.CoordinationServiceException;
 import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService.Lock;
@@ -116,6 +96,7 @@ import org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.Processing
 import static org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.ProcessingStatus.PENDING;
 import static org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.ProcessingStatus.PROCESSING;
 import static org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.ProcessingStatus.COMPLETED;
+import org.sleuthkit.autopsy.corecomponentinterfaces.AutomatedIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.experimental.configuration.SharedConfiguration.SharedConfigurationException;
 
 /**
@@ -150,8 +131,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
     private static final long JOB_STATUS_EVENT_INTERVAL_SECONDS = 10;
     private static final String JOB_STATUS_PUBLISHING_THREAD_NAME = "AIM-job-status-event-publisher-%d";
     private static final long MAX_MISSED_JOB_STATUS_UPDATES = 10;
-    private static final String TSK_IS_DRIVE_IMAGE_TOOL_DIR = "tsk_isImageTool";
-    private static final String TSK_IS_DRIVE_IMAGE_TOOL_EXE = "tsk_isImageTool.exe";
     private static final int PRIORITIZATION_LOCK_TIME_OUT = 10;
     private static final TimeUnit PRIORITIZATION_LOCK_TIME_OUT_UNIT = TimeUnit.SECONDS;
     private static final java.util.logging.Logger LOGGER = AutoIngestSystemLogger.getLogger(); // RJCTODO: Rename to systemLogger
@@ -178,7 +157,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
     private CoordinationService coordinationService;
     private JobProcessingTask jobProcessingTask;
     private Future<?> jobProcessingTaskFuture;
-    private Path tskIsImageToolExePath;
     private Path rootInputDirectory;
     private Path rootOutputDirectory;
 
@@ -232,7 +210,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
         }
         rootInputDirectory = Paths.get(AutoIngestUserPreferences.getAutoModeImageFolder());
         rootOutputDirectory = Paths.get(AutoIngestUserPreferences.getAutoModeResultsFolder());
-        tskIsImageToolExePath = locateTskIsImageToolExecutable();
         inputScanSchedulingExecutor.scheduleAtFixedRate(new InputDirScanSchedulingTask(), 0, INPUT_SCAN_INTERVAL, TimeUnit.MILLISECONDS);
         jobProcessingTask = new JobProcessingTask();
         jobProcessingTaskFuture = jobProcessingExecutor.submit(jobProcessingTask);
@@ -240,40 +217,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
         eventPublisher.addSubscriber(EVENT_LIST, instance);
         RuntimeProperties.setCoreComponentsActive(false);
         state = State.RUNNING;
-    }
-
-    /**
-     * Gets the path to the copy of the SleuthKit executable that is used to
-     * determine whether or not a drive image has a file system. The tool is
-     * installed during Autopsy installation, so it is assumed that it only needs
-     * to be found on start up.
-     *
-     * @return The path to the executable.
-     *
-     * @throws AutoIngestManagerStartupException if the executable cannot be
-     *                                           found or cannot be executed.
-     */
-    private static Path locateTskIsImageToolExecutable() throws AutoIngestManagerStartupException {
-        if (!PlatformUtil.isWindowsOS()) {
-            throw new AutoIngestManagerStartupException("Auto ingest requires a Windows operating system to run");
-        }
-
-        final File folder = InstalledFileLocator.getDefault().locate(TSK_IS_DRIVE_IMAGE_TOOL_DIR, AutoIngestManager.class.getPackage().getName(), false);
-        if (null == folder) {
-            throw new AutoIngestManagerStartupException("Unable to locate SleuthKit image tool installation folder");
-        }
-
-        Path executablePath = Paths.get(folder.getAbsolutePath(), TSK_IS_DRIVE_IMAGE_TOOL_EXE);
-        File executable = executablePath.toFile();
-        if (!executable.exists()) {
-            throw new AutoIngestManagerStartupException("Unable to locate SleuthKit image tool");
-        }
-
-        if (!executable.canExecute()) {
-            throw new AutoIngestManagerStartupException("Unable to run SleuthKit image tool");
-        }
-
-        return executablePath;
     }
 
     /**
@@ -1389,7 +1332,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
      */
     private final class JobProcessingTask implements Runnable {
 
-        private static final String AUTO_INGEST_MODULE_OUTPUT_DIR = "AutoIngest";
         private final Object ingestLock;
         private final Object pauseLock;
         @GuardedBy("pauseLock")
@@ -1962,7 +1904,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
          */
         private void ingestDataSource(Case caseForJob) throws InterruptedException {
             if (!handleCancellation()) {
-                DataSource dataSource = identifyDataSource(caseForJob);
+                DataSource dataSource = identifyDataSource();
                 if (!handleCancellation() && null != dataSource) {
                     runDataSourceProcessor(caseForJob, dataSource);
                     if (!handleCancellation() && !dataSource.getContent().isEmpty()) {
@@ -2021,7 +1963,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
          *                              blocked, i.e., if auto ingest is
          *                              shutting down.
          */
-        private DataSource identifyDataSource(Case caseForJob) throws InterruptedException {
+        private DataSource identifyDataSource() throws InterruptedException {
             Manifest manifest = currentJob.getManifest();
             Path manifestPath = manifest.getFilePath();
             LOGGER.log(Level.INFO, "Starting identifying data source stage for {0} ", manifestPath);
@@ -2037,150 +1979,10 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                     return null;
                 }
                 String deviceId = manifest.getDeviceId();
-                if (FileFilters.isAcceptedByFilter(dataSource, FileFilters.archiveFilters)) {
-                    Path extractedDataSource = extractDataSource(caseForJob, dataSourcePath);
-                    LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, DataSource.Type.CELLEBRITE_PHYSICAL_REPORT});
-                    jobLogger.logDataSourceTypeId(DataSource.Type.CELLEBRITE_PHYSICAL_REPORT.toString());
-                    return new DataSource(deviceId, extractedDataSource, DataSource.Type.CELLEBRITE_PHYSICAL_REPORT);
-                /* ELTODO } else if (FileFilters.isAcceptedByFilter(dataSource, FileFilters.cellebriteLogicalReportFilters)) {
-                    DataSource.Type type = parseCellebriteLogicalReportType(dataSourcePath);
-                    if (null != type) {
-                        LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, type});
-                        jobLogger.logDataSourceTypeId(type.toString());
-                        return new DataSource(deviceId, dataSourcePath, type);
-                    }*/
-                } else if (VirtualMachineFinder.isVirtualMachine(manifest.getDataSourceFileName())) {
-                    LOGGER.log(Level.INFO, "Identified data source type for {0} as {1} (VM)", new Object[]{manifestPath, DataSource.Type.DRIVE_IMAGE});
-                    jobLogger.logDataSourceTypeId(DataSource.Type.DRIVE_IMAGE.toString());
-                    return new DataSource(deviceId, dataSourcePath, DataSource.Type.DRIVE_IMAGE);
-                } else if (imageHasFileSystem(caseForJob, dataSourcePath)) {
-                    LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, DataSource.Type.DRIVE_IMAGE});
-                    jobLogger.logDataSourceTypeId(DataSource.Type.DRIVE_IMAGE.toString());
-                    return new DataSource(deviceId, dataSourcePath, DataSource.Type.DRIVE_IMAGE);
-                } else {
-                    LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, DataSource.Type.PHONE_IMAGE});
-                    jobLogger.logDataSourceTypeId(DataSource.Type.PHONE_IMAGE.toString());
-                    return new DataSource(deviceId, dataSourcePath, DataSource.Type.PHONE_IMAGE);
-                }
-                // ELTODO LOGGER.log(Level.INFO, "Failed to identify data source type for {0}", manifestPath);
-                // ELTODO jobLogger.logFailedToIdentifyDataSource();
-                // ELTODO return null;
-
-            } catch (IOException ex) {
-                LOGGER.log(Level.SEVERE, String.format("Error identifying data source for %s", manifestPath), ex);
-                jobLogger.logDataSourceTypeIdError(ex);
-                return null;
-
+                return new DataSource(deviceId, dataSourcePath);
             } finally {
                 LOGGER.log(Level.INFO, "Finished identifying data source stage for {0}", manifestPath);
             }
-        }
-
-        /**
-         * Extracts the contents of a ZIP archive submitted as a data source to
-         * a subdirectory of the auto ingest module output directory.
-         *
-         * @throws IOException if there is a problem extracting the data source
-         *                     from the archive.
-         */
-        private Path extractDataSource(Case caseForJob, Path dataSourcePath) throws IOException {
-            String dataSourceFileNameNoExt = FilenameUtils.removeExtension(dataSourcePath.getFileName().toString());
-            Path destinationFolder = Paths.get(caseForJob.getModuleDirectory(),
-                    AUTO_INGEST_MODULE_OUTPUT_DIR,
-                    dataSourceFileNameNoExt + "_" + TimeStampUtils.createTimeStamp());
-            Files.createDirectories(destinationFolder);
-
-            int BUFFER_SIZE = 524288; // Read/write 500KB at a time
-            File sourceZipFile = dataSourcePath.toFile();
-            ZipFile zipFile;
-            zipFile = new ZipFile(sourceZipFile, ZipFile.OPEN_READ);
-            Enumeration<? extends ZipEntry> zipFileEntries = zipFile.entries();
-            try {
-                while (zipFileEntries.hasMoreElements()) {
-                    ZipEntry entry = zipFileEntries.nextElement();
-                    String currentEntry = entry.getName();
-                    File destFile = new File(destinationFolder.toString(), currentEntry);
-                    destFile = new File(destinationFolder.toString(), destFile.getName());
-                    File destinationParent = destFile.getParentFile();
-                    destinationParent.mkdirs();
-                    if (!entry.isDirectory()) {
-                        BufferedInputStream is = new BufferedInputStream(zipFile.getInputStream(entry));
-                        int currentByte;
-                        byte data[] = new byte[BUFFER_SIZE];
-                        try (FileOutputStream fos = new FileOutputStream(destFile); BufferedOutputStream dest = new BufferedOutputStream(fos, BUFFER_SIZE)) {
-                            currentByte = is.read(data, 0, BUFFER_SIZE);
-                            while (currentByte != -1) {
-                                dest.write(data, 0, currentByte);
-                                currentByte = is.read(data, 0, BUFFER_SIZE);
-                            }
-                        }
-                    }
-                }
-            } finally {
-                zipFile.close();
-            }
-            return destinationFolder;
-        }
-
-        /**
-         * Attempts to parse a data source as a Cellebrite logical report.
-         *
-         * @param dataSourcePath The path to the data source.
-         *
-         * @return Type of Cellebrite logical report if the data source is a
-         *         valid Cellebrite logical report file, null otherwise.
-         */
-        private DataSource.Type parseCellebriteLogicalReportType(Path dataSourcePath) {
-            String report_type;
-            try {
-                DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-                DocumentBuilder builder = factory.newDocumentBuilder();
-                Document doc = builder.parse(dataSourcePath.toFile());
-                XPathFactory xPathfactory = XPathFactory.newInstance();
-                XPath xpath = xPathfactory.newXPath();
-                XPathExpression expr = xpath.compile("/reports/report/general_information/report_type/text()");
-                report_type = (String) expr.evaluate(doc, XPathConstants.STRING);
-                if (report_type.equalsIgnoreCase("sim")) {
-                    return DataSource.Type.CELLEBRITE_LOGICAL_SIM;
-                } else if (report_type.equalsIgnoreCase("cell")) {
-                    return DataSource.Type.CELLEBRITE_LOGICAL_HANDSET;
-                } else {
-                    return null;
-                }
-            } catch (Exception ignore) {
-                // Not a valid Cellebrite logical report file.
-                return null;
-            }
-        }
-
-        /**
-         * Uses the installed tsk_isImageTool executable to determine whether a
-         * potential data source has a file system.
-         *
-         * @param dataSourcePath The path to the data source.
-         *
-         * @return True or false.
-         *
-         * @throws IOException if an error occurs while trying to determine if
-         *                     the data source has a file system.
-         */
-        private boolean imageHasFileSystem(Case caseForJob, Path dataSourcePath) throws IOException {
-            Path logFileName = Paths.get(caseForJob.getTempDirectory(), "tsk_isImageTool.log"); // RJCTODO: Pass case through to avoid these calls
-            File logFile = new File(logFileName.toString());
-            Path errFileName = Paths.get(caseForJob.getTempDirectory(), "tsk_isImageTool_err.log");
-            File errFile = new File(errFileName.toString());
-            ProcessBuilder processBuilder = new ProcessBuilder(
-                    "\"" + tskIsImageToolExePath.toString() + "\"",
-                    "\"" + dataSourcePath + "\"");
-            File directory = new File(tskIsImageToolExePath.getParent().toString());
-            processBuilder.directory(directory);
-            processBuilder.redirectError(ProcessBuilder.Redirect.appendTo(errFile));
-            processBuilder.redirectOutput(ProcessBuilder.Redirect.appendTo(logFile));
-            int exitValue = ExecUtil.execute(processBuilder);
-            Files.delete(logFileName);
-            Files.delete(errFileName);
-            return (exitValue == 0);
-
         }
 
         /**
@@ -2238,6 +2040,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             currentJob.setStage(AutoIngestJob.Stage.ADDING_DATA_SOURCE);
             Path caseDirectoryPath = currentJob.getCaseDirectoryPath();
             AutoIngestJobLogger jobLogger = new AutoIngestJobLogger(manifestPath, manifest.getDataSourceFileName(), caseDirectoryPath);
+            AutomatedIngestDataSourceProcessor selectedProcessor = null;
             try {
                 final DataSourceProcessorProgressMonitor progressMonitor = new DataSourceProcessorProgressMonitor() {
                     /*
@@ -2261,38 +2064,63 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                 final UUID taskId = UUID.randomUUID();
                 try {
                     caseForJob.notifyAddingDataSource(taskId);
-                    synchronized (ingestLock) {
-                        switch (dataSource.type) {
-                            case DRIVE_IMAGE:
-                                new ImageDSProcessor().run(dataSource.getDeviceId(),
-                                        dataSource.getPath().toString(),
-                                        "",
-                                        false,
-                                        progressMonitor,
-                                        callBack);
-                                break;
+                    
+                    // lookup all AutomatedIngestDataSourceProcessors 
+                    Collection <? extends AutomatedIngestDataSourceProcessor> processorCandidates = Lookup.getDefault().lookupAll(AutomatedIngestDataSourceProcessor.class);
 
-                            // ELTODO plug in data source processor lookup
-                            case CELLEBRITE_LOGICAL_HANDSET:
-                            case CELLEBRITE_LOGICAL_SIM:
-                            case PHONE_IMAGE:
-                            case CELLEBRITE_PHYSICAL_REPORT:
-                            default:
-                                LOGGER.log(Level.SEVERE, "Unsupported data source type {0} for {1}", new Object[]{dataSource.getType(), manifestPath});  // NON-NLS
+                    int selectedProcessorConfidence = 0;
+                    for (AutomatedIngestDataSourceProcessor processor : processorCandidates) {
+                        int confidence = 0;
+                        try {
+                            confidence = processor.canProcess(dataSource.getPath());
+                        } catch (AutomatedIngestDataSourceProcessor.AutomatedIngestDataSourceProcessorException ex) {
+                            LOGGER.log(Level.SEVERE, "Exception while determining whether data source processor {0} can process {1}", new Object[]{processor.getDataSourceType(), dataSource.getPath()});
+                            // ELTODO - should we auto-pause if one of DSP.canProcess() threw an exception? Probably so...
+                            // On the other hand what if we simply weren't able to extract an archive or something?
+                            pauseForSystemError();
+                            return;
+                        }
+                        if (confidence > selectedProcessorConfidence)  {
+                            selectedProcessor = processor;
+                            selectedProcessorConfidence = confidence;
+                        }
+                    }
+                    
+                    // did we find a data source processor that can process the data source
+                    if (selectedProcessor == null) {
+                        jobLogger.logDataSourceTypeIdError("Unsupported data source " + dataSource.getPath() + " for " + manifestPath);
+                        LOGGER.log(Level.SEVERE, "Unsupported data source {0} for {1}", new Object[]{dataSource.getPath(), manifestPath});  // NON-NLS
+                        return;
+                    }
+                    
+                    synchronized (ingestLock) {
+                        LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, selectedProcessor.getDataSourceType()});
+                        try {
+                            selectedProcessor.process(dataSource.getDeviceId(), dataSource.getPath(), progressMonitor, callBack);
+                        } catch (AutomatedIngestDataSourceProcessor.AutomatedIngestDataSourceProcessorException ex) {
+                            LOGGER.log(Level.SEVERE, "Exception while processing {0} with data source processor {1}", new Object[]{dataSource.getPath(), selectedProcessor.getDataSourceType()});
+                            jobLogger.logDataSourceProcessorError(selectedProcessor.getDataSourceType(), ex.getMessage());
+                            pauseForSystemError();
+                            return;
                         }
                         ingestLock.wait();
                     }
                 } finally {
-                    String imageType = dataSource.getType().toString();
+                    String imageType;
+                    if (selectedProcessor != null) {
+                        imageType = selectedProcessor.getDataSourceType();
+                    } else {
+                        imageType = dataSource.getPath().toString();
+                    }
                     DataSourceProcessorResult resultCode = dataSource.getResultDataSourceProcessorResultCode();
                     if (null != resultCode) {
                         switch (resultCode) {
                             case NO_ERRORS:
-                                jobLogger.logDataSourceAdded(dataSource.getType().toString());
+                                jobLogger.logDataSourceAdded(imageType);
                                 break;
 
                             case NONCRITICAL_ERRORS:
-                                jobLogger.logDataSourceAdded(dataSource.getType().toString());
+                                jobLogger.logDataSourceAdded(imageType);
                                 for (String errorMessage : dataSource.getDataSourceProcessorErrorMessages()) {
                                     LOGGER.log(Level.WARNING, "Non-critical error running data source processor for {0}: {1}", new Object[]{manifestPath, errorMessage});
                                 }
@@ -2702,52 +2530,18 @@ public final class AutoIngestManager extends Observable implements PropertyChang
 
     }
 
-    private static final class FileFilters {
-
-        //ELTODO private static final List<FileFilter> cellebriteLogicalReportFilters = CellebriteXMLProcessor.getFileFilterList();
-        private static final GeneralFilter zipFilter = new GeneralFilter(Arrays.asList(new String[]{".zip"}), "");
-        private static final List<FileFilter> archiveFilters = new ArrayList<>();
-
-        static {
-            archiveFilters.add(zipFilter);
-        }
-
-        private static boolean isAcceptedByFilter(File file, List<FileFilter> filters) {
-            for (FileFilter filter : filters) {
-                if (filter.accept(file)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        private FileFilters() {
-        }
-    }
-
     @ThreadSafe
     private static final class DataSource {
 
-        private enum Type {
-
-            CELLEBRITE_PHYSICAL_REPORT,
-            CELLEBRITE_LOGICAL_HANDSET,
-            CELLEBRITE_LOGICAL_SIM,
-            DRIVE_IMAGE,
-            PHONE_IMAGE,
-        }
-
         private final String deviceId;
         private final Path path;
-        private final Type type;
         private DataSourceProcessorResult resultCode;
         private List<String> errorMessages;
         private List<Content> content;
 
-        DataSource(String deviceId, Path path, Type type) {
+        DataSource(String deviceId, Path path) {
             this.deviceId = deviceId;
             this.path = path;
-            this.type = type;
         }
 
         String getDeviceId() {
@@ -2756,10 +2550,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
 
         Path getPath() {
             return this.path;
-        }
-
-        Type getType() {
-            return type;
         }
 
         synchronized void setDataSourceProcessorOutput(DataSourceProcessorResult result, List<String> errorMessages, List<Content> content) {
