@@ -31,7 +31,9 @@ import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
@@ -184,17 +186,13 @@ public final class ContentUtils {
      */
     public static <T> long writeToFile(Content content, java.io.File outputFile,
             ProgressHandle progress, Future<T> worker, boolean source) throws IOException {
-
         InputStream in = new ReadContentInputStream(content);
-
-        boolean append = false;
-        FileOutputStream out = new FileOutputStream(outputFile, append);
 
         // Get the unit size for a progress bar
         int unit = (int) (content.getSize() / 100);
         long totalRead = 0;
 
-        try {
+        try (FileOutputStream out = new FileOutputStream(outputFile, false)) {
             byte[] buffer = new byte[TO_FILE_BUFFER_SIZE];
             int len = in.read(buffer);
             while (len != -1) {
@@ -216,13 +214,47 @@ public final class ContentUtils {
                 }
             }
         } finally {
-            out.close();
+            in.close();
         }
         return totalRead;
     }
 
     public static void writeToFile(Content content, java.io.File outputFile) throws IOException {
         writeToFile(content, outputFile, null, null, false);
+    }
+    
+    /**
+     * Reads all the data from any content object and writes (extracts) it to a
+     * file, using a cancellation check instead of a Future object method.
+     * 
+     * @param content     Any content object.
+     * @param outputFile  Will be created if it doesn't exist, and overwritten
+     *                    if it does
+     * @param cancelCheck Used to terminate the process if the ingest is
+     *                    terminated.
+     * @return number of bytes extracted
+     * @throws IOException if file could not be written
+     */
+    public static long writeToFile(Content content, java.io.File outputFile,
+            CancellationCheck cancelCheck) throws IOException {
+        InputStream in = new ReadContentInputStream(content);
+        long totalRead = 0;
+        
+        try (FileOutputStream out = new FileOutputStream(outputFile, false)) {
+            byte[] buffer = new byte[TO_FILE_BUFFER_SIZE];
+            int len = in.read(buffer);
+            while (len != -1) {
+                out.write(buffer, 0, len);
+                totalRead += len;
+                if (cancelCheck.isCancelled()) {
+                    break;
+                }
+                len = in.read(buffer);
+            }
+        } finally {
+            in.close();
+        }
+        return totalRead;
     }
 
     /**
@@ -378,10 +410,10 @@ public final class ContentUtils {
         }
 
         @Override
-        protected Void defaultVisit(Content cntnt) {
+        protected Void defaultVisit(Content content) {
             throw new UnsupportedOperationException(NbBundle.getMessage(this.getClass(),
                     "ContentUtils.exception.msg",
-                    cntnt.getClass().getSimpleName()));
+                    content.getClass().getSimpleName()));
         }
     }
 
@@ -393,4 +425,17 @@ public final class ContentUtils {
     public static boolean shouldDisplayTimesInLocalTime() {
         return displayTimesInLocalTime;
     }
+    
+    /**
+     * Cancellation check object to determine whether the ingest process has
+     * been terminated.
+     */
+    public interface CancellationCheck {
+    
+        /**
+         * @return whether the process has been cancelled
+         */
+        boolean isCancelled();
+    }
 }
+
