@@ -142,6 +142,13 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
                 }
             });
             add(tagAndCommentItem);
+            
+            // Create a new menu item for the Bookmark File action
+           /* JMenuItem bookmarkFileActionItem = new JMenuItem(
+                    NbBundle.getMessage(this.getClass(), "AddTagAction.bookmarkFile"));
+            bookmarkFileActionItem.addActionListener((ActionEvent e) -> {
+                
+            });*/
         }
     }
 }
