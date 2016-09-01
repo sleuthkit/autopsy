@@ -109,8 +109,8 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
 
         setTitle(title); // set the title
         setName(title);
-        getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_B, InputEvent.CTRL_MASK), "addTag");
-        getActionMap().put("addTag", new BookmarkFileAction());
+        getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_B, InputEvent.CTRL_MASK), "addBookmarkTag");
+        getActionMap().put("addBookmarkTag", new BookmarkFileAction());
 
         putClientProperty(TopComponent.PROP_CLOSING_DISABLED, isMain); // set option to close compoment in GUI
         putClientProperty(TopComponent.PROP_MAXIMIZATION_DISABLED, true);
