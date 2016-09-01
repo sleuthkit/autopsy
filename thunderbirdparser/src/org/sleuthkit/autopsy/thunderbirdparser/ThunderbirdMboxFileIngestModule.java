@@ -233,7 +233,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         }
 
         try {
-            ContentUtils.writeToFile(abstractFile, file);
+            ContentUtils.writeToFile(abstractFile, file, new FileIngestCancellationCheck(context));
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Failed writing mbox file to disk.", ex); //NON-NLS
             return ProcessResult.OK;

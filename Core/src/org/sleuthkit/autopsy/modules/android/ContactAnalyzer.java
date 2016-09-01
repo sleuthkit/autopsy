@@ -34,6 +34,8 @@ import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestCancellationCheck;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -49,8 +51,8 @@ class ContactAnalyzer {
     private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(ContactAnalyzer.class.getName());
 
-    public static void findContacts(Content dataSource, FileManager fileManager) {
-
+    public static void findContacts(Content dataSource, FileManager fileManager,
+            IngestJobContext context) {
         List<AbstractFile> absFiles;
         try {
             absFiles = fileManager.findFiles(dataSource, "contacts.db"); //NON-NLS
@@ -61,7 +63,7 @@ class ContactAnalyzer {
             for (AbstractFile AF : absFiles) {
                 try {
                     File jFile = new File(Case.getCurrentCase().getTempDirectory(), AF.getName());
-                    ContentUtils.writeToFile(AF, jFile);
+                    ContentUtils.writeToFile(AF, jFile, new DataSourceIngestCancellationCheck(context));
                     findContactsInDB(jFile.toString(), AF);
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "Error parsing Contacts", e); //NON-NLS

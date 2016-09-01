@@ -52,6 +52,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestCancellationCheck;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.*;
@@ -318,7 +319,7 @@ class ExtractIE extends Extract {
                 break;
             }
             try {
-                ContentUtils.writeToFile(indexFile, datFile);
+                ContentUtils.writeToFile(indexFile, datFile, new DataSourceIngestCancellationCheck(context));
             } catch (IOException e) {
                 logger.log(Level.WARNING, "Error while trying to write index.dat file " + datFile.getAbsolutePath(), e); //NON-NLS
                 this.addErrorMessage(
