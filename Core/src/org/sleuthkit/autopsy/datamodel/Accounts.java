@@ -86,10 +86,23 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
     @GuardedBy("Accounts.class")
     private static boolean iinsLoaded = false;
 
-
     private SleuthkitCase skCase;
 
     private boolean showRejected = false;
+
+    void showRejected(boolean showRejected) {
+
+        boolean needsUpdate = showRejected != this.showRejected;
+        this.showRejected = showRejected;
+
+        if (needsUpdate) {
+            update();
+        }
+    }
+
+    boolean isShowRejected() {
+        return showRejected;
+    }
 
     /**
      * Load the IIN range information from disk. If the map has already been
@@ -214,7 +227,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
     public class AccountsRootNode extends DisplayableItemNode {
 
         AccountsRootNode() {
-            super(Children.create(new AccountTypeFactory(), true));
+            super(Children.create(new AccountTypeFactory(), true), Lookups.singleton(Accounts.this));
             super.setName("Accounts");    //NON-NLS
             super.setDisplayName(Bundle.Accounts_RootNode_displayName());
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/account_menu.png");    //NON-NLS
@@ -230,14 +243,6 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             return v.visit(this);
         }
 
-        @Override
-        public Action[] getActions(boolean context) {
-            Action[] actions = super.getActions(context);
-            ArrayList<Action> actionsList = new ArrayList<>();
-            actionsList.addAll(Arrays.asList(actions));
-            actionsList.add(new SetShowRejected(!showRejected));
-            return actionsList.toArray(new Action[actionsList.size()]);
-        }
     }
 
     /**
@@ -971,22 +976,6 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         }
     }
 
-    private class SetShowRejected extends AbstractAction {
-
-        private final boolean show;
-
-        public SetShowRejected(boolean show) {
-            super(show ? "Show Rejected Results" : "Hide Rejected Results");
-            this.show = show;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            showRejected = show;
-            update();
-        }
-    }
-
     private class RejectAccounts extends AbstractAction {
 
         private final Collection<? extends BlackboardArtifact> artifacts;
@@ -1171,4 +1160,5 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             return bankCity;
         }
     }
+
 }
