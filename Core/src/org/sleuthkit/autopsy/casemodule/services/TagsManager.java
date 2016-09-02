@@ -62,12 +62,11 @@ public class TagsManager implements Closeable {
     TagsManager(SleuthkitCase caseDb) {
         this.caseDb = caseDb;
     }
-    
+
     /**
      * Gets a list of all tag names currently available for tagging content or
-     * artifacts. Available tag names include tag names currently being used or
-     * tag names loaded from the properties file.
-     * 
+     * artifacts.
+     *
      * @return A list, possibly empty, of TagName data transfer objects (DTOs).
      *
      * @throws TskCoreException If there is an error reading from the case
@@ -78,7 +77,23 @@ public class TagsManager implements Closeable {
             throw new TskCoreException("Tags manager has been closed");
         }
         lazyLoadExistingTagNames();
-        //return caseDb.getAllTagNames();
+        return caseDb.getAllTagNames();
+    }
+    
+    /**
+     * Gets a list of all tag names currently being used or tag names loaded
+     * from the properties file.
+     * 
+     * @return A list, possibly empty, of TagName data transfer objects (DTOs).
+     *
+     * @throws TskCoreException If there is an error reading from the case
+     *                          database.
+     */
+    public synchronized List<TagName> getAllTagNamesForDisplay() throws TskCoreException {
+        if (null == caseDb) {
+            throw new TskCoreException("Tags manager has been closed");
+        }
+        lazyLoadExistingTagNames();
         Set<TagName> tagNameSet = new HashSet<>();
         tagNameSet.addAll(getTagNamesInUse());
         tagNameSet.addAll(getTagNamesForPropertyFile());
@@ -108,7 +123,7 @@ public class TagsManager implements Closeable {
      * 
      * @return A list, possibly empty, of TagName data transfer objects (DTOs).
      */
-    public synchronized List<TagName> getTagNamesForPropertyFile() {
+    private synchronized List<TagName> getTagNamesForPropertyFile() {
         lazyLoadExistingTagNames();
         List<TagName> propertyFileTagNames = new ArrayList<>();
         

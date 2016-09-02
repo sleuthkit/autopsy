@@ -14,7 +14,6 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import javax.swing.DefaultListModel;
 import org.netbeans.spi.options.OptionsPanelController;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
@@ -32,6 +31,8 @@ public class TagsManagerOptionsPanel extends javax.swing.JPanel implements Optio
     
     private static final String TAGS_SETTINGS_NAME = "Tags"; //NON-NLS
     private static final String TAG_NAMES_SETTING_KEY = "TagNames"; //NON-NLS
+    
+    private static final String TAG_BOOKMARK = "Bookmark";
     
     private static final String DEFAULT_DESCRIPTION = "";
     private static final String DEFAULT_COLOR_STRING = "NONE";
@@ -71,7 +72,10 @@ public class TagsManagerOptionsPanel extends javax.swing.JPanel implements Optio
                 CustomTagName tagName = new CustomTagName(tagNameAttributes[0], tagNameAttributes[1], tagNameAttributes[2]);
                 tagNamesFromSettings.add(tagName);
             }
+        } else {
+            tagNamesFromSettings.add(new CustomTagName(TAG_BOOKMARK, DEFAULT_DESCRIPTION, DEFAULT_COLOR_STRING));
         }
+        
         return tagNamesFromSettings;
     }
     
@@ -125,7 +129,7 @@ public class TagsManagerOptionsPanel extends javax.swing.JPanel implements Optio
             }
         });
 
-        addTagNameButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add16.png"))); // NOI18N
+        addTagNameButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add-tag.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(addTagNameButton, org.openide.util.NbBundle.getMessage(TagsManagerOptionsPanel.class, "TagsManagerOptionsPanel.addTagNameButton.text")); // NOI18N
         addTagNameButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -133,7 +137,7 @@ public class TagsManagerOptionsPanel extends javax.swing.JPanel implements Optio
             }
         });
 
-        deleteTagNameButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/delete16.png"))); // NOI18N
+        deleteTagNameButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/delete-tag.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(deleteTagNameButton, org.openide.util.NbBundle.getMessage(TagsManagerOptionsPanel.class, "TagsManagerOptionsPanel.deleteTagNameButton.text")); // NOI18N
         deleteTagNameButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {

@@ -98,7 +98,7 @@ public class GetTagNameDialog extends JDialog {
         TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
         List<TagName> currentTagNames = null;
         try {
-            currentTagNames = tagsManager.getAllTagNames();
+            currentTagNames = tagsManager.getAllTagNamesForDisplay();
         } catch (TskCoreException ex) {
             Logger.getLogger(GetTagNameDialog.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
         }

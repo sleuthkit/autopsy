@@ -117,7 +117,7 @@ public class GetTagNameAndCommentDialog extends JDialog {
         TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
         List<TagName> currentTagNames = null;
         try {
-            currentTagNames = tagsManager.getAllTagNames();
+            currentTagNames = tagsManager.getAllTagNamesForDisplay();
         } catch (TskCoreException ex) {
             Logger.getLogger(GetTagNameAndCommentDialog.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
         }

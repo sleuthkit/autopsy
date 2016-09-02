@@ -15,7 +15,7 @@ import org.openide.util.Lookup;
 
 @OptionsPanelController.TopLevelRegistration(
         categoryName = "#OptionsCategory_Name_TagsManager",
-        iconBase = "org/sleuthkit/autopsy/modules/filetypeid/user-defined-file-types-settings.png",
+        iconBase = "org/sleuthkit/autopsy/casemodule/services/tags-manager.png",
         keywords = "#OptionsCategory_Keywords_TagsManager",
         keywordsCategory = "TagsManager",
         position = 8

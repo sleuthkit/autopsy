@@ -89,7 +89,7 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
             TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
             List<TagName> tagNames = null;
             try {
-                tagNames = tagsManager.getAllTagNames();
+                tagNames = tagsManager.getAllTagNamesForDisplay();
                 Collections.sort(tagNames);
             } catch (TskCoreException ex) {
                 Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
