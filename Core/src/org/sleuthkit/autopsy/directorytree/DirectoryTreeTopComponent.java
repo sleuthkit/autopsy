@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -68,7 +68,6 @@ import org.sleuthkit.autopsy.datamodel.Reports;
 import org.sleuthkit.autopsy.datamodel.Results;
 import org.sleuthkit.autopsy.datamodel.ResultsNode;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
-import org.sleuthkit.autopsy.datamodel.SetShowRejected;
 import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.autopsy.datamodel.Views;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
@@ -202,11 +201,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         });
 
         org.openide.awt.Mnemonics.setLocalizedText(showRejectedCheckBox, org.openide.util.NbBundle.getMessage(DirectoryTreeTopComponent.class, "DirectoryTreeTopComponent.showRejectedCheckBox.text")); // NOI18N
-        showRejectedCheckBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                showRejectedCheckBoxActionPerformed(evt);
-            }
-        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -284,10 +278,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
         this.setCursor(null);
     }//GEN-LAST:event_forwardButtonActionPerformed
-
-    private void showRejectedCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showRejectedCheckBoxActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_showRejectedCheckBoxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton backButton;
@@ -413,8 +403,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     Children resultsChilds = results.getChildren();
                     tree.expandNode(resultsChilds.findChild(KeywordHits.NAME));
                     tree.expandNode(resultsChilds.findChild(ExtractedContent.NAME));
-                    Accounts accounts = resultsChilds.findChild("Accounts").getLookup().lookup(Accounts.class);
-                    showRejectedCheckBox.setAction(new SetShowRejected(accounts));
+
+                    Accounts accounts = resultsChilds.findChild(Accounts.NAME).getLookup().lookup(Accounts.class);
+                    showRejectedCheckBox.setAction(accounts.newToggleShowRejectedAction());
                     showRejectedCheckBox.setSelected(false);
 
                     Node views = childNodes.findChild(ViewsNode.NAME);

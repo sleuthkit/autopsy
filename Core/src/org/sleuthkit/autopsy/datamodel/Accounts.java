@@ -76,33 +76,28 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
     private static final Logger LOGGER = Logger.getLogger(Accounts.class.getName());
     private static final BlackboardArtifact.Type CREDIT_CARD_ACCOUNT_TYPE = new BlackboardArtifact.Type(TSK_CREDIT_CARD_ACCOUNT);
+    @NbBundle.Messages("AccountsRootNode.name=Accounts")
+    final public static String NAME = Bundle.AccountsRootNode_name();
 
     /**
      * Range Map from a (ranges of) B/IINs to data model object with details of
      * the B/IIN, ie, bank name, phone, url, visa/amex/mastercard/...,
      */
     @GuardedBy("Accounts.class")
-    private final static RangeMap<Integer, IINInfo> iinRanges = TreeRangeMap.create();
+    private final static RangeMap<Integer, IINRange> iinRanges = TreeRangeMap.create();
+
+    /**
+     * Flag for if we have loaded the IINs from the file already.
+     */
     @GuardedBy("Accounts.class")
     private static boolean iinsLoaded = false;
 
     private SleuthkitCase skCase;
 
+    /**
+     * Should rejected accounts be shown in the accounts section of the tree.
+     */
     private boolean showRejected = false;
-
-    void showRejected(boolean showRejected) {
-
-        boolean needsUpdate = showRejected != this.showRejected;
-        this.showRejected = showRejected;
-
-        if (needsUpdate) {
-            update();
-        }
-    }
-
-    boolean isShowRejected() {
-        return showRejected;
-    }
 
     /**
      * Load the IIN range information from disk. If the map has already been
@@ -111,7 +106,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
     synchronized private static void loadIINRanges() {
         if (iinsLoaded == false) {
             try {
-                InputStreamReader in = new InputStreamReader(Accounts.class.getResourceAsStream("ranges.csv"));
+                InputStreamReader in = new InputStreamReader(Accounts.class.getResourceAsStream("ranges.csv")); //NON-NLS
                 CSVParser rangesParser = CSVFormat.RFC4180.withFirstRecordAsHeader().parse(in);
 
                 //parse each row and add to range map
@@ -122,48 +117,68 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                      * IINs, but we need a consistent length for the range map,
                      * we pad all the numbers out to 8 digits
                      */
-                    String start = StringUtils.rightPad(record.get("iin_start"), 8, "0"); //pad start with 0's
+                    String start = StringUtils.rightPad(record.get("iin_start"), 8, "0"); //pad start with 0's //NON-NLS
 
                     //if there is no end listed, use start, since ranges will be closed.
-                    String end = StringUtils.defaultIfBlank(record.get("iin_end"), start);
-                    end = StringUtils.rightPad(end, 8, "99"); //pad end with 9's
+                    String end = StringUtils.defaultIfBlank(record.get("iin_end"), start); //NON-NLS
+                    end = StringUtils.rightPad(end, 8, "99"); //pad end with 9's //NON-NLS
 
-                    final String numberLength = record.get("number_length");
+                    final String numberLength = record.get("number_length"); //NON-NLS
 
                     try {
-                        IINInfo iinRange = new IINInfo(Integer.parseInt(start),
+                        IINRange iinRange = new IINRange(Integer.parseInt(start),
                                 Integer.parseInt(end),
                                 StringUtils.isBlank(numberLength) ? null : Integer.valueOf(numberLength),
-                                record.get("scheme"),
-                                record.get("brand"),
-                                record.get("type"),
-                                record.get("country"),
-                                record.get("bank_name"),
-                                record.get("bank_url"),
-                                record.get("bank_phone"),
-                                record.get("bank_city"));
+                                record.get("scheme"), //NON-NLS
+                                record.get("brand"), //NON-NLS
+                                record.get("type"), //NON-NLS
+                                record.get("country"), //NON-NLS
+                                record.get("bank_name"), //NON-NLS
+                                record.get("bank_url"), //NON-NLS
+                                record.get("bank_phone"), //NON-NLS
+                                record.get("bank_city")); //NON-NLS
 
                         iinRanges.put(Range.closed(iinRange.getIINstart(), iinRange.getIINend()), iinRange);
 
                     } catch (NumberFormatException numberFormatException) {
-                        LOGGER.log(Level.WARNING, "Failed to parse IIN range: " + record.toString(), numberFormatException);
+                        LOGGER.log(Level.WARNING, "Failed to parse IIN range: " + record.toString(), numberFormatException); //NON-NLS
                     }
                     iinsLoaded = true;
                 }
             } catch (IOException ex) {
-                LOGGER.log(Level.WARNING, "Failed to load IIN ranges form ranges.csv", ex);
+                LOGGER.log(Level.WARNING, "Failed to load IIN ranges form ranges.csv", ex); //NON-NLS
                 MessageNotifyUtil.Notify.warn("Credit Card Number Discovery", "There was an error loading Bank Identification Number information.  Accounts will not have their BINs identified.");
             }
         }
     }
 
+    /**
+     * Constructor
+     *
+     * @param skCase The SleuthkitCase object to use for db queries.
+     */
+    Accounts(SleuthkitCase skCase) {
+        this.skCase = skCase;
+    }
+
+    /**
+     * Get the clause that should be used in order to (not) filter out rejected
+     * results from db queries.
+     *
+     * @return A clause that will or will not filter out rejected artifacts
+     *         based on the state of showRejected.
+     */
+    private String getRejectedArtifactFilterClause() {
+        return showRejected ? "" : " AND blackboard_artifacts.review_status_id != " + BlackboardArtifact.ReviewStatus.REJECTED.getID(); //NON-NLS
+    }
+
+    /**
+     * Notify all observers that something has changed, causing a refresh of the
+     * accounts section of the tree.
+     */
     private void update() {
         setChanged();
         notifyObservers();
-    }
-
-    Accounts(SleuthkitCase skCase) {
-        this.skCase = skCase;
     }
 
     /**
@@ -196,6 +211,211 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
     }
 
     /**
+     * Gets a new Action that when invoked toggles showing rejected artifacts on
+     * or off.
+     *
+     * @return An Action that will toggle whether rejected artifacts are shown
+     *         in the tree rooted by this Accounts instance.
+     */
+    public Action newToggleShowRejectedAction() {
+        return new ToggleShowRejected();
+    }
+
+    //Interface for objects that provide details about one or more IINs.
+    static public interface IINInfo {
+
+        /**
+         * Get the city of the issuer.
+         *
+         * @return the city of the issuer.
+         */
+        Optional<String> getBankCity();
+
+        /**
+         * Get the name of the issuer.
+         *
+         * @return the name of the issuer.
+         */
+        Optional<String> getBankName();
+
+        /**
+         * Get the phone number of the issuer.
+         *
+         * @return the phone number of the issuer.
+         */
+        Optional<String> getBankPhoneNumber();
+
+        /**
+         * Get the URL of the issuer.
+         *
+         * @return the URL of the issuer.
+         */
+        Optional<String> getBankURL();
+
+        /**
+         * Get the brand of this IIN range.
+         *
+         * @return the brand of this IIN range.
+         */
+        Optional<String> getBrand();
+
+        /**
+         * Get the type of card (credit vs debit) for this IIN range.
+         *
+         * @return the type of cards in this IIN range.
+         */
+        Optional<String> getCardType();
+
+        /**
+         * Get the country of the issuer.
+         *
+         * @return the country of the issuer.
+         */
+        Optional<String> getCountry();
+
+        /**
+         * Get the length of account numbers in this IIN range.
+         *
+         * NOTE: the length is currently unused, and not in the data file for
+         * any ranges. It could be quite helpfull for validation...
+         *
+         * @return the length of account numbers in this IIN range. Or an empty
+         *         Optional if the length is unknown.
+         *
+         */
+        Optional<Integer> getNumberLength();
+
+        /**
+         * Get the scheme this IIN range uses to, eg amex,visa,mastercard, etc
+         *
+         * @return the scheme this IIN range uses.
+         */
+        Optional<String> getScheme();
+    }
+
+    /**
+     * Details of a range of Issuer/Bank Identifiaction Number(s) (IIN/BIN) used
+     * by a bank.
+     */
+    static private class IINRange implements IINInfo {
+
+        private final int IINStart; //start of IIN range, 8 digits
+        private final int IINEnd; // end (incluse ) of IIN rnage, 8 digits
+
+        private final Integer numberLength; // the length of accounts numbers with this IIN, currently unused
+
+        /**
+         * AMEX, VISA, MASTERCARD, DINERS, DISCOVER, UNIONPAY
+         */
+        private final String scheme;
+        private final String brand;
+
+        /**
+         * DEBIT, CREDIT
+         */
+        private final String cardType;
+        private final String country;
+        private final String bankName;
+        private final String bankCity;
+        private final String bankURL;
+        private final String bankPhoneNumber;
+
+        /**
+         * Constructor
+         *
+         * @param IIN_start     the first IIN in the range, must be 8 digits
+         * @param IIN_end       the last(inclusive) IIN in the range, must be 8
+         *                      digits
+         * @param number_length the length of account numbers in this IIN range
+         * @param scheme        amex/visa/mastercard/etc
+         * @param brand         the brand of this IIN range
+         * @param type          credit vs debit
+         * @param country       the country of the issuer
+         * @param bank_name     the name of the issuer
+         * @param bank_url      the url of the issuer
+         * @param bank_phone    the phone number of the issuer
+         * @param bank_city     the city of the issuer
+         */
+        private IINRange(int IIN_start, int IIN_end, Integer number_length, String scheme, String brand, String type, String country, String bank_name, String bank_url, String bank_phone, String bank_city) {
+            this.IINStart = IIN_start;
+            this.IINEnd = IIN_end;
+
+            this.numberLength = number_length;
+            this.scheme = StringUtils.defaultIfBlank(scheme, null);
+            this.brand = StringUtils.defaultIfBlank(brand, null);
+            this.cardType = StringUtils.defaultIfBlank(type, null);
+            this.country = StringUtils.defaultIfBlank(country, null);
+            this.bankName = StringUtils.defaultIfBlank(bank_name, null);
+            this.bankURL = StringUtils.defaultIfBlank(bank_url, null);
+            this.bankPhoneNumber = StringUtils.defaultIfBlank(bank_phone, null);
+            this.bankCity = StringUtils.defaultIfBlank(bank_city, null);
+        }
+
+        /**
+         * Get the first IIN in this range
+         *
+         * @return the first IIN in this range.
+         */
+        int getIINstart() {
+            return IINStart;
+        }
+
+        /**
+         * Get the last (inclusive) IIN in this range.
+         *
+         * @return the last (inclusive) IIN in this range.
+         */
+        int getIINend() {
+            return IINEnd;
+        }
+
+        @Override
+        public Optional<Integer> getNumberLength() {
+            return Optional.ofNullable(numberLength);
+        }
+
+        @Override
+        public Optional<String> getScheme() {
+            return Optional.ofNullable(scheme);
+        }
+
+        @Override
+        public Optional<String> getBrand() {
+            return Optional.ofNullable(brand);
+        }
+
+        @Override
+        public Optional<String> getCardType() {
+            return Optional.ofNullable(cardType);
+        }
+
+        @Override
+        public Optional<String> getCountry() {
+            return Optional.ofNullable(country);
+        }
+
+        @Override
+        public Optional<String> getBankName() {
+            return Optional.ofNullable(bankName);
+        }
+
+        @Override
+        public Optional<String> getBankURL() {
+            return Optional.ofNullable(bankURL);
+        }
+
+        @Override
+        public Optional<String> getBankPhoneNumber() {
+            return Optional.ofNullable(bankPhoneNumber);
+        }
+
+        @Override
+        public Optional<String> getBankCity() {
+            return Optional.ofNullable(bankCity);
+        }
+    }
+
+    /**
      * Base class for factories that are also observers.
      *
      * @param <X> The type of keys used by this factory.
@@ -210,13 +430,13 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         @Override
         protected void removeNotify() {
             super.removeNotify();
-            deleteObserver(this);
+            Accounts.this.deleteObserver(this);
         }
 
         @Override
         protected void addNotify() {
             super.addNotify();
-            addObserver(this);
+            Accounts.this.addObserver(this);
         }
     }
 
@@ -228,7 +448,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
         AccountsRootNode() {
             super(Children.create(new AccountTypeFactory(), true), Lookups.singleton(Accounts.this));
-            super.setName("Accounts");    //NON-NLS
+            super.setName(Accounts.NAME);
             super.setDisplayName(Bundle.Accounts_RootNode_displayName());
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/account_menu.png");    //NON-NLS
         }
@@ -362,7 +582,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
     /**
      * Enum for the children under the credit card AccountTypeNode.
      */
-    static private enum CreditCardViewMode {
+    private enum CreditCardViewMode {
         BY_FILE,
         BY_BIN;
     }
@@ -457,7 +677,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             "# {0} - number of children",
             "Accounts.ByBINNode.displayName=By BIN ({0})"})
         private void updateDisplayName() {
-            ArrayList<BINInfo> keys = new ArrayList<>();
+            ArrayList<BinResult> keys = new ArrayList<>();
             binFactory.createKeys(keys);
             setDisplayName(Bundle.Accounts_ByBINNode_displayName(keys.size()));
         }
@@ -537,7 +757,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
      */
     static <X> List<X> unGroupConcat(String groupConcat, Function<String, X> mapper) {
         return StringUtils.isBlank(groupConcat) ? Collections.emptyList()
-                : Stream.of(groupConcat.split(","))
+                : Stream.of(groupConcat.split(",")) //NON-NLS
                 .map(mapper::apply)
                 .collect(Collectors.toList());
     }
@@ -559,7 +779,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                     + " LEFT JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id " //NON-NLS
                     + "                                AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SOLR_DOCUMENT_ID.getTypeID() //NON-NLS
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT.getTypeID() //NON-NLS
-                    + (showRejected ? "" : "  AND blackboard_artifacts.review_status_id != " + BlackboardArtifact.ReviewStatus.REJECTED.getID()) //NON-NLS
+                    + getRejectedArtifactFilterClause()
                     + " GROUP BY blackboard_artifacts.obj_id, solr_document_id " //NON-NLS
                     + " ORDER BY hits DESC ";  //NON-NLS
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
@@ -581,7 +801,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
         @Override
         protected Node createNodeForKey(FileWithCCN key) {
-            //add all account artifacts for the file and the file itself to th elookup
+            //add all account artifacts for the file and the file itself to the lookup
             try {
                 List<Object> lookupContents = new ArrayList<>();
                 for (long artId : key.artifactIDS) {
@@ -628,7 +848,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             this.fileKey = key;
             this.fileName = (key.getSolrDocmentID() == null)
                     ? content.getName()
-                    : Bundle.Accounts_FileWithCCNNode_unallocatedSpaceFile_displayName(content.getName(), StringUtils.substringAfter(key.getSolrDocmentID(), "_"));
+                    : Bundle.Accounts_FileWithCCNNode_unallocatedSpaceFile_displayName(content.getName(), StringUtils.substringAfter(key.getSolrDocmentID(), "_")); //NON-NLS
             setName(fileName);
             setDisplayName(fileName);
         }
@@ -670,7 +890,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                     Bundle.Accounts_FileWithCCNNode_noDescription(),
                     fileKey.getStatuses().stream()
                     .map(BlackboardArtifact.ReviewStatus::getDisplayName)
-                    .collect(Collectors.joining(", "))));
+                    .collect(Collectors.joining(", ")))); //NON-NLS
 
             return s;
         }
@@ -688,41 +908,17 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             arrayList.add(new RejectAccounts(getLookup().lookupAll(BlackboardArtifact.class)));
             return arrayList.toArray(new Action[arrayList.size()]);
         }
-
     }
 
-    /**
-     * Node that represents a BIN (Bank Identification Number)
-     */
     public class BINNode extends DisplayableItemNode implements Observer {
 
-        private final BINInfo bin;
+        private final BinResult bin;
         private final AccountFactory accountFactory;
-        private final IINInfo iinRange;
-        private String brand;
-        private String city;
-        private String bankName;
-        private String phoneNumber;
-        private String url;
-        private String country;
-        private String scheme;
-        private String cardType;
 
-        private BINNode(BINInfo bin) {
+        private BINNode(BinResult bin) {
             super(Children.LEAF);
             this.bin = bin;
-            iinRange = getIINInfo(bin.getBIN());
 
-            if (iinRange != null) {
-                cardType = iinRange.getCardType();
-                scheme = iinRange.getScheme();
-                brand = iinRange.getBrand();
-                city = iinRange.getBankCity();
-                bankName = iinRange.getBankName();
-                phoneNumber = iinRange.getBankPhoneNumber();
-                url = iinRange.getBankURL();
-                country = iinRange.getCountry();
-            }
             accountFactory = new AccountFactory(bin);
             setChildren(Children.create(accountFactory, true));
             setName(bin.toString());
@@ -739,7 +935,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         private void updateDisplayName() {
             ArrayList<Long> keys = new ArrayList<>();
             accountFactory.createKeys(keys);
-            setDisplayName(bin.getBIN().toString() + " (" + keys.size() + ")");
+            setDisplayName(bin.getBIN().toString() + " (" + keys.size() + ")"); //NON-NLS
         }
 
         @Override
@@ -752,68 +948,78 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             return v.visit(this);
         }
 
-        @Override
-        @NbBundle.Messages({
-            "Accounts.BINNode.binProperty.displayName=Bank Identifier Number",
-            "Accounts.BINNode.accountsProperty.displayName=Accounts",
-            "Accounts.BINNode.noDescription=no description"})
-        protected Sheet createSheet() {
-            Sheet s = super.createSheet();
+        private Sheet.Set getPropertySet(Sheet s) {
             Sheet.Set ss = s.get(Sheet.PROPERTIES);
             if (ss == null) {
                 ss = Sheet.createPropertiesSet();
                 s.put(ss);
             }
+            return ss;
+        }
 
-            ss.put(new NodeProperty<>(Bundle.Accounts_BINNode_binProperty_displayName(),
+        @Override
+        @NbBundle.Messages({
+            "Accounts.BINNode.binProperty.displayName=Bank Identifier Number",
+            "Accounts.BINNode.accountsProperty.displayName=Accounts",
+            "Accounts.BINNode.cardTypeProperty.displayName=Payment Card Type",
+            "Accounts.BINNode.schemeProperty.displayName=Credit Card Scheme",
+            "Accounts.BINNode.brandProperty.displayName=Brand",
+            "Accounts.BINNode.bankProperty.displayName=Bank",
+            "Accounts.BINNode.bankCityProperty.displayName=Bank City",
+            "Accounts.BINNode.bankCountryProperty.displayName=Bank Country",
+            "Accounts.BINNode.bankPhoneProperty.displayName=Bank Phone #",
+            "Accounts.BINNode.bankURLProperty.displayName=Bank URL",
+            "Accounts.BINNode.noDescription=no description"})
+        protected Sheet createSheet() {
+            Sheet sheet = super.createSheet();
+            Sheet.Set properties = getPropertySet(sheet);
+
+            properties.put(new NodeProperty<>(Bundle.Accounts_BINNode_binProperty_displayName(),
                     Bundle.Accounts_BINNode_binProperty_displayName(),
                     Bundle.Accounts_BINNode_noDescription(),
                     bin.getBIN()));
-            ss.put(new NodeProperty<>(Bundle.Accounts_BINNode_accountsProperty_displayName(),
-                    Bundle.Accounts_BINNode_accountsProperty_displayName(), Bundle.Accounts_BINNode_noDescription(),
-                    bin.getCount()));
-            ss.put(new NodeProperty<>(Bundle.Accounts_BINNode_accountsProperty_displayName(),
-                    Bundle.Accounts_BINNode_accountsProperty_displayName(), Bundle.Accounts_BINNode_noDescription(),
-                    bin.getCount()));
-            ss.put(new NodeProperty<>(Bundle.Accounts_BINNode_accountsProperty_displayName(),
+            properties.put(new NodeProperty<>(Bundle.Accounts_BINNode_accountsProperty_displayName(),
                     Bundle.Accounts_BINNode_accountsProperty_displayName(), Bundle.Accounts_BINNode_noDescription(),
                     bin.getCount()));
 
-            if (StringUtils.isNotBlank(cardType)) {
-                ss.put(new NodeProperty<>("Payment Card Type", "Payment Card Type", Bundle.Accounts_BINNode_noDescription(), cardType));
+            //add optional properties if they are available
+            if (bin.hasDetails()) {
+                bin.getCardType().ifPresent(cardType -> properties.put(new NodeProperty<>(Bundle.Accounts_BINNode_cardTypeProperty_displayName(),
+                        Bundle.Accounts_BINNode_cardTypeProperty_displayName(), Bundle.Accounts_BINNode_noDescription(),
+                        cardType)));
+                bin.getScheme().ifPresent(scheme -> properties.put(new NodeProperty<>(Bundle.Accounts_BINNode_schemeProperty_displayName(),
+                        Bundle.Accounts_BINNode_schemeProperty_displayName(), Bundle.Accounts_BINNode_noDescription(),
+                        scheme)));
+                bin.getBrand().ifPresent(brand -> properties.put(new NodeProperty<>(Bundle.Accounts_BINNode_brandProperty_displayName(),
+                        Bundle.Accounts_BINNode_brandProperty_displayName(), Bundle.Accounts_BINNode_noDescription(),
+                        brand)));
+                bin.getBankName().ifPresent(bankName -> properties.put(new NodeProperty<>(Bundle.Accounts_BINNode_bankProperty_displayName(),
+                        Bundle.Accounts_BINNode_bankProperty_displayName(), Bundle.Accounts_BINNode_noDescription(),
+                        bankName)));
+                bin.getBankCity().ifPresent(bankCity -> properties.put(new NodeProperty<>(Bundle.Accounts_BINNode_bankCityProperty_displayName(),
+                        Bundle.Accounts_BINNode_bankCityProperty_displayName(), Bundle.Accounts_BINNode_noDescription(),
+                        bankCity)));
+                bin.getCountry().ifPresent(country -> properties.put(new NodeProperty<>(Bundle.Accounts_BINNode_bankCountryProperty_displayName(),
+                        Bundle.Accounts_BINNode_bankCountryProperty_displayName(), Bundle.Accounts_BINNode_noDescription(),
+                        country)));
+                bin.getBankPhoneNumber().ifPresent(phoneNumber -> properties.put(new NodeProperty<>(Bundle.Accounts_BINNode_bankPhoneProperty_displayName(),
+                        Bundle.Accounts_BINNode_bankPhoneProperty_displayName(), Bundle.Accounts_BINNode_noDescription(),
+                        phoneNumber)));
+                bin.getBankURL().ifPresent(url -> properties.put(new NodeProperty<>(Bundle.Accounts_BINNode_bankURLProperty_displayName(),
+                        Bundle.Accounts_BINNode_bankURLProperty_displayName(), Bundle.Accounts_BINNode_noDescription(),
+                        url)));
             }
-            if (StringUtils.isNotBlank(scheme)) {
-                ss.put(new NodeProperty<>("Credit Card Scheme", "Credit Card Scheme", Bundle.Accounts_BINNode_noDescription(), scheme));
-            }
-            if (StringUtils.isNotBlank(brand)) {
-                ss.put(new NodeProperty<>("Brand", "Brand", Bundle.Accounts_BINNode_noDescription(), brand));
-            }
-            if (StringUtils.isNotBlank(bankName)) {
-                ss.put(new NodeProperty<>("Bank", "Bank", Bundle.Accounts_BINNode_noDescription(), bankName));
-            }
-            if (StringUtils.isNotBlank(city)) {
-                ss.put(new NodeProperty<>("Bank City", "Bank City", Bundle.Accounts_BINNode_noDescription(), city));
-            }
-            if (StringUtils.isNotBlank(country)) {
-                ss.put(new NodeProperty<>("Bank Country", "Bank Country", Bundle.Accounts_BINNode_noDescription(), country));
-            }
-            if (StringUtils.isNotBlank(phoneNumber)) {
-                ss.put(new NodeProperty<>("Bank Phone #", "Bank Phone #", Bundle.Accounts_BINNode_noDescription(), phoneNumber));
-            }
-            if (StringUtils.isNotBlank(url)) {
-                ss.put(new NodeProperty<>("Bank URL", "Bank URL", Bundle.Accounts_BINNode_noDescription(), url));
-            }
-            return s;
+            return sheet;
         }
     }
 
     /**
      * Factory that generates the children of the ByBin node.
      */
-    private class BINFactory extends ObservingChildFactory<BINInfo> {
+    private class BINFactory extends ObservingChildFactory<BinResult> {
 
         @Override
-        protected boolean createKeys(List<BINInfo> list) {
+        protected boolean createKeys(List<BinResult> list) {
             String query
                     = "SELECT SUBSTR(blackboard_attributes.value_text,1,8) AS BIN, " //NON-NLS
                     + "     COUNT(blackboard_artifacts.artifact_id) AS count " //NON-NLS
@@ -821,13 +1027,13 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                     + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id" //NON-NLS
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER.getTypeID() //NON-NLS
-                    + (showRejected ? "" : "     AND blackboard_artifacts.review_status_id != " + BlackboardArtifact.ReviewStatus.REJECTED.getID()) //NON-NLS
+                    + getRejectedArtifactFilterClause()
                     + " GROUP BY BIN " //NON-NLS
                     + " ORDER BY BIN "; //NON-NLS
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query)) {
                 ResultSet resultSet = results.getResultSet();
                 while (resultSet.next()) {
-                    list.add(new BINInfo(Integer.valueOf(resultSet.getString("BIN")), //NON-NLS
+                    list.add(new BinResult(Integer.valueOf(resultSet.getString("BIN")), //NON-NLS
                             resultSet.getLong("count"))); //NON-NLS
                 }
             } catch (TskCoreException | SQLException ex) {
@@ -838,26 +1044,28 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         }
 
         @Override
-        protected Node createNodeForKey(BINInfo key) {
+        protected Node createNodeForKey(BinResult key) {
             return new BINNode(key);
         }
     }
 
     /**
-     * Data model item to back the BINNodes in the tree. Has basic info about a
-     * BIN.
+     * Data model item to back the BINNodes in the tree. Has the number of
+     * accounts found with the BIN.
      */
-    private class BINInfo {
+    private class BinResult implements IINInfo {
 
         private final Integer bin;
         /**
          * The number of accounts with this BIN
          */
         private final Long count;
+        private final IINInfo iinInfo;
 
-        private BINInfo(Integer bin, Long count) {
+        private BinResult(Integer bin, Long count) {
             this.bin = bin;
             this.count = count;
+            iinInfo = getIINInfo(bin);
         }
 
         public Integer getBIN() {
@@ -867,6 +1075,55 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         public Long getCount() {
             return count;
         }
+
+        boolean hasDetails() {
+            return iinInfo != null;
+        }
+
+        @Override
+        public Optional<Integer> getNumberLength() {
+            return iinInfo.getNumberLength();
+        }
+
+        @Override
+        public Optional<String> getBankCity() {
+            return iinInfo.getBankCity();
+        }
+
+        @Override
+        public Optional<String> getBankName() {
+            return iinInfo.getBankName();
+        }
+
+        @Override
+        public Optional<String> getBankPhoneNumber() {
+            return iinInfo.getBankPhoneNumber();
+        }
+
+        @Override
+        public Optional<String> getBankURL() {
+            return iinInfo.getBankURL();
+        }
+
+        @Override
+        public Optional<String> getBrand() {
+            return iinInfo.getBrand();
+        }
+
+        @Override
+        public Optional<String> getCardType() {
+            return iinInfo.getCardType();
+        }
+
+        @Override
+        public Optional<String> getCountry() {
+            return iinInfo.getCountry();
+        }
+
+        @Override
+        public Optional<String> getScheme() {
+            return iinInfo.getScheme();
+        }
     }
 
     /**
@@ -874,9 +1131,9 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
      */
     private class AccountFactory extends ObservingChildFactory<Long> {
 
-        private final BINInfo bin;
+        private final BinResult bin;
 
-        private AccountFactory(BINInfo bin) {
+        private AccountFactory(BinResult bin) {
             this.bin = bin;
         }
 
@@ -889,7 +1146,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.value_text LIKE \"" + bin.getBIN() + "%\" " //NON-NLS
-                    + (showRejected ? "" : "     AND blackboard_artifacts.review_status_id != " + BlackboardArtifact.ReviewStatus.REJECTED.getID()) //NON-NLS
+                    + getRejectedArtifactFilterClause()
                     + " ORDER BY blackboard_attributes.value_text"; //NON-NLS
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
                     ResultSet rs = results.getResultSet();) {
@@ -939,18 +1196,32 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
         @Override
         protected Sheet createSheet() {
-            Sheet sheet = super.createSheet(); //To change body of generated methods, choose Tools | Templates.
-            Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
-            if (sheetSet == null) {
-                sheetSet = Sheet.createPropertiesSet();
-                sheet.put(sheetSet);
+            Sheet sheet = super.createSheet();
+            Sheet.Set properties = sheet.get(Sheet.PROPERTIES);
+            if (properties == null) {
+                properties = Sheet.createPropertiesSet();
+                sheet.put(properties);
             }
-            sheetSet.put(new NodeProperty<>(Bundle.Accounts_FileWithCCNNode_statusProperty_displayName(),
+            properties.put(new NodeProperty<>(Bundle.Accounts_FileWithCCNNode_statusProperty_displayName(),
                     Bundle.Accounts_FileWithCCNNode_statusProperty_displayName(),
                     Bundle.Accounts_FileWithCCNNode_noDescription(),
                     artifact.getReviewStatus().getDisplayName()));
 
             return sheet;
+        }
+    }
+
+    final class ToggleShowRejected extends AbstractAction {
+
+        @NbBundle.Messages("ToggleShowRejected.name=Show Rejcted Results")
+        ToggleShowRejected() {
+            super(Bundle.ToggleShowRejected_name());
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            showRejected = !showRejected;
+            update();
         }
     }
 
@@ -999,166 +1270,4 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             }
         }
     }
-
-    /**
-     * Details of a (range of) Issuer/Bank Identifiaction Number(s) * (IIN/BIN)
-     * used by a bank.
-     */
-    static public class IINInfo {
-
-        private final int IINStart; //start of IIN range, 8 digits
-        private final int IINEnd; // end (incluse ) of IIN rnage, 8 digits
-        private final Integer numberLength; // the length of accounts numbers with this IIN, currently unused
-
-        /**
-         * AMEX, VISA, MASTERCARD, DINERS, DISCOVER, UNIONPAY
-         */
-        private final String scheme;
-        private final String brand;
-
-        /**
-         * DEBIT, CREDIT
-         */
-        private final String cardType;
-        private final String country;
-        private final String bankName;
-        private final String bankCity;
-        private final String bankURL;
-        private final String bankPhoneNumber;
-
-        /**
-         * Constructor
-         *
-         * @param IIN_start     the first IIN in the range, must be 8 digits
-         * @param IIN_end       the last(inclusive) IIN in the range, must be 8
-         *                      digits
-         * @param number_length the length of account numbers in this IIN range
-         * @param scheme        amex/visa/mastercard/etc
-         * @param brand         the brand of this IIN range
-         * @param type          credit vs debit
-         * @param country       the country of the issuer
-         * @param bank_name     the name of the issuer
-         * @param bank_url      the url of the issuer
-         * @param bank_phone    the phone number of the issuer
-         * @param bank_city     the city of the issuer
-         */
-        private IINInfo(int IIN_start, int IIN_end, Integer number_length, String scheme, String brand, String type, String country, String bank_name, String bank_url, String bank_phone, String bank_city) {
-            this.IINStart = IIN_start;
-            this.IINEnd = IIN_end;
-            this.numberLength = number_length;
-            this.scheme = scheme;
-            this.brand = brand;
-            this.cardType = type;
-            this.country = country;
-            this.bankName = bank_name;
-            this.bankURL = bank_url;
-            this.bankPhoneNumber = bank_phone;
-            this.bankCity = bank_city;
-        }
-
-        /**
-         * Get the first IIN in this range
-         *
-         * @return the first IIN in this range.
-         */
-        int getIINstart() {
-            return IINStart;
-        }
-
-        /**
-         * Get the last (inclusive) IIN in this range.
-         *
-         * @return the last (inclusive) IIN in this range.
-         */
-        int getIINend() {
-            return IINEnd;
-        }
-
-        /**
-         * Get the length of account numbers in this IIN range.
-         *
-         * NOTE: the length is currently unused, and not in the data file for
-         * any ranges. It could be quite helpfull for validation...
-         *
-         * @return the length of account numbers in this IIN range. Or an empty
-         *         Optional if the length is unknown.
-         *
-         */
-        public Optional<Integer> getNumberLength() {
-            return Optional.ofNullable(numberLength);
-        }
-
-        /**
-         * Get the scheme this IIN range uses to, eg amex,visa,mastercard, etc
-         *
-         * @return the scheme this IIN range uses.
-         */
-        public String getScheme() {
-            return scheme;
-        }
-
-        /**
-         * Get the brand of this IIN range.
-         *
-         * @return the brand of this IIN range.
-         */
-        public String getBrand() {
-            return brand;
-        }
-
-        /**
-         * Get the type of card (credit vs debit) for this IIN range.
-         *
-         * @return the type of cards in this IIN range.
-         */
-        public String getCardType() {
-            return cardType;
-        }
-
-        /**
-         * Get the country of the issuer.
-         *
-         * @return the country of the issuer.
-         */
-        public String getCountry() {
-            return country;
-        }
-
-        /**
-         * Get the name of the issuer.
-         *
-         * @return the name of the issuer.
-         */
-        public String getBankName() {
-            return bankName;
-        }
-
-        /**
-         * Get the URL of the issuer.
-         *
-         * @return the URL of the issuer.
-         */
-        public String getBankURL() {
-            return bankURL;
-        }
-
-        /**
-         * Get the phone number of the issuer.
-         *
-         * @return the phone number of the issuer.
-         */
-        public String getBankPhoneNumber() {
-            return bankPhoneNumber;
-        }
-
-        /**
-         * Get the city of the issuer.
-         *
-         * @return the city of the issuer.
-         */
-        public String getBankCity() {
-            return bankCity;
-        }
-    }
-
 }

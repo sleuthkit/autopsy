@@ -32,8 +32,7 @@
              ignoreerrors="true"
              verbose="true"/>
     </target>
- 
- 
+
     <target name="init" depends="basic-init,files-init,build-init,-javac-init">
         <antcall target="download-binlist" />   
 

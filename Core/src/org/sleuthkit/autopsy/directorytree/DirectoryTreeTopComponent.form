@@ -129,9 +129,6 @@
           <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="DirectoryTreeTopComponent.showRejectedCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
-      <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="showRejectedCheckBoxActionPerformed"/>
-      </Events>
     </Component>
   </SubComponents>
 </Form>

@@ -208,33 +208,26 @@ final class TermComponentQuery implements KeywordSearchQuery {
                 String ccn = newArtifact.getAttribute(ACCOUNT_NUMBER_TYPE).getValueString();
                 final int iin = Integer.parseInt(ccn.substring(0, 8));
 
-                Accounts.IINInfo iinRange = Accounts.getIINInfo(iin);
+                Accounts.IINInfo iinInfo = Accounts.getIINInfo(iin);
 
-                if (StringUtils.isNotBlank(iinRange.getScheme())) {
-                    newArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_CREDIT_CARD_SCHEME, MODULE_NAME, iinRange.getScheme()));
+                if (iinInfo != null) {
+                    iinInfo.getScheme().ifPresent(scheme
+                            -> addAttributeSafe(newArtifact, ATTRIBUTE_TYPE.TSK_CREDIT_CARD_SCHEME, scheme));
+                    iinInfo.getCardType().ifPresent(cardType
+                            -> addAttributeSafe(newArtifact, ATTRIBUTE_TYPE.TSK_PAYMENT_CARD_TYPE, cardType));
+                    iinInfo.getBrand().ifPresent(brand
+                            -> addAttributeSafe(newArtifact, ATTRIBUTE_TYPE.TSK_BRAND, brand));
+                    iinInfo.getBankName().ifPresent(bankName
+                            -> addAttributeSafe(newArtifact, ATTRIBUTE_TYPE.TSK_BANK_NAME, bankName));
+                    iinInfo.getBankPhoneNumber().ifPresent(phoneNumber
+                            -> addAttributeSafe(newArtifact, ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, phoneNumber));
+                    iinInfo.getBankURL().ifPresent(url
+                            -> addAttributeSafe(newArtifact, ATTRIBUTE_TYPE.TSK_URL, url));
+                    iinInfo.getCountry().ifPresent(country
+                            -> addAttributeSafe(newArtifact, ATTRIBUTE_TYPE.TSK_COUNTRY, country));
+                    iinInfo.getBankCity().ifPresent(city
+                            -> addAttributeSafe(newArtifact, ATTRIBUTE_TYPE.TSK_CITY, city));
                 }
-                if (StringUtils.isNotBlank(iinRange.getCardType())) {
-                    newArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PAYMENT_CARD_TYPE, MODULE_NAME, iinRange.getCardType()));
-                }
-                if (StringUtils.isNotBlank(iinRange.getBrand())) {
-                    newArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_BRAND, MODULE_NAME, iinRange.getBrand()));
-                }
-                if (StringUtils.isNotBlank(iinRange.getBankName())) {
-                    newArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_BANK_NAME, MODULE_NAME, iinRange.getBankName()));
-                }
-                if (StringUtils.isNotBlank(iinRange.getBankPhoneNumber())) {
-                    newArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, MODULE_NAME, iinRange.getBankPhoneNumber()));
-                }
-                if (StringUtils.isNotBlank(iinRange.getBankURL())) {
-                    newArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL, MODULE_NAME, iinRange.getBankURL()));
-                }
-                if (StringUtils.isNotBlank(iinRange.getCountry())) {
-                    newArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNTRY, MODULE_NAME, iinRange.getCountry()));
-                }
-                if (StringUtils.isNotBlank(iinRange.getBankCity())) {
-                    newArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_CITY, MODULE_NAME, iinRange.getBankCity()));
-                }
-
             } else {
                 //make keyword hit artifact
                 newArtifact = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
@@ -270,6 +263,22 @@ final class TermComponentQuery implements KeywordSearchQuery {
         } catch (TskCoreException e) {
             LOGGER.log(Level.SEVERE, "Error adding bb attributes for terms search artifact", e); //NON-NLS
             return null;
+        }
+    }
+
+    /**
+     * Add an attribute of the given type and value to the given artifact,
+     * catching and logging any exceptions.
+     *
+     * @param newArtifact    The artifact to add an attribute to.
+     * @param AtributeType   The type of attribute to add.
+     * @param attributeValue The value of the attribute to add.
+     */
+    static private void addAttributeSafe(BlackboardArtifact newArtifact, ATTRIBUTE_TYPE AtributeType, String attributeValue) {
+        try {
+            newArtifact.addAttribute(new BlackboardAttribute(AtributeType, MODULE_NAME, attributeValue));
+        } catch (IllegalArgumentException | TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Error adding bb attribute to artifact", ex); //NON-NLS
         }
     }
 
