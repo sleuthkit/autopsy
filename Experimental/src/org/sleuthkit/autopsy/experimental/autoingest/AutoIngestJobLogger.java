@@ -33,10 +33,7 @@ import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationServic
 import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService.Lock;
 import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService.CoordinationServiceException;
 import java.util.concurrent.TimeUnit;
-import java.util.List;
 import javax.annotation.concurrent.Immutable;
-import org.sleuthkit.autopsy.ingest.IngestModuleError;
-import org.sleuthkit.autopsy.ingest.IngestManager.IngestManagerException;
 
 /**
  * A logger for the processing of an auto ingest job by an auto ingest node. An
@@ -170,8 +167,7 @@ final class AutoIngestJobLogger {
     }
 
     /**
-     * Logs a failure to identify an image data source as either a drive or
-     * phone image.
+     * Logs a failure to identify data source processor for the data source.
      *
      * @throws AutoIngestJobLoggerException if there is an error writing the log
      *                                      message.
@@ -179,8 +175,8 @@ final class AutoIngestJobLogger {
      *                                      to acquire an exclusive lock on the
      *                                      log file.
      */
-    void logFailedToIdentifyImageDataSource() throws AutoIngestJobLoggerException, InterruptedException {
-        log(MessageCategory.ERROR, String.format("Failed to identifying data source as drive or phone image"));
+    void logFailedToIdentifyDataSource() throws AutoIngestJobLoggerException, InterruptedException {
+        log(MessageCategory.ERROR, String.format("Failed to identify data source"));
     }
 
     /**

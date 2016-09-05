@@ -2118,7 +2118,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             }
             String deviceId = manifest.getDeviceId();
             return new DataSource(deviceId, dataSourcePath);
-
         }
 
         /**
@@ -2170,7 +2169,9 @@ public final class AutoIngestManager extends Observable implements PropertyChang
 
                 // did we find a data source processor that can process the data source
                 if (selectedProcessor == null) {
-                    //ELTODO jobLogger.logDataSourceTypeIdError("Unsupported data source " + dataSource.getPath() + " for " + manifestPath);
+                    AutoIngestAlertFile.create(caseDirectoryPath); // Do this first, it is more important than the case log
+                    currentJob.setErrorsOccurred(true);
+                    jobLogger.logFailedToIdentifyDataSource();
                     SYS_LOGGER.log(Level.SEVERE, "Unsupported data source {0} for {1}", new Object[]{dataSource.getPath(), manifestPath});  // NON-NLS
                     return;
                 }
