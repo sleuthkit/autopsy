@@ -39,6 +39,7 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.sql.Statement;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
@@ -48,10 +49,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -65,6 +69,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import javax.annotation.concurrent.GuardedBy;
+import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.ThreadSafe;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
@@ -99,9 +104,13 @@ import org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.Processing
 import static org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.ProcessingStatus.PENDING;
 import static org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.ProcessingStatus.PROCESSING;
 import static org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.ProcessingStatus.COMPLETED;
-import static org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.ProcessingStatus.DELETE;
+//import static org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.ProcessingStatus.DELETE;
 import org.sleuthkit.autopsy.corecomponentinterfaces.AutomatedIngestDataSourceProcessor;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestAlertFile.AutoIngestAlertFileException;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobLogger.AutoIngestJobLoggerException;
 import org.sleuthkit.autopsy.experimental.configuration.SharedConfiguration.SharedConfigurationException;
+import org.sleuthkit.autopsy.ingest.IngestJob.CancellationReason;
 
 /**
  * An auto ingest manager is responsible for processing auto ingest jobs defined
@@ -237,7 +246,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
      *
      * @return The state.
      */
-        State getState() {
+    State getState() {
         return state;
     }
 
@@ -248,8 +257,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
      */
     ErrorState getErrorState() {
         return errorState;
-    }
-        }
     }
 
     /**
@@ -654,7 +661,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
 
     /**
      * Deletes a case. This includes deleting the case directory, the text
-     * index, and the case database. This does not include the directories 
+     * index, and the case database. This does not include the directories
      * containing the data sources and their manifests.
      *
      * @param caseName          The name of the case.
@@ -721,18 +728,18 @@ public final class AutoIngestManager extends Observable implements PropertyChang
 
                 /*
                  * Mark each job (manifest file) as deleted
-                */
+                 */
                 for (Path manifestPath : manifestPaths) {
-                    try{
+                    try {
                         ManifestNodeData nodeData = new ManifestNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestPath.toString()));
                         nodeData.setStatus(ManifestNodeData.ProcessingStatus.DELETED);
                         coordinationService.setNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestPath.toString(), nodeData.toArray());
-                    } catch (InterruptedException | CoordinationServiceException ex){
+                    } catch (InterruptedException | CoordinationServiceException ex) {
                         SYS_LOGGER.log(Level.SEVERE, String.format("Error attempting to set delete flag on manifest data for %s for case %s", manifestPath, caseName), ex);
                         return CaseDeletionResult.PARTIALLY_DELETED;
                     }
                 }
-                
+
                 /*
                  * Try to unload/delete the Solr core from the Solr server. Do
                  * this before deleting the case directory because the index
@@ -910,6 +917,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             List<AutoIngestJob> runningJobs = new ArrayList<>();
             getJobs(null, runningJobs, null);
             return runningJobs;
+
         }
     }
 
@@ -1198,7 +1206,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                             int numberOfCrashes = nodeData.getNumberOfCrashes();
                             ++numberOfCrashes;
                             nodeData.setNumberOfCrashes(numberOfCrashes);
-                            if (numberOfCrashes <= VikingUserPreferences.getMaxNumTimesToProcessImage()) {
+                            if (numberOfCrashes <= AutoIngestUserPreferences.getMaxNumTimesToProcessImage()) {
                                 nodeData.setStatus(PENDING);
                                 Path caseDirectoryPath = PathUtils.findCaseDirectory(rootOutputDirectory, manifest.getCaseName());
                                 newPendingJobsList.add(new AutoIngestJob(manifest, caseDirectoryPath, nodeData.getPriority(), LOCAL_HOST_NAME, AutoIngestJob.Stage.PENDING, new Date(0), true));
@@ -1410,7 +1418,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                         } else if (ex instanceof AutoIngestJobLoggerException) {
                             errorState = ErrorState.JOB_LOGGER_ERROR;
                         } else if (ex instanceof InterruptedException) {
-                            throw (InterruptedException)ex;
+                            throw (InterruptedException) ex;
                         } else {
                             errorState = ErrorState.UNEXPECTED_EXCEPTION;
                         }
@@ -2074,7 +2082,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                  * Sleep to allow ingest event subscribers to do their event
                  * handling.
                  */
-                Thread.sleep(VikingUserPreferences.getSecondsToSleepBetweenCases() * 1000); // RJCTODO: Change the setting description to be more generic
+                Thread.sleep(AutoIngestUserPreferences.getSecondsToSleepBetweenCases() * 1000); // RJCTODO: Change the setting description to be more generic
             }
 
             if (currentJob.isCancelled() || jobProcessingTaskFuture.isCancelled()) {
@@ -2169,7 +2177,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
 
             Manifest manifest = currentJob.getManifest();
             Path manifestPath = manifest.getFilePath();
-            LOGGER.log(Level.INFO, "Starting adding data source stage for {0} ", manifestPath);
+            SYS_LOGGER.log(Level.INFO, "Starting adding data source stage for {0} ", manifestPath);
             currentJob.setStage(AutoIngestJob.Stage.ADDING_DATA_SOURCE);
             Path caseDirectoryPath = currentJob.getCaseDirectoryPath();
             AutoIngestJobLogger jobLogger = new AutoIngestJobLogger(manifestPath, manifest.getDataSourceFileName(), caseDirectoryPath);
@@ -2197,9 +2205,9 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                 final UUID taskId = UUID.randomUUID();
                 try {
                     caseForJob.notifyAddingDataSource(taskId);
-                    
+
                     // lookup all AutomatedIngestDataSourceProcessors 
-                    Collection <? extends AutomatedIngestDataSourceProcessor> processorCandidates = Lookup.getDefault().lookupAll(AutomatedIngestDataSourceProcessor.class);
+                    Collection<? extends AutomatedIngestDataSourceProcessor> processorCandidates = Lookup.getDefault().lookupAll(AutomatedIngestDataSourceProcessor.class);
 
                     int selectedProcessorConfidence = 0;
                     for (AutomatedIngestDataSourceProcessor processor : processorCandidates) {
@@ -2207,31 +2215,31 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                         try {
                             confidence = processor.canProcess(dataSource.getPath());
                         } catch (AutomatedIngestDataSourceProcessor.AutomatedIngestDataSourceProcessorException ex) {
-                            LOGGER.log(Level.SEVERE, "Exception while determining whether data source processor {0} can process {1}", new Object[]{processor.getDataSourceType(), dataSource.getPath()});
+                            SYS_LOGGER.log(Level.SEVERE, "Exception while determining whether data source processor {0} can process {1}", new Object[]{processor.getDataSourceType(), dataSource.getPath()});
                             // ELTODO - should we auto-pause if one of DSP.canProcess() threw an exception? Probably so...
                             // On the other hand what if we simply weren't able to extract an archive or something?
                             pauseForSystemError();
                             return;
                         }
-                        if (confidence > selectedProcessorConfidence)  {
+                        if (confidence > selectedProcessorConfidence) {
                             selectedProcessor = processor;
                             selectedProcessorConfidence = confidence;
                         }
                     }
-                    
+
                     // did we find a data source processor that can process the data source
                     if (selectedProcessor == null) {
                         jobLogger.logDataSourceTypeIdError("Unsupported data source " + dataSource.getPath() + " for " + manifestPath);
-                        LOGGER.log(Level.SEVERE, "Unsupported data source {0} for {1}", new Object[]{dataSource.getPath(), manifestPath});  // NON-NLS
+                        SYS_LOGGER.log(Level.SEVERE, "Unsupported data source {0} for {1}", new Object[]{dataSource.getPath(), manifestPath});  // NON-NLS
                         return;
                     }
-                    
+
                     synchronized (ingestLock) {
-                        LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, selectedProcessor.getDataSourceType()});
+                        SYS_LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, selectedProcessor.getDataSourceType()});
                         try {
                             selectedProcessor.process(dataSource.getDeviceId(), dataSource.getPath(), progressMonitor, callBack);
                         } catch (AutomatedIngestDataSourceProcessor.AutomatedIngestDataSourceProcessorException ex) {
-                            LOGGER.log(Level.SEVERE, "Exception while processing {0} with data source processor {1}", new Object[]{dataSource.getPath(), selectedProcessor.getDataSourceType()});
+                            SYS_LOGGER.log(Level.SEVERE, "Exception while processing {0} with data source processor {1}", new Object[]{dataSource.getPath(), selectedProcessor.getDataSourceType()});
                             jobLogger.logDataSourceProcessorError(selectedProcessor.getDataSourceType(), ex.getMessage());
                             pauseForSystemError();
                             return;
@@ -2255,7 +2263,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                             case NONCRITICAL_ERRORS:
                                 jobLogger.logDataSourceAdded(imageType);
                                 for (String errorMessage : dataSource.getDataSourceProcessorErrorMessages()) {
-                                    LOGGER.log(Level.WARNING, "Non-critical error running data source processor for {0}: {1}", new Object[]{manifestPath, errorMessage});
+                                    SYS_LOGGER.log(Level.WARNING, "Non-critical error running data source processor for {0}: {1}", new Object[]{manifestPath, errorMessage});
                                 }
                                 for (String errorMessage : dataSource.getDataSourceProcessorErrorMessages()) {
                                     jobLogger.logDataSourceProcessorWarning(imageType, errorMessage);
@@ -2265,14 +2273,14 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                             case CRITICAL_ERRORS:
                                 jobLogger.logFailedToAddDataSource(imageType);
                                 for (String errorMessage : dataSource.getDataSourceProcessorErrorMessages()) {
-                                    LOGGER.log(Level.SEVERE, "Critical error running data source processor for {0}: {1}", new Object[]{manifestPath, errorMessage});
+                                    SYS_LOGGER.log(Level.SEVERE, "Critical error running data source processor for {0}: {1}", new Object[]{manifestPath, errorMessage});
                                 }
                                 for (String errorMessage : dataSource.getDataSourceProcessorErrorMessages()) {
                                     jobLogger.logDataSourceProcessorError(imageType, errorMessage);
                                 }
                                 break;
                             default:
-                                LOGGER.log(Level.SEVERE, "Unrecognized result code {0} running data source processor for {1}", new Object[]{resultCode, manifestPath});
+                                SYS_LOGGER.log(Level.SEVERE, "Unrecognized result code {0} running data source processor for {1}", new Object[]{resultCode, manifestPath});
                                 break;
                         }
 
@@ -2281,13 +2289,13 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                          * TODO (JIRA-1711): Use cancellation feature of data
                          * source processors that support cancellation.
                          */
-                        LOGGER.log(Level.WARNING, "Cancellation while waiting for data source processor for {0}", manifestPath);
+                        SYS_LOGGER.log(Level.WARNING, "Cancellation while waiting for data source processor for {0}", manifestPath);
                         jobLogger.logDataSourceProcessorCancelled(imageType);
                     }
                 }
 
             } finally {
-                LOGGER.log(Level.INFO, "Finished adding data source stage for {0}", manifestPath);
+                SYS_LOGGER.log(Level.INFO, "Finished adding data source stage for {0}", manifestPath);
             }
         }
 
@@ -2321,7 +2329,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             IngestManager.getInstance().addIngestJobEventListener(ingestJobEventListener);
             try {
                 synchronized (ingestLock) {
-                    IngestJobSettings ingestJobSettings = new IngestJobSettings(VikingUserPreferences.getAutoModeIngestModuleContextString());
+                    IngestJobSettings ingestJobSettings = new IngestJobSettings(AutoIngestUserPreferences.getAutoModeIngestModuleContextString());
                     List<String> settingsWarnings = ingestJobSettings.getWarnings();
                     if (settingsWarnings.isEmpty()) {
                         IngestJobStartResult ingestJobStartResult = IngestManager.getInstance().beginIngestJob(dataSource.getContent(), ingestJobSettings);
@@ -2815,29 +2823,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
         FAILED,
         PARTIALLY_DELETED,
         FULLY_DELETED
-    }
-
-    private static final class FileFilters {
-
-        private static final List<FileFilter> cellebriteLogicalReportFilters = CellebriteXMLProcessor.getFileFilterList();
-        private static final GeneralFilter zipFilter = new GeneralFilter(Arrays.asList(new String[]{".zip"}), "");
-        private static final List<FileFilter> archiveFilters = new ArrayList<>();
-
-        static {
-            archiveFilters.add(zipFilter);
-        }
-
-        private static boolean isAcceptedByFilter(File file, List<FileFilter> filters) {
-            for (FileFilter filter : filters) {
-                if (filter.accept(file)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        private FileFilters() {
-        }
     }
 
     @ThreadSafe
