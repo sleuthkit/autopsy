@@ -24,23 +24,23 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 /**
  * Event published when a case is deleted by the automated ingest manager.
  */
-public final class AutoIngestCaseDeletedEvent extends AutopsyEvent implements Serializable {
+@Immutable
+final class AutoIngestCaseDeletedEvent extends AutopsyEvent implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private final AutoIngestManager.CaseDeletionResult result;
+    private final String caseName;
     private final String nodeName;
 
     /**
      * Constructs an event that is published when a case is deleted by the
      * automated ingest manager.
      *
-     * @param result   The deletion result // RJCTODO: Get rid of logical
-     *                 deletion
+     * @param caseName The case name.
      * @param nodeName The host name of the node that deleted the case.
      */
-    public AutoIngestCaseDeletedEvent(AutoIngestManager.CaseDeletionResult result, String nodeName) {
+    AutoIngestCaseDeletedEvent(String caseName, String nodeName) {
         super(AutoIngestManager.Event.CASE_DELETED.toString(), null, null);
-        this.result = result;
+        this.caseName = caseName;
         this.nodeName = nodeName;
     }
 
@@ -49,8 +49,8 @@ public final class AutoIngestCaseDeletedEvent extends AutopsyEvent implements Se
      *
      * @return
      */
-    public String getNodeName() {
-        return nodeName;
+    String getCaseName() {
+        return caseName;
     }
 
     /**
@@ -58,8 +58,8 @@ public final class AutoIngestCaseDeletedEvent extends AutopsyEvent implements Se
      *
      * @return
      */
-    public AutoIngestManager.CaseDeletionResult getResult() {
-        return result;
+    String getNodeName() {
+        return nodeName;
     }
 
 }

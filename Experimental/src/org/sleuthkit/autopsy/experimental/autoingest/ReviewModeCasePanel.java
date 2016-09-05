@@ -61,8 +61,8 @@ public final class ReviewModeCasePanel extends JPanel {
     private static final int STATUS_COL_MIN_WIDTH = 55;
     private static final int STATUS_COL_MAX_WIDTH = 250;
     private static final int STATUS_COL_PREFERRED_WIDTH = 60;
-    private static final int MILLISECONDS_TO_WAIT_BEFORE_STARTING = 500;
-    private static final int MILLISECONDS_TO_WAIT_BETWEEN_UPDATES = 30000;
+    private static final int MILLISECONDS_TO_WAIT_BEFORE_STARTING = 500; // RJCTODO: Shorten name
+    private static final int MILLISECONDS_TO_WAIT_BETWEEN_UPDATES = 30000; // RJCTODO: Shorten name
     private ScheduledThreadPoolExecutor casesTableRefreshExecutor;
 
     /*
@@ -84,7 +84,7 @@ public final class ReviewModeCasePanel extends JPanel {
         CREATEDTIME,
         COMPLETEDTIME,
         STATUS_ICON,
-        OUTPUTFOLDER
+        OUTPUTFOLDER // RJCTODO: Change name
     }
     private final String[] columnNames = {CASE_HEADER, CREATEDTIME_HEADER, COMPLETEDTIME_HEADER, STATUS_ICON_HEADER, OUTPUT_FOLDER_HEADER};
     private DefaultTableModel caseTableModel;
@@ -325,7 +325,7 @@ public final class ReviewModeCasePanel extends JPanel {
                         autoIngestCase.getCaseName(),
                         autoIngestCase.getCreationDate(),
                         autoIngestCase.getLastAccessedDate(),
-                        autoIngestCase.getStatus(),
+                        (AutoIngestCase.CaseStatus.OK != autoIngestCase.getStatus()),
                         autoIngestCase.getCaseDirectoryPath().toString()});
                 }
             }

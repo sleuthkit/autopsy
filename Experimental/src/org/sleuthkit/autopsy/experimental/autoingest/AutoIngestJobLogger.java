@@ -28,7 +28,6 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Date;
-import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService.Lock;
@@ -59,6 +58,7 @@ final class AutoIngestJobLogger {
     private static final String DATE_FORMAT_STRING = "yyyy/MM/dd HH:mm:ss";
     private static final SimpleDateFormat logDateFormat = new SimpleDateFormat(DATE_FORMAT_STRING);
     private final Path manifestPath;
+    private final String manifestFileName;
     private final String dataSourceFileName;
     private final Path caseDirectoryPath;
     private final String hostName;
@@ -73,7 +73,7 @@ final class AutoIngestJobLogger {
          */
         INFO,
         /**
-         * Qualifies a log message about an unexpected event or condition during
+         * Qualifies a log message about an unexpected event or condtion during
          * automated ingest processing.
          */
         WARNING,
@@ -111,6 +111,7 @@ final class AutoIngestJobLogger {
      */
     AutoIngestJobLogger(Path manifestPath, String dataSourceFileName, Path caseDirectoryPath) {
         this.manifestPath = manifestPath;
+        manifestFileName = manifestPath.getFileName().toString();
         this.dataSourceFileName = dataSourceFileName;
         this.caseDirectoryPath = caseDirectoryPath;
         hostName = NetworkUtils.getLocalHostName();
@@ -119,151 +120,146 @@ final class AutoIngestJobLogger {
     /**
      * Logs the cancellation of an auto ingest job during processing.
      *
-     * @throws InterruptedException if interrupted while blocked waiting to
-     *                              acquire an exclusive lock on the log file.
+     * @throws AutoIngestJobLoggerException if there is an error writing the log
+     *                                      message.
+     * @throws InterruptedException         if interrupted while blocked waiting
+     *                                      to acquire an exclusive lock on the
+     *                                      log file.
      */
-    void logJobCancelled() throws InterruptedException {
+    void logJobCancelled() throws AutoIngestJobLoggerException, InterruptedException {
         log(MessageCategory.WARNING, "Auto ingest job cancelled during processing");
     }
 
     /**
      * Logs the presence of a manifest file without a matching data source.
      *
-     * @throws InterruptedException if interrupted while blocked waiting to
-     *                              acquire an exclusive lock on the log file.
+     * @throws AutoIngestJobLoggerException if there is an error writing the log
+     *                                      message.
+     * @throws InterruptedException         if interrupted while blocked waiting
+     *                                      to acquire an exclusive lock on the
+     *                                      log file.
      */
-    void logMissingDataSource() throws InterruptedException {
-        log(MessageCategory.ERROR, "Data source file not found"); // RJCTODO: Check for this
+    void logMissingDataSource() throws AutoIngestJobLoggerException, InterruptedException {
+        log(MessageCategory.ERROR, "Data source file not found");
     }
 
     /**
-     * Logs an error identifying the type of a data source.
+     * Logs a failure to extract an archived data source.
      *
-     * @param dataSource The data source.
-     * @param errorMessage The error.
-     *
-     * @throws InterruptedException if interrupted while blocked waiting to
-     *                              acquire an exclusive lock on the log file
-     *                              path.
+     * @throws AutoIngestJobLoggerException if there is an error writing the log
+     *                                      message.
+     * @throws InterruptedException         if interrupted while blocked waiting
+     *                                      to acquire an exclusive lock on the
+     *                                      log file.
      */
-    void logDataSourceTypeIdError(String errorMessage) throws InterruptedException {
-        log(MessageCategory.ERROR, String.format("Error identifying data source type: %s", errorMessage));
+    void logFailedToExtractDataSource() throws AutoIngestJobLoggerException, InterruptedException {
+        log(MessageCategory.ERROR, "Failed to extract data source from archive");
     }
 
     /**
-     * RJCTODO
+     * Logs a failure to parse a Cellebrite logical report data source.
      *
-     * @throws InterruptedException if interrupted while blocked waiting to
-     *                              acquire an exclusive lock on the log file.
+     * @throws AutoIngestJobLoggerException if there is an error writing the log
+     *                                      message.
+     * @throws InterruptedException         if interrupted while blocked waiting
+     *                                      to acquire an exclusive lock on the
+     *                                      log file.
      */
-    void logFailedToIdentifyDataSource() throws InterruptedException {
-        log(MessageCategory.ERROR, String.format("Failed to identifying data source type, cannot ingest"));
+    void logFailedToParseLogicalReportDataSource() throws AutoIngestJobLoggerException, InterruptedException {
+        log(MessageCategory.ERROR, "Failed to parse Cellebrite logical report data source");
     }
 
     /**
-     * RJCTODO
+     * Logs a failure to identify an image data source as either a drive or
+     * phone image.
      *
-     * @param dataSourceType
-     *
-     * @throws InterruptedException if interrupted while blocked waiting to
-     *                              acquire an exclusive lock on the log file.
+     * @throws AutoIngestJobLoggerException if there is an error writing the log
+     *                                      message.
+     * @throws InterruptedException         if interrupted while blocked waiting
+     *                                      to acquire an exclusive lock on the
+     *                                      log file.
      */
-    void logDataSourceTypeId(String dataSourceType) throws InterruptedException {
-        log(MessageCategory.INFO, String.format("Identified data source as %s", dataSourceType));
+    void logFailedToIdentifyImageDataSource() throws AutoIngestJobLoggerException, InterruptedException {
+        log(MessageCategory.ERROR, String.format("Failed to identifying data source as drive or phone image"));
     }
 
     /**
      * Logs cancellation of the addition of a data source to the case database.
      *
-     * @param dataSourceType The data source type.
-     *
-     * @throws InterruptedException if interrupted while blocked waiting to
-     *                              acquire an exclusive lock on the log file.
+     * @throws AutoIngestJobLoggerException if there is an error writing the log
+     *                                      message.
+     * @throws InterruptedException         if interrupted while blocked waiting
+     *                                      to acquire an exclusive lock on the
+     *                                      log file.
      */
-    void logDataSourceProcessorCancelled(String dataSourceType) throws InterruptedException { // RJCTODO: Is this used now?
-        log(MessageCategory.WARNING, String.format("Cancelled adding data source to case as %s", dataSourceType));
+    void logDataSourceProcessorCancelled() throws AutoIngestJobLoggerException, InterruptedException { // RJCTODO: Is this used now?
+        log(MessageCategory.WARNING, "Cancelled adding data source to case");
     }
 
     /**
      * Logs the addition of a data source to the case database.
      *
-     * @param dataSourceType The data source type.
-     *
-     * @throws InterruptedException if interrupted while blocked waiting to
-     *                              acquire an exclusive lock on the log file.
+     * @throws AutoIngestJobLoggerException if there is an error writing the log
+     *                                      message.
+     * @throws InterruptedException         if interrupted while blocked waiting
+     *                                      to acquire an exclusive lock on the
+     *                                      log file.
      */
-    void logDataSourceAdded(String dataSourceType) throws InterruptedException {
-        log(MessageCategory.INFO, String.format("Added data source to case as %s", dataSourceType));
+    void logDataSourceAdded() throws AutoIngestJobLoggerException, InterruptedException {
+        log(MessageCategory.INFO, "Added data source to case");
     }
 
     /**
-     * Logs a critical error reported by a data source processor when adding a
-     * data source to the case database.
+     * Logs an failure adding a data source to the case database.
      *
-     * @param dataSourceType The data source type.
-     * @param errorMessage   The error message.
-     *
-     * @throws InterruptedException if interrupted while blocked waiting to
-     *                              acquire an exclusive lock on the log file.
+     * @throws AutoIngestJobLoggerException if there is an error writing the log
+     *                                      message.
+     * @throws InterruptedException         if interrupted while blocked waiting
+     *                                      to acquire an exclusive lock on the
+     *                                      log file.
      */
-    void logDataSourceProcessorError(String dataSourceType, String errorMessage) throws InterruptedException {
-        log(MessageCategory.ERROR, String.format("Critical error adding data source to case as %s: %s", dataSourceType, errorMessage));
+    void logFailedToAddDataSource() throws AutoIngestJobLoggerException, InterruptedException {
+        log(MessageCategory.ERROR, "Failed to add data source to case");
     }
 
     /**
-     * Logs a non-critical error reported by a data source processor when adding
-     * a data source to the case database.
+     * Logs failure of a data source to produce content.
      *
-     * @param dataSourceType The data source type.
-     * @param errorMessage   The error message.
-     *
-     * @throws InterruptedException if interrupted while blocked waiting to
-     *                              acquire an exclusive lock on the log file.
+     * @throws AutoIngestJobLoggerException if there is an error writing the log
+     *                                      message.
+     * @throws InterruptedException         if interrupted while blocked waiting
+     *                                      to acquire an exclusive lock on the
+     *                                      log file.
      */
-    void logDataSourceProcessorWarning(String dataSourceType, String errorMessage) throws InterruptedException {
-        log(MessageCategory.WARNING, String.format("Critical error adding data source to case as %s: %s", dataSourceType, errorMessage));
+    void logNoDataSourceContent() throws AutoIngestJobLoggerException, InterruptedException {
+        log(MessageCategory.ERROR, "Data source failed to produce content");
     }
 
     /**
-     * Logs an error adding a data source to the case database.
+     * Logs failure to analyze a data source due to ingest job settings errors.
      *
-     * @param dataSourceType The data source type.
-     * @param dataSource     The data source.
-     *
-     * @throws InterruptedException if interrupted while blocked waiting to
-     *                              acquire an exclusive lock on the log file.
+     * @throws AutoIngestJobLoggerException if there is an error writing the log
+     *                                      message.
+     * @throws InterruptedException         if interrupted while blocked waiting
+     *                                      to acquire an exclusive lock on the
+     *                                      log file.
      */
-    void logFailedToAddDataSource(String dataSourceType) throws InterruptedException { // RJCTODO: Why this and logDataSourceProcessorError? Bd handling of critical vs. non-critical?
-        log(MessageCategory.ERROR, String.format("Failed to add data source to case as %s", dataSourceType));
-    }
-
-    /**
-     * RJCTODO: Document and homogenize messages
-     *
-     * @param errors
-     *
-     * @throws InterruptedException if interrupted while blocked waiting to
-     *                              acquire an exclusive lock on the log file.
-     */
-    void logIngestJobSettingsErrors(List<String> errors) throws InterruptedException {
-        for (String error : errors) {
-            log(MessageCategory.ERROR, String.format("Settings error, analysis of data source by ingest modules not started: %s", error));
-        }
+    void logIngestJobSettingsErrors() throws AutoIngestJobLoggerException, InterruptedException {
+        log(MessageCategory.ERROR, "Failed to analyze data source due to settings errors");
     }
 
     /**
      * Logs failure to analyze a data source due to ingest module startup
      * errors.
      *
-     * @param errors The ingest module errors.
-     *
-     * @throws InterruptedException if interrupted while blocked waiting to
-     *                              acquire an exclusive lock on the log file.
+     * @throws AutoIngestJobLoggerException if there is an error writing the log
+     *                                      message.
+     * @throws InterruptedException         if interrupted while blocked waiting
+     *                                      to acquire an exclusive lock on the
+     *                                      log file.
      */
-    void logIngestModuleStartupErrors(List<IngestModuleError> errors) throws InterruptedException {
-        for (IngestModuleError error : errors) {
-            log(MessageCategory.ERROR, String.format("Analysis of data source by ingest modules not started, %s startup error: %s", error.getModuleDisplayName(), error.getThrowable().getLocalizedMessage()));
-        }
+    void logIngestModuleStartupErrors() throws AutoIngestJobLoggerException, InterruptedException {
+        log(MessageCategory.ERROR, "Failed to analyze data source due to ingest module startup errors");
     }
 
     /**
@@ -272,21 +268,27 @@ final class AutoIngestJobLogger {
      *
      * @param ex The ingest manager exception.
      *
-     * @throws InterruptedException if interrupted while blocked waiting to
-     *                              acquire an exclusive lock on the log file.
+     * @throws AutoIngestJobLoggerException if there is an error writing the log
+     *                                      message.
+     * @throws InterruptedException         if interrupted while blocked waiting
+     *                                      to acquire an exclusive lock on the
+     *                                      log file.
      */
-    void logAnalysisStartupError(IngestManagerException ex) throws InterruptedException {
-        log(MessageCategory.ERROR, String.format("Analysis of data source by ingest modules not started: %s", ex.getLocalizedMessage()));
+    void logAnalysisStartupError() throws AutoIngestJobLoggerException, InterruptedException {
+        log(MessageCategory.ERROR, "Failed to analyze data source due to ingest job startup error");
     }
 
     /**
      * Logs the completion of analysis of a data source by the ingest modules.
      *
-     * @throws InterruptedException if interrupted while blocked waiting to
-     *                              acquire an exclusive lock on the log file.
+     * @throws AutoIngestJobLoggerException if there is an error writing the log
+     *                                      message.
+     * @throws InterruptedException         if interrupted while blocked waiting
+     *                                      to acquire an exclusive lock on the
+     *                                      log file.
      */
-    void logAnalysisCompleted() throws InterruptedException {
-        log(MessageCategory.INFO, "Analysis of data source by ingest modules completed");
+    void logAnalysisCompleted() throws AutoIngestJobLoggerException, InterruptedException {
+        log(MessageCategory.INFO, "Analysis of data source completed");
     }
 
     /**
@@ -296,67 +298,79 @@ final class AutoIngestJobLogger {
      * @param cancelledModuleName The display name of the cancelled ingest
      *                            module.
      *
-     * @throws InterruptedException if interrupted while blocked waiting to
-     *                              acquire an exclusive lock on the log file.
+     * @throws AutoIngestJobLoggerException if there is an error writing the log
+     *                                      message.
+     * @throws InterruptedException         if interrupted while blocked waiting
+     *                                      to acquire an exclusive lock on the
+     *                                      log file.
      */
-    void logIngestModuleCancelled(String cancelledModuleName) throws InterruptedException {
+    void logIngestModuleCancelled(String cancelledModuleName) throws AutoIngestJobLoggerException, InterruptedException {
         log(MessageCategory.WARNING, String.format("%s analysis of data source cancelled", cancelledModuleName));
     }
 
     /**
      * Logs the cancellation of analysis of a data source by the ingest modules.
      *
-     * @param reason The reason for cancellation.
-     *
-     * @throws InterruptedException if interrupted while blocked waiting to
-     *                              acquire an exclusive lock on the log file.
+     * @throws AutoIngestJobLoggerException if there is an error writing the log
+     *                                      message.
+     * @throws InterruptedException         if interrupted while blocked waiting
+     *                                      to acquire an exclusive lock on the
+     *                                      log file.
      */
-    void logAnalysisCancelled(String reason) throws InterruptedException {
-        log(MessageCategory.WARNING, String.format("Analysis of data source by ingest modules cancelled: %s", reason));
+    void logAnalysisCancelled() throws AutoIngestJobLoggerException, InterruptedException {
+        log(MessageCategory.WARNING, "Analysis of data source cancelled");
     }
 
     /**
      * Logs that automated file export is not enabled.
      *
-     * @throws InterruptedException if interrupted while blocked waiting to
-     *                              acquire an exclusive lock on the log file.
-     * @throws InterruptedException if interrupted while blocked waiting to
-     *                              acquire an exclusive lock on the log file.
+     * @throws AutoIngestJobLoggerException if there is an error writing the log
+     *                                      message.
+     * @throws InterruptedException         if interrupted while blocked waiting
+     *                                      to acquire an exclusive lock on the
+     *                                      log file.
      */
-    void logFileExportDisabled() throws InterruptedException {
+    void logFileExportDisabled() throws AutoIngestJobLoggerException, InterruptedException {
         log(MessageCategory.WARNING, "Automated file export is not enabled");
     }
 
     /**
-     * RJCTODO
+     * Logs completion of file export.
      *
-     * @throws InterruptedException if interrupted while blocked waiting to
-     *                              acquire an exclusive lock on the log file.
+     * @throws AutoIngestJobLoggerException if there is an error writing the log
+     *                                      message.
+     * @throws InterruptedException         if interrupted while blocked waiting
+     *                                      to acquire an exclusive lock on the
+     *                                      log file.
      */
-    void logFileExportCompleted() throws InterruptedException {
+    void logFileExportCompleted() throws AutoIngestJobLoggerException, InterruptedException {
         log(MessageCategory.INFO, "Automated file export completed");
     }
 
     /**
-     * RJCTODO
+     * Logs failure to complete file export.
      *
-     * @param ex
-     *
-     * @throws InterruptedException if interrupted while blocked waiting to
-     *                              acquire an exclusive lock on the log file.
+     * @throws AutoIngestJobLoggerException if there is an error writing the log
+     *                                      message.
+     * @throws InterruptedException         if interrupted while blocked waiting
+     *                                      to acquire an exclusive lock on the
+     *                                      log file.
      */
-    void logFileExportError(Exception ex) throws InterruptedException {
-        log(MessageCategory.ERROR, String.format("Error exporting files: %s", ex.getMessage()));
+    void logFileExportError() throws AutoIngestJobLoggerException, InterruptedException {
+        log(MessageCategory.ERROR, "Error exporting files");
     }
 
     /**
      * Logs discovery of a crashed auto ingest job for which recovery will be
      * attempted.
      *
-     * @throws InterruptedException if interrupted while blocked waiting to
-     *                              acquire an exclusive lock on the log file.
+     * @throws AutoIngestJobLoggerException if there is an error writing the log
+     *                                      message.
+     * @throws InterruptedException         if interrupted while blocked waiting
+     *                                      to acquire an exclusive lock on the
+     *                                      log file.
      */
-    void logCrashRecoveryWithRetry() throws InterruptedException {
+    void logCrashRecoveryWithRetry() throws AutoIngestJobLoggerException, InterruptedException {
         log(MessageCategory.ERROR, "Detected crash while processing, reprocessing");
     }
 
@@ -364,22 +378,14 @@ final class AutoIngestJobLogger {
      * Logs discovery of a crashed auto ingest job for which recovery will not
      * be attempted because the retry limit for the job has been reached.
      *
-     * @throws InterruptedException if interrupted while blocked waiting to
-     *                              acquire an exclusive lock on the log file.
+     * @throws AutoIngestJobLoggerException if there is an error writing the log
+     *                                      message.
+     * @throws InterruptedException         if interrupted while blocked waiting
+     *                                      to acquire an exclusive lock on the
+     *                                      log file.
      */
-    void logCrashRecoveryNoRetry() throws InterruptedException {
+    void logCrashRecoveryNoRetry() throws AutoIngestJobLoggerException, InterruptedException {
         log(MessageCategory.ERROR, "Detected crash while processing, reached retry limit for processing");
-    }
-
-    /**
-     * Logs an unexpected runtime exception, e.g., an exception caught by the
-     * automated ingest job processing exception firewall.
-     *
-     * @throws InterruptedException if interrupted while blocked waiting to
-     *                              acquire an exclusive lock on the log file.
-     */
-    void logErrorCondition(String message) throws InterruptedException {
-        log(MessageCategory.ERROR, message);
     }
 
     /**
@@ -392,25 +398,55 @@ final class AutoIngestJobLogger {
      * @param category The message category.
      * @param message  The message.
      *
-     * @throws InterruptedException if interrupted while blocked waiting to
-     *                              acquire an exclusive lock on the log file.
+     * @throws AutoIngestJobLoggerException if there is an error writing the log
+     *                                      message.
+     * @throws InterruptedException         if interrupted while blocked waiting
+     *                                      to acquire an exclusive lock on the
+     *                                      log file.
      */
-    private void log(MessageCategory category, String message) throws InterruptedException {
-        String prefix = String.format("Failed to write case auto ingest message (\"%s\") for %s", message, manifestPath);
+    private void log(MessageCategory category, String message) throws AutoIngestJobLoggerException, InterruptedException {
         try (Lock lock = CoordinationService.getInstance(CoordinationServiceNamespace.getRoot()).tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, getLogPath(caseDirectoryPath).toString(), LOCK_TIME_OUT, LOCK_TIME_OUT_UNIT)) {
             if (null != lock) {
                 File logFile = getLogPath(caseDirectoryPath).toFile();
                 try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(logFile, logFile.exists())), true)) {
-                    writer.println(String.format("%s %s: %s\\%s: %-8s: %s", logDateFormat.format((Date.from(Instant.now()).getTime())), hostName, manifestPath, dataSourceFileName, category.toString(), message));
+                    writer.println(String.format("%s %s: %s: %s: %-8s: %s", logDateFormat.format((Date.from(Instant.now()).getTime())), hostName, manifestFileName, dataSourceFileName, category.toString(), message));
                 } catch (IOException ex) {
-                    AutoIngestSystemLogger.getLogger().log(Level.SEVERE, String.format("%s due to I/O error", prefix), ex);
+                    throw new AutoIngestJobLoggerException(String.format("Failed to write case auto ingest log message (\"%s\") for %s", message, manifestPath), ex);
                 }
             } else {
-                AutoIngestSystemLogger.getLogger().log(Level.SEVERE, String.format("%s due to lock timeout", prefix));
+                throw new AutoIngestJobLoggerException(String.format("Failed to write case auto ingest log message (\"%s\") for %s due to time out acquiring log lock", message, manifestPath));
             }
-
         } catch (CoordinationServiceException ex) {
-            AutoIngestSystemLogger.getLogger().log(Level.SEVERE, String.format("%s due to coordination service error", prefix), ex);
+            throw new AutoIngestJobLoggerException(String.format("Failed to write case auto ingest log message (\"%s\") for %s", message, manifestPath), ex);
+        }
+    }
+
+    /**
+     * Exception thrown when there is a problem writing a log message.
+     */
+    final static class AutoIngestJobLoggerException extends Exception {
+
+        private static final long serialVersionUID = 1L;
+
+        /**
+         * Constructs an exception to throw when there is a problem writing a
+         * log message.
+         *
+         * @param message The exception message.
+         */
+        private AutoIngestJobLoggerException(String message) {
+            super(message);
+        }
+
+        /**
+         * Constructs an exception to throw when there is a problem writing a
+         * log message.
+         *
+         * @param message The exception message.
+         * @param cause   The cause of the exception, if it was an exception.
+         */
+        private AutoIngestJobLoggerException(String message, Throwable cause) {
+            super(message, cause);
         }
     }
 

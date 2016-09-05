@@ -19,13 +19,13 @@
 package org.sleuthkit.autopsy.experimental.autoingest;
 
 /**
- * RJCTODO
+ * Namespace elements for auto ingest coordination service nodes.
  */
 final class CoordinationServiceNamespace {
-    static final String ROOT_COORD_SCV_NAMESPACE = "autopsy"; // RJCTODO: Move this elsewhere
+    private static final String ROOT = "autopsy";
 
     static String getRoot() {
-        return ROOT_COORD_SCV_NAMESPACE;
+        return ROOT;
     }
 
     private CoordinationServiceNamespace() {
