@@ -21,13 +21,9 @@ package org.sleuthkit.autopsy.experimental.autoingest;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import org.sleuthkit.autopsy.experimental.configuration.AutoIngestUserPreferences;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.Serializable;
 import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
 import java.nio.file.FileVisitResult;
 import static java.nio.file.FileVisitResult.CONTINUE;
@@ -63,7 +59,6 @@ import java.util.Observable;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -104,7 +99,7 @@ import org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.Processing
 import static org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.ProcessingStatus.PENDING;
 import static org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.ProcessingStatus.PROCESSING;
 import static org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.ProcessingStatus.COMPLETED;
-//import static org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.ProcessingStatus.DELETE;
+import static org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.ProcessingStatus.DELETED;
 import org.sleuthkit.autopsy.corecomponentinterfaces.AutomatedIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestAlertFile.AutoIngestAlertFileException;
@@ -2055,7 +2050,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                 return;
             }
 
-            DataSource dataSource = identifyDataSource(caseForJob);
+            DataSource dataSource = identifyDataSource();
             if (null == dataSource) {
                 currentJob.setStage(AutoIngestJob.Stage.COMPLETED);
                 return;
@@ -2105,7 +2100,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
          *                              blocked, i.e., if auto ingest is
          *                              shutting down.
          */
-        private DataSource identifyDataSource() throws InterruptedException {
+        private DataSource identifyDataSource() throws InterruptedException, AutoIngestAlertFileException, AutoIngestJobLoggerException {
             Manifest manifest = currentJob.getManifest();
             Path manifestPath = manifest.getFilePath();
             SYS_LOGGER.log(Level.INFO, "Identifying data source for {0} ", manifestPath);
@@ -2138,167 +2133,135 @@ public final class AutoIngestManager extends Observable implements PropertyChang
          *                              task is interrupted while blocked, i.e.,
          *                              if auto ingest is shutting down.
          */
-        private void runDataSourceProcessor(Case caseForJob, DataSource dataSource) throws InterruptedException {
-            /**
-             * This "callback" collects the results of running the data source
-             * processor on the data source and unblocks the auto ingest task
-             * thread when the data source processor finishes running in its own
-             * thread.
-             */
-            class AddDataSourceCallback extends DataSourceProcessorCallback {
-
-                private final DataSource dataSourceInfo;
-                private final UUID taskId;
-
-                AddDataSourceCallback(DataSource dataSourceInfo, UUID taskId) {
-                    this.dataSourceInfo = dataSourceInfo;
-                    this.taskId = taskId;
-                }
-
-                @Override
-                public void done(DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errorMessages, List<Content> dataSources) {
-                    if (!dataSources.isEmpty()) {
-                        caseForJob.notifyDataSourceAdded(dataSources.get(0), taskId);
-                    } else {
-                        caseForJob.notifyFailedAddingDataSource(taskId);
-                    }
-                    dataSourceInfo.setDataSourceProcessorOutput(result, errorMessages, dataSources);
-                    dataSources.addAll(dataSources);
-                    synchronized (ingestLock) {
-                        ingestLock.notify();
-                    }
-                }
-
-                @Override
-                public void doneEDT(DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errorMessages, List<Content> dataSources) {
-                    done(result, errorMessages, dataSources);
-                }
-            }
-
+        private void runDataSourceProcessor(Case caseForJob, DataSource dataSource) throws InterruptedException, AutoIngestAlertFileException, AutoIngestJobLoggerException {
             Manifest manifest = currentJob.getManifest();
             Path manifestPath = manifest.getFilePath();
-            SYS_LOGGER.log(Level.INFO, "Starting adding data source stage for {0} ", manifestPath);
+            SYS_LOGGER.log(Level.INFO, "Adding data source for {0} ", manifestPath);
             currentJob.setStage(AutoIngestJob.Stage.ADDING_DATA_SOURCE);
+            UUID taskId = UUID.randomUUID();
+            DataSourceProcessorCallback callBack = new AddDataSourceCallback(caseForJob, dataSource, taskId);
+            DataSourceProcessorProgressMonitor progressMonitor = new DoNothingDSPProgressMonitor();
             Path caseDirectoryPath = currentJob.getCaseDirectoryPath();
             AutoIngestJobLogger jobLogger = new AutoIngestJobLogger(manifestPath, manifest.getDataSourceFileName(), caseDirectoryPath);
             AutomatedIngestDataSourceProcessor selectedProcessor = null;
             try {
-                final DataSourceProcessorProgressMonitor progressMonitor = new DataSourceProcessorProgressMonitor() {
-                    /*
-                     * This data source processor progress monitor does nothing.
-                     * There is no UI for showing data source processor progress
-                     * during an auto ingest job.
-                     */
-                    @Override
-                    public void setIndeterminate(final boolean indeterminate) {
-                    }
+                caseForJob.notifyAddingDataSource(taskId);
 
-                    @Override
-                    public void setProgress(final int progress) {
-                    }
+                // lookup all AutomatedIngestDataSourceProcessors 
+                Collection<? extends AutomatedIngestDataSourceProcessor> processorCandidates = Lookup.getDefault().lookupAll(AutomatedIngestDataSourceProcessor.class);
 
-                    @Override
-                    public void setProgressText(final String text) {
-                    }
-                };
-                DataSourceProcessorCallback callBack = new AddDataSourceCallback(dataSource, UUID.randomUUID());
-                final UUID taskId = UUID.randomUUID();
-                try {
-                    caseForJob.notifyAddingDataSource(taskId);
-
-                    // lookup all AutomatedIngestDataSourceProcessors 
-                    Collection<? extends AutomatedIngestDataSourceProcessor> processorCandidates = Lookup.getDefault().lookupAll(AutomatedIngestDataSourceProcessor.class);
-
-                    int selectedProcessorConfidence = 0;
-                    for (AutomatedIngestDataSourceProcessor processor : processorCandidates) {
-                        int confidence = 0;
-                        try {
-                            confidence = processor.canProcess(dataSource.getPath());
-                        } catch (AutomatedIngestDataSourceProcessor.AutomatedIngestDataSourceProcessorException ex) {
-                            SYS_LOGGER.log(Level.SEVERE, "Exception while determining whether data source processor {0} can process {1}", new Object[]{processor.getDataSourceType(), dataSource.getPath()});
-                            // ELTODO - should we auto-pause if one of DSP.canProcess() threw an exception? Probably so...
-                            // On the other hand what if we simply weren't able to extract an archive or something?
-                            pauseForSystemError();
-                            return;
-                        }
-                        if (confidence > selectedProcessorConfidence) {
-                            selectedProcessor = processor;
-                            selectedProcessorConfidence = confidence;
-                        }
-                    }
-
-                    // did we find a data source processor that can process the data source
-                    if (selectedProcessor == null) {
-                        jobLogger.logDataSourceTypeIdError("Unsupported data source " + dataSource.getPath() + " for " + manifestPath);
-                        SYS_LOGGER.log(Level.SEVERE, "Unsupported data source {0} for {1}", new Object[]{dataSource.getPath(), manifestPath});  // NON-NLS
+                int selectedProcessorConfidence = 0;
+                for (AutomatedIngestDataSourceProcessor processor : processorCandidates) {
+                    int confidence = 0;
+                    try {
+                        confidence = processor.canProcess(dataSource.getPath());
+                    } catch (AutomatedIngestDataSourceProcessor.AutomatedIngestDataSourceProcessorException ex) {
+                        SYS_LOGGER.log(Level.SEVERE, "Exception while determining whether data source processor {0} can process {1}", new Object[]{processor.getDataSourceType(), dataSource.getPath()});
+                        // ELTODO - should we auto-pause if one of DSP.canProcess() threw an exception? Probably so...
+                        // On the other hand what if we simply weren't able to extract an archive or something?
+                        pauseForSystemError();
                         return;
                     }
-
-                    synchronized (ingestLock) {
-                        SYS_LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, selectedProcessor.getDataSourceType()});
-                        try {
-                            selectedProcessor.process(dataSource.getDeviceId(), dataSource.getPath(), progressMonitor, callBack);
-                        } catch (AutomatedIngestDataSourceProcessor.AutomatedIngestDataSourceProcessorException ex) {
-                            SYS_LOGGER.log(Level.SEVERE, "Exception while processing {0} with data source processor {1}", new Object[]{dataSource.getPath(), selectedProcessor.getDataSourceType()});
-                            jobLogger.logDataSourceProcessorError(selectedProcessor.getDataSourceType(), ex.getMessage());
-                            pauseForSystemError();
-                            return;
-                        }
-                        ingestLock.wait();
-                    }
-                } finally {
-                    String imageType;
-                    if (selectedProcessor != null) {
-                        imageType = selectedProcessor.getDataSourceType();
-                    } else {
-                        imageType = dataSource.getPath().toString();
-                    }
-                    DataSourceProcessorResult resultCode = dataSource.getResultDataSourceProcessorResultCode();
-                    if (null != resultCode) {
-                        switch (resultCode) {
-                            case NO_ERRORS:
-                                jobLogger.logDataSourceAdded(imageType);
-                                break;
-
-                            case NONCRITICAL_ERRORS:
-                                jobLogger.logDataSourceAdded(imageType);
-                                for (String errorMessage : dataSource.getDataSourceProcessorErrorMessages()) {
-                                    SYS_LOGGER.log(Level.WARNING, "Non-critical error running data source processor for {0}: {1}", new Object[]{manifestPath, errorMessage});
-                                }
-                                for (String errorMessage : dataSource.getDataSourceProcessorErrorMessages()) {
-                                    jobLogger.logDataSourceProcessorWarning(imageType, errorMessage);
-                                }
-                                break;
-
-                            case CRITICAL_ERRORS:
-                                jobLogger.logFailedToAddDataSource(imageType);
-                                for (String errorMessage : dataSource.getDataSourceProcessorErrorMessages()) {
-                                    SYS_LOGGER.log(Level.SEVERE, "Critical error running data source processor for {0}: {1}", new Object[]{manifestPath, errorMessage});
-                                }
-                                for (String errorMessage : dataSource.getDataSourceProcessorErrorMessages()) {
-                                    jobLogger.logDataSourceProcessorError(imageType, errorMessage);
-                                }
-                                break;
-                            default:
-                                SYS_LOGGER.log(Level.SEVERE, "Unrecognized result code {0} running data source processor for {1}", new Object[]{resultCode, manifestPath});
-                                break;
-                        }
-
-                    } else {
-                        /*
-                         * TODO (JIRA-1711): Use cancellation feature of data
-                         * source processors that support cancellation.
-                         */
-                        SYS_LOGGER.log(Level.WARNING, "Cancellation while waiting for data source processor for {0}", manifestPath);
-                        jobLogger.logDataSourceProcessorCancelled(imageType);
+                    if (confidence > selectedProcessorConfidence) {
+                        selectedProcessor = processor;
+                        selectedProcessorConfidence = confidence;
                     }
                 }
 
+                // did we find a data source processor that can process the data source
+                if (selectedProcessor == null) {
+                    //ELTODO jobLogger.logDataSourceTypeIdError("Unsupported data source " + dataSource.getPath() + " for " + manifestPath);
+                    SYS_LOGGER.log(Level.SEVERE, "Unsupported data source {0} for {1}", new Object[]{dataSource.getPath(), manifestPath});  // NON-NLS
+                    return;
+                }
+
+                synchronized (ingestLock) {
+                    SYS_LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, selectedProcessor.getDataSourceType()});
+                    try {
+                        selectedProcessor.process(dataSource.getDeviceId(), dataSource.getPath(), progressMonitor, callBack);
+                    } catch (AutomatedIngestDataSourceProcessor.AutomatedIngestDataSourceProcessorException ex) {
+                        SYS_LOGGER.log(Level.SEVERE, "Exception while processing {0} with data source processor {1}", new Object[]{dataSource.getPath(), selectedProcessor.getDataSourceType()});
+                        //ELTODO jobLogger.logDataSourceProcessorError(selectedProcessor.getDataSourceType(), ex.getMessage());
+                        pauseForSystemError();
+                        return;
+                    }
+                    ingestLock.wait();
+                }
             } finally {
-                SYS_LOGGER.log(Level.INFO, "Finished adding data source stage for {0}", manifestPath);
+                currentJob.setDataSourceProcessor(null);
+                logDataSourceProcessorResult(dataSource);
             }
         }
 
+        /**
+         * Logs the results of running a data source processor on the data
+         * source for the current job.
+         *
+         * @param dataSource The data source.
+         *
+         * @throws AutoIngestAlertFileException if there is an error creating an
+         *                                      alert file.
+         * @throws AutoIngestJobLoggerException if there is an error writing to
+         *                                      the auto ingest log for the
+         *                                      case.
+         * @throws InterruptedException         if the thread running the job
+         *                                      processing task is interrupted
+         *                                      while blocked, i.e., if auto
+         *                                      ingest is shutting down.
+         */
+        private void logDataSourceProcessorResult(DataSource dataSource) throws AutoIngestAlertFileException, AutoIngestJobLoggerException, InterruptedException {
+            Manifest manifest = currentJob.getManifest();
+            Path manifestPath = manifest.getFilePath();
+            Path caseDirectoryPath = currentJob.getCaseDirectoryPath();
+            AutoIngestJobLogger jobLogger = new AutoIngestJobLogger(manifestPath, manifest.getDataSourceFileName(), caseDirectoryPath);
+            DataSourceProcessorResult resultCode = dataSource.getResultDataSourceProcessorResultCode();
+            if (null != resultCode) {
+                switch (resultCode) {
+                    case NO_ERRORS:
+                        jobLogger.logDataSourceAdded();
+                        if (dataSource.getContent().isEmpty()) {
+                            currentJob.setErrorsOccurred(true);
+                            AutoIngestAlertFile.create(caseDirectoryPath); // Do this first, it is more important than the case log
+                            jobLogger.logNoDataSourceContent();
+                        }
+                        break;
+
+                    case NONCRITICAL_ERRORS:
+                        for (String errorMessage : dataSource.getDataSourceProcessorErrorMessages()) {
+                            SYS_LOGGER.log(Level.WARNING, "Non-critical error running data source processor for {0}: {1}", new Object[]{manifestPath, errorMessage});
+                        }
+                        jobLogger.logDataSourceAdded();
+                        if (dataSource.getContent().isEmpty()) {
+                            currentJob.setErrorsOccurred(true);
+                            AutoIngestAlertFile.create(caseDirectoryPath); // Do this first, it is more important than the case log
+                            jobLogger.logNoDataSourceContent();
+                        }
+                        break;
+
+                    case CRITICAL_ERRORS:
+                        for (String errorMessage : dataSource.getDataSourceProcessorErrorMessages()) {
+                            SYS_LOGGER.log(Level.SEVERE, "Critical error running data source processor for {0}: {1}", new Object[]{manifestPath, errorMessage});
+                        }
+                        currentJob.setErrorsOccurred(true);
+                        AutoIngestAlertFile.create(caseDirectoryPath); // Do this first, it is more important than the case log
+                        jobLogger.logFailedToAddDataSource();
+                        break;
+                }
+            } else {
+                /*
+                 * TODO (JIRA-1711): Use cancellation feature of data source
+                 * processors that support cancellation. This should be able to
+                 * be done by adding a transient reference to the DSP to
+                 * AutoIngestJob and calling cancel on the DSP, if not null, in
+                 * cancelCurrentJob.
+                 */
+                SYS_LOGGER.log(Level.WARNING, "Cancellation while waiting for data source processor for {0}", manifestPath);
+                currentJob.setErrorsOccurred(true);
+                AutoIngestAlertFile.create(caseDirectoryPath); // Do this first, it is more important than the case log
+                jobLogger.logDataSourceProcessorCancelled();
+            }
+        }
+        
         /**
          * Analyzes the data source content returned by the data source
          * processor using the configured set of data source level and file

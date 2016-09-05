@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.io.Serializable;
+import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 
 /**

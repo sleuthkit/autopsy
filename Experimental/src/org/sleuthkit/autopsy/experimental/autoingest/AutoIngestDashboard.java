@@ -59,8 +59,8 @@ import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotDialog;
-import org.sleuthkit.autopsy.experimental.AutoIngestManager.CaseDeletionResult;
-import org.sleuthkit.autopsy.experimental.AutoIngestManager.JobsSnapshot;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestManager.CaseDeletionResult;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestManager.JobsSnapshot;
 import org.sleuthkit.autopsy.experimental.configuration.OptionsDialog;
 
 /**
@@ -1246,6 +1246,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
 
         org.openide.awt.Mnemonics.setLocalizedText(bnPrioritizeJob, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPrioritizeJob.text")); // NOI18N
         bnPrioritizeJob.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPrioritizeJob.toolTipText")); // NOI18N
+        bnPrioritizeJob.setActionCommand(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPrioritizeJob.actionCommand")); // NOI18N
         bnPrioritizeJob.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnPrioritizeJobActionPerformed(evt);
