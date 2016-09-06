@@ -24,6 +24,8 @@ import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 import java.util.concurrent.Future;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
@@ -230,13 +232,13 @@ public final class ContentUtils {
      * @param content     Any content object.
      * @param outputFile  Will be created if it doesn't exist, and overwritten
      *                    if it does
-     * @param cancelCheck Used to terminate the process if the ingest is
+     * @param cancelCheck A function used to check if the ingest job has been
      *                    terminated.
      * @return number of bytes extracted
      * @throws IOException if file could not be written
      */
     public static long writeToFile(Content content, java.io.File outputFile,
-            CancellationCheck cancelCheck) throws IOException {
+            Supplier<Boolean> cancelCheck) throws IOException {
         InputStream in = new ReadContentInputStream(content);
         long totalRead = 0;
         
@@ -246,7 +248,7 @@ public final class ContentUtils {
             while (len != -1) {
                 out.write(buffer, 0, len);
                 totalRead += len;
-                if (cancelCheck.isCancelled()) {
+                if (cancelCheck.get()) {
                     break;
                 }
                 len = in.read(buffer);
@@ -426,16 +428,4 @@ public final class ContentUtils {
         return displayTimesInLocalTime;
     }
     
-    /**
-     * Cancellation check object to determine whether the ingest process has
-     * been terminated.
-     */
-    public interface CancellationCheck {
-    
-        /**
-         * @return whether the process has been cancelled
-         */
-        boolean isCancelled();
-    }
 }
-

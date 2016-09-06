@@ -36,7 +36,6 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.ingest.DataSourceIngestCancellationCheck;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -108,7 +107,7 @@ class Firefox extends Extract {
             String fileName = historyFile.getName();
             String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db"; //NON-NLS
             try {
-                ContentUtils.writeToFile(historyFile, new File(temps), new DataSourceIngestCancellationCheck(context));
+                ContentUtils.writeToFile(historyFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Error writing the sqlite db for firefox web history artifacts.{0}", ex); //NON-NLS
                 this.addErrorMessage(
@@ -190,7 +189,7 @@ class Firefox extends Extract {
             String fileName = bookmarkFile.getName();
             String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db"; //NON-NLS
             try {
-                ContentUtils.writeToFile(bookmarkFile, new File(temps), new DataSourceIngestCancellationCheck(context));
+                ContentUtils.writeToFile(bookmarkFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Error writing the sqlite db for firefox bookmark artifacts.{0}", ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Firefox.getBookmark.errMsg.errAnalyzeFile",
@@ -269,7 +268,7 @@ class Firefox extends Extract {
             String fileName = cookiesFile.getName();
             String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db"; //NON-NLS
             try {
-                ContentUtils.writeToFile(cookiesFile, new File(temps), new DataSourceIngestCancellationCheck(context));
+                ContentUtils.writeToFile(cookiesFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Error writing the sqlite db for firefox cookie artifacts.{0}", ex); //NON-NLS
                 this.addErrorMessage(
@@ -378,7 +377,7 @@ class Firefox extends Extract {
             String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db"; //NON-NLS
             int errors = 0;
             try {
-                ContentUtils.writeToFile(downloadsFile, new File(temps), new DataSourceIngestCancellationCheck(context));
+                ContentUtils.writeToFile(downloadsFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Error writing the sqlite db for firefox download artifacts.{0}", ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Firefox.getDlPre24.errMsg.errAnalyzeFiles",
@@ -486,7 +485,7 @@ class Firefox extends Extract {
             String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + "-downloads" + j + ".db"; //NON-NLS
             int errors = 0;
             try {
-                ContentUtils.writeToFile(downloadsFile, new File(temps), new DataSourceIngestCancellationCheck(context));
+                ContentUtils.writeToFile(downloadsFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Error writing the sqlite db for firefox download artifacts.{0}", ex); //NON-NLS
                 this.addErrorMessage(

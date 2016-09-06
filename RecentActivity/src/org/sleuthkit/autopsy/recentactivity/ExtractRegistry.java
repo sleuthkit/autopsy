@@ -50,7 +50,6 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import java.nio.file.Path;
-import org.sleuthkit.autopsy.ingest.DataSourceIngestCancellationCheck;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 
 /**
@@ -162,7 +161,7 @@ class ExtractRegistry extends Extract {
             String outputPathBase = RAImageIngestModule.getRAOutputPath(currentCase, "reg") + File.separator + regFileName + "-regripper-" + Integer.toString(j++); //NON-NLS
             File regFileNameLocalFile = new File(regFileNameLocal);
             try {
-                ContentUtils.writeToFile(regFile, regFileNameLocalFile, new DataSourceIngestCancellationCheck(context));
+                ContentUtils.writeToFile(regFile, regFileNameLocalFile, context::dataSourceIngestIsCancelled);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Error writing the temp registry file. {0}", ex); //NON-NLS
                 this.addErrorMessage(

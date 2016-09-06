@@ -46,7 +46,6 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.ingest.FileIngestCancellationCheck;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
@@ -207,7 +206,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             long writestart = System.currentTimeMillis();
             WorkingPaths paths = PhotoRecCarverFileIngestModule.pathsByJob.get(this.jobId);
             tempFilePath = Paths.get(paths.getTempDirPath().toString(), file.getName());
-            ContentUtils.writeToFile(file, tempFilePath.toFile(), new FileIngestCancellationCheck(context));
+            ContentUtils.writeToFile(file, tempFilePath.toFile(), context::fileIngestIsCancelled);
 
             if (this.context.fileIngestIsCancelled() == true) {
                 // if it was cancelled by the user, result is OK

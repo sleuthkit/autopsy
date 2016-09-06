@@ -40,7 +40,6 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgress
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.ingest.DataSourceIngestCancellationCheck;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
@@ -244,7 +243,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
          * Write the virtual machine file to disk.
          */
         File localFile = Paths.get(outputFolderForThisVM, vmFile.getName()).toFile();
-        ContentUtils.writeToFile(vmFile, localFile, new DataSourceIngestCancellationCheck(context));
+        ContentUtils.writeToFile(vmFile, localFile, context::dataSourceIngestIsCancelled);
     }
 
     /**

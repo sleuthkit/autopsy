@@ -35,7 +35,6 @@ import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.ingest.DataSourceIngestCancellationCheck;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -69,7 +68,7 @@ class CallLogAnalyzer {
             for (AbstractFile abstractFile : absFiles) {
                 try {
                     File file = new File(Case.getCurrentCase().getTempDirectory(), abstractFile.getName());
-                    ContentUtils.writeToFile(abstractFile, file, new DataSourceIngestCancellationCheck(context));
+                    ContentUtils.writeToFile(abstractFile, file, context::dataSourceIngestIsCancelled);
                     findCallLogsInDB(file.toString(), abstractFile);
                 } catch (IOException e) {
                     logger.log(Level.SEVERE, "Error writing temporary call log db to disk", e); //NON-NLS

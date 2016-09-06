@@ -32,7 +32,6 @@ import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.ingest.DataSourceIngestCancellationCheck;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -64,7 +63,7 @@ class TextMessageAnalyzer {
             for (AbstractFile AF : absFiles) {
                 try {
                     jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), AF.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
-                    ContentUtils.writeToFile(AF, jFile, new DataSourceIngestCancellationCheck(context));
+                    ContentUtils.writeToFile(AF, jFile, context::dataSourceIngestIsCancelled);
                     dbPath = jFile.toString(); //path of file as string
                     fileId = AF.getId();
                     findTextsInDB(dbPath, fileId);

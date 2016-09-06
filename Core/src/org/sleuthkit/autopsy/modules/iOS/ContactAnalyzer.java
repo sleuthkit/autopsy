@@ -36,7 +36,6 @@ import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.ingest.DataSourceIngestCancellationCheck;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -71,7 +70,7 @@ class ContactAnalyzer {
                 try {
                     jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), AF.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
                     //jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), i+".txt");
-                    ContentUtils.writeToFile(AF, jFile, new DataSourceIngestCancellationCheck(context));
+                    ContentUtils.writeToFile(AF, jFile, context::dataSourceIngestIsCancelled);
                     //copyFileUsingStreams(AF,jFile);
                     //copyFileUsingStream(AF,jFile);
                     dbPath = jFile.toString(); //path of file as string

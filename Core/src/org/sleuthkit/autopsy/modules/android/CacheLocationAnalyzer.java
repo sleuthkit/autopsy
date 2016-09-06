@@ -33,7 +33,6 @@ import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.ingest.DataSourceIngestCancellationCheck;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -68,7 +67,7 @@ class CacheLocationAnalyzer {
                         continue;
                     }
                     File jFile = new File(Case.getCurrentCase().getTempDirectory(), abstractFile.getName());
-                    ContentUtils.writeToFile(abstractFile, jFile, new DataSourceIngestCancellationCheck(context));
+                    ContentUtils.writeToFile(abstractFile, jFile, context::dataSourceIngestIsCancelled);
 
                     findGeoLocationsInFile(jFile, abstractFile);
                 } catch (Exception e) {
