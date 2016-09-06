@@ -101,6 +101,7 @@ import static org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.Pro
 import static org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.ProcessingStatus.COMPLETED;
 import static org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.ProcessingStatus.DELETED;
 import org.sleuthkit.autopsy.corecomponentinterfaces.AutomatedIngestDataSourceProcessor;
+import org.sleuthkit.autopsy.corecomponentinterfaces.AutomatedIngestDataSourceProcessor.AutomatedIngestDataSourceProcessorException;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestAlertFile.AutoIngestAlertFileException;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobLogger.AutoIngestJobLoggerException;
@@ -1412,6 +1413,8 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                             errorState = ErrorState.ALERT_FILE_ERROR;
                         } else if (ex instanceof AutoIngestJobLoggerException) {
                             errorState = ErrorState.JOB_LOGGER_ERROR;
+                        } else if (ex instanceof AutomatedIngestDataSourceProcessorException) {
+                            errorState = ErrorState.DATA_SOURCE_PROCESSOR_ERROR;
                         } else if (ex instanceof InterruptedException) {
                             throw (InterruptedException) ex;
                         } else {
@@ -1591,7 +1594,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
          *                                          i.e., if auto ingest is
          *                                          shutting down.
          */
-        private void processJobs() throws CoordinationServiceException, SharedConfigurationException, ServicesMonitorException, DatabaseServerDownException, KeywordSearchServerDownException, CaseManagementException, AnalysisStartupException, FileExportException, AutoIngestAlertFileException, AutoIngestJobLoggerException, InterruptedException {
+        private void processJobs() throws CoordinationServiceException, SharedConfigurationException, ServicesMonitorException, DatabaseServerDownException, KeywordSearchServerDownException, CaseManagementException, AnalysisStartupException, FileExportException, AutoIngestAlertFileException, AutoIngestJobLoggerException, InterruptedException, AutomatedIngestDataSourceProcessor.AutomatedIngestDataSourceProcessorException {
             SYS_LOGGER.log(Level.INFO, "Started processing pending jobs queue");
             Lock manifestLock = JobProcessingTask.this.dequeueAndLockNextJob();
             while (null != manifestLock) {
@@ -1752,7 +1755,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
          *                                          i.e., if auto ingest is
          *                                          shutting down.
          */
-        private void processJob() throws CoordinationServiceException, SharedConfigurationException, ServicesMonitorException, DatabaseServerDownException, KeywordSearchServerDownException, CaseManagementException, AnalysisStartupException, FileExportException, AutoIngestAlertFileException, AutoIngestJobLoggerException, InterruptedException {
+        private void processJob() throws CoordinationServiceException, SharedConfigurationException, ServicesMonitorException, DatabaseServerDownException, KeywordSearchServerDownException, CaseManagementException, AnalysisStartupException, FileExportException, AutoIngestAlertFileException, AutoIngestJobLoggerException, InterruptedException, AutomatedIngestDataSourceProcessor.AutomatedIngestDataSourceProcessorException {
             Manifest manifest = currentJob.getManifest();
             String manifestPath = manifest.getFilePath().toString();
             SYS_LOGGER.log(Level.INFO, "Started processing of {0}", manifestPath);
@@ -1823,7 +1826,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
          *                                          i.e., if auto ingest is
          *                                          shutting down.
          */
-        private void attemptJob() throws CoordinationServiceException, SharedConfigurationException, ServicesMonitorException, DatabaseServerDownException, KeywordSearchServerDownException, CaseManagementException, AnalysisStartupException, FileExportException, AutoIngestAlertFileException, AutoIngestJobLoggerException, InterruptedException {
+        private void attemptJob() throws CoordinationServiceException, SharedConfigurationException, ServicesMonitorException, DatabaseServerDownException, KeywordSearchServerDownException, CaseManagementException, AnalysisStartupException, FileExportException, AutoIngestAlertFileException, AutoIngestJobLoggerException, InterruptedException, AutomatedIngestDataSourceProcessor.AutomatedIngestDataSourceProcessorException {
             updateConfiguration();
             if (currentJob.isCancelled() || jobProcessingTaskFuture.isCancelled()) {
                 return;
@@ -1995,7 +1998,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
          *                                      while blocked, i.e., if auto
          *                                      ingest is shutting down.
          */
-        private void runIngestForJob(Case caseForJob) throws CoordinationServiceException, AnalysisStartupException, FileExportException, AutoIngestAlertFileException, AutoIngestJobLoggerException, InterruptedException {
+        private void runIngestForJob(Case caseForJob) throws CoordinationServiceException, AnalysisStartupException, FileExportException, AutoIngestAlertFileException, AutoIngestJobLoggerException, InterruptedException, AutomatedIngestDataSourceProcessor.AutomatedIngestDataSourceProcessorException {
             Manifest manifest = currentJob.getManifest();
             String manifestPath = manifest.getFilePath().toString();
             ManifestNodeData nodeData = new ManifestNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestPath));
@@ -2045,7 +2048,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
          *                                      while blocked, i.e., if auto
          *                                      ingest is shutting down.
          */
-        private void ingestDataSource(Case caseForJob) throws AnalysisStartupException, FileExportException, AutoIngestAlertFileException, AutoIngestJobLoggerException, InterruptedException {
+        private void ingestDataSource(Case caseForJob) throws AnalysisStartupException, FileExportException, AutoIngestAlertFileException, AutoIngestJobLoggerException, InterruptedException, AutomatedIngestDataSourceProcessor.AutomatedIngestDataSourceProcessorException {
             if (currentJob.isCancelled() || jobProcessingTaskFuture.isCancelled()) {
                 return;
             }
@@ -2132,7 +2135,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
          *                              task is interrupted while blocked, i.e.,
          *                              if auto ingest is shutting down.
          */
-        private void runDataSourceProcessor(Case caseForJob, DataSource dataSource) throws InterruptedException, AutoIngestAlertFileException, AutoIngestJobLoggerException {
+        private void runDataSourceProcessor(Case caseForJob, DataSource dataSource) throws InterruptedException, AutoIngestAlertFileException, AutoIngestJobLoggerException, AutomatedIngestDataSourceProcessor.AutomatedIngestDataSourceProcessorException {
             Manifest manifest = currentJob.getManifest();
             Path manifestPath = manifest.getFilePath();
             SYS_LOGGER.log(Level.INFO, "Adding data source for {0} ", manifestPath);
@@ -2156,10 +2159,8 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                         confidence = processor.canProcess(dataSource.getPath());
                     } catch (AutomatedIngestDataSourceProcessor.AutomatedIngestDataSourceProcessorException ex) {
                         SYS_LOGGER.log(Level.SEVERE, "Exception while determining whether data source processor {0} can process {1}", new Object[]{processor.getDataSourceType(), dataSource.getPath()});
-                        // ELTODO - should we auto-pause if one of DSP.canProcess() threw an exception? Probably so...
-                        // On the other hand what if we simply weren't able to extract an archive or something?
-                        pauseForSystemError();
-                        return;
+                        // rethrow the exception. It will get caught & handled upstream and will result in AIM auto-pause.
+                        throw ex;
                     }
                     if (confidence > selectedProcessorConfidence) {
                         selectedProcessor = processor;
@@ -2169,11 +2170,11 @@ public final class AutoIngestManager extends Observable implements PropertyChang
 
                 // did we find a data source processor that can process the data source
                 if (selectedProcessor == null) {
-                    // ELTODO: do we need to log this as error and create alert file? is it SEVERE or WARNING?
-                    AutoIngestAlertFile.create(caseDirectoryPath); // Do this first, it is more important than the case log
+                    // This should never happen. We should add all unsupported data sources as logical files.
+                    AutoIngestAlertFile.create(caseDirectoryPath);
                     currentJob.setErrorsOccurred(true);
                     jobLogger.logFailedToIdentifyDataSource();
-                    SYS_LOGGER.log(Level.SEVERE, "Unsupported data source {0} for {1}", new Object[]{dataSource.getPath(), manifestPath});  // NON-NLS
+                    SYS_LOGGER.log(Level.WARNING, "Unsupported data source {0} for {1}", new Object[]{dataSource.getPath(), manifestPath});  // NON-NLS
                     return;
                 }
 
@@ -2182,10 +2183,12 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                     try {
                         selectedProcessor.process(dataSource.getDeviceId(), dataSource.getPath(), progressMonitor, callBack);
                     } catch (AutomatedIngestDataSourceProcessor.AutomatedIngestDataSourceProcessorException ex) {
+                        AutoIngestAlertFile.create(caseDirectoryPath);
+                        currentJob.setErrorsOccurred(true);
+                        jobLogger.logFailedToAddDataSource();
                         SYS_LOGGER.log(Level.SEVERE, "Exception while processing {0} with data source processor {1}", new Object[]{dataSource.getPath(), selectedProcessor.getDataSourceType()});
-                        //ELTODO jobLogger.logDataSourceProcessorError(selectedProcessor.getDataSourceType(), ex.getMessage());
-                        pauseForSystemError();
-                        return;
+                        // rethrow the exception. It will get caught & handled upstream and will result in AIM auto-pause.
+                        throw ex;
                     }
                     ingestLock.wait();
                 }
@@ -2725,6 +2728,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
         FILE_EXPORT_ERROR,
         ALERT_FILE_ERROR,
         JOB_LOGGER_ERROR,
+        DATA_SOURCE_PROCESSOR_ERROR,
         UNEXPECTED_EXCEPTION
     }
 
