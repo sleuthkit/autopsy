@@ -30,7 +30,9 @@ public interface AutomatedIngestDataSourceProcessor extends DataSourceProcessor 
 
     /**
      * Indicates whether the DataSourceProcessor is capable of processing the
-     * data source. Returns a confidence value.
+     * data source. Returns a confidence value. Method can throw an exception
+     * for a system level problem. The exception should not be thrown for an issue
+     * related to bad input data.
      *
      * @param dataSourcePath Path to the data source.
      *
@@ -48,7 +50,9 @@ public interface AutomatedIngestDataSourceProcessor extends DataSourceProcessor 
      * Adds a data source to the case database using a background task in a
      * separate thread by calling DataSourceProcessor.run() method. Returns as
      * soon as the background task is started. The background task uses a
-     * callback object to signal task completion and return results.
+     * callback object to signal task completion and return results. Method can
+     * throw an exception for a system level problem. The exception should not
+     * be thrown for an issue related to bad input data.
      *
      * @param deviceId        An ASCII-printable identifier for the device
      *                        associated with the data source that is intended
