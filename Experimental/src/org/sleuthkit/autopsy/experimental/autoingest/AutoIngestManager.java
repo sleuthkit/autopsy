@@ -2169,6 +2169,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
 
                 // did we find a data source processor that can process the data source
                 if (selectedProcessor == null) {
+                    // ELTODO: do we need to log this as error and create alert file? is it SEVERE or WARNING?
                     AutoIngestAlertFile.create(caseDirectoryPath); // Do this first, it is more important than the case log
                     currentJob.setErrorsOccurred(true);
                     jobLogger.logFailedToIdentifyDataSource();

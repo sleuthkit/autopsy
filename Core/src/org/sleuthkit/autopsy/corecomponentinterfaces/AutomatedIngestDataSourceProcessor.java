@@ -45,6 +45,10 @@ public interface AutomatedIngestDataSourceProcessor extends DataSourceProcessor 
     int canProcess(Path dataSourcePath) throws AutomatedIngestDataSourceProcessorException;
 
     /**
+     * Adds a data source to the case database using a background task in a
+     * separate thread by calling DataSourceProcessor.run() method. Returns as
+     * soon as the background task is started. The background task uses a
+     * callback object to signal task completion and return results.
      *
      * @param deviceId        An ASCII-printable identifier for the device
      *                        associated with the data source that is intended
