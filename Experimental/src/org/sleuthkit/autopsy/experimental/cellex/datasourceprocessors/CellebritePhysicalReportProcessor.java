@@ -46,7 +46,7 @@ import org.sleuthkit.autopsy.casemodule.GeneralFilter;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
-import org.sleuthkit.autopsy.experimental.autoingest.TimeStampUtils;
+import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 
 /**
  * An Cellebrite UFED output folder data source processor that implements the

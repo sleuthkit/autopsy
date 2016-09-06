@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.nio.file.Path;
