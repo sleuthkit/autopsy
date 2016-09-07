@@ -20,8 +20,6 @@ package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.text.NumberFormat;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -33,8 +31,6 @@ import javax.swing.JMenuItem;
  * @author pmartel
  */
 class SizeSearchPanel extends javax.swing.JPanel {
-
-    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     /**
      * Creates new form SizeSearchPanel
@@ -91,16 +87,6 @@ class SizeSearchPanel extends javax.swing.JPanel {
         this.sizeCompareComboBox.setEnabled(enabled);
         this.sizeUnitComboBox.setEnabled(enabled);
         this.sizeTextField.setEnabled(enabled);
-    }
-    
-    @Override
-    public void addPropertyChangeListener(PropertyChangeListener pcl) {
-        pcs.addPropertyChangeListener(pcl);
-    }
-
-    @Override
-    public void removePropertyChangeListener(PropertyChangeListener pcl) {
-        pcs.removePropertyChangeListener(pcl);
     }
 
     /**
@@ -182,7 +168,7 @@ class SizeSearchPanel extends javax.swing.JPanel {
 
     private void sizeCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sizeCheckBoxActionPerformed
         setComponentsEnabled();
-        pcs.firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+        firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
     }//GEN-LAST:event_sizeCheckBoxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
