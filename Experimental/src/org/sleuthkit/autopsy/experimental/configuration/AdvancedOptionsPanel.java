@@ -135,7 +135,7 @@ class AdvancedOptionsPanel extends javax.swing.JPanel {
         lbSecondsBetweenJobs = new javax.swing.JLabel();
         spSecondsBetweenJobs = new javax.swing.JSpinner();
         lbNumberOfThreads = new javax.swing.JLabel();
-        numberOfFileIngestThreadsComboBox = new javax.swing.JComboBox<>();
+        numberOfFileIngestThreadsComboBox = new javax.swing.JComboBox<Integer>();
         lbRestartRequired = new javax.swing.JLabel();
         lbRetriesAllowed = new javax.swing.JLabel();
         spMainScrollPane = new javax.swing.JScrollPane();

@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.experimental.autoingest;
+package org.sleuthkit.autopsy.coreutils;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;

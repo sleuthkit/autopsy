@@ -28,8 +28,6 @@ import java.util.logging.Level;
  * Utility for creating and checking for the existence of an automated ingest
  * alert file. The purpose of the file is to put a marker in the case directory
  * when an error or warning occurs in connection with an automated ingest job.
- * If there is an error creating an alert file, it is logged to the auto ingest
- * system log.
  */
 final class AutoIngestAlertFile {
 
@@ -54,7 +52,7 @@ final class AutoIngestAlertFile {
      *
      * @return True or false.
      */
-    static void create(Path caseDirectoryPath) {
+    static void create(Path caseDirectoryPath) throws AutoIngestAlertFileException {
         try {
             Files.createFile(caseDirectoryPath.resolve(ERROR_FILE_NAME));
         } catch (FileAlreadyExistsException ignored) {
@@ -67,8 +65,37 @@ final class AutoIngestAlertFile {
              * for that case.
              */
             if (!exists(caseDirectoryPath)) {
-                AutoIngestSystemLogger.getLogger().log(Level.SEVERE, String.format("Error creating automated ingest alert file in %s", caseDirectoryPath), ex);
+                throw new AutoIngestAlertFileException(String.format("Error creating automated ingest alert file in %s", caseDirectoryPath), ex);
             }
+        }
+    }
+
+    /**
+     * Exception thrown when there is a problem creating an alert file.
+     */
+    final static class AutoIngestAlertFileException extends Exception {
+
+        private static final long serialVersionUID = 1L;
+
+        /**
+         * Constructs an exception to throw when there is a problem creating an
+         * alert file.
+         *
+         * @param message The exception message.
+         */
+        private AutoIngestAlertFileException(String message) {
+            super(message);
+        }
+
+        /**
+         * Constructs an exception to throw when there is a problem creating an
+         * alert file.
+         *
+         * @param message The exception message.
+         * @param cause   The cause of the exception, if it was an exception.
+         */
+        private AutoIngestAlertFileException(String message, Throwable cause) {
+            super(message, cause);
         }
     }
 
@@ -77,5 +104,5 @@ final class AutoIngestAlertFile {
      */
     private AutoIngestAlertFile() {
     }
-    
+
 }

@@ -54,10 +54,13 @@ import org.openide.LifecycleManager;
 import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotDialog;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestManager.CaseDeletionResult;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestManager.JobsSnapshot;
 import org.sleuthkit.autopsy.experimental.configuration.OptionsDialog;
 
 /**
@@ -91,7 +94,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     private static final int COMPLETED_TIME_COL_PREFERRED_WIDTH = 280;
     private static final String UPDATE_TASKS_THREAD_NAME = "AID-update-tasks-%d";
     private static final String LOCAL_HOST_NAME = NetworkUtils.getLocalHostName();
-    private static final Logger LOGGER = AutoIngestSystemLogger.getLogger();
+    private static final Logger SYS_LOGGER = AutoIngestSystemLogger.getLogger();
     private static AutoIngestDashboard instance;
     private final DefaultTableModel pendingTableModel;
     private final DefaultTableModel runningTableModel;
@@ -121,7 +124,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         STAGE_TIME(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.StageTime")),
         STATUS(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.Status")),
         CASE_DIRECTORY_PATH(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.CaseFolder")),
-        IS_LOCAL_JOB(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.LocalJob"));
+        IS_LOCAL_JOB(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.LocalJob")),
+        MANIFEST_FILE_PATH(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.ManifestFilePath"));
 
         private final String header;
 
@@ -144,7 +148,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
             STATUS.getColumnHeader(),
             STAGE_TIME.getColumnHeader(),
             CASE_DIRECTORY_PATH.getColumnHeader(),
-            IS_LOCAL_JOB.getColumnHeader()};
+            IS_LOCAL_JOB.getColumnHeader(),
+            MANIFEST_FILE_PATH.getColumnHeader()};
     }
 
     /**
@@ -232,6 +237,29 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                 return null;
             }
 
+            /**
+             * Gets a status string for a given service.
+             *
+             * @param service The service to test.
+             *
+             * @return The status string.
+             */
+            private String getServiceStatus(ServicesMonitor.Service service) {
+                String serviceStatus = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Unknown");
+                try {
+                    ServicesMonitor servicesMonitor = ServicesMonitor.getInstance();
+                    serviceStatus = servicesMonitor.getServiceStatus(service.toString());
+                    if (serviceStatus.compareTo(ServicesMonitor.ServiceStatus.UP.toString()) == 0) {
+                        serviceStatus = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Up");
+                    } else {
+                        serviceStatus = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down");
+                    }
+                } catch (ServicesMonitor.ServicesMonitorException ex) {
+                    SYS_LOGGER.log(Level.SEVERE, String.format("Dashboard error getting service status for %s", service), ex);
+                }
+                return serviceStatus;
+            }
+
             @Override
             protected void done() {
                 tbServicesStatusMessage.setText(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message", caseDatabaseServerStatus, keywordSearchServiceStatus, keywordSearchServiceStatus, messagingStatus));
@@ -249,30 +277,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     }
 
     /**
-     * Gets a status string for a given service.
-     *
-     * @param service The service to test.
-     *
-     * @return up, down, or unknown
-     */
-    private String getServiceStatus(ServicesMonitor.Service service) {
-        String serviceStatus = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Unknown");
-        try {
-            ServicesMonitor servicesMonitor = ServicesMonitor.getInstance();
-            serviceStatus = servicesMonitor.getServiceStatus(service.toString());
-            if (serviceStatus.compareTo(ServicesMonitor.ServiceStatus.UP.toString()) == 0) {
-                serviceStatus = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Up");
-            } else {
-                serviceStatus = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down");
-            }
-        } catch (ServicesMonitor.ServicesMonitorException ex) {
-            LOGGER.log(Level.SEVERE, String.format("Dashboard error getting service status for %s", service), ex);
-        }
-        return serviceStatus;
-    }
-
-    /**
-     * Sets up the JTable that presents a view of the
+     * Sets up the JTable that presents a view of the system-wide pending jobs
+     * queue.
      */
     private void initPendingJobsTable() {
         /*
@@ -287,6 +293,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         pendingTable.removeColumn(pendingTable.getColumn(JobsTableModelColumns.CASE_DIRECTORY_PATH.getColumnHeader()));
         pendingTable.removeColumn(pendingTable.getColumn(JobsTableModelColumns.IS_LOCAL_JOB.getColumnHeader()));
         pendingTable.removeColumn(pendingTable.getColumn(JobsTableModelColumns.STATUS.getColumnHeader()));
+        pendingTable.removeColumn(pendingTable.getColumn(JobsTableModelColumns.MANIFEST_FILE_PATH.getColumnHeader()));
 
         /*
          * Set up a column to display the cases associated with the jobs.
@@ -344,7 +351,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     }
 
     /**
-     * Sets up the header and columns for the running auto ingest jobs table.
+     * Sets up the JTable that presents a view of the system-wide running jobs
+     * list.
      */
     private void initRunningJobsTable() {
         /*
@@ -357,6 +365,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.STATUS.getColumnHeader()));
         runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.CASE_DIRECTORY_PATH.getColumnHeader()));
         runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.IS_LOCAL_JOB.getColumnHeader()));
+        runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.MANIFEST_FILE_PATH.getColumnHeader()));
 
         /*
          * Set up a column to display the cases associated with the jobs.
@@ -438,8 +447,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     }
 
     /**
-     * Sets up the header, columns, and selection listener for the completed
-     * auto ingest jobs table.
+     * Sets up the JTable that presents a view of the system-wide competed jobs
+     * list.
      */
     private void initCompletedJobsTable() {
         /*
@@ -452,6 +461,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.IS_LOCAL_JOB.getColumnHeader()));
         completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.HOST_NAME.getColumnHeader()));
         completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.CASE_DIRECTORY_PATH.getColumnHeader()));
+        completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.MANIFEST_FILE_PATH.getColumnHeader()));
 
         /*
          * Set up a column to display the cases associated with the jobs.
@@ -558,11 +568,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
      * @param enable Enable/disable the buttons.
      */
     private void enablePendingTableButtons(Boolean enable) {
-        // RJCTODO: Restore prioritization feature
-//        bnPrioritizeCase.setEnabled(enable);
-//        bnPrioritizeFolder.setEnabled(enable);
-        bnPrioritizeCase.setEnabled(false);
-        bnPrioritizeFolder.setEnabled(false);
+        bnPrioritizeCase.setEnabled(enable);
+        bnPrioritizeJob.setEnabled(enable);
     }
 
     /**
@@ -573,12 +580,12 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     private void startUp() {
 
         /*
-         * Start up the auto ingest manager (AIM).
+         * Starts up the auto ingest manager (AIM).
          */
         try {
             manager.startUp();
         } catch (AutoIngestManager.AutoIngestManagerStartupException ex) {
-            LOGGER.log(Level.SEVERE, "Dashboard error starting up auto ingest", ex);
+            SYS_LOGGER.log(Level.SEVERE, "Dashboard error starting up auto ingest", ex);
             tbStatusMessage.setText(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.AutoIngestStartupError"));
             manager = null;
 
@@ -595,20 +602,6 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         }
 
         /*
-         * Attempt to connect the AIM to any other auto ingest nodes (AINs) if
-         * this is a cluster.
-         */
-        try {
-            manager.establishRemoteCommunications();
-        } catch (Exception ex) {
-            LOGGER.log(Level.SEVERE, "Dashboard error establishing remote communications for auto ingest", ex);
-            JOptionPane.showMessageDialog(this,
-                    NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.AutoIngestStartupWarning.Message"),
-                    NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.AutoIngestStartupWarning.Title"),
-                    JOptionPane.WARNING_MESSAGE);
-        }
-
-        /*
          * Subscribe to services monitor events.
          */
         ServicesMonitor.getInstance().addSubscriber((PropertyChangeEvent evt) -> {
@@ -621,18 +614,10 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         manager.addObserver(this);
 
         /*
-         * Populate the pending, running, and completed auto ingest tables.
+         * Populate the pending, running, and completed auto ingest job tables.
          */
         updateExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(UPDATE_TASKS_THREAD_NAME).build());
         updateExecutor.submit(new UpdateAllJobsTablesTask());
-
-        /*
-         * TODO (RC): This does not seem right, given that the AIM does its
-         * first image folder scan on start up. I think it could actually delay
-         * the population of the auto ingest job tables, since the table refresh
-         * and the scan both acquire the job lists manager. Does the AIM send an
-         * event after a scan? Need to check this.
-         */
         manager.scanInputDirsNow();
 
         bnPause.setEnabled(true);
@@ -743,7 +728,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                         isPaused = true;
                     });
                     break;
-                case PAUSED_FOR_SYSTEM_ERROR: // RJCTODO: Consider making this more detailed again, probably not, too much maintenance and is iverkill
+                case PAUSED_FOR_SYSTEM_ERROR:
                     EventQueue.invokeLater(() -> {
                         tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.PauseDueToSystemError"));
                         bnOptions.setEnabled(true);
@@ -777,9 +762,9 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
      * running, and that the auto ingest manager will not actually pause until
      * the current auto ingest job completes.
      *
-     * @param buttonClicked Is this pause requests in response to a user gesture
+     * @param buttonClicked Is this pause request in response to a user gesture
      *                      or a nofification from the auto ingest manager
-     *                      (AMI)?
+     *                      (AIM)?
      */
     private void pause(boolean buttonClicked) {
         /**
@@ -1058,15 +1043,16 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                     job.getNodeName(), // HOST_NAME
                     job.getManifest().getDateFileCreated(), // CREATED_TIME
                     job.getStageStartDate(), // STARTED_TIME
-                    job.getStageStartDate(), // COMPLETED_TIME
+                    job.getCompletedDate(), // COMPLETED_TIME
                     status.getDescription(), // ACTIVITY
-                    (null != job.getCaseDirectoryPath()) ? AutoIngestAlertFile.exists(job.getCaseDirectoryPath()) : false, // STATUS  // RJCTODO: awkward?
+                    job.hasErrors(), // STATUS
                     ((Date.from(Instant.now()).getTime()) - (status.getStartDate().getTime())), // ACTIVITY_TIME
-                    job.getCaseDirectoryPath(), // CASE_DIRECTORY_PATH // RJCTODO: What about nulls? 
-                    job.getNodeName().equals(LOCAL_HOST_NAME)}); // IS_LOCAL_JOB           // RJCTODO: move method that also does this
+                    job.getCaseDirectoryPath(), // CASE_DIRECTORY_PATH
+                    job.getNodeName().equals(LOCAL_HOST_NAME), // IS_LOCAL_JOB
+                    job.getManifest().getFilePath()}); // MANIFEST_FILE_PATH
             }
         } catch (Exception ex) {
-            LOGGER.log(Level.SEVERE, "Dashboard error refreshing table", ex); // NON-NLS // RJCTODO: Consider AID log
+            SYS_LOGGER.log(Level.SEVERE, "Dashboard error refreshing table", ex);
         }
     }
 
@@ -1100,10 +1086,11 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         bnShowCaseLog = new javax.swing.JButton();
         tbStatusMessage = new javax.swing.JTextField();
         lbStatus = new javax.swing.JLabel();
-        bnPrioritizeFolder = new javax.swing.JButton();
+        bnPrioritizeJob = new javax.swing.JButton();
         lbServicesStatus = new javax.swing.JLabel();
         tbServicesStatusMessage = new javax.swing.JTextField();
         bnOpenLogDir = new javax.swing.JButton();
+        bnReprocessJob = new javax.swing.JButton();
 
         pendingTable.setModel(pendingTableModel);
         pendingTable.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.pendingTable.toolTipText")); // NOI18N
@@ -1257,11 +1244,12 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         lbStatus.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(lbStatus, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.lbStatus.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(bnPrioritizeFolder, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPrioritizeFolder.text")); // NOI18N
-        bnPrioritizeFolder.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPrioritizeFolder.toolTipText")); // NOI18N
-        bnPrioritizeFolder.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(bnPrioritizeJob, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPrioritizeJob.text")); // NOI18N
+        bnPrioritizeJob.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPrioritizeJob.toolTipText")); // NOI18N
+        bnPrioritizeJob.setActionCommand(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPrioritizeJob.actionCommand")); // NOI18N
+        bnPrioritizeJob.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnPrioritizeFolderActionPerformed(evt);
+                bnPrioritizeJobActionPerformed(evt);
             }
         });
 
@@ -1280,6 +1268,13 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(bnReprocessJob, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnReprocessJob.text")); // NOI18N
+        bnReprocessJob.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bnReprocessJobActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -1288,52 +1283,49 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(lbPending, javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(pendingScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 920, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(bnPrioritizeCase, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(bnPrioritizeJob, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(lbPending, javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(pendingScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 920, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(bnPrioritizeCase, javax.swing.GroupLayout.PREFERRED_SIZE, 117, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(bnPrioritizeFolder, javax.swing.GroupLayout.PREFERRED_SIZE, 117, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(bnPause)
+                                .addGap(18, 18, 18)
+                                .addComponent(bnRefresh, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(bnOptions)
+                                .addGap(18, 18, 18)
+                                .addComponent(bnOpenLogDir)
+                                .addGap(18, 18, 18)
+                                .addComponent(bnExit, javax.swing.GroupLayout.PREFERRED_SIZE, 94, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addGap(50, 50, 50)
-                                        .addComponent(bnPause)
-                                        .addGap(50, 50, 50)
-                                        .addComponent(bnRefresh, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(50, 50, 50)
-                                        .addComponent(bnOptions)
-                                        .addGap(50, 50, 50)
-                                        .addComponent(bnOpenLogDir)
-                                        .addGap(50, 50, 50)
-                                        .addComponent(bnExit, javax.swing.GroupLayout.PREFERRED_SIZE, 94, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(runningScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 920, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(completedScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 920, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                            .addComponent(bnCancelJob, javax.swing.GroupLayout.DEFAULT_SIZE, 117, Short.MAX_VALUE)
-                                            .addComponent(bnShowProgress, javax.swing.GroupLayout.DEFAULT_SIZE, 116, Short.MAX_VALUE)
-                                            .addComponent(bnCancelModule, javax.swing.GroupLayout.DEFAULT_SIZE, 117, Short.MAX_VALUE)
-                                            .addComponent(bnDeleteCase, javax.swing.GroupLayout.DEFAULT_SIZE, 117, Short.MAX_VALUE)
-                                            .addComponent(bnShowCaseLog, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(lbStatus)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(tbStatusMessage, javax.swing.GroupLayout.PREFERRED_SIZE, 861, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addComponent(lbCompleted)
-                                    .addComponent(lbRunning))
-                                .addGap(0, 0, Short.MAX_VALUE)))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(lbServicesStatus)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(tbServicesStatusMessage, javax.swing.GroupLayout.PREFERRED_SIZE, 861, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                                    .addComponent(runningScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 920, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(completedScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 920, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(bnCancelJob, javax.swing.GroupLayout.DEFAULT_SIZE, 117, Short.MAX_VALUE)
+                                    .addComponent(bnShowProgress, javax.swing.GroupLayout.DEFAULT_SIZE, 116, Short.MAX_VALUE)
+                                    .addComponent(bnCancelModule, javax.swing.GroupLayout.DEFAULT_SIZE, 117, Short.MAX_VALUE)
+                                    .addComponent(bnDeleteCase, javax.swing.GroupLayout.DEFAULT_SIZE, 117, Short.MAX_VALUE)
+                                    .addComponent(bnShowCaseLog, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(bnReprocessJob, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(lbStatus)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(tbStatusMessage, javax.swing.GroupLayout.PREFERRED_SIZE, 861, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(lbCompleted)
+                            .addComponent(lbRunning)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(lbServicesStatus)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(tbServicesStatusMessage, javax.swing.GroupLayout.PREFERRED_SIZE, 861, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
         );
 
         layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {bnCancelJob, bnCancelModule, bnDeleteCase, bnExit, bnOpenLogDir, bnOptions, bnPause, bnRefresh, bnShowProgress});
@@ -1358,7 +1350,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                         .addGap(82, 82, 82)
                         .addComponent(bnPrioritizeCase)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(bnPrioritizeFolder)))
+                        .addComponent(bnPrioritizeJob)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lbRunning)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1374,9 +1366,11 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                         .addComponent(runningScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 133, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(102, 102, 102)
+                        .addGap(68, 68, 68)
+                        .addComponent(bnReprocessJob)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(bnDeleteCase)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(bnShowCaseLog))
                     .addGroup(layout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1419,55 +1413,47 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
      * @param evt The button click event.
      */
     private void bnDeleteCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnDeleteCaseActionPerformed
-        // RJCTODO: Re-implement
-//        if (completedTableModel.getRowCount() < 0 || completedTable.getSelectedRow() < 0) {
-//            return;
-//        }
-//
-//        String caseName = (String) completedTable.getValueAt(completedTable.getSelectedRow(), JobsTableModelColumns.CASE.ordinal());
-//        Object[] options = {
-//            org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "ConfirmationDialog.Delete"),
-//            org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "ConfirmationDialog.DoNotDelete")
-//        };
-//
-//        // Add checkbox to allow user to delete images in input folder as well
-//        JCheckBox deleteInputChk = new JCheckBox("Delete input images for this case in shared input folder");
-//        Object[] msgContent = {org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "ConfirmationDialog.DeleteAreYouSure") + "\"" + caseName + "\"?", deleteInputChk};
-//        int reply = JOptionPane.showOptionDialog(this,
-//                msgContent,
-//                org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "ConfirmationDialog.ConfirmDeletionHeader"),
-//                JOptionPane.DEFAULT_OPTION,
-//                JOptionPane.WARNING_MESSAGE,
-//                null,
-//                options,
-//                options[JOptionPane.NO_OPTION]);
-//        if (reply == JOptionPane.YES_OPTION) {
-//            bnDeleteCase.setEnabled(false);
-//            bnShowCaseLog.setEnabled(false);
-//            if (completedTableModel.getRowCount() > 0 && completedTable.getSelectedRow() >= 0) {
-//                String caseOutputFolderPath = completedTableModel.getValueAt(completedTable.getSelectedRow(), JobsTableModelColumns.CASE_FOLDER.ordinal()).toString();
-//                String caseAutFilePath = completedTableModel.getValueAt(completedTable.getSelectedRow(), JobsTableModelColumns.CASE.ordinal()).toString() + CaseMetadata.getFileExtension();
-//                completedTable.clearSelection();
-//                this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-//                AutoIngestManager.CaseDeletionResult deletionResult = manager.deleteCase(Paths.get(caseOutputFolderPath), deleteInputChk.isSelected(), caseAutFilePath);
-//                this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-//                if (deletionResult.getCaseDeletionStatus() == AutoIngestManager.CaseDeletionResult.Status.FAILED) {
-//                    JOptionPane.showMessageDialog(this, "Could not delete case " + caseName + " because it is in use",
-//                            org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.DeletionFailed"), JOptionPane.INFORMATION_MESSAGE);
-//                } else if (deletionResult.getCaseDeletionStatus() == AutoIngestManager.CaseDeletionResult.Status.PARTIALLY_COMPLETED) {
-//                    String str = "Deleted case \"" + caseName + "\", but not all files could be deleted.\nTo delete these files, stop automated ingest and delete \n"
-//                            + caseOutputFolderPath + "\nand \n" + deletionResult.getCaseImageFolderPath() + "\nif present.";
-//                    JOptionPane.showMessageDialog(this, str,
-//                            org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.DeletionFailed"), JOptionPane.INFORMATION_MESSAGE);
-//                }
-//                /**
-//                 * Need to update both the pending jobs table and the completed
-//                 * jobs table since pending jobs for the deleted case are also
-//                 * deleted.
-//                 */
-//                updateExecutor.submit(new UpdateAllJobsTablesTask());
-//            }
-//        }
+        if (completedTableModel.getRowCount() < 0 || completedTable.getSelectedRow() < 0) {
+            return;
+        }
+
+        String caseName = (String) completedTable.getValueAt(completedTable.getSelectedRow(), JobsTableModelColumns.CASE.ordinal());
+        Object[] options = {
+            org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "ConfirmationDialog.Delete"),
+            org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "ConfirmationDialog.DoNotDelete")
+        };
+        Object[] msgContent = {org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "ConfirmationDialog.DeleteAreYouSure") + "\"" + caseName + "\"?"};
+        int reply = JOptionPane.showOptionDialog(this,
+                msgContent,
+                org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "ConfirmationDialog.ConfirmDeletionHeader"),
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.WARNING_MESSAGE,
+                null,
+                options,
+                options[JOptionPane.NO_OPTION]);
+        if (reply == JOptionPane.YES_OPTION) {
+            bnDeleteCase.setEnabled(false);
+            bnShowCaseLog.setEnabled(false);
+            if (completedTableModel.getRowCount() > 0 && completedTable.getSelectedRow() >= 0) {
+                Path caseDirectoryPath = (Path) completedTableModel.getValueAt(completedTable.getSelectedRow(), JobsTableModelColumns.CASE_DIRECTORY_PATH.ordinal());
+                completedTable.clearSelection();
+                this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                CaseDeletionResult result = manager.deleteCase(caseName, caseDirectoryPath);
+                this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                if (CaseDeletionResult.FAILED == result) {
+                    JOptionPane.showMessageDialog(this,
+                            String.format("Could not delete case %s. It may be in in use.", caseName),
+                            org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.DeletionFailed"),
+                            JOptionPane.INFORMATION_MESSAGE);
+                } else if (CaseDeletionResult.PARTIALLY_DELETED == result) {
+                    JOptionPane.showMessageDialog(this,
+                            String.format("Could not delete case %s. See system log for details.", caseName),
+                            org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.DeletionFailed"),
+                            JOptionPane.INFORMATION_MESSAGE);
+                }
+                updateExecutor.submit(new UpdateAllJobsTablesTask());
+            }
+        }
     }//GEN-LAST:event_bnDeleteCaseActionPerformed
 
     /**
@@ -1583,22 +1569,15 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
      * @param evt The button click event.
      */
     private void bnPrioritizeCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnPrioritizeCaseActionPerformed
-        // RJCTODO: Re-implement
-//        if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
-//            this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-//            String caseName = (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.CASE.ordinal())).toString();
-//            try {
-//                List<AutoIngestJob> prioritizedQueue = manager.prioritizeCase(caseName);
-//                refreshTable(prioritizedQueue, pendingTableModel, null);
-//            } catch (IOException ex) {
-//                logger.log(Level.SEVERE, String.format("Error while prioritizing case %s", caseName), ex);
-//                MessageNotifyUtil.Message.error("An error occurred while prioritizing the case.");
-//            } finally {
-//                pendingTable.clearSelection();
-//                enablePendingTableButtons(false);
-//                AutoIngestDashboard.this.setCursor(Cursor.getDefaultCursor());
-//            }
-//        }
+        if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
+            this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            String caseName = (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.CASE.ordinal())).toString();
+            List<AutoIngestJob> prioritizedQueue = manager.prioritizeCase(caseName);
+            refreshTable(prioritizedQueue, pendingTableModel, null);
+            pendingTable.clearSelection();
+            enablePendingTableButtons(false);
+            AutoIngestDashboard.this.setCursor(Cursor.getDefaultCursor());
+        }
     }//GEN-LAST:event_bnPrioritizeCaseActionPerformed
 
     /**
@@ -1612,16 +1591,20 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
             int selectedRow = completedTable.getSelectedRow();
             if (selectedRow != -1) {
                 Path caseDirectoryPath = (Path) completedTableModel.getValueAt(selectedRow, JobsTableModelColumns.CASE_DIRECTORY_PATH.ordinal());
-                Path pathToLog = AutoIngestJobLogger.getLogPath(caseDirectoryPath);
-                if (pathToLog.toFile().exists()) {
-                    Desktop.getDesktop().edit(pathToLog.toFile());
+                if (null != caseDirectoryPath) {
+                    Path pathToLog = AutoIngestJobLogger.getLogPath(caseDirectoryPath);
+                    if (pathToLog.toFile().exists()) {
+                        Desktop.getDesktop().edit(pathToLog.toFile());
+                    } else {
+                        JOptionPane.showMessageDialog(this, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.ShowLogFailed.Message"),
+                                org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.ShowLogFailed.Title"), JOptionPane.ERROR_MESSAGE);
+                    }
                 } else {
-                    JOptionPane.showMessageDialog(this, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.ShowLogFailed.Message"),
-                            org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.ShowLogFailed.Title"), JOptionPane.ERROR_MESSAGE);
+                    MessageNotifyUtil.Message.warn("The case directory for this job has been deleted.");
                 }
             }
         } catch (IOException ex) {
-            LOGGER.log(Level.SEVERE, "Dashboard error attempting to display case auto ingest log", ex);
+            SYS_LOGGER.log(Level.SEVERE, "Dashboard error attempting to display case auto ingest log", ex);
             Object[] options = {org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "DisplayLogDialog.okay")};
             JOptionPane.showOptionDialog(this,
                     org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "DisplayLogDialog.cannotFindLog"),
@@ -1634,25 +1617,17 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         }
     }//GEN-LAST:event_bnShowCaseLogActionPerformed
 
-    private void bnPrioritizeFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnPrioritizeFolderActionPerformed
-        // RJCTODO: Re-implement
-//        if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
-//            this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-//            String caseName = (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.CASE.ordinal())).toString();
-//            String folderName = (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.DATA_SOURCE.ordinal())).toString();
-//            try {
-//                List<AutoIngestJob> prioritizedQueue = manager.prioritizeJob(caseName, folderName);
-//                refreshTable(prioritizedQueue, pendingTableModel, null);
-//            } catch (IOException ex) {
-//                logger.log(Level.SEVERE, String.format("Error while prioritizing folder %s", folderName), ex);
-//                MessageNotifyUtil.Message.error("An error occurred while prioritizing the folder.");
-//            } finally {
-//                pendingTable.clearSelection();
-//                enablePendingTableButtons(false);
-//                AutoIngestDashboard.this.setCursor(Cursor.getDefaultCursor());
-//            }
-//        }
-    }//GEN-LAST:event_bnPrioritizeFolderActionPerformed
+    private void bnPrioritizeJobActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnPrioritizeJobActionPerformed
+        if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
+            this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            Path manifestFilePath = (Path) (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.MANIFEST_FILE_PATH.ordinal()));
+            List<AutoIngestJob> prioritizedQueue = manager.prioritizeJob(manifestFilePath);
+            refreshTable(prioritizedQueue, pendingTableModel, null);
+            pendingTable.clearSelection();
+            enablePendingTableButtons(false);
+            AutoIngestDashboard.this.setCursor(Cursor.getDefaultCursor());
+        }
+    }//GEN-LAST:event_bnPrioritizeJobActionPerformed
 
     private void bnOpenLogDirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOpenLogDirActionPerformed
         Path logDirPath = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), "var", "log");
@@ -1661,10 +1636,23 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
             Desktop.getDesktop().open(logDir);
         } catch (IOException ex) {
             DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(
-                    String.format("Unable to open log directory %s:\n%s", logDirPath, ex.getLocalizedMessage()), // RJCTODO: Localize
+                    String.format("Unable to open log directory %s:\n%s", logDirPath, ex.getLocalizedMessage()),
                     NotifyDescriptor.ERROR_MESSAGE));
         }
     }//GEN-LAST:event_bnOpenLogDirActionPerformed
+
+    private void bnReprocessJobActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnReprocessJobActionPerformed
+        if (completedTableModel.getRowCount() < 0 || completedTable.getSelectedRow() < 0) {
+            return;
+        }
+        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        Path manifestPath = (Path) completedTableModel.getValueAt(completedTable.getSelectedRow(), JobsTableModelColumns.MANIFEST_FILE_PATH.ordinal());
+        JobsSnapshot jobsSnapshot = manager.reprocessJob(manifestPath);
+        refreshTable(jobsSnapshot.getCompletedJobs(), completedTableModel, null);
+        refreshTable(jobsSnapshot.getPendingJobs(), pendingTableModel, null);
+        refreshTable(jobsSnapshot.getRunningJobs(), runningTableModel, null);
+        AutoIngestDashboard.this.setCursor(Cursor.getDefaultCursor());
+    }//GEN-LAST:event_bnReprocessJobActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bnCancelJob;
@@ -1675,8 +1663,9 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     private javax.swing.JButton bnOptions;
     private javax.swing.JButton bnPause;
     private javax.swing.JButton bnPrioritizeCase;
-    private javax.swing.JButton bnPrioritizeFolder;
+    private javax.swing.JButton bnPrioritizeJob;
     private javax.swing.JButton bnRefresh;
+    private javax.swing.JButton bnReprocessJob;
     private javax.swing.JButton bnShowCaseLog;
     private javax.swing.JButton bnShowProgress;
     private javax.swing.JScrollPane completedScrollPane;

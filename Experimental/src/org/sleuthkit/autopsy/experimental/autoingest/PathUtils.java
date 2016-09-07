@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.nio.file.Path;
@@ -28,11 +29,9 @@ import java.util.Collections;
 import java.util.List;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.casemodule.GeneralFilter;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 final class PathUtils {
 
-    private static final Logger logger = Logger.getLogger(PathUtils.class.getName());
     private static final List<String> CASE_METADATA_FILE_EXTS = Arrays.asList(new String[]{CaseMetadata.getFileExtension()});
     private static final GeneralFilter caseMetadataFileFilter = new GeneralFilter(CASE_METADATA_FILE_EXTS, "Autopsy Case File");
 
@@ -71,7 +70,7 @@ final class PathUtils {
      *
      * @return A list of the output case folder paths.
      */
-    static List<Path> findCaseFolders(Path folderToSearch) {
+    static List<Path> findCaseFolders(Path folderToSearch) { // RJCTODO: Rename
         File searchFolder = new File(folderToSearch.toString());
         if (!searchFolder.isDirectory()) {
             return Collections.emptyList();
@@ -113,32 +112,6 @@ final class PathUtils {
     }
 
     /**
-     * Extracts the path to the case images folder path from an image folder
-     * path.
-     *
-     * @param rootImageFoldersPath The root image folders path.
-     * @param imageFolderPath      The image folder path.
-     *
-     * @return The root input folder path for a case.
-     */
-    static Path caseImagesPathFromImageFolderPath(Path rootImageFoldersPath, Path imageFolderPath) {
-        return rootImageFoldersPath.resolve(imageFolderPath.subpath(0, rootImageFoldersPath.getNameCount() + 1).getFileName());
-    }
-
-    /**
-     * Extracts the case name from an image folder path.
-     *
-     * @param rootImageFoldersPath The root image folders path.
-     * @param imageFolderPath      The image folder path.
-     *
-     * @return The case name.
-     */
-    static String caseNameFromImageFolderPath(Path rootImageFoldersPath, Path imageFolderPath) {
-        Path caseImagesPath = PathUtils.caseImagesPathFromImageFolderPath(rootImageFoldersPath, imageFolderPath);
-        return caseImagesPath.getFileName().toString();
-    }
-
-    /**
      * Extracts the case name from a case folder path.
      *
      * @param caseFolderPath A case folder path.
@@ -163,7 +136,7 @@ final class PathUtils {
      *
      * @return A case folder path with a time stamp suffix.
      */
-    static Path createCaseFolderPath(Path caseFoldersPath, String caseName) {
+    static Path createCaseFolderPath(Path caseFoldersPath, String caseName) { // RJCTODO: Rename
         String folderName = caseName + "_" + TimeStampUtils.createTimeStamp();
         return Paths.get(caseFoldersPath.toString(), folderName);
     }

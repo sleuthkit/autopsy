@@ -27,13 +27,13 @@ import java.util.Date;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.ThreadSafe;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 
 /**
- * An automated ingest job auto ingest jobs associated with a manifest file. A
- * manifest file specifies a co-located data source and a case to which the data
- * source is to be added.
+ * An automated ingest job for a manifest. The manifest specifies a co-located
+ * data source and a case to which the data source is to be added.
  */
 @ThreadSafe
 public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializable {
@@ -51,14 +51,38 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
     @GuardedBy("this")
     private Date stageStartDate;
     @GuardedBy("this")
+    transient private DataSourceProcessor dataSourceProcessor;
+    @GuardedBy("this")
     transient private IngestJob ingestJob;
+    @GuardedBy("this")
+    transient private boolean cancelled; // RJCTODO: Document
+    @GuardedBy("this")
+    transient private boolean completed; // RJCTODO: Document
+    @GuardedBy("this")
+    private Date completedDate;
+    @GuardedBy("this")
+    private boolean errorsOccurred;
 
     /**
-     * RJCTODO
+     * Constructs an automated ingest job for a manifest. The manifest specifies
+     * a co-located data source and a case to which the data source is to be
+     * added.
      *
-     * @param manifest
+     * @param manifest          The manifest
+     * @param caseDirectoryPath The path to the case directory for the job, may
+     *                          be null.
+     * @param priority          The priority of the job. The higher the number,
+     *                          the higher the priority.
+     * @param nodeName          If the job is in progress, the node doing the
+     *                          processing, otherwise the locla host.
+     * @param stage             The processing stage for display purposes.
+     * @param completedDate     The date when the job was completed. Use the
+     *                          epoch (January 1, 1970, 00:00:00 GMT) to
+     *                          indicate the the job is not completed, i.e., new
+     *                          Date(0L).
      */
-    AutoIngestJob(Manifest manifest, Path caseDirectoryPath, int priority, String nodeName, Stage stage) {
+    // RJCTODO: The null case directory is error-prone and the nodeName is confusing.
+    AutoIngestJob(Manifest manifest, Path caseDirectoryPath, int priority, String nodeName, Stage stage, Date completedDate, boolean errorsOccurred) {
         this.manifest = manifest;
         if (null != caseDirectoryPath) {
             this.caseDirectoryPath = caseDirectoryPath.toString();
@@ -69,12 +93,14 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
         this.nodeName = nodeName;
         this.stage = stage;
         this.stageStartDate = manifest.getDateFileCreated();
+        this.completedDate = completedDate;
+        this.errorsOccurred = errorsOccurred;
     }
 
     /**
-     * RJCTODO
+     * Gets the auto ingest jobmanifest.
      *
-     * @return
+     * @return The manifest.
      */
     Manifest getManifest() {
         return this.manifest;
@@ -86,6 +112,7 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
      *
      * @return True or false
      */
+    // RJCTODO: Use this or lose this
     synchronized boolean hasCaseDirectoryPath() {
         return (false == this.caseDirectoryPath.isEmpty());
     }
@@ -114,14 +141,21 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
         }
     }
 
+    /**
+     * Sets the priority of the job. A higher number indicates a higher
+     * priority.
+     *
+     * @param priority The priority.
+     */
     synchronized void setPriority(Integer priority) {
         this.priority = priority;
     }
 
     /**
-     * RJCTODO
+     * Gets the priority of the job. A higher number indicates a higher
+     * priority.
      *
-     * @return
+     * @return The priority.
      */
     synchronized Integer getPriority() {
         return this.priority;
@@ -143,11 +177,7 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
      * @param stateStartedDate
      */
     synchronized void setStage(Stage newState, Date stateStartedDate) {
-        if (Stage.CANCELLED == this.stage && Stage.COMPLETED != newState) {
-            /**
-             * Do not overwrite canceling status with anything other than
-             * completed status.
-             */
+        if (Stage.CANCELLING == this.stage && Stage.COMPLETED != newState) {
             return;
         }
         this.stage = newState;
@@ -214,10 +244,12 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
         return new StageDetails(description, startDate);
     }
 
+    synchronized void setDataSourceProcessor(DataSourceProcessor dataSourceProcessor) {
+        this.dataSourceProcessor = dataSourceProcessor;
+    }
+
     /**
      * RJCTODO
-     *
-     * @param ingestStatus
      */
     // RJCTODO: Consider moving this class into AIM and making this private
     synchronized void setIngestJob(IngestJob ingestJob) {
@@ -226,13 +258,88 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
 
     /**
      * RJCTODO
-     *
-     * @return
      */
     // RJCTODO: Consider moving this class into AIM and making this private. 
     // Or move the AID into a separate package. Or do not worry about it.
     synchronized IngestJob getIngestJob() {
         return this.ingestJob;
+    }
+
+    /**
+     * RJCTODO
+     */
+    synchronized void cancel() {
+        setStage(Stage.CANCELLING);
+        cancelled = true;
+        errorsOccurred = true;
+        if (null != dataSourceProcessor) {
+            dataSourceProcessor.cancel();
+        }
+        if (null != ingestJob) {
+            ingestJob.cancel(IngestJob.CancellationReason.USER_CANCELLED);
+        }
+    }
+
+    /**
+     * RJCTODO
+     */
+    synchronized boolean isCancelled() {
+        return cancelled;
+    }
+
+    /**
+     * RJCTODO
+     */
+    synchronized void setCompleted() {
+        setStage(Stage.COMPLETED);
+        completed = true;
+    }
+
+    /**
+     * RJCTODO
+     *
+     * @return
+     */
+    synchronized boolean isCompleted() {
+        return completed;
+    }
+
+    /**
+     * Sets the date the job was completed, with or without cancellation or
+     * errors.
+     *
+     * @param completedDate The completion date.
+     */
+    synchronized void setCompletedDate(Date completedDate) {
+        this.completedDate = completedDate;
+    }
+
+    /**
+     * Gets the date the job was completed, with or without cancellation or
+     * errors.
+     *
+     * @return True or false.
+     */
+    synchronized Date getCompletedDate() {
+        return completedDate; // RJCTODO: Consider returning null if == 0 (epoch)
+    }
+
+    /**
+     * Sets whether or not erros occurred during the processing of the job.
+     *
+     * @param errorsOccurred True or false;
+     */
+    synchronized void setErrorsOccurred(boolean errorsOccurred) {
+        this.errorsOccurred = errorsOccurred;
+    }
+
+    /**
+     * Queries whether or not erros occurred during the processing of the job.
+     *
+     * @return True or false.
+     */
+    synchronized boolean hasErrors() {
+        return this.errorsOccurred;
     }
 
     /**
@@ -309,30 +416,21 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
     }
 
     /**
-     * Custom comparator that sorts the pending list with prioritized cases
-     * first, then nonprioritized cases. Prioritized cases are last in, first
-     * out. Nonprioritized cases are first in, first out. Prioritized times are
-     * from the creation time of the "prioritized" state file. Non prioritized
-     * are from the folder creation time.
+     * Comparator that sorts auto ingest jobs by priority in descending order.
      */
     public static class PriorityComparator implements Comparator<AutoIngestJob> {
 
         /**
          * RJCTODO
          *
-         * @param o1
-         * @param o2
+         * @param job
+         * @param anotherJob
          *
          * @return
          */
         @Override
-        public int compare(AutoIngestJob o1, AutoIngestJob o2) {
-            Integer result = o1.getPriority().compareTo(o2.getPriority());
-            if (0 != result) {
-                return result;
-            } else {
-                return o1.getManifest().getDateFileCreated().compareTo(o2.getManifest().getDateFileCreated());
-            }
+        public int compare(AutoIngestJob job, AutoIngestJob anotherJob) {
+            return -(job.getPriority().compareTo(anotherJob.getPriority()));
         }
 
     }
@@ -364,6 +462,10 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
         }
     }
 
+    /**
+     * RJCTODO
+     */
+    // RJCTODO: Combine this enum with StageDetails to make a single class.
     enum Stage {
 
         PENDING("Pending"),
@@ -377,8 +479,7 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
         ANALYZING_FILES("Analyzing files"),
         EXPORTING_FILES("Exporting files"),
         CANCELLING_MODULE("Cancelling module"),
-        CANCELLED("Cancelled"),
-        INTERRUPTED("Cancelled"),
+        CANCELLING("Cancelling"),
         COMPLETED("Completed");
 
         private final String displayText;

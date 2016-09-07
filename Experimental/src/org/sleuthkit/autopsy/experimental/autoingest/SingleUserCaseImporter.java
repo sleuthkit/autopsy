@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import java.awt.Dimension;
 import java.io.BufferedWriter;
 import java.io.File;
