@@ -18,21 +18,27 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -368,14 +374,14 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         private final String solrDocumentId;
         private final List<Long> artifactIDS;
         private final long hits;
-        private final String status;
+        private final Set<BlackboardArtifact.ReviewStatus> statuses;
 
-        private FileWithCCN(long objID, String solrDocID, List<Long> artifactIDS, long hits, String status) {
+        private FileWithCCN(long objID, String solrDocID, List<Long> artifactIDS, long hits, Set<BlackboardArtifact.ReviewStatus> statuses) {
             this.objID = objID;
             this.solrDocumentId = solrDocID;
             this.artifactIDS = artifactIDS;
             this.hits = hits;
-            this.status = status;
+            this.statuses = statuses;
         }
 
         public long getObjID() {
@@ -394,8 +400,8 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             return hits;
         }
 
-        public String getStatus() {
-            return status;
+        public Set<BlackboardArtifact.ReviewStatus> getStatuses() {
+            return statuses;
         }
     }
 
@@ -430,15 +436,17 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<FileWithCCN> list) {
-            String query =
-                    "SELECT blackboard_artifacts.obj_id," //NON-NLS
+            String query
+                    = "SELECT blackboard_artifacts.obj_id," //NON-NLS
                     + "      blackboard_attributes.value_text AS solr_document_id, " //NON-NLS
                     + "      GROUP_CONCAT(blackboard_artifacts.artifact_id) AS artifact_IDs, " //NON-NLS
-                    + "      COUNT( blackboard_artifacts.artifact_id) AS hits " //NON-NLS
+                    + "      COUNT( blackboard_artifacts.artifact_id) AS hits,  " //NON-NLS
+                    + "      GROUP_CONCAT(blackboard_artifacts.review_status_id) AS review_status_ids "
                     + " FROM blackboard_artifacts " //NON-NLS
                     + " LEFT JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id " //NON-NLS
                     + "                                AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SOLR_DOCUMENT_ID.getTypeID() //NON-NLS
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT.getTypeID() //NON-NLS
+                    + "     AND blackboard_artifacts.review_status_id != " + BlackboardArtifact.ReviewStatus.REJECTED.getID() //NON-NLS
                     + " GROUP BY blackboard_artifacts.obj_id, solr_document_id " //NON-NLS
                     + " ORDER BY hits DESC ";  //NON-NLS
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
@@ -449,7 +457,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                             rs.getString("solr_document_id"), //NON-NLS
                             unGroupConcat(rs.getString("artifact_IDs"), Long::valueOf), //NON-NLS
                             rs.getLong("hits"), //NON-NLS
-                            "unreviewed"));  //NON-NLS
+                            new HashSet<>(unGroupConcat(rs.getString("review_status_ids"), id -> BlackboardArtifact.ReviewStatus.withID(Integer.valueOf(id))))));  //NON-NLS
                 }
             } catch (TskCoreException | SQLException ex) {
                 LOGGER.log(Level.SEVERE, "Error querying for files with ccn hits.", ex); //NON-NLS
@@ -547,10 +555,27 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             ss.put(new NodeProperty<>(Bundle.Accounts_FileWithCCNNode_statusProperty_displayName(),
                     Bundle.Accounts_FileWithCCNNode_statusProperty_displayName(),
                     Bundle.Accounts_FileWithCCNNode_noDescription(),
-                    fileKey.getStatus()));
+                    fileKey.getStatuses().stream()
+                    .map(BlackboardArtifact.ReviewStatus::getDisplayName)
+                    .collect(Collectors.joining(", "))));
 
             return s;
         }
+
+        @NbBundle.Messages({
+            "ApproveAccountsAction.name=Approve Accounts",
+            "RejectAccountsAction.name=Reject Accounts"})
+        @Override
+        public Action[] getActions(boolean context) {
+            Action[] actions = super.getActions(context);
+            ArrayList<Action> arrayList = new ArrayList<>();
+            arrayList.addAll(Arrays.asList(actions));
+
+            arrayList.add(new ApproveAccounts(getLookup().lookupAll(BlackboardArtifact.class)));
+            arrayList.add(new RejectAccounts(getLookup().lookupAll(BlackboardArtifact.class)));
+            return arrayList.toArray(new Action[arrayList.size()]);
+        }
+
     }
 
     /**
@@ -625,13 +650,14 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<BINInfo> list) {
-            String query =
-                    "SELECT SUBSTR(blackboard_attributes.value_text,1,6) AS BIN, " //NON-NLS
+            String query
+                    = "SELECT SUBSTR(blackboard_attributes.value_text,1,6) AS BIN, " //NON-NLS
                     + "     COUNT(blackboard_artifacts.artifact_id) AS count " //NON-NLS
                     + " FROM blackboard_artifacts " //NON-NLS
                     + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id" //NON-NLS
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER.getTypeID() //NON-NLS
+                    + "     AND blackboard_artifacts.review_status_id != " + BlackboardArtifact.ReviewStatus.REJECTED.getID() //NON-NLS
                     + " GROUP BY BIN " //NON-NLS
                     + " ORDER BY BIN "; //NON-NLS
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query)) {
@@ -692,13 +718,14 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<Long> list) {
-            String query =
-                    "SELECT blackboard_artifacts.artifact_id " //NON-NLS
+            String query
+                    = "SELECT blackboard_artifacts.artifact_id " //NON-NLS
                     + " FROM blackboard_artifacts " //NON-NLS
                     + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id " //NON-NLS
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.value_text LIKE \"" + bin.getBIN() + "%\" " //NON-NLS
+                    + "     AND blackboard_artifacts.review_status_id != " + BlackboardArtifact.ReviewStatus.REJECTED.getID() //NON-NLS
                     + " ORDER BY blackboard_attributes.value_text"; //NON-NLS
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
                     ResultSet rs = results.getResultSet();) {
@@ -720,10 +747,91 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
             try {
                 BlackboardArtifact art = skCase.getBlackboardArtifact(artifactID);
-                return new BlackboardArtifactNode(art, "org/sleuthkit/autopsy/images/credit-card.png");   //NON-NLS 
+                return new AccountArtifactNode(art);
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.WARNING, "Error creating BlackboardArtifactNode for artifact with ID " + artifactID, ex);   //NON-NLS
                 return null;
+            }
+        }
+    }
+
+    private class AccountArtifactNode extends BlackboardArtifactNode {
+
+        private final BlackboardArtifact artifact;
+
+        private AccountArtifactNode(BlackboardArtifact artifact) {
+            super(artifact, "org/sleuthkit/autopsy/images/credit-card.png");   //NON-NLS
+            this.artifact = artifact;
+        }
+
+        @Override
+        public Action[] getActions(boolean context) {
+            List<Action> actionsList = new ArrayList<>();
+            actionsList.addAll(Arrays.asList(super.getActions(context)));
+            actionsList.add(new ApproveAccounts(Collections.singleton(artifact)));
+            actionsList.add(new RejectAccounts(Collections.singleton(artifact)));
+            return actionsList.toArray(new Action[actionsList.size()]);
+        }
+
+        @Override
+        protected Sheet createSheet() {
+            Sheet sheet = super.createSheet(); //To change body of generated methods, choose Tools | Templates.
+            Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+            if (sheetSet == null) {
+                sheetSet = Sheet.createPropertiesSet();
+                sheet.put(sheetSet);
+            }
+            sheetSet.put(new NodeProperty<>(Bundle.Accounts_FileWithCCNNode_statusProperty_displayName(),
+                    Bundle.Accounts_FileWithCCNNode_statusProperty_displayName(),
+                    Bundle.Accounts_FileWithCCNNode_noDescription(),
+                    artifact.getReviewStatus().getDisplayName()));
+
+            return sheet;
+        }
+    }
+
+    private class ApproveAccounts extends AbstractAction {
+
+        private final Collection<? extends BlackboardArtifact> artifacts;
+
+        ApproveAccounts(Collection<? extends BlackboardArtifact> artifacts) {
+            super(Bundle.ApproveAccountsAction_name());
+            this.artifacts = artifacts;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            try {
+                for (BlackboardArtifact artifact : artifacts) {
+                    skCase.setReviewStatus(artifact, BlackboardArtifact.ReviewStatus.APPROVED);
+                }
+                Accounts.this.update();
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Error approving artifacts.", ex); //NON-NLS
+            }
+        }
+    }
+
+    private class RejectAccounts extends AbstractAction {
+
+        private final Collection<? extends BlackboardArtifact> artifacts;
+
+        RejectAccounts(Collection<? extends BlackboardArtifact> artifacts) {
+            super(Bundle.RejectAccountsAction_name());
+
+            this.artifacts = artifacts;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            try {
+                for (BlackboardArtifact artifact : artifacts) {
+                    skCase.setReviewStatus(artifact, BlackboardArtifact.ReviewStatus.REJECTED);
+                }
+                Accounts.this.update();
+
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Error approving artifacts.", ex); //NON-NLS
             }
         }
     }
