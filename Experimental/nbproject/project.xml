@@ -98,7 +98,10 @@
                     </run-dependency>
                 </dependency>
             </module-dependencies>
-            <public-packages/>
+            <public-packages>
+                <package>org.sleuthkit.autopsy.experimental.autoingest</package>
+                <package>org.sleuthkit.autopsy.experimental.configuration</package>
+            </public-packages>
             <class-path-extension>
                 <runtime-relative-path>ext/zookeeper-3.4.6.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/zookeeper-3.4.6.jar</binary-origin>
