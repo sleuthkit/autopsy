@@ -1388,7 +1388,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                     }
                     try {
                         processJobs();
-//                    } catch (CoordinationServiceException | SharedConfigurationException | ServicesMonitorException | DatabaseServerDownException | KeywordSearchServerDownException | CaseManagementException | AnalysisStartupException | FileExportException | AutoIngestAlertFileException | AutoIngestJobLoggerException ex) {
                     } catch (Exception ex) {
                         if (jobProcessingTaskFuture.isCancelled()) {
                             break;
