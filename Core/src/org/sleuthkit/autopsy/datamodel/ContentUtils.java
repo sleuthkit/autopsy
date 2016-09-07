@@ -24,7 +24,6 @@ import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 import java.util.concurrent.Future;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
@@ -33,9 +32,7 @@ import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
@@ -232,8 +229,8 @@ public final class ContentUtils {
      * @param content     Any content object.
      * @param outputFile  Will be created if it doesn't exist, and overwritten
      *                    if it does
-     * @param cancelCheck A function used to check if the ingest job has been
-     *                    terminated.
+     * @param cancelCheck A function used to check if the file write process
+     *                    should be terminated.
      * @return number of bytes extracted
      * @throws IOException if file could not be written
      */
