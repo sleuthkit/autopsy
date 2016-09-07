@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.modules.filetypeid;
 
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.DefaultListModel;
@@ -41,7 +39,6 @@ class AddFileTypePanel extends javax.swing.JPanel {
 
     private AddFileTypeSignatureDialog addSigDialog;
     private DefaultListModel<FileType.Signature> signaturesListModel;
-    private PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     /**
      * Creates a panel for a new file type.
@@ -147,16 +144,6 @@ class AddFileTypePanel extends javax.swing.JPanel {
     
     boolean hasSignature() {
         return !this.signaturesListModel.isEmpty();
-    }
-    
-    @Override
-    public void addPropertyChangeListener(PropertyChangeListener l) {
-        pcs.addPropertyChangeListener(l);
-    }
-
-    @Override
-    public void removePropertyChangeListener(PropertyChangeListener l) {
-        pcs.removePropertyChangeListener(l);
     }
 
     /**
@@ -279,7 +266,7 @@ class AddFileTypePanel extends javax.swing.JPanel {
             if (!this.signaturesListModel.isEmpty()) {
                 signatureList.setSelectedIndex(0);
             }
-            pcs.firePropertyChange(SIG_LIST_CHANGED.toString(), null, null);
+            firePropertyChange(SIG_LIST_CHANGED.toString(), null, null);
         }
     }//GEN-LAST:event_deleteSigButtonActionPerformed
 
@@ -289,7 +276,7 @@ class AddFileTypePanel extends javax.swing.JPanel {
             if (addSigDialog.getResult() == AddFileTypeSignatureDialog.BUTTON_PRESSED.OK) {
                 signaturesListModel.addElement(this.addSigDialog.getSignature());
             }
-            pcs.firePropertyChange(SIG_LIST_CHANGED.toString(), null, null);
+            firePropertyChange(SIG_LIST_CHANGED.toString(), null, null);
         }
     }//GEN-LAST:event_addSigButtonActionPerformed
 
