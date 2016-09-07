@@ -199,7 +199,9 @@ public class ImageDSProcessor implements AutomatedIngestDataSourceProcessor {
      */
     @Override
     public void cancel() {
-        addImageTask.cancelTask();
+        if (null != addImageTask) {
+            addImageTask.cancelTask();
+        }
     }
 
     /**

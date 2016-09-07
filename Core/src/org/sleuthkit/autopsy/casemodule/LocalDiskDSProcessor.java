@@ -177,7 +177,9 @@ public class LocalDiskDSProcessor implements AutomatedIngestDataSourceProcessor 
      */
     @Override
     public void cancel() {
-        addDiskTask.cancelTask();
+        if (null != addDiskTask) {
+            addDiskTask.cancelTask();
+        }
     }
 
     /**
