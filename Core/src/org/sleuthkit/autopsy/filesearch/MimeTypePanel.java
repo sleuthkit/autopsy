@@ -6,7 +6,6 @@
 package org.sleuthkit.autopsy.filesearch;
 
 import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -29,7 +28,6 @@ public class MimeTypePanel extends javax.swing.JPanel {
     private static final SortedSet<MediaType> mediaTypes = MimeTypes.getDefaultMimeTypes().getMediaTypeRegistry().getTypes();
     private static final Logger logger = Logger.getLogger(MimeTypePanel.class.getName());
     private static final long serialVersionUID = 1L;
-    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     /**
      * Creates new form MimeTypePanel
@@ -40,7 +38,7 @@ public class MimeTypePanel extends javax.swing.JPanel {
         this.mimeTypeList.addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
-                pcs.firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+                firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
             }
         });
     }
@@ -85,16 +83,6 @@ public class MimeTypePanel extends javax.swing.JPanel {
         boolean enabled = this.isSelected();
         this.mimeTypeList.setEnabled(enabled);
         this.jLabel1.setEnabled(enabled);
-    }
-    
-    @Override
-    public void addPropertyChangeListener(PropertyChangeListener pcl) {
-        pcs.addPropertyChangeListener(pcl);
-    }
-
-    @Override
-    public void removePropertyChangeListener(PropertyChangeListener pcl) {
-        pcs.removePropertyChangeListener(pcl);
     }
 
     /**
@@ -162,7 +150,7 @@ public class MimeTypePanel extends javax.swing.JPanel {
 
     private void mimeTypeCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mimeTypeCheckBoxActionPerformed
         setComponentsEnabled();
-        pcs.firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+        firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
         this.mimeTypeList.setSelectedIndices(new int[0]);
     }//GEN-LAST:event_mimeTypeCheckBoxActionPerformed
 

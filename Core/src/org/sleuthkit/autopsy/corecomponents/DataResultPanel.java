@@ -21,10 +21,8 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.awt.Cursor;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
@@ -59,7 +57,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private ExplorerManagerNodeSelectionListener emNodeSelectionListener;
     
     private Node rootNode;
-    private PropertyChangeSupport pcs;
 
     // Different DataResultsViewers
     private final List<UpdateWrapper> viewers = new ArrayList<>();
@@ -81,7 +78,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     private DataResultPanel() {
         this.isMain = true;
-        pcs = new PropertyChangeSupport(this);
         initComponents();
 
         setName(title);
@@ -333,11 +329,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * listeners.
      */
     void close() {
-        // try to remove any references to this class
-        PropertyChangeListener[] pcl = pcs.getPropertyChangeListeners();
-        for (int i = 0; i < pcl.length; i++) {
-            pcs.removePropertyChangeListener(pcl[i]);
-        }
 
         if (null != explorerManager && null != emNodeSelectionListener) {
             explorerManager.removePropertyChangeListener(emNodeSelectionListener);
@@ -360,25 +351,9 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             this.matchLabel.removeAll();
             this.matchLabel = null;
             this.setLayout(null);
-            this.pcs = null;
             this.removeAll();
             this.setVisible(false);
         }
-    }
-
-    @Override
-    public synchronized void addPropertyChangeListener(PropertyChangeListener listener) {
-        if (pcs == null) {
-            logger.log(Level.WARNING, "Could not add listener to DataResultPanel, " //NON-NLS
-                    + "listener support not fully initialized yet, listener: " + listener.toString()); //NON-NLS
-        } else {
-            this.pcs.addPropertyChangeListener(listener);
-        }
-    }
-
-    @Override
-    public synchronized void removePropertyChangeListener(PropertyChangeListener listener) {
-        this.pcs.removePropertyChangeListener(listener);
     }
 
     @Override
