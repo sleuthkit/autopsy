@@ -19,45 +19,26 @@
 package org.sleuthkit.autopsy.experimental.configuration;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.io.File;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
-import javax.swing.JTextField;
 import javax.swing.SwingWorker;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.autopsy.core.UserPreferencesException;
-import org.sleuthkit.autopsy.corecomponents.TextPrompt;
-import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettingsPanel;
-import org.sleuthkit.datamodel.TskData;
-import java.awt.Cursor;
 import java.awt.Dimension;
 import java.nio.file.Paths;
-import javax.swing.ImageIcon;
 import org.openide.util.ImageUtilities;
-import org.openide.util.Lookup;
-import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
-import java.util.logging.Level;
 import javax.swing.JScrollPane;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.CaseDbConnectionInfo;
-import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
-import org.sleuthkit.autopsy.events.MessageServiceException;
 import org.sleuthkit.autopsy.experimental.autoingest.FileExporterSettingsPanel;
 
 /**
@@ -67,21 +48,8 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
 
     private final AutoIngestSettingsPanelController controller;
     private final JFileChooser fc = new JFileChooser();
-    private final Collection<JTextField> textBoxes = new ArrayList<>();
     private TextBoxChangedListener textBoxChangedListener;
-    private static final String HOST_NAME_OR_IP_PROMPT = NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbDbHostname.toolTipText");
-    private static final String PORT_PROMPT = NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbDbPort.toolTipText");
-    private static final String USER_NAME_PROMPT = NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbDbUsername.toolTipText");
-    private static final String PASSWORD_PROMPT = NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbDbPassword.toolTipText");
-    private static final String USER_NAME_PROMPT_OPT = NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbMsgUsername.toolTipText");
-    private static final String PASSWORD_PROMPT_OPT = NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbMsgPassword.toolTipText");
-    private static final String INCOMPLETE_SETTINGS_MSG = NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.validationErrMsg.incomplete");
-    private static final String INVALID_DB_PORT_MSG = NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.validationErrMsg.invalidDatabasePort");
-    private static final String INVALID_MESSAGE_SERVICE_PORT_MSG = NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.validationErrMsg.invalidMessageServicePort");
-    private static final String INVALID_INDEXING_SERVER_PORT_MSG = NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.validationErrMsg.invalidIndexingServerPort");
     private static final long serialVersionUID = 1L;
-    private final ImageIcon goodIcon;
-    private final ImageIcon badIcon;
     private static final Logger logger = Logger.getLogger(AutoIngestSettingsPanel.class.getName());
     private Integer oldIngestThreads;
 
@@ -114,9 +82,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         pbTaskInProgress.setEnabled(false);
         jLabelCurrentTask.setEnabled(false);
         jLabelTaskDescription.setEnabled(false);
-
-        goodIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/good.png", false));
-        badIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/bad.png", false));
 
         this.oldIngestThreads = UserPreferences.numberOfFileIngestThreads();
     }
