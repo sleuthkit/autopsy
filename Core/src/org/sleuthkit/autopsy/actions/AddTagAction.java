@@ -1,21 +1,21 @@
 /*
- * Autopsy Forensic Browser
- * 
- * Copyright 2013-15 Basis Technology Corp.
- * Contact: carrier <at> sleuthkit <dot> org
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Autopsy Forensic Browser
+*
+* Copyright 2013-15 Basis Technology Corp.
+* Contact: carrier <at> sleuthkit <dot> org
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 package org.sleuthkit.autopsy.actions;
 
 import java.awt.event.ActionEvent;
@@ -38,18 +38,18 @@ import org.sleuthkit.datamodel.TskCoreException;
  * model objects.
  */
 abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
-
+    
     private static final String NO_COMMENT = "";
-
+    
     AddTagAction(String menuText) {
         super(menuText);
     }
-
+    
     @Override
     public JMenuItem getPopupPresenter() {
         return new TagMenu();
     }
-
+    
     /**
      * Subclasses of AddTagAction, should not override actionPerformed, but
      * instead override addTag.
@@ -60,19 +60,19 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
     @SuppressWarnings("NoopMethodInAbstractClass")
     public void actionPerformed(ActionEvent event) {
     }
-
+    
     /**
      * Template method to allow derived classes to provide a string for a menu
      * item label.
      */
     abstract protected String getActionDisplayName();
-
+    
     /**
      * Template method to allow derived classes to add the indicated tag and
      * comment to one or more SleuthKit data model objects.
      */
     abstract protected void addTag(TagName tagName, String comment);
-
+    
     /**
      * Instances of this class implement a context menu user interface for
      * creating or selecting a tag name for a tag and specifying an optional tag
@@ -81,10 +81,10 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
     // @@@ This user interface has some significant usability issues and needs
     // to be reworked.
     private class TagMenu extends JMenu {
-
+        
         TagMenu() {
             super(getActionDisplayName());
-
+            
             // Get the current set of tag names.
             TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
             List<TagName> tagNames = null;
@@ -94,14 +94,14 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
             } catch (TskCoreException ex) {
                 Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
             }
-
+            
             // Create a "Quick Tag" sub-menu.
             JMenu quickTagMenu = new JMenu(NbBundle.getMessage(this.getClass(), "AddTagAction.quickTag"));
             add(quickTagMenu);
-
+            
             // Each tag name in the current set of tags gets its own menu item in
             // the "Quick Tags" sub-menu. Selecting one of these menu items adds
-            // a tag with the associated tag name. 
+            // a tag with the associated tag name.
             if (null != tagNames && !tagNames.isEmpty()) {
                 for (final TagName tagName : tagNames) {
                     JMenuItem tagNameItem = new JMenuItem(tagName.getDisplayName());
@@ -115,9 +115,9 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
                 empty.setEnabled(false);
                 quickTagMenu.add(empty);
             }
-
+            
             quickTagMenu.addSeparator();
-
+            
             // The "Quick Tag" menu also gets an "Choose Tag..." menu item.
             // Selecting this item initiates a dialog that can be used to create
             // or select a tag name and adds a tag with the resulting name.
@@ -129,9 +129,9 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
                 }
             });
             quickTagMenu.add(newTagMenuItem);
-
+            
             // Create a "Choose Tag and Comment..." menu item. Selecting this item initiates
-            // a dialog that can be used to create or select a tag name with an 
+            // a dialog that can be used to create or select a tag name with an
             // optional comment and adds a tag with the resulting name.
             JMenuItem tagAndCommentItem = new JMenuItem(
                     NbBundle.getMessage(this.getClass(), "AddTagAction.tagAndComment"));
@@ -143,12 +143,6 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
             });
             add(tagAndCommentItem);
             
-            // Create a new menu item for the Bookmark File action
-           /* JMenuItem bookmarkFileActionItem = new JMenuItem(
-                    NbBundle.getMessage(this.getClass(), "AddTagAction.bookmarkFile"));
-            bookmarkFileActionItem.addActionListener((ActionEvent e) -> {
-                
-            });*/
         }
     }
 }

@@ -19,10 +19,6 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
-/**
- *
- * @author smori
- */
 public class BookmarkFileAction extends AbstractAction {
      
     private static final String NO_COMMENT = "";
@@ -32,15 +28,15 @@ public class BookmarkFileAction extends AbstractAction {
     public void actionPerformed(ActionEvent e) {
         TagName tagName = null;
         try {
-            tagName = Case.getCurrentCase().getServices().getTagsManager().getTagName(BOOKMARK);
-        } catch (TagsManager.TagNameDoesNotExistException ex) {
+            tagName = Case.getCurrentCase().getServices().getTagsManager().addTagName(BOOKMARK);
+        } catch (TagsManager.TagNameAlreadyExistsException ex) {
             try {
-                tagName = Case.getCurrentCase().getServices().getTagsManager().addTagName(BOOKMARK);
-            } catch (TagsManager.TagNameAlreadyExistsException ex1) {
-                Exceptions.printStackTrace(ex1);
-            } catch (TskCoreException ex1) {
-                Exceptions.printStackTrace(ex1);
+                tagName = Case.getCurrentCase().getServices().getTagsManager().getTagName(BOOKMARK);
+            } catch (TagsManager.TagNameDoesNotExistException ex1) {
+                // already confirmed that tag name does exist
             }
+        } catch (TskCoreException ex) {
+            Logger.getLogger(BookmarkFileAction.class.getName()).log(Level.SEVERE, "Error tagging file", ex); //NON-NLS
         } finally {
             AddContentTagAction.getInstance().addTag(tagName, NO_COMMENT);
         }
