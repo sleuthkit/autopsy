@@ -139,7 +139,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         }
 
         try {
-            ContentUtils.writeToFile(abstractFile, file);
+            ContentUtils.writeToFile(abstractFile, file, context::fileIngestIsCancelled);
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Failed writing pst file to disk.", ex); //NON-NLS
             return ProcessResult.OK;
@@ -232,7 +232,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         }
 
         try {
-            ContentUtils.writeToFile(abstractFile, file);
+            ContentUtils.writeToFile(abstractFile, file, context::fileIngestIsCancelled);
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Failed writing mbox file to disk.", ex); //NON-NLS
             return ProcessResult.OK;

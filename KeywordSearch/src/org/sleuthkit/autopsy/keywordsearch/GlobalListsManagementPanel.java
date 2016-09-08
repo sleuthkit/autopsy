@@ -19,8 +19,6 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.event.KeyEvent;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +42,6 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
 
     private Logger logger = Logger.getLogger(GlobalListsManagementPanel.class.getName());
     private KeywordListTableModel tableModel;
-    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private final org.sleuthkit.autopsy.keywordsearch.GlobalListSettingsPanel globalListSettingsPanel;
 
     GlobalListsManagementPanel(org.sleuthkit.autopsy.keywordsearch.GlobalListSettingsPanel gsp) {
@@ -88,16 +85,6 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
          * listsTable.getSelectionModel().setSelectionInterval(0, 0); } else {
          * listsTable.getSelectionModel().clearSelection(); } } } });
          */
-    }
-
-    @Override
-    public void addPropertyChangeListener(PropertyChangeListener l) {
-        pcs.addPropertyChangeListener(l);
-    }
-
-    @Override
-    public void removePropertyChangeListener(PropertyChangeListener l) {
-        pcs.removePropertyChangeListener(l);
     }
 
     /**
@@ -220,7 +207,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
                 listsTable.getSelectionModel().addSelectionInterval(i, i);
             }
         }
-        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         globalListSettingsPanel.setFocusOnKeywordTextBox();
     }//GEN-LAST:event_newListButtonActionPerformed
 
@@ -316,7 +303,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
                 }
             }
         }
-        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_importButtonActionPerformed
     private void listsTableKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_listsTableKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_DELETE) {
@@ -326,7 +313,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
             } else if (KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.title"), NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.body"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
                 String listName = (String) listsTable.getModel().getValueAt(selected[0], 0);
                 XmlKeywordSearchList.getCurrent().deleteList(listName);
-                pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+                firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             } else {
                 return;
             }
