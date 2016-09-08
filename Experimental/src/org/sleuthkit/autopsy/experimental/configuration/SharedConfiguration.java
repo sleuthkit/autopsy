@@ -48,7 +48,7 @@ import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
-import org.sleuthkit.autopsy.experimental.configuration.OptionsPanel.UpdateConfigSwingWorker;
+import org.sleuthkit.autopsy.experimental.configuration.AutoIngestSettingsPanel.UpdateConfigSwingWorker;
 import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService.Lock;
 import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService.CoordinationServiceException;
