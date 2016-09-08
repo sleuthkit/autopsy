@@ -63,26 +63,26 @@ import org.sleuthkit.autopsy.experimental.autoingest.FileExporterSettingsPanel;
 /**
  *
  */
-public class OptionsPanel extends javax.swing.JPanel {
+public class AutoIngestSettingsPanel extends javax.swing.JPanel {
 
-    private final JDialog parent;
+    private final AutoIngestSettingsPanelController controller;
     private final JFileChooser fc = new JFileChooser();
     private final Collection<JTextField> textBoxes = new ArrayList<>();
     private TextBoxChangedListener textBoxChangedListener;
-    private static final String HOST_NAME_OR_IP_PROMPT = NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.tbDbHostname.toolTipText");
-    private static final String PORT_PROMPT = NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.tbDbPort.toolTipText");
-    private static final String USER_NAME_PROMPT = NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.tbDbUsername.toolTipText");
-    private static final String PASSWORD_PROMPT = NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.tbDbPassword.toolTipText");
-    private static final String USER_NAME_PROMPT_OPT = NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.tbMsgUsername.toolTipText");
-    private static final String PASSWORD_PROMPT_OPT = NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.tbMsgPassword.toolTipText");
-    private static final String INCOMPLETE_SETTINGS_MSG = NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.validationErrMsg.incomplete");
-    private static final String INVALID_DB_PORT_MSG = NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.validationErrMsg.invalidDatabasePort");
-    private static final String INVALID_MESSAGE_SERVICE_PORT_MSG = NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.validationErrMsg.invalidMessageServicePort");
-    private static final String INVALID_INDEXING_SERVER_PORT_MSG = NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.validationErrMsg.invalidIndexingServerPort");
+    private static final String HOST_NAME_OR_IP_PROMPT = NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbDbHostname.toolTipText");
+    private static final String PORT_PROMPT = NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbDbPort.toolTipText");
+    private static final String USER_NAME_PROMPT = NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbDbUsername.toolTipText");
+    private static final String PASSWORD_PROMPT = NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbDbPassword.toolTipText");
+    private static final String USER_NAME_PROMPT_OPT = NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbMsgUsername.toolTipText");
+    private static final String PASSWORD_PROMPT_OPT = NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbMsgPassword.toolTipText");
+    private static final String INCOMPLETE_SETTINGS_MSG = NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.validationErrMsg.incomplete");
+    private static final String INVALID_DB_PORT_MSG = NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.validationErrMsg.invalidDatabasePort");
+    private static final String INVALID_MESSAGE_SERVICE_PORT_MSG = NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.validationErrMsg.invalidMessageServicePort");
+    private static final String INVALID_INDEXING_SERVER_PORT_MSG = NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.validationErrMsg.invalidIndexingServerPort");
     private static final long serialVersionUID = 1L;
     private final ImageIcon goodIcon;
     private final ImageIcon badIcon;
-    private static final Logger logger = Logger.getLogger(OptionsPanel.class.getName());
+    private static final Logger logger = Logger.getLogger(AutoIngestSettingsPanel.class.getName());
     private Integer oldIngestThreads;
 
     enum OptionsUiMode {
@@ -91,10 +91,12 @@ public class OptionsPanel extends javax.swing.JPanel {
     };
 
     /**
-     * Creates new form OptionsPanel
+     * Creates new form AutoIngestSettingsPanel
+     *
+     * @param theController Controller to notify of changes.
      */
-    public OptionsPanel(JDialog parent) {
-        this.parent = parent;
+    public AutoIngestSettingsPanel(AutoIngestSettingsPanelController theController) {
+        controller = theController;
         initComponents();
         initMultiUserPanel();
 
@@ -221,7 +223,7 @@ public class OptionsPanel extends javax.swing.JPanel {
                 sharedFolder.mkdir();
                 return sharedFolder.getAbsolutePath();
             } catch (Exception ex) {
-                sharedSettingsErrorTextField.setText(NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.ErrorSettingDefaultFolder"));
+                sharedSettingsErrorTextField.setText(NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.ErrorSettingDefaultFolder"));
                 return "";
             }
         }
@@ -246,8 +248,8 @@ public class OptionsPanel extends javax.swing.JPanel {
             }
             if (needsSaving) {
                 JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.MustRestart"),
-                        NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.restartRequiredLabel.text"),
+                        NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.MustRestart"),
+                        NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.restartRequiredLabel.text"),
                         JOptionPane.WARNING_MESSAGE);
             }
 
@@ -275,8 +277,8 @@ public class OptionsPanel extends javax.swing.JPanel {
             }
             if (needsSaving) {
                 JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.MustRestart"),
-                        NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.restartRequiredLabel.text"),
+                        NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.MustRestart"),
+                        NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.restartRequiredLabel.text"),
                         JOptionPane.WARNING_MESSAGE);
             }
 
@@ -295,8 +297,8 @@ public class OptionsPanel extends javax.swing.JPanel {
             String thePath = AutoIngestUserPreferences.getAutoModeResultsFolder();
             if (thePath != null && 0 != outputPathTextField.getText().compareTo(thePath)) {
                 JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.MustRestart"),
-                        NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.restartRequiredLabel.text"),
+                        NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.MustRestart"),
+                        NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.restartRequiredLabel.text"),
                         JOptionPane.WARNING_MESSAGE);
             }
 
@@ -534,21 +536,21 @@ public class OptionsPanel extends javax.swing.JPanel {
 
         if (inputPath.isEmpty()) {
             jLabelInvalidImageFolder.setVisible(true);
-            jLabelInvalidImageFolder.setText(NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.ImageDirectoryUnspecified"));
+            jLabelInvalidImageFolder.setText(NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.ImageDirectoryUnspecified"));
             return false;
         }
 
         if (!isFolderPathValid(inputPath)) {
             jLabelInvalidImageFolder.setVisible(true);
-            jLabelInvalidImageFolder.setText(NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.PathInvalid"));
+            jLabelInvalidImageFolder.setText(NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.PathInvalid"));
             return false;
         }
 
         if (false == permissionsAppropriate(inputPath)) {
             jLabelInvalidImageFolder.setVisible(true);
-            jLabelInvalidImageFolder.setText(NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.CannotAccess")
+            jLabelInvalidImageFolder.setText(NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.CannotAccess")
                     + " " + inputPath + "   "
-                    + NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.CheckPermissions"));
+                    + NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.CheckPermissions"));
             return false;
         }
 
@@ -565,21 +567,21 @@ public class OptionsPanel extends javax.swing.JPanel {
 
         if (outputPath.isEmpty()) {
             jLabelInvalidResultsFolder.setVisible(true);
-            jLabelInvalidResultsFolder.setText(NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.ResultsDirectoryUnspecified"));
+            jLabelInvalidResultsFolder.setText(NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.ResultsDirectoryUnspecified"));
             return false;
         }
 
         if (!isFolderPathValid(outputPath)) {
             jLabelInvalidResultsFolder.setVisible(true);
-            jLabelInvalidResultsFolder.setText(NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.PathInvalid"));
+            jLabelInvalidResultsFolder.setText(NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.PathInvalid"));
             return false;
         }
 
         if (false == permissionsAppropriate(outputPath)) {
             jLabelInvalidResultsFolder.setVisible(true);
-            jLabelInvalidResultsFolder.setText(NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.CannotAccess")
+            jLabelInvalidResultsFolder.setText(NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.CannotAccess")
                     + " " + outputPath + "   "
-                    + NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.CheckPermissions"));
+                    + NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.CheckPermissions"));
             return false;
         }
 
@@ -600,21 +602,21 @@ public class OptionsPanel extends javax.swing.JPanel {
 
         if (sharedSettingsPath.isEmpty()) {
             sharedSettingsErrorTextField.setVisible(true);
-            sharedSettingsErrorTextField.setText(NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.EmptySettingsDirectory"));
+            sharedSettingsErrorTextField.setText(NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.EmptySettingsDirectory"));
             return false;
         }
 
         if (!isFolderPathValid(sharedSettingsPath)) {
             sharedSettingsErrorTextField.setVisible(true);
-            sharedSettingsErrorTextField.setText(NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.PathInvalid"));
+            sharedSettingsErrorTextField.setText(NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.PathInvalid"));
             return false;
         }
 
         if (false == permissionsAppropriate(sharedSettingsPath)) {
             sharedSettingsErrorTextField.setVisible(true);
-            sharedSettingsErrorTextField.setText(NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.CannotAccess")
+            sharedSettingsErrorTextField.setText(NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.CannotAccess")
                     + " " + sharedSettingsPath + " "
-                    + NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.CheckPermissions"));
+                    + NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.CheckPermissions"));
             return false;
         }
 
@@ -1153,14 +1155,14 @@ public class OptionsPanel extends javax.swing.JPanel {
         bnAdvancedSettings = new javax.swing.JButton();
         bnFileExport = new javax.swing.JButton();
 
-        org.openide.awt.Mnemonics.setLocalizedText(bnSave, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.bnSave.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(bnSave, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.bnSave.text")); // NOI18N
         bnSave.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnSaveActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(bnCancel, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.bnCancel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(bnCancel, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.bnCancel.text")); // NOI18N
         bnCancel.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnCancelActionPerformed(evt);
@@ -1172,35 +1174,35 @@ public class OptionsPanel extends javax.swing.JPanel {
         pnMessagingSettings.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         lbMessageServiceSettings.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(lbMessageServiceSettings, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.lbMessageServiceSettings.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbMessageServiceSettings, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.lbMessageServiceSettings.text")); // NOI18N
 
         tbMsgHostname.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        tbMsgHostname.setText(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.tbMsgHostname.text")); // NOI18N
-        tbMsgHostname.setToolTipText(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.tbMsgHostname.toolTipText")); // NOI18N
+        tbMsgHostname.setText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbMsgHostname.text")); // NOI18N
+        tbMsgHostname.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbMsgHostname.toolTipText")); // NOI18N
 
         tbMsgUsername.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        tbMsgUsername.setText(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.tbMsgUsername.text")); // NOI18N
-        tbMsgUsername.setToolTipText(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.tbMsgUsername.toolTipText")); // NOI18N
+        tbMsgUsername.setText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbMsgUsername.text")); // NOI18N
+        tbMsgUsername.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbMsgUsername.toolTipText")); // NOI18N
 
         tbMsgPort.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        tbMsgPort.setText(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.tbMsgPort.text")); // NOI18N
-        tbMsgPort.setToolTipText(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.tbMsgPort.toolTipText")); // NOI18N
+        tbMsgPort.setText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbMsgPort.text")); // NOI18N
+        tbMsgPort.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbMsgPort.toolTipText")); // NOI18N
 
         tbMsgPassword.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        tbMsgPassword.setText(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.tbMsgPassword.text")); // NOI18N
-        tbMsgPassword.setToolTipText(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.tbMsgPassword.toolTipText")); // NOI18N
+        tbMsgPassword.setText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbMsgPassword.text")); // NOI18N
+        tbMsgPassword.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbMsgPassword.toolTipText")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(bnTestMessageService, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.bnTestMessageService.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(bnTestMessageService, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.bnTestMessageService.text")); // NOI18N
         bnTestMessageService.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnTestMessageServiceActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbTestMessageService, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.lbTestMessageService.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbTestMessageService, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.lbTestMessageService.text")); // NOI18N
 
         lbTestMessageWarning.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(lbTestMessageWarning, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.lbTestMessageWarning.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbTestMessageWarning, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.lbTestMessageWarning.text")); // NOI18N
 
         javax.swing.GroupLayout pnMessagingSettingsLayout = new javax.swing.GroupLayout(pnMessagingSettings);
         pnMessagingSettings.setLayout(pnMessagingSettingsLayout);
@@ -1248,25 +1250,25 @@ public class OptionsPanel extends javax.swing.JPanel {
         pnSolrSettings.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         lbSolrSettings.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(lbSolrSettings, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.lbSolrSettings.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbSolrSettings, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.lbSolrSettings.text")); // NOI18N
 
         tbSolrHostname.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        tbSolrHostname.setToolTipText(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.tbSolrHostname.toolTipText")); // NOI18N
+        tbSolrHostname.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbSolrHostname.toolTipText")); // NOI18N
 
         tbSolrPort.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        tbSolrPort.setToolTipText(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.tbSolrPort.toolTipText")); // NOI18N
+        tbSolrPort.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbSolrPort.toolTipText")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(bnTestSolr, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.bnTestSolr.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(bnTestSolr, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.bnTestSolr.text")); // NOI18N
         bnTestSolr.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnTestSolrActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbTestSolr, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.lbTestSolr.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbTestSolr, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.lbTestSolr.text")); // NOI18N
 
         lbTestSolrWarning.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(lbTestSolrWarning, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.lbTestSolrWarning.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbTestSolrWarning, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.lbTestSolrWarning.text")); // NOI18N
 
         javax.swing.GroupLayout pnSolrSettingsLayout = new javax.swing.GroupLayout(pnSolrSettings);
         pnSolrSettings.setLayout(pnSolrSettingsLayout);
@@ -1308,37 +1310,37 @@ public class OptionsPanel extends javax.swing.JPanel {
         pnDatabaseSettings.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         tbDbHostname.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        tbDbHostname.setText(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.tbDbHostname.text")); // NOI18N
-        tbDbHostname.setToolTipText(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.tbDbHostname.toolTipText")); // NOI18N
+        tbDbHostname.setText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbDbHostname.text")); // NOI18N
+        tbDbHostname.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbDbHostname.toolTipText")); // NOI18N
 
         tbDbPort.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        tbDbPort.setText(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.tbDbPort.text")); // NOI18N
-        tbDbPort.setToolTipText(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.tbDbPort.toolTipText")); // NOI18N
+        tbDbPort.setText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbDbPort.text")); // NOI18N
+        tbDbPort.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbDbPort.toolTipText")); // NOI18N
 
         tbDbUsername.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        tbDbUsername.setText(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.tbDbUsername.text")); // NOI18N
-        tbDbUsername.setToolTipText(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.tbDbUsername.toolTipText")); // NOI18N
+        tbDbUsername.setText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbDbUsername.text")); // NOI18N
+        tbDbUsername.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbDbUsername.toolTipText")); // NOI18N
 
         tbDbPassword.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        tbDbPassword.setText(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.tbDbPassword.text")); // NOI18N
-        tbDbPassword.setToolTipText(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.tbDbPassword.toolTipText")); // NOI18N
+        tbDbPassword.setText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbDbPassword.text")); // NOI18N
+        tbDbPassword.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbDbPassword.toolTipText")); // NOI18N
 
         lbDatabaseSettings.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(lbDatabaseSettings, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.lbDatabaseSettings.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbDatabaseSettings, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.lbDatabaseSettings.text")); // NOI18N
         lbDatabaseSettings.setVerticalAlignment(javax.swing.SwingConstants.TOP);
 
-        org.openide.awt.Mnemonics.setLocalizedText(bnTestDatabase, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.bnTestDatabase.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(bnTestDatabase, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.bnTestDatabase.text")); // NOI18N
         bnTestDatabase.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnTestDatabaseActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbTestDatabase, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.lbTestDatabase.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbTestDatabase, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.lbTestDatabase.text")); // NOI18N
         lbTestDatabase.setAutoscrolls(true);
 
         lbTestDbWarning.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(lbTestDbWarning, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.lbTestDbWarning.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbTestDbWarning, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.lbTestDbWarning.text")); // NOI18N
 
         javax.swing.GroupLayout pnDatabaseSettingsLayout = new javax.swing.GroupLayout(pnDatabaseSettings);
         pnDatabaseSettings.setLayout(pnDatabaseSettingsLayout);
@@ -1384,7 +1386,7 @@ public class OptionsPanel extends javax.swing.JPanel {
                 .addContainerGap())
         );
 
-        org.openide.awt.Mnemonics.setLocalizedText(cbEnableMultiUser, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.cbEnableMultiUser.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(cbEnableMultiUser, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.cbEnableMultiUser.text")); // NOI18N
         cbEnableMultiUser.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 cbEnableMultiUserItemStateChanged(evt);
@@ -1393,7 +1395,7 @@ public class OptionsPanel extends javax.swing.JPanel {
 
         tbOops.setEditable(false);
         tbOops.setForeground(new java.awt.Color(255, 0, 0));
-        tbOops.setText(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.tbOops.text")); // NOI18N
+        tbOops.setText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbOops.text")); // NOI18N
         tbOops.setBorder(null);
         tbOops.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1402,7 +1404,7 @@ public class OptionsPanel extends javax.swing.JPanel {
         });
 
         multiUserRestartLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/experimental/images/warning16.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(multiUserRestartLabel, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.multiUserRestartLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(multiUserRestartLabel, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.multiUserRestartLabel.text")); // NOI18N
 
         javax.swing.GroupLayout multiUserPanelLayout = new javax.swing.GroupLayout(multiUserPanel);
         multiUserPanel.setLayout(multiUserPanelLayout);
@@ -1441,21 +1443,21 @@ public class OptionsPanel extends javax.swing.JPanel {
                 .addContainerGap())
         );
 
-        mainTabPane.addTab(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.multiUserPanel.TabConstraints.tabTitle"), multiUserPanel); // NOI18N
+        mainTabPane.addTab(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.multiUserPanel.TabConstraints.tabTitle"), multiUserPanel); // NOI18N
 
         nodePanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        jPanelNodeType.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.jPanelNodeType.border.title"))); // NOI18N
+        jPanelNodeType.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jPanelNodeType.border.title"))); // NOI18N
         jPanelNodeType.setMinimumSize(new java.awt.Dimension(50, 50));
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabelSelectMode, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.jLabelSelectMode.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabelSelectMode, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jLabelSelectMode.text")); // NOI18N
 
         restartRequiredNodeLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/experimental/images/warning16.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(restartRequiredNodeLabel, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.restartRequiredNodeLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(restartRequiredNodeLabel, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.restartRequiredNodeLabel.text")); // NOI18N
 
         modeRadioButtons.add(jRadioButtonStandalone);
-        org.openide.awt.Mnemonics.setLocalizedText(jRadioButtonStandalone, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.jRadioButtonStandalone.text")); // NOI18N
-        jRadioButtonStandalone.setToolTipText(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.jRadioButtonStandalone.toolTipText")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jRadioButtonStandalone, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jRadioButtonStandalone.text")); // NOI18N
+        jRadioButtonStandalone.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jRadioButtonStandalone.toolTipText")); // NOI18N
         jRadioButtonStandalone.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jRadioButtonStandaloneActionPerformed(evt);
@@ -1463,7 +1465,7 @@ public class OptionsPanel extends javax.swing.JPanel {
         });
 
         modeRadioButtons.add(jRadioButtonCopyFilesMode);
-        org.openide.awt.Mnemonics.setLocalizedText(jRadioButtonCopyFilesMode, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.jRadioButtonCopyFilesMode.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jRadioButtonCopyFilesMode, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jRadioButtonCopyFilesMode.text")); // NOI18N
         jRadioButtonCopyFilesMode.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jRadioButtonCopyFilesModeActionPerformed(evt);
@@ -1471,8 +1473,8 @@ public class OptionsPanel extends javax.swing.JPanel {
         });
 
         modeRadioButtons.add(jRadioButtonAutomated);
-        org.openide.awt.Mnemonics.setLocalizedText(jRadioButtonAutomated, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.jRadioButtonAutomated.text")); // NOI18N
-        jRadioButtonAutomated.setToolTipText(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.jRadioButtonAutomated.toolTipText")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jRadioButtonAutomated, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jRadioButtonAutomated.text")); // NOI18N
+        jRadioButtonAutomated.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jRadioButtonAutomated.toolTipText")); // NOI18N
         jRadioButtonAutomated.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jRadioButtonAutomatedActionPerformed(evt);
@@ -1480,34 +1482,34 @@ public class OptionsPanel extends javax.swing.JPanel {
         });
 
         modeRadioButtons.add(jRadioButtonReview);
-        org.openide.awt.Mnemonics.setLocalizedText(jRadioButtonReview, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.jRadioButtonReview.text")); // NOI18N
-        jRadioButtonReview.setToolTipText(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.jRadioButtonReview.toolTipText")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jRadioButtonReview, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jRadioButtonReview.text")); // NOI18N
+        jRadioButtonReview.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jRadioButtonReview.toolTipText")); // NOI18N
         jRadioButtonReview.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jRadioButtonReviewActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabelSelectInputFolder, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.jLabelSelectInputFolder.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabelSelectInputFolder, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jLabelSelectInputFolder.text")); // NOI18N
         jLabelSelectInputFolder.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
 
-        inputPathTextField.setText(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.inputPathTextField.text")); // NOI18N
-        inputPathTextField.setToolTipText(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.inputPathTextField.toolTipText")); // NOI18N
+        inputPathTextField.setText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.inputPathTextField.text")); // NOI18N
+        inputPathTextField.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.inputPathTextField.toolTipText")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(browseInputFolderButton, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.browseInputFolderButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(browseInputFolderButton, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.browseInputFolderButton.text")); // NOI18N
         browseInputFolderButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 browseInputFolderButtonActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabelSelectOutputFolder, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.jLabelSelectOutputFolder.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabelSelectOutputFolder, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jLabelSelectOutputFolder.text")); // NOI18N
         jLabelSelectOutputFolder.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
 
-        outputPathTextField.setText(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.outputPathTextField.text")); // NOI18N
-        outputPathTextField.setToolTipText(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.outputPathTextField.toolTipText")); // NOI18N
+        outputPathTextField.setText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.outputPathTextField.text")); // NOI18N
+        outputPathTextField.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.outputPathTextField.toolTipText")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(browseOutputFolderButton, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.browseOutputFolderButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(browseOutputFolderButton, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.browseOutputFolderButton.text")); // NOI18N
         browseOutputFolderButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 browseOutputFolderButtonActionPerformed(evt);
@@ -1515,17 +1517,17 @@ public class OptionsPanel extends javax.swing.JPanel {
         });
 
         jLabelAimDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/experimental/images/AIM.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(jLabelAimDiagram, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.jLabelAimDiagram.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabelAimDiagram, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jLabelAimDiagram.text")); // NOI18N
 
         jLabelInvalidImageFolder.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(jLabelInvalidImageFolder, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.jLabelInvalidImageFolder.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabelInvalidImageFolder, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jLabelInvalidImageFolder.text")); // NOI18N
 
         jLabelInvalidResultsFolder.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(jLabelInvalidResultsFolder, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.jLabelInvalidResultsFolder.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabelInvalidResultsFolder, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jLabelInvalidResultsFolder.text")); // NOI18N
 
         multiUserErrorTextField.setEditable(false);
         multiUserErrorTextField.setForeground(new java.awt.Color(255, 0, 0));
-        multiUserErrorTextField.setText(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.multiUserErrorTextField.text")); // NOI18N
+        multiUserErrorTextField.setText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.multiUserErrorTextField.text")); // NOI18N
         multiUserErrorTextField.setBorder(null);
 
         javax.swing.GroupLayout jPanelNodeTypeLayout = new javax.swing.GroupLayout(jPanelNodeType);
@@ -1608,9 +1610,9 @@ public class OptionsPanel extends javax.swing.JPanel {
                 .addGap(6, 6, 6))
         );
 
-        jPanelSharedConfig.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.jPanelSharedConfig.border.title"))); // NOI18N
+        jPanelSharedConfig.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jPanelSharedConfig.border.title"))); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(sharedConfigCheckbox, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.sharedConfigCheckbox.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(sharedConfigCheckbox, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.sharedConfigCheckbox.text")); // NOI18N
         sharedConfigCheckbox.setMaximumSize(new java.awt.Dimension(191, 14));
         sharedConfigCheckbox.setMinimumSize(new java.awt.Dimension(191, 14));
         sharedConfigCheckbox.setPreferredSize(new java.awt.Dimension(191, 14));
@@ -1620,10 +1622,10 @@ public class OptionsPanel extends javax.swing.JPanel {
             }
         });
 
-        sharedSettingsTextField.setText(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.sharedSettingsTextField.text")); // NOI18N
+        sharedSettingsTextField.setText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.sharedSettingsTextField.text")); // NOI18N
         sharedSettingsTextField.setEnabled(false);
 
-        org.openide.awt.Mnemonics.setLocalizedText(browseSharedSettingsButton, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.browseSharedSettingsButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(browseSharedSettingsButton, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.browseSharedSettingsButton.text")); // NOI18N
         browseSharedSettingsButton.setEnabled(false);
         browseSharedSettingsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1633,10 +1635,10 @@ public class OptionsPanel extends javax.swing.JPanel {
 
         sharedSettingsErrorTextField.setEditable(false);
         sharedSettingsErrorTextField.setForeground(new java.awt.Color(255, 0, 0));
-        sharedSettingsErrorTextField.setText(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.sharedSettingsErrorTextField.text")); // NOI18N
+        sharedSettingsErrorTextField.setText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.sharedSettingsErrorTextField.text")); // NOI18N
         sharedSettingsErrorTextField.setBorder(null);
 
-        org.openide.awt.Mnemonics.setLocalizedText(masterNodeCheckBox, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.masterNodeCheckBox.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(masterNodeCheckBox, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.masterNodeCheckBox.text")); // NOI18N
         masterNodeCheckBox.setEnabled(false);
         masterNodeCheckBox.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -1644,27 +1646,27 @@ public class OptionsPanel extends javax.swing.JPanel {
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(uploadButton, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.uploadButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(uploadButton, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.uploadButton.text")); // NOI18N
         uploadButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 uploadButtonActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(downloadButton, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.downloadButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(downloadButton, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.downloadButton.text")); // NOI18N
         downloadButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 downloadButtonActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabelCurrentTask, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.jLabelCurrentTask.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabelCurrentTask, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jLabelCurrentTask.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabelTaskDescription, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.jLabelTaskDescription.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabelTaskDescription, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jLabelTaskDescription.text")); // NOI18N
 
         configButtonErrorTextField.setEditable(false);
         configButtonErrorTextField.setForeground(new java.awt.Color(255, 0, 0));
-        configButtonErrorTextField.setText(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.configButtonErrorTextField.text")); // NOI18N
+        configButtonErrorTextField.setText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.configButtonErrorTextField.text")); // NOI18N
         configButtonErrorTextField.setBorder(null);
 
         javax.swing.GroupLayout jPanelSharedConfigLayout = new javax.swing.GroupLayout(jPanelSharedConfig);
@@ -1729,24 +1731,24 @@ public class OptionsPanel extends javax.swing.JPanel {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        jPanelIngestSettings.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.jPanelIngestSettings.border.title"))); // NOI18N
+        jPanelIngestSettings.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jPanelIngestSettings.border.title"))); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(bnEditIngestSettings, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.bnEditIngestSettings.text")); // NOI18N
-        bnEditIngestSettings.setToolTipText(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.bnEditIngestSettings.toolTipText")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(bnEditIngestSettings, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.bnEditIngestSettings.text")); // NOI18N
+        bnEditIngestSettings.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.bnEditIngestSettings.toolTipText")); // NOI18N
         bnEditIngestSettings.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnEditIngestSettingsActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(bnAdvancedSettings, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.bnAdvancedSettings.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(bnAdvancedSettings, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.bnAdvancedSettings.text")); // NOI18N
         bnAdvancedSettings.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnAdvancedSettingsActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(bnFileExport, org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.bnFileExport.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(bnFileExport, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.bnFileExport.text")); // NOI18N
         bnFileExport.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnFileExportActionPerformed(evt);
@@ -1801,7 +1803,7 @@ public class OptionsPanel extends javax.swing.JPanel {
                 .addContainerGap())
         );
 
-        mainTabPane.addTab(org.openide.util.NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.nodePanel.TabConstraints.tabTitle"), nodePanel); // NOI18N
+        mainTabPane.addTab(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.nodePanel.TabConstraints.tabTitle"), nodePanel); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -2125,11 +2127,11 @@ public class OptionsPanel extends javax.swing.JPanel {
                 lbTestSolrWarning.setText("");
             } else {
                 lbTestSolr.setIcon(badIcon);
-                lbTestSolrWarning.setText(NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.KeywordSearchNull"));
+                lbTestSolrWarning.setText(NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.KeywordSearchNull"));
             }
         } catch (NumberFormatException ex) {
             lbTestSolr.setIcon(badIcon);
-            lbTestSolrWarning.setText(NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.InvalidPortNumber"));
+            lbTestSolrWarning.setText(NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.InvalidPortNumber"));
         } catch (KeywordSearchServiceException ex) {
             lbTestSolr.setIcon(badIcon);
             lbTestSolrWarning.setText(ex.getMessage());
@@ -2148,7 +2150,7 @@ public class OptionsPanel extends javax.swing.JPanel {
             port = Integer.parseInt(this.tbMsgPort.getText().trim());
         } catch (NumberFormatException ex) {
             lbTestMessageService.setIcon(badIcon);
-            lbTestMessageWarning.setText(NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.InvalidPortNumber"));
+            lbTestMessageWarning.setText(NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.InvalidPortNumber"));
             return;
         }
 
@@ -2170,11 +2172,11 @@ public class OptionsPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_bnTestMessageServiceActionPerformed
 
     private void bnAdvancedSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnAdvancedSettingsActionPerformed
-        AdvancedOptionsPanel advancedOptionsPanel = new AdvancedOptionsPanel(getModeFromRadioButtons());
-        if (JOptionPane.showConfirmDialog(null, advancedOptionsPanel,
-                NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.AdvancedOptionsPanel.Title"),
+        AdvancedAutoIngestSettingsPanel advancedAutoIngestSettingsPanel = new AdvancedAutoIngestSettingsPanel(getModeFromRadioButtons());
+        if (JOptionPane.showConfirmDialog(null, advancedAutoIngestSettingsPanel,
+                NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.AdvancedAutoIngestSettingsPanel.Title"),
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
-            advancedOptionsPanel.store();
+            advancedAutoIngestSettingsPanel.store();
         }
     }//GEN-LAST:event_bnAdvancedSettingsActionPerformed
 
@@ -2192,7 +2194,7 @@ public class OptionsPanel extends javax.swing.JPanel {
         jScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         jScrollPane.setMinimumSize(new Dimension(100, 100));
         jDialog.add(jScrollPane);
-        jDialog.setTitle(NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.FileExportRules.text"));
+        jDialog.setTitle(NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.FileExportRules.text"));
         jDialog.setIconImage(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/frame32.gif"));
         jDialog.setModalityType(java.awt.Dialog.ModalityType.APPLICATION_MODAL);
         jDialog.pack();
@@ -2298,8 +2300,8 @@ public class OptionsPanel extends javax.swing.JPanel {
             // Check if anything requiring a reset has changed and update the UI
             if (isResetNeeded()) {
                 JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.MustRestart"),
-                        NbBundle.getMessage(OptionsPanel.class, "OptionsPanel.restartRequiredLabel.text"),
+                        NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.MustRestart"),
+                        NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.restartRequiredLabel.text"),
                         JOptionPane.WARNING_MESSAGE);
             }
 
