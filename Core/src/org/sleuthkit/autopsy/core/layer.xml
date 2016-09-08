@@ -397,7 +397,7 @@
             -->
         </folder>
         <folder name="Ingest">
-            <attr name="position" intvalue="109"/>
+            <attr name="position" intvalue="105"/>
             <file name="org-sleuthkit-autopsy-ingest-IngestMessagesAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-ingest-IngestMessagesAction.instance"/>
             </file>
