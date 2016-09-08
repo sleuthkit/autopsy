@@ -134,6 +134,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         if (!UserPreferences.getIsMultiUserModeEnabled()) {
             cbJoinAutoIngestCluster.setEnabled(false);
             enableUI(false);
+            return;
         }
 
         String images = AutoIngestUserPreferences.getAutoModeImageFolder();
@@ -603,10 +604,14 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     private OptionsUiMode getModeFromRadioButtons() {
         if (!cbJoinAutoIngestCluster.isSelected()) {
             return OptionsUiMode.STANDALONE;
-        } else if (jRadioButtonAutomated.isSelected()) {
+        }
+        
+        if (jRadioButtonAutomated.isSelected()) {
             return OptionsUiMode.AIM;
-        } else {
+        } else if (jRadioButtonReview.isSelected()) {
             return OptionsUiMode.REVIEW;
+        } else {
+            return OptionsUiMode.STANDALONE;
         }
     }
 
@@ -704,6 +709,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(restartRequiredNodeLabel, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.restartRequiredNodeLabel.text")); // NOI18N
 
         modeRadioButtons.add(jRadioButtonAutomated);
+        jRadioButtonAutomated.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(jRadioButtonAutomated, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jRadioButtonAutomated.text")); // NOI18N
         jRadioButtonAutomated.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jRadioButtonAutomated.toolTipText")); // NOI18N
         jRadioButtonAutomated.addActionListener(new java.awt.event.ActionListener() {
@@ -1125,15 +1131,19 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_browseInputFolderButtonActionPerformed
 
     private void jRadioButtonReviewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jRadioButtonReviewActionPerformed
-        enableOptionsBasedOnMode(OptionsUiMode.REVIEW);
-        setSharedConfigEnable();
-        validateSettings();
+        if (cbJoinAutoIngestCluster.isSelected()) {
+            enableOptionsBasedOnMode(OptionsUiMode.REVIEW);
+            setSharedConfigEnable();
+            validateSettings();
+        }
     }//GEN-LAST:event_jRadioButtonReviewActionPerformed
 
     private void jRadioButtonAutomatedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jRadioButtonAutomatedActionPerformed
-        enableOptionsBasedOnMode(OptionsUiMode.AIM);
-        setSharedConfigEnable();
-        validateSettings();
+        if (cbJoinAutoIngestCluster.isSelected()) {
+            enableOptionsBasedOnMode(OptionsUiMode.AIM);
+            setSharedConfigEnable();
+            validateSettings();
+        }
     }//GEN-LAST:event_jRadioButtonAutomatedActionPerformed
 
     boolean permissionsAppropriate(String path) {
@@ -1288,8 +1298,10 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
 
     private void cbJoinAutoIngestClusterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbJoinAutoIngestClusterActionPerformed
         
-        enableUI(cbJoinAutoIngestCluster.isSelected());
-        
+        //enableUI(cbJoinAutoIngestCluster.isSelected());
+
+        enableOptionsBasedOnMode(getModeFromRadioButtons());
+
         // ELTODO enableMultiUserComponents(textBoxes, cbJoinAutoIngestCluster.isSelected());
         controller.changed();
     }//GEN-LAST:event_cbJoinAutoIngestClusterActionPerformed
