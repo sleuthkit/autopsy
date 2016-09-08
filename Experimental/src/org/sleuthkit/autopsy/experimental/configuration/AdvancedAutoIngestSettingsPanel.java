@@ -25,11 +25,11 @@ import javax.swing.JComponent;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.core.UserPreferences;
 
-class AdvancedOptionsPanel extends javax.swing.JPanel {
+class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
 
-    AdvancedOptionsPanel(OptionsPanel.OptionsUiMode mode) {
+    AdvancedAutoIngestSettingsPanel(AutoIngestSettingsPanel.OptionsUiMode mode) {
         initComponents();
         tbWarning.setLineWrap(true);
         tbWarning.setWrapStyleWord(true);
@@ -58,18 +58,18 @@ class AdvancedOptionsPanel extends javax.swing.JPanel {
         numberOfFileIngestThreadsComboBox.setSelectedItem(UserPreferences.numberOfFileIngestThreads());
     }
 
-    private void load(OptionsPanel.OptionsUiMode mode) {
+    private void load(AutoIngestSettingsPanel.OptionsUiMode mode) {
         initThreadCount();
         spSecondsBetweenJobs.setValue(AutoIngestUserPreferences.getSecondsToSleepBetweenCases());
         spMaximumRetryAttempts.setValue(AutoIngestUserPreferences.getMaxNumTimesToProcessImage());
         int maxJobsPerCase = AutoIngestUserPreferences.getMaxConcurrentJobsForOneCase();
         spConcurrentJobsPerCase.setValue(maxJobsPerCase);
-        spSecondsBetweenJobs.setEnabled(mode == OptionsPanel.OptionsUiMode.UTILITY || mode == OptionsPanel.OptionsUiMode.AIM);
-        spMaximumRetryAttempts.setEnabled(mode == OptionsPanel.OptionsUiMode.UTILITY || mode == OptionsPanel.OptionsUiMode.AIM);
-        cbTimeoutEnabled.setEnabled(mode == OptionsPanel.OptionsUiMode.UTILITY || mode == OptionsPanel.OptionsUiMode.AIM);
-        lbSecondsBetweenJobs.setEnabled(mode == OptionsPanel.OptionsUiMode.UTILITY || mode == OptionsPanel.OptionsUiMode.AIM);
-        lbTimeoutText.setEnabled(mode == OptionsPanel.OptionsUiMode.UTILITY || mode == OptionsPanel.OptionsUiMode.AIM);
-        lbRetriesAllowed.setEnabled(mode == OptionsPanel.OptionsUiMode.UTILITY || mode == OptionsPanel.OptionsUiMode.AIM);
+        spSecondsBetweenJobs.setEnabled(mode == AutoIngestSettingsPanel.OptionsUiMode.UTILITY || mode == AutoIngestSettingsPanel.OptionsUiMode.AIM);
+        spMaximumRetryAttempts.setEnabled(mode == AutoIngestSettingsPanel.OptionsUiMode.UTILITY || mode == AutoIngestSettingsPanel.OptionsUiMode.AIM);
+        cbTimeoutEnabled.setEnabled(mode == AutoIngestSettingsPanel.OptionsUiMode.UTILITY || mode == AutoIngestSettingsPanel.OptionsUiMode.AIM);
+        lbSecondsBetweenJobs.setEnabled(mode == AutoIngestSettingsPanel.OptionsUiMode.UTILITY || mode == AutoIngestSettingsPanel.OptionsUiMode.AIM);
+        lbTimeoutText.setEnabled(mode == AutoIngestSettingsPanel.OptionsUiMode.UTILITY || mode == AutoIngestSettingsPanel.OptionsUiMode.AIM);
+        lbRetriesAllowed.setEnabled(mode == AutoIngestSettingsPanel.OptionsUiMode.UTILITY || mode == AutoIngestSettingsPanel.OptionsUiMode.AIM);
         cbTimeoutEnabled.setSelected(UserPreferences.getIsTimeOutEnabled());
         int timeOutHrs = UserPreferences.getProcessTimeOutHrs();
         spTimeoutHours.setValue(timeOutHrs);
@@ -90,7 +90,7 @@ class AdvancedOptionsPanel extends javax.swing.JPanel {
         uiComponents.add(spTimeoutHours);
         uiComponents.add(spConcurrentJobsPerCase);
 
-        String disabledText = " " + NbBundle.getMessage(OptionsPanel.class, "AdvancedOptionsPanel.ItemDisabled.text");
+        String disabledText = " " + NbBundle.getMessage(AutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.ItemDisabled.text");
         for (JComponent item : uiComponents) {
             if (!item.isEnabled()) {
                 item.setToolTipText(item.getToolTipText() + disabledText);
@@ -135,7 +135,7 @@ class AdvancedOptionsPanel extends javax.swing.JPanel {
         lbSecondsBetweenJobs = new javax.swing.JLabel();
         spSecondsBetweenJobs = new javax.swing.JSpinner();
         lbNumberOfThreads = new javax.swing.JLabel();
-        numberOfFileIngestThreadsComboBox = new javax.swing.JComboBox<Integer>();
+        numberOfFileIngestThreadsComboBox = new javax.swing.JComboBox<>();
         lbRestartRequired = new javax.swing.JLabel();
         lbRetriesAllowed = new javax.swing.JLabel();
         spMainScrollPane = new javax.swing.JScrollPane();
@@ -150,13 +150,13 @@ class AdvancedOptionsPanel extends javax.swing.JPanel {
         spTimeoutHours = new javax.swing.JSpinner();
         lbSecondsBetweenJobsSeconds = new javax.swing.JLabel();
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbSecondsBetweenJobs, org.openide.util.NbBundle.getMessage(AdvancedOptionsPanel.class, "AdvancedOptionsPanel.lbSecondsBetweenJobs.text")); // NOI18N
-        lbSecondsBetweenJobs.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedOptionsPanel.class, "AdvancedOptionsPanel.lbSecondsBetweenJobs.toolTipText")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbSecondsBetweenJobs, org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbSecondsBetweenJobs.text")); // NOI18N
+        lbSecondsBetweenJobs.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbSecondsBetweenJobs.toolTipText")); // NOI18N
 
         spSecondsBetweenJobs.setModel(new javax.swing.SpinnerNumberModel(30, 30, 3600, 10));
-        spSecondsBetweenJobs.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedOptionsPanel.class, "AdvancedOptionsPanel.spSecondsBetweenJobs.toolTipText")); // NOI18N
+        spSecondsBetweenJobs.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.spSecondsBetweenJobs.toolTipText")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbNumberOfThreads, org.openide.util.NbBundle.getMessage(AdvancedOptionsPanel.class, "AdvancedOptionsPanel.lbNumberOfThreads.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbNumberOfThreads, org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbNumberOfThreads.text")); // NOI18N
 
         numberOfFileIngestThreadsComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -164,33 +164,33 @@ class AdvancedOptionsPanel extends javax.swing.JPanel {
             }
         });
 
-        lbRestartRequired.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/experimental/images/warning16.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(lbRestartRequired, org.openide.util.NbBundle.getMessage(AdvancedOptionsPanel.class, "AdvancedOptionsPanel.lbRestartRequired.text")); // NOI18N
+        lbRestartRequired.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/warning16.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbRestartRequired, org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbRestartRequired.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbRetriesAllowed, org.openide.util.NbBundle.getMessage(AdvancedOptionsPanel.class, "AdvancedOptionsPanel.lbRetriesAllowed.text")); // NOI18N
-        lbRetriesAllowed.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedOptionsPanel.class, "AdvancedOptionsPanel.lbRetriesAllowed.toolTipText")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbRetriesAllowed, org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbRetriesAllowed.text")); // NOI18N
+        lbRetriesAllowed.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbRetriesAllowed.toolTipText")); // NOI18N
         lbRetriesAllowed.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
 
         tbWarning.setEditable(false);
         tbWarning.setColumns(20);
         tbWarning.setFont(new java.awt.Font("Monospaced", 1, 14)); // NOI18N
         tbWarning.setRows(5);
-        tbWarning.setText(org.openide.util.NbBundle.getMessage(AdvancedOptionsPanel.class, "AdvancedOptionsPanel.tbWarning.text")); // NOI18N
+        tbWarning.setText(org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.tbWarning.text")); // NOI18N
         tbWarning.setAutoscrolls(false);
         spMainScrollPane.setViewportView(tbWarning);
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbTimeoutText, org.openide.util.NbBundle.getMessage(AdvancedOptionsPanel.class, "AdvancedOptionsPanel.lbTimeoutText.text")); // NOI18N
-        lbTimeoutText.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedOptionsPanel.class, "AdvancedOptionsPanel.lbTimeoutText.toolTipText")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbTimeoutText, org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbTimeoutText.text")); // NOI18N
+        lbTimeoutText.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbTimeoutText.toolTipText")); // NOI18N
         lbTimeoutText.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lbTimeoutTextMouseClicked(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbTimeoutHours, org.openide.util.NbBundle.getMessage(AdvancedOptionsPanel.class, "AdvancedOptionsPanel.lbTimeoutHours.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbTimeoutHours, org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbTimeoutHours.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(cbTimeoutEnabled, org.openide.util.NbBundle.getMessage(AdvancedOptionsPanel.class, "AdvancedOptionsPanel.cbTimeoutEnabled.text")); // NOI18N
-        cbTimeoutEnabled.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedOptionsPanel.class, "AdvancedOptionsPanel.cbTimeoutEnabled.toolTipText")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(cbTimeoutEnabled, org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.cbTimeoutEnabled.text")); // NOI18N
+        cbTimeoutEnabled.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.cbTimeoutEnabled.toolTipText")); // NOI18N
         cbTimeoutEnabled.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 cbTimeoutEnabledItemStateChanged(evt);
@@ -198,19 +198,19 @@ class AdvancedOptionsPanel extends javax.swing.JPanel {
         });
 
         spMaximumRetryAttempts.setModel(new javax.swing.SpinnerNumberModel(2, 0, 9999999, 1));
-        spMaximumRetryAttempts.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedOptionsPanel.class, "AdvancedOptionsPanel.spMaximumRetryAttempts.toolTipText")); // NOI18N
+        spMaximumRetryAttempts.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.spMaximumRetryAttempts.toolTipText")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbConcurrentJobsPerCase, org.openide.util.NbBundle.getMessage(AdvancedOptionsPanel.class, "AdvancedOptionsPanel.lbConcurrentJobsPerCase.text")); // NOI18N
-        lbConcurrentJobsPerCase.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedOptionsPanel.class, "AdvancedOptionsPanel.lbConcurrentJobsPerCase.toolTipText")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbConcurrentJobsPerCase, org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbConcurrentJobsPerCase.text")); // NOI18N
+        lbConcurrentJobsPerCase.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbConcurrentJobsPerCase.toolTipText")); // NOI18N
         lbConcurrentJobsPerCase.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
 
         spConcurrentJobsPerCase.setModel(new javax.swing.SpinnerNumberModel(3, 1, 100, 1));
-        spConcurrentJobsPerCase.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedOptionsPanel.class, "AdvancedOptionsPanel.lbConcurrentJobsPerCase.toolTipText")); // NOI18N
+        spConcurrentJobsPerCase.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedOptionsPanel.lbConcurrentJobsPerCase.toolTipText")); // NOI18N
 
         spTimeoutHours.setModel(new javax.swing.SpinnerNumberModel(60, 1, 100000, 1));
-        spTimeoutHours.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedOptionsPanel.class, "AdvancedOptionsPanel.spTimeoutHours.toolTipText")); // NOI18N
+        spTimeoutHours.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.spTimeoutHours.toolTipText")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbSecondsBetweenJobsSeconds, org.openide.util.NbBundle.getMessage(AdvancedOptionsPanel.class, "AdvancedOptionsPanel.lbSecondsBetweenJobsSeconds.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbSecondsBetweenJobsSeconds, org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbSecondsBetweenJobsSeconds.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -289,7 +289,7 @@ class AdvancedOptionsPanel extends javax.swing.JPanel {
                 .addContainerGap(241, Short.MAX_VALUE))
         );
 
-        spMaximumRetryAttempts.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(AdvancedOptionsPanel.class, "AdvancedOptionsPanel.spMaximumRetryAttempts.AccessibleContext.accessibleDescription")); // NOI18N
+        spMaximumRetryAttempts.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.spMaximumRetryAttempts.AccessibleContext.accessibleDescription")); // NOI18N
     }// </editor-fold>//GEN-END:initComponents
 
     private void cbTimeoutEnabledItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cbTimeoutEnabledItemStateChanged
