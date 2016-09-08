@@ -42,7 +42,6 @@ import java.io.IOException;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.experimental.autoingest.ReviewModeCaseManager.ReviewModeCaseManagerException;
-import org.sleuthkit.autopsy.experimental.configuration.OptionsDialog;
 
 /**
  * A panel that allows a user to open cases created by automated ingest.
@@ -613,7 +612,7 @@ public final class ReviewModeCasePanel extends JPanel {
 
     private void bnOptionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOptionsActionPerformed
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        OptionsDialog dialog = new OptionsDialog(this.getTopLevelAncestor(), true);
+        // ELTODO OptionsDialog dialog = new OptionsDialog(this.getTopLevelAncestor(), true);
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }//GEN-LAST:event_bnOptionsActionPerformed
 

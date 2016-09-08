@@ -61,7 +61,6 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotDialog;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestManager.CaseDeletionResult;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestManager.JobsSnapshot;
-import org.sleuthkit.autopsy.experimental.configuration.OptionsDialog;
 
 /**
  * A panel for monitoring automated ingest by a cluster, and for controlling
@@ -1519,7 +1518,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
      */
     private void bnOptionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOptionsActionPerformed
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        OptionsDialog dialog = new OptionsDialog(this.getTopLevelAncestor(), true);
+        // ELTODO OptionsDialog dialog = new OptionsDialog(this.getTopLevelAncestor(), true);
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }//GEN-LAST:event_bnOptionsActionPerformed
 
