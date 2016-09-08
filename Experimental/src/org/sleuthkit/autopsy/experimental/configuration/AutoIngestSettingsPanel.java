@@ -1835,7 +1835,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void bnCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnCancelActionPerformed
-        parent.dispose();
+        //parent.dispose();
     }//GEN-LAST:event_bnCancelActionPerformed
 
     private void bnEditIngestSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnEditIngestSettingsActionPerformed
@@ -1966,7 +1966,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         }
         if (isValidNodePanel) {
             store();
-            parent.dispose();
+            controller.changed();
         }
     }//GEN-LAST:event_bnSaveActionPerformed
 

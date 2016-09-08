@@ -30,7 +30,7 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 @OptionsPanelController.TopLevelRegistration(categoryName = "#OptionsCategory_Name_Auto_Ingest",
-        iconBase = "org/sleuthkit/autopsy/images/User-Group-icon-green32.png",
+        iconBase = "org/sleuthkit/autopsy/experimental/images/frame32.gif",
         position = 3,
         keywords = "#OptionsCategory_Keywords_Auto_Ingest_Settings",
         keywordsCategory = "Auto Ingest")
@@ -43,7 +43,7 @@ public final class AutoIngestSettingsPanelController extends OptionsPanelControl
 
     @Override
     public void update() {
-        getPanel().load();
+        getPanel().load(false);
         changed = false;
     }
 
