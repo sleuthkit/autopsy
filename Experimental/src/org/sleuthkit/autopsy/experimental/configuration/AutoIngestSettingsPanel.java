@@ -98,14 +98,11 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     public AutoIngestSettingsPanel(AutoIngestSettingsPanelController theController) {
         controller = theController;
         initComponents();
-        initMultiUserPanel();
 
         load(true);
         sharedSettingsTextField.getDocument().addDocumentListener(new MyDocumentListener());
         inputPathTextField.getDocument().addDocumentListener(new MyDocumentListener());
         outputPathTextField.getDocument().addDocumentListener(new MyDocumentListener());
-        tbSolrHostname.getDocument().addDocumentListener(new MyDocumentListener());
-        tbSolrPort.getDocument().addDocumentListener(new MyDocumentListener());
 
         jLabelInvalidImageFolder.setText("");
         jLabelInvalidResultsFolder.setText("");
@@ -122,7 +119,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         badIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/bad.png", false));
 
         this.oldIngestThreads = UserPreferences.numberOfFileIngestThreads();
-        cbEnableMultiUserItemStateChanged(null);
     }
 
     private class MyDocumentListener implements DocumentListener {
@@ -149,7 +145,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
      * @param inStartup True if we're doing the initial population of the UI
      */
     final void load(boolean inStartup) {
-        loadMultiUserSettings();
         if (inStartup) {
             AutoIngestUserPreferences.SelectedMode storedMode = AutoIngestUserPreferences.getMode();
             inputPathTextField.requestFocusInWindow();
@@ -306,8 +301,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
             String resultsFolderPath = getNormalizedFolderPath(outputPathTextField.getText().trim());
             AutoIngestUserPreferences.setAutoModeResultsFolder(resultsFolderPath);
         }
-
-        storeMultiUserSettings();
     }
 
     void validateSettings() {
@@ -342,31 +335,21 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
      * Validate current panel settings.
      */
     boolean valid() {
+        
+        if (!UserPreferences.getIsMultiUserModeEnabled()) {
+            return false;
+        }
+        
         jLabelInvalidImageFolder.setVisible(false);
         jLabelInvalidResultsFolder.setVisible(false);
         boolean isValidNodePanel = true;
-
-        boolean isValidMultiuserPanel = validateMultiUserPanel();
 
         if (jRadioButtonAutomated.isSelected() || jRadioButtonCopyFilesMode.isSelected()) {
             if (sharedConfigCheckbox.isEnabled() && sharedConfigCheckbox.isSelected() && !validSharedConfigSettings()) {
                 isValidNodePanel = false;
             }
         }
-
-        if (!isValidMultiuserPanel) {
-            mainTabPane.setForegroundAt(0, Color.red);
-        } else {
-            mainTabPane.setForegroundAt(0, Color.black);
-        }
-
-        if (!isValidNodePanel) {
-            mainTabPane.setForegroundAt(1, Color.red);
-        } else {
-            mainTabPane.setForegroundAt(1, Color.black);
-        }
-
-        return isValidNodePanel && isValidMultiuserPanel;
+        return isValidNodePanel;
     }
 
     /**
@@ -380,11 +363,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         //  - shared config checkbox enabled and checked
         //  - valid shared config folder entered
         //  - mulit-user settings enabled
-        //  - solr address
-        //  - solr port
-        return (sharedConfigCheckbox.isEnabled() && sharedConfigCheckbox.isSelected()
-                && cbEnableMultiUser.isSelected() && indexingServerSettingsAreValid()
-                && !tbSolrHostname.getText().trim().isEmpty());
+        return (sharedConfigCheckbox.isEnabled() && sharedConfigCheckbox.isSelected() && UserPreferences.getIsMultiUserModeEnabled());
     }
 
     /**
@@ -392,10 +371,8 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
      */
     void displaySharedConfigButtonText() {
         if (sharedConfigCheckbox.isEnabled() && sharedConfigCheckbox.isSelected()) {
-            if (!cbEnableMultiUser.isSelected()) {
+            if (!UserPreferences.getIsMultiUserModeEnabled()) {
                 configButtonErrorTextField.setText("Multi-user cases must be enabled");
-            } else if (!indexingServerSettingsAreValid() || tbSolrHostname.getText().trim().isEmpty()) {
-                configButtonErrorTextField.setText("Multi-user Settings->Solr Settings are missing/invalid");
             } else {
                 configButtonErrorTextField.setText("");
             }
@@ -419,18 +396,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         String oldInputPath = inputPathTextField.getText().trim();
         String oldOutputPath = outputPathTextField.getText().trim();
 
-        boolean oldMultiUserSelected = cbEnableMultiUser.isSelected();
-        String oldHostnameOrIp = tbDbHostname.getText().trim();
-        String oldPortNumber = tbDbPort.getText().trim();
-        String oldUsername = tbDbUsername.getText().trim();
-        char[] oldPassword = tbDbPassword.getPassword();
-        String oldMsgHost = tbMsgHostname.getText().trim();
-        String oldMsgPort = tbMsgPort.getText().trim();
-        String oldMsgUserName = tbMsgUsername.getText().trim();
-        char[] oldMsgPassword = tbMsgPassword.getPassword();
-        String oldIndexingServerHost = tbSolrHostname.getText().trim();
-        String oldIndexingServerPort = tbSolrPort.getText().trim();
-
         // Refresh UI
         load(false);
 
@@ -443,21 +408,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         if (!this.oldIngestThreads.equals(UserPreferences.numberOfFileIngestThreads())) {
             resetNeeded = true;
         }
-
-        if (oldMultiUserSelected != cbEnableMultiUser.isSelected()
-                || !oldHostnameOrIp.equals(tbDbHostname.getText().trim())
-                || !oldPortNumber.equals(tbDbPort.getText().trim())
-                || !oldUsername.equals(tbDbUsername.getText().trim())
-                || !oldMsgHost.equals(tbMsgHostname.getText().trim())
-                || !oldMsgPort.equals(tbMsgPort.getText().trim())
-                || !oldMsgUserName.equals(tbMsgUsername.getText().trim())
-                || !oldIndexingServerHost.equals(tbSolrHostname.getText().trim())
-                || !oldIndexingServerPort.equals(tbSolrPort.getText().trim())
-                || !Arrays.equals(oldPassword, tbDbPassword.getPassword())
-                || !Arrays.equals(oldMsgPassword, tbMsgPassword.getPassword())) {
-            resetNeeded = true;
-        }
-
         return resetNeeded;
     }
 
@@ -728,355 +678,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         }
     }
 
-    private void initMultiUserPanel() {
-        /**
-         * Add text prompts to all of the text fields.
-         */
-        Collection<TextPrompt> textPrompts = new ArrayList<>();
-        textPrompts.add(new TextPrompt(HOST_NAME_OR_IP_PROMPT, tbDbHostname));
-        textPrompts.add(new TextPrompt(PORT_PROMPT, tbDbPort));
-        textPrompts.add(new TextPrompt(USER_NAME_PROMPT, tbDbUsername));
-        textPrompts.add(new TextPrompt(PASSWORD_PROMPT, tbDbPassword));
-        textPrompts.add(new TextPrompt(HOST_NAME_OR_IP_PROMPT, tbMsgHostname));
-        textPrompts.add(new TextPrompt(PORT_PROMPT, tbMsgPort));
-        textPrompts.add(new TextPrompt(USER_NAME_PROMPT_OPT, tbMsgUsername));
-        textPrompts.add(new TextPrompt(PASSWORD_PROMPT_OPT, tbMsgPassword));
-        textPrompts.add(new TextPrompt(HOST_NAME_OR_IP_PROMPT, tbSolrHostname));
-        textPrompts.add(new TextPrompt(PORT_PROMPT, tbSolrPort));
-        configureTextPrompts(textPrompts);
-
-        /*
-         * Set each textbox with a "statusIcon" property enabling the
-         * DocumentListeners to know which icon to erase when changes are made
-         */
-        tbDbHostname.getDocument().putProperty("statusIcon", lbTestDatabase);
-        tbDbPort.getDocument().putProperty("statusIcon", lbTestDatabase);
-        tbDbUsername.getDocument().putProperty("statusIcon", lbTestDatabase);
-        tbDbPassword.getDocument().putProperty("statusIcon", lbTestDatabase);
-
-        tbSolrHostname.getDocument().putProperty("statusIcon", lbTestSolr);
-        tbSolrPort.getDocument().putProperty("statusIcon", lbTestSolr);
-
-        tbMsgHostname.getDocument().putProperty("statusIcon", lbTestMessageService);
-        tbMsgPort.getDocument().putProperty("statusIcon", lbTestMessageService);
-        tbMsgUsername.getDocument().putProperty("statusIcon", lbTestMessageService);
-        tbMsgPassword.getDocument().putProperty("statusIcon", lbTestMessageService);
-
-        /// Register for notifications when the text boxes get updated.
-        textBoxChangedListener = new TextBoxChangedListener();
-        textBoxes.add(tbDbHostname);
-        textBoxes.add(tbDbPort);
-        textBoxes.add(tbDbUsername);
-        textBoxes.add(tbDbPassword);
-        textBoxes.add(tbMsgHostname);
-        textBoxes.add(tbMsgPort);
-        textBoxes.add(tbMsgUsername);
-        textBoxes.add(tbMsgPassword);
-        textBoxes.add(tbSolrHostname);
-        textBoxes.add(tbSolrPort);
-        addMultiUserDocumentListeners(textBoxes, textBoxChangedListener);
-
-        lbTestDatabase.setIcon(null);
-        lbTestSolr.setIcon(null);
-        lbTestMessageService.setIcon(null);
-        lbTestDbWarning.setText("");
-        lbTestSolrWarning.setText("");
-        lbTestMessageWarning.setText("");
-        enableMultiUserComponents(textBoxes, cbEnableMultiUser.isSelected());
-    }
-
-    void loadMultiUserSettings() {
-        lbTestDatabase.setIcon(null);
-        lbTestSolr.setIcon(null);
-        lbTestMessageService.setIcon(null);
-        lbTestDbWarning.setText("");
-        lbTestSolrWarning.setText("");
-        lbTestMessageWarning.setText("");
-        try {
-            CaseDbConnectionInfo dbInfo = UserPreferences.getDatabaseConnectionInfo();
-            tbDbHostname.setText(dbInfo.getHost().trim());
-            tbDbPort.setText(dbInfo.getPort().trim());
-            tbDbUsername.setText(dbInfo.getUserName().trim());
-            tbDbPassword.setText(dbInfo.getPassword());
-        } catch (UserPreferencesException ex) {
-            logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
-        }
-
-        try {
-            MessageServiceConnectionInfo msgServiceInfo = UserPreferences.getMessageServiceConnectionInfo();
-            tbMsgHostname.setText(msgServiceInfo.getHost().trim());
-            tbMsgPort.setText(Integer.toString(msgServiceInfo.getPort()));
-            tbMsgUsername.setText(msgServiceInfo.getUserName().trim());
-            tbMsgPassword.setText(msgServiceInfo.getPassword());
-        } catch (UserPreferencesException ex) {
-            logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
-        }
-
-        String indexingServerHost = UserPreferences.getIndexingServerHost().trim();
-        if (!indexingServerHost.isEmpty()) {
-            tbSolrHostname.setText(indexingServerHost);
-        }
-        String indexingServerPort = UserPreferences.getIndexingServerPort().trim();
-        if (portNumberIsValid(indexingServerPort)) {
-            tbSolrPort.setText(indexingServerPort);
-        }
-
-        lbTestDatabase.setIcon(null);
-        lbTestSolr.setIcon(null);
-        lbTestMessageService.setIcon(null);
-
-        bnTestDatabase.setEnabled(false);
-        bnTestSolr.setEnabled(false);
-        bnTestMessageService.setEnabled(false);
-
-        cbEnableMultiUser.setSelected(UserPreferences.getIsMultiUserModeEnabled());
-        this.valid(); // trigger validation to enable buttons based on current settings
-    }
-
-    void storeMultiUserSettings() {
-
-        boolean multiUserCasesEnabled = cbEnableMultiUser.isSelected();
-        UserPreferences.setIsMultiUserModeEnabled(multiUserCasesEnabled);
-        if (multiUserCasesEnabled == false) {
-            return;
-        }
-
-        /*
-         * Currently only supporting multi-user cases with PostgreSQL case
-         * databases.
-         */
-        TskData.DbType dbType = TskData.DbType.POSTGRESQL;
-        CaseDbConnectionInfo info = new CaseDbConnectionInfo(
-                tbDbHostname.getText().trim(),
-                tbDbPort.getText().trim(),
-                tbDbUsername.getText().trim(),
-                new String(tbDbPassword.getPassword()),
-                dbType);
-
-        try {
-            UserPreferences.setDatabaseConnectionInfo(info);
-        } catch (UserPreferencesException ex) {
-            logger.log(Level.SEVERE, "Error saving case database connection info", ex); //NON-NLS
-        }
-
-        int msgServicePort = 0;
-        try {
-            msgServicePort = Integer.parseInt(this.tbMsgPort.getText().trim());
-        } catch (NumberFormatException ex) {
-            logger.log(Level.SEVERE, "Could not parse messaging service port setting", ex);
-        }
-
-        MessageServiceConnectionInfo msgServiceInfo = new MessageServiceConnectionInfo(
-                tbMsgHostname.getText().trim(),
-                msgServicePort,
-                tbMsgUsername.getText().trim(),
-                new String(tbMsgPassword.getPassword()));
-
-        try {
-            UserPreferences.setMessageServiceConnectionInfo(msgServiceInfo);
-        } catch (UserPreferencesException ex) {
-            logger.log(Level.SEVERE, "Error saving messaging service connection info", ex); //NON-NLS
-        }
-        UserPreferences.setIndexingServerHost(tbSolrHostname.getText().trim());
-        UserPreferences.setIndexingServerPort(Integer.parseInt(tbSolrPort.getText().trim()));
-    }
-
-    private boolean validateMultiUserPanel() {
-        tbOops.setText("");
-        multiUserErrorTextField.setText("");
-        if ((jRadioButtonAutomated.isSelected() || jRadioButtonReview.isSelected() || jRadioButtonCopyFilesMode.isSelected())
-                && !cbEnableMultiUser.isSelected()) {
-            // AIM and Review mode both require multi-user settings to be enabled
-            tbOops.setText("Multi-user settings must be enabled in non-standalone modes");
-            multiUserErrorTextField.setText("Multi-user settings must be enabled");
-            return false;
-        }
-
-        if (cbEnableMultiUser.isSelected()) {
-            return checkFieldsAndEnableButtons()
-                    && databaseSettingsAreValid()
-                    && indexingServerSettingsAreValid()
-                    && messageServiceSettingsAreValid();
-        } else {
-            return true;
-        }
-    }
-
-    /**
-     * Tests whether or not values have been entered in all of the database
-     * settings text fields.
-     *
-     * @return True or false.
-     */
-    private boolean databaseFieldsArePopulated() {
-        return !tbDbHostname.getText().trim().isEmpty()
-                && !tbDbPort.getText().trim().isEmpty()
-                && !tbDbUsername.getText().trim().isEmpty()
-                && tbDbPassword.getPassword().length != 0;
-    }
-
-    /**
-     * Tests whether or not values have been entered in all of the Solr settings
-     * text fields.
-     *
-     * @return True or false.
-     */
-    private boolean solrFieldsArePopulated() {
-        return !tbSolrHostname.getText().trim().isEmpty()
-                && !tbSolrPort.getText().trim().isEmpty();
-    }
-
-    /**
-     * Tests whether or not values have been entered in all of the required
-     * message service settings text fields.
-     *
-     * @return True or false.
-     */
-    private boolean messageServiceFieldsArePopulated() {
-
-        if ((tbMsgHostname.getText().trim().isEmpty())
-                || (tbMsgPort.getText().trim().isEmpty())) {
-            return false;
-        }
-
-        // user name and pw are optional, but make sure they are both set or both empty
-        boolean isUserSet = (tbMsgUsername.getText().trim().isEmpty() == false);
-        boolean isPwSet = (tbMsgPassword.getPassword().length != 0);
-        return (isUserSet == isPwSet);
-    }
-
-    /**
-     * Tests whether or not all of the settings components are populated and
-     * sets the test buttons appropriately.
-     *
-     * @return True or false.
-     */
-    boolean checkFieldsAndEnableButtons() {
-        boolean result = true;
-
-        boolean dbPopulated = databaseFieldsArePopulated();
-        boolean solrPopulated = solrFieldsArePopulated();
-        boolean messageServicePopulated = messageServiceFieldsArePopulated();
-
-        // PostgreSQL Database
-        bnTestDatabase.setEnabled(dbPopulated && tbDbHostname.isEnabled());
-
-        // Solr Indexing
-        bnTestSolr.setEnabled(solrPopulated && tbSolrHostname.isEnabled());
-
-        // ActiveMQ Messaging
-        bnTestMessageService.setEnabled(messageServicePopulated && tbMsgHostname.isEnabled());
-
-        if (!dbPopulated || !solrPopulated || !messageServicePopulated) {
-            // We don't even have everything filled out
-            if (sharedConfigCheckbox.isSelected() && !masterNodeCheckBox.isSelected() && solrPopulated) {
-                result = true;
-            } else {
-                result = false;
-                tbOops.setText(INCOMPLETE_SETTINGS_MSG);
-            }
-        }
-        return result;
-    }
-
-    /**
-     * Tests whether or not the database settings are valid.
-     *
-     * @return True or false.
-     */
-    boolean databaseSettingsAreValid() {
-        if (portNumberIsValid(tbDbPort.getText().trim())) {
-            return true;
-        } else {
-            tbOops.setText(INVALID_DB_PORT_MSG);
-            return false;
-        }
-    }
-
-    /**
-     * Tests whether or not the message service settings are valid.
-     *
-     * @return True or false.
-     */
-    boolean messageServiceSettingsAreValid() {
-        if (!portNumberIsValid(tbMsgPort.getText().trim())) {
-            tbOops.setText(INVALID_MESSAGE_SERVICE_PORT_MSG);
-            return false;
-        }
-        return true;
-    }
-
-    /**
-     * Tests whether or not the indexing server settings are valid.
-     *
-     * @return True or false.
-     */
-    boolean indexingServerSettingsAreValid() {
-        if (!portNumberIsValid(tbSolrPort.getText().trim())) {
-            tbOops.setText(INVALID_INDEXING_SERVER_PORT_MSG);
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Determines whether or not a port number is within the range of valid port
-     * numbers.
-     *
-     * @param portNumber The port number as a string.
-     *
-     * @return True or false.
-     */
-    private static boolean portNumberIsValid(String portNumber) {
-        try {
-            int value = Integer.parseInt(portNumber);
-            if (value < 0 || value > 65535) { // invalid port numbers
-                return false;
-            }
-        } catch (NumberFormatException detailsNotImportant) {
-            return false;
-        }
-        return true;
-    }
-
-    /**
-     * Sets the foreground color and transparency of a collection of text
-     * prompts.
-     *
-     * @param textPrompts The text prompts to configure.
-     */
-    private static void configureTextPrompts(Collection<TextPrompt> textPrompts) {
-        float alpha = 0.9f; // Mostly opaque
-        for (TextPrompt textPrompt : textPrompts) {
-            textPrompt.setForeground(Color.LIGHT_GRAY);
-            textPrompt.changeAlpha(alpha);
-        }
-    }
-
-    /**
-     * Adds a change listener to a collection of text fields.
-     *
-     * @param textFields The text fields.
-     * @param listener   The change listener.
-     */
-    private static void addMultiUserDocumentListeners(Collection<JTextField> textFields, TextBoxChangedListener listener) {
-        for (JTextField textField : textFields) {
-            textField.getDocument().addDocumentListener(listener);
-        }
-    }
-
-    /**
-     * Enables/disables the multi-user settings, based upon input provided
-     *
-     * @param enabled true means enable, false means disable
-     */
-    private static void enableMultiUserComponents(Collection<JTextField> textFields, boolean enabled) {
-        for (JTextField textField : textFields) {
-            textField.setEnabled(enabled);
-        }
-    }
-
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -1087,38 +688,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     private void initComponents() {
 
         modeRadioButtons = new javax.swing.ButtonGroup();
-        bnSave = new javax.swing.JButton();
-        bnCancel = new javax.swing.JButton();
-        mainTabPane = new javax.swing.JTabbedPane();
-        multiUserPanel = new javax.swing.JPanel();
-        pnMessagingSettings = new javax.swing.JPanel();
-        lbMessageServiceSettings = new javax.swing.JLabel();
-        tbMsgHostname = new javax.swing.JTextField();
-        tbMsgUsername = new javax.swing.JTextField();
-        tbMsgPort = new javax.swing.JTextField();
-        tbMsgPassword = new javax.swing.JPasswordField();
-        bnTestMessageService = new javax.swing.JButton();
-        lbTestMessageService = new javax.swing.JLabel();
-        lbTestMessageWarning = new javax.swing.JLabel();
-        pnSolrSettings = new javax.swing.JPanel();
-        lbSolrSettings = new javax.swing.JLabel();
-        tbSolrHostname = new javax.swing.JTextField();
-        tbSolrPort = new javax.swing.JTextField();
-        bnTestSolr = new javax.swing.JButton();
-        lbTestSolr = new javax.swing.JLabel();
-        lbTestSolrWarning = new javax.swing.JLabel();
-        pnDatabaseSettings = new javax.swing.JPanel();
-        tbDbHostname = new javax.swing.JTextField();
-        tbDbPort = new javax.swing.JTextField();
-        tbDbUsername = new javax.swing.JTextField();
-        tbDbPassword = new javax.swing.JPasswordField();
-        lbDatabaseSettings = new javax.swing.JLabel();
-        bnTestDatabase = new javax.swing.JButton();
-        lbTestDatabase = new javax.swing.JLabel();
-        lbTestDbWarning = new javax.swing.JLabel();
-        cbEnableMultiUser = new javax.swing.JCheckBox();
-        tbOops = new javax.swing.JTextField();
-        multiUserRestartLabel = new javax.swing.JLabel();
         nodePanel = new javax.swing.JPanel();
         jPanelNodeType = new javax.swing.JPanel();
         jLabelSelectMode = new javax.swing.JLabel();
@@ -1154,296 +723,8 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         bnEditIngestSettings = new javax.swing.JButton();
         bnAdvancedSettings = new javax.swing.JButton();
         bnFileExport = new javax.swing.JButton();
-
-        org.openide.awt.Mnemonics.setLocalizedText(bnSave, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.bnSave.text")); // NOI18N
-        bnSave.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnSaveActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(bnCancel, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.bnCancel.text")); // NOI18N
-        bnCancel.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnCancelActionPerformed(evt);
-            }
-        });
-
-        multiUserPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-
-        pnMessagingSettings.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-
-        lbMessageServiceSettings.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(lbMessageServiceSettings, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.lbMessageServiceSettings.text")); // NOI18N
-
-        tbMsgHostname.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        tbMsgHostname.setText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbMsgHostname.text")); // NOI18N
-        tbMsgHostname.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbMsgHostname.toolTipText")); // NOI18N
-
-        tbMsgUsername.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        tbMsgUsername.setText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbMsgUsername.text")); // NOI18N
-        tbMsgUsername.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbMsgUsername.toolTipText")); // NOI18N
-
-        tbMsgPort.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        tbMsgPort.setText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbMsgPort.text")); // NOI18N
-        tbMsgPort.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbMsgPort.toolTipText")); // NOI18N
-
-        tbMsgPassword.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        tbMsgPassword.setText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbMsgPassword.text")); // NOI18N
-        tbMsgPassword.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbMsgPassword.toolTipText")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(bnTestMessageService, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.bnTestMessageService.text")); // NOI18N
-        bnTestMessageService.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnTestMessageServiceActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(lbTestMessageService, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.lbTestMessageService.text")); // NOI18N
-
-        lbTestMessageWarning.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(lbTestMessageWarning, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.lbTestMessageWarning.text")); // NOI18N
-
-        javax.swing.GroupLayout pnMessagingSettingsLayout = new javax.swing.GroupLayout(pnMessagingSettings);
-        pnMessagingSettings.setLayout(pnMessagingSettingsLayout);
-        pnMessagingSettingsLayout.setHorizontalGroup(
-            pnMessagingSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnMessagingSettingsLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(pnMessagingSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(pnMessagingSettingsLayout.createSequentialGroup()
-                        .addComponent(lbMessageServiceSettings)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(bnTestMessageService)
-                        .addGap(18, 18, 18)
-                        .addComponent(lbTestMessageService, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(tbMsgHostname, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(tbMsgUsername, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(tbMsgPort, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(tbMsgPassword)
-                    .addGroup(pnMessagingSettingsLayout.createSequentialGroup()
-                        .addComponent(lbTestMessageWarning)
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
-        );
-        pnMessagingSettingsLayout.setVerticalGroup(
-            pnMessagingSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnMessagingSettingsLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(pnMessagingSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lbMessageServiceSettings)
-                    .addComponent(bnTestMessageService)
-                    .addComponent(lbTestMessageService, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tbMsgHostname, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tbMsgPort, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tbMsgUsername, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tbMsgPassword, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lbTestMessageWarning, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
-        pnSolrSettings.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-
-        lbSolrSettings.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(lbSolrSettings, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.lbSolrSettings.text")); // NOI18N
-
-        tbSolrHostname.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        tbSolrHostname.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbSolrHostname.toolTipText")); // NOI18N
-
-        tbSolrPort.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        tbSolrPort.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbSolrPort.toolTipText")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(bnTestSolr, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.bnTestSolr.text")); // NOI18N
-        bnTestSolr.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnTestSolrActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(lbTestSolr, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.lbTestSolr.text")); // NOI18N
-
-        lbTestSolrWarning.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(lbTestSolrWarning, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.lbTestSolrWarning.text")); // NOI18N
-
-        javax.swing.GroupLayout pnSolrSettingsLayout = new javax.swing.GroupLayout(pnSolrSettings);
-        pnSolrSettings.setLayout(pnSolrSettingsLayout);
-        pnSolrSettingsLayout.setHorizontalGroup(
-            pnSolrSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnSolrSettingsLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(pnSolrSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(pnSolrSettingsLayout.createSequentialGroup()
-                        .addComponent(lbSolrSettings)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(bnTestSolr)
-                        .addGap(18, 18, 18)
-                        .addComponent(lbTestSolr, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(tbSolrHostname, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(tbSolrPort, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(pnSolrSettingsLayout.createSequentialGroup()
-                        .addComponent(lbTestSolrWarning)
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
-        );
-        pnSolrSettingsLayout.setVerticalGroup(
-            pnSolrSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnSolrSettingsLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(pnSolrSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lbSolrSettings)
-                    .addComponent(bnTestSolr)
-                    .addComponent(lbTestSolr, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tbSolrHostname, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 8, Short.MAX_VALUE)
-                .addComponent(tbSolrPort, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lbTestSolrWarning, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
-        );
-
-        pnDatabaseSettings.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-
-        tbDbHostname.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        tbDbHostname.setText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbDbHostname.text")); // NOI18N
-        tbDbHostname.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbDbHostname.toolTipText")); // NOI18N
-
-        tbDbPort.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        tbDbPort.setText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbDbPort.text")); // NOI18N
-        tbDbPort.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbDbPort.toolTipText")); // NOI18N
-
-        tbDbUsername.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        tbDbUsername.setText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbDbUsername.text")); // NOI18N
-        tbDbUsername.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbDbUsername.toolTipText")); // NOI18N
-
-        tbDbPassword.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        tbDbPassword.setText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbDbPassword.text")); // NOI18N
-        tbDbPassword.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbDbPassword.toolTipText")); // NOI18N
-
-        lbDatabaseSettings.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(lbDatabaseSettings, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.lbDatabaseSettings.text")); // NOI18N
-        lbDatabaseSettings.setVerticalAlignment(javax.swing.SwingConstants.TOP);
-
-        org.openide.awt.Mnemonics.setLocalizedText(bnTestDatabase, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.bnTestDatabase.text")); // NOI18N
-        bnTestDatabase.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnTestDatabaseActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(lbTestDatabase, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.lbTestDatabase.text")); // NOI18N
-        lbTestDatabase.setAutoscrolls(true);
-
-        lbTestDbWarning.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(lbTestDbWarning, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.lbTestDbWarning.text")); // NOI18N
-
-        javax.swing.GroupLayout pnDatabaseSettingsLayout = new javax.swing.GroupLayout(pnDatabaseSettings);
-        pnDatabaseSettings.setLayout(pnDatabaseSettingsLayout);
-        pnDatabaseSettingsLayout.setHorizontalGroup(
-            pnDatabaseSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnDatabaseSettingsLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(pnDatabaseSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(tbDbHostname)
-                    .addComponent(tbDbPort)
-                    .addComponent(tbDbUsername)
-                    .addComponent(tbDbPassword)
-                    .addGroup(pnDatabaseSettingsLayout.createSequentialGroup()
-                        .addComponent(lbDatabaseSettings)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(bnTestDatabase)
-                        .addGap(18, 18, 18)
-                        .addComponent(lbTestDatabase, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(pnDatabaseSettingsLayout.createSequentialGroup()
-                        .addComponent(lbTestDbWarning)
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
-        );
-        pnDatabaseSettingsLayout.setVerticalGroup(
-            pnDatabaseSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnDatabaseSettingsLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(pnDatabaseSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lbTestDatabase, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(pnDatabaseSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(lbDatabaseSettings)
-                        .addComponent(bnTestDatabase)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tbDbHostname, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tbDbPort, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tbDbUsername, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tbDbPassword, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lbTestDbWarning, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
-        );
-
-        org.openide.awt.Mnemonics.setLocalizedText(cbEnableMultiUser, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.cbEnableMultiUser.text")); // NOI18N
-        cbEnableMultiUser.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                cbEnableMultiUserItemStateChanged(evt);
-            }
-        });
-
-        tbOops.setEditable(false);
-        tbOops.setForeground(new java.awt.Color(255, 0, 0));
-        tbOops.setText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbOops.text")); // NOI18N
-        tbOops.setBorder(null);
-        tbOops.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                tbOopsActionPerformed(evt);
-            }
-        });
-
-        multiUserRestartLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/experimental/images/warning16.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(multiUserRestartLabel, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.multiUserRestartLabel.text")); // NOI18N
-
-        javax.swing.GroupLayout multiUserPanelLayout = new javax.swing.GroupLayout(multiUserPanel);
-        multiUserPanel.setLayout(multiUserPanelLayout);
-        multiUserPanelLayout.setHorizontalGroup(
-            multiUserPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(multiUserPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(multiUserPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(pnDatabaseSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(multiUserPanelLayout.createSequentialGroup()
-                        .addComponent(multiUserRestartLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 496, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 246, Short.MAX_VALUE))
-                    .addComponent(pnSolrSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(pnMessagingSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(multiUserPanelLayout.createSequentialGroup()
-                        .addComponent(cbEnableMultiUser)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(tbOops)))
-                .addContainerGap())
-        );
-        multiUserPanelLayout.setVerticalGroup(
-            multiUserPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(multiUserPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(multiUserRestartLabel)
-                .addGap(15, 15, 15)
-                .addGroup(multiUserPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cbEnableMultiUser)
-                    .addComponent(tbOops, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(pnDatabaseSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(pnSolrSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(pnMessagingSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
-        );
-
-        mainTabPane.addTab(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.multiUserPanel.TabConstraints.tabTitle"), multiUserPanel); // NOI18N
+        bnSave = new javax.swing.JButton();
+        bnCancel = new javax.swing.JButton();
 
         nodePanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
@@ -1803,34 +1084,39 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                 .addContainerGap())
         );
 
-        mainTabPane.addTab(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.nodePanel.TabConstraints.tabTitle"), nodePanel); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(bnSave, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.bnSave.text")); // NOI18N
+        bnSave.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bnSaveActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(bnCancel, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.bnCancel.text")); // NOI18N
+        bnCancel.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bnCancelActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(nodePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(mainTabPane, javax.swing.GroupLayout.PREFERRED_SIZE, 771, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap())
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(bnSave, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(bnCancel, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(15, 15, 15))))
+                .addGap(26, 26, 26)
+                .addComponent(bnSave, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(bnCancel, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(mainTabPane, javax.swing.GroupLayout.PREFERRED_SIZE, 705, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(nodePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(bnSave)
-                    .addComponent(bnCancel))
-                .addContainerGap())
+                    .addComponent(bnCancel)))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -1909,7 +1195,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     private void jRadioButtonAutomatedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jRadioButtonAutomatedActionPerformed
         enableOptionsBasedOnMode(OptionsUiMode.AIM);
         setSharedConfigEnable();
-        cbEnableMultiUserItemStateChanged(null);
         validateSettings();
     }//GEN-LAST:event_jRadioButtonAutomatedActionPerformed
 
@@ -1970,52 +1255,10 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_bnSaveActionPerformed
 
-    private void cbEnableMultiUserItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cbEnableMultiUserItemStateChanged
-        if (!cbEnableMultiUser.isSelected()) {
-            tbOops.setText("");
-            bnTestDatabase.setEnabled(false);
-            lbTestDatabase.setIcon(null);
-            bnTestSolr.setEnabled(false);
-            lbTestSolr.setIcon(null);
-            bnTestMessageService.setEnabled(false);
-            lbTestMessageService.setIcon(null);
-            lbTestDbWarning.setText("");
-            lbTestSolrWarning.setText("");
-            lbTestMessageWarning.setText("");
-            lbSolrSettings.setEnabled(false);
-            enableMultiUserComponents(textBoxes, cbEnableMultiUser.isSelected());
-        } else if (sharedConfigCheckbox.isEnabled() && sharedConfigCheckbox.isSelected() && !masterNodeCheckBox.isSelected()) {
-            bnTestDatabase.setEnabled(false);
-            lbTestDatabase.setIcon(null);
-            lbTestSolr.setIcon(null);
-            bnTestMessageService.setEnabled(false);
-            lbTestMessageService.setIcon(null);
-            lbTestDbWarning.setText("");
-            lbTestSolrWarning.setText("");
-            lbTestMessageWarning.setText("");
-            enableMultiUserComponents(textBoxes, false);
-            bnTestSolr.setEnabled(true);
-            lbTestSolr.setEnabled(true);
-            tbSolrHostname.setEnabled(true);
-            tbSolrPort.setEnabled(true);
-            lbSolrSettings.setEnabled(true);
-        } else {
-            enableMultiUserComponents(textBoxes, cbEnableMultiUser.isSelected());
-        }
-
-        validateSettings();
-    }//GEN-LAST:event_cbEnableMultiUserItemStateChanged
-
-    private void tbOopsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tbOopsActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_tbOopsActionPerformed
-
     private void downloadButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_downloadButtonActionPerformed
         // First save the shared config folder and solr settings to the properties
         String globalSettingsPath = getNormalizedFolderPath(sharedSettingsTextField.getText().trim());
         AutoIngestUserPreferences.setSharedConfigFolder(globalSettingsPath);
-        UserPreferences.setIndexingServerHost(tbSolrHostname.getText().trim());
-        UserPreferences.setIndexingServerPort(Integer.parseInt(tbSolrPort.getText().trim()));
 
         disableUI();
         jLabelCurrentTask.setEnabled(true);
@@ -2069,7 +1312,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
             sharedSettingsErrorTextField.setText("");
             validateSettings();
         }
-        cbEnableMultiUserItemStateChanged(null);
     }
 
     private void masterNodeCheckBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_masterNodeCheckBoxItemStateChanged
@@ -2087,89 +1329,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
             jRadioButtonReview.setEnabled(false);
             jRadioButtonStandalone.setEnabled(false);
         }
-        cbEnableMultiUserItemStateChanged(null);
     }//GEN-LAST:event_masterNodeCheckBoxItemStateChanged
-
-    private void bnTestDatabaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnTestDatabaseActionPerformed
-        lbTestDatabase.setIcon(null);
-        lbTestDbWarning.setText("");
-        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        try {
-            CaseDbConnectionInfo info = new CaseDbConnectionInfo(
-                    this.tbDbHostname.getText().trim(),
-                    this.tbDbPort.getText().trim(),
-                    this.tbDbUsername.getText().trim(),
-                    new String(this.tbDbPassword.getPassword()),
-                    TskData.DbType.POSTGRESQL);
-
-            SleuthkitCase.tryConnect(info);
-            lbTestDatabase.setIcon(goodIcon);
-            lbTestDbWarning.setText("");
-        } catch (TskCoreException ex) {
-            lbTestDatabase.setIcon(badIcon);
-            lbTestDbWarning.setText(ex.getMessage());
-        } finally {
-            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-        }
-    }//GEN-LAST:event_bnTestDatabaseActionPerformed
-
-    private void bnTestSolrActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnTestSolrActionPerformed
-        lbTestSolr.setIcon(null);
-        lbTestSolrWarning.setText("");
-        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-
-        KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
-        try {
-            if (kwsService != null) {
-                int port = Integer.parseInt(tbSolrPort.getText().trim());
-                kwsService.tryConnect(tbSolrHostname.getText().trim(), port);
-                lbTestSolr.setIcon(goodIcon);
-                lbTestSolrWarning.setText("");
-            } else {
-                lbTestSolr.setIcon(badIcon);
-                lbTestSolrWarning.setText(NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.KeywordSearchNull"));
-            }
-        } catch (NumberFormatException ex) {
-            lbTestSolr.setIcon(badIcon);
-            lbTestSolrWarning.setText(NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.InvalidPortNumber"));
-        } catch (KeywordSearchServiceException ex) {
-            lbTestSolr.setIcon(badIcon);
-            lbTestSolrWarning.setText(ex.getMessage());
-        } finally {
-            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-        }
-    }//GEN-LAST:event_bnTestSolrActionPerformed
-
-    private void bnTestMessageServiceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnTestMessageServiceActionPerformed
-        lbTestMessageService.setIcon(null);
-        lbTestMessageWarning.setText("");
-        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-
-        int port;
-        try {
-            port = Integer.parseInt(this.tbMsgPort.getText().trim());
-        } catch (NumberFormatException ex) {
-            lbTestMessageService.setIcon(badIcon);
-            lbTestMessageWarning.setText(NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.InvalidPortNumber"));
-            return;
-        }
-
-        MessageServiceConnectionInfo info = new MessageServiceConnectionInfo(
-                this.tbMsgHostname.getText().trim(),
-                port,
-                this.tbMsgUsername.getText().trim(),
-                new String(this.tbMsgPassword.getPassword()));
-        try {
-            info.tryConnect();
-            lbTestMessageService.setIcon(goodIcon);
-            lbTestMessageWarning.setText("");
-        } catch (MessageServiceException ex) {
-            lbTestMessageService.setIcon(badIcon);
-            lbTestMessageWarning.setText(ex.getMessage());
-        } finally {
-            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-        }
-    }//GEN-LAST:event_bnTestMessageServiceActionPerformed
 
     private void bnAdvancedSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnAdvancedSettingsActionPerformed
         AdvancedAutoIngestSettingsPanel advancedAutoIngestSettingsPanel = new AdvancedAutoIngestSettingsPanel(getModeFromRadioButtons());
@@ -2210,10 +1370,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         sharedConfigCheckbox.setEnabled(false);
         masterNodeCheckBox.setEnabled(false);
         sharedSettingsTextField.setEnabled(false);
-        // Disable multi-user settings
-        cbEnableMultiUser.setEnabled(false);
-        enableMultiUserComponents(textBoxes, false);
-        bnTestSolr.setEnabled(false);
+
         bnSave.setEnabled(false);
         bnCancel.setEnabled(false);
     }
@@ -2221,10 +1378,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     private void resetUI() {
         enableOptionsBasedOnMode(getModeFromRadioButtons());
         setSharedConfigEnable();
-        // Enable multi-user settings
-        cbEnableMultiUser.setEnabled(true);
-        enableMultiUserComponents(textBoxes, cbEnableMultiUser.isSelected());
-        bnTestSolr.setEnabled(true);
+
         bnCancel.setEnabled(true);
 
         validateSettings(); // Will re-enable the save button if everything is valid
@@ -2327,8 +1481,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         bnAdvancedSettings.setEnabled(enabled);
         bnEditIngestSettings.setEnabled(enabled);
         bnFileExport.setEnabled(enabled);
-        bnTestDatabase.setEnabled(enabled);
-        bnTestMessageService.setEnabled(enabled);
         browseInputFolderButton.setEnabled(enabled);
         browseOutputFolderButton.setEnabled(enabled);
         browseSharedSettingsButton.setEnabled(sharedConfigCheckbox.isSelected() && jRadioButtonAutomated.isSelected());
@@ -2346,20 +1498,9 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         jRadioButtonCopyFilesMode.setEnabled(enabled);
         jRadioButtonReview.setEnabled(enabled);
         jRadioButtonStandalone.setEnabled(enabled);
-        lbDatabaseSettings.setEnabled(enabled);
-        lbMessageServiceSettings.setEnabled(enabled);
-        lbTestDatabase.setEnabled(enabled);
-        lbTestDbWarning.setEnabled(enabled);
-        lbTestMessageService.setEnabled(enabled);
-        lbTestMessageWarning.setEnabled(enabled);
         multiUserErrorTextField.setEnabled(enabled);
         outputPathTextField.setEnabled(enabled);
-        pnDatabaseSettings.setEnabled(enabled);
-        pnMessagingSettings.setEnabled(enabled);
-        pnSolrSettings.setEnabled(enabled);
         restartRequiredNodeLabel.setEnabled(enabled);
-        bnTestDatabase.setEnabled(enabled);
-        bnTestMessageService.setEnabled(enabled);
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -2368,13 +1509,9 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JButton bnEditIngestSettings;
     private javax.swing.JButton bnFileExport;
     private javax.swing.JButton bnSave;
-    private javax.swing.JButton bnTestDatabase;
-    private javax.swing.JButton bnTestMessageService;
-    private javax.swing.JButton bnTestSolr;
     private javax.swing.JButton browseInputFolderButton;
     private javax.swing.JButton browseOutputFolderButton;
     private javax.swing.JButton browseSharedSettingsButton;
-    private javax.swing.JCheckBox cbEnableMultiUser;
     private javax.swing.JTextField configButtonErrorTextField;
     private javax.swing.JButton downloadButton;
     private javax.swing.JTextField inputPathTextField;
@@ -2394,42 +1531,16 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JRadioButton jRadioButtonReview;
     private javax.swing.JRadioButton jRadioButtonStandalone;
     private javax.swing.JSeparator jSeparator1;
-    private javax.swing.JLabel lbDatabaseSettings;
-    private javax.swing.JLabel lbMessageServiceSettings;
-    private javax.swing.JLabel lbSolrSettings;
-    private javax.swing.JLabel lbTestDatabase;
-    private javax.swing.JLabel lbTestDbWarning;
-    private javax.swing.JLabel lbTestMessageService;
-    private javax.swing.JLabel lbTestMessageWarning;
-    private javax.swing.JLabel lbTestSolr;
-    private javax.swing.JLabel lbTestSolrWarning;
-    private javax.swing.JTabbedPane mainTabPane;
     private javax.swing.JCheckBox masterNodeCheckBox;
     private javax.swing.ButtonGroup modeRadioButtons;
     private javax.swing.JTextField multiUserErrorTextField;
-    private javax.swing.JPanel multiUserPanel;
-    private javax.swing.JLabel multiUserRestartLabel;
     private javax.swing.JPanel nodePanel;
     private javax.swing.JTextField outputPathTextField;
     private javax.swing.JProgressBar pbTaskInProgress;
-    private javax.swing.JPanel pnDatabaseSettings;
-    private javax.swing.JPanel pnMessagingSettings;
-    private javax.swing.JPanel pnSolrSettings;
     private javax.swing.JLabel restartRequiredNodeLabel;
     private javax.swing.JCheckBox sharedConfigCheckbox;
     private javax.swing.JTextField sharedSettingsErrorTextField;
     private javax.swing.JTextField sharedSettingsTextField;
-    private javax.swing.JTextField tbDbHostname;
-    private javax.swing.JPasswordField tbDbPassword;
-    private javax.swing.JTextField tbDbPort;
-    private javax.swing.JTextField tbDbUsername;
-    private javax.swing.JTextField tbMsgHostname;
-    private javax.swing.JPasswordField tbMsgPassword;
-    private javax.swing.JTextField tbMsgPort;
-    private javax.swing.JTextField tbMsgUsername;
-    private javax.swing.JTextField tbOops;
-    private javax.swing.JTextField tbSolrHostname;
-    private javax.swing.JTextField tbSolrPort;
     private javax.swing.JButton uploadButton;
     // End of variables declaration//GEN-END:variables
 }
