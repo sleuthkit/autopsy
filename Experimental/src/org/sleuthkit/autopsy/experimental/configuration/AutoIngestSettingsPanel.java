@@ -67,6 +67,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         controller = theController;
         initComponents();
 
+        cbJoinAutoIngestCluster.setVisible(true);
         load(true);
         sharedSettingsTextField.getDocument().addDocumentListener(new MyDocumentListener());
         inputPathTextField.getDocument().addDocumentListener(new MyDocumentListener());
@@ -77,7 +78,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         sharedSettingsErrorTextField.setText("");
         jLabelTaskDescription.setText("");
         configButtonErrorTextField.setText("");
-        multiUserErrorTextField.setText("");
 
         pbTaskInProgress.setEnabled(false);
         jLabelCurrentTask.setEnabled(false);
@@ -123,14 +123,17 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                     enableOptionsBasedOnMode(OptionsUiMode.AIM);
                     break;
                 case COPYFILES:
-                    jRadioButtonCopyFilesMode.setSelected(true);
-                    enableOptionsBasedOnMode(OptionsUiMode.UTILITY);
-                    break;
                 default:
-                    jRadioButtonStandalone.setSelected(true);
+                    cbJoinAutoIngestCluster.setSelected(false);
                     enableOptionsBasedOnMode(OptionsUiMode.STANDALONE);
                     break;
             }
+        }
+        
+        // multi user mode must be enabled
+        if (!UserPreferences.getIsMultiUserModeEnabled()) {
+            cbJoinAutoIngestCluster.setEnabled(false);
+            enableUI(false);
         }
 
         String images = AutoIngestUserPreferences.getAutoModeImageFolder();
@@ -194,9 +197,12 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
      * Save mode to persistent storage.
      */
     void store() {
-        if (jRadioButtonStandalone.isSelected()) {
+        if (!cbJoinAutoIngestCluster.isSelected()) {
             AutoIngestUserPreferences.setMode(AutoIngestUserPreferences.SelectedMode.STANDALONE);
-        } else if (jRadioButtonAutomated.isSelected()) {
+            return;
+        } 
+            
+        if (jRadioButtonAutomated.isSelected()) {
             boolean needsSaving = false;
             String thePath = AutoIngestUserPreferences.getAutoModeImageFolder();
             if (thePath != null && 0 != inputPathTextField.getText().compareTo(thePath)) {
@@ -224,7 +230,8 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                 AutoIngestUserPreferences.setSharedConfigFolder(globalSettingsPath);
                 AutoIngestUserPreferences.setSharedConfigMaster(masterNodeCheckBox.isSelected());
             }
-        } else if (jRadioButtonCopyFilesMode.isSelected()) {
+        } /* ELTODO Make this into a Tool
+            else if (jRadioButtonCopyFilesMode.isSelected()) {
 
             boolean needsSaving = false;
             String thePath = AutoIngestUserPreferences.getAutoModeImageFolder();
@@ -253,7 +260,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                 AutoIngestUserPreferences.setSharedConfigFolder(globalSettingsPath);
                 AutoIngestUserPreferences.setSharedConfigMaster(masterNodeCheckBox.isSelected());
             }
-        } else if (jRadioButtonReview.isSelected()) {
+        }*/ else if (jRadioButtonReview.isSelected()) {
             String thePath = AutoIngestUserPreferences.getAutoModeResultsFolder();
             if (thePath != null && 0 != outputPathTextField.getText().compareTo(thePath)) {
                 JOptionPane.showMessageDialog(null,
@@ -309,7 +316,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         jLabelInvalidResultsFolder.setVisible(false);
         boolean isValidNodePanel = true;
 
-        if (jRadioButtonAutomated.isSelected() || jRadioButtonCopyFilesMode.isSelected()) {
+        if (jRadioButtonAutomated.isSelected()) {
             if (sharedConfigCheckbox.isEnabled() && sharedConfigCheckbox.isSelected() && !validSharedConfigSettings()) {
                 isValidNodePanel = false;
             }
@@ -594,10 +601,8 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     }
 
     private OptionsUiMode getModeFromRadioButtons() {
-        if (jRadioButtonStandalone.isSelected()) {
+        if (!cbJoinAutoIngestCluster.isSelected()) {
             return OptionsUiMode.STANDALONE;
-        } else if (jRadioButtonCopyFilesMode.isSelected()) {
-            return OptionsUiMode.UTILITY;
         } else if (jRadioButtonAutomated.isSelected()) {
             return OptionsUiMode.AIM;
         } else {
@@ -657,8 +662,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         jPanelNodeType = new javax.swing.JPanel();
         jLabelSelectMode = new javax.swing.JLabel();
         restartRequiredNodeLabel = new javax.swing.JLabel();
-        jRadioButtonStandalone = new javax.swing.JRadioButton();
-        jRadioButtonCopyFilesMode = new javax.swing.JRadioButton();
         jRadioButtonAutomated = new javax.swing.JRadioButton();
         jRadioButtonReview = new javax.swing.JRadioButton();
         jLabelSelectInputFolder = new javax.swing.JLabel();
@@ -667,10 +670,8 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         jLabelSelectOutputFolder = new javax.swing.JLabel();
         outputPathTextField = new javax.swing.JTextField();
         browseOutputFolderButton = new javax.swing.JButton();
-        jLabelAimDiagram = new javax.swing.JLabel();
         jLabelInvalidImageFolder = new javax.swing.JLabel();
         jLabelInvalidResultsFolder = new javax.swing.JLabel();
-        multiUserErrorTextField = new javax.swing.JTextField();
         jPanelSharedConfig = new javax.swing.JPanel();
         sharedConfigCheckbox = new javax.swing.JCheckBox();
         sharedSettingsTextField = new javax.swing.JTextField();
@@ -690,6 +691,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         bnFileExport = new javax.swing.JButton();
         bnSave = new javax.swing.JButton();
         bnCancel = new javax.swing.JButton();
+        cbJoinAutoIngestCluster = new javax.swing.JCheckBox();
 
         nodePanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
@@ -700,23 +702,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
 
         restartRequiredNodeLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/experimental/images/warning16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(restartRequiredNodeLabel, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.restartRequiredNodeLabel.text")); // NOI18N
-
-        modeRadioButtons.add(jRadioButtonStandalone);
-        org.openide.awt.Mnemonics.setLocalizedText(jRadioButtonStandalone, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jRadioButtonStandalone.text")); // NOI18N
-        jRadioButtonStandalone.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jRadioButtonStandalone.toolTipText")); // NOI18N
-        jRadioButtonStandalone.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jRadioButtonStandaloneActionPerformed(evt);
-            }
-        });
-
-        modeRadioButtons.add(jRadioButtonCopyFilesMode);
-        org.openide.awt.Mnemonics.setLocalizedText(jRadioButtonCopyFilesMode, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jRadioButtonCopyFilesMode.text")); // NOI18N
-        jRadioButtonCopyFilesMode.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jRadioButtonCopyFilesModeActionPerformed(evt);
-            }
-        });
 
         modeRadioButtons.add(jRadioButtonAutomated);
         org.openide.awt.Mnemonics.setLocalizedText(jRadioButtonAutomated, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jRadioButtonAutomated.text")); // NOI18N
@@ -762,19 +747,11 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
             }
         });
 
-        jLabelAimDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/experimental/images/AIM.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(jLabelAimDiagram, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jLabelAimDiagram.text")); // NOI18N
-
         jLabelInvalidImageFolder.setForeground(new java.awt.Color(255, 0, 0));
         org.openide.awt.Mnemonics.setLocalizedText(jLabelInvalidImageFolder, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jLabelInvalidImageFolder.text")); // NOI18N
 
         jLabelInvalidResultsFolder.setForeground(new java.awt.Color(255, 0, 0));
         org.openide.awt.Mnemonics.setLocalizedText(jLabelInvalidResultsFolder, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jLabelInvalidResultsFolder.text")); // NOI18N
-
-        multiUserErrorTextField.setEditable(false);
-        multiUserErrorTextField.setForeground(new java.awt.Color(255, 0, 0));
-        multiUserErrorTextField.setText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.multiUserErrorTextField.text")); // NOI18N
-        multiUserErrorTextField.setBorder(null);
 
         javax.swing.GroupLayout jPanelNodeTypeLayout = new javax.swing.GroupLayout(jPanelNodeType);
         jPanelNodeType.setLayout(jPanelNodeTypeLayout);
@@ -792,20 +769,11 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                             .addComponent(browseInputFolderButton, javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(browseOutputFolderButton, javax.swing.GroupLayout.Alignment.TRAILING)))
                     .addGroup(jPanelNodeTypeLayout.createSequentialGroup()
-                        .addGroup(jPanelNodeTypeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jRadioButtonCopyFilesMode)
-                            .addComponent(jRadioButtonAutomated)
-                            .addComponent(jRadioButtonReview)
-                            .addComponent(jRadioButtonStandalone)
+                        .addGroup(jPanelNodeTypeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(jPanelNodeTypeLayout.createSequentialGroup()
                                 .addComponent(jLabelSelectMode)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(restartRequiredNodeLabel))
-                            .addComponent(multiUserErrorTextField))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabelAimDiagram))
-                    .addGroup(jPanelNodeTypeLayout.createSequentialGroup()
-                        .addGroup(jPanelNodeTypeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(jPanelNodeTypeLayout.createSequentialGroup()
                                 .addComponent(jLabelSelectInputFolder)
                                 .addGap(18, 18, 18)
@@ -813,31 +781,23 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                             .addGroup(jPanelNodeTypeLayout.createSequentialGroup()
                                 .addComponent(jLabelSelectOutputFolder)
                                 .addGap(18, 18, 18)
-                                .addComponent(jLabelInvalidResultsFolder, javax.swing.GroupLayout.PREFERRED_SIZE, 544, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(jLabelInvalidResultsFolder, javax.swing.GroupLayout.PREFERRED_SIZE, 544, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(jRadioButtonAutomated)
+                            .addComponent(jRadioButtonReview))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanelNodeTypeLayout.setVerticalGroup(
             jPanelNodeTypeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanelNodeTypeLayout.createSequentialGroup()
-                .addGroup(jPanelNodeTypeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanelNodeTypeLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(jPanelNodeTypeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabelSelectMode)
-                            .addComponent(restartRequiredNodeLabel))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jRadioButtonStandalone)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jRadioButtonCopyFilesMode)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jRadioButtonAutomated)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jRadioButtonReview)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(multiUserErrorTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jLabelAimDiagram))
-                .addGap(6, 6, 6)
+                .addGroup(jPanelNodeTypeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabelSelectMode)
+                    .addComponent(restartRequiredNodeLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jRadioButtonAutomated)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jRadioButtonReview)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanelNodeTypeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabelSelectInputFolder, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabelInvalidImageFolder))
@@ -853,7 +813,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                 .addGroup(jPanelNodeTypeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(browseOutputFolderButton)
                     .addComponent(outputPathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(6, 6, 6))
+                .addGap(0, 9, Short.MAX_VALUE))
         );
 
         jPanelSharedConfig.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jPanelSharedConfig.border.title"))); // NOI18N
@@ -1025,30 +985,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        javax.swing.GroupLayout nodePanelLayout = new javax.swing.GroupLayout(nodePanel);
-        nodePanel.setLayout(nodePanelLayout);
-        nodePanelLayout.setHorizontalGroup(
-            nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(nodePanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jPanelNodeType, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanelSharedConfig, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanelIngestSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
-        );
-        nodePanelLayout.setVerticalGroup(
-            nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(nodePanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jPanelNodeType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(jPanelIngestSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(jPanelSharedConfig, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-
         org.openide.awt.Mnemonics.setLocalizedText(bnSave, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.bnSave.text")); // NOI18N
         bnSave.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1063,25 +999,62 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
             }
         });
 
+        cbJoinAutoIngestCluster.setFont(cbJoinAutoIngestCluster.getFont().deriveFont(cbJoinAutoIngestCluster.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        org.openide.awt.Mnemonics.setLocalizedText(cbJoinAutoIngestCluster, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.cbJoinAutoIngestCluster.text")); // NOI18N
+        cbJoinAutoIngestCluster.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbJoinAutoIngestClusterActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout nodePanelLayout = new javax.swing.GroupLayout(nodePanel);
+        nodePanel.setLayout(nodePanelLayout);
+        nodePanelLayout.setHorizontalGroup(
+            nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(nodePanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(cbJoinAutoIngestCluster)
+                    .addGroup(nodePanelLayout.createSequentialGroup()
+                        .addGap(10, 10, 10)
+                        .addComponent(bnSave, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(bnCancel, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(jPanelNodeType, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jPanelSharedConfig, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jPanelIngestSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+        nodePanelLayout.setVerticalGroup(
+            nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(nodePanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(cbJoinAutoIngestCluster)
+                .addGap(3, 3, 3)
+                .addComponent(jPanelNodeType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanelIngestSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanelSharedConfig, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(bnSave)
+                    .addComponent(bnCancel))
+                .addContainerGap())
+        );
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(nodePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(26, 26, 26)
-                .addComponent(bnSave, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(bnCancel, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(nodePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(bnSave)
-                    .addComponent(bnCancel)))
+                .addGap(0, 38, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -1163,18 +1136,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         validateSettings();
     }//GEN-LAST:event_jRadioButtonAutomatedActionPerformed
 
-    private void jRadioButtonCopyFilesModeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jRadioButtonCopyFilesModeActionPerformed
-        enableOptionsBasedOnMode(OptionsUiMode.UTILITY);
-        setSharedConfigEnable();
-        validateSettings();
-    }//GEN-LAST:event_jRadioButtonCopyFilesModeActionPerformed
-
-    private void jRadioButtonStandaloneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jRadioButtonStandaloneActionPerformed
-        enableOptionsBasedOnMode(OptionsUiMode.STANDALONE);
-        setSharedConfigEnable();
-        validateSettings();
-    }//GEN-LAST:event_jRadioButtonStandaloneActionPerformed
-
     boolean permissionsAppropriate(String path) {
         return FileUtil.hasReadWriteAccess(Paths.get(path));
     }
@@ -1225,7 +1186,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         String globalSettingsPath = getNormalizedFolderPath(sharedSettingsTextField.getText().trim());
         AutoIngestUserPreferences.setSharedConfigFolder(globalSettingsPath);
 
-        disableUI();
+        enableUI(false);
         jLabelCurrentTask.setEnabled(true);
         jLabelTaskDescription.setEnabled(true);
         pbTaskInProgress.setEnabled(true);
@@ -1242,7 +1203,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     private void uploadButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_uploadButtonActionPerformed
         store();
 
-        disableUI();
+        enableUI(false);
         jLabelCurrentTask.setEnabled(true);
         jLabelTaskDescription.setEnabled(true);
         pbTaskInProgress.setEnabled(true);
@@ -1290,9 +1251,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         }
         if (sharedConfigCheckbox.isEnabled()) {
             jRadioButtonAutomated.setEnabled(false);
-            jRadioButtonCopyFilesMode.setEnabled(false);
             jRadioButtonReview.setEnabled(false);
-            jRadioButtonStandalone.setEnabled(false);
         }
     }//GEN-LAST:event_masterNodeCheckBoxItemStateChanged
 
@@ -1327,17 +1286,25 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         jDialog.setVisible(true);
     }//GEN-LAST:event_bnFileExportActionPerformed
 
-    private void disableUI() {
-        enableOptionsBasedOnMode(OptionsUiMode.DOWNLOADING_CONFIGURATION);
-        downloadButton.setEnabled(false);
-        uploadButton.setEnabled(false);
-        browseSharedSettingsButton.setEnabled(false);
-        sharedConfigCheckbox.setEnabled(false);
-        masterNodeCheckBox.setEnabled(false);
-        sharedSettingsTextField.setEnabled(false);
+    private void cbJoinAutoIngestClusterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbJoinAutoIngestClusterActionPerformed
+        
+        enableUI(cbJoinAutoIngestCluster.isSelected());
+        
+        // ELTODO enableMultiUserComponents(textBoxes, cbJoinAutoIngestCluster.isSelected());
+        controller.changed();
+    }//GEN-LAST:event_cbJoinAutoIngestClusterActionPerformed
 
-        bnSave.setEnabled(false);
-        bnCancel.setEnabled(false);
+    private void enableUI(boolean state) {
+        enableOptionsBasedOnMode(OptionsUiMode.DOWNLOADING_CONFIGURATION);
+        downloadButton.setEnabled(state);
+        uploadButton.setEnabled(state);
+        browseSharedSettingsButton.setEnabled(state);
+        sharedConfigCheckbox.setEnabled(state);
+        masterNodeCheckBox.setEnabled(state);
+        sharedSettingsTextField.setEnabled(state);
+
+        bnSave.setEnabled(state);
+        bnCancel.setEnabled(state);
     }
 
     private void resetUI() {
@@ -1460,10 +1427,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         jPanelNodeType.setEnabled(enabled);
         jPanelSharedConfig.setEnabled(enabled);
         jRadioButtonAutomated.setEnabled(enabled);
-        jRadioButtonCopyFilesMode.setEnabled(enabled);
         jRadioButtonReview.setEnabled(enabled);
-        jRadioButtonStandalone.setEnabled(enabled);
-        multiUserErrorTextField.setEnabled(enabled);
         outputPathTextField.setEnabled(enabled);
         restartRequiredNodeLabel.setEnabled(enabled);
     }
@@ -1477,10 +1441,10 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JButton browseInputFolderButton;
     private javax.swing.JButton browseOutputFolderButton;
     private javax.swing.JButton browseSharedSettingsButton;
+    private javax.swing.JCheckBox cbJoinAutoIngestCluster;
     private javax.swing.JTextField configButtonErrorTextField;
     private javax.swing.JButton downloadButton;
     private javax.swing.JTextField inputPathTextField;
-    private javax.swing.JLabel jLabelAimDiagram;
     private javax.swing.JLabel jLabelCurrentTask;
     private javax.swing.JLabel jLabelInvalidImageFolder;
     private javax.swing.JLabel jLabelInvalidResultsFolder;
@@ -1492,13 +1456,10 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JPanel jPanelNodeType;
     private javax.swing.JPanel jPanelSharedConfig;
     private javax.swing.JRadioButton jRadioButtonAutomated;
-    private javax.swing.JRadioButton jRadioButtonCopyFilesMode;
     private javax.swing.JRadioButton jRadioButtonReview;
-    private javax.swing.JRadioButton jRadioButtonStandalone;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JCheckBox masterNodeCheckBox;
     private javax.swing.ButtonGroup modeRadioButtons;
-    private javax.swing.JTextField multiUserErrorTextField;
     private javax.swing.JPanel nodePanel;
     private javax.swing.JTextField outputPathTextField;
     private javax.swing.JProgressBar pbTaskInProgress;
