@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1449,6 +1449,8 @@ class TableReportGenerator {
 
             columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.remotePath"),
                     new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_REMOTE_PATH)));
+        } else if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT.getTypeID()) {
+            columns.add(new StatusColumn());
         } else {
             // This is the case that it is a custom type. The reason an else is 
             // necessary is to make sure that the source file column is added
@@ -1562,6 +1564,26 @@ class TableReportGenerator {
         Set<BlackboardAttribute.Type> removeTypeFromSet(Set<BlackboardAttribute.Type> types);
     }
 
+    private class StatusColumn implements Column {
+
+        @NbBundle.Messages("TableReportGenerator.StatusColumn.Header=Review Status")
+        @Override
+        public String getColumnHeader() {
+            return Bundle.TableReportGenerator_StatusColumn_Header();
+        }
+
+        @Override
+        public String getCellData(ArtifactData artData) {
+            return artData.getArtifact().getReviewStatus().getDisplayName();
+        }
+
+        @Override
+        public Set<BlackboardAttribute.Type> removeTypeFromSet(Set<BlackboardAttribute.Type> types) {
+            // This column doesn't have a type, so nothing to remove
+            return types;
+        }
+
+    }
     private class AttributeColumn implements Column {
 
         private final String columnHeader;
