@@ -169,7 +169,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
      *         based on the state of showRejected.
      */
     private String getRejectedArtifactFilterClause() {
-        return showRejected ? "" : " AND blackboard_artifacts.review_status_id != " + BlackboardArtifact.ReviewStatus.REJECTED.getID(); //NON-NLS
+        return showRejected ? " " : " AND blackboard_artifacts.review_status_id != " + BlackboardArtifact.ReviewStatus.REJECTED.getID(); //NON-NLS
     }
 
     /**
@@ -1020,6 +1020,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<BinResult> list) {
+
             String query
                     = "SELECT SUBSTR(blackboard_attributes.value_text,1,8) AS BIN, " //NON-NLS
                     + "     COUNT(blackboard_artifacts.artifact_id) AS count " //NON-NLS
@@ -1055,22 +1056,39 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
      */
     private class BinResult implements IINInfo {
 
-        private final Integer bin;
         /**
          * The number of accounts with this BIN
          */
-        private final Long count;
+        private Long count;
+
         private final IINInfo iinInfo;
+        private Range<Integer> iinRange;
 
-        private BinResult(Integer bin, Long count) {
-            this.bin = bin;
+        private BinResult(int start, int end, Long count, IINInfo iinInfo) {
+            this.iinRange = Range.closed(start, end);
             this.count = count;
-            iinInfo = getIINInfo(bin);
+            this.iinInfo = iinInfo;
+        }
+        public void setIINStart(int IINStart) {
+            this.IINStart = IINStart;
         }
 
-        public Integer getBIN() {
-            return bin;
+        public void setIINEnd(int IINEnd) {
+            this.IINEnd = IINEnd;
         }
+
+        public void setCount(Long count) {
+            this.count = count;
+        }
+
+        int getIINstart() {
+            return IINStart;
+        }
+
+        int getIINend() {
+            return IINEnd;
+        }
+
 
         public Long getCount() {
             return count;
@@ -1139,13 +1157,15 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<Long> list) {
+        private final static RangeMap<Integer, BinResult> presentRanges = TreeRangeMap.create();
+
             String query
                     = "SELECT blackboard_artifacts.artifact_id " //NON-NLS
                     + " FROM blackboard_artifacts " //NON-NLS
                     + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id " //NON-NLS
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER.getTypeID() //NON-NLS
-                    + "     AND blackboard_attributes.value_text LIKE \"" + bin.getBIN() + "%\" " //NON-NLS
+                    + "     AND blackboard_attributes.value_text BETWEEN " + bin.getIINstart() + " AND  " + bin.getIINend() //NON-NLS
                     + getRejectedArtifactFilterClause()
                     + " ORDER BY blackboard_attributes.value_text"; //NON-NLS
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
