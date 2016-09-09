@@ -39,6 +39,7 @@ import javax.swing.table.TableColumn;
 import org.sleuthkit.autopsy.casemodule.StartupWindowProvider;
 import java.awt.Cursor;
 import java.io.IOException;
+import org.netbeans.api.options.OptionsDisplayer;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.experimental.autoingest.ReviewModeCaseManager.ReviewModeCaseManagerException;
@@ -613,6 +614,7 @@ public final class ReviewModeCasePanel extends JPanel {
     private void bnOptionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOptionsActionPerformed
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         // ELTODO OptionsDialog dialog = new OptionsDialog(this.getTopLevelAncestor(), true);
+        OptionsDisplayer.getDefault().open();
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }//GEN-LAST:event_bnOptionsActionPerformed
 
