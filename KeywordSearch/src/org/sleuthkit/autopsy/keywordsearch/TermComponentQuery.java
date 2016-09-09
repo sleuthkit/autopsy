@@ -19,6 +19,7 @@
 //
 package org.sleuthkit.autopsy.keywordsearch;
 
+import com.google.common.base.CharMatcher;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -65,7 +66,7 @@ final class TermComponentQuery implements KeywordSearchQuery {
      */
     private static final Pattern TRACK2_PATTERN = Pattern.compile(
             "[:;<=>?]?" //(optional)start sentinel //NON-NLS
-            + "(?<accountNumber>[3456]\\d{11,18})" //12-19 digit ccn, first digit is 3, 4, 5, or 6 //NON-NLS
+            + "(?<accountNumber>[3456]([ -]?\\d){11,18})" //12-19 digits, with possible single spaces or dashes in between. first digit is 3,4,5, or 6 //NON-NLS
             + "(?:[:;<=>?]" //separator //NON-NLS
             + "(?:(?<expiration>\\d{4})" //4 digit expiration date YYMM //NON-NLS
             + "(?:(?<serviceCode>\\d{3})" //3 digit service code //NON-NLS
@@ -85,7 +86,7 @@ final class TermComponentQuery implements KeywordSearchQuery {
             "(?:" //begin nested optinal group //NON-NLS
             + "%?" //optional start sentinal: % //NON-NLS
             + "B)?" //format code  //NON-NLS
-            + "(?<accountNumber>[3456]\\d{11,18})" //12-19 digit ccn, first digit is 3, 4, 5, or 6 //NON-NLS
+            + "(?<accountNumber>[3456]([ -]?\\d){11,18})" //12-19 digits, with possible single spaces or dashes in between. first digit is 3,4,5, or 6 //NON-NLS
             + "\\^" //separator //NON-NLS
             + "(?<name>[^^]{2,26})" //2-26 charachter name, not containing ^ //NON-NLS
             + "(?:\\^" //separator //NON-NLS
@@ -95,7 +96,7 @@ final class TermComponentQuery implements KeywordSearchQuery {
             + "(?:\\?" // end sentinal: ? //NON-NLS
             + "(?<LRC>.)" //longitudinal redundancy check //NON-NLS
             + "?)?)?)?)?)?");//close nested optional groups //NON-NLS
-    private static final Pattern CCN_PATTERN = Pattern.compile("(?<ccn>[3456]\\d{11,18})"); //12-19 digit ccn, first digit is 3, 4, 5, or 6 //NON-NLS
+    private static final Pattern CCN_PATTERN = Pattern.compile("(?<ccn>[3456]([ -]?\\d){11,18})");   //12-19 digits, with possible single spaces or dashes in between. first digit is 3,4,5, or 6 //NON-NLS
     private static final LuhnCheckDigit LUHN_CHECK = new LuhnCheckDigit();
 
     //corresponds to field in Solr schema, analyzed with white-space tokenizer only
@@ -324,7 +325,7 @@ final class TermComponentQuery implements KeywordSearchQuery {
                 //If the keyword is a credit card number, pass it through luhn validator
                 Matcher matcher = CCN_PATTERN.matcher(term.getTerm());
                 matcher.find();
-                final String ccn = matcher.group("ccn");
+                final String ccn = CharMatcher.anyOf(" -").removeFrom(matcher.group("ccn"));
                 if (false == LUHN_CHECK.isValid(ccn)) {
                     continue; //if the hit does not pass the luhn check, skip it.
                 }
@@ -384,6 +385,9 @@ final class TermComponentQuery implements KeywordSearchQuery {
         BlackboardAttribute.Type type = new BlackboardAttribute.Type(attrType);
         if (artifact.getAttribute(type) == null) {
             String value = matcher.group(groupName);
+            if (attrType.equals(ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER)) {
+                value = CharMatcher.anyOf(" -").removeFrom(value);
+            }
             if (StringUtils.isNotBlank(value)) {
                 artifact.addAttribute(new BlackboardAttribute(type, MODULE_NAME, value));
             }
