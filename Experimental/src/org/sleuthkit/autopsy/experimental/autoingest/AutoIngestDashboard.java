@@ -1519,7 +1519,6 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
      */
     private void bnOptionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOptionsActionPerformed
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        // ELTODO OptionsDialog dialog = new OptionsDialog(this.getTopLevelAncestor(), true);
         OptionsDisplayer.getDefault().open();
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }//GEN-LAST:event_bnOptionsActionPerformed
