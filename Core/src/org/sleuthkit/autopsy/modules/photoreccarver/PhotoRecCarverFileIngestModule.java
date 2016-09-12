@@ -206,7 +206,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             long writestart = System.currentTimeMillis();
             WorkingPaths paths = PhotoRecCarverFileIngestModule.pathsByJob.get(this.jobId);
             tempFilePath = Paths.get(paths.getTempDirPath().toString(), file.getName());
-            ContentUtils.writeToFile(file, tempFilePath.toFile());
+            ContentUtils.writeToFile(file, tempFilePath.toFile(), context::fileIngestIsCancelled);
 
             if (this.context.fileIngestIsCancelled() == true) {
                 // if it was cancelled by the user, result is OK

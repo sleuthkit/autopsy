@@ -318,7 +318,7 @@ class ExtractIE extends Extract {
                 break;
             }
             try {
-                ContentUtils.writeToFile(indexFile, datFile);
+                ContentUtils.writeToFile(indexFile, datFile, context::dataSourceIngestIsCancelled);
             } catch (IOException e) {
                 logger.log(Level.WARNING, "Error while trying to write index.dat file " + datFile.getAbsolutePath(), e); //NON-NLS
                 this.addErrorMessage(
