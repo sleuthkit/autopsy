@@ -37,7 +37,7 @@
     <Component class="javax.swing.JCheckBox" name="processUnallocatedSpaceCheckBox">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/bulkextractoringestmodule/Bundle.properties" key="BulkExtractorIngestJobSettingsPanel.processUnallocatedSpaceCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/ingestmodules/bulkextractor/Bundle.properties" key="BulkExtractorIngestJobSettingsPanel.processUnallocatedSpaceCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>

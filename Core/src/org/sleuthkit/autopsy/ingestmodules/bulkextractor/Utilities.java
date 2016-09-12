@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.modules.bulkextractor;
+package org.sleuthkit.autopsy.ingestmodules.bulkextractor;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,6 +37,7 @@ import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.ExecUtil.ProcessTerminator;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestModule;
+import org.sleuthkit.autopsy.ingestmodules.bulkextractor.Bundle;
 
 /**
  * Utility methods for the Bulk Extractor ingest module.
