@@ -212,13 +212,13 @@
                     <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-ingest-RunIngestAction.instance"/>
                 </file>
             </folder>
-            <file name="org-sleuthkit-autopsy-report-ReportWizardAction.shadow">
+            <!--<file name="org-sleuthkit-autopsy-report-ReportWizardAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-report-ReportWizardAction.instance"/>
                 <attr name="position" intvalue="100"/>
-            </file>
+            </file>-->
             <file name="org-sleuthkit-autopsy-report-ReportWizardAction-separatorAfter.instance">
                 <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
-                <attr name="position" intvalue="101"/>
+                <attr name="position" intvalue="104"/>
             </file>
             <!--<file name="Separator1.instance_hidden"/>
             <file name="Separator3.instance_hidden"/>-->
@@ -364,34 +364,40 @@
         <file name="UndoRedo_hidden"/>
         <file name="File_hidden"/>
         <folder name="Case">
-            <file name="org-sleuthkit-autopsy-casemodule-CaseCloseAction.instance">
-                <attr name="delegate" newvalue="org.sleuthkit.autopsy.casemodule.CaseCloseAction"/>
-                <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.casemodule.Bundle#CTL_CaseCloseAct"/>
-                <attr name="iconBase" stringvalue="org/sleuthkit/autopsy/images/close-icon.png"/>
-                <attr name="noIconInMenu" boolvalue="false"/>
-                <attr name="position" intvalue="100"/>
-            </file>
-            <file name="org-sleuthkit-autopsy-casemodule-AddImageAction.instance">
+            <attr name="position" intvalue="90"/>
+            <!--<file name="org-sleuthkit-autopsy-casemodule-AddImageAction.instance">
                 <attr name="delegate" newvalue="org.sleuthkit.autopsy.casemodule.AddImageAction"/>
                 <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.casemodule.Bundle#CTL_AddImage"/>
                 <attr name="iconBase" stringvalue="org/sleuthkit/autopsy/images/addImage-icon.png"/>
                 <attr name="noIconInMenu" boolvalue="false"/>
-                <attr name="position" intvalue="101"/>
-            </file>
+                <attr name="position" intvalue="100"/>
+            </file>-->
             <file name="org-sleuthkit-autopsy-casemodule-CaseSaveAction.instance_hidden"/>
             <file name="org-openide-actions-SaveAllAction.shadow_hidden"/>
+            
+            
+            
             <file name="org-sleuthkit-autopsy-menuactions-SpacerAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-menuactions-SpacerAction.instance"/>
                 <attr name="position" intvalue="10000"/>
             </file>
+            <!--
             <file name="org-sleuthkit-autopsy-report-ReportWizardAction.shadow">
                 <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.report.Bundle#Toolbars/Reports/org-sleuthkit-autopsy-report-ReportWizardAction.shadow"/>
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-report-ReportWizardAction.instance"/>
                 <attr name="position" intvalue="103"/>
             </file>
+            <file name="org-sleuthkit-autopsy-casemodule-CaseCloseAction.instance">
+                <attr name="delegate" newvalue="org.sleuthkit.autopsy.casemodule.CaseCloseAction"/>
+                <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.casemodule.Bundle#CTL_CaseCloseAct"/>
+                <attr name="iconBase" stringvalue="org/sleuthkit/autopsy/images/close-icon.png"/>
+                <attr name="noIconInMenu" boolvalue="false"/>
+                <attr name="position" intvalue="104"/>
+            </file>
+            -->
         </folder>
         <folder name="Ingest">
-            <attr intvalue="104" name="position"/>
+            <attr name="position" intvalue="105"/>
             <file name="org-sleuthkit-autopsy-ingest-IngestMessagesAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-ingest-IngestMessagesAction.instance"/>
             </file>

@@ -17,7 +17,7 @@
     
     <!-- ======================================================
          Services
-        ======================================================= -->
+         ======================================================= -->
     <folder name="Services">
         <file name="org-sleuthkit-autopsy-keywordsearch-HighlightedText.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.datamodel.TextMarkupLookup"/>
@@ -31,7 +31,7 @@
          ====================================================== -->
     <folder name="Toolbars">
         <folder name="Keyword">
-            <attr name="position" intvalue="104"/>
+            <attr name="position" intvalue="106"/>
             <file name="org-sleuthkit-autopsy-keywordsearch-KeywordSearchAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-keywordsearch-KeywordSearchAction.instance"/>
             </file>
