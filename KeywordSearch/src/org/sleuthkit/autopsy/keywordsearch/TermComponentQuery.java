@@ -182,21 +182,30 @@ final class TermComponentQuery implements KeywordSearchQuery {
     @Override
     public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(String termHit, KeywordHit hit, String snippet, String listName) {
         BlackboardArtifact newArtifact;
+
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
         try {
             //if the keyword hit matched the credit card number keyword/regex...
             if (keyword.getType() == ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER) {
+                termHit = CharMatcher.inRange('0', '9').negate().trimFrom(termHit);
                 newArtifact = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT);
                 // make account artifact
                 //try to match it against the track 1 regex
                 Matcher matcher = TRACK1_PATTERN.matcher(hit.getSnippet());
-                if (matcher.find()) {
-                    parseTrack1Data(newArtifact, matcher);
+                while (matcher.find()) {
+                    if (termHit.equals(matcher.group("accountNumber"))) {
+                        parseTrack1Data(newArtifact, matcher);
+                        break;
+                    }
                 }
                 //then try to match it against the track 2 regex
                 matcher = TRACK2_PATTERN.matcher(hit.getSnippet());
-                if (matcher.find()) {
-                    parseTrack2Data(newArtifact, matcher);
+                while (matcher.find()) {
+                    final String group = matcher.group("accountNumber");
+                    if (termHit.equals(group)) {
+                        parseTrack2Data(newArtifact, matcher);
+                        break;
+                    }
                 }
                 if (hit.getContent() instanceof AbstractFile) {
                     AbstractFile file = (AbstractFile) hit.getContent();

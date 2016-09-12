@@ -43,7 +43,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
+import javax.annotation.concurrent.Immutable;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.apache.commons.csv.CSVFormat;
@@ -169,7 +171,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
      *         based on the state of showRejected.
      */
     private String getRejectedArtifactFilterClause() {
-        return showRejected ? "" : " AND blackboard_artifacts.review_status_id != " + BlackboardArtifact.ReviewStatus.REJECTED.getID(); //NON-NLS
+        return showRejected ? " " : " AND blackboard_artifacts.review_status_id != " + BlackboardArtifact.ReviewStatus.REJECTED.getID(); //NON-NLS
     }
 
     /**
@@ -297,6 +299,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
      * Details of a range of Issuer/Bank Identifiaction Number(s) (IIN/BIN) used
      * by a bank.
      */
+    @Immutable
     static private class IINRange implements IINInfo {
 
         private final int IINStart; //start of IIN range, 8 digits
@@ -702,6 +705,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
      * DataModel for a child of the ByFileNode. Represents a file(chunk) and its
      * associated accounts.
      */
+    @Immutable
     private static class FileWithCCN {
 
         private final long objID;
@@ -933,9 +937,15 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         }
 
         private void updateDisplayName() {
-            ArrayList<Long> keys = new ArrayList<>();
-            accountFactory.createKeys(keys);
-            setDisplayName(bin.getBIN().toString() + " (" + keys.size() + ")"); //NON-NLS
+            setDisplayName(getBinRangeString() + " (" + bin.getCount() + ")"); //NON-NLS
+        }
+
+        private String getBinRangeString() {
+            if (bin.getIINStart() == bin.getIINEnd()) {
+                return Integer.toString(bin.getIINStart());
+            } else {
+                return bin.getIINStart() + "-" + StringUtils.difference(bin.getIINStart() + "", bin.getIINEnd() + "");
+            }
         }
 
         @Override
@@ -977,7 +987,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             properties.put(new NodeProperty<>(Bundle.Accounts_BINNode_binProperty_displayName(),
                     Bundle.Accounts_BINNode_binProperty_displayName(),
                     Bundle.Accounts_BINNode_noDescription(),
-                    bin.getBIN()));
+                    getBinRangeString()));
             properties.put(new NodeProperty<>(Bundle.Accounts_BINNode_accountsProperty_displayName(),
                     Bundle.Accounts_BINNode_accountsProperty_displayName(), Bundle.Accounts_BINNode_noDescription(),
                     bin.getCount()));
@@ -1020,6 +1030,8 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<BinResult> list) {
+            RangeMap<Integer, BinResult> ranges = TreeRangeMap.create();
+
             String query
                     = "SELECT SUBSTR(blackboard_attributes.value_text,1,8) AS BIN, " //NON-NLS
                     + "     COUNT(blackboard_artifacts.artifact_id) AS count " //NON-NLS
@@ -1033,9 +1045,24 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query)) {
                 ResultSet resultSet = results.getResultSet();
                 while (resultSet.next()) {
-                    list.add(new BinResult(Integer.valueOf(resultSet.getString("BIN")), //NON-NLS
-                            resultSet.getLong("count"))); //NON-NLS
+                    final Integer bin = Integer.valueOf(resultSet.getString("BIN"));
+                    long count = resultSet.getLong("count");
+
+                    IINRange iinRange = (IINRange) getIINInfo(bin);
+                    BinResult previousResult = ranges.get(bin);
+
+                    if (previousResult != null) {
+                        ranges.remove(Range.closed(previousResult.getIINStart(), previousResult.getIINEnd()));
+                        count += previousResult.getCount();
+                    }
+
+                    if (iinRange != null) {
+                        ranges.put(Range.closed(iinRange.getIINstart(), iinRange.getIINend()), new BinResult(count, iinRange));
+                    } else {
+                        ranges.put(Range.closed(bin, bin), new BinResult(count, bin, bin));
+                    }
                 }
+                ranges.asMapOfRanges().values().forEach(list::add);
             } catch (TskCoreException | SQLException ex) {
                 LOGGER.log(Level.SEVERE, "Error querying for BINs.", ex); //NON-NLS
                 return false;
@@ -1053,76 +1080,92 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
      * Data model item to back the BINNodes in the tree. Has the number of
      * accounts found with the BIN.
      */
-    private class BinResult implements IINInfo {
+    @Immutable
+    static private class BinResult implements IINInfo {
 
-        private final Integer bin;
         /**
          * The number of accounts with this BIN
          */
-        private final Long count;
-        private final IINInfo iinInfo;
+        private final long count;
 
-        private BinResult(Integer bin, Long count) {
-            this.bin = bin;
+        private final IINRange iinRange;
+        private final int iinEnd;
+        private final int iinStart;
+
+        private BinResult(long count, @Nonnull IINRange iinRange) {
             this.count = count;
-            iinInfo = getIINInfo(bin);
+            this.iinRange = iinRange;
+            iinStart = iinRange.getIINstart();
+            iinEnd = iinRange.getIINend();
         }
 
-        public Integer getBIN() {
-            return bin;
+        private BinResult(long count, int start, int end) {
+            this.count = count;
+            this.iinRange = null;
+            iinStart = start;
+            iinEnd = end;
         }
 
-        public Long getCount() {
+        int getIINStart() {
+            return iinStart;
+        }
+
+        int getIINEnd() {
+            return iinEnd;
+        }
+
+
+        public long getCount() {
             return count;
         }
 
         boolean hasDetails() {
-            return iinInfo != null;
+            return iinRange != null;
         }
 
         @Override
         public Optional<Integer> getNumberLength() {
-            return iinInfo.getNumberLength();
+            return iinRange.getNumberLength();
         }
 
         @Override
         public Optional<String> getBankCity() {
-            return iinInfo.getBankCity();
+            return iinRange.getBankCity();
         }
 
         @Override
         public Optional<String> getBankName() {
-            return iinInfo.getBankName();
+            return iinRange.getBankName();
         }
 
         @Override
         public Optional<String> getBankPhoneNumber() {
-            return iinInfo.getBankPhoneNumber();
+            return iinRange.getBankPhoneNumber();
         }
 
         @Override
         public Optional<String> getBankURL() {
-            return iinInfo.getBankURL();
+            return iinRange.getBankURL();
         }
 
         @Override
         public Optional<String> getBrand() {
-            return iinInfo.getBrand();
+            return iinRange.getBrand();
         }
 
         @Override
         public Optional<String> getCardType() {
-            return iinInfo.getCardType();
+            return iinRange.getCardType();
         }
 
         @Override
         public Optional<String> getCountry() {
-            return iinInfo.getCountry();
+            return iinRange.getCountry();
         }
 
         @Override
         public Optional<String> getScheme() {
-            return iinInfo.getScheme();
+            return iinRange.getScheme();
         }
     }
 
@@ -1139,13 +1182,14 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<Long> list) {
+
             String query
                     = "SELECT blackboard_artifacts.artifact_id " //NON-NLS
                     + " FROM blackboard_artifacts " //NON-NLS
                     + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id " //NON-NLS
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER.getTypeID() //NON-NLS
-                    + "     AND blackboard_attributes.value_text LIKE \"" + bin.getBIN() + "%\" " //NON-NLS
+                    + "     AND blackboard_attributes.value_text >= \"" + bin.getIINStart() + "\" AND  blackboard_attributes.value_text < \"" + (bin.getIINEnd() + 1) + "\"" //NON-NLS
                     + getRejectedArtifactFilterClause()
                     + " ORDER BY blackboard_attributes.value_text"; //NON-NLS
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
@@ -1253,7 +1297,6 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
         RejectAccounts(Collection<? extends BlackboardArtifact> artifacts) {
             super(Bundle.RejectAccountsAction_name());
-
             this.artifacts = artifacts;
         }
 
