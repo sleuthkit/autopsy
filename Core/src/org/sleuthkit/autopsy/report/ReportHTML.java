@@ -254,6 +254,9 @@ class ReportHTML implements TableReportModule {
                 case TSK_REMOTE_DRIVE:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/drive_network.png"); //NON-NLS
                     break;
+                case TSK_CREDIT_CARD_ACCOUNT:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/credit-card.png"); //NON-NLS
+                    break;
                 default:
                     logger.log(Level.WARNING, "useDataTypeIcon: unhandled artifact type = " + dataType); //NON-NLS
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png"); //NON-NLS
