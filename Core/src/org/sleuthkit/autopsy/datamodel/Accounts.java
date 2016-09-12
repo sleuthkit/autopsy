@@ -45,6 +45,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
+import javax.annotation.concurrent.Immutable;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.apache.commons.csv.CSVFormat;
@@ -298,6 +299,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
      * Details of a range of Issuer/Bank Identifiaction Number(s) (IIN/BIN) used
      * by a bank.
      */
+    @Immutable
     static private class IINRange implements IINInfo {
 
         private final int IINStart; //start of IIN range, 8 digits
@@ -703,6 +705,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
      * DataModel for a child of the ByFileNode. Represents a file(chunk) and its
      * associated accounts.
      */
+    @Immutable
     private static class FileWithCCN {
 
         private final long objID;
@@ -1027,7 +1030,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<BinResult> list) {
-            RangeMap<Integer, BinResult> presentRanges = TreeRangeMap.create();
+            RangeMap<Integer, BinResult> ranges = TreeRangeMap.create();
 
             String query
                     = "SELECT SUBSTR(blackboard_attributes.value_text,1,8) AS BIN, " //NON-NLS
@@ -1043,26 +1046,23 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                 ResultSet resultSet = results.getResultSet();
                 while (resultSet.next()) {
                     final Integer bin = Integer.valueOf(resultSet.getString("BIN"));
-                    final long count = resultSet.getLong("count");
-                    IINRange iinRange = (IINRange) getIINInfo(bin);
+                    long count = resultSet.getLong("count");
 
-                    BinResult previousResult = presentRanges.get(bin);
+                    IINRange iinRange = (IINRange) getIINInfo(bin);
+                    BinResult previousResult = ranges.get(bin);
 
                     if (previousResult != null) {
-                        presentRanges.remove(Range.closed(previousResult.getIINStart(), previousResult.getIINEnd()));
-                        BinResult merged = new BinResult(previousResult.getCount() + count, previousResult.getIINRange());
-                        presentRanges.put(Range.closed(merged.getIINStart(), merged.getIINEnd()), merged);
-                    } else if (iinRange == null) {
-                        BinResult merged = new BinResult(count, bin, bin);
-                        if (merged.hasDetails()) {
-                            presentRanges.put(Range.closed(iinRange.getIINstart(), iinRange.getIINend()), merged);
-                        } else {
-                            presentRanges.put(Range.closed(bin, bin), merged);
-                            }
-                        }
+                        ranges.remove(Range.closed(previousResult.getIINStart(), previousResult.getIINEnd()));
+                        count += previousResult.getCount();
+                    }
+
+                    if (iinRange != null) {
+                        ranges.put(Range.closed(iinRange.getIINstart(), iinRange.getIINend()), new BinResult(count, iinRange));
+                    } else {
+                        ranges.put(Range.closed(bin, bin), new BinResult(count, bin, bin));
                     }
                 }
-                presentRanges.asMapOfRanges().values().forEach(list::add);
+                ranges.asMapOfRanges().values().forEach(list::add);
             } catch (TskCoreException | SQLException ex) {
                 LOGGER.log(Level.SEVERE, "Error querying for BINs.", ex); //NON-NLS
                 return false;
@@ -1080,25 +1080,26 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
      * Data model item to back the BINNodes in the tree. Has the number of
      * accounts found with the BIN.
      */
-    private class BinResult implements IINInfo {
+    @Immutable
+    static private class BinResult implements IINInfo {
 
         /**
          * The number of accounts with this BIN
          */
-        private final Long count;
+        private final long count;
 
         private final IINRange iinRange;
         private final int iinEnd;
         private final int iinStart;
 
-        private BinResult(Long count, @Nonnull IINRange iinRange) {
+        private BinResult(long count, @Nonnull IINRange iinRange) {
             this.count = count;
             this.iinRange = iinRange;
             iinStart = iinRange.getIINstart();
             iinEnd = iinRange.getIINend();
         }
 
-        private BinResult(Long count, int start, int end) {
+        private BinResult(long count, int start, int end) {
             this.count = count;
             this.iinRange = null;
             iinStart = start;
@@ -1113,7 +1114,8 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             return iinEnd;
         }
 
-        public Long getCount() {
+
+        public long getCount() {
             return count;
         }
 
@@ -1164,10 +1166,6 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         @Override
         public Optional<String> getScheme() {
             return iinRange.getScheme();
-        }
-
-        private IINRange getIINRange() {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         }
     }
 
@@ -1299,7 +1297,6 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
         RejectAccounts(Collection<? extends BlackboardArtifact> artifacts) {
             super(Bundle.RejectAccountsAction_name());
-
             this.artifacts = artifacts;
         }
 

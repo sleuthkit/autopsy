@@ -339,9 +339,9 @@ final class TermComponentQuery implements KeywordSearchQuery {
                     continue; //if the hit does not pass the luhn check, skip it.
                 }
                 final int iin = Integer.parseInt(ccn.substring(0, 8));
-//                if (false == Accounts.isIINKnown(iin)) {
-//                    continue;
-//                }
+                if (false == Accounts.isIINKnown(iin)) {
+                    continue;
+                }
             }
 
             /*
