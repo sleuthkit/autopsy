@@ -97,6 +97,7 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
      * Load data.
      */    
     final void load() {
+        // Note: we used to store input folders in persistent storage but it is not done any more for some reason...
         caseSourceFolderChooser.setCurrentDirectory(caseSourceFolderChooser.getFileSystemView().getParentDirectory(new File("C:\\"))); //NON-NLS
         caseSourceFolderChooser.setAcceptAllFileFilterUsed(false);
         caseSourceFolderChooser.setDialogTitle(NbBundle.getMessage(CaseImportPanel.class, "CaseImportPanel.ChooseCase"));

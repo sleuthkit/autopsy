@@ -135,7 +135,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                     jRadioButtonAutomated.setSelected(true);
                     enableOptionsBasedOnMode(OptionsUiMode.AIM);
                     break;
-                case COPYFILES:
                 default:
                     cbJoinAutoIngestCluster.setSelected(false);
                     enableOptionsBasedOnMode(OptionsUiMode.STANDALONE);

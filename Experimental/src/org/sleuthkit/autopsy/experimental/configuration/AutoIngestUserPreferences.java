@@ -34,8 +34,7 @@ public final class AutoIngestUserPreferences {
 
         STANDALONE,
         AUTOMATED,
-        REVIEW,
-        COPYFILES
+        REVIEW
     };
 
     private static final Preferences preferences = NbPreferences.forModule(AutoIngestUserPreferences.class);
@@ -46,7 +45,6 @@ public final class AutoIngestUserPreferences {
     private static final String SHARED_CONFIG_ENABLED = "SharedSettingsEnabled"; // NON-NLS
     private static final String SHARED_CONFIG_MASTER = "SharedSettingsMaster"; // NON-NLS
     private static final String AUTO_MODE_CONTEXT_STRING = "AutoModeContext"; // NON-NLS
-    private static final String COPY_MODE_SOURCE_FOLDER = "CopyModeSourceFolder"; // NON-NLS
     private static final String SLEEP_BETWEEN_CASES_TIME = "SleepBetweenCasesTime"; // NON-NLS
     private static final String MAX_NUM_TIMES_TO_PROCESS_IMAGE = "MaxNumTimesToAttemptToProcessImage"; // NON-NLS
     private static final String MAX_CONCURRENT_NODES_FOR_ONE_CASE = "MaxConcurrentNodesForOneCase"; // NON-NLS
@@ -215,25 +213,6 @@ public final class AutoIngestUserPreferences {
      */
     public static String getAutoModeIngestModuleContextString() {
         return AUTO_MODE_CONTEXT_STRING;
-    }
-
-
-    /**
-     * Get source folder for Copy Mode from persistent storage.
-     *
-     * @return String Most recent source folder.
-     */
-    public static String getCopyModeSourceFolder() {
-        return preferences.get(COPY_MODE_SOURCE_FOLDER, "C:\\");
-    }
-
-    /**
-     * Set source folder for Copy Mode into persistent storage.
-     *
-     * @param folder Selected source folder.
-     */
-    public static void setCopyModeSourceFolder(String folder) {
-        preferences.put(COPY_MODE_SOURCE_FOLDER, folder);
     }
 
     /**
