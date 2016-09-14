@@ -907,7 +907,11 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             Action[] actions = super.getActions(context);
             ArrayList<Action> arrayList = new ArrayList<>();
             arrayList.addAll(Arrays.asList(actions));
-
+            try {
+                arrayList.addAll(DataModelActionsFactory.getActions(Accounts.this.skCase.getContentById(fileKey.getObjID()), false));
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Error gettung content by id", ex);
+            }
             arrayList.add(new ApproveAccounts(getLookup().lookupAll(BlackboardArtifact.class)));
             arrayList.add(new RejectAccounts(getLookup().lookupAll(BlackboardArtifact.class)));
             return arrayList.toArray(new Action[arrayList.size()]);
