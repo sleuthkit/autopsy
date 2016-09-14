@@ -34,6 +34,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Optional;
@@ -48,6 +49,7 @@ import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.Immutable;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.SwingUtilities;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -55,11 +57,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.nodes.NodeOp;
 import org.openide.nodes.Sheet;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -78,6 +84,8 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
     private static final Logger LOGGER = Logger.getLogger(Accounts.class.getName());
     private static final BlackboardArtifact.Type CREDIT_CARD_ACCOUNT_TYPE = new BlackboardArtifact.Type(TSK_CREDIT_CARD_ACCOUNT);
+    private static final BlackboardAttribute.Type ACCOUNT_NUMBER_TYPE = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER);
+
     @NbBundle.Messages("AccountsRootNode.name=Accounts")
     final public static String NAME = Bundle.AccountsRootNode_name();
 
@@ -182,7 +190,6 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         setChanged();
         notifyObservers();
     }
-
 
     /**
      * Get an IINInfo object with details about the given IIN
@@ -842,7 +849,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             this.fileName = (key.getSolrDocmentID() == null)
                     ? content.getName()
                     : Bundle.Accounts_FileWithCCNNode_unallocatedSpaceFile_displayName(content.getName(), StringUtils.substringAfter(key.getSolrDocmentID(), "_")); //NON-NLS
-            setName(fileName);
+            setName(fileName + key.getObjID());
             setDisplayName(fileName);
         }
 
@@ -902,7 +909,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                 LOGGER.log(Level.SEVERE, "Error gettung content by id", ex);
             }
             arrayList.add(new ApproveAccounts(getLookup().lookupAll(BlackboardArtifact.class)));
-            arrayList.add(new RejectAccounts(getLookup().lookupAll(BlackboardArtifact.class)));
+            arrayList.add(new RejectAccounts(getLookup().lookupAll(BlackboardArtifact.class), this));
             return arrayList.toArray(new Action[arrayList.size()]);
         }
     }
@@ -918,7 +925,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
             accountFactory = new AccountFactory(bin);
             setChildren(Children.create(accountFactory, true));
-            setName(bin.toString());
+            setName(getBinRangeString());
             updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/bank.png");   //NON-NLS
             Accounts.this.addObserver(this);
@@ -1076,6 +1083,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
     @Immutable
     static private class BinResult implements IINInfo {
 
+
         /**
          * The number of accounts with this BIN
          */
@@ -1106,7 +1114,6 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         int getIINEnd() {
             return iinEnd;
         }
-
 
         public long getCount() {
             return count;
@@ -1220,6 +1227,11 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         private AccountArtifactNode(BlackboardArtifact artifact) {
             super(artifact, "org/sleuthkit/autopsy/images/credit-card.png");   //NON-NLS
             this.artifact = artifact;
+            try {
+                setName(this.artifact.getAttribute(ACCOUNT_NUMBER_TYPE).getValueString() + "_" + this.artifact.getArtifactID());
+            } catch (TskCoreException ex) {
+                Exceptions.printStackTrace(ex);
+            }
         }
 
         @Override
@@ -1227,7 +1239,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             List<Action> actionsList = new ArrayList<>();
             actionsList.addAll(Arrays.asList(super.getActions(context)));
             actionsList.add(new ApproveAccounts(Collections.singleton(artifact)));
-            actionsList.add(new RejectAccounts(Collections.singleton(artifact)));
+            actionsList.add(new RejectAccounts(Collections.singleton(artifact), this));
             return actionsList.toArray(new Action[actionsList.size()]);
         }
 
@@ -1287,10 +1299,12 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
     private class RejectAccounts extends AbstractAction {
 
         private final Collection<? extends BlackboardArtifact> artifacts;
+        private final Node target;
 
-        RejectAccounts(Collection<? extends BlackboardArtifact> artifacts) {
+        RejectAccounts(Collection<? extends BlackboardArtifact> artifacts, Node target) {
             super(Bundle.RejectAccountsAction_name());
             this.artifacts = artifacts;
+            this.target = target;
         }
 
         @Override
@@ -1299,7 +1313,31 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                 for (BlackboardArtifact artifact : artifacts) {
                     skCase.setReviewStatus(artifact, BlackboardArtifact.ReviewStatus.REJECTED);
                 }
-                Accounts.this.update();
+
+                //find the node to select after the target is removed from the UI
+                List<Node> siblings = Arrays.asList(target.getParentNode().getChildren().getNodes());
+                if (siblings.size() <= 1) {
+                    Accounts.this.update();
+                } else {
+                    final int indexOf = siblings.indexOf(target);
+
+                    final Node sibling = indexOf < siblings.size() - 1 // if it is not the last in the list
+                            ? siblings.get(indexOf + 1) //select the next element
+                            : siblings.get(indexOf - 1);//else select the previous element
+                    String nodeToSelectName = sibling.getName();
+
+                    Accounts.this.update();
+
+                    if (showRejected == false && siblings.size() > 1) {
+                        SwingUtilities.invokeLater(() -> {
+                            final DirectoryTreeTopComponent directoryTree = DirectoryTreeTopComponent.findInstance();
+                            final DataResultTopComponent directoryListing = directoryTree.getDirectoryListing();
+
+                            Node findChild = NodeOp.findChild(directoryListing.getRootNode(), nodeToSelectName);
+                            directoryListing.getExplorerManager().setExploredContext(findChild, new Node[]{findChild});
+                        });
+                    }
+                }
 
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Error approving artifacts.", ex); //NON-NLS
