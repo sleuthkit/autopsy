@@ -379,11 +379,6 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
         tbOops.setForeground(new java.awt.Color(255, 0, 0));
         tbOops.setText(org.openide.util.NbBundle.getMessage(CaseImportPanel.class, "AutoIngestSettingsPanel.tbOops.text")); // NOI18N
         tbOops.setBorder(null);
-        tbOops.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                tbOopsActionPerformed(evt);
-            }
-        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -673,16 +668,12 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
         }
     }//GEN-LAST:event_cbCopyImagesStateChanged
 
-    private void tbOopsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tbOopsActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_tbOopsActionPerformed
-
     /**
      * Enables the start button if all input is in order, disables it otherwise
-     *
      */
     private void enableStartButton() {
-        if (!tbCaseSource.getText().isEmpty()
+        if (UserPreferences.getIsMultiUserModeEnabled() && (AutoIngestUserPreferences.getMode() == AUTOMATED)
+                && !tbCaseSource.getText().isEmpty()
                 && !tbCaseDestination.getText().isEmpty()
                 && canTalkToDb == true
                 && (!cbCopyImages.isSelected() || (!tbImageSource.getText().isEmpty() && !tbImageDestination.getText().isEmpty()))) {
