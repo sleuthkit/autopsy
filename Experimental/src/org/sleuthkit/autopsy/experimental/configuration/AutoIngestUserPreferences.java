@@ -40,6 +40,7 @@ public final class AutoIngestUserPreferences {
 
     private static final Preferences preferences = NbPreferences.forModule(AutoIngestUserPreferences.class);
     private static final String MODE = "AutopsyMode"; // NON-NLS
+    private static final String JOIN_AUTO_MODE_CLUSTER = "JoinAutoModeCluster"; // NON-NLS
     private static final String AUTO_MODE_IMAGES_FOLDER = "AutoModeImageFolder"; // NON-NLS
     private static final String AUTO_MODE_RESULTS_FOLDER = "AutoModeResultsFolder"; // NON-NLS
     private static final String SHARED_CONFIG_FOLDER = "SharedSettingsFolder"; // NON-NLS
@@ -112,7 +113,25 @@ public final class AutoIngestUserPreferences {
     public static void setMode(SelectedMode mode) {
         preferences.putInt(MODE, mode.ordinal());
     }
+    
+    /**
+     * Get "Join Automated Ingest Cluster" setting from persistent storage.
+     *
+     * @return SelectedMode Selected setting.
+     */
+    public static boolean getJoinAutoModeCluster() {
+        return preferences.getBoolean(JOIN_AUTO_MODE_CLUSTER, false);
+    }
 
+    /**
+     * Set "Join Automated Ingest Cluster" setting to persistent storage.
+     *
+     * @param join boolean value of whether to join auto ingest cluster or not
+     */
+    public static void setJoinAutoModeCluster(boolean join) {
+        preferences.putBoolean(JOIN_AUTO_MODE_CLUSTER, join);
+    }
+    
     /**
      * Get input folder for automated mode from persistent storage.
      *

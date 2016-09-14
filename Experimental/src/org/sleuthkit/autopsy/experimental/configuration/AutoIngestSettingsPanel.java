@@ -120,6 +120,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         } else {
             tbOops.setText("");
         }
+        cbJoinAutoIngestCluster.setSelected(AutoIngestUserPreferences.getJoinAutoModeCluster());
         cbJoinAutoIngestCluster.setEnabled(UserPreferences.getIsMultiUserModeEnabled());
         //enableUI(UserPreferences.getIsMultiUserModeEnabled());
         
@@ -204,6 +205,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
      * Save mode to persistent storage.
      */
     void store() {
+        AutoIngestUserPreferences.setJoinAutoModeCluster(cbJoinAutoIngestCluster.isSelected());
         if (!cbJoinAutoIngestCluster.isSelected()) {
             AutoIngestUserPreferences.setMode(AutoIngestUserPreferences.SelectedMode.STANDALONE);
             return;
