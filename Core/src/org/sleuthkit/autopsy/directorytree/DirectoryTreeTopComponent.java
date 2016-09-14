@@ -22,7 +22,6 @@ import java.awt.Cursor;
 import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -93,7 +92,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private final LinkedList<String[]> backList;
     private final LinkedList<String[]> forwardList;
     private static final String PREFERRED_ID = "DirectoryTreeTopComponent"; //NON-NLS
-    private final PropertyChangeSupport pcs;
     private static final Logger logger = Logger.getLogger(DirectoryTreeTopComponent.class.getName());
     private RootContentChildren contentChildren;
 
@@ -112,8 +110,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
         subscribeToChangeEvents();
         associateLookup(ExplorerUtils.createLookup(em, getActionMap()));
-
-        this.pcs = new PropertyChangeSupport(this);
 
         // set the back & forward list and also disable the back & forward button
         this.backList = new LinkedList<>();
@@ -724,16 +720,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         forwardList.clear();
         backButton.setEnabled(false);
         forwardButton.setEnabled(false);
-    }
-
-    @Override
-    public synchronized void addPropertyChangeListener(PropertyChangeListener listener) {
-        pcs.addPropertyChangeListener(listener);
-    }
-
-    @Override
-    public synchronized void removePropertyChangeListener(PropertyChangeListener listener) {
-        pcs.removePropertyChangeListener(listener);
     }
 
     /**

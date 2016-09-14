@@ -22,8 +22,6 @@ import org.openide.util.NbBundle;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
@@ -38,7 +36,6 @@ public class ReportProgressPanel extends javax.swing.JPanel {
     private static final Logger logger = Logger.getLogger(ReportProgressPanel.class.getName());
     private static final Color GREEN = new Color(50, 205, 50);
     private static final Color RED = new Color(178, 34, 34);
-    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private ReportStatus status;
 
     /**
@@ -113,26 +110,6 @@ public class ReportProgressPanel extends javax.swing.JPanel {
         } else {
             pathLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.initPathLabel.noFile"));
         }
-    }
-
-    /**
-     * Adds a property change listener to this panel.
-     *
-     * @param listener The listener to be added.
-     */
-    @Override
-    public void addPropertyChangeListener(PropertyChangeListener listener) {
-        this.pcs.addPropertyChangeListener(listener);
-    }
-
-    /**
-     * Removes a property change listener from this panel.
-     *
-     * @param listener The listener to be removed.
-     */
-    @Override
-    public void removePropertyChangeListener(PropertyChangeListener listener) {
-        this.pcs.removePropertyChangeListener(listener);
     }
 
     /**
@@ -242,7 +219,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                         reportProgressBar.setStringPainted(true);
                         reportProgressBar.setForeground(GREEN);
                         reportProgressBar.setString("Complete"); //NON-NLS
-                        pcs.firePropertyChange(ReportStatus.COMPLETE.toString(), oldValue, status);
+                        firePropertyChange(ReportStatus.COMPLETE.toString(), oldValue, status);
                         break;
                     }
                     case ERROR: {
@@ -254,7 +231,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                         reportProgressBar.setStringPainted(true);
                         reportProgressBar.setForeground(RED);
                         reportProgressBar.setString("Error"); //NON-NLS
-                        pcs.firePropertyChange(ReportStatus.COMPLETE.toString(), oldValue, status);
+                        firePropertyChange(ReportStatus.COMPLETE.toString(), oldValue, status);
                         break;
                     }
                     default: {
@@ -285,7 +262,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                 reportProgressBar.setStringPainted(true);
                 reportProgressBar.setForeground(RED); // Red
                 reportProgressBar.setString("Cancelled"); //NON-NLS
-                pcs.firePropertyChange(ReportStatus.CANCELED.toString(), oldValue, status);
+                firePropertyChange(ReportStatus.CANCELED.toString(), oldValue, status);
                 statusMessageLabel.setForeground(RED);
                 statusMessageLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.cancel.procLbl.text"));
                 break;

@@ -35,6 +35,7 @@ import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -57,7 +58,8 @@ class CallLogAnalyzer {
      */
     private static final Iterable<String> tableNames = Arrays.asList("calls", "logs"); //NON-NLS
 
-    public static void findCallLogs(Content dataSource, FileManager fileManager) {
+    public static void findCallLogs(Content dataSource, FileManager fileManager,
+            IngestJobContext context) {
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
         try {
             List<AbstractFile> absFiles = fileManager.findFiles(dataSource, "logs.db"); //NON-NLS
@@ -66,7 +68,7 @@ class CallLogAnalyzer {
             for (AbstractFile abstractFile : absFiles) {
                 try {
                     File file = new File(Case.getCurrentCase().getTempDirectory(), abstractFile.getName());
-                    ContentUtils.writeToFile(abstractFile, file);
+                    ContentUtils.writeToFile(abstractFile, file, context::dataSourceIngestIsCancelled);
                     findCallLogsInDB(file.toString(), abstractFile);
                 } catch (IOException e) {
                     logger.log(Level.SEVERE, "Error writing temporary call log db to disk", e); //NON-NLS

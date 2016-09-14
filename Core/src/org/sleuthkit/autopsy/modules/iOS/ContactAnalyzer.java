@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -55,7 +56,7 @@ class ContactAnalyzer {
     private static final Logger logger = Logger.getLogger(ContactAnalyzer.class.getName());
     private Blackboard blackboard;
 
-    public void findContacts() {
+    public void findContacts(IngestJobContext context) {
 
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
         List<AbstractFile> absFiles;
@@ -69,7 +70,7 @@ class ContactAnalyzer {
                 try {
                     jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), AF.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
                     //jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), i+".txt");
-                    ContentUtils.writeToFile(AF, jFile);
+                    ContentUtils.writeToFile(AF, jFile, context::dataSourceIngestIsCancelled);
                     //copyFileUsingStreams(AF,jFile);
                     //copyFileUsingStream(AF,jFile);
                     dbPath = jFile.toString(); //path of file as string
