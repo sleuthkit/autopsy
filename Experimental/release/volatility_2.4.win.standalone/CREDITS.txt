@@ -1,0 +1,92 @@
+===============================================
+We would like to acknowledge individuals that 
+have made significant contributions, code, or 
+ideas toward the respective volatility releases. 
+
+All lists are alphabetical. 
+
+These lists exclude the core Volatility authors, 
+who are identified in AUTHORS.txt. 
+
+If you believe you've been left off, it is not 
+intentional. Please bring it to our attention!
+===============================================
+
+Volatility 2.4:
+
+Justin Capella and Espen Olsen for their work on the Qemu ELF core dumps
+Sebastien Bourdon-Richard for his work on the VMware vmem/vmss split (with meta) AS 
+Stewart McIntyre for extending apihooks for detecting JMP FAR instructions
+Matt McCormack for supplying a patch to rebase dumped PE files 
+Kevin Marker for contributing over 160 standard build Linux profiles 
+Steven Adair for assistance identifying a large memory PAE bug 
+Cem Gurkok for help updating Mac OS X support for 10.9
+Raphaël Vinot for his patch to fix IPython within volshell
+synack33 for creating various Mac OS X profiles, including initial ones for 10.10 
+
+Volatility 2.3:
+
+Cem Gurkok for his work on the privileges plugin for Windows
+Nir Izraeli for his work on the VMware snapshot address space (see also the vmsnparser project)
+@osxmem of the volafox project (Mac OS X & BSD Memory Analysis Toolkit)
+@osxreverser of reverse.put.as for his help with OSX memory analysis
+Carl Pulley for numerous bug reports, example patches, and plugin testing
+Andreas Schuster for his work on poison ivy plugins for Windows
+Joe Sylve for his work on the ARM address space and significant contributions to linux and mac capabilities
+Philippe Teuwen for his work on the virtual box address space
+Santiago Vicente for his work on the citadel plugins for Windows
+
+Volatility 2.2:
+------------
+
+Joe Sylve
+
+Volatility 2.1:
+------------
+
+--- 
+
+Volatility 2.0:
+------------
+
+Frank Boldewin 
+Carl Pulley
+Andreas Schuster
+Bradley Schatz
+
+Volatility 1.3:
+------------
+
+Harlan Carvey
+Michael Cohen
+David Collett
+Brendan Dolan-Gavitt 
+Andreas Schuster
+Matthieu Suiche
+
+We would also like to acknowledge those who have provided valuable
+feedback, bug reports, and testing:
+
+Jide Abu
+Joseph Ayo Akinyele
+Tommaso Assandri
+Richard Austin
+Cameron C Caffee
+Eoghan Casey
+Angelo Cavallini
+Andre' DiMino
+Jon Evans
+Robert Guess
+Christian Herndler
+jeremie0
+Eugene Libster
+Erik Ligda
+Robert Lowe
+Tony Martin
+Timothy Morgan
+Bryan D. Payne
+Golden G. Richard III
+Wyatt Roersma
+RB
+Sam F. Stover
+Marko Thure
