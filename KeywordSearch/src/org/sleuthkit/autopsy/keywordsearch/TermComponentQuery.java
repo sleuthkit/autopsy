@@ -338,10 +338,6 @@ final class TermComponentQuery implements KeywordSearchQuery {
                 if (false == LUHN_CHECK.isValid(ccn)) {
                     continue; //if the hit does not pass the luhn check, skip it.
                 }
-                final int iin = Integer.parseInt(ccn.substring(0, 8));
-                if (false == Accounts.isIINKnown(iin)) {
-                    continue;
-                }
             }
 
             /*
