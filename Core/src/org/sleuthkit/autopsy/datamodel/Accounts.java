@@ -183,17 +183,6 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         notifyObservers();
     }
 
-    /**
-     * Are there details available about the given IIN?
-     *
-     * @param iin the IIN to check.
-     *
-     * @return true if th given IIN is known, false otherwise.
-     */
-    synchronized static public boolean isIINKnown(int iin) {
-        loadIINRanges();
-        return iinRanges.get(iin) != null;
-    }
 
     /**
      * Get an IINInfo object with details about the given IIN
