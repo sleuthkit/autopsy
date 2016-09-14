@@ -53,7 +53,7 @@ import org.sleuthkit.datamodel.TskData;
 final class UnallocatedSpaceIngestModule implements FileIngestModule {
 
     private static final String TEMP_DIR_NAME = "temp"; // NON-NLS
-    private static final Logger logger = Logger.getLogger(DiskImageIngestModule.class.getName());
+    private static final Logger logger = Logger.getLogger(UnallocatedSpaceIngestModule.class.getName());
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private static final Map<Long, Path> tempPathsByJob = new ConcurrentHashMap<>();
     private final BulkExtractorIngestJobSettings settings;
