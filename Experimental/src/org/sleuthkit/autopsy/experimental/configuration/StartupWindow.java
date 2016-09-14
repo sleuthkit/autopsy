@@ -26,9 +26,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import javax.swing.JDialog;
-import javax.swing.JTabbedPane;
 import javax.swing.WindowConstants;
-import org.openide.LifecycleManager;
 import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
@@ -37,7 +35,6 @@ import org.sleuthkit.autopsy.casemodule.CueBannerPanel;
 import org.sleuthkit.autopsy.casemodule.StartupWindowInterface;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestDashboard;
-import org.sleuthkit.autopsy.experimental.autoingest.CaseImportPanel;
 import org.sleuthkit.autopsy.experimental.autoingest.ReviewModeCasePanel;
 
 /**
@@ -51,8 +48,6 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
     private static CueBannerPanel welcomeWindow;
     private static final long serialVersionUID = 1L;
     private ReviewModeCasePanel caseManagementPanel = null;
-    private CaseImportPanel caseImportPanel = null;
-    private JTabbedPane copyPane = new JTabbedPane();
     private static final String LOCAL_HOST_NAME = NetworkUtils.getLocalHostName();
 
     public StartupWindow() {
@@ -129,20 +124,6 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
                 caseManagementPanel = new ReviewModeCasePanel(this);
                 setIconImage(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/frame.gif", false)); //NON-NLS
                 add(caseManagementPanel);
-                break;
-            case COPYFILES:
-                this.setTitle(NbBundle.getMessage(StartupWindow.class, "StartupWindow.CopyAndImportMode") + " (" + LOCAL_HOST_NAME + ")");
-                caseImportPanel = new CaseImportPanel();
-                setIconImage(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/frame.gif", false)); //NON-NLS
-                copyPane.add(NbBundle.getMessage(StartupWindow.class, "StartupWindow.CaseImportMode"), caseImportPanel);
-                this.addWindowListener(new WindowAdapter() {
-                    @Override
-                    public void windowClosing(WindowEvent e) {
-                        LifecycleManager.getDefault().exit();
-                    }
-                });
-                setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-                add(copyPane);
                 break;
             default:                
                 welcomeWindow = new CueBannerPanel();

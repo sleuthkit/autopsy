@@ -46,6 +46,7 @@ import org.sleuthkit.autopsy.experimental.configuration.AutoIngestUserPreference
  */
 public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCallback {
 
+    private final CaseImportPanelController controller;
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(CaseImportPanel.class.getName());
     private Thread ongoingImport; // used to interrupt thread if we need to
@@ -70,8 +71,32 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
     /**
      * Creates new panel CaseImportPanel
      */
-    public CaseImportPanel() {
+    public CaseImportPanel(CaseImportPanelController theController) {
+        controller = theController;
         initComponents();
+        badDatabaseCredentials = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/warning16.png", false)); //NON-NLS
+        goodDatabaseCredentials = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/tick.png", false)); //NON-NLS
+    }
+    
+    /**
+     * Validate current panel settings.
+     */
+    boolean valid() {
+        // Nothing to validate for case import panel as far as Netbeans Tools/Options controller is concerned
+        return true;
+    }
+    
+    /**
+     * Store current panel settings.
+     */
+    void store() {
+        // Nothing to store for case import panel as far as Netbeans Tools/Options controller is concerned
+    }    
+
+    /**
+     * Load data.
+     */    
+    final void load() {
         caseSourceFolderChooser.setCurrentDirectory(caseSourceFolderChooser.getFileSystemView().getParentDirectory(new File("C:\\"))); //NON-NLS
         caseSourceFolderChooser.setAcceptAllFileFilterUsed(false);
         caseSourceFolderChooser.setDialogTitle(NbBundle.getMessage(CaseImportPanel.class, "CaseImportPanel.ChooseCase"));
@@ -84,8 +109,6 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
         tbImageDestination.setText(AutoIngestUserPreferences.getAutoModeImageFolder());
         cbCopyImages.setSelected(true);
         cbDeleteCase.setSelected(false);
-        badDatabaseCredentials = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/warning16.png", false)); //NON-NLS
-        goodDatabaseCredentials = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/tick.png", false)); //NON-NLS
         picDbStatus.setText(""); //NON-NLS
         tbDeleteWarning.setText(""); //NON-NLS
         tbInputNotification.setText(""); //NON-NLS
@@ -94,7 +117,7 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
         pbShowProgress.setStringPainted(true);
         pbShowProgress.setForeground(new Color(51, 153, 255));
         pbShowProgress.setString(""); //NON-NLS
-        showDbStatus();
+        showDbStatus();        
     }
 
     /**
