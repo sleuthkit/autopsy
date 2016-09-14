@@ -120,8 +120,8 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         } else {
             tbOops.setText("");
         }
+        cbJoinAutoIngestCluster.setSelected(AutoIngestUserPreferences.getJoinAutoModeCluster());
         cbJoinAutoIngestCluster.setEnabled(UserPreferences.getIsMultiUserModeEnabled());
-        //enableUI(UserPreferences.getIsMultiUserModeEnabled());
         
         if (inStartup) {
             AutoIngestUserPreferences.SelectedMode storedMode = AutoIngestUserPreferences.getMode();
@@ -204,6 +204,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
      * Save mode to persistent storage.
      */
     void store() {
+        AutoIngestUserPreferences.setJoinAutoModeCluster(cbJoinAutoIngestCluster.isSelected());
         if (!cbJoinAutoIngestCluster.isSelected()) {
             AutoIngestUserPreferences.setMode(AutoIngestUserPreferences.SelectedMode.STANDALONE);
             return;
@@ -312,8 +313,8 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
      */
     boolean valid() {
         
-        if (!UserPreferences.getIsMultiUserModeEnabled() || !cbJoinAutoIngestCluster.isSelected()) {
-            return false;
+        if (!cbJoinAutoIngestCluster.isSelected()) {
+            return true;
         }
         
         boolean isValidNodePanel = true;
@@ -612,7 +613,10 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     }
 
     private void enableOptionsBasedOnMode(OptionsUiMode mode) {
-        if (mode != OptionsUiMode.DOWNLOADING_CONFIGURATION) {
+        if (mode != OptionsUiMode.DOWNLOADING_CONFIGURATION) {            
+            jRadioButtonAutomated.setEnabled(cbJoinAutoIngestCluster.isSelected());
+            jRadioButtonReview.setEnabled(cbJoinAutoIngestCluster.isSelected());
+            
             jLabelSelectInputFolder.setEnabled(mode == OptionsUiMode.UTILITY || mode == OptionsUiMode.AIM);
             inputPathTextField.setEnabled(mode == OptionsUiMode.UTILITY || mode == OptionsUiMode.AIM);
             browseInputFolderButton.setEnabled(mode == OptionsUiMode.UTILITY || mode == OptionsUiMode.AIM);
@@ -630,8 +634,10 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
             sharedConfigCheckbox.setEnabled(mode == OptionsUiMode.AIM);
             masterNodeCheckBox.setEnabled(mode == OptionsUiMode.AIM && sharedConfigCheckbox.isSelected());
             bnFileExport.setEnabled(mode == OptionsUiMode.AIM);
-            sharedSettingsTextField.setEnabled(mode == OptionsUiMode.AIM);
-            downloadButton.setEnabled(mode == OptionsUiMode.AIM);
+            sharedSettingsTextField.setEnabled(mode == OptionsUiMode.AIM && sharedConfigCheckbox.isSelected());
+            downloadButton.setEnabled(mode == OptionsUiMode.AIM && sharedConfigCheckbox.isSelected());
+            browseSharedSettingsButton.setEnabled(mode == OptionsUiMode.AIM && sharedConfigCheckbox.isSelected());
+            uploadButton.setEnabled(mode == OptionsUiMode.AIM && sharedConfigCheckbox.isSelected() && masterNodeCheckBox.isSelected());
         } else {
             setEnabledState(false);
         }

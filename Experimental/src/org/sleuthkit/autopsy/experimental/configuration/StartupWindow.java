@@ -56,7 +56,7 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
     private static final String LOCAL_HOST_NAME = NetworkUtils.getLocalHostName();
 
     public StartupWindow() {
-        super(WindowManager.getDefault().getMainWindow(), TITLE, true);
+        super(WindowManager.getDefault().getMainWindow(), TITLE, false);
         init();
     }
 
