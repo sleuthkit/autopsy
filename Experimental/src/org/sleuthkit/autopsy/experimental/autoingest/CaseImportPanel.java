@@ -377,7 +377,6 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
         tbOops.setEditable(false);
         tbOops.setFont(tbOops.getFont().deriveFont(tbOops.getFont().getStyle() | java.awt.Font.BOLD, 12));
         tbOops.setForeground(new java.awt.Color(255, 0, 0));
-        tbOops.setText(org.openide.util.NbBundle.getMessage(CaseImportPanel.class, "AutoIngestSettingsPanel.tbOops.text")); // NOI18N
         tbOops.setBorder(null);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
