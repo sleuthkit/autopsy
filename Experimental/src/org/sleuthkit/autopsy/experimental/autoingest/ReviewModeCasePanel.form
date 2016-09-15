@@ -33,8 +33,6 @@
                       <Component id="bnRefresh" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="bnShowLog" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace type="separate" max="-2" attributes="0"/>
-                      <Component id="bnOptions" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="32767" attributes="0"/>
                       <Component id="panelFilter" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="-2" pref="20" max="-2" attributes="0"/>
@@ -63,7 +61,6 @@
                           <Component id="bnOpen" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="bnRefresh" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="bnShowLog" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="bnOptions" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace min="-2" pref="36" max="-2" attributes="0"/>
                   </Group>
@@ -234,16 +231,6 @@
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bnShowLogActionPerformed"/>
-      </Events>
-    </Component>
-    <Component class="javax.swing.JButton" name="bnOptions">
-      <Properties>
-        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="ReviewModeCasePanel.bnOptions.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-        </Property>
-      </Properties>
-      <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bnOptionsActionPerformed"/>
       </Events>
     </Component>
   </SubComponents>
