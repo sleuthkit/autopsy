@@ -58,6 +58,7 @@ import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.CaseNewAction;
+import org.sleuthkit.autopsy.casemodule.CaseOpenAction;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
@@ -229,6 +230,11 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
          * Disable the new case action in auto ingest mode.
          */
         CallableSystemAction.get(CaseNewAction.class).setEnabled(false);
+
+        /*
+         * Disable the new case action in auto ingest mode.
+         */
+        CallableSystemAction.get(CaseOpenAction.class).setEnabled(false);
 
         /*
          * Permanently delete the "Open Recent Cases" item in the "Case" menu.
