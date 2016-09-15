@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.experimental.configuration;
+package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -31,6 +31,7 @@ import org.sleuthkit.autopsy.casemodule.CaseOpenAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.StartupWindowProvider;
+import org.sleuthkit.autopsy.experimental.configuration.AutoIngestUserPreferences;
 
 final class AutoIngestCaseOpenAction extends CallableSystemAction implements ActionListener {
 

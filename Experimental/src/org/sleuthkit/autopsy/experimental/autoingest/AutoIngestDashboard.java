@@ -235,6 +235,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
          * Disable the new case action in auto ingest mode.
          */
         CallableSystemAction.get(CaseOpenAction.class).setEnabled(false);
+        CallableSystemAction.get(AutoIngestCaseOpenAction.class).setEnabled(false);
 
         /*
          * Permanently delete the "Open Recent Cases" item in the "Case" menu.

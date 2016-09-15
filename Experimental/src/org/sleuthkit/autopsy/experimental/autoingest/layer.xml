@@ -7,8 +7,8 @@
          ====================================================== -->
     <folder name="Actions">
         <folder name="Case">
-            <file name="org-sleuthkit-autopsy-experimental-configuration-AutoIngestCaseOpenAction.instance">
-                <attr name="delegate" newvalue="org.sleuthkit.autopsy.experimental.configuration.AutoIngestCaseOpenAction"/>
+            <file name="org-sleuthkit-autopsy-experimental-autoingest-AutoIngestCaseOpenAction.instance">
+                <attr name="delegate" newvalue="org.sleuthkit.autopsy.experimental.autoingest.AutoIngestCaseOpenAction"/>
                 <attr name="displayName" stringvalue="Open Case"/>
                 <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
                 <attr name="noIconInMenu" boolvalue="false"/>
@@ -25,8 +25,8 @@
         </folder>    
         <folder name="Case">
             <file name="org-sleuthkit-autopsy-casemodule-CaseOpenAction.shadow_hidden"/>     
-            <file name="org-sleuthkit-autopsy-experimental-configuration-AutoIngestCaseOpenAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-experimental-configuration-AutoIngestCaseOpenAction.instance"/>
+            <file name="org-sleuthkit-autopsy-experimental-autoingest-AutoIngestCaseOpenAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-experimental-autoingest-AutoIngestCaseOpenAction.instance"/>
                 <attr name="position" intvalue="101"/>
             </file>        
         </folder>    
