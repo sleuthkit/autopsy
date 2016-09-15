@@ -55,7 +55,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
 
     enum OptionsUiMode {
 
-        STANDALONE, UTILITY, AIM, REVIEW, DOWNLOADING_CONFIGURATION
+        STANDALONE, AIM, REVIEW, DOWNLOADING_CONFIGURATION
     };
 
     /**
@@ -135,7 +135,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                     jRadioButtonAutomated.setSelected(true);
                     enableOptionsBasedOnMode(OptionsUiMode.AIM);
                     break;
-                case COPYFILES:
                 default:
                     cbJoinAutoIngestCluster.setSelected(false);
                     enableOptionsBasedOnMode(OptionsUiMode.STANDALONE);
@@ -238,37 +237,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                 AutoIngestUserPreferences.setSharedConfigFolder(globalSettingsPath);
                 AutoIngestUserPreferences.setSharedConfigMaster(masterNodeCheckBox.isSelected());
             }
-        } /* ELTODO Make this into a Tool
-            else if (jRadioButtonCopyFilesMode.isSelected()) {
-
-            boolean needsSaving = false;
-            String thePath = AutoIngestUserPreferences.getAutoModeImageFolder();
-            if (thePath != null && 0 != inputPathTextField.getText().compareTo(thePath)) {
-                needsSaving = true;
-            }
-            thePath = AutoIngestUserPreferences.getAutoModeResultsFolder();
-            if (thePath != null && 0 != outputPathTextField.getText().compareTo(thePath)) {
-                needsSaving = true;
-            }
-            if (needsSaving) {
-                JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.MustRestart"),
-                        NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.restartRequiredLabel.text"),
-                        JOptionPane.WARNING_MESSAGE);
-            }
-
-            AutoIngestUserPreferences.setMode(AutoIngestUserPreferences.SelectedMode.COPYFILES);
-            String imageFolderPath = getNormalizedFolderPath(inputPathTextField.getText().trim());
-            AutoIngestUserPreferences.setAutoModeImageFolder(imageFolderPath);
-            String resultsFolderPath = getNormalizedFolderPath(outputPathTextField.getText().trim());
-            AutoIngestUserPreferences.setAutoModeResultsFolder(resultsFolderPath);
-            AutoIngestUserPreferences.setSharedConfigEnabled(sharedConfigCheckbox.isSelected());
-            if (sharedConfigCheckbox.isSelected()) {
-                String globalSettingsPath = getNormalizedFolderPath(sharedSettingsTextField.getText().trim());
-                AutoIngestUserPreferences.setSharedConfigFolder(globalSettingsPath);
-                AutoIngestUserPreferences.setSharedConfigMaster(masterNodeCheckBox.isSelected());
-            }
-        }*/ else if (jRadioButtonReview.isSelected()) {
+        } else if (jRadioButtonReview.isSelected()) {
             String thePath = AutoIngestUserPreferences.getAutoModeResultsFolder();
             if (thePath != null && 0 != outputPathTextField.getText().compareTo(thePath)) {
                 JOptionPane.showMessageDialog(null,
@@ -320,14 +289,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         boolean isValidNodePanel = true;
 
         switch (getModeFromRadioButtons()) {
-            case UTILITY:
-                if (!validateImagePath()) {
-                    isValidNodePanel = false;
-                }
-                if (!validateResultsPath()) {
-                    isValidNodePanel = false;
-                }
-                break;
             case AIM:
                 if (!validateImagePath()) {
                     isValidNodePanel = false;
@@ -617,15 +578,15 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
             jRadioButtonAutomated.setEnabled(cbJoinAutoIngestCluster.isSelected());
             jRadioButtonReview.setEnabled(cbJoinAutoIngestCluster.isSelected());
             
-            jLabelSelectInputFolder.setEnabled(mode == OptionsUiMode.UTILITY || mode == OptionsUiMode.AIM);
-            inputPathTextField.setEnabled(mode == OptionsUiMode.UTILITY || mode == OptionsUiMode.AIM);
-            browseInputFolderButton.setEnabled(mode == OptionsUiMode.UTILITY || mode == OptionsUiMode.AIM);
+            jLabelSelectInputFolder.setEnabled(mode == OptionsUiMode.AIM);
+            inputPathTextField.setEnabled(mode == OptionsUiMode.AIM);
+            browseInputFolderButton.setEnabled(mode == OptionsUiMode.AIM);
 
-            jLabelSelectOutputFolder.setEnabled(mode == OptionsUiMode.UTILITY || mode == OptionsUiMode.AIM || mode == OptionsUiMode.REVIEW);
-            outputPathTextField.setEnabled(mode == OptionsUiMode.UTILITY || mode == OptionsUiMode.AIM || mode == OptionsUiMode.REVIEW);
-            browseOutputFolderButton.setEnabled(mode == OptionsUiMode.UTILITY || mode == OptionsUiMode.AIM || mode == OptionsUiMode.REVIEW);
+            jLabelSelectOutputFolder.setEnabled(mode == OptionsUiMode.AIM || mode == OptionsUiMode.REVIEW);
+            outputPathTextField.setEnabled(mode == OptionsUiMode.AIM || mode == OptionsUiMode.REVIEW);
+            browseOutputFolderButton.setEnabled(mode == OptionsUiMode.AIM || mode == OptionsUiMode.REVIEW);
 
-            jPanelSharedConfig.setEnabled(mode == OptionsUiMode.UTILITY || mode == OptionsUiMode.AIM);
+            jPanelSharedConfig.setEnabled(mode == OptionsUiMode.AIM);
 
             jPanelIngestSettings.setEnabled(mode == OptionsUiMode.AIM);
             bnEditIngestSettings.setEnabled(mode == OptionsUiMode.AIM);

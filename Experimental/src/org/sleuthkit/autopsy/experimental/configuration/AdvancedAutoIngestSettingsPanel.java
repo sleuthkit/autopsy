@@ -64,12 +64,12 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
         spMaximumRetryAttempts.setValue(AutoIngestUserPreferences.getMaxNumTimesToProcessImage());
         int maxJobsPerCase = AutoIngestUserPreferences.getMaxConcurrentJobsForOneCase();
         spConcurrentJobsPerCase.setValue(maxJobsPerCase);
-        spSecondsBetweenJobs.setEnabled(mode == AutoIngestSettingsPanel.OptionsUiMode.UTILITY || mode == AutoIngestSettingsPanel.OptionsUiMode.AIM);
-        spMaximumRetryAttempts.setEnabled(mode == AutoIngestSettingsPanel.OptionsUiMode.UTILITY || mode == AutoIngestSettingsPanel.OptionsUiMode.AIM);
-        cbTimeoutEnabled.setEnabled(mode == AutoIngestSettingsPanel.OptionsUiMode.UTILITY || mode == AutoIngestSettingsPanel.OptionsUiMode.AIM);
-        lbSecondsBetweenJobs.setEnabled(mode == AutoIngestSettingsPanel.OptionsUiMode.UTILITY || mode == AutoIngestSettingsPanel.OptionsUiMode.AIM);
-        lbTimeoutText.setEnabled(mode == AutoIngestSettingsPanel.OptionsUiMode.UTILITY || mode == AutoIngestSettingsPanel.OptionsUiMode.AIM);
-        lbRetriesAllowed.setEnabled(mode == AutoIngestSettingsPanel.OptionsUiMode.UTILITY || mode == AutoIngestSettingsPanel.OptionsUiMode.AIM);
+        spSecondsBetweenJobs.setEnabled(mode == AutoIngestSettingsPanel.OptionsUiMode.AIM);
+        spMaximumRetryAttempts.setEnabled(mode == AutoIngestSettingsPanel.OptionsUiMode.AIM);
+        cbTimeoutEnabled.setEnabled(mode == AutoIngestSettingsPanel.OptionsUiMode.AIM);
+        lbSecondsBetweenJobs.setEnabled(mode == AutoIngestSettingsPanel.OptionsUiMode.AIM);
+        lbTimeoutText.setEnabled(mode == AutoIngestSettingsPanel.OptionsUiMode.AIM);
+        lbRetriesAllowed.setEnabled(mode == AutoIngestSettingsPanel.OptionsUiMode.AIM);
         cbTimeoutEnabled.setSelected(UserPreferences.getIsTimeOutEnabled());
         int timeOutHrs = UserPreferences.getProcessTimeOutHrs();
         spTimeoutHours.setValue(timeOutHrs);

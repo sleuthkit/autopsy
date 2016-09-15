@@ -38,6 +38,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.experimental.configuration.AutoIngestUserPreferences;
+import static org.sleuthkit.autopsy.experimental.configuration.AutoIngestUserPreferences.SelectedMode.AUTOMATED;
 
 /**
  * This panel shows up in a tab pane next to the copy files panel for the
@@ -46,6 +47,7 @@ import org.sleuthkit.autopsy.experimental.configuration.AutoIngestUserPreference
  */
 public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCallback {
 
+    private final CaseImportPanelController controller;
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(CaseImportPanel.class.getName());
     private Thread ongoingImport; // used to interrupt thread if we need to
@@ -57,6 +59,8 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
     private boolean canTalkToDb = false;
     private boolean copyImagesState = true;
     private boolean deleteImagesState = false;
+    private static final String MULTI_USER_SETTINGS_MUST_BE_ENABLED = NbBundle.getMessage(CaseImportPanel.class, "CaseImportPanel.validationErrMsg.MUdisabled");
+    private static final String AIM_MUST_BE_ENABLED = NbBundle.getMessage(CaseImportPanel.class, "CaseImportPanel.validationErrMsg.AIMdisabled");
 
     // Used to specify which notification area should be upated
     private enum NotificationLabel {
@@ -70,8 +74,47 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
     /**
      * Creates new panel CaseImportPanel
      */
-    public CaseImportPanel() {
+    public CaseImportPanel(CaseImportPanelController theController) {
+        controller = theController;
         initComponents();
+        badDatabaseCredentials = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/warning16.png", false)); //NON-NLS
+        goodDatabaseCredentials = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/tick.png", false)); //NON-NLS
+    }
+    
+    /**
+     * Validate current panel settings.
+     */
+    boolean valid() {
+        // Nothing to validate for case import panel as far as Netbeans Tools/Options controller is concerned
+        return true;
+    }
+    
+    /**
+     * Store current panel settings.
+     */
+    void store() {
+        // Nothing to store for case import panel as far as Netbeans Tools/Options controller is concerned
+    }    
+
+    /**
+     * Load data.
+     */    
+    final void load() {
+        
+        // Multi user mode must be enabled. This is required to make sure database credentials are set.
+        // Also, "join auto ingest cluster" must be selected and we need to be in automated ingest mode. 
+        // This is required to make sure "shared images" and "shared results" folders are set
+        if (!UserPreferences.getIsMultiUserModeEnabled()) {
+            tbOops.setText(MULTI_USER_SETTINGS_MUST_BE_ENABLED);
+            return;
+        } else if (AutoIngestUserPreferences.getMode() != AUTOMATED) {
+            tbOops.setText(AIM_MUST_BE_ENABLED);
+            return;
+        } else {
+            tbOops.setText("");
+        }
+        
+        // Note: we used to store input folders in persistent storage but it is not done any more for some reason...
         caseSourceFolderChooser.setCurrentDirectory(caseSourceFolderChooser.getFileSystemView().getParentDirectory(new File("C:\\"))); //NON-NLS
         caseSourceFolderChooser.setAcceptAllFileFilterUsed(false);
         caseSourceFolderChooser.setDialogTitle(NbBundle.getMessage(CaseImportPanel.class, "CaseImportPanel.ChooseCase"));
@@ -80,12 +123,8 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
         imageSourceFolderChooser.setAcceptAllFileFilterUsed(false);
         imageSourceFolderChooser.setDialogTitle(NbBundle.getMessage(CaseImportPanel.class, "CaseImportPanel.ChooseSource"));
         imageSourceFolderChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        tbCaseDestination.setText(AutoIngestUserPreferences.getAutoModeResultsFolder());
-        tbImageDestination.setText(AutoIngestUserPreferences.getAutoModeImageFolder());
         cbCopyImages.setSelected(true);
         cbDeleteCase.setSelected(false);
-        badDatabaseCredentials = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/warning16.png", false)); //NON-NLS
-        goodDatabaseCredentials = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/tick.png", false)); //NON-NLS
         picDbStatus.setText(""); //NON-NLS
         tbDeleteWarning.setText(""); //NON-NLS
         tbInputNotification.setText(""); //NON-NLS
@@ -95,6 +134,33 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
         pbShowProgress.setForeground(new Color(51, 153, 255));
         pbShowProgress.setString(""); //NON-NLS
         showDbStatus();
+        handleAutoModeInputs();
+    }
+    
+    void handleAutoModeInputs() {
+        String caseDestinationResult = "";
+        String output = AutoIngestUserPreferences.getAutoModeResultsFolder();
+        if (output.isEmpty() || !(new File(output).exists())) {
+            setNotificationText(NotificationLabel.OUTPUT, NbBundle.getMessage(CaseImportPanel.class, "CaseImportPanel.BadCaseDestinationFolder"), false);
+        } else {
+            tbCaseDestination.setText(output);
+            caseDestinationResult = "";
+        }
+
+        String imageDestinationResult = "";
+        String imageFolder = AutoIngestUserPreferences.getAutoModeImageFolder();
+        if (imageFolder.isEmpty() || !(new File(imageFolder).exists())) {
+            setNotificationText(NotificationLabel.OUTPUT, NbBundle.getMessage(CaseImportPanel.class, "CaseImportPanel.BadImageDestinationFolder"), false);
+        } else {
+            tbImageDestination.setText(imageFolder);
+            imageDestinationResult = "";
+        }
+
+        String result = caseDestinationResult;
+        if (result.isEmpty()) {
+            result = imageDestinationResult;
+        }
+        setNotificationText(NotificationLabel.OUTPUT, result, false);      
     }
 
     /**
@@ -142,7 +208,6 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
         bnStart = new javax.swing.JButton();
         bnCancel = new javax.swing.JButton();
         bnShowLog = new javax.swing.JButton();
-        bnOptions = new javax.swing.JButton();
         bnBrowseCaseSource = new javax.swing.JButton();
         bnBrowseImageSource = new javax.swing.JButton();
         pbShowProgress = new javax.swing.JProgressBar();
@@ -157,6 +222,7 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
         tbInputNotification = new javax.swing.JTextField();
         tbOutputNotification = new javax.swing.JTextField();
         tbDeleteWarning = new javax.swing.JTextField();
+        tbOops = new javax.swing.JTextField();
 
         setMinimumSize(new java.awt.Dimension(830, 240));
 
@@ -213,13 +279,6 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
         bnShowLog.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnShowLogActionPerformed(evt);
-            }
-        });
-
-        bnOptions.setText("Options");
-        bnOptions.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnOptionsActionPerformed(evt);
             }
         });
 
@@ -315,6 +374,11 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
         tbDeleteWarning.setText("delete warning");
         tbDeleteWarning.setBorder(null);
 
+        tbOops.setEditable(false);
+        tbOops.setFont(tbOops.getFont().deriveFont(tbOops.getFont().getStyle() | java.awt.Font.BOLD, 12));
+        tbOops.setForeground(new java.awt.Color(255, 0, 0));
+        tbOops.setBorder(null);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -340,12 +404,11 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
                                         .addComponent(tbInputNotification, javax.swing.GroupLayout.PREFERRED_SIZE, 527, javax.swing.GroupLayout.PREFERRED_SIZE)))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(bnBrowseImageSource, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(bnOptions, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(37, 37, 37)
                         .addComponent(lbCaption)
+                        .addGap(35, 35, 35)
+                        .addComponent(tbOops, javax.swing.GroupLayout.PREFERRED_SIZE, 465, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
@@ -388,7 +451,9 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(lbCaption)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lbCaption)
+                    .addComponent(tbOops, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
                     .addComponent(bnBrowseCaseSource)
@@ -409,7 +474,6 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
                     .addComponent(tbDeleteWarning, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(35, 35, 35)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                    .addComponent(bnOptions)
                     .addComponent(tbCaseDestination, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(lbCaseDestination))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -476,7 +540,6 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
         cbCopyImages.setEnabled(!setting);
         cbDeleteCase.setEnabled(!setting);
         bnStart.setEnabled(!setting);
-        bnOptions.setEnabled(!setting);
         bnCancel.setEnabled(setting);
     }
 
@@ -542,41 +605,6 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
     }
 
     /**
-     * Handles pressing the Options button
-     *
-     * @param evt
-     */
-    private void bnOptionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOptionsActionPerformed
-        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-        String caseDestinationResult = "";
-        String output = AutoIngestUserPreferences.getAutoModeResultsFolder();
-        if (output.isEmpty() || !(new File(output).exists())) {
-            setNotificationText(NotificationLabel.OUTPUT, NbBundle.getMessage(CaseImportPanel.class, "CaseImportPanel.BadCaseDestinationFolder"), false);
-        } else {
-            tbCaseDestination.setText(output);
-            caseDestinationResult = "";
-        }
-
-        String imageDestinationResult = "";
-        String imageFolder = AutoIngestUserPreferences.getAutoModeImageFolder();
-        if (imageFolder.isEmpty() || !(new File(imageFolder).exists())) {
-            setNotificationText(NotificationLabel.OUTPUT, NbBundle.getMessage(CaseImportPanel.class, "CaseImportPanel.BadImageDestinationFolder"), false);
-        } else {
-            tbImageDestination.setText(imageFolder);
-            imageDestinationResult = "";
-        }
-
-        String result = caseDestinationResult;
-        if (result.isEmpty()) {
-            result = imageDestinationResult;
-        }
-        setNotificationText(NotificationLabel.OUTPUT, result, false);
-        showDbStatus();
-        enableStartButton();
-    }//GEN-LAST:event_bnOptionsActionPerformed
-
-    /**
      * Handles pressing the Show Log button
      *
      * @param evt
@@ -636,20 +664,20 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
                 bnBrowseImageSource.setEnabled(false);
             }
             validateSourceFields();
-            enableStartButton();
         }
     }//GEN-LAST:event_cbCopyImagesStateChanged
 
     /**
      * Enables the start button if all input is in order, disables it otherwise
-     *
      */
     private void enableStartButton() {
-        if (!tbCaseSource.getText().isEmpty()
+        if (UserPreferences.getIsMultiUserModeEnabled()
+                && AutoIngestUserPreferences.getJoinAutoModeCluster()
+                && (AutoIngestUserPreferences.getMode() == AUTOMATED)
+                && !tbCaseSource.getText().isEmpty()
                 && !tbCaseDestination.getText().isEmpty()
                 && canTalkToDb == true
-                && (!cbCopyImages.isSelected() || (!tbImageSource.getText().isEmpty()
-                && !tbImageDestination.getText().isEmpty()))) {
+                && (!cbCopyImages.isSelected() || (!tbImageSource.getText().isEmpty() && !tbImageDestination.getText().isEmpty()))) {
             bnStart.setEnabled(true);
         } else {
             bnStart.setEnabled(false);
@@ -701,7 +729,6 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
     private javax.swing.JButton bnBrowseCaseSource;
     private javax.swing.JButton bnBrowseImageSource;
     private javax.swing.JButton bnCancel;
-    private javax.swing.JButton bnOptions;
     private javax.swing.JButton bnShowLog;
     private javax.swing.JButton bnStart;
     private javax.swing.JCheckBox cbCopyImages;
@@ -722,6 +749,7 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
     private javax.swing.JTextField tbImageDestination;
     private javax.swing.JTextField tbImageSource;
     private javax.swing.JTextField tbInputNotification;
+    private javax.swing.JTextField tbOops;
     private javax.swing.JTextField tbOutputNotification;
     // End of variables declaration//GEN-END:variables
 
