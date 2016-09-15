@@ -34,7 +34,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Optional;
@@ -1334,7 +1333,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                             final DataResultTopComponent directoryListing = directoryTree.getDirectoryListing();
 
                             Node findChild = NodeOp.findChild(directoryListing.getRootNode(), nodeToSelectName);
-                            directoryListing.getExplorerManager().setExploredContext(findChild, new Node[]{findChild});
+                            directoryListing.getExplorerManager().setExploredContext(findChild.getParentNode(), new Node[]{findChild});
                         });
                     }
                 }
