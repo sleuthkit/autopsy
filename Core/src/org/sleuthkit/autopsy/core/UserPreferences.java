@@ -65,7 +65,7 @@ public final class UserPreferences {
     private static final int DEFAULT_PROCESS_TIMEOUT_HR = 60;
     private static final String DEFAULT_PORT_STRING = "61616";
     private static final int DEFAULT_PORT_INT = 61616;
-    private static final String TOOL_NAME = "ToolName";
+    private static final String APP_NAME = "AppName";
 
     // Prevent instantiation.
     private UserPreferences() {
@@ -287,10 +287,10 @@ public final class UserPreferences {
     
     /**
      * Get the display name for this program
-     * @return Name for the tool
+     * @return Name of this program
      */
-    public static String getToolName(){
-        return preferences.get(TOOL_NAME, "Autopsy");
+    public static String getAppName(){
+        return preferences.get(APP_NAME, "Autopsy");
     }
     
     /**
@@ -298,8 +298,8 @@ public final class UserPreferences {
      * 
      * @param name Display name
      */
-    public static void setToolName(String name){
-        preferences.put(TOOL_NAME, name);
+    public static void setAppName(String name){
+        preferences.put(APP_NAME, name);
     }
     
     
