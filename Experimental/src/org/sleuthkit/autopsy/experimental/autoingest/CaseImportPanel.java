@@ -671,7 +671,9 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
      * Enables the start button if all input is in order, disables it otherwise
      */
     private void enableStartButton() {
-        if (UserPreferences.getIsMultiUserModeEnabled() && (AutoIngestUserPreferences.getMode() == AUTOMATED)
+        if (UserPreferences.getIsMultiUserModeEnabled()
+                && AutoIngestUserPreferences.getJoinAutoModeCluster()
+                && (AutoIngestUserPreferences.getMode() == AUTOMATED)
                 && !tbCaseSource.getText().isEmpty()
                 && !tbCaseDestination.getText().isEmpty()
                 && canTalkToDb == true
