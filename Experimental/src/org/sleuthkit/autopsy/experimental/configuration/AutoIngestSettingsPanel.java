@@ -1220,12 +1220,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_bnFileExportActionPerformed
 
     private void cbJoinAutoIngestClusterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbJoinAutoIngestClusterActionPerformed
-        
-        //enableUI(cbJoinAutoIngestCluster.isSelected());
-
         enableOptionsBasedOnMode(getModeFromRadioButtons());
-
-        // ELTODO enableMultiUserComponents(textBoxes, cbJoinAutoIngestCluster.isSelected());
         controller.changed();
     }//GEN-LAST:event_cbJoinAutoIngestClusterActionPerformed
 
@@ -1244,10 +1239,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     }
 
     private void resetUI() {
-        enableOptionsBasedOnMode(getModeFromRadioButtons());
-        setSharedConfigEnable();
-
-        validateSettings(); // Will re-enable the save button if everything is valid
+        load(true);
         controller.changed();
     }
 
