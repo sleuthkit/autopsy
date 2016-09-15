@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
+<filesystem>
+    
+    <!-- ======================================================
+         Actions
+         ====================================================== -->
+    <folder name="Actions">
+        <folder name="Case">
+            <file name="org-sleuthkit-autopsy-experimental-autoingest-AutoIngestCaseOpenAction.instance">
+                <attr name="delegate" newvalue="org.sleuthkit.autopsy.experimental.autoingest.AutoIngestCaseOpenAction"/>
+                <attr name="displayName" stringvalue="Open Case"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" boolvalue="false"/>
+            </file>   
+        </folder>
+    </folder> 
+
+    <!-- ======================================================
+    Menu hidden
+    =========================================================== -->
+    <folder name="Menu">        
+        <folder name="Help">
+            <file name="org-sleuthkit-autopsy-corecomponents-CustomAboutAction.shadow_hidden"/>
+        </folder>    
+        <folder name="Case">
+            <file name="org-sleuthkit-autopsy-casemodule-CaseOpenAction.shadow_hidden"/>     
+            <file name="org-sleuthkit-autopsy-experimental-autoingest-AutoIngestCaseOpenAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-experimental-autoingest-AutoIngestCaseOpenAction.instance"/>
+                <attr name="position" intvalue="101"/>
+            </file>        
+        </folder>    
+    </folder>       
+
+</filesystem>

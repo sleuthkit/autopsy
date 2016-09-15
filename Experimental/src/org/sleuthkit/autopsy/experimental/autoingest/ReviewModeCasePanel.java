@@ -39,7 +39,6 @@ import javax.swing.table.TableColumn;
 import org.sleuthkit.autopsy.casemodule.StartupWindowProvider;
 import java.awt.Cursor;
 import java.io.IOException;
-import org.netbeans.api.options.OptionsDisplayer;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.experimental.autoingest.ReviewModeCaseManager.ReviewModeCaseManagerException;
@@ -385,7 +384,6 @@ public final class ReviewModeCasePanel extends JPanel {
         rbDays = new javax.swing.JRadioButton();
         rbGroupLabel = new javax.swing.JLabel();
         bnShowLog = new javax.swing.JButton();
-        bnOptions = new javax.swing.JButton();
 
         setName("Completed Cases"); // NOI18N
 
@@ -492,13 +490,6 @@ public final class ReviewModeCasePanel extends JPanel {
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(bnOptions, org.openide.util.NbBundle.getMessage(ReviewModeCasePanel.class, "ReviewModeCasePanel.bnOptions.text")); // NOI18N
-        bnOptions.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnOptionsActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -513,8 +504,6 @@ public final class ReviewModeCasePanel extends JPanel {
                         .addComponent(bnRefresh)
                         .addGap(18, 18, 18)
                         .addComponent(bnShowLog)
-                        .addGap(18, 18, 18)
-                        .addComponent(bnOptions)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(panelFilter, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(20, 20, 20))
@@ -536,8 +525,7 @@ public final class ReviewModeCasePanel extends JPanel {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(bnOpen)
                             .addComponent(bnRefresh)
-                            .addComponent(bnShowLog)
-                            .addComponent(bnOptions))
+                            .addComponent(bnShowLog))
                         .addGap(36, 36, 36))))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -611,12 +599,6 @@ public final class ReviewModeCasePanel extends JPanel {
         }
     }//GEN-LAST:event_bnShowLogActionPerformed
 
-    private void bnOptionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOptionsActionPerformed
-        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        OptionsDisplayer.getDefault().open();
-        setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-    }//GEN-LAST:event_bnOptionsActionPerformed
-
     private void casesTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_casesTableMouseClicked
         if (evt.getClickCount() == 2) {
             Path caseMetadataFilePath = Paths.get((String) caseTableModel.getValueAt(casesTable.getSelectedRow(),
@@ -628,7 +610,6 @@ public final class ReviewModeCasePanel extends JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bnOpen;
-    private javax.swing.JButton bnOptions;
     private javax.swing.JButton bnRefresh;
     private javax.swing.JButton bnShowLog;
     private javax.swing.JTable casesTable;
