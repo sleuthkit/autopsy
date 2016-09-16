@@ -284,7 +284,7 @@ final class VolatilityIngestModule implements DataSourceIngestModule {
 
                 hiberFilePath = Paths.get(tempDirPath.toString(), file.getName());
                 progressBar.progress("Saving file: " + file.getName(), completeTasks++);
-                ContentUtils.writeToFile(file, hiberFilePath.toFile());
+                ContentUtils.writeToFile(file, hiberFilePath.toFile(), context::dataSourceIngestIsCancelled);
 
                 // Because it can take a while to save the hiberfil.sys we
                 // check to see if the task was cancelled while the file was being saved.

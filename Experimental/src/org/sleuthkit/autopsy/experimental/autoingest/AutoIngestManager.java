@@ -2393,7 +2393,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             try {
                 FileExporter fileExporter = new FileExporter();
                 if (fileExporter.isEnabled()) {
-                    fileExporter.process(manifest.getDeviceId(), dataSource.getContent());
+                    fileExporter.process(manifest.getDeviceId(), dataSource.getContent(), currentJob::isCancelled);
                     jobLogger.logFileExportCompleted();
                 } else {
                     SYS_LOGGER.log(Level.WARNING, "Exporting files not enabled for {0}", manifestPath);
