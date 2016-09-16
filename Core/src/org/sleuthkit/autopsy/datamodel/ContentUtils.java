@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.datamodel;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 import java.util.concurrent.Future;
@@ -238,20 +239,22 @@ public final class ContentUtils {
             Supplier<Boolean> cancelCheck) throws IOException {
         InputStream in = new ReadContentInputStream(content);
         long totalRead = 0;
-        
         try (FileOutputStream out = new FileOutputStream(outputFile, false)) {
             byte[] buffer = new byte[TO_FILE_BUFFER_SIZE];
             int len = in.read(buffer);
             while (len != -1) {
                 out.write(buffer, 0, len);
-                totalRead += len;
                 if (cancelCheck.get()) {
+                    totalRead = -1;
                     break;
                 }
                 len = in.read(buffer);
             }
         } finally {
             in.close();
+            if (totalRead < 0) {                
+                Files.delete(outputFile.toPath());
+            }
         }
         return totalRead;
     }
