@@ -33,14 +33,15 @@ import org.sleuthkit.autopsy.datamodel.ContentUtils;
 
 /**
  * Extracts a File object to a temporary file in the case directory, and then
- * tries to open it in the user's system with the default associated
- * application.
+ * tries to open it in the user's system with the default or user specified
+ * associated application.
  */
 public class ExternalViewerAction extends AbstractAction {
 
     private final static Logger logger = Logger.getLogger(ExternalViewerAction.class.getName());
     private org.sleuthkit.datamodel.AbstractFile fileObject;
     final static String[] EXECUTABLE_EXT = {".exe", ".dll", ".com", ".bat", ".msi", ".reg", ".scr"}; //NON-NLS
+    private String fileObjectExt;
 
     public ExternalViewerAction(String title, Node fileNode) {
         super(title);
@@ -53,12 +54,15 @@ public class ExternalViewerAction extends AbstractAction {
         boolean isExecutable = false;
         if (extPos != -1) {
             String extension = fileName.substring(extPos, fileName.length()).toLowerCase();
+            fileObjectExt = extension;
             for (int i = 0; i < EXECUTABLE_EXT.length; ++i) {
                 if (EXECUTABLE_EXT[i].equals(extension)) {
                     isExecutable = true;
                     break;
                 }
             }
+        } else {
+            fileObjectExt = "";
         }
 
         // no point opening a file if it's empty, and java doesn't know how to
@@ -89,13 +93,31 @@ public class ExternalViewerAction extends AbstractAction {
             logger.log(Level.WARNING, "Can't save to temporary file.", ex); //NON-NLS
         }
 
-        try {
-            Desktop.getDesktop().open(tempFile);
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, "Could not find a viewer for the given file: " + tempFile.getName(), ex); //NON-NLS
-            JOptionPane.showMessageDialog(null, Bundle.ExternalViewerAction_actionPerformed_failure_message(), Bundle.ExternalViewerAction_actionPerformed_failure_title(), JOptionPane.ERROR_MESSAGE);
+        /**
+         * Check if the file MIME type or extension exists in the user defined
+         * settings. Otherwise open with the default associated application.
+         */
+        String exePath = ExternalViewerRulesManager.getInstance().getExePathForName(fileObject.getMIMEType());
+        if (exePath.equals("")) {
+            exePath = ExternalViewerRulesManager.getInstance().getExePathForName(fileObjectExt);
         }
-
+        if (!exePath.equals("")) {
+            Runtime runtime = Runtime.getRuntime();
+            String[] s = new String[]{exePath, tempFile.getAbsolutePath()};
+            try {
+                runtime.exec(s);
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "Could not open the specified viewer for the given file: " + tempFile.getName(), ex); //NON-NLS
+                JOptionPane.showMessageDialog(null, Bundle.ExternalViewerAction_actionPerformed_failure_message(), Bundle.ExternalViewerAction_actionPerformed_failure_title(), JOptionPane.ERROR_MESSAGE);
+            }
+        } else {
+            try {
+                Desktop.getDesktop().open(tempFile);
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "Could not find a viewer for the given file: " + tempFile.getName(), ex); //NON-NLS
+                JOptionPane.showMessageDialog(null, Bundle.ExternalViewerAction_actionPerformed_failure_message(), Bundle.ExternalViewerAction_actionPerformed_failure_title(), JOptionPane.ERROR_MESSAGE);
+            }
+        }
         // delete the file on exit
         tempFile.deleteOnExit();
     }

@@ -5,33 +5,60 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
+import java.util.Objects;
+
 /**
- *
- * @author smori
+ * An object that represents an association between a MIME type or extension
+ * name to a user defined executable.
  */
 class ExternalViewerRule {
-    private String name;
-    private String exePath;
-    
+
+    private final String name;
+    private final String exePath;
+
+    /**
+     * Creates a new ExternalViewerRule
+     *
+     * @param name MIME type or extension
+     * @param exePath Absolute path of the exe file
+     */
     ExternalViewerRule(String name, String exePath) {
         this.name = name;
         this.exePath = exePath;
     }
-    
+
     String getName() {
         return name;
     }
-    
+
     String getExePath() {
         return exePath;
     }
-    
-    void editName(String newName) {
-        name = newName;
+
+    @Override
+    public String toString() {
+        return name;
     }
-    
-    void editExePath(String newExePath) {
-        exePath = newExePath;
+
+    /**
+     * Only one association is allowed per MIME type or extension, so rules are
+     * equal if the names are the same.
+     */
+    @Override
+    public boolean equals(Object other) {
+        if (other != null && other instanceof ExternalViewerRule) {
+            ExternalViewerRule that = (ExternalViewerRule) other;
+            if (this.getName().equals(that.getName())) {
+                return true;
+            }
+        }
+        return false;
     }
-    
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 67 * hash + Objects.hashCode(this.name);
+        return hash;
+    }
 }
