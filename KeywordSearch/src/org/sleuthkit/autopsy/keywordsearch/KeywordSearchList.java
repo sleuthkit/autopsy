@@ -122,7 +122,7 @@ abstract class KeywordSearchList {
 
         //CCN
         List<Keyword> ccns = new ArrayList<>();
-        ccns.add(new Keyword(CCN_REGEX, false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER));
+        ccns.add(new Keyword(CCN_REGEX, false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CREDIT_CARD_NUMBER));
         lockedLists.add("Credit Card Numbers");
         addList("Credit Card Numbers", ccns, true, false, true);
     }
