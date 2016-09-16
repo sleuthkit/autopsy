@@ -58,7 +58,6 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.NodeOp;
 import org.openide.nodes.Sheet;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -916,14 +915,10 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
     public class BINNode extends DisplayableItemNode implements Observer {
 
         private final BinResult bin;
-        private final AccountFactory accountFactory;
 
         private BINNode(BinResult bin) {
-            super(Children.LEAF);
+            super(Children.create(new AccountFactory(bin), true));
             this.bin = bin;
-
-            accountFactory = new AccountFactory(bin);
-            setChildren(Children.create(accountFactory, true));
             setName(getBinRangeString());
             updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/bank.png");   //NON-NLS
@@ -1082,7 +1077,6 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
     @Immutable
     static private class BinResult implements IINInfo {
 
-
         /**
          * The number of accounts with this BIN
          */
@@ -1226,11 +1220,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         private AccountArtifactNode(BlackboardArtifact artifact) {
             super(artifact, "org/sleuthkit/autopsy/images/credit-card.png");   //NON-NLS
             this.artifact = artifact;
-            try {
-                setName(this.artifact.getAttribute(ACCOUNT_NUMBER_TYPE).getValueString() + "_" + this.artifact.getArtifactID());
-            } catch (TskCoreException ex) {
-                Exceptions.printStackTrace(ex);
-            }
+            setName("" + this.artifact.getArtifactID());
         }
 
         @Override
@@ -1324,16 +1314,21 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                             ? siblings.get(indexOf + 1) //select the next element
                             : siblings.get(indexOf - 1);//else select the previous element
                     String nodeToSelectName = sibling.getName();
-
                     Accounts.this.update();
 
                     if (showRejected == false && siblings.size() > 1) {
                         SwingUtilities.invokeLater(() -> {
                             final DirectoryTreeTopComponent directoryTree = DirectoryTreeTopComponent.findInstance();
                             final DataResultTopComponent directoryListing = directoryTree.getDirectoryListing();
+                            final Node rootNode = directoryListing.getRootNode();
 
-                            Node findChild = NodeOp.findChild(directoryListing.getRootNode(), nodeToSelectName);
-                            directoryListing.getExplorerManager().setExploredContext(findChild.getParentNode(), new Node[]{findChild});
+                            Node child = NodeOp.findChild(rootNode, nodeToSelectName);
+
+                            if (child.getParentNode() == rootNode) {
+                                directoryListing.setSelectedNodes(new Node[]{child});
+                            } else {
+                                directoryListing.getExplorerManager().setExploredContext(child.getParentNode(), new Node[]{child});
+                            }
                         });
                     }
                 }
