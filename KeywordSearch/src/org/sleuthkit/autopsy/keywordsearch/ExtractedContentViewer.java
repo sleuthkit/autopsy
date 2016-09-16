@@ -188,7 +188,7 @@ public class ExtractedContentViewer implements DataContentViewer {
              * For keyword hit artifacts, add the text of the artifact that hit,
              * not the hit artifact; otherwise add the text for the artifact.
              */
-            if (artifact.getArtifactTypeID() == TSK_KEYWORD_HIT.getTypeID()) {
+            if (artifact.getArtifactTypeID() == TSK_KEYWORD_HIT.getTypeID() || artifact.getArtifactTypeID() == TSK_CREDIT_CARD_ACCOUNT.getTypeID()) {
                 try {
                     BlackboardAttribute attribute = artifact.getAttribute(TSK_ASSOCIATED_ARTIFACT_TYPE);
                     if (attribute != null) {
