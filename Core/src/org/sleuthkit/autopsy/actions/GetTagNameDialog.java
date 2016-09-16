@@ -98,7 +98,7 @@ public class GetTagNameDialog extends JDialog {
         TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
         List<TagName> currentTagNames = null;
         try {
-            currentTagNames = tagsManager.getAllTagNames();
+            currentTagNames = tagsManager.getAllTagNamesForDisplay();
         } catch (TskCoreException ex) {
             Logger.getLogger(GetTagNameDialog.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
         }
@@ -120,17 +120,6 @@ public class GetTagNameDialog extends JDialog {
         // Center and show the dialog box. 
         this.setLocationRelativeTo(owner);
         setVisible(true);
-    }
-
-    private boolean containsIllegalCharacters(String content) {
-        return (content.contains("\\")
-                || content.contains(":")
-                || content.contains("*")
-                || content.contains("?")
-                || content.contains("\"")
-                || content.contains("<")
-                || content.contains(">")
-                || content.contains("|"));
     }
 
     private class TagsTableModel extends AbstractTableModel {
@@ -305,7 +294,7 @@ public class GetTagNameDialog extends JDialog {
                             "GetTagNameDialog.mustSupplyTtagName.msg"),
                     NbBundle.getMessage(this.getClass(), "GetTagNameDialog.tagNameErr"),
                     JOptionPane.ERROR_MESSAGE);
-        } else if (containsIllegalCharacters(tagDisplayName)) {
+        } else if (TagsManager.containsIllegalCharacters(tagDisplayName)) {
             JOptionPane.showMessageDialog(null,
                     NbBundle.getMessage(this.getClass(), "GetTagNameDialog.illegalChars.msg"),
                     NbBundle.getMessage(this.getClass(), "GetTagNameDialog.illegalCharsErr"),
