@@ -81,6 +81,11 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
     final public static String NAME = Bundle.AccountsRootNode_name();
 
     /**
+     * This is a secret handshake with
+     * org.sleuthkit.autopsy.keywordsearch.TermComponentQuery
+     */
+    private static final String CREDIT_CARD_NUMBER_ACCOUNT_TYPE = "Credit Card Number";
+    /**
      * Range Map from a (ranges of) B/IINs to data model object with details of
      * the B/IIN, ie, bank name, phone, url, visa/amex/mastercard/...,
      */
@@ -771,7 +776,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                     + "                                AND solr_attribute.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SOLR_DOCUMENT_ID.getTypeID() //NON-NLS
                     + " LEFT JOIN blackboard_attributes as account_type ON blackboard_artifacts.artifact_id = account_type.artifact_id " //NON-NLS
                     + "                                AND account_type.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID() //NON-NLS
-                    + "                                AND account_type.value_text = 'credit_card'" //NON-NLS
+                    + "                                AND account_type.value_text = '" + CREDIT_CARD_NUMBER_ACCOUNT_TYPE + "'" //NON-NLS
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
                     + getRejectedArtifactFilterClause()
                     + " GROUP BY blackboard_artifacts.obj_id, solr_document_id " //NON-NLS
