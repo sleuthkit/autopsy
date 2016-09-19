@@ -331,11 +331,12 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             long cTime = attach.getcTime();
             String relPath = attach.getLocalPath();
             long size = attach.getSize();
+            TskData.EncodingType encodingType = attach.getEncodingType();
 
             try {
                 DerivedFile df = fileManager.addDerivedFile(filename, relPath,
                         size, cTime, crTime, aTime, mTime, true, abstractFile, "",
-                        EmailParserModuleFactory.getModuleName(), EmailParserModuleFactory.getModuleVersion(), "");
+                        EmailParserModuleFactory.getModuleName(), EmailParserModuleFactory.getModuleVersion(), "", encodingType);
                 files.add(df);
             } catch (TskCoreException ex) {
                 postErrorMessage(
