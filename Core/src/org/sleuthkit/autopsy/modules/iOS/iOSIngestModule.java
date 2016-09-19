@@ -44,7 +44,7 @@ class iOSIngestModule implements DataSourceIngestModule {
     @Override
     public IngestModule.ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         ContactAnalyzer FindContacts = new ContactAnalyzer();
-        FindContacts.findContacts();
+        FindContacts.findContacts(context);
         return IngestModule.ProcessResult.OK;
     }
 }

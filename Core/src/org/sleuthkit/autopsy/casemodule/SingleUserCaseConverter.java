@@ -26,6 +26,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
@@ -39,6 +40,7 @@ import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Import a case from single-user to multi-user.
@@ -489,9 +491,18 @@ public class SingleUserCaseConverter {
                 if (value > biggestPK) {
                     biggestPK = value;
                 }
-                outputStatement.executeUpdate("INSERT INTO tsk_files_path (obj_id, path) VALUES (" //NON-NLS
+                
+                // If the entry contains an encoding type, copy it. Otherwise use NONE.
+                // The test on column count can be removed if we upgrade the database before conversion.
+                int encoding = TskData.EncodingType.NONE.getType();
+                ResultSetMetaData rsMetaData = inputResultSet.getMetaData();
+                if(rsMetaData.getColumnCount() == 3){
+                    encoding = inputResultSet.getInt(3);
+                }
+                outputStatement.executeUpdate("INSERT INTO tsk_files_path (obj_id, path, encoding_type) VALUES (" //NON-NLS
                         + value + ", '"
-                        + SleuthkitCase.escapeSingleQuotes(inputResultSet.getString(2)) + "')"); //NON-NLS
+                        + SleuthkitCase.escapeSingleQuotes(inputResultSet.getString(2)) + "', "
+                        + encoding + ")"); //NON-NLS
             } catch (SQLException ex) {
                 if (ex.getErrorCode() != 0) { // 0 if the entry already exists
                     throw new SQLException(ex);

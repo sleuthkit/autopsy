@@ -46,7 +46,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.timeline.Timeline")
 @ActionRegistration(displayName = "#CTL_MakeTimeline", lazy = false)
 @ActionReferences(value = {
-    @ActionReference(path = "Menu/Tools", position = 100),
+    @ActionReference(path = "Menu/Tools", position = 102),
     @ActionReference(path = "Toolbars/Case", position = 102)})
 public final class OpenTimelineAction extends CallableSystemAction implements Presenter.Toolbar {
 
