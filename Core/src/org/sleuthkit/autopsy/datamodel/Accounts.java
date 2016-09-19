@@ -52,10 +52,12 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -64,7 +66,6 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -77,10 +78,15 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class Accounts extends Observable implements AutopsyVisitableItem {
 
     private static final Logger LOGGER = Logger.getLogger(Accounts.class.getName());
-    private static final BlackboardArtifact.Type CREDIT_CARD_ACCOUNT_TYPE = new BlackboardArtifact.Type(TSK_CREDIT_CARD_ACCOUNT);
+    private static final BlackboardArtifact.Type ACCOUNT_TYPE = new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT);
     @NbBundle.Messages("AccountsRootNode.name=Accounts")
     final public static String NAME = Bundle.AccountsRootNode_name();
 
+    /**
+     * This is a secret handshake with
+     * org.sleuthkit.autopsy.keywordsearch.TermComponentQuery
+     */
+    private static final String CREDIT_CARD_NUMBER_ACCOUNT_TYPE = "Credit Card Number";
     /**
      * Range Map from a (ranges of) B/IINs to data model object with details of
      * the B/IIN, ie, bank name, phone, url, visa/amex/mastercard/...,
@@ -182,7 +188,6 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         setChanged();
         notifyObservers();
     }
-
 
     /**
      * Get an IINInfo object with details about the given IIN
@@ -487,7 +492,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                          * for the event to have a null oldValue.
                          */
                         ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
-                        if (null != eventData && CREDIT_CARD_ACCOUNT_TYPE.equals(eventData.getBlackboardArtifactType())) {
+                        if (null != eventData && ACCOUNT_TYPE.equals(eventData.getBlackboardArtifactType())) {
                             Accounts.this.update();
                         }
                     } catch (IllegalStateException notUsed) {
@@ -518,15 +523,32 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         };
 
         @Override
-        @NbBundle.Messages({"Accounts.AccountTypeFactory.accountType.creditCards=Credit Card Numbers"})
+
         protected boolean createKeys(List<String> list) {
-            list.add(Bundle.Accounts_AccountTypeFactory_accountType_creditCards());
+
+            try (SleuthkitCase.CaseDbQuery executeQuery = skCase.executeQuery(
+                    "SELECT DISTINCT blackboard_attributes.value_text as account_type "
+                    + " FROM blackboard_attributes "
+                    + " WHERE blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID());
+                    ResultSet resultSet = executeQuery.getResultSet()) {
+                while (resultSet.next()) {
+                    list.add(resultSet.getString("account_type"));
+                }
+            } catch (TskCoreException | SQLException ex) {
+                Exceptions.printStackTrace(ex);
+                return false;
+            }
             return true;
         }
 
         @Override
         protected Node createNodeForKey(String key) {
-            return new AccountTypeNode(key);
+            if (key.equals(CREDIT_CARD_NUMBER_ACCOUNT_TYPE)) {
+                return new CreditCardNumberAccountTypeNode(key);
+            } else {
+                //Flesh out what happens with other account types here.
+                return new AbstractNode(Children.LEAF);
+            }
         }
 
         @Override
@@ -552,9 +574,9 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
      *
      * NOTE: currently hard coded to work for Credit Card only
      */
-    public class AccountTypeNode extends DisplayableItemNode {
+    public class CreditCardNumberAccountTypeNode extends DisplayableItemNode {
 
-        private AccountTypeNode(String accountTypeName) {
+        private CreditCardNumberAccountTypeNode(String accountTypeName) {
             super(Children.create(new ViewModeFactory(), true));
             super.setName(accountTypeName);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/credit-cards.png");   //NON-NLS
@@ -764,14 +786,17 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         protected boolean createKeys(List<FileWithCCN> list) {
             String query
                     = "SELECT blackboard_artifacts.obj_id," //NON-NLS
-                    + "      blackboard_attributes.value_text AS solr_document_id, " //NON-NLS
+                    + "      solr_attribute.value_text AS solr_document_id, " //NON-NLS
                     + "      GROUP_CONCAT(blackboard_artifacts.artifact_id) AS artifact_IDs, " //NON-NLS
                     + "      COUNT( blackboard_artifacts.artifact_id) AS hits,  " //NON-NLS
                     + "      GROUP_CONCAT(blackboard_artifacts.review_status_id) AS review_status_ids "
                     + " FROM blackboard_artifacts " //NON-NLS
-                    + " LEFT JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id " //NON-NLS
-                    + "                                AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SOLR_DOCUMENT_ID.getTypeID() //NON-NLS
-                    + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT.getTypeID() //NON-NLS
+                    + " LEFT JOIN blackboard_attributes as solr_attribute ON blackboard_artifacts.artifact_id = solr_attribute.artifact_id " //NON-NLS
+                    + "                                AND solr_attribute.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SOLR_DOCUMENT_ID.getTypeID() //NON-NLS
+                    + " LEFT JOIN blackboard_attributes as account_type ON blackboard_artifacts.artifact_id = account_type.artifact_id " //NON-NLS
+                    + "                                AND account_type.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID() //NON-NLS
+                    + "                                AND account_type.value_text = '" + CREDIT_CARD_NUMBER_ACCOUNT_TYPE + "'" //NON-NLS
+                    + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
                     + getRejectedArtifactFilterClause()
                     + " GROUP BY blackboard_artifacts.obj_id, solr_document_id " //NON-NLS
                     + " ORDER BY hits DESC ";  //NON-NLS
@@ -910,13 +935,13 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
     public class BINNode extends DisplayableItemNode implements Observer {
 
         private final BinResult bin;
-        private final AccountFactory accountFactory;
+        private final CreditCardNumberFactory accountFactory;
 
         private BINNode(BinResult bin) {
             super(Children.LEAF);
             this.bin = bin;
 
-            accountFactory = new AccountFactory(bin);
+            accountFactory = new CreditCardNumberFactory(bin);
             setChildren(Children.create(accountFactory, true));
             setName(bin.toString());
             updateDisplayName();
@@ -1030,8 +1055,8 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                     + "     COUNT(blackboard_artifacts.artifact_id) AS count " //NON-NLS
                     + " FROM blackboard_artifacts " //NON-NLS
                     + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id" //NON-NLS
-                    + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT.getTypeID() //NON-NLS
-                    + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER.getTypeID() //NON-NLS
+                    + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
+                    + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CREDIT_CARD_NUMBER.getTypeID() //NON-NLS
                     + getRejectedArtifactFilterClause()
                     + " GROUP BY BIN " //NON-NLS
                     + " ORDER BY BIN "; //NON-NLS
@@ -1107,7 +1132,6 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             return iinEnd;
         }
 
-
         public long getCount() {
             return count;
         }
@@ -1165,11 +1189,11 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
     /**
      * Creates the nodes for the accounts of a given type
      */
-    private class AccountFactory extends ObservingChildFactory<Long> {
+    private class CreditCardNumberFactory extends ObservingChildFactory<Long> {
 
         private final BinResult bin;
 
-        private AccountFactory(BinResult bin) {
+        private CreditCardNumberFactory(BinResult bin) {
             this.bin = bin;
         }
 
@@ -1180,8 +1204,8 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                     = "SELECT blackboard_artifacts.artifact_id " //NON-NLS
                     + " FROM blackboard_artifacts " //NON-NLS
                     + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id " //NON-NLS
-                    + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT.getTypeID() //NON-NLS
-                    + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER.getTypeID() //NON-NLS
+                    + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
+                    + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CREDIT_CARD_NUMBER.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.value_text >= \"" + bin.getIINStart() + "\" AND  blackboard_attributes.value_text < \"" + (bin.getIINEnd() + 1) + "\"" //NON-NLS
                     + getRejectedArtifactFilterClause()
                     + " ORDER BY blackboard_attributes.value_text"; //NON-NLS

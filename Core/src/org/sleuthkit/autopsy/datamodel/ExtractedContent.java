@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT;
@@ -201,7 +201,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
             doNotShow.add(new BlackboardArtifact.Type(TSK_KEYWORD_HIT));
             doNotShow.add(new BlackboardArtifact.Type(TSK_INTERESTING_FILE_HIT));
             doNotShow.add(new BlackboardArtifact.Type(TSK_INTERESTING_ARTIFACT_HIT));
-            doNotShow.add(new BlackboardArtifact.Type(TSK_CREDIT_CARD_ACCOUNT));
+            doNotShow.add(new BlackboardArtifact.Type(TSK_ACCOUNT));
         }
 
         private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {

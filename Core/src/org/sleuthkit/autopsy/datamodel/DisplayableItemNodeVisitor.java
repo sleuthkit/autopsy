@@ -127,7 +127,7 @@ public interface DisplayableItemNodeVisitor<T> {
      */
     T visit(Accounts.AccountsRootNode accountRootNode);
 
-    T visit(Accounts.AccountTypeNode accountTypeNode);
+    T visit(Accounts.CreditCardNumberAccountTypeNode accountTypeNode);
 
     T visit(Accounts.ByBINNode byArtifactNode);
 
@@ -350,7 +350,7 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(Accounts.AccountTypeNode node) {
+        public T visit(Accounts.CreditCardNumberAccountTypeNode node) {
             return defaultVisit(node);
         }
 
