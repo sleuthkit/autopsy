@@ -52,10 +52,12 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -521,15 +523,32 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         };
 
         @Override
-        @NbBundle.Messages({"Accounts.AccountTypeFactory.accountType.creditCards=Credit Card Numbers"})
+
         protected boolean createKeys(List<String> list) {
-            list.add(Bundle.Accounts_AccountTypeFactory_accountType_creditCards());
+
+            try (SleuthkitCase.CaseDbQuery executeQuery = skCase.executeQuery(
+                    "SELECT DISTINCT blackboard_attributes.value_text as account_type "
+                    + " FROM blackboard_attributes "
+                    + " WHERE blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID());
+                    ResultSet resultSet = executeQuery.getResultSet()) {
+                while (resultSet.next()) {
+                    list.add(resultSet.getString("account_type"));
+                }
+            } catch (TskCoreException | SQLException ex) {
+                Exceptions.printStackTrace(ex);
+                return false;
+            }
             return true;
         }
 
         @Override
         protected Node createNodeForKey(String key) {
-            return new AccountTypeNode(key);
+            if (key.equals(CREDIT_CARD_NUMBER_ACCOUNT_TYPE)) {
+                return new CreditCardNumberAccountTypeNode(key);
+            } else {
+                //Flesh out what happens with other account types here.
+                return new AbstractNode(Children.LEAF);
+            }
         }
 
         @Override
@@ -555,9 +574,9 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
      *
      * NOTE: currently hard coded to work for Credit Card only
      */
-    public class AccountTypeNode extends DisplayableItemNode {
+    public class CreditCardNumberAccountTypeNode extends DisplayableItemNode {
 
-        private AccountTypeNode(String accountTypeName) {
+        private CreditCardNumberAccountTypeNode(String accountTypeName) {
             super(Children.create(new ViewModeFactory(), true));
             super.setName(accountTypeName);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/credit-cards.png");   //NON-NLS
@@ -916,13 +935,13 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
     public class BINNode extends DisplayableItemNode implements Observer {
 
         private final BinResult bin;
-        private final AccountFactory accountFactory;
+        private final CreditCardNumberFactory accountFactory;
 
         private BINNode(BinResult bin) {
             super(Children.LEAF);
             this.bin = bin;
 
-            accountFactory = new AccountFactory(bin);
+            accountFactory = new CreditCardNumberFactory(bin);
             setChildren(Children.create(accountFactory, true));
             setName(bin.toString());
             updateDisplayName();
@@ -1170,11 +1189,11 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
     /**
      * Creates the nodes for the accounts of a given type
      */
-    private class AccountFactory extends ObservingChildFactory<Long> {
+    private class CreditCardNumberFactory extends ObservingChildFactory<Long> {
 
         private final BinResult bin;
 
-        private AccountFactory(BinResult bin) {
+        private CreditCardNumberFactory(BinResult bin) {
             this.bin = bin;
         }
 
