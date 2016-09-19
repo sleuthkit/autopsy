@@ -33,6 +33,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
@@ -43,6 +44,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.Type;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -152,52 +154,68 @@ class TableReportGenerator {
                 continue;
             }
 
-            /*
-                 Gets all of the attribute types of this artifact type by adding
-                 all of the types to a set
-             */
-            Set<BlackboardAttribute.Type> attrTypeSet = new TreeSet<>((BlackboardAttribute.Type o1, BlackboardAttribute.Type o2) -> o1.getDisplayName().compareTo(o2.getDisplayName()));
-            for (ArtifactData data : artifactList) {
-                List<BlackboardAttribute> attributes = data.getAttributes();
-                for (BlackboardAttribute attribute : attributes) {
-                    attrTypeSet.add(attribute.getAttributeType());
+            if (type.getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
+                Map<String, List<ArtifactData>> collect = artifactList.stream().collect(Collectors.groupingBy((ArtifactData t) -> {
+                    try {
+                        return t.getArtifact().getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE)).getValueString();
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.SEVERE, "Unable to get value of TSK_ACCOUNT_TYPE attribute.", ex);
+                        return "";
+                    }
+                }));
+                for (Map.Entry<String, List<ArtifactData>> x : collect.entrySet()) {
+                    writeDataType(x.getValue(), type, BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getDisplayName() + ": " + x.getKey(), comment);
                 }
+            } else {
+                writeDataType(artifactList, type, type.getDisplayName(), comment);
             }
-            // Get the columns appropriate for the artifact type. This is
-            // used to get the data that will be in the cells below based on
-            // type, and display the column headers.
-            List<Column> columns = getArtifactTableColumns(type.getTypeID(), attrTypeSet);
-            if (columns.isEmpty()) {
-                continue;
-            }
-            columnHeaderMap.put(type.getTypeID(), columns);
-
-            // The artifact list is sorted now, as getting the row data is 
-            // dependent on having the columns, which is necessary for 
-            // sorting.
-            Collections.sort(artifactList);
-            List<String> columnHeaderNames = new ArrayList<>();
-            for (Column currColumn : columns) {
-                columnHeaderNames.add(currColumn.getColumnHeader());
-            }
-
-            tableReport.startDataType(type.getDisplayName(), comment.toString());
-            tableReport.startTable(columnHeaderNames);
-            for (ArtifactData artifactData : artifactList) {
-                // Get the row data for this artifact, and has the 
-                // module add it.
-                List<String> rowData = artifactData.getRow();
-                if (rowData.isEmpty()) {
-                    continue;
-                }
-
-                tableReport.addRow(rowData);
-            }
-            // Finish up this data type
-            progressPanel.increment();
-            tableReport.endTable();
-            tableReport.endDataType();
         }
+    }
+
+    private void writeDataType(List<ArtifactData> artifactList, BlackboardArtifact.Type type, String dataType, StringBuilder comment) {
+        /*
+         * Gets all of the attribute types of this artifact type by adding all
+         * of the types to a set
+         */
+        Set<BlackboardAttribute.Type> attrTypeSet = new TreeSet<>((BlackboardAttribute.Type o1, BlackboardAttribute.Type o2) -> o1.getDisplayName().compareTo(o2.getDisplayName()));
+        for (ArtifactData data : artifactList) {
+            List<BlackboardAttribute> attributes = data.getAttributes();
+            for (BlackboardAttribute attribute : attributes) {
+                attrTypeSet.add(attribute.getAttributeType());
+            }
+        }
+        // Get the columns appropriate for the artifact type. This is
+        // used to get the data that will be in the cells below based on
+        // type, and display the column headers.
+        List<Column> columns = getArtifactTableColumns(type.getTypeID(), attrTypeSet);
+        if (columns.isEmpty()) {
+            return;
+        }
+        columnHeaderMap.put(type.getTypeID(), columns);
+        // The artifact list is sorted now, as getting the row data is
+        // dependent on having the columns, which is necessary for
+        // sorting.
+        Collections.sort(artifactList);
+        List<String> columnHeaderNames = new ArrayList<>();
+        for (Column currColumn : columns) {
+            columnHeaderNames.add(currColumn.getColumnHeader());
+        }
+        tableReport.startDataType(dataType, comment.toString());
+        tableReport.startTable(columnHeaderNames);
+        for (ArtifactData artifactData : artifactList) {
+            // Get the row data for this artifact, and has the
+            // module add it.
+            List<String> rowData = artifactData.getRow();
+            if (rowData.isEmpty()) {
+                return;
+            }
+
+            tableReport.addRow(rowData);
+        }
+        // Finish up this data type
+        progressPanel.increment();
+        tableReport.endTable();
+        tableReport.endDataType();
     }
 
     /**
@@ -1451,6 +1469,7 @@ class TableReportGenerator {
                     new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_REMOTE_PATH)));
         } else if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
             columns.add(new StatusColumn());
+            attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE));
         } else {
             // This is the case that it is a custom type. The reason an else is 
             // necessary is to make sure that the source file column is added
@@ -1584,6 +1603,7 @@ class TableReportGenerator {
         }
 
     }
+
     private class AttributeColumn implements Column {
 
         private final String columnHeader;
@@ -1643,10 +1663,10 @@ class TableReportGenerator {
         @Override
         public String getCellData(ArtifactData artData) {
             return getFileUniquePath(artData.getContent());
-            /*else if (this.columnHeader.equals(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tags"))) {
-             return makeCommaSeparatedList(artData.getTags());
-             }
-             return "";*/
+            /* else if
+             * (this.columnHeader.equals(NbBundle.getMessage(this.getClass(),
+             * "ReportGenerator.artTableColHdr.tags"))) { return
+             * makeCommaSeparatedList(artData.getTags()); } return ""; */
         }
 
         @Override
