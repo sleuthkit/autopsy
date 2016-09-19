@@ -497,7 +497,7 @@ public class DataResultFilterNode extends FilterNode {
         }
 
         @Override
-        public AbstractAction visit(Accounts.AccountTypeNode node) {
+        public AbstractAction visit(Accounts.CreditCardNumberAccountTypeNode node) {
             return openChild(node);
         }
 
