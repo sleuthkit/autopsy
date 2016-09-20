@@ -1,4 +1,4 @@
- /*
+/*
  *
  * Autopsy Forensic Browser
  * 
@@ -722,8 +722,7 @@ class ReportHTML implements TableReportModule {
      */
     public String saveContent(AbstractFile file, String dirName) {
         // clean up the dir name passed in
-        String dirName2 = dirName.replace("/", "_");
-        dirName2 = dirName2.replace("\\", "_");
+        String dirName2 = org.sleuthkit.autopsy.coreutils.FileUtil.escapeFileName(dirName);
 
         // Make a folder for the local file with the same tagName as the tag.
         StringBuilder localFilePath = new StringBuilder();  // full path
@@ -843,13 +842,13 @@ class ReportHTML implements TableReportModule {
             StringBuilder index = new StringBuilder();
             final String reportTitle = reportBranding.getReportTitle();
             String iconPath = reportBranding.getAgencyLogoPath();
-            if (iconPath == null){
+            if (iconPath == null) {
                 // use default Autopsy icon if custom icon is not set
                 iconPath = "favicon.ico";
             }
             index.append("<head>\n<title>").append(reportTitle).append(" ").append(
                     NbBundle.getMessage(this.getClass(), "ReportHTML.writeIndex.title", currentCase.getName())).append(
-                            "</title>\n"); //NON-NLS
+                    "</title>\n"); //NON-NLS
             index.append("<link rel=\"icon\" type=\"image/ico\" href=\"")
                     .append(iconPath).append("\" />\n"); //NON-NLS
             index.append("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n"); //NON-NLS
@@ -1048,10 +1047,10 @@ class ReportHTML implements TableReportModule {
                     .append("</td><td>").append(caseName).append("</td></tr>\n"); //NON-NLS NON-NLS
             summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.caseNum")) //NON-NLS
                     .append("</td><td>").append(!caseNumber.isEmpty() ? caseNumber : NbBundle //NON-NLS
-                                    .getMessage(this.getClass(), "ReportHTML.writeSum.noCaseNum")).append("</td></tr>\n"); //NON-NLS
+                    .getMessage(this.getClass(), "ReportHTML.writeSum.noCaseNum")).append("</td></tr>\n"); //NON-NLS
             summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.examiner")).append("</td><td>") //NON-NLS
                     .append(!examiner.isEmpty() ? examiner : NbBundle
-                                    .getMessage(this.getClass(), "ReportHTML.writeSum.noExaminer"))
+                            .getMessage(this.getClass(), "ReportHTML.writeSum.noExaminer"))
                     .append("</td></tr>\n"); //NON-NLS
             summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.numImages")) //NON-NLS
                     .append("</td><td>").append(imagecount).append("</td></tr>\n"); //NON-NLS

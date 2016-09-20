@@ -171,7 +171,7 @@ public class STIXReportModule implements GeneralReportModule {
                 }
                 try {
                     processFile(file.getAbsolutePath(), progressPanel, output);
-                } catch (TskCoreException ex) {
+                } catch (TskCoreException | JAXBException ex) {
                     logger.log(Level.SEVERE, String.format("Unable to process STIX file %s", file), ex); //NON-NLS
                     MessageNotifyUtil.Notify.show("STIXReportModule", //NON-NLS
                             ex.getLocalizedMessage(),
@@ -213,10 +213,11 @@ public class STIXReportModule implements GeneralReportModule {
      * @param stixFile      - Name of the file
      * @param progressPanel - Progress panel (for updating)
      *
+     * @throws JAXBException
      * @throws TskCoreException
      */
     private void processFile(String stixFile, ReportProgressPanel progressPanel, BufferedWriter output) throws
-            TskCoreException {
+            JAXBException, TskCoreException {
 
         // Load the STIX file
         STIXPackage stix;
@@ -244,23 +245,18 @@ public class STIXReportModule implements GeneralReportModule {
      *
      * @return Unmarshalled file contents
      *
-     * @throws TskCoreException
+     * @throws JAXBException
      */
-    private STIXPackage loadSTIXFile(String stixFileName) throws TskCoreException {
-        try {
-            // Create STIXPackage object from xml.
-            File file = new File(stixFileName);
-            JAXBContext jaxbContext = JAXBContext.newInstance("org.mitre.stix.stix_1:org.mitre.stix.common_1:org.mitre.stix.indicator_2:" //NON-NLS
-                    + "org.mitre.cybox.objects:org.mitre.cybox.cybox_2:org.mitre.cybox.common_2"); //NON-NLS
-            Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-            STIXPackage stix = (STIXPackage) jaxbUnmarshaller.unmarshal(file);
-            return stix;
-        } catch (JAXBException ex) {
-            logger.log(Level.SEVERE, String.format("Unable to load STIX file %s", stixFileName), ex.getLocalizedMessage()); //NON-NLS
-            throw new TskCoreException("Error loading STIX file (" + ex.toString() + ")"); //NON-NLS
-        }
+    private STIXPackage loadSTIXFile(String stixFileName) throws JAXBException {
+        // Create STIXPackage object from xml.
+        File file = new File(stixFileName);
+        JAXBContext jaxbContext = JAXBContext.newInstance("org.mitre.stix.stix_1:org.mitre.stix.common_1:org.mitre.stix.indicator_2:" //NON-NLS
+                + "org.mitre.cybox.objects:org.mitre.cybox.cybox_2:org.mitre.cybox.common_2"); //NON-NLS
+        Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+        STIXPackage stix = (STIXPackage) jaxbUnmarshaller.unmarshal(file);
+        return stix;
     }
-
+    
     /**
      * Do the initial processing of the list of observables. For each
      * observable, save it in a map using the ID as key.
