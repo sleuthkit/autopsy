@@ -24,14 +24,12 @@ import com.google.common.collect.TreeRangeMap;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -49,7 +47,6 @@ import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.Immutable;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.SwingUtilities;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -57,15 +54,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.openide.nodes.NodeOp;
 import org.openide.nodes.Sheet;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
+import org.openide.util.Utilities;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -162,6 +156,9 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         }
     }
 
+    private final RejectAccounts rejectActionInstance;
+    private final ApproveAccounts approveActionInstance;
+
     /**
      * Constructor
      *
@@ -169,6 +166,9 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
      */
     Accounts(SleuthkitCase skCase) {
         this.skCase = skCase;
+
+        this.rejectActionInstance = new RejectAccounts();
+        this.approveActionInstance = new ApproveAccounts();
     }
 
     /**
@@ -895,9 +895,6 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             return s;
         }
 
-        @NbBundle.Messages({
-            "ApproveAccountsAction.name=Approve Accounts",
-            "RejectAccountsAction.name=Reject Accounts"})
         @Override
         public Action[] getActions(boolean context) {
             Action[] actions = super.getActions(context);
@@ -908,8 +905,10 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Error gettung content by id", ex);
             }
-            arrayList.add(new ApproveAccounts(getLookup().lookupAll(BlackboardArtifact.class)));
-            arrayList.add(new RejectAccounts(getLookup().lookupAll(BlackboardArtifact.class), this));
+
+            arrayList.add(approveActionInstance);
+            arrayList.add(rejectActionInstance);
+
             return arrayList.toArray(new Action[arrayList.size()]);
         }
     }
@@ -1229,8 +1228,10 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         public Action[] getActions(boolean context) {
             List<Action> actionsList = new ArrayList<>();
             actionsList.addAll(Arrays.asList(super.getActions(context)));
-            actionsList.add(new ApproveAccounts(Collections.singleton(artifact)));
-            actionsList.add(new RejectAccounts(Collections.singleton(artifact), this));
+
+            actionsList.add(approveActionInstance);
+            actionsList.add(rejectActionInstance);
+
             return actionsList.toArray(new Action[actionsList.size()]);
         }
 
@@ -1261,84 +1262,81 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         @Override
         public void actionPerformed(ActionEvent e) {
             showRejected = !showRejected;
-            update();
+            Accounts.this.update();
         }
     }
 
-    private class ApproveAccounts extends AbstractAction {
+    private abstract class ReviewStatusAction extends AbstractAction {
 
-        private final Collection<? extends BlackboardArtifact> artifacts;
+        private final BlackboardArtifact.ReviewStatus newStatus;
 
-        ApproveAccounts(Collection<? extends BlackboardArtifact> artifacts) {
-            super(Bundle.ApproveAccountsAction_name());
-            this.artifacts = artifacts;
+        private ReviewStatusAction(String displayName, BlackboardArtifact.ReviewStatus newStatus) {
+            super(displayName);
+            this.newStatus = newStatus;
+
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            try {
-                for (BlackboardArtifact artifact : artifacts) {
-                    skCase.setReviewStatus(artifact, BlackboardArtifact.ReviewStatus.APPROVED);
+            Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class).forEach(artifact -> {
+                try {
+                    skCase.setReviewStatus(artifact, newStatus);
+                } catch (TskCoreException ex) {
+                    LOGGER.log(Level.SEVERE, "Error changing artifact review status.", ex); //NON-NLS
                 }
-                Accounts.this.update();
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Error approving artifacts.", ex); //NON-NLS
-            }
+            });
+            Accounts.this.update();
         }
     }
 
-    private class RejectAccounts extends AbstractAction {
+    private class ApproveAccounts extends ReviewStatusAction {
 
-        private final Collection<? extends BlackboardArtifact> artifacts;
-        private final Node target;
+        @NbBundle.Messages({"ApproveAccountsAction.name=Approve Accounts"})
+        private ApproveAccounts() {
+            super(Bundle.ApproveAccountsAction_name(), BlackboardArtifact.ReviewStatus.APPROVED);
+        }
+    }
 
-        RejectAccounts(Collection<? extends BlackboardArtifact> artifacts, Node target) {
-            super(Bundle.RejectAccountsAction_name());
-            this.artifacts = artifacts;
-            this.target = target;
+    private class RejectAccounts extends ReviewStatusAction {
+
+        @NbBundle.Messages({"RejectAccountsAction.name=Reject Accounts"})
+        private RejectAccounts() {
+            super(Bundle.RejectAccountsAction_name(), BlackboardArtifact.ReviewStatus.REJECTED);
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            try {
-                for (BlackboardArtifact artifact : artifacts) {
-                    skCase.setReviewStatus(artifact, BlackboardArtifact.ReviewStatus.REJECTED);
-                }
-
-                //find the node to select after the target is removed from the UI
-                List<Node> siblings = Arrays.asList(target.getParentNode().getChildren().getNodes());
-                if (siblings.size() <= 1) {
-                    Accounts.this.update();
-                } else {
-                    final int indexOf = siblings.indexOf(target);
-
-                    final Node sibling = indexOf < siblings.size() - 1 // if it is not the last in the list
-                            ? siblings.get(indexOf + 1) //select the next element
-                            : siblings.get(indexOf - 1);//else select the previous element
-                    String nodeToSelectName = sibling.getName();
-                    Accounts.this.update();
-
-                    if (showRejected == false && siblings.size() > 1) {
-                        SwingUtilities.invokeLater(() -> {
-                            final DirectoryTreeTopComponent directoryTree = DirectoryTreeTopComponent.findInstance();
-                            final DataResultTopComponent directoryListing = directoryTree.getDirectoryListing();
-                            final Node rootNode = directoryListing.getRootNode();
-
-                            Node child = NodeOp.findChild(rootNode, nodeToSelectName);
-
-                            try {
-                                directoryTree.getExplorerManager().setSelectedNodes(new Node[]{child.getParentNode()});
-                                directoryListing.setSelectedNodes(new Node[]{child.getParentNode()});
-                            } catch (PropertyVetoException ex) {
-                                Exceptions.printStackTrace(ex);
-                            }
-                        });
-                    }
-                }
-
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Error approving artifacts.", ex); //NON-NLS
-            }
+            super.actionPerformed(e);
+//            //find the node to select after the target is removed from the UI
+//            List<Node> siblings = Arrays.asList(target.getParentNode().getChildren().getNodes());
+//            if (siblings.size() <= 1) {
+//                Accounts.this.update();
+//            } else {
+//                final int indexOf = siblings.indexOf(target);
+//
+//                final Node sibling = indexOf < siblings.size() - 1 // if it is not the last in the list
+//                        ? siblings.get(indexOf + 1) //select the next element
+//                        : siblings.get(indexOf - 1);//else select the previous element
+//                String nodeToSelectName = sibling.getName();
+//                Accounts.this.update();
+//
+//                if (showRejected == false && siblings.size() > 1) {
+//                    SwingUtilities.invokeLater(() -> {
+//                        final DirectoryTreeTopComponent directoryTree = DirectoryTreeTopComponent.findInstance();
+//                        final DataResultTopComponent directoryListing = directoryTree.getDirectoryListing();
+//                        final Node rootNode = directoryListing.getRootNode();
+//
+//                        Node child = NodeOp.findChild(rootNode, nodeToSelectName);
+//
+//                        try {
+//                            directoryTree.getExplorerManager().setSelectedNodes(new Node[]{child.getParentNode()});
+//                            directoryListing.setSelectedNodes(new Node[]{child.getParentNode()});
+//                        } catch (PropertyVetoException ex) {
+//                            Exceptions.printStackTrace(ex);
+//                        }
+//                    });
+//                }
+//            }
         }
     }
 }
