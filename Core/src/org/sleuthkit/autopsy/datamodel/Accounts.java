@@ -30,7 +30,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -57,6 +56,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.openide.util.Utilities;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -154,6 +154,9 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         }
     }
 
+    private final RejectAccounts rejectActionInstance;
+    private final ApproveAccounts approveActionInstance;
+
     /**
      * Constructor
      *
@@ -161,6 +164,9 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
      */
     Accounts(SleuthkitCase skCase) {
         this.skCase = skCase;
+
+        this.rejectActionInstance = new RejectAccounts();
+        this.approveActionInstance = new ApproveAccounts();
     }
 
     /**
@@ -182,7 +188,6 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         setChanged();
         notifyObservers();
     }
-
 
     /**
      * Get an IINInfo object with details about the given IIN
@@ -888,9 +893,6 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             return s;
         }
 
-        @NbBundle.Messages({
-            "ApproveAccountsAction.name=Approve Accounts",
-            "RejectAccountsAction.name=Reject Accounts"})
         @Override
         public Action[] getActions(boolean context) {
             Action[] actions = super.getActions(context);
@@ -901,8 +903,8 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Error gettung content by id", ex);
             }
-            arrayList.add(new ApproveAccounts(getLookup().lookupAll(BlackboardArtifact.class)));
-            arrayList.add(new RejectAccounts(getLookup().lookupAll(BlackboardArtifact.class)));
+            arrayList.add(approveActionInstance);
+            arrayList.add(rejectActionInstance);
             return arrayList.toArray(new Action[arrayList.size()]);
         }
     }
@@ -1107,7 +1109,6 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             return iinEnd;
         }
 
-
         public long getCount() {
             return count;
         }
@@ -1226,8 +1227,8 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         public Action[] getActions(boolean context) {
             List<Action> actionsList = new ArrayList<>();
             actionsList.addAll(Arrays.asList(super.getActions(context)));
-            actionsList.add(new ApproveAccounts(Collections.singleton(artifact)));
-            actionsList.add(new RejectAccounts(Collections.singleton(artifact)));
+            actionsList.add(approveActionInstance);
+            actionsList.add(rejectActionInstance);
             return actionsList.toArray(new Action[actionsList.size()]);
         }
 
@@ -1258,52 +1259,46 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         @Override
         public void actionPerformed(ActionEvent e) {
             showRejected = !showRejected;
-            update();
+            Accounts.this.update();
         }
     }
 
-    private class ApproveAccounts extends AbstractAction {
+    private abstract class ReviewStatusAction extends AbstractAction {
 
-        private final Collection<? extends BlackboardArtifact> artifacts;
+        private final BlackboardArtifact.ReviewStatus newStatus;
 
-        ApproveAccounts(Collection<? extends BlackboardArtifact> artifacts) {
-            super(Bundle.ApproveAccountsAction_name());
-            this.artifacts = artifacts;
+        private ReviewStatusAction(String displayName, BlackboardArtifact.ReviewStatus newStatus) {
+            super(displayName);
+            this.newStatus = newStatus;
+
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            try {
-                for (BlackboardArtifact artifact : artifacts) {
-                    skCase.setReviewStatus(artifact, BlackboardArtifact.ReviewStatus.APPROVED);
+            Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class).forEach(artifact -> {
+                try {
+                    skCase.setReviewStatus(artifact, newStatus);
+                } catch (TskCoreException ex) {
+                    LOGGER.log(Level.SEVERE, "Error changing artifact review status.", ex); //NON-NLS
                 }
-                Accounts.this.update();
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Error approving artifacts.", ex); //NON-NLS
-            }
+            });
+            Accounts.this.update();
         }
     }
 
-    private class RejectAccounts extends AbstractAction {
+    private class ApproveAccounts extends ReviewStatusAction {
 
-        private final Collection<? extends BlackboardArtifact> artifacts;
-
-        RejectAccounts(Collection<? extends BlackboardArtifact> artifacts) {
-            super(Bundle.RejectAccountsAction_name());
-            this.artifacts = artifacts;
+        @NbBundle.Messages({"ApproveAccountsAction.name=Approve Accounts"})
+        private ApproveAccounts() {
+            super(Bundle.ApproveAccountsAction_name(), BlackboardArtifact.ReviewStatus.APPROVED);
         }
+    }
 
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            try {
-                for (BlackboardArtifact artifact : artifacts) {
-                    skCase.setReviewStatus(artifact, BlackboardArtifact.ReviewStatus.REJECTED);
-                }
-                Accounts.this.update();
+    private class RejectAccounts extends ReviewStatusAction {
 
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Error approving artifacts.", ex); //NON-NLS
-            }
+        @NbBundle.Messages({"RejectAccountsAction.name=Reject Accounts"})
+        private RejectAccounts() {
+            super(Bundle.RejectAccountsAction_name(), BlackboardArtifact.ReviewStatus.REJECTED);
         }
     }
 }
