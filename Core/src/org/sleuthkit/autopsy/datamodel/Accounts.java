@@ -24,6 +24,7 @@ import com.google.common.collect.TreeRangeMap;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.ResultSet;
@@ -58,6 +59,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.NodeOp;
 import org.openide.nodes.Sheet;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -1324,10 +1326,11 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
                             Node child = NodeOp.findChild(rootNode, nodeToSelectName);
 
-                            if (child.getParentNode() == rootNode) {
-                                directoryListing.setSelectedNodes(new Node[]{child});
-                            } else {
-                                directoryListing.getExplorerManager().setExploredContext(child.getParentNode(), new Node[]{child});
+                            try {
+                                directoryTree.getExplorerManager().setSelectedNodes(new Node[]{child.getParentNode()});
+                                directoryListing.setSelectedNodes(new Node[]{child.getParentNode()});
+                            } catch (PropertyVetoException ex) {
+                                Exceptions.printStackTrace(ex);
                             }
                         });
                     }
