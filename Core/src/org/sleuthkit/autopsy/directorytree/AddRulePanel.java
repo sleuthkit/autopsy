@@ -172,6 +172,7 @@ class AddRulePanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(exePathLabel, org.openide.util.NbBundle.getMessage(AddRulePanel.class, "AddRulePanel.exePathLabel.text")); // NOI18N
 
+        exePathTextField.setEditable(false);
         exePathTextField.setText(org.openide.util.NbBundle.getMessage(AddRulePanel.class, "AddRulePanel.exePathTextField.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(browseButton, org.openide.util.NbBundle.getMessage(AddRulePanel.class, "AddRulePanel.browseButton.text")); // NOI18N
