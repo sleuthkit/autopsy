@@ -634,11 +634,11 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                          * The following conditional was added to support this
                          * feature.
                          */
-//                        if(originNode instanceof DisplayableItemNode) {
-//                            dataResult.setNode(new TableFilterNode(kffn, true, ((DisplayableItemNode) originNode).getItemType()));
-//                        } else {
+                        if(originNode instanceof DisplayableItemNode) {
+                            dataResult.setNode(new TableFilterNode(kffn, true, ((DisplayableItemNode) originNode).getItemType()));
+                        } else {
                         dataResult.setNode(new TableFilterNode(kffn, true));
-//                        }
+                        }
 
                         String displayName = "";
                         Content content = originNode.getLookup().lookup(Content.class);

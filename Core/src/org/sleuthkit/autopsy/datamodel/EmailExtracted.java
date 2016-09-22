@@ -204,15 +204,10 @@ public class EmailExtracted implements AutopsyVisitableItem {
             return s;
         }
 
-        /*
-         * TODO (AUT-1849): Correct or remove peristent column reordering code
-         *
-         * Added to support this feature.
-         */
-//        @Override
-//        public String getItemType() {
-//            return "EmailExtractedRoot"; //NON-NLS
-//        }
+        @Override
+        public String getItemType() {
+            return getClass().getName();
+        }
     }
 
     /**
@@ -364,15 +359,10 @@ public class EmailExtracted implements AutopsyVisitableItem {
             updateDisplayName();
         }
 
-        /*
-         * TODO (AUT-1849): Correct or remove peristent column reordering code
-         *
-         * Added to support this feature.
-         */
-//        @Override
-//        public String getItemType() {
-//            return "EmailExtractedAccount"; //NON-NLS
-//        }
+        @Override
+        public String getItemType() {
+            return getClass().getName();
+        }
     }
 
     /**
@@ -460,15 +450,10 @@ public class EmailExtracted implements AutopsyVisitableItem {
             updateDisplayName();
         }
 
-        /*
-         * TODO (AUT-1849): Correct or remove peristent column reordering code
-         *
-         * Added to support this feature.
-         */
-//        @Override
-//        public String getItemType() {
-//            return "EmailExtractedFolder"; //NON-NLS
-//        }
+        @Override
+        public String getItemType() {
+            return getClass().getName();
+        }
     }
 
     /**

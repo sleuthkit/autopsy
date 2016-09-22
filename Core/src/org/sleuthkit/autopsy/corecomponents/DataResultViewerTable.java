@@ -30,10 +30,15 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 import javax.swing.Action;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.TableColumnModelEvent;
+import javax.swing.event.TableColumnModelListener;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.view.OutlineView;
@@ -48,7 +53,10 @@ import org.openide.nodes.NodeMemberEvent;
 import org.openide.nodes.NodeReorderEvent;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.openide.util.NbPreferences;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * DataResult sortable table viewer
@@ -60,6 +68,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 public class DataResultViewerTable extends AbstractDataResultViewer {
 
     private String firstColumnLabel = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.firstColLbl");
+    // This is a set because we add properties of up to 100 child nodes, and we want unique properties
     private Set<Property<?>> propertiesAcc = new LinkedHashSet<>();
     private final DummyNodeListener dummyNodeListener = new DummyNodeListener();
     private static final String DUMMY_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.dummyNodeDisplayName");
@@ -99,29 +108,32 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          *
          * The following lines of code were added for this feature.
          */
-//        ov.getOutline().getColumnModel().addColumnModelListener(new TableColumnModelListener() {
-//            @Override
-//            public void columnAdded(TableColumnModelEvent e) {}
-//            @Override
-//            public void columnRemoved(TableColumnModelEvent e) {}
-//            @Override
-//            public void columnMarginChanged(ChangeEvent e) {}
-//            @Override
-//            public void columnSelectionChanged(ListSelectionEvent e) {}
-//
-//            @Override
-//            public void columnMoved(TableColumnModelEvent e) {
-//                // change the order of the column in the array/hashset
-//                List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
-//                Node.Property<?> prop = props.remove(e.getFromIndex());
-//                props.add(e.getToIndex(), prop);
-//                
-//                propertiesAcc.clear();
-//                for (int j = 0; j < props.size(); ++j) {
-//                    propertiesAcc.add(props.get(j));
-//                }
-//            }
-//        });
+        ov.getOutline().getColumnModel().addColumnModelListener(new TableColumnModelListener() {
+            @Override
+            public void columnAdded(TableColumnModelEvent e) {}
+            @Override
+            public void columnRemoved(TableColumnModelEvent e) {}
+            @Override
+            public void columnMarginChanged(ChangeEvent e) {}
+            @Override
+            public void columnSelectionChanged(ListSelectionEvent e) {}
+            @Override
+            public void columnMoved(TableColumnModelEvent e) {
+                if (e.getFromIndex() == 0) {
+                    return;
+                }
+                // change the order of the column in the array/hashset
+                List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
+                Node.Property<?> prop = props.remove(e.getFromIndex());
+                props.add(e.getToIndex(), prop);
+                
+                propertiesAcc.clear();
+                for (int j = 0; j < props.size(); ++j) {
+                    propertiesAcc.add(props.get(j));
+                }
+                storeState();
+            }
+        });
     }
 
     /**
@@ -332,13 +344,12 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          * The next three lines of code replaced the three lines of code that
          * follow
          */
-//        storeState();        
-        // set the new root as current
-//        currentRoot = root;
-//        List<Node.Property<?>> props = loadState();
-        propertiesAcc.clear();
-        DataResultViewerTable.this.getAllChildPropertyHeadersRec(root, 100);
-        List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
+         //set the new root as current
+        currentRoot = root;
+        List<Node.Property<?>> props = loadState();
+//        propertiesAcc.clear();
+//        DataResultViewerTable.this.getAllChildPropertyHeadersRec(root, 100);
+//        List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
 
         /*
          * OutlineView makes the first column be the result of
@@ -417,63 +428,63 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * The following three methods were added for this feature
      */
     // Store the state of current root Node.
-//    private void storeState() {
-//        if(currentRoot == null || propertiesAcc.isEmpty())
-//            return;
-//        
-//        TableFilterNode tfn;
-//        if(currentRoot instanceof TableFilterNode)
-//            tfn = (TableFilterNode) currentRoot;
-//        else
-//            return;
-//        
-//        List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
-//        for (int i = 0; i < props.size(); i++) {
-//            Property<?> prop = props.get(i);
-//            NbPreferences.forModule(this.getClass()).put(getUniqueColName(prop, tfn.getItemType()), String.valueOf(i));
-//        }
-//    }
-    // Load the state of current root Node if exists. 
-//    private List<Node.Property<?>> loadState() {
-//        propertiesAcc.clear();
-//        this.getAllChildPropertyHeadersRec(currentRoot, 100);
-//        List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
-//
-//        // If node is not table filter node, use default order for columns
-//        TableFilterNode tfn;
-//        if (currentRoot instanceof TableFilterNode) {
-//            tfn = (TableFilterNode) currentRoot;
-//        } else {
-//            Logger.getLogger(DataResultViewerTable.class.getName()).log(Level.INFO,
-//                    "Node {0} is not TableFilterNode, columns are going to be in default order", currentRoot.getName());
-//            return props;
-//        }
-//
-//        List<Node.Property<?>> orderedProps = new ArrayList<>(propertiesAcc);
-//        for (Property<?> prop : props) {
-//            Integer value = Integer.valueOf(NbPreferences.forModule(this.getClass()).get(getUniqueColName(prop, tfn.getItemType()), "-1"));
-//            if (value >= 0) {
-//                /**
-//                 * The original contents of orderedProps do not matter when
-//                 * setting the new ordered values. The reason we copy
-//                 * propertiesAcc into it first is to give it the currect size so
-//                 * we can set() in any index.
-//                 */
-//                orderedProps.set(value, prop);
-//            }
-//        }
-//        propertiesAcc.clear();
-//        for (Property<?> prop : orderedProps) {
-//            propertiesAcc.add(prop);
-//        }
-//        return orderedProps;
-//    }
-//
-//    // Get unique name for node and it's property.
-//    private String getUniqueColName(Property<?> prop, String type) {
-//        return Case.getCurrentCase().getName() + "." + type + "."
-//                + prop.getName().replaceAll("[^a-zA-Z0-9_]", "") + ".columnOrder";
-//    }
+    private void storeState() {
+        if(currentRoot == null || propertiesAcc.isEmpty())
+            return;
+        
+        TableFilterNode tfn;
+        if(currentRoot instanceof TableFilterNode)
+            tfn = (TableFilterNode) currentRoot;
+        else
+            return;
+        
+        List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
+        for (int i = 0; i < props.size(); i++) {
+            Property<?> prop = props.get(i);
+            NbPreferences.forModule(this.getClass()).put(getPreferenceKey(prop, tfn.getItemType()), String.valueOf(i));
+        }
+    }
+     //Load the state of current root Node if exists. 
+    private List<Node.Property<?>> loadState() {
+        propertiesAcc.clear();
+        this.getAllChildPropertyHeadersRec(currentRoot, 100);
+        List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
+
+        // If node is not table filter node, use default order for columns
+        TableFilterNode tfn;
+        if (currentRoot instanceof TableFilterNode) {
+            tfn = (TableFilterNode) currentRoot;
+        } else {
+            Logger.getLogger(DataResultViewerTable.class.getName()).log(Level.INFO,
+                    "Node {0} is not TableFilterNode, columns are going to be in default order", currentRoot.getName());
+            return props;
+        }
+
+        List<Node.Property<?>> orderedProps = new ArrayList<>(propertiesAcc);
+        for (Property<?> prop : props) {
+            Integer value = Integer.valueOf(NbPreferences.forModule(this.getClass()).get(getPreferenceKey(prop, tfn.getItemType()), "-1"));
+            if (value >= 0) {
+                /**
+                 * The original contents of orderedProps do not matter when
+                 * setting the new ordered values. The reason we copy
+                 * propertiesAcc into it first is to give it the currect size so
+                 * we can set() in any index.
+                 */
+                orderedProps.set(value, prop);
+            }
+        }
+        propertiesAcc.clear();
+        for (Property<?> prop : orderedProps) {
+            propertiesAcc.add(prop);
+        }
+        return orderedProps;
+    }
+
+    // Get unique name for node and its property.
+    private String getPreferenceKey(Property<?> prop, String type) {
+        return type.replaceAll("[^a-zA-Z0-9_]", "") + "." +
+                prop.getName().replaceAll("[^a-zA-Z0-9_]", "") + ".columnOrder";
+    }
 
     // Populate a two-dimensional array with rows of property values for up 
     // to maxRows children of the node passed in. 

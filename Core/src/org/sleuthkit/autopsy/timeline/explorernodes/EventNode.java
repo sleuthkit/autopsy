@@ -160,15 +160,11 @@ public class EventNode extends DisplayableItemNode {
         throw new UnsupportedOperationException("Not supported yet."); // NON-NLS 
     }
 
-    /*
-     * TODO (AUT-1849): Correct or remove peristent column reordering code
-     *
-     * Added to support this feature.
-     */
-//    @Override
-//    public String getItemType() {
-//        return "Event";
-//    }
+    @Override
+    public String getItemType() {
+        return getClass().getName();
+    }
+
     /**
      * We use TimeProperty instead of a normal NodeProperty to correctly display
      * the date/time when the user changes the timezone setting.

@@ -50,7 +50,7 @@ public abstract class DisplayableItemNode extends AbstractNode {
      * 
      * Added to support this feature.
      */
-//    public abstract String getItemType();
+    public abstract String getItemType();
     /**
      * this code started as a cut and past of
      * DataResultFilterNode.GetPopupActionsDisplayableItemNodeVisitor.findLinked(BlackboardArtifactNode

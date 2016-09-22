@@ -27,9 +27,10 @@ import org.openide.util.NbBundle;
  * wraps. It is designed to be used for nodes displayed in Autopsy table views.
  */
 public class TableFilterNode extends FilterNode {
-
+    
     private final boolean createChildren;
-
+    private String itemType;
+    
     /**
      * Constructs a filter node that creates at most one layer of child nodes
      * for the node it wraps. It is designed to be used for nodes displayed in
@@ -43,7 +44,13 @@ public class TableFilterNode extends FilterNode {
         super(wrappedNode, TableFilterChildren.createInstance(wrappedNode, createChildren));
         this.createChildren = createChildren;
     }
-
+    
+    public TableFilterNode(Node wrappedNode, boolean createChildren, String itemType) {
+        super(wrappedNode, TableFilterChildren.createInstance(wrappedNode, createChildren));
+        this.createChildren = createChildren;
+        this.itemType = itemType;
+    }
+    
     /**
      * Returns a display name for the wrapped node, for use in the first column
      * of an Autopsy table view.
@@ -58,5 +65,8 @@ public class TableFilterNode extends FilterNode {
             return super.getDisplayName();
         }
     }
-
+    
+    String getItemType() {
+        return itemType;
+    }
 }
