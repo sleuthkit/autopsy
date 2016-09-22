@@ -30,6 +30,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -1307,6 +1308,8 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
         @Override
         public void actionPerformed(ActionEvent e) {
             super.actionPerformed(e);
+            Collection<? extends Node> lookupAll = Utilities.actionsGlobalContext().lookupAll(Node.class);
+            System.out.println(lookupAll);
 //            //find the node to select after the target is removed from the UI
 //            List<Node> siblings = Arrays.asList(target.getParentNode().getChildren().getNodes());
 //            if (siblings.size() <= 1) {
