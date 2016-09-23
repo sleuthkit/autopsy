@@ -51,9 +51,9 @@ public class AddRuleDialog extends JDialog {
     /**
      * Creates a dialog for creating an external viewer rule
      */
-    @Messages({"AddRuleDialog.title=External Viewer Rule"})
     AddRuleDialog() {
-        super(new JFrame(Bundle.AddRuleDialog_title()), Bundle.AddRuleDialog_title(), true);
+        super(new JFrame(NbBundle.getMessage(AddRuleDialog.class, "AddRuleDialog.title")),
+                NbBundle.getMessage(AddRuleDialog.class, "AddRuleDialog.title"), true);
         addRulePanel = new AddRulePanel();
         this.display();
     }
@@ -64,7 +64,8 @@ public class AddRuleDialog extends JDialog {
      * @param rule ExternalViewerRule to be edited
      */
     AddRuleDialog(ExternalViewerRule rule) {
-        super(new JFrame(Bundle.AddRuleDialog_title()), Bundle.AddRuleDialog_title(), true);
+        super(new JFrame(NbBundle.getMessage(AddRuleDialog.class, "AddRuleDialog.title")),
+                NbBundle.getMessage(AddRuleDialog.class, "AddRuleDialog.title"), true);
         addRulePanel = new AddRulePanel(rule);
         this.display();
     }
@@ -72,9 +73,6 @@ public class AddRuleDialog extends JDialog {
     /**
      * Displays the add external viewer rule dialog.
      */
-    @NbBundle.Messages({
-        "AddRuleDialog.addButton.title=Save",
-        "AddRuleDialog.cancelButton.title=Cancel"})
     private void display() {
         setLayout(new BorderLayout());
 
@@ -89,13 +87,13 @@ public class AddRuleDialog extends JDialog {
         add(this.addRulePanel, BorderLayout.PAGE_START);
 
         // Add a save button.
-        saveButton = new JButton(Bundle.AddRuleDialog_addButton_title());
+        saveButton = new JButton(NbBundle.getMessage(AddRuleDialog.class, "AddRuleDialog.saveButton.title"));
         saveButton.addActionListener((ActionEvent e) -> {
             doButtonAction(true);
         });
 
         // Add a close button.
-        closeButton = new JButton(Bundle.AddRuleDialog_cancelButton_title());
+        closeButton = new JButton(NbBundle.getMessage(AddRuleDialog.class, "AddRuleDialog.cancelButton.title"));
         closeButton.addActionListener((ActionEvent e) -> {
             doButtonAction(false);
         });
@@ -138,7 +136,6 @@ public class AddRuleDialog extends JDialog {
         pack();
         setResizable(false);
         setVisible(true);
-        getRootPane().setDefaultButton(saveButton);
     }
 
     /**

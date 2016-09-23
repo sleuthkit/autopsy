@@ -225,8 +225,9 @@ public class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel implem
                         NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.JOptionPane.ruleAlreadyExists.title"),
                         JOptionPane.ERROR_MESSAGE);
             } else {
-                rules.add(dialog.getRule());
+                rules.add(newRule);
                 updateRulesListModel();
+                rulesList.setSelectedIndex(rules.size() - 1);
                 firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             }
         }
@@ -251,6 +252,7 @@ public class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel implem
                 firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             }
         }
+        rulesList.setSelectedIndex(selected);
     }//GEN-LAST:event_editRuleButtonActionPerformed
 
     private void deleteRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteRuleButtonActionPerformed
@@ -268,10 +270,8 @@ public class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel implem
     @Override
     public void load() {
         rules = ExternalViewerRulesManager.getInstance().getUserRules();
+        Collections.sort(rules);
         updateRulesListModel();
-        if (!rulesListModel.isEmpty()) {
-            rulesList.setSelectedIndex(0);
-        }
         enableButtons();
     }
 
@@ -290,14 +290,8 @@ public class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel implem
      */
     private void updateRulesListModel() {
         rulesListModel.clear();
-        Collections.sort(rules, (ExternalViewerRule rule1, ExternalViewerRule rule2) -> {
-            return rule1.getName().compareTo(rule2.getName());
-        });
         for (ExternalViewerRule rule : rules) {
             rulesListModel.addElement(rule);
-        }
-        if (!rulesListModel.isEmpty()) {
-            rulesList.setSelectedIndex(0);
         }
     }
 

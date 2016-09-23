@@ -24,7 +24,7 @@ import java.util.Objects;
  * An object that represents an association between a MIME type or extension
  * name to a user defined executable.
  */
-class ExternalViewerRule {
+class ExternalViewerRule implements Comparable<ExternalViewerRule> {
 
     private final String name;
     private final String exePath;
@@ -73,5 +73,10 @@ class ExternalViewerRule {
         int hash = 7;
         hash = 67 * hash + Objects.hashCode(this.name);
         return hash;
+    }
+
+    @Override
+    public int compareTo(ExternalViewerRule other) {
+        return this.getName().compareTo(other.getName());
     }
 }
