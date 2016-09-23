@@ -95,8 +95,18 @@ public class TagsManager implements Closeable {
         }
         lazyLoadExistingTagNames();
         Set<TagName> tagNameSet = new HashSet<>();
+        // Add bookmark tag and other tag names that are in use
+        tagNameSet.add(uniqueTagNames.get(NbBundle.getMessage(this.getClass(), "TagsManager.predefTagNames.bookmark.text")));
         tagNameSet.addAll(getTagNamesInUse());
-        tagNameSet.addAll(getTagNamesForPropertyFile());
+        // Add any tag names defined by the user
+        String setting = ModuleSettings.getConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY);
+        if (null != setting && !setting.isEmpty()) {
+            List<String> tagNameTuples = Arrays.asList(setting.split(";"));
+            for (String tagNameTuple : tagNameTuples) {
+                String[] tagNameAttributes = tagNameTuple.split(",");
+                tagNameSet.add(uniqueTagNames.get(tagNameAttributes[0]));
+            }
+        }
         return new ArrayList<>(tagNameSet);
     }
     
@@ -115,27 +125,6 @@ public class TagsManager implements Closeable {
         }
         lazyLoadExistingTagNames();
         return caseDb.getTagNamesInUse();
-    }
-    
-    /**
-     * Gets a list of all tag names associated with the ones found in the
-     * properties file.
-     * 
-     * @return A list, possibly empty, of TagName data transfer objects (DTOs).
-     */
-    private synchronized List<TagName> getTagNamesForPropertyFile() {
-        lazyLoadExistingTagNames();
-        List<TagName> propertyFileTagNames = new ArrayList<>();
-        
-        String setting = ModuleSettings.getConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY);
-        if (null != setting && !setting.isEmpty()) {
-            List<String> tagNameTuples = Arrays.asList(setting.split(";"));
-            for (String tagNameTuple : tagNameTuples) {
-                String[] tagNameAttributes = tagNameTuple.split(",");
-                propertyFileTagNames.add(uniqueTagNames.get(tagNameAttributes[0]));
-            }
-        }
-        return propertyFileTagNames;
     }
     
     /**
@@ -213,30 +202,32 @@ public class TagsManager implements Closeable {
         
         lazyLoadExistingTagNames();
         
-        //The tag name already exists in the database, user either
-        //1) adding it again by error -> throws TagNameAlreadyExistsException
-        //2) adding it after it was deleted at some point in the past
+        /**
+         * It is possible user is trying to add back a tag after having deleted
+         * it.
+         */
         if (uniqueTagNames.containsKey(displayName)) {
             TagName existingTagName = uniqueTagNames.get(displayName);
-            long tagNameCount = getContentTagsCountByTagName(existingTagName) + getBlackboardArtifactTagsCountByTagName(existingTagName);
-            if (tagNameCount > 0) {
-                throw new TagNameAlreadyExistsException();
-            } else {
+            long count = getContentTagsCountByTagName(existingTagName) + getBlackboardArtifactTagsCountByTagName(existingTagName);
+            if (count == 0) {
                 addNewTagNameToTagsSettings(existingTagName);
+                return existingTagName;
+            } else {
+                throw new TagNameAlreadyExistsException();
             }
-            return existingTagName;
         }
+
         /*
-        * Add the tag name to the case.
-        */
+         * Add the tag name to the case.
+         */
         TagName newTagName = caseDb.addTagName(displayName, description, color);
+        uniqueTagNames.put(newTagName.getDisplayName(), newTagName);
         
         /*
-        * Add the tag name to the tags settings.
-        */
-        uniqueTagNames.put(newTagName.getDisplayName(), newTagName);
+         * Add the tag name to the tags settings.
+         */
         addNewTagNameToTagsSettings(newTagName);
-        
+
         return newTagName;
     }
         
@@ -634,15 +625,12 @@ public class TagsManager implements Closeable {
     /**
      * Populates the tag names collection and the tag names table in the case
      * database with the existing tag names from all sources.
-     * 
-     * Tag names from current case are not saved into the settings file.
      */
     private void lazyLoadExistingTagNames() {
         if (!tagNamesLoaded) {
-            addTagNamesFromTagsSettings();
-            addPredefinedTagNames();
-            saveTagNamesToTagsSettings();
             addTagNamesFromCurrentCase();
+            addPredefinedTagNames();
+            addTagNamesFromTagsSettings();
             tagNamesLoaded = true;
         }
     }
@@ -683,7 +671,7 @@ public class TagsManager implements Closeable {
                         uniqueTagNames.put(tagName.getDisplayName(), tagName);
                     } catch (TskCoreException ex) {
                         Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to add saved tag name " + tagNameAttributes[0], ex); //NON-NLS
-                    }
+                    } 
                 }
             }
         }
@@ -703,23 +691,24 @@ public class TagsManager implements Closeable {
             }
         }
     }
-    
+
     /**
-     * Saves the tag names to a properties file. The properties file is used to
-     * make it possible to use tag names across cases.
+     * Adds any user defined tag name to the case db and also to uniqueTagNames,
+     * to allow user tag names to be displayed while tagging.
+     * 
+     * @param userTagNames a List of UserTagName objects to be added
      */
-    private void saveTagNamesToTagsSettings() {
-        if (!uniqueTagNames.isEmpty()) {
-            StringBuilder setting = new StringBuilder();
-            for (TagName tagName : uniqueTagNames.values()) {
-                if (setting.length() != 0) {
-                    setting.append(";");
+    void storeNewUserTagNames(List<UserTagName> userTagNames) {
+        lazyLoadExistingTagNames();
+        for (UserTagName utn : userTagNames) {
+            if (!uniqueTagNames.containsKey(utn.getDisplayName())) {
+                try {
+                    TagName tagName = caseDb.addTagName(utn.getDisplayName(), utn.getDescription(), TagName.HTML_COLOR.getColorByName(utn.getColorName()));
+                    uniqueTagNames.put(tagName.getDisplayName(), tagName);
+                } catch (TskCoreException ex) {
+                    Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to add saved tag name " + utn.getDisplayName(), ex); //NON-NLS
                 }
-                setting.append(tagName.getDisplayName()).append(",");
-                setting.append(tagName.getDescription()).append(",");
-                setting.append(tagName.getColor().name());
             }
-            ModuleSettings.setConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY, setting.toString());
         }
     }
     
@@ -765,14 +754,6 @@ public class TagsManager implements Closeable {
     public static class TagNameAlreadyExistsException extends Exception {
         
         private static final long serialVersionUID = 1L;
-    }
-    
-    /**
-     * Exception thrown if there is an attempt to delete a nonexistent tag name.
-     * Unused for current implementation of tag name deletion.
-     */
-    public static class TagNameDoesNotExistException extends Exception {
-        
     }
     
 }
