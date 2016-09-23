@@ -447,7 +447,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
             super(Children.create(new AccountTypeFactory(), true), Lookups.singleton(Accounts.this));
             super.setName(Accounts.NAME);
             super.setDisplayName(Bundle.Accounts_RootNode_displayName());
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/account_menu.png");    //NON-NLS
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/accounts.png");    //NON-NLS
         }
 
         @Override

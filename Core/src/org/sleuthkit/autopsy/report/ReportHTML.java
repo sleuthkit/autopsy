@@ -255,7 +255,7 @@ class ReportHTML implements TableReportModule {
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/drive_network.png"); //NON-NLS
                     break;
                 case TSK_ACCOUNT:
-                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/account_menu.png"); //NON-NLS
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/accounts.png"); //NON-NLS
                     break;
                 default:
                     logger.log(Level.WARNING, "useDataTypeIcon: unhandled artifact type = " + dataType); //NON-NLS
@@ -271,8 +271,8 @@ class ReportHTML implements TableReportModule {
              * general account icon, but we could do soemthing else in the
              * future.
              */
-            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/account_menu.png"); //NON-NLS
-            iconFileName = "account_menu.png"; //NON-NLS
+            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/accounts.png"); //NON-NLS
+            iconFileName = "accounts.png"; //NON-NLS
             iconFilePath = path + File.separator + iconFileName;
         } else {  // no defined artifact found for this dataType
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png"); //NON-NLS
