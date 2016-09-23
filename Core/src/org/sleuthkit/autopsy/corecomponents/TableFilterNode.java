@@ -27,10 +27,10 @@ import org.openide.util.NbBundle;
  * wraps. It is designed to be used for nodes displayed in Autopsy table views.
  */
 public class TableFilterNode extends FilterNode {
-    
+
     private final boolean createChildren;
-    private String itemType;
-    
+    private String itemType = "NONE";
+
     /**
      * Constructs a filter node that creates at most one layer of child nodes
      * for the node it wraps. It is designed to be used for nodes displayed in
@@ -44,13 +44,22 @@ public class TableFilterNode extends FilterNode {
         super(wrappedNode, TableFilterChildren.createInstance(wrappedNode, createChildren));
         this.createChildren = createChildren;
     }
-    
+
+    /**
+     * Constructs a filter node that has information about the node's type.
+     * 
+     * @param wrappedNode    The node to wrap in the filter node.
+     * @param createChildren True if a children (child factory) object should be
+     *                       created for the wrapped node.
+     * @param itemType       A name of the node, based on its class name and
+     *                       filter or artifact type if it holds those.
+     */
     public TableFilterNode(Node wrappedNode, boolean createChildren, String itemType) {
         super(wrappedNode, TableFilterChildren.createInstance(wrappedNode, createChildren));
         this.createChildren = createChildren;
         this.itemType = itemType;
     }
-    
+
     /**
      * Returns a display name for the wrapped node, for use in the first column
      * of an Autopsy table view.
@@ -65,7 +74,11 @@ public class TableFilterNode extends FilterNode {
             return super.getDisplayName();
         }
     }
-    
+
+    /**
+     * @return itemType of associated DisplayableItemNode to allow for custom
+     *         column orderings in the DataResultViewerTable
+     */
     String getItemType() {
         return itemType;
     }
