@@ -44,14 +44,14 @@ import org.sleuthkit.datamodel.TskCoreException;
  * of tags applied to content and blackboard artifacts by users.
  */
 public class TagsManager implements Closeable {
-    
+
     private static final Logger logger = Logger.getLogger(TagsManager.class.getName());
     private static final String TAGS_SETTINGS_NAME = "Tags"; //NON-NLS
     private static final String TAG_NAMES_SETTING_KEY = "TagNames"; //NON-NLS
     private SleuthkitCase caseDb;
     private final HashMap<String, TagName> uniqueTagNames = new HashMap<>();
     private boolean tagNamesLoaded = false;
-    
+
     /**
      * Constructs a per case Autopsy service that manages the creation,
      * updating, and deletion of tags applied to content and blackboard
@@ -79,7 +79,7 @@ public class TagsManager implements Closeable {
         lazyLoadExistingTagNames();
         return caseDb.getAllTagNames();
     }
-    
+
     /**
      * Gets a list of all tag names currently being used or tag names loaded
      * from the properties file.
@@ -109,7 +109,7 @@ public class TagsManager implements Closeable {
         }
         return new ArrayList<>(tagNameSet);
     }
-    
+
     /**
      * Gets a list of all tag names currently in use for tagging content or
      * artifacts.
@@ -126,7 +126,7 @@ public class TagsManager implements Closeable {
         lazyLoadExistingTagNames();
         return caseDb.getTagNamesInUse();
     }
-    
+
     /**
      * Checks whether a tag name with a given display name exists.
      *
@@ -138,7 +138,7 @@ public class TagsManager implements Closeable {
         lazyLoadExistingTagNames();
         return uniqueTagNames.containsKey(tagDisplayName);
     }
-    
+
     /**
      * Adds a new tag name to the current case and to the tags settings.
      *
@@ -158,7 +158,7 @@ public class TagsManager implements Closeable {
         }
         return addTagName(displayName, "", TagName.HTML_COLOR.NONE);
     }
-    
+
     /**
      * Adds a new tag name to the current case and to the tags settings.
      *
@@ -179,7 +179,7 @@ public class TagsManager implements Closeable {
         }
         return addTagName(displayName, description, TagName.HTML_COLOR.NONE);
     }
-    
+
     /**
      * Adds a new tag name to the current case and to the tags settings.
      *
@@ -199,10 +199,10 @@ public class TagsManager implements Closeable {
         if (null == caseDb) {
             throw new TskCoreException("Tags manager has been closed");
         }
-        
+
         lazyLoadExistingTagNames();
-        
-        /**
+
+        /*
          * It is possible user is trying to add back a tag after having deleted
          * it.
          */
@@ -222,7 +222,7 @@ public class TagsManager implements Closeable {
          */
         TagName newTagName = caseDb.addTagName(displayName, description, color);
         uniqueTagNames.put(newTagName.getDisplayName(), newTagName);
-        
+
         /*
          * Add the tag name to the tags settings.
          */
@@ -230,7 +230,7 @@ public class TagsManager implements Closeable {
 
         return newTagName;
     }
-        
+
     /**
      * Tags a content object.
      *
@@ -248,7 +248,7 @@ public class TagsManager implements Closeable {
         }
         return addContentTag(content, tagName, "", -1, -1);
     }
-    
+
     /**
      * Tags a content object.
      *
@@ -267,7 +267,7 @@ public class TagsManager implements Closeable {
         }
         return addContentTag(content, tagName, comment, -1, -1);
     }
-    
+
     /**
      * Tags a content object or a section of a content object.
      *
@@ -325,7 +325,7 @@ public class TagsManager implements Closeable {
         }
         return tag;
     }
-    
+
     /**
      * Deletes a content tag.
      *
@@ -349,7 +349,7 @@ public class TagsManager implements Closeable {
             logger.log(Level.SEVERE, NbBundle.getMessage(TagsManager.class, "TagsManager.deleteContentTag.noCaseWarning"), ex);
         }
     }
-    
+
     /**
      * Gets all content tags for the current case.
      *
@@ -365,7 +365,7 @@ public class TagsManager implements Closeable {
         lazyLoadExistingTagNames();
         return caseDb.getAllContentTags();
     }
-    
+
     /**
      * Gets content tags count by tag name.
      *
@@ -383,7 +383,7 @@ public class TagsManager implements Closeable {
         lazyLoadExistingTagNames();
         return caseDb.getContentTagsCountByTagName(tagName);
     }
-    
+
     /**
      * Gets a content tag by tag id.
      *
@@ -401,7 +401,7 @@ public class TagsManager implements Closeable {
         lazyLoadExistingTagNames();
         return caseDb.getContentTagByID(tagID);
     }
-    
+
     /**
      * Gets content tags by tag name.
      *
@@ -420,7 +420,7 @@ public class TagsManager implements Closeable {
         lazyLoadExistingTagNames();
         return caseDb.getContentTagsByTagName(tagName);
     }
-    
+
     /**
      * Gets content tags count by content.
      *
@@ -439,7 +439,7 @@ public class TagsManager implements Closeable {
         lazyLoadExistingTagNames();
         return caseDb.getContentTagsByContent(content);
     }
-    
+
     /**
      * Tags a blackboard artifact object.
      *
@@ -458,7 +458,7 @@ public class TagsManager implements Closeable {
         }
         return addBlackboardArtifactTag(artifact, tagName, "");
     }
-    
+
     /**
      * Tags a blackboard artifact object.
      *
@@ -484,7 +484,7 @@ public class TagsManager implements Closeable {
             }
             tag = caseDb.addBlackboardArtifactTag(artifact, tagName, comment);
         }
-        
+
         try {
             Case.getCurrentCase().notifyBlackBoardArtifactTagAdded(tag);
         } catch (IllegalStateException ex) {
@@ -492,7 +492,7 @@ public class TagsManager implements Closeable {
         }
         return tag;
     }
-    
+
     /**
      * Deletes a blackboard artifact tag.
      *
@@ -516,7 +516,7 @@ public class TagsManager implements Closeable {
             logger.log(Level.WARNING, NbBundle.getMessage(TagsManager.class, "TagsManager.deleteBlackboardArtifactTag.noCaseWarning"), ex);
         }
     }
-    
+
     /**
      * Gets all blackboard artifact tags for the current case.
      *
@@ -532,7 +532,7 @@ public class TagsManager implements Closeable {
         lazyLoadExistingTagNames();
         return caseDb.getAllBlackboardArtifactTags();
     }
-    
+
     /**
      * Gets blackboard artifact tags count by tag name.
      *
@@ -551,7 +551,7 @@ public class TagsManager implements Closeable {
         lazyLoadExistingTagNames();
         return caseDb.getBlackboardArtifactTagsCountByTagName(tagName);
     }
-    
+
     /**
      * Gets a blackboard artifact tag by tag id.
      *
@@ -569,7 +569,7 @@ public class TagsManager implements Closeable {
         lazyLoadExistingTagNames();
         return caseDb.getBlackboardArtifactTagByID(tagID);
     }
-    
+
     /**
      * Gets blackboard artifact tags by tag name.
      *
@@ -588,7 +588,7 @@ public class TagsManager implements Closeable {
         lazyLoadExistingTagNames();
         return caseDb.getBlackboardArtifactTagsByTagName(tagName);
     }
-    
+
     /**
      * Gets blackboard artifact tags for a particular blackboard artifact.
      *
@@ -607,7 +607,7 @@ public class TagsManager implements Closeable {
         lazyLoadExistingTagNames();
         return caseDb.getBlackboardArtifactTagsByArtifact(artifact);
     }
-    
+
     /**
      * Closes the tags manager, saving the available tag names to secondary
      * storage.
@@ -621,7 +621,7 @@ public class TagsManager implements Closeable {
         //saveTagNamesToTagsSettings();
         caseDb = null;
     }
-    
+
     /**
      * Populates the tag names collection and the tag names table in the case
      * database with the existing tag names from all sources.
@@ -634,7 +634,7 @@ public class TagsManager implements Closeable {
             tagNamesLoaded = true;
         }
     }
-    
+
     /**
      * Adds any tag names that are in the case database to the tag names
      * collection.
@@ -649,7 +649,7 @@ public class TagsManager implements Closeable {
             Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get tag types from the current case", ex); //NON-NLS
         }
     }
-    
+
     /**
      * Adds any tag names that are in the properties file to the tag names
      * collection and to the case database. The properties file is used to make
@@ -676,7 +676,7 @@ public class TagsManager implements Closeable {
             }
         }
     }
-    
+
     /**
      * Adds the standard tag names to the tag names collection.
      */
@@ -696,7 +696,7 @@ public class TagsManager implements Closeable {
      * Adds any user defined tag name to the case db and also to uniqueTagNames,
      * to allow user tag names to be displayed while tagging.
      * 
-     * @param userTagNames a List of UserTagName objects to be added
+     * @param userTagNames a List of UserTagName objects to be potentially added
      */
     void storeNewUserTagNames(List<UserTagName> userTagNames) {
         lazyLoadExistingTagNames();
@@ -711,7 +711,7 @@ public class TagsManager implements Closeable {
             }
         }
     }
-    
+
     /**
      * Adds a new tag name to the settings file, used when user creates a new
      * tag name.
@@ -727,7 +727,7 @@ public class TagsManager implements Closeable {
         setting += tagName.getDisplayName() + "," + tagName.getDescription() + "," + tagName.getColor().toString();
         ModuleSettings.setConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY, setting);
     }
-    
+
     /**
      * Returns true if the tag display name contains an illegal character. Used
      * after a tag display name is retrieved from user input.
@@ -747,7 +747,7 @@ public class TagsManager implements Closeable {
                 || content.contains(",")
                 || content.contains(";"));
     }
-    
+
     /**
      * Exception thrown if there is an attempt to add a duplicate tag name.
      */
@@ -755,5 +755,5 @@ public class TagsManager implements Closeable {
         
         private static final long serialVersionUID = 1L;
     }
-    
+
 }

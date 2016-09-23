@@ -1,15 +1,27 @@
 /*
-* To change this license header, choose License Headers in Project Properties.
-* To change this template file, choose Tools | Templates
-* and open the template in the editor.
- */
+* Autopsy Forensic Browser
+*
+* Copyright 2011-2016 Basis Technology Corp.
+* Contact: carrier <at> sleuthkit <dot> org
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 package org.sleuthkit.autopsy.casemodule.services;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import org.netbeans.spi.options.OptionsPanelController;
@@ -31,8 +43,6 @@ public class TagNamesSettingsPanel extends javax.swing.JPanel implements Options
 
     private static final String TAGS_SETTINGS_NAME = "Tags"; //NON-NLS
     private static final String TAG_NAMES_SETTING_KEY = "TagNames"; //NON-NLS
-
-    private static final String TAG_BOOKMARK = "Bookmark";
 
     private static final String DEFAULT_DESCRIPTION = "";
     private static final String DEFAULT_COLOR_STRING = "NONE";
@@ -185,13 +195,16 @@ public class TagNamesSettingsPanel extends javax.swing.JPanel implements Options
                 .addGap(0, 0, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
-
+    
     private void addTagNameButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addTagNameButtonActionPerformed
         NewUserTagNameDialog dialog = new NewUserTagNameDialog();
         NewUserTagNameDialog.BUTTON_PRESSED result = dialog.getResult();
         if (result == NewUserTagNameDialog.BUTTON_PRESSED.OK) {
             String newTagDisplayName = dialog.getTagName();
             UserTagName newTagName = new UserTagName(newTagDisplayName, DEFAULT_DESCRIPTION, DEFAULT_COLOR_STRING);
+            /*
+             * If tag name already exists, don't add the tag name.
+             */
             if (tagNames.contains(newTagName)) {
                 JOptionPane.showMessageDialog(null,
                         NbBundle.getMessage(TagNamesSettingsPanel.class, "TagNamesSettingsPanel.JOptionPane.tagNameAlreadyExists.message"),
@@ -200,13 +213,16 @@ public class TagNamesSettingsPanel extends javax.swing.JPanel implements Options
             } else {
                 tagNames.add(newTagName);
                 updateTagNamesListModel();
+                /*
+                 * Set the selection to the tag name that was just added.
+                 */
                 tagNamesList.setSelectedIndex(tagNames.size() - 1);
                 enableButtons();
                 firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             }
         }
     }//GEN-LAST:event_addTagNameButtonActionPerformed
-
+    
     private void deleteTagNameButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteTagNameButtonActionPerformed
         UserTagName tagName = tagNamesList.getSelectedValue();
         tagNames.remove(tagName);
@@ -236,7 +252,6 @@ public class TagNamesSettingsPanel extends javax.swing.JPanel implements Options
      */
     private void updateTagNamesListModel() {
         tagNamesListModel.clear();
-        Collections.sort(tagNames);
         for (UserTagName tagName : tagNames) {
             tagNamesListModel.addElement(tagName);
         }
@@ -244,13 +259,13 @@ public class TagNamesSettingsPanel extends javax.swing.JPanel implements Options
 
     /**
      * Stores tag name changes in the properties file, called when OK or Apply
-     * is selected in the OptionsPanel.
+     * is selected in the options panel.
      *
-     * Adds all new tag names to the case database for use.
+     * Adds all new tag names to the case database for displaying usable tag
+     * names when tagging.
      */
     @Override
     public void store() {
-        //Case.getCurrentCase().getServices().getTagsManager().saveUserTagNames(tagNames);
         StringBuilder setting = new StringBuilder();
         for (UserTagName tagName : tagNames) {
             if (setting.length() != 0) {
@@ -263,31 +278,32 @@ public class TagNamesSettingsPanel extends javax.swing.JPanel implements Options
             Case.getCurrentCase().getServices().getTagsManager().storeNewUserTagNames(tagNames);
         }
     }
-    
+
     /**
      * Updates the tag names list component with tag names from the properties
      * file.
      */
     @Override
     public void load() {
-        //tagNames = Case.getCurrentCase().getServices().getTagsManager().getUserTagNames();
         String setting = ModuleSettings.getConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY);
         tagNames.clear();
         if (null != setting && !setting.isEmpty()) {
             List<String> tagNameTuples = Arrays.asList(setting.split(";"));
             for (String tagNameTuple : tagNameTuples) {
                 String[] tagNameAttributes = tagNameTuple.split(",");
-                    tagNames.add(new UserTagName(tagNameAttributes[0], tagNameAttributes[1], tagNameAttributes[2]));
-                }
+                tagNames.add(new UserTagName(tagNameAttributes[0], tagNameAttributes[1], tagNameAttributes[2]));
             }
+        }
+        Collections.sort(tagNames);
         updateTagNamesListModel();
         enableButtons();
     }
-    
+
+    /**
+     * Only enable delete button when there is a tag name selected in the list.
+     */
     private void enableButtons() {
         boolean ruleIsSelected = tagNamesList.getSelectedIndex() != -1;
         deleteTagNameButton.setEnabled(ruleIsSelected);
     }
-    
-   
 }

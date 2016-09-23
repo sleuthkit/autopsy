@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+* Autopsy Forensic Browser
+*
+* Copyright 2011-2016 Basis Technology Corp.
+* Contact: carrier <at> sleuthkit <dot> org
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
  */
 package org.sleuthkit.autopsy.casemodule.services;
 
@@ -10,7 +23,6 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.beans.PropertyChangeEvent;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.event.DocumentEvent;
@@ -18,14 +30,17 @@ import javax.swing.event.DocumentListener;
 import org.openide.util.NbBundle;
 
 public class NewUserTagNameDialog extends javax.swing.JDialog {
-    
+
     private String userTagDisplayName;
     private BUTTON_PRESSED result;
-    
+
     enum BUTTON_PRESSED {
         OK, CANCEL;
     }
-    
+
+    /**
+     * Creates a new NewUserTagNameDialog dialog.
+     */
     NewUserTagNameDialog() {
         super(new JFrame(NbBundle.getMessage(NewUserTagNameDialog.class, "NewUserTagNameDialog.title.text")),
                 NbBundle.getMessage(NewUserTagNameDialog.class, "NewUserTagNameDialog.title.text"), true);
@@ -33,25 +48,34 @@ public class NewUserTagNameDialog extends javax.swing.JDialog {
         String test = "";
         this.display();
     }
-    
+
+    /**
+     * Sets display settings for the dialog and adds appropriate listeners.
+     */
     private void display() {
         setLayout(new BorderLayout());
-        
-        // Center the dialog
+
+        /*
+         * Center the dialog 
+         */
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
         int width = this.getSize().width;
         int height = this.getSize().height;
         setLocation((screenDimension.width - width) / 2, (screenDimension.height - height) / 2);
-        
-        // Add a handler for when the dialog window is closed directly
+
+        /*
+         * Add a handler for when the dialog window is closed directly.
+         */
         this.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
                 doButtonAction(false);
             }
         });
-        
-        // Add a listener to enable the save button
+
+        /*
+         * Add a listener to enable the save button when the text field changes.
+         */
         tagNameTextField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void changedUpdate(DocumentEvent e) {
@@ -69,15 +93,20 @@ public class NewUserTagNameDialog extends javax.swing.JDialog {
                 enableOkButton();
             }
         });
-        
+
         enableOkButton();
-        
-        // Show the dialog
+
+        /*
+         * Used to show the dialog.
+         */
         setResizable(false);
         setVisible(true);
-        
     }
-    
+
+    /**
+     * Called when a button is pressed or when the dialog is closed.
+     * @param okPressed whether the OK button was pressed.
+     */
     private void doButtonAction(boolean okPressed) {
         if (okPressed) {
             String newTagDisplayName = tagNameTextField.getText();
@@ -96,20 +125,35 @@ public class NewUserTagNameDialog extends javax.swing.JDialog {
             setVisible(false);
         }
     }
-    
+
+    /**
+     * Returns the tag name entered by the user.
+     * 
+     * @return a new user tag name 
+     */
     String getTagName() {
         return userTagDisplayName;
     }
-    
+
+    /**
+     * Returns information about which button was pressed.
+     * 
+     * @return BUTTON_PRESSED (OK, CANCEL)
+     */
     BUTTON_PRESSED getResult() {
         return result;
     }
-    
+
+    /**
+     * Enable the OK button if the tag name text field is not empty.
+     * Sets the enter button as default, so user can press enter to activate
+     * an okButton press and add the tag name.
+     */
     private void enableOkButton() {
         okButton.setEnabled(!tagNameTextField.getText().isEmpty());
         getRootPane().setDefaultButton(okButton);
     }
-    
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
