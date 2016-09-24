@@ -34,10 +34,10 @@ import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
-import org.sleuthkit.autopsy.datamodel.AccountType;
 import org.sleuthkit.autopsy.datamodel.Accounts;
 import org.sleuthkit.autopsy.datamodel.BINMap;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -54,10 +54,9 @@ final class TermComponentQuery implements KeywordSearchQuery {
     private static final boolean DEBUG = Version.Type.DEVELOPMENT.equals(Version.getBuildType());
 
     private static final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
-    private static final BlackboardAttribute.Type SOLR_DOCUMENT_ID_TYPE = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SOLR_DOCUMENT_ID);
-    private static final BlackboardAttribute.Type ACCOUNT_NUMBER_TYPE = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CREDIT_CARD_NUMBER);
-    private static final BlackboardAttribute.Type ACOUNT_TYPE_TYPE = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE);
-
+    private static final BlackboardAttribute.Type KEYWORD_SEARCH_DOCUMENT_ID = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID);
+    private static final BlackboardAttribute.Type CREDIT_CARD_NUMBER = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CREDIT_CARD_NUMBER);
+    private static final BlackboardAttribute.Type ACOUNT_TYPE = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE);
 
     //TODO: move these regex and the luhn check to a new class, something like: CreditCardNumberValidator
     /*
@@ -192,7 +191,7 @@ final class TermComponentQuery implements KeywordSearchQuery {
             //if the keyword hit matched the credit card number keyword/regex...
             if (keyword.getType() == ATTRIBUTE_TYPE.TSK_CREDIT_CARD_NUMBER) {
                 newArtifact = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_ACCOUNT);
-                newArtifact.addAttribute(new BlackboardAttribute(ACOUNT_TYPE_TYPE, MODULE_NAME, AccountType.CREDIT_CARD.name()));
+                newArtifact.addAttribute(new BlackboardAttribute(ACOUNT_TYPE, MODULE_NAME, Account.Type.CREDIT_CARD.name()));
 
                 // make account artifact
                 //try to match it against the track 1 regex
@@ -210,11 +209,11 @@ final class TermComponentQuery implements KeywordSearchQuery {
                     AbstractFile file = (AbstractFile) hit.getContent();
                     if (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS
                             || file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) {
-                        newArtifact.addAttribute(new BlackboardAttribute(SOLR_DOCUMENT_ID_TYPE, MODULE_NAME, hit.getSolrDocumentId()));
+                        newArtifact.addAttribute(new BlackboardAttribute(KEYWORD_SEARCH_DOCUMENT_ID, MODULE_NAME, hit.getSolrDocumentId()));
                     }
                 }
 
-                String ccn = newArtifact.getAttribute(ACCOUNT_NUMBER_TYPE).getValueString();
+                String ccn = newArtifact.getAttribute(CREDIT_CARD_NUMBER).getValueString();
                 final int iin = Integer.parseInt(ccn.substring(0, 8));
 
                 Accounts.IINInfo iinInfo = BINMap.getIINInfo(iin);

@@ -58,6 +58,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
@@ -74,12 +75,6 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
     private static final BlackboardArtifact.Type ACCOUNT_TYPE = new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT);
     @NbBundle.Messages("AccountsRootNode.name=Accounts")
     final public static String NAME = Bundle.AccountsRootNode_name();
-
-    /**
-     * This is a secret handshake with
-     * org.sleuthkit.autopsy.keywordsearch.TermComponentQuery
-     */
-    private static final String CREDIT_CARD_ACCOUNT_TYPE = "Credit Card";
 
     private SleuthkitCase skCase;
 
@@ -459,7 +454,11 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
         @Override
         protected Node createNodeForKey(String key) {
-            if (key.equals(CREDIT_CARD_ACCOUNT_TYPE)) {
+            if (key.equals( /**
+                     * This is a secret handshake with
+                     * org.sleuthkit.autopsy.keywordsearch.TermComponentQuery
+                     */
+                    Account.Type.CREDIT_CARD.name())) {
                 return new CreditCardNumberAccountTypeNode(key);
             } else {
                 //Flesh out what happens with other account types here.
@@ -708,10 +707,10 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                     + "      GROUP_CONCAT(blackboard_artifacts.review_status_id) AS review_status_ids "
                     + " FROM blackboard_artifacts " //NON-NLS
                     + " LEFT JOIN blackboard_attributes as solr_attribute ON blackboard_artifacts.artifact_id = solr_attribute.artifact_id " //NON-NLS
-                    + "                                AND solr_attribute.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SOLR_DOCUMENT_ID.getTypeID() //NON-NLS
+                    + "                                AND solr_attribute.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID.getTypeID() //NON-NLS
                     + " LEFT JOIN blackboard_attributes as account_type ON blackboard_artifacts.artifact_id = account_type.artifact_id " //NON-NLS
                     + "                                AND account_type.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID() //NON-NLS
-                    + "                                AND account_type.value_text = '" + CREDIT_CARD_ACCOUNT_TYPE + "'" //NON-NLS
+                    + "                                AND account_type.value_text = '" + Account.Type.CREDIT_CARD.name() + "'" //NON-NLS
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
                     + getRejectedArtifactFilterClause()
                     + " GROUP BY blackboard_artifacts.obj_id, solr_document_id " //NON-NLS
