@@ -34,7 +34,9 @@ import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
+import org.sleuthkit.autopsy.datamodel.AccountType;
 import org.sleuthkit.autopsy.datamodel.Accounts;
+import org.sleuthkit.autopsy.datamodel.BINMap;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -56,10 +58,6 @@ final class TermComponentQuery implements KeywordSearchQuery {
     private static final BlackboardAttribute.Type ACCOUNT_NUMBER_TYPE = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CREDIT_CARD_NUMBER);
     private static final BlackboardAttribute.Type ACOUNT_TYPE_TYPE = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE);
 
-    /**
-     * This is a secret handshake with org.sleuthkit.autopsy.datamodel.Accounts
-     */
-    private static final String CREDIT_CARD_NUMBER_ACCOUNT_TYPE = "Credit Card Number";
 
     //TODO: move these regex and the luhn check to a new class, something like: CreditCardNumberValidator
     /*
@@ -194,7 +192,7 @@ final class TermComponentQuery implements KeywordSearchQuery {
             //if the keyword hit matched the credit card number keyword/regex...
             if (keyword.getType() == ATTRIBUTE_TYPE.TSK_CREDIT_CARD_NUMBER) {
                 newArtifact = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_ACCOUNT);
-                newArtifact.addAttribute(new BlackboardAttribute(ACOUNT_TYPE_TYPE, MODULE_NAME, CREDIT_CARD_NUMBER_ACCOUNT_TYPE));
+                newArtifact.addAttribute(new BlackboardAttribute(ACOUNT_TYPE_TYPE, MODULE_NAME, AccountType.CREDIT_CARD.name()));
 
                 // make account artifact
                 //try to match it against the track 1 regex
@@ -219,7 +217,7 @@ final class TermComponentQuery implements KeywordSearchQuery {
                 String ccn = newArtifact.getAttribute(ACCOUNT_NUMBER_TYPE).getValueString();
                 final int iin = Integer.parseInt(ccn.substring(0, 8));
 
-                Accounts.IINInfo iinInfo = Accounts.getIINInfo(iin);
+                Accounts.IINInfo iinInfo = BINMap.getIINInfo(iin);
 
                 if (iinInfo != null) {
                     iinInfo.getScheme().ifPresent(scheme

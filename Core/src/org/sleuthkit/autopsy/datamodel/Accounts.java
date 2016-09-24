@@ -24,8 +24,6 @@ import com.google.common.collect.TreeRangeMap;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -44,13 +42,9 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
-import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.Immutable;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
@@ -61,7 +55,6 @@ import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -86,19 +79,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
      * This is a secret handshake with
      * org.sleuthkit.autopsy.keywordsearch.TermComponentQuery
      */
-    private static final String CREDIT_CARD_NUMBER_ACCOUNT_TYPE = "Credit Card Number";
-    /**
-     * Range Map from a (ranges of) B/IINs to data model object with details of
-     * the B/IIN, ie, bank name, phone, url, visa/amex/mastercard/...,
-     */
-    @GuardedBy("Accounts.class")
-    private final static RangeMap<Integer, IINRange> iinRanges = TreeRangeMap.create();
-
-    /**
-     * Flag for if we have loaded the IINs from the file already.
-     */
-    @GuardedBy("Accounts.class")
-    private static boolean iinsLoaded = false;
+    private static final String CREDIT_CARD_ACCOUNT_TYPE = "Credit Card";
 
     private SleuthkitCase skCase;
 
@@ -108,65 +89,17 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
     private boolean showRejected = false;
 
     /**
-     * Load the IIN range information from disk. If the map has already been
-     * initialized, don't load again.
-     */
-    synchronized private static void loadIINRanges() {
-        if (iinsLoaded == false) {
-            try {
-                InputStreamReader in = new InputStreamReader(Accounts.class.getResourceAsStream("ranges.csv")); //NON-NLS
-                CSVParser rangesParser = CSVFormat.RFC4180.withFirstRecordAsHeader().parse(in);
-
-                //parse each row and add to range map
-                for (CSVRecord record : rangesParser) {
-
-                    /**
-                     * Because ranges.csv allows both 6 and (the newer) 8 digit
-                     * IINs, but we need a consistent length for the range map,
-                     * we pad all the numbers out to 8 digits
-                     */
-                    String start = StringUtils.rightPad(record.get("iin_start"), 8, "0"); //pad start with 0's //NON-NLS
-
-                    //if there is no end listed, use start, since ranges will be closed.
-                    String end = StringUtils.defaultIfBlank(record.get("iin_end"), start); //NON-NLS
-                    end = StringUtils.rightPad(end, 8, "99"); //pad end with 9's //NON-NLS
-
-                    final String numberLength = record.get("number_length"); //NON-NLS
-
-                    try {
-                        IINRange iinRange = new IINRange(Integer.parseInt(start),
-                                Integer.parseInt(end),
-                                StringUtils.isBlank(numberLength) ? null : Integer.valueOf(numberLength),
-                                record.get("scheme"), //NON-NLS
-                                record.get("brand"), //NON-NLS
-                                record.get("type"), //NON-NLS
-                                record.get("country"), //NON-NLS
-                                record.get("bank_name"), //NON-NLS
-                                record.get("bank_url"), //NON-NLS
-                                record.get("bank_phone"), //NON-NLS
-                                record.get("bank_city")); //NON-NLS
-
-                        iinRanges.put(Range.closed(iinRange.getIINstart(), iinRange.getIINend()), iinRange);
-
-                    } catch (NumberFormatException numberFormatException) {
-                        LOGGER.log(Level.WARNING, "Failed to parse IIN range: " + record.toString(), numberFormatException); //NON-NLS
-                    }
-                    iinsLoaded = true;
-                }
-            } catch (IOException ex) {
-                LOGGER.log(Level.WARNING, "Failed to load IIN ranges form ranges.csv", ex); //NON-NLS
-                MessageNotifyUtil.Notify.warn("Credit Card Number Discovery", "There was an error loading Bank Identification Number information.  Accounts will not have their BINs identified.");
-            }
-        }
-    }
-
-    /**
      * Constructor
      *
      * @param skCase The SleuthkitCase object to use for db queries.
      */
     Accounts(SleuthkitCase skCase) {
         this.skCase = skCase;
+    }
+
+    @Override
+    public <T> T accept(AutopsyItemVisitor<T> v) {
+        return v.visit(this);
     }
 
     /**
@@ -187,23 +120,6 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
     private void update() {
         setChanged();
         notifyObservers();
-    }
-
-    /**
-     * Get an IINInfo object with details about the given IIN
-     *
-     * @param iin the IIN to get details of.
-     *
-     * @return
-     */
-    synchronized static public IINInfo getIINInfo(int iin) {
-        loadIINRanges();
-        return iinRanges.get(iin);
-    }
-
-    @Override
-    public <T> T accept(AutopsyItemVisitor<T> v) {
-        return v.visit(this);
     }
 
     /**
@@ -294,7 +210,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
      * by a bank.
      */
     @Immutable
-    static private class IINRange implements IINInfo {
+    static class IINRange implements IINInfo {
 
         private final int IINStart; //start of IIN range, 8 digits
         private final int IINEnd; // end (incluse ) of IIN rnage, 8 digits
@@ -333,7 +249,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
          * @param bank_phone    the phone number of the issuer
          * @param bank_city     the city of the issuer
          */
-        private IINRange(int IIN_start, int IIN_end, Integer number_length, String scheme, String brand, String type, String country, String bank_name, String bank_url, String bank_phone, String bank_city) {
+        IINRange(int IIN_start, int IIN_end, Integer number_length, String scheme, String brand, String type, String country, String bank_name, String bank_url, String bank_phone, String bank_city) {
             this.IINStart = IIN_start;
             this.IINEnd = IIN_end;
 
@@ -543,7 +459,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
 
         @Override
         protected Node createNodeForKey(String key) {
-            if (key.equals(CREDIT_CARD_NUMBER_ACCOUNT_TYPE)) {
+            if (key.equals(CREDIT_CARD_ACCOUNT_TYPE)) {
                 return new CreditCardNumberAccountTypeNode(key);
             } else {
                 //Flesh out what happens with other account types here.
@@ -795,7 +711,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                     + "                                AND solr_attribute.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SOLR_DOCUMENT_ID.getTypeID() //NON-NLS
                     + " LEFT JOIN blackboard_attributes as account_type ON blackboard_artifacts.artifact_id = account_type.artifact_id " //NON-NLS
                     + "                                AND account_type.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID() //NON-NLS
-                    + "                                AND account_type.value_text = '" + CREDIT_CARD_NUMBER_ACCOUNT_TYPE + "'" //NON-NLS
+                    + "                                AND account_type.value_text = '" + CREDIT_CARD_ACCOUNT_TYPE + "'" //NON-NLS
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
                     + getRejectedArtifactFilterClause()
                     + " GROUP BY blackboard_artifacts.obj_id, solr_document_id " //NON-NLS
@@ -1066,7 +982,7 @@ public class Accounts extends Observable implements AutopsyVisitableItem {
                     final Integer bin = Integer.valueOf(resultSet.getString("BIN"));
                     long count = resultSet.getLong("count");
 
-                    IINRange iinRange = (IINRange) getIINInfo(bin);
+                    IINRange iinRange = (IINRange) BINMap.getIINInfo(bin);
                     BinResult previousResult = ranges.get(bin);
 
                     if (previousResult != null) {
