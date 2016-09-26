@@ -162,13 +162,13 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
      * Top-level node for the accounts tree
      */
     @NbBundle.Messages({"Accounts.RootNode.displayName=Accounts"})
-    public class AccountsRootNode extends DisplayableItemNode {
+    final public class AccountsRootNode extends DisplayableItemNode {
 
         /**
          * Creates child nodes for each account type (currently hard coded to
          * make one for Credit Cards)
          */
-        private class AccountTypeFactory extends ObservingChildFactory<String> {
+        final private class AccountTypeFactory extends ObservingChildFactory<String> {
 
             /*
              * The pcl is in this class because it has the easiest mechanisms to
@@ -301,9 +301,9 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
 
     }
 
-    public class DefaultAccountTypeNode extends DisplayableItemNode {
+    final public class DefaultAccountTypeNode extends DisplayableItemNode {
 
-        private class DefaultAccountFactory extends ChildFactory.Detachable<Long> {
+        final private class DefaultAccountFactory extends ChildFactory.Detachable<Long> {
 
             private final String accountTypeName;
 
@@ -376,13 +376,13 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
      *
      * NOTE: currently hard coded to work for Credit Card only
      */
-    public class CreditCardNumberAccountTypeNode extends DisplayableItemNode {
+    final public class CreditCardNumberAccountTypeNode extends DisplayableItemNode {
 
         /**
          * ChildFactory that makes nodes for the different account organizations
          * (by file, by BIN)
          */
-        private class ViewModeFactory extends ObservingChildFactory<CreditCardViewMode> {
+        final private class ViewModeFactory extends ObservingChildFactory<CreditCardViewMode> {
 
             @Override
             protected boolean createKeys(List<CreditCardViewMode> list) {
@@ -425,12 +425,12 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
      * Node that is the root of the "by file" accounts tree. Its children are
      * FileWithCCNNodes.
      */
-    public class ByFileNode extends DisplayableItemNode implements Observer {
+    final public class ByFileNode extends DisplayableItemNode implements Observer {
 
         /**
          * Factory for the children of the ByFiles Node.
          */
-        private class FileWithCCNFactory extends ObservingChildFactory<FileWithCCN> {
+        final private class FileWithCCNFactory extends ObservingChildFactory<FileWithCCN> {
 
             @Override
             protected boolean createKeys(List<FileWithCCN> list) {
@@ -530,12 +530,12 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
      * Node that is the root of the "By BIN" accounts tree. Its children are
      * BINNodes.
      */
-    public class ByBINNode extends DisplayableItemNode implements Observer {
+    final public class ByBINNode extends DisplayableItemNode implements Observer {
 
         /**
          * Factory that generates the children of the ByBin node.
          */
-        private class BINFactory extends ObservingChildFactory<BinResult> {
+        final private class BINFactory extends ObservingChildFactory<BinResult> {
 
             @Override
             protected boolean createKeys(List<BinResult> list) {
@@ -627,7 +627,7 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
      * associated accounts.
      */
     @Immutable
-    private static class FileWithCCN {
+    final private static class FileWithCCN {
 
         private final long objID;
         private final String solrDocumentId;
@@ -690,7 +690,7 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
     /**
      * Node that represents a file or chunk of an unallocated space file.
      */
-    public class FileWithCCNNode extends DisplayableItemNode {
+    final public class FileWithCCNNode extends DisplayableItemNode {
 
         private final FileWithCCN fileKey;
         private final String fileName;
@@ -779,12 +779,12 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
         }
     }
 
-    public class BINNode extends DisplayableItemNode implements Observer {
+    final public class BINNode extends DisplayableItemNode implements Observer {
 
         /**
          * Creates the nodes for the accounts of a given type
          */
-        private class CreditCardNumberFactory extends ObservingChildFactory<Long> {
+        final private class CreditCardNumberFactory extends ObservingChildFactory<Long> {
 
             private final BinResult bin;
 
@@ -943,7 +943,7 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
      * accounts found with the BIN.
      */
     @Immutable
-    static private class BinResult implements CreditCards.BankIdentificationNumber {
+    final static private class BinResult implements CreditCards.BankIdentificationNumber {
 
         /**
          * The number of accounts with this BIN
@@ -1030,7 +1030,7 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
         }
     }
 
-    private class AccountArtifactNode extends BlackboardArtifactNode {
+    final private class AccountArtifactNode extends BlackboardArtifactNode {
 
         private final BlackboardArtifact artifact;
 
@@ -1079,7 +1079,7 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
         }
     }
 
-    private class ApproveAccounts extends AbstractAction {
+    final private class ApproveAccounts extends AbstractAction {
 
         private final Collection<? extends BlackboardArtifact> artifacts;
 
@@ -1101,7 +1101,7 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
         }
     }
 
-    private class RejectAccounts extends AbstractAction {
+    final private class RejectAccounts extends AbstractAction {
 
         private final Collection<? extends BlackboardArtifact> artifacts;
 
