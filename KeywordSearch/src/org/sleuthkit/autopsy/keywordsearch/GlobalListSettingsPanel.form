@@ -42,6 +42,7 @@
               <Border info="null"/>
             </Property>
             <Property name="dividerLocation" type="int" value="275"/>
+            <Property name="dividerSize" type="int" value="1"/>
           </Properties>
 
           <Layout class="org.netbeans.modules.form.compat2.layouts.support.JSplitPaneSupportLayout"/>
@@ -81,7 +82,7 @@
               <Layout>
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <EmptySpace min="0" pref="393" max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="397" max="32767" attributes="0"/>
                   </Group>
                 </DimensionLayout>
                 <DimensionLayout dim="1">
