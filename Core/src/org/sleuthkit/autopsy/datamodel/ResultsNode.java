@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import org.sleuthkit.autopsy.datamodel._private.Accounts;
 import java.util.Arrays;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
