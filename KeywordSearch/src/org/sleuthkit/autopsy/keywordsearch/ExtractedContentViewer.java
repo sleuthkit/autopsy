@@ -140,7 +140,7 @@ public class ExtractedContentViewer implements DataContentViewer {
                  */
                 for (BlackboardArtifact artifact : artifacts) {
                     try {
-                        BlackboardAttribute solrIDAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SOLR_DOCUMENT_ID));
+                        BlackboardAttribute solrIDAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID));
                         if (solrIDAttr != null) {
                             String valueString = solrIDAttr.getValueString();
                             if (StringUtils.isNotBlank(valueString)) {

@@ -34,8 +34,7 @@ import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
-import org.sleuthkit.autopsy.datamodel.Accounts;
-import org.sleuthkit.autopsy.datamodel.BINMap;
+import org.sleuthkit.autopsy.datamodel.CreditCards;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -214,26 +213,26 @@ final class TermComponentQuery implements KeywordSearchQuery {
                 }
 
                 String ccn = newArtifact.getAttribute(CREDIT_CARD_NUMBER).getValueString();
-                final int iin = Integer.parseInt(ccn.substring(0, 8));
+                final int bin = Integer.parseInt(ccn.substring(0, 8));
 
-                Accounts.IINInfo iinInfo = BINMap.getIINInfo(iin);
+                CreditCards.BankIdentificationNumber binInfo = CreditCards.getBINInfo(bin);
 
-                if (iinInfo != null) {
-                    iinInfo.getScheme().ifPresent(scheme
+                if (binInfo != null) {
+                    binInfo.getScheme().ifPresent(scheme
                             -> addAttributeSafe(newArtifact, ATTRIBUTE_TYPE.TSK_CREDIT_CARD_SCHEME, scheme));
-                    iinInfo.getCardType().ifPresent(cardType
+                    binInfo.getCardType().ifPresent(cardType
                             -> addAttributeSafe(newArtifact, ATTRIBUTE_TYPE.TSK_PAYMENT_CARD_TYPE, cardType));
-                    iinInfo.getBrand().ifPresent(brand
+                    binInfo.getBrand().ifPresent(brand
                             -> addAttributeSafe(newArtifact, ATTRIBUTE_TYPE.TSK_BRAND, brand));
-                    iinInfo.getBankName().ifPresent(bankName
+                    binInfo.getBankName().ifPresent(bankName
                             -> addAttributeSafe(newArtifact, ATTRIBUTE_TYPE.TSK_BANK_NAME, bankName));
-                    iinInfo.getBankPhoneNumber().ifPresent(phoneNumber
+                    binInfo.getBankPhoneNumber().ifPresent(phoneNumber
                             -> addAttributeSafe(newArtifact, ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, phoneNumber));
-                    iinInfo.getBankURL().ifPresent(url
+                    binInfo.getBankURL().ifPresent(url
                             -> addAttributeSafe(newArtifact, ATTRIBUTE_TYPE.TSK_URL, url));
-                    iinInfo.getCountry().ifPresent(country
+                    binInfo.getCountry().ifPresent(country
                             -> addAttributeSafe(newArtifact, ATTRIBUTE_TYPE.TSK_COUNTRY, country));
-                    iinInfo.getBankCity().ifPresent(city
+                    binInfo.getBankCity().ifPresent(city
                             -> addAttributeSafe(newArtifact, ATTRIBUTE_TYPE.TSK_CITY, city));
                 }
             } else {

@@ -22,6 +22,7 @@ import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsChildren.De
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsNode;
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootChildren.FileSizeNode;
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootNode;
+import org.sleuthkit.autopsy.datamodel._private.Accounts;
 
 /**
  * Visitor pattern that goes over all nodes in the directory tree. This includes
@@ -136,6 +137,8 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(Accounts.FileWithCCNNode byFileNode);
 
     T visit(Accounts.BINNode binNode);
+
+    T visit(Accounts.DefaultAccountTypeNode node);
 
     /**
      * Visitor with an implementable default behavior for all types. Override
@@ -376,6 +379,10 @@ public interface DisplayableItemNodeVisitor<T> {
 
         @Override
         public T visit(Accounts.BINNode node) {
+            return defaultVisit(node);
+        }
+        @Override
+        public T visit(Accounts.DefaultAccountTypeNode node) {
             return defaultVisit(node);
         }
     }
