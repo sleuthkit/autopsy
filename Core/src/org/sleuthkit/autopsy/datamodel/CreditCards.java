@@ -14,7 +14,7 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.datamodel._private.Accounts;
+import org.sleuthkit.autopsy.datamodel._private.BINRange;
 
 public class CreditCards {
 
@@ -96,7 +96,7 @@ public class CreditCards {
      * the BIN, ie, bank name, phone, url, visa/amex/mastercard/...,
      */
     @GuardedBy("CreditCards.class")
-    private final static RangeMap<Integer, Accounts.BINRange> binRanges = TreeRangeMap.create();
+    private final static RangeMap<Integer, BINRange> binRanges = TreeRangeMap.create();
 
     /**
      * Flag for if we have loaded the BINs from the file already.
@@ -131,7 +131,7 @@ public class CreditCards {
                     final String numberLength = record.get("number_length"); //NON-NLS
 
                     try {
-                        Accounts.BINRange binRange = new Accounts.BINRange(Integer.parseInt(start),
+                        BINRange binRange = new BINRange(Integer.parseInt(start),
                                 Integer.parseInt(end),
                                 StringUtils.isBlank(numberLength) ? null : Integer.valueOf(numberLength),
                                 record.get("scheme"), //NON-NLS
