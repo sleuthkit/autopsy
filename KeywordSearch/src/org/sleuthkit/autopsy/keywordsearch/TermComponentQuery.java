@@ -54,8 +54,6 @@ final class TermComponentQuery implements KeywordSearchQuery {
 
     private static final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
     private static final BlackboardAttribute.Type KEYWORD_SEARCH_DOCUMENT_ID = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID);
-    private static final BlackboardAttribute.Type CREDIT_CARD_NUMBER = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CREDIT_CARD_NUMBER);
-    private static final BlackboardAttribute.Type ACOUNT_TYPE = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE);
 
     //TODO: move these regex and the luhn check to a new class, something like: CreditCardNumberValidator
     /*
@@ -188,9 +186,12 @@ final class TermComponentQuery implements KeywordSearchQuery {
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
         try {
             //if the keyword hit matched the credit card number keyword/regex...
-            if (keyword.getType() == ATTRIBUTE_TYPE.TSK_CREDIT_CARD_NUMBER) {
+            if (keyword.getType() == ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
                 newArtifact = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_ACCOUNT);
-                newArtifact.addAttribute(new BlackboardAttribute(ACOUNT_TYPE, MODULE_NAME, Account.Type.CREDIT_CARD.name()));
+                final BlackboardAttribute attr = new BlackboardAttribute(
+                        new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE),
+                        MODULE_NAME, Account.Type.CREDIT_CARD.name());
+                newArtifact.addAttribute(attr);
 
                 // make account artifact
                 //try to match it against the track 1 regex
@@ -212,18 +213,18 @@ final class TermComponentQuery implements KeywordSearchQuery {
                     }
                 }
 
-                String ccn = newArtifact.getAttribute(CREDIT_CARD_NUMBER).getValueString();
+                String ccn = newArtifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CARD_NUMBER)).getValueString();
                 final int bin = Integer.parseInt(ccn.substring(0, 8));
 
                 CreditCards.BankIdentificationNumber binInfo = CreditCards.getBINInfo(bin);
 
                 if (binInfo != null) {
                     binInfo.getScheme().ifPresent(scheme
-                            -> addAttributeSafe(newArtifact, ATTRIBUTE_TYPE.TSK_CREDIT_CARD_SCHEME, scheme));
+                            -> addAttributeSafe(newArtifact, ATTRIBUTE_TYPE.TSK_CARD_SCHEME, scheme));
                     binInfo.getCardType().ifPresent(cardType
-                            -> addAttributeSafe(newArtifact, ATTRIBUTE_TYPE.TSK_PAYMENT_CARD_TYPE, cardType));
+                            -> addAttributeSafe(newArtifact, ATTRIBUTE_TYPE.TSK_CARD_TYPE, cardType));
                     binInfo.getBrand().ifPresent(brand
-                            -> addAttributeSafe(newArtifact, ATTRIBUTE_TYPE.TSK_BRAND, brand));
+                            -> addAttributeSafe(newArtifact, ATTRIBUTE_TYPE.TSK_BRAND_NAME, brand));
                     binInfo.getBankName().ifPresent(bankName
                             -> addAttributeSafe(newArtifact, ATTRIBUTE_TYPE.TSK_BANK_NAME, bankName));
                     binInfo.getBankPhoneNumber().ifPresent(phoneNumber
@@ -327,7 +328,7 @@ final class TermComponentQuery implements KeywordSearchQuery {
         for (Term term : terms) {
             final String termStr = KeywordSearchUtil.escapeLuceneQuery(term.getTerm());
 
-            if (keyword.getType() == ATTRIBUTE_TYPE.TSK_CREDIT_CARD_NUMBER) {
+            if (keyword.getType() == ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
                 //If the keyword is a credit card number, pass it through luhn validator
                 Matcher matcher = CCN_PATTERN.matcher(term.getTerm());
                 matcher.find();
@@ -387,7 +388,7 @@ final class TermComponentQuery implements KeywordSearchQuery {
         BlackboardAttribute.Type type = new BlackboardAttribute.Type(attrType);
         if (artifact.getAttribute(type) == null) {
             String value = matcher.group(groupName);
-            if (attrType.equals(ATTRIBUTE_TYPE.TSK_CREDIT_CARD_NUMBER)) {
+            if (attrType.equals(ATTRIBUTE_TYPE.TSK_CARD_NUMBER)) {
                 value = CharMatcher.anyOf(" -").removeFrom(value);
             }
             if (StringUtils.isNotBlank(value)) {
@@ -408,11 +409,11 @@ final class TermComponentQuery implements KeywordSearchQuery {
      */
     static private void parseTrack2Data(BlackboardArtifact artifact, Matcher matcher) throws IllegalArgumentException, TskCoreException {
         //try to add all the attrributes common to track 1 and 2
-        addAttributeIfNotAlreadyCaptured(artifact, ATTRIBUTE_TYPE.TSK_CREDIT_CARD_NUMBER, "accountNumber", matcher);
-        addAttributeIfNotAlreadyCaptured(artifact, ATTRIBUTE_TYPE.TSK_CREDIT_CARD_EXPIRATION, "expiration", matcher);
-        addAttributeIfNotAlreadyCaptured(artifact, ATTRIBUTE_TYPE.TSK_CREDIT_CARD_SERVICE_CODE, "serviceCode", matcher);
-        addAttributeIfNotAlreadyCaptured(artifact, ATTRIBUTE_TYPE.TSK_CREDIT_CARD_DISCRETIONARY, "discretionary", matcher);
-        addAttributeIfNotAlreadyCaptured(artifact, ATTRIBUTE_TYPE.TSK_CREDIT_CARD_LRC, "LRC", matcher);
+        addAttributeIfNotAlreadyCaptured(artifact, ATTRIBUTE_TYPE.TSK_CARD_NUMBER, "accountNumber", matcher);
+        addAttributeIfNotAlreadyCaptured(artifact, ATTRIBUTE_TYPE.TSK_CARD_EXPIRATION, "expiration", matcher);
+        addAttributeIfNotAlreadyCaptured(artifact, ATTRIBUTE_TYPE.TSK_CARD_SERVICE_CODE, "serviceCode", matcher);
+        addAttributeIfNotAlreadyCaptured(artifact, ATTRIBUTE_TYPE.TSK_CARD_DISCRETIONARY, "discretionary", matcher);
+        addAttributeIfNotAlreadyCaptured(artifact, ATTRIBUTE_TYPE.TSK_CARD_LRC, "LRC", matcher);
 
     }
 

@@ -148,7 +148,7 @@ public class ExtractedContentViewer implements DataContentViewer {
                             }
                         }
 
-                        BlackboardAttribute keyWordAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CREDIT_CARD_NUMBER));
+                        BlackboardAttribute keyWordAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CARD_NUMBER));
                         if (keyWordAttr != null) {
                             String valueString = keyWordAttr.getValueString();
                             if (StringUtils.isNotBlank(valueString)) {

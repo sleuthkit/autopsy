@@ -547,7 +547,7 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
                         + " FROM blackboard_artifacts " //NON-NLS
                         + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id" //NON-NLS
                         + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
-                        + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CREDIT_CARD_NUMBER.getTypeID() //NON-NLS
+                        + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER.getTypeID() //NON-NLS
                         + getRejectedArtifactFilterClause()
                         + " GROUP BY BIN " //NON-NLS
                         + " ORDER BY BIN "; //NON-NLS
@@ -800,7 +800,7 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
                         + " FROM blackboard_artifacts " //NON-NLS
                         + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id " //NON-NLS
                         + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
-                        + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CREDIT_CARD_NUMBER.getTypeID() //NON-NLS
+                        + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER.getTypeID() //NON-NLS
                         + "     AND blackboard_attributes.value_text >= \"" + bin.getBINStart() + "\" AND  blackboard_attributes.value_text < \"" + (bin.getBINEnd() + 1) + "\"" //NON-NLS
                         + getRejectedArtifactFilterClause()
                         + " ORDER BY blackboard_attributes.value_text"; //NON-NLS
@@ -976,7 +976,7 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
             return binEnd;
         }
 
-        public long getCount() {
+        long getCount() {
             return count;
         }
 
