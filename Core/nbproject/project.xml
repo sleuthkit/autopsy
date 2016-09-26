@@ -222,6 +222,10 @@
                 </dependency>
             </module-dependencies>
             <public-packages>
+                <package>net.sf.sevenzipjbinding</package>
+                <package>net.sf.sevenzipjbinding.impl</package>
+                <package>net.sf.sevenzipjbinding.simple</package>
+                <package>net.sf.sevenzipjbinding.simple.impl</package>
                 <package>org.sleuthkit.autopsy.actions</package>
                 <package>org.sleuthkit.autopsy.casemodule</package>
                 <package>org.sleuthkit.autopsy.casemodule.events</package>
