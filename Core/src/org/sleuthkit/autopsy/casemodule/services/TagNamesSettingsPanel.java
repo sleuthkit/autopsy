@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
  * properties file, able to be used across cases. Potentially room to add other
  * tag name options in the future.
  */
-public class TagNamesSettingsPanel extends javax.swing.JPanel implements OptionsPanel {
+final class TagNamesSettingsPanel extends javax.swing.JPanel implements OptionsPanel {
 
     private static final Logger logger = Logger.getLogger(TagNamesSettingsPanel.class.getName());
 
@@ -53,7 +53,7 @@ public class TagNamesSettingsPanel extends javax.swing.JPanel implements Options
     /**
      * Creates new form TagsManagerOptionsPanel
      */
-    public TagNamesSettingsPanel() {
+    TagNamesSettingsPanel() {
         initComponents();
         customizeComponents();
     }

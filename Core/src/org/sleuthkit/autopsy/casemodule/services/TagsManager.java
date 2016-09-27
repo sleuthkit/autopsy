@@ -631,6 +631,9 @@ public class TagsManager implements Closeable {
             addPredefinedTagNames();
             addTagNamesFromTagsSettings();
             tagNamesLoaded = true;
+        } else {
+            // Reload case db tag names in case another user has added some.
+            addTagNamesFromCurrentCase();
         }
     }
 

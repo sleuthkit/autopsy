@@ -29,7 +29,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.openide.util.NbBundle;
 
-public class NewUserTagNameDialog extends javax.swing.JDialog {
+class NewUserTagNameDialog extends javax.swing.JDialog {
 
     private String userTagDisplayName;
     private BUTTON_PRESSED result;
