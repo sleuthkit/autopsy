@@ -24,6 +24,8 @@ import java.util.Collections;
 import java.util.List;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -57,11 +59,17 @@ final class TagNamesSettingsPanel extends javax.swing.JPanel implements OptionsP
         initComponents();
         customizeComponents();
     }
-
+    
     private void customizeComponents() {
         tagNamesListModel = new DefaultListModel<>();
         tagNamesList.setModel(tagNamesListModel);
         tagNames = new ArrayList<>();
+        tagNamesList.addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                enableButtons();
+            }
+        });
     }
 
     /**
@@ -93,14 +101,6 @@ final class TagNamesSettingsPanel extends javax.swing.JPanel implements OptionsP
 
         org.openide.awt.Mnemonics.setLocalizedText(tagNamesListLabel, org.openide.util.NbBundle.getMessage(TagNamesSettingsPanel.class, "TagNamesSettingsPanel.tagNamesListLabel.text")); // NOI18N
 
-        tagNamesList.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                tagNamesListMouseClicked(evt);
-            }
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                tagNamesListMousePressed(evt);
-            }
-        });
         jScrollPane1.setViewportView(tagNamesList);
 
         newTagNameButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add-tag.png"))); // NOI18N
@@ -234,14 +234,6 @@ final class TagNamesSettingsPanel extends javax.swing.JPanel implements OptionsP
         enableButtons();
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_deleteTagNameButtonActionPerformed
-
-    private void tagNamesListMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tagNamesListMouseClicked
-        enableButtons();
-    }//GEN-LAST:event_tagNamesListMouseClicked
-
-    private void tagNamesListMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tagNamesListMousePressed
-        enableButtons();
-    }//GEN-LAST:event_tagNamesListMousePressed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton deleteTagNameButton;
