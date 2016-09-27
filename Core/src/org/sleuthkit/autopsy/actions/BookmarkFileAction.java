@@ -6,40 +6,26 @@
 package org.sleuthkit.autopsy.actions;
 
 import java.awt.event.ActionEvent;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.logging.Level;
+import java.util.List;
 import javax.swing.AbstractAction;
-import org.openide.util.Exceptions;
-import org.openide.util.Utilities;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.services.TagsManager;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TagName;
-import org.sleuthkit.datamodel.TskCoreException;
 
-public class BookmarkFileAction extends AbstractAction {
-     
+class BookmarkFileAction extends AbstractAction {
+
     private static final String NO_COMMENT = "";
-    private static final String BOOKMARK = "Bookmark";
+    private static final String BOOKMARK = NbBundle.getMessage(BookmarkFileAction.class, "BookmarkFileAction.bookmark.text");
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        TagName tagName = null;
-        try {
-            tagName = Case.getCurrentCase().getServices().getTagsManager().addTagName(BOOKMARK);
-        } catch (TagsManager.TagNameAlreadyExistsException ex) {
-            try {
-                tagName = Case.getCurrentCase().getServices().getTagsManager().getTagName(BOOKMARK);
-            } catch (TagsManager.TagNameDoesNotExistException ex1) {
-                // already confirmed that tag name does exist
+        List<TagName> tagNames = Case.getCurrentCase().getServices().getTagsManager().getPredefinedTagNames();
+        for (TagName tagName : tagNames) {
+            if (tagName.getDisplayName().equals(BOOKMARK)) {
+                AddContentTagAction.getInstance().addTag(tagName, NO_COMMENT);
+                return;
             }
-        } catch (TskCoreException ex) {
-            Logger.getLogger(BookmarkFileAction.class.getName()).log(Level.SEVERE, "Error tagging file", ex); //NON-NLS
-        } finally {
-            AddContentTagAction.getInstance().addTag(tagName, NO_COMMENT);
         }
     }
-    
+
 }

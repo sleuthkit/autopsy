@@ -93,16 +93,6 @@ public class TagsManager implements Closeable {
         lazyLoadExistingTagNames();
         return caseDb.getTagNamesInUse();
     }
-    
-    public synchronized TagName getTagName(String tagDisplayName) throws TagNameDoesNotExistException {
-        lazyLoadExistingTagNames();
-        if (tagNameExists(tagDisplayName)) {
-            return uniqueTagNames.get(tagDisplayName);
-        }
-        else {
-            throw new TagNameDoesNotExistException();
-        }
-    }
 
     /**
      * Checks whether a tag name with a given display name exists.
@@ -683,11 +673,4 @@ public class TagsManager implements Closeable {
 
         private static final long serialVersionUID = 1L;
     }
-
-    public static class TagNameDoesNotExistException extends Exception {
-
-        public TagNameDoesNotExistException() {
-        }
-    }
-
 }
