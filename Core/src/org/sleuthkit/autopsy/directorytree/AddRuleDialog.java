@@ -31,7 +31,6 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import org.openide.util.NbBundle;
-import org.openide.util.NbBundle.Messages;
 
 /**
  * A dialog for adding or editing an external viewer rule

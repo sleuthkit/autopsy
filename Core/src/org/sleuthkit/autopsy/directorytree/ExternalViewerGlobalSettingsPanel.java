@@ -227,7 +227,9 @@ public class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel implem
             } else {
                 rules.add(newRule);
                 updateRulesListModel();
-                rulesList.setSelectedIndex(rules.size() - 1);
+                int index = rules.indexOf(newRule);
+                rulesList.setSelectedIndex(index);
+                enableButtons();
                 firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             }
         }
@@ -253,6 +255,7 @@ public class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel implem
             }
         }
         rulesList.setSelectedIndex(selected);
+        enableButtons();
     }//GEN-LAST:event_editRuleButtonActionPerformed
 
     private void deleteRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteRuleButtonActionPerformed
@@ -270,7 +273,6 @@ public class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel implem
     @Override
     public void load() {
         rules = ExternalViewerRulesManager.getInstance().getUserRules();
-        Collections.sort(rules);
         updateRulesListModel();
         enableButtons();
     }
@@ -290,6 +292,7 @@ public class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel implem
      */
     private void updateRulesListModel() {
         rulesListModel.clear();
+        Collections.sort(rules);
         for (ExternalViewerRule rule : rules) {
             rulesListModel.addElement(rule);
         }
