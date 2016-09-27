@@ -35,7 +35,7 @@ import org.openide.util.NbBundle;
 /**
  * A dialog for adding or editing an external viewer rule
  */
-public class AddRuleDialog extends JDialog {
+class AddRuleDialog extends JDialog {
 
     private ExternalViewerRule rule;
     private final AddRulePanel addRulePanel;
