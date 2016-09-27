@@ -97,6 +97,9 @@ public class TagNamesSettingsPanel extends javax.swing.JPanel implements Options
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 tagNamesListMouseClicked(evt);
             }
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                tagNamesListMousePressed(evt);
+            }
         });
         jScrollPane1.setViewportView(tagNamesList);
 
@@ -235,6 +238,10 @@ public class TagNamesSettingsPanel extends javax.swing.JPanel implements Options
     private void tagNamesListMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tagNamesListMouseClicked
         enableButtons();
     }//GEN-LAST:event_tagNamesListMouseClicked
+
+    private void tagNamesListMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tagNamesListMousePressed
+        enableButtons();
+    }//GEN-LAST:event_tagNamesListMousePressed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton deleteTagNameButton;

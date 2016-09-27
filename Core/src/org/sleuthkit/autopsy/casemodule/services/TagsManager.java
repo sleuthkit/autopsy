@@ -64,8 +64,7 @@ public class TagsManager implements Closeable {
     }
 
     /**
-     * Gets a list of all tag names currently available for tagging content or
-     * artifacts.
+     * Gets a list of all tag names currently in the case database.
      *
      * @return A list, possibly empty, of TagName data transfer objects (DTOs).
      *
@@ -81,33 +80,34 @@ public class TagsManager implements Closeable {
     }
 
     /**
-     * Gets a list of all tag names currently being used or tag names loaded
-     * from the properties file.
+     * Gets a list of all user tag names from the preference file.
      *
      * @return A list, possibly empty, of TagName data transfer objects (DTOs).
-     *
-     * @throws TskCoreException If there is an error reading from the case
-     *                          database.
      */
-    public synchronized List<TagName> getAllTagNamesForDisplay() throws TskCoreException {
-        if (null == caseDb) {
-            throw new TskCoreException("Tags manager has been closed");
-        }
+    public synchronized List<TagName> getUserTagNames() {
         lazyLoadExistingTagNames();
-        Set<TagName> tagNameSet = new HashSet<>();
-        // Add bookmark tag and other tag names that are in use
-        tagNameSet.add(uniqueTagNames.get(NbBundle.getMessage(this.getClass(), "TagsManager.predefTagNames.bookmark.text")));
-        tagNameSet.addAll(getTagNamesInUse());
-        // Add any tag names defined by the user
+        List<TagName> tagNameList = new ArrayList<>();
         String setting = ModuleSettings.getConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY);
         if (null != setting && !setting.isEmpty()) {
             List<String> tagNameTuples = Arrays.asList(setting.split(";"));
             for (String tagNameTuple : tagNameTuples) {
                 String[] tagNameAttributes = tagNameTuple.split(",");
-                tagNameSet.add(uniqueTagNames.get(tagNameAttributes[0]));
+                tagNameList.add(uniqueTagNames.get(tagNameAttributes[0]));
             }
         }
-        return new ArrayList<>(tagNameSet);
+        return tagNameList;
+    }
+
+    /**
+     * Gets a list of all predefined tag names.
+     * 
+     * @return A list of TagName data transfer objects (DTOs).
+     */
+    public synchronized List<TagName> getPredefinedTagNames() {
+        lazyLoadExistingTagNames();
+        List<TagName> tagNameList = new ArrayList<>();
+        tagNameList.add(uniqueTagNames.get(NbBundle.getMessage(this.getClass(), "TagsManager.predefTagNames.bookmark.text")));
+        return tagNameList;
     }
 
     /**

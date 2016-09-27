@@ -19,8 +19,12 @@
 package org.sleuthkit.autopsy.actions;
 
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JMenu;
@@ -89,8 +93,11 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
             TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
             List<TagName> tagNames = null;
             try {
-                tagNames = tagsManager.getAllTagNamesForDisplay();
-                Collections.sort(tagNames);
+                Set<TagName> tagNamesSet = new TreeSet<>();
+                tagNamesSet.addAll(tagsManager.getUserTagNames());
+                tagNamesSet.addAll(tagsManager.getTagNamesInUse());
+                tagNamesSet.addAll(tagsManager.getPredefinedTagNames());
+                tagNames = new ArrayList(tagNamesSet);
             } catch (TskCoreException ex) {
                 Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
             }

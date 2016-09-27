@@ -21,8 +21,11 @@ package org.sleuthkit.autopsy.actions;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
@@ -117,7 +120,11 @@ public class GetTagNameAndCommentDialog extends JDialog {
         TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
         List<TagName> currentTagNames = null;
         try {
-            currentTagNames = tagsManager.getAllTagNamesForDisplay();
+            Set<TagName> tagNamesSet = new TreeSet<>();
+            tagNamesSet.addAll(tagsManager.getUserTagNames());
+            tagNamesSet.addAll(tagsManager.getTagNamesInUse());
+            tagNamesSet.addAll(tagsManager.getPredefinedTagNames());
+            currentTagNames = new ArrayList(tagNamesSet);
         } catch (TskCoreException ex) {
             Logger.getLogger(GetTagNameAndCommentDialog.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
         }
