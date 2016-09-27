@@ -80,7 +80,7 @@ public class TagNamesSettingsPanel extends javax.swing.JPanel implements Options
         tagNamesListLabel = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tagNamesList = new javax.swing.JList<>();
-        addTagNameButton = new javax.swing.JButton();
+        newTagNameButton = new javax.swing.JButton();
         deleteTagNameButton = new javax.swing.JButton();
         tagNameAdditionalPanel = new javax.swing.JPanel();
 
@@ -100,11 +100,11 @@ public class TagNamesSettingsPanel extends javax.swing.JPanel implements Options
         });
         jScrollPane1.setViewportView(tagNamesList);
 
-        addTagNameButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add-tag.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(addTagNameButton, org.openide.util.NbBundle.getMessage(TagNamesSettingsPanel.class, "TagNamesSettingsPanel.addTagNameButton.text")); // NOI18N
-        addTagNameButton.addActionListener(new java.awt.event.ActionListener() {
+        newTagNameButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add-tag.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(newTagNameButton, org.openide.util.NbBundle.getMessage(TagNamesSettingsPanel.class, "TagNamesSettingsPanel.newTagNameButton.text")); // NOI18N
+        newTagNameButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                addTagNameButtonActionPerformed(evt);
+                newTagNameButtonActionPerformed(evt);
             }
         });
 
@@ -125,10 +125,10 @@ public class TagNamesSettingsPanel extends javax.swing.JPanel implements Options
                 .addGroup(modifyTagNameListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(tagNamesListLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(modifyTagNameListPanelLayout.createSequentialGroup()
-                        .addComponent(addTagNameButton)
+                        .addComponent(newTagNameButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(deleteTagNameButton)
-                        .addGap(0, 115, Short.MAX_VALUE))
+                        .addGap(0, 113, Short.MAX_VALUE))
                     .addComponent(jScrollPane1))
                 .addContainerGap())
         );
@@ -141,7 +141,7 @@ public class TagNamesSettingsPanel extends javax.swing.JPanel implements Options
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 383, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(modifyTagNameListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(addTagNameButton)
+                    .addComponent(newTagNameButton)
                     .addComponent(deleteTagNameButton))
                 .addContainerGap())
         );
@@ -196,7 +196,7 @@ public class TagNamesSettingsPanel extends javax.swing.JPanel implements Options
         );
     }// </editor-fold>//GEN-END:initComponents
     
-    private void addTagNameButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addTagNameButtonActionPerformed
+    private void newTagNameButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newTagNameButtonActionPerformed
         NewUserTagNameDialog dialog = new NewUserTagNameDialog();
         NewUserTagNameDialog.BUTTON_PRESSED result = dialog.getResult();
         if (result == NewUserTagNameDialog.BUTTON_PRESSED.OK) {
@@ -209,24 +209,26 @@ public class TagNamesSettingsPanel extends javax.swing.JPanel implements Options
                 JOptionPane.showMessageDialog(null,
                         NbBundle.getMessage(TagNamesSettingsPanel.class, "TagNamesSettingsPanel.JOptionPane.tagNameAlreadyExists.message"),
                         NbBundle.getMessage(TagNamesSettingsPanel.class, "TagNamesSettingsPanel.JOptionPane.tagNameAlreadyExists.title"),
-                        JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.INFORMATION_MESSAGE);
             } else {
                 tagNames.add(newTagName);
                 updateTagNamesListModel();
                 /*
                  * Set the selection to the tag name that was just added.
                  */
-                tagNamesList.setSelectedIndex(tagNames.size() - 1);
+                int index = tagNames.indexOf(newTagName);
+                tagNamesList.setSelectedIndex(index);
                 enableButtons();
                 firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             }
         }
-    }//GEN-LAST:event_addTagNameButtonActionPerformed
+    }//GEN-LAST:event_newTagNameButtonActionPerformed
     
     private void deleteTagNameButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteTagNameButtonActionPerformed
         UserTagName tagName = tagNamesList.getSelectedValue();
         tagNames.remove(tagName);
         updateTagNamesListModel();
+        enableButtons();
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_deleteTagNameButtonActionPerformed
 
@@ -235,12 +237,12 @@ public class TagNamesSettingsPanel extends javax.swing.JPanel implements Options
     }//GEN-LAST:event_tagNamesListMouseClicked
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton addTagNameButton;
     private javax.swing.JButton deleteTagNameButton;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JPanel modifyTagNameListPanel;
+    private javax.swing.JButton newTagNameButton;
     private javax.swing.JLabel panelDescriptionLabel;
     private javax.swing.JPanel tagNameAdditionalPanel;
     private javax.swing.JList<UserTagName> tagNamesList;
@@ -252,6 +254,7 @@ public class TagNamesSettingsPanel extends javax.swing.JPanel implements Options
      */
     private void updateTagNamesListModel() {
         tagNamesListModel.clear();
+        Collections.sort(tagNames);
         for (UserTagName tagName : tagNames) {
             tagNamesListModel.addElement(tagName);
         }
@@ -294,7 +297,6 @@ public class TagNamesSettingsPanel extends javax.swing.JPanel implements Options
                 tagNames.add(new UserTagName(tagNameAttributes[0], tagNameAttributes[1], tagNameAttributes[2]));
             }
         }
-        Collections.sort(tagNames);
         updateTagNamesListModel();
         enableButtons();
     }

@@ -45,7 +45,6 @@ public class NewUserTagNameDialog extends javax.swing.JDialog {
         super(new JFrame(NbBundle.getMessage(NewUserTagNameDialog.class, "NewUserTagNameDialog.title.text")),
                 NbBundle.getMessage(NewUserTagNameDialog.class, "NewUserTagNameDialog.title.text"), true);
         initComponents();
-        String test = "";
         this.display();
     }
 
@@ -74,7 +73,7 @@ public class NewUserTagNameDialog extends javax.swing.JDialog {
         });
 
         /*
-         * Add a listener to enable the save button when the text field changes.
+         * Add a listener to enable the OK button when the text field changes.
          */
         tagNameTextField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
@@ -109,21 +108,27 @@ public class NewUserTagNameDialog extends javax.swing.JDialog {
      */
     private void doButtonAction(boolean okPressed) {
         if (okPressed) {
-            String newTagDisplayName = tagNameTextField.getText();
+            String newTagDisplayName = tagNameTextField.getText().trim();
+            if (newTagDisplayName.isEmpty()) {
+                JOptionPane.showMessageDialog(null,
+                        NbBundle.getMessage(NewUserTagNameDialog.class, "NewUserTagNameDialog.JOptionPane.tagNameEmpty.message"),
+                        NbBundle.getMessage(NewUserTagNameDialog.class, "NewUserTagNameDialog.JOptionPane.tagNameEmpty.title"),
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
             if (TagsManager.containsIllegalCharacters(newTagDisplayName)) {
                 JOptionPane.showMessageDialog(null,
                         NbBundle.getMessage(NewUserTagNameDialog.class, "NewUserTagNameDialog.JOptionPane.tagNameIllegalCharacters.message"),
                         NbBundle.getMessage(NewUserTagNameDialog.class, "NewUserTagNameDialog.JOptionPane.tagNameIllegalCharacters.title"),
                         JOptionPane.ERROR_MESSAGE);
-            } else {
-                userTagDisplayName = newTagDisplayName;
-                result = BUTTON_PRESSED.OK;
-                setVisible(false);
+                return;
             }
+            userTagDisplayName = newTagDisplayName;
+            result = BUTTON_PRESSED.OK;
         } else {
             result = BUTTON_PRESSED.CANCEL;
-            setVisible(false);
         }
+            setVisible(false);
     }
 
     /**

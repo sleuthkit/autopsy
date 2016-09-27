@@ -15,7 +15,7 @@
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 * See the License for the specific language governing permissions and
 * limitations under the License.
-*/
+ */
 package org.sleuthkit.autopsy.casemodule.services;
 
 import java.io.Closeable;
@@ -83,7 +83,7 @@ public class TagsManager implements Closeable {
     /**
      * Gets a list of all tag names currently being used or tag names loaded
      * from the properties file.
-     * 
+     *
      * @return A list, possibly empty, of TagName data transfer objects (DTOs).
      *
      * @throws TskCoreException If there is an error reading from the case
@@ -147,7 +147,7 @@ public class TagsManager implements Closeable {
      * @return A TagName data transfer object (DTO) representing the new tag
      *         name.
      *
-     * @throws TagNameAlreadyExistsException If the tag name would be a 
+     * @throws TagNameAlreadyExistsException If the tag name would be a
      *                                       duplicate.
      * @throws TskCoreException              If there is an error adding the tag
      *                                       to the case database.
@@ -168,7 +168,7 @@ public class TagsManager implements Closeable {
      * @return A TagName data transfer object (DTO) representing the new tag
      *         name.
      *
-     * @throws TagNameAlreadyExistsException If the tag name would be a 
+     * @throws TagNameAlreadyExistsException If the tag name would be a
      *                                       duplicate.
      * @throws TskCoreException              If there is an error adding the tag
      *                                       to the case database.
@@ -190,7 +190,7 @@ public class TagsManager implements Closeable {
      * @return A TagName data transfer object (DTO) representing the new tag
      *         name.
      *
-     * @throws TagNameAlreadyExistsException If the tag name would be a 
+     * @throws TagNameAlreadyExistsException If the tag name would be a
      *                                       duplicate.
      * @throws TskCoreException              If there is an error adding the tag
      *                                       to the case database.
@@ -291,33 +291,33 @@ public class TagsManager implements Closeable {
         ContentTag tag;
         synchronized (this) {
             lazyLoadExistingTagNames();
-            
+
             if (null == comment) {
                 throw new IllegalArgumentException("Passed null comment argument");
             }
-            
+
             if (beginByteOffset >= 0 && endByteOffset >= 1) {
                 if (beginByteOffset > content.getSize() - 1) {
                     throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(),
                             "TagsManager.addContentTag.exception.beginByteOffsetOOR.msg",
                             beginByteOffset, content.getSize() - 1));
                 }
-                
+
                 if (endByteOffset > content.getSize() - 1) {
                     throw new IllegalArgumentException(
                             NbBundle.getMessage(this.getClass(), "TagsManager.addContentTag.exception.endByteOffsetOOR.msg",
                                     endByteOffset, content.getSize() - 1));
                 }
-                
+
                 if (endByteOffset < beginByteOffset) {
                     throw new IllegalArgumentException(
                             NbBundle.getMessage(this.getClass(), "TagsManager.addContentTag.exception.endLTbegin.msg"));
                 }
             }
-            
+
             tag = caseDb.addContentTag(content, tagName, comment, beginByteOffset, endByteOffset);
         }
-        
+
         try {
             Case.getCurrentCase().notifyContentTagAdded(tag);
         } catch (IllegalStateException ex) {
@@ -342,7 +342,7 @@ public class TagsManager implements Closeable {
             lazyLoadExistingTagNames();
             caseDb.deleteContentTag(tag);
         }
-        
+
         try {
             Case.getCurrentCase().notifyContentTagDeleted(tag);
         } catch (IllegalStateException ex) {
@@ -509,7 +509,7 @@ public class TagsManager implements Closeable {
             lazyLoadExistingTagNames();
             caseDb.deleteBlackboardArtifactTag(tag);
         }
-        
+
         try {
             Case.getCurrentCase().notifyBlackBoardArtifactTagDeleted(tag);
         } catch (IllegalStateException ex) {
@@ -618,7 +618,6 @@ public class TagsManager implements Closeable {
     @Override
     @Deprecated
     public synchronized void close() throws IOException {
-        //saveTagNamesToTagsSettings();
         caseDb = null;
     }
 
@@ -660,7 +659,7 @@ public class TagsManager implements Closeable {
         if (null != setting && !setting.isEmpty()) {
             // Read the tag name setting and break it into tag name tuples.
             List<String> tagNameTuples = Arrays.asList(setting.split(";"));
-            
+
             // Parse each tuple and add the tag names to the current case, one
             // at a time to gracefully discard any duplicates or corrupt tuples.
             for (String tagNameTuple : tagNameTuples) {
@@ -671,7 +670,7 @@ public class TagsManager implements Closeable {
                         uniqueTagNames.put(tagName.getDisplayName(), tagName);
                     } catch (TskCoreException ex) {
                         Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to add saved tag name " + tagNameAttributes[0], ex); //NON-NLS
-                    } 
+                    }
                 }
             }
         }
@@ -695,7 +694,7 @@ public class TagsManager implements Closeable {
     /**
      * Adds any user defined tag name to the case db and also to uniqueTagNames,
      * to allow user tag names to be displayed while tagging.
-     * 
+     *
      * @param userTagNames a List of UserTagName objects to be potentially added
      */
     void storeNewUserTagNames(List<UserTagName> userTagNames) {
@@ -720,8 +719,7 @@ public class TagsManager implements Closeable {
         String setting = ModuleSettings.getConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY);
         if (setting == null || setting.isEmpty()) {
             setting = "";
-        }
-        else {
+        } else {
             setting += ";";
         }
         setting += tagName.getDisplayName() + "," + tagName.getDescription() + "," + tagName.getColor().toString();
@@ -731,7 +729,7 @@ public class TagsManager implements Closeable {
     /**
      * Returns true if the tag display name contains an illegal character. Used
      * after a tag display name is retrieved from user input.
-     * 
+     *
      * @param content Display name of the tag being added.
      * @return boolean indicating whether the name has an invalid character.
      */
@@ -752,7 +750,7 @@ public class TagsManager implements Closeable {
      * Exception thrown if there is an attempt to add a duplicate tag name.
      */
     public static class TagNameAlreadyExistsException extends Exception {
-        
+
         private static final long serialVersionUID = 1L;
     }
 
