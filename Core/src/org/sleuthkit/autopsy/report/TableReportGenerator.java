@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.report;
 
+import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Multimaps;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -35,7 +37,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
@@ -157,21 +158,30 @@ class TableReportGenerator {
             }
 
             /* TSK_ACCOUNT artifacts get grouped by their TSK_ACCOUNT_TYPE
-             * attribute, and then handed off the default method for writing
+             * attribute, and then handed off to the standard method for writing
              * tables. */
             if (type.getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
-                Map<String, List<ArtifactData>> collect = artifactList.stream().collect(Collectors.groupingBy((ArtifactData artifactData) -> {
-                    try {
-                        return artifactData.getArtifact().getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE)).getValueString();
-                    } catch (TskCoreException ex) {
-                        logger.log(Level.SEVERE, "Unable to get value of TSK_ACCOUNT_TYPE attribute. Defaulting to \"unknown\"", ex);
-                        return "unknown";
-                    }
-                }));
-                for (Map.Entry<String, List<ArtifactData>> x : collect.entrySet()) {
-                    writeTableForDataType(x.getValue(), type, BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getDisplayName() + ": " + x.getKey(), comment);
+                //Group account artifacts by their account type
+                ListMultimap<String, ArtifactData> groupedArtifacts = Multimaps.index(artifactList,
+                        artifactData -> {
+                            try {
+                                return artifactData.getArtifact().getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE)).getValueString();
+                            } catch (TskCoreException ex) {
+                                logger.log(Level.SEVERE, "Unable to get value of TSK_ACCOUNT_TYPE attribute. Defaulting to \"unknown\"", ex);
+                                return "unknown";
+                            }
+                        });
+                for (String accountType : groupedArtifacts.keySet()) {
+                    /* If the report is a ReportHTML, the data type name
+                     * eventualy makes it to useDataTypeIcon which expects but
+                     * does not require a artifact name, so we make a synthetic
+                     * compund name by appending a ":" and the account type.
+                     */
+                    final String compundDataTypeName = BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getDisplayName() + ": " + accountType;
+                    writeTableForDataType(groupedArtifacts.get(accountType), type, compundDataTypeName, comment);
                 }
             } else {
+                //all other artifact types are sent to writeTableForDataType directly
                 writeTableForDataType(artifactList, type, type.getDisplayName(), comment);
             }
         }

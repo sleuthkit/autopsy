@@ -266,10 +266,10 @@ class ReportHTML implements TableReportModule {
             }
         } else if (dataType.startsWith(ARTIFACT_TYPE.TSK_ACCOUNT.getDisplayName())) {
             /* TSK_ACCOUNT artifacts get separated by their TSK_ACCOUNT_TYPE
-             * attribute, with a compound dataType name, so they are not caught
-             * by the switch statement above. For now we just give them all the
-             * general account icon, but we could do something else in the
-             * future.
+             * attribute, with a synthetic compound dataType name, so they are
+             * not caught by the switch statement above. For now we just give
+             * them all the general account icon, but we could do something else
+             * in the future.
              */
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/accounts.png"); //NON-NLS
             iconFileName = "accounts.png"; //NON-NLS
