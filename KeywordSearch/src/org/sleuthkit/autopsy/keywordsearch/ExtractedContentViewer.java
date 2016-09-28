@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
@@ -127,7 +127,7 @@ public class ExtractedContentViewer implements DataContentViewer {
                 //if the node had artifacts in the lookup use them, other wise look up all credit card artifacts for the content.
                 Collection<? extends BlackboardArtifact> artifacts = nodeLookup.lookupAll(BlackboardArtifact.class);
                 artifacts = (artifacts == null || artifacts.isEmpty())
-                        ? content.getArtifacts(TSK_CREDIT_CARD_ACCOUNT)
+                        ? content.getArtifacts(TSK_ACCOUNT)
                         : artifacts;
 
                 /*
@@ -140,7 +140,7 @@ public class ExtractedContentViewer implements DataContentViewer {
                  */
                 for (BlackboardArtifact artifact : artifacts) {
                     try {
-                        BlackboardAttribute solrIDAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SOLR_DOCUMENT_ID));
+                        BlackboardAttribute solrIDAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID));
                         if (solrIDAttr != null) {
                             String valueString = solrIDAttr.getValueString();
                             if (StringUtils.isNotBlank(valueString)) {
@@ -148,7 +148,7 @@ public class ExtractedContentViewer implements DataContentViewer {
                             }
                         }
 
-                        BlackboardAttribute keyWordAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ACCOUNT_NUMBER));
+                        BlackboardAttribute keyWordAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CARD_NUMBER));
                         if (keyWordAttr != null) {
                             String valueString = keyWordAttr.getValueString();
                             if (StringUtils.isNotBlank(valueString)) {
@@ -188,7 +188,7 @@ public class ExtractedContentViewer implements DataContentViewer {
              * For keyword hit artifacts, add the text of the artifact that hit,
              * not the hit artifact; otherwise add the text for the artifact.
              */
-            if (artifact.getArtifactTypeID() == TSK_KEYWORD_HIT.getTypeID()) {
+            if (artifact.getArtifactTypeID() == TSK_KEYWORD_HIT.getTypeID() || artifact.getArtifactTypeID() == TSK_ACCOUNT.getTypeID()) {
                 try {
                     BlackboardAttribute attribute = artifact.getAttribute(TSK_ASSOCIATED_ARTIFACT_TYPE);
                     if (attribute != null) {
@@ -296,7 +296,7 @@ public class ExtractedContentViewer implements DataContentViewer {
         Collection<? extends BlackboardArtifact> artifacts = node.getLookup().lookupAll(BlackboardArtifact.class);
         if (artifacts != null) {
             for (BlackboardArtifact art : artifacts) {
-                if (art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT.getTypeID()) {
+                if (art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
                     return true;
                 }
             }
@@ -321,7 +321,7 @@ public class ExtractedContentViewer implements DataContentViewer {
         if (art == null) {
             return 4;
         } else if (art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()
-                || art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_CREDIT_CARD_ACCOUNT.getTypeID()) {
+                || art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
             return 6;
         } else {
             return 4;
