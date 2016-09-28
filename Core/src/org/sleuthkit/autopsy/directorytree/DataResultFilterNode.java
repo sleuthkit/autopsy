@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
-import org.sleuthkit.autopsy.datamodel.Accounts;
+import org.sleuthkit.autopsy.datamodel._private.Accounts;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsChildren.DeletedContentNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsNode;
@@ -497,7 +497,7 @@ public class DataResultFilterNode extends FilterNode {
         }
 
         @Override
-        public AbstractAction visit(Accounts.AccountTypeNode node) {
+        public AbstractAction visit(Accounts.CreditCardNumberAccountTypeNode node) {
             return openChild(node);
         }
 

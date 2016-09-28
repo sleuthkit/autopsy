@@ -16,14 +16,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datamodel;
+package org.sleuthkit.autopsy.datamodel._private;
+
+import org.sleuthkit.autopsy.datamodel.DataSources;
+import org.sleuthkit.autopsy.datamodel.DeletedContent;
+import org.sleuthkit.autopsy.datamodel.EmailExtracted;
+import org.sleuthkit.autopsy.datamodel.ExtractedContent;
+import org.sleuthkit.autopsy.datamodel.FileSize;
+import org.sleuthkit.autopsy.datamodel.HashsetHits;
+import org.sleuthkit.autopsy.datamodel.InterestingHits;
+import org.sleuthkit.autopsy.datamodel.KeywordHits;
+import org.sleuthkit.autopsy.datamodel.Reports;
+import org.sleuthkit.autopsy.datamodel.Results;
+import org.sleuthkit.autopsy.datamodel.Tags;
+import org.sleuthkit.autopsy.datamodel.Views;
 
 /**
  * This visitor goes over the AutopsyVisitableItems, which are currently the
  * nodes in the tree that are structural and not nodes that are from
  * Sleuthkit-based data model objects.
  */
-interface AutopsyItemVisitor<T> {
+public interface AutopsyItemVisitor<T> {
 
     T visit(DataSources i);
 

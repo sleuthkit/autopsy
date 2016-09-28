@@ -16,13 +16,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datamodel;
+package org.sleuthkit.autopsy.datamodel._private;
+;
 
 /**
  * AutopsyVisitableItems are the nodes in the directory tree that are for
  * structure only. They are not associated with content objects.
  */
-interface AutopsyVisitableItem {
+public interface AutopsyVisitableItem {
 
     /**
      * visitor pattern support

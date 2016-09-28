@@ -254,8 +254,8 @@ class ReportHTML implements TableReportModule {
                 case TSK_REMOTE_DRIVE:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/drive_network.png"); //NON-NLS
                     break;
-                case TSK_CREDIT_CARD_ACCOUNT:
-                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/credit-card.png"); //NON-NLS
+                case TSK_ACCOUNT:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/accounts.png"); //NON-NLS
                     break;
                 default:
                     logger.log(Level.WARNING, "useDataTypeIcon: unhandled artifact type = " + dataType); //NON-NLS
@@ -264,7 +264,17 @@ class ReportHTML implements TableReportModule {
                     iconFilePath = path + File.separator + iconFileName;
                     break;
             }
-        } else {  // no defined artifact found for this dataType 
+        } else if (dataType.startsWith(ARTIFACT_TYPE.TSK_ACCOUNT.getDisplayName())) {
+            /* TSK_ACCOUNT artifacts get separated by their TSK_ACCOUNT_TYPE
+             * attribute, with a synthetic compound dataType name, so they are
+             * not caught by the switch statement above. For now we just give
+             * them all the general account icon, but we could do something else
+             * in the future.
+             */
+            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/accounts.png"); //NON-NLS
+            iconFileName = "accounts.png"; //NON-NLS
+            iconFilePath = path + File.separator + iconFileName;
+        } else {  // no defined artifact found for this dataType
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png"); //NON-NLS
             iconFileName = "star.png"; //NON-NLS
             iconFilePath = path + File.separator + iconFileName;

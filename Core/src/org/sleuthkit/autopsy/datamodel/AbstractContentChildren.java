@@ -18,6 +18,11 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import org.sleuthkit.autopsy.datamodel._private.Accounts;
+import org.sleuthkit.autopsy.datamodel._private.FileTypeExtensionFilters;
+import org.sleuthkit.autopsy.datamodel._private.RecentFiles;
+import org.sleuthkit.autopsy.datamodel._private.AutopsyItemVisitor;
+import org.sleuthkit.autopsy.datamodel._private.AutopsyVisitableItem;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children.Keys;
 import org.openide.nodes.Node;
