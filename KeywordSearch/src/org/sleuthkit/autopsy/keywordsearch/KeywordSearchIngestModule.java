@@ -556,12 +556,13 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 if (context.fileIngestIsCancelled()) {
                     return;
                 }
+                if (fileType.equals("application/octet-stream")) {
+                    extractStringsAndIndex(aFile);
+                    return;
+                }
                 if (!extractTextAndIndex(aFile, fileType)) {
                     logger.log(Level.WARNING, "Text extractor not found for file. Extracting strings only. File: ''{0}'' (id:{1}).", new Object[]{aFile.getName(), aFile.getId()}); //NON-NLS
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
-                } else if (fileType.equals("application/octet-stream")) {
-                    extractStringsAndIndex(aFile);
-                    return;
                 } else {
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.TEXT_INGESTED);
                     wasTextAdded = true;
