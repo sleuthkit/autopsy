@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
@@ -80,34 +81,55 @@ public class TagsManager implements Closeable {
     }
 
     /**
-     * Gets a list of all user tag names from the preference file.
+     * Gets a mapping of user tag name display names to TagName DTOs if they
+     * have been added to the database. Otherwise, the display name maps to
+     * null.
      *
-     * @return A list, possibly empty, of TagName data transfer objects (DTOs).
+     * @return A map of String display name to TagName DTO, TagName may be null
      */
-    public synchronized List<TagName> getUserTagNames() {
+    public synchronized Map<String, TagName> getUserTagNamesMap() {
         lazyLoadExistingTagNames();
-        List<TagName> tagNameList = new ArrayList<>();
+        Map<String, TagName> tagNamesMap = new HashMap<>();
         String setting = ModuleSettings.getConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY);
         if (null != setting && !setting.isEmpty()) {
             List<String> tagNameTuples = Arrays.asList(setting.split(";"));
             for (String tagNameTuple : tagNameTuples) {
                 String[] tagNameAttributes = tagNameTuple.split(",");
-                tagNameList.add(uniqueTagNames.get(tagNameAttributes[0]));
+                tagNamesMap.put(tagNameAttributes[0], uniqueTagNames.get(tagNameAttributes[0]));
             }
         }
-        return tagNameList;
+        return tagNamesMap;
+    }
+    
+    /**
+     * Gets a mapping of predefined tag names to their TagName DTOs. Currently
+     * only for the bookmark tag.
+     * 
+     * @return A map of String display name to TagName DTO
+     */
+    public synchronized Map<String, TagName> getPredefinedTagNamesMap() {
+        Map<String, TagName> tagNamesMap = new HashMap<>();
+        TagName bookmarkTagName = uniqueTagNames.get(NbBundle.getMessage(this.getClass(), "TagsManager.predefTagNames.bookmark.text"));
+        tagNamesMap.put(NbBundle.getMessage(this.getClass(), "TagsManager.predefTagNames.bookmark.text"), bookmarkTagName);
+        return tagNamesMap;
     }
 
     /**
-     * Gets a list of all predefined tag names.
+     * Gets a mapping of the display names of predefined tag names and tag names
+     * that are in use to their TagName DTOs.
      * 
-     * @return A list of TagName data transfer objects (DTOs).
+     * @return A map of String display name to TagName DTO
+     * 
+     * @throws TskCoreException If there is an error reading from the case
+     *                          database.
      */
-    public synchronized List<TagName> getPredefinedTagNames() {
-        lazyLoadExistingTagNames();
-        List<TagName> tagNameList = new ArrayList<>();
-        tagNameList.add(uniqueTagNames.get(NbBundle.getMessage(this.getClass(), "TagsManager.predefTagNames.bookmark.text")));
-        return tagNameList;
+    public synchronized Map<String, TagName> getTagNamesInUseMap() throws TskCoreException {
+        List<TagName> tagNames = getTagNamesInUse();
+        Map<String, TagName> tagNamesMap = new HashMap<>();
+        for (TagName tagName : tagNames) {
+            tagNamesMap.put(tagName.getDisplayName(), tagName);
+        }
+        return tagNamesMap;
     }
 
     /**
@@ -136,7 +158,8 @@ public class TagsManager implements Closeable {
      */
     public synchronized boolean tagNameExists(String tagDisplayName) {
         lazyLoadExistingTagNames();
-        return uniqueTagNames.containsKey(tagDisplayName);
+        return uniqueTagNames.containsKey(tagDisplayName) &&
+                (uniqueTagNames.get(tagDisplayName) != null);
     }
 
     /**
@@ -201,31 +224,28 @@ public class TagsManager implements Closeable {
         }
 
         lazyLoadExistingTagNames();
-
+        
         /*
          * It is possible user is trying to add back a tag after having deleted
-         * it.
+         * it. It is also possible a user tag name was never added to the
+         * database.
          */
         if (uniqueTagNames.containsKey(displayName)) {
-            TagName existingTagName = uniqueTagNames.get(displayName);
-            long count = getContentTagsCountByTagName(existingTagName) + getBlackboardArtifactTagsCountByTagName(existingTagName);
-            if (count == 0) {
-                addNewTagNameToTagsSettings(existingTagName);
-                return existingTagName;
-            } else {
-                throw new TagNameAlreadyExistsException();
+            if (uniqueTagNames.get(displayName) != null) {
+                TagName existingTagName = uniqueTagNames.get(displayName);
+                long count = getContentTagsCountByTagName(existingTagName) + getBlackboardArtifactTagsCountByTagName(existingTagName);
+                if (count == 0) {
+                    addNewTagNameToTagsSettings(existingTagName);
+                    return existingTagName;
+                } else {
+                    throw new TagNameAlreadyExistsException();
+                }
             }
         }
-
-        /*
-         * Add the tag name to the case.
-         */
+        
         TagName newTagName = caseDb.addTagName(displayName, description, color);
         uniqueTagNames.put(newTagName.getDisplayName(), newTagName);
 
-        /*
-         * Add the tag name to the tags settings.
-         */
         addNewTagNameToTagsSettings(newTagName);
 
         return newTagName;
@@ -668,12 +688,7 @@ public class TagsManager implements Closeable {
             for (String tagNameTuple : tagNameTuples) {
                 String[] tagNameAttributes = tagNameTuple.split(",");
                 if (!uniqueTagNames.containsKey(tagNameAttributes[0])) {
-                    try {
-                        TagName tagName = caseDb.addTagName(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.getColorByName(tagNameAttributes[2]));
-                        uniqueTagNames.put(tagName.getDisplayName(), tagName);
-                    } catch (TskCoreException ex) {
-                        Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to add saved tag name " + tagNameAttributes[0], ex); //NON-NLS
-                    }
+                    uniqueTagNames.put(tagNameAttributes[0], null);
                 }
             }
         }
@@ -704,12 +719,7 @@ public class TagsManager implements Closeable {
         lazyLoadExistingTagNames();
         for (UserTagName utn : userTagNames) {
             if (!uniqueTagNames.containsKey(utn.getDisplayName())) {
-                try {
-                    TagName tagName = caseDb.addTagName(utn.getDisplayName(), utn.getDescription(), TagName.HTML_COLOR.getColorByName(utn.getColorName()));
-                    uniqueTagNames.put(tagName.getDisplayName(), tagName);
-                } catch (TskCoreException ex) {
-                    Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to add saved tag name " + utn.getDisplayName(), ex); //NON-NLS
-                }
+                uniqueTagNames.put(utn.getDisplayName(), null);
             }
         }
     }

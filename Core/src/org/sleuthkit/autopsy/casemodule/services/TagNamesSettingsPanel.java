@@ -21,7 +21,9 @@ package org.sleuthkit.autopsy.casemodule.services;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
@@ -253,6 +255,10 @@ final class TagNamesSettingsPanel extends javax.swing.JPanel implements OptionsP
      */
     private void updateTagNamesListModel() {
         tagNamesListModel.clear();
+        Set<UserTagName> tagNameSet = new HashSet<>();
+        tagNameSet.addAll(tagNames);
+        tagNames.clear();
+        tagNames.addAll(tagNameSet);
         Collections.sort(tagNames);
         for (UserTagName tagName : tagNames) {
             tagNamesListModel.addElement(tagName);
