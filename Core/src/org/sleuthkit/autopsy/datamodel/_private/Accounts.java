@@ -315,7 +315,7 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
 
             private final String accountTypeName;
 
-            public DefaultAccountFactory(String accountTypeName) {
+            private DefaultAccountFactory(String accountTypeName) {
                 this.accountTypeName = accountTypeName;
             }
 
@@ -380,10 +380,9 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
     }
 
     /**
-     * Node for an account type.
+     * Node for the Credit Card account type.
      *
-     * NOTE: currently hard coded to work for Credit Card only
-     */
+       */
     final public class CreditCardNumberAccountTypeNode extends DisplayableItemNode {
 
         /**
@@ -1122,8 +1121,9 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            super.actionPerformed(e);
+
             Collection<? extends Node> targets = Utilities.actionsGlobalContext().lookupAll(Node.class);
+            super.actionPerformed(e);
             System.out.println(targets);
 //            //find the node to select after the target is removed from the UI
 //            List<Node> siblings = Arrays.asList(target.getParentNode().getChildren().getNodes());
