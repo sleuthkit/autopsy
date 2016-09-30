@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.datamodel._private;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeMap;
 import com.google.common.collect.TreeRangeMap;
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -32,8 +34,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Observable;
-import java.util.Observer;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -76,7 +77,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * AutopsyVisitableItem for the Accounts section of the tree. All nodes,
  * factories, and data objects related to accounts are inner classes.
  */
-final public class Accounts extends Observable implements AutopsyVisitableItem {
+final public class Accounts implements AutopsyVisitableItem {
 
     private static final Logger LOGGER = Logger.getLogger(Accounts.class.getName());
 
@@ -84,6 +85,7 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
     final public static String NAME = Bundle.AccountsRootNode_name();
 
     private SleuthkitCase skCase;
+    private final EventBus reviewStatusBus = new EventBus("ReviewStatusBus");
 
     /**
      * Should rejected accounts be shown in the accounts section of the tree.
@@ -122,15 +124,6 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
     }
 
     /**
-     * Notify all observers that something has changed, causing a refresh of the
-     * accounts section of the tree.
-     */
-    private void update() {
-        setChanged();
-        notifyObservers();
-    }
-
-    /**
      * Gets a new Action that when invoked toggles showing rejected artifacts on
      * or off.
      *
@@ -146,23 +139,41 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
      *
      * @param <X> The type of keys used by this factory.
      */
-    private abstract class ObservingChildFactory<X> extends ChildFactory.Detachable<X> implements Observer {
+    private abstract class ObservingChildren<X> extends Children.Keys<X> {
 
         @Override
-        public void update(Observable o, Object arg) {
-            refresh(true);
+        protected Node[] createNodes(X key) {
+            return new Node[]{createNodeForKey(key)};
         }
+
+        abstract protected Node createNodeForKey(X key);
+
+        /**
+         *
+         */
+        abstract protected Collection<X> createKeys();
+
+        /**
+         * Update the keys for this Children
+         */
+        void updateKeys() {
+            setKeys(createKeys());
+        }
+
+        @Subscribe
+        abstract void handleReviewStatusChange(ReviewStatusChangeEvent event);
 
         @Override
         protected void removeNotify() {
             super.removeNotify();
-            Accounts.this.deleteObserver(this);
+            reviewStatusBus.unregister(ObservingChildren.this);
         }
 
         @Override
         protected void addNotify() {
             super.addNotify();
-            Accounts.this.addObserver(this);
+            updateKeys();
+            reviewStatusBus.register(ObservingChildren.this);
         }
     }
 
@@ -176,7 +187,7 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
          * Creates child nodes for each account type (currently hard coded to
          * make one for Credit Cards)
          */
-        final private class AccountTypeFactory extends ObservingChildFactory<String> {
+        final private class AccountTypeFactory extends ObservingChildren<String> {
 
             /*
              * The pcl is in this class because it has the easiest mechanisms to
@@ -205,7 +216,7 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
                             ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
                             if (null != eventData
                                     && eventData.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
-                                Accounts.this.update();
+                                updateKeys();
                             }
                         } catch (IllegalStateException notUsed) {
                             // Case is closed, do nothing.
@@ -220,7 +231,7 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
                          */
                         try {
                             Case.getCurrentCase();
-                            Accounts.this.update();
+                            updateKeys();
                         } catch (IllegalStateException notUsed) {
                             // Case is closed, do nothing.
                         }
@@ -234,10 +245,18 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
                 }
             };
 
+            @Subscribe
             @Override
+            public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+                updateKeys();
+            }
 
-            protected boolean createKeys(List<String> list) {
-
+            /**
+             *
+             */
+            @Override
+            protected List<String> createKeys() {
+                List<String> list = new ArrayList<>();
                 try (SleuthkitCase.CaseDbQuery executeQuery = skCase.executeQuery(
                         "SELECT DISTINCT blackboard_attributes.value_text as account_type "
                         + " FROM blackboard_attributes "
@@ -249,9 +268,8 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
                     }
                 } catch (TskCoreException | SQLException ex) {
                     Exceptions.printStackTrace(ex);
-                    return false;
                 }
-                return true;
+                return list;
             }
 
             @Override
@@ -285,13 +303,13 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
                 IngestManager.getInstance().addIngestModuleEventListener(pcl);
                 Case.addPropertyChangeListener(pcl);
                 super.addNotify();
-                Accounts.this.update();
+                updateKeys();
             }
         }
 
         public AccountsRootNode() {
             super(Children.LEAF, Lookups.singleton(Accounts.this));
-            setChildren(Children.create(new AccountTypeFactory(), true));
+            setChildren(Children.createLazy(AccountTypeFactory::new));
             setName(Accounts.NAME);
             setDisplayName(Bundle.Accounts_RootNode_displayName());
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/accounts.png");    //NON-NLS
@@ -306,7 +324,6 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
         }
-
     }
 
     final public class DefaultAccountTypeNode extends DisplayableItemNode {
@@ -374,7 +391,7 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
     /**
      * Enum for the children under the credit card AccountTypeNode.
      */
-    private enum CreditCardViewMode {
+    enum CreditCardViewMode {
         BY_FILE,
         BY_BIN;
     }
@@ -382,19 +399,28 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
     /**
      * Node for the Credit Card account type.
      *
-       */
+     */
     final public class CreditCardNumberAccountTypeNode extends DisplayableItemNode {
 
         /**
          * ChildFactory that makes nodes for the different account organizations
          * (by file, by BIN)
          */
-        final private class ViewModeFactory extends ObservingChildFactory<CreditCardViewMode> {
+        final private class ViewModeFactory extends ObservingChildren<CreditCardViewMode> {
 
+            @Subscribe
             @Override
-            protected boolean createKeys(List<CreditCardViewMode> list) {
+            public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+                updateKeys();
+            }
+
+            /**
+             *
+             */
+            @Override
+            protected List<CreditCardViewMode> createKeys() {
                 list.addAll(Arrays.asList(CreditCardViewMode.values()));
-                return true;
+                return list;
             }
 
             @Override
@@ -412,7 +438,7 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
 
         private CreditCardNumberAccountTypeNode() {
             super(Children.LEAF);
-            setChildren(Children.create(new ViewModeFactory(), true));
+            setChildren(new ViewModeFactory());
             setName(Account.Type.CREDIT_CARD.getDisplayName());
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/credit-cards.png");   //NON-NLS
         }
@@ -432,15 +458,24 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
      * Node that is the root of the "by file" accounts tree. Its children are
      * FileWithCCNNodes.
      */
-    final public class ByFileNode extends DisplayableItemNode implements Observer {
+    final public class ByFileNode extends DisplayableItemNode {
 
         /**
          * Factory for the children of the ByFiles Node.
          */
-        final private class FileWithCCNFactory extends ObservingChildFactory<FileWithCCN> {
+        final private class FileWithCCNFactory extends ObservingChildren<FileWithCCN> {
 
+            @Subscribe
             @Override
-            protected boolean createKeys(List<FileWithCCN> list) {
+            public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+                updateKeys();
+            }
+
+            /**
+             *
+             */
+            @Override
+            protected List<FileWithCCN> createKeys() {
                 String query
                         = "SELECT blackboard_artifacts.obj_id," //NON-NLS
                         + "      solr_attribute.value_text AS solr_document_id, " //NON-NLS
@@ -469,9 +504,9 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
                     }
                 } catch (TskCoreException | SQLException ex) {
                     LOGGER.log(Level.SEVERE, "Error querying for files with ccn hits.", ex); //NON-NLS
-                    return false;
+
                 }
-                return true;
+                return list;
             }
 
             @Override
@@ -490,31 +525,22 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
                     return null;
                 }
             }
-
-            @Override
-            public void update(Observable o, Object arg) {
-                refresh(true);
-            }
         }
-        private final FileWithCCNFactory fileFactory;
 
         private ByFileNode() {
             super(Children.LEAF);
-            fileFactory = new FileWithCCNFactory();
-            setChildren(Children.create(fileFactory, true));
+            setChildren(Children.createLazy(FileWithCCNFactory::new));
             setName("By File");   //NON-NLS
             updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon.png");   //NON-NLS
-            Accounts.this.addObserver(this);
+            reviewStatusBus.register(this);
         }
 
         @NbBundle.Messages({
             "# {0} - number of children",
             "Accounts.ByFileNode.displayName=By File ({0})"})
         private void updateDisplayName() {
-            ArrayList<FileWithCCN> keys = new ArrayList<>();
-            fileFactory.createKeys(keys);
-            setDisplayName(Bundle.Accounts_ByFileNode_displayName(keys.size()));
+            setDisplayName(Bundle.Accounts_ByFileNode_displayName(getChildren().getNodesCount(true)));
         }
 
         @Override
@@ -527,8 +553,8 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
             return v.visit(this);
         }
 
-        @Override
-        public void update(Observable o, Object arg) {
+        @Subscribe
+        public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
             updateDisplayName();
         }
     }
@@ -537,15 +563,24 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
      * Node that is the root of the "By BIN" accounts tree. Its children are
      * BINNodes.
      */
-    final public class ByBINNode extends DisplayableItemNode implements Observer {
+    final public class ByBINNode extends DisplayableItemNode {
 
         /**
          * Factory that generates the children of the ByBin node.
          */
-        final private class BINFactory extends ObservingChildFactory<BinResult> {
+        final private class BINFactory extends ObservingChildren<BinResult> {
 
+            @Subscribe
             @Override
-            protected boolean createKeys(List<BinResult> list) {
+            public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+                updateKeys();
+            }
+
+            /**
+             *
+             */
+            @Override
+            protected List<BinResult> createKeys() {
                 RangeMap<Integer, BinResult> ranges = TreeRangeMap.create();
 
                 String query
@@ -581,9 +616,9 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
                     ranges.asMapOfRanges().values().forEach(list::add);
                 } catch (TskCoreException | SQLException ex) {
                     LOGGER.log(Level.SEVERE, "Error querying for BINs.", ex); //NON-NLS
-                    return false;
+
                 }
-                return true;
+                return list;
             }
 
             @Override
@@ -592,25 +627,20 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
             }
         }
 
-        private final BINFactory binFactory;
-
         private ByBINNode() {
             super(Children.LEAF);
-            binFactory = new BINFactory();
-            setChildren(Children.create(binFactory, true));
+            setChildren(Children.createLazy(BINFactory::new));
             setName("By BIN");  //NON-NLS
             updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/bank.png");   //NON-NLS
-            Accounts.this.addObserver(this);
+            reviewStatusBus.register(this);
         }
 
         @NbBundle.Messages({
             "# {0} - number of children",
             "Accounts.ByBINNode.displayName=By BIN ({0})"})
         private void updateDisplayName() {
-            ArrayList<BinResult> keys = new ArrayList<>();
-            binFactory.createKeys(keys);
-            setDisplayName(Bundle.Accounts_ByBINNode_displayName(keys.size()));
+            setDisplayName(Bundle.Accounts_ByBINNode_displayName(getChildren().getNodesCount(true)));
         }
 
         @Override
@@ -623,8 +653,8 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
             return v.visit(this);
         }
 
-        @Override
-        public void update(Observable o, Object arg) {
+        @Subscribe
+        public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
             updateDisplayName();
         }
     }
@@ -635,6 +665,35 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
      */
     @Immutable
     final private static class FileWithCCN {
+
+        @Override
+        public int hashCode() {
+            int hash = 5;
+            hash = 89 * hash + (int) (this.objID ^ (this.objID >>> 32));
+            hash = 89 * hash + Objects.hashCode(this.solrDocumentId);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final FileWithCCN other = (FileWithCCN) obj;
+            if (this.objID != other.objID) {
+                return false;
+            }
+            if (!Objects.equals(this.solrDocumentId, other.solrDocumentId)) {
+                return false;
+            }
+            return true;
+        }
 
         private final long objID;
         private final String solrDocumentId;
@@ -785,15 +844,24 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
         }
     }
 
-    final public class BINNode extends DisplayableItemNode implements Observer {
+    final public class BINNode extends DisplayableItemNode {
 
         /**
          * Creates the nodes for the accounts of a given type
          */
-        final private class CreditCardNumberFactory extends ObservingChildFactory<Long> {
+        final private class CreditCardNumberFactory extends ObservingChildren<Long> {
 
+            @Subscribe
             @Override
-            protected boolean createKeys(List<Long> list) {
+            public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+                updateKeys();
+            }
+
+            /**
+             *
+             */
+            @Override
+            protected List<Long> createKeys() {
 
                 String query
                         = "SELECT blackboard_artifacts.artifact_id " //NON-NLS
@@ -811,9 +879,9 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
                     }
                 } catch (TskCoreException | SQLException ex) {
                     LOGGER.log(Level.SEVERE, "Error querying for account artifacts.", ex); //NON-NLS
-                    return false;
+
                 }
-                return true;
+                return list;
             }
 
             @Override
@@ -832,26 +900,26 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
             }
         }
         private final BinResult bin;
-        private final CreditCardNumberFactory accountFactory;
+//        private final CreditCardNumberFactory accountFactory;
 
         private BINNode(BinResult bin) {
             super(Children.LEAF);
+            setChildren(Children.createLazy(CreditCardNumberFactory::new));
             this.bin = bin;
-            accountFactory = new CreditCardNumberFactory();
-            setChildren(Children.create(accountFactory, true));
             setName(getBinRangeString());
             updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/bank.png");   //NON-NLS
-            Accounts.this.addObserver(this);
+            reviewStatusBus.register(this);
         }
 
-        @Override
-        public void update(Observable o, Object arg) {
+        @Subscribe
+        public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
             updateDisplayName();
         }
 
         private void updateDisplayName() {
-            setDisplayName(getBinRangeString() + " (" + bin.getCount() + ")"); //NON-NLS
+
+            setDisplayName(getBinRangeString() + " (" + getChildren().getNodesCount(true) + ")"); //NON-NLS
         }
 
         private String getBinRangeString() {
@@ -943,6 +1011,35 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
      */
     @Immutable
     final static private class BinResult implements CreditCards.BankIdentificationNumber {
+
+        @Override
+        public int hashCode() {
+            int hash = 3;
+            hash = 97 * hash + this.binEnd;
+            hash = 97 * hash + this.binStart;
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final BinResult other = (BinResult) obj;
+            if (this.binEnd != other.binEnd) {
+                return false;
+            }
+            if (this.binStart != other.binStart) {
+                return false;
+            }
+            return true;
+        }
 
         /**
          * The number of accounts with this BIN
@@ -1077,7 +1174,7 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
         @Override
         public void actionPerformed(ActionEvent e) {
             showRejected = !showRejected;
-            Accounts.this.update();
+            reviewStatusBus.post(new ReviewStatusChangeEvent(Collections.emptySet(), null));
         }
     }
 
@@ -1093,14 +1190,15 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class).forEach(artifact -> {
+            final Collection<? extends BlackboardArtifact> lookupAll = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class);
+            lookupAll.forEach(artifact -> {
                 try {
                     skCase.setReviewStatus(artifact, newStatus);
                 } catch (TskCoreException ex) {
                     LOGGER.log(Level.SEVERE, "Error changing artifact review status.", ex); //NON-NLS
                 }
             });
-            Accounts.this.update();
+            reviewStatusBus.post(new ReviewStatusChangeEvent(lookupAll, newStatus));
         }
     }
 
@@ -1118,43 +1216,16 @@ final public class Accounts extends Observable implements AutopsyVisitableItem {
         private RejectAccounts() {
             super(Bundle.RejectAccountsAction_name(), BlackboardArtifact.ReviewStatus.REJECTED);
         }
+    }
 
-        @Override
-        public void actionPerformed(ActionEvent e) {
+    class ReviewStatusChangeEvent {
 
-            Collection<? extends Node> targets = Utilities.actionsGlobalContext().lookupAll(Node.class);
-            super.actionPerformed(e);
-            System.out.println(targets);
-//            //find the node to select after the target is removed from the UI
-//            List<Node> siblings = Arrays.asList(target.getParentNode().getChildren().getNodes());
-//            if (siblings.size() <= 1) {
-//                Accounts.this.update();
-//            } else {
-//                final int indexOf = siblings.indexOf(target);
-//
-//                final Node sibling = indexOf < siblings.size() - 1 // if it is not the last in the list
-//                        ? siblings.get(indexOf + 1) //select the next element
-//                        : siblings.get(indexOf - 1);//else select the previous element
-//                String nodeToSelectName = sibling.getName();
-//                Accounts.this.update();
-//
-//                if (showRejected == false && siblings.size() > 1) {
-//                    SwingUtilities.invokeLater(() -> {
-//                        final DirectoryTreeTopComponent directoryTree = DirectoryTreeTopComponent.findInstance();
-//                        final DataResultTopComponent directoryListing = directoryTree.getDirectoryListing();
-//                        final Node rootNode = directoryListing.getRootNode();
-//
-//                        Node child = NodeOp.findChild(rootNode, nodeToSelectName);
-//
-//                        try {
-//                            directoryTree.getExplorerManager().setSelectedNodes(new Node[]{child.getParentNode()});
-//                            directoryListing.setSelectedNodes(new Node[]{child.getParentNode()});
-//                        } catch (PropertyVetoException ex) {
-//                            Exceptions.printStackTrace(ex);
-//                        }
-//                    });
-//                }
-//            }
+        Collection<? extends BlackboardArtifact> artifacts;
+        BlackboardArtifact.ReviewStatus newReviewStatus;
+
+        public ReviewStatusChangeEvent(Collection<? extends BlackboardArtifact> artifacts, BlackboardArtifact.ReviewStatus newReviewStatus) {
+            this.artifacts = artifacts;
+            this.newReviewStatus = newReviewStatus;
         }
     }
 }
