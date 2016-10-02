@@ -419,8 +419,8 @@ final public class Accounts implements AutopsyVisitableItem {
              */
             @Override
             protected List<CreditCardViewMode> createKeys() {
-                list.addAll(Arrays.asList(CreditCardViewMode.values()));
-                return list;
+                return Arrays.asList(CreditCardViewMode.values());
+
             }
 
             @Override
@@ -476,6 +476,7 @@ final public class Accounts implements AutopsyVisitableItem {
              */
             @Override
             protected List<FileWithCCN> createKeys() {
+                List<FileWithCCN> list = new ArrayList<>();
                 String query
                         = "SELECT blackboard_artifacts.obj_id," //NON-NLS
                         + "      solr_attribute.value_text AS solr_document_id, " //NON-NLS
@@ -581,6 +582,8 @@ final public class Accounts implements AutopsyVisitableItem {
              */
             @Override
             protected List<BinResult> createKeys() {
+                List<BinResult> list = new ArrayList<>();
+
                 RangeMap<Integer, BinResult> ranges = TreeRangeMap.create();
 
                 String query
@@ -862,6 +865,7 @@ final public class Accounts implements AutopsyVisitableItem {
              */
             @Override
             protected List<Long> createKeys() {
+                List<Long> list = new ArrayList<>();
 
                 String query
                         = "SELECT blackboard_artifacts.artifact_id " //NON-NLS
