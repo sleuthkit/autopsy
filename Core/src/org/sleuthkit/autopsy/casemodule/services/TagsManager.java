@@ -20,11 +20,14 @@ package org.sleuthkit.autopsy.casemodule.services;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -42,6 +45,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class TagsManager implements Closeable {
 
     private static final Logger LOGGER = Logger.getLogger(TagsManager.class.getName());
+    @NbBundle.Messages("TagsManager.predefTagNames.bookmark.text=Bookmark")
+    private static final Set<String> STANDARD_TAG_DISPLAY_NAMES = new HashSet<>(Arrays.asList(Bundle.TagsManager_predefTagNames_bookmark_text()));
     private final SleuthkitCase caseDb;
 
     /**
@@ -104,9 +109,9 @@ public class TagsManager implements Closeable {
          * map.
          */
         Map<String, TagName> tagNames = new HashMap<>();
-        tagNames.put("TagsManager.predefTagNames.bookmark.text", null);
-        Set<TagType> customTypes = TagType.getCustomTagTypes();
-        for (TagType tagType : customTypes) {
+        tagNames.put(NbBundle.getMessage(this.getClass(), "TagsManager.predefTagNames.bookmark.text"), null);
+        Set<TagNameDefiniton> customTypes = TagNameDefiniton.getTagNameDefinitions();
+        for (TagNameDefiniton tagType : customTypes) {
             tagNames.put(tagType.getDisplayName(), null);
         }
         for (TagName tagName : caseDb.getAllTagNames()) {
@@ -116,8 +121,8 @@ public class TagsManager implements Closeable {
     }
 
     /**
-     * Adds a tag name entry to the case database and adds a corresponding 
-     * tag type to the current user's custom tag types.
+     * Adds a tag name entry to the case database and adds a corresponding tag
+     * type to the current user's custom tag types.
      *
      * @param displayName The display name for the new tag type.
      *
@@ -134,8 +139,8 @@ public class TagsManager implements Closeable {
     }
 
     /**
-     * Adds a tag name entry to the case database and adds a corresponding 
-     * tag type to the current user's custom tag types.
+     * Adds a tag name entry to the case database and adds a corresponding tag
+     * type to the current user's custom tag types.
      *
      * @param displayName The display name for the new tag type.
      * @param description The description for the new tag type.
@@ -153,8 +158,8 @@ public class TagsManager implements Closeable {
     }
 
     /**
-     * Adds a tag name entry to the case database and adds a corresponding 
-     * tag type to the current user's custom tag types.
+     * Adds a tag name entry to the case database and adds a corresponding tag
+     * type to the current user's custom tag types.
      *
      * @param displayName The display name for the new tag type.
      * @param description The description for the new tag type.
@@ -170,9 +175,11 @@ public class TagsManager implements Closeable {
     public synchronized TagName addTagName(String displayName, String description, TagName.HTML_COLOR color) throws TagNameAlreadyExistsException, TskCoreException {
         try {
             TagName tagName = caseDb.addTagName(displayName, description, color);
-            Set<TagType> customTypes = TagType.getCustomTagTypes();
-            customTypes.add(new TagType(displayName, description, color));
-            TagType.setCustomTagTypes(customTypes);
+            if (!STANDARD_TAG_DISPLAY_NAMES.contains(displayName)) {
+                Set<TagNameDefiniton> customTypes = TagNameDefiniton.getTagNameDefinitions();
+                customTypes.add(new TagNameDefiniton(displayName, description, color));
+                TagNameDefiniton.setTagNameDefinitions(customTypes);
+            }
             return tagName;
         } catch (TskCoreException ex) {
             List<TagName> existingTagNames = caseDb.getAllTagNames();

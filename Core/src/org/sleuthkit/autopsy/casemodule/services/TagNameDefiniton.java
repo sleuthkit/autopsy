@@ -28,10 +28,10 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.datamodel.TagName;
 
 /**
- * A tag type definition consisting of a display name, description and color.
+ * A tag name definition consisting of a display name, description and color.
  */
 @Immutable
-final class TagType implements Comparable<TagType> {
+final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
 
     private static final String TAGS_SETTINGS_NAME = "Tags"; //NON-NLS
     private static final String TAG_NAMES_SETTING_KEY = "TagNames"; //NON-NLS    
@@ -40,21 +40,21 @@ final class TagType implements Comparable<TagType> {
     private final TagName.HTML_COLOR color;
 
     /**
-     * Constructs a tag type definition consisting of a display name,
+     * Constructs a tag name definition consisting of a display name,
      * description and color.
      *
-     * @param displayName The display name for the tag type.
-     * @param description The dcescription of the tag type.
-     * @param color       The color to associate with the tag type.
+     * @param displayName The display name for the tag name.
+     * @param description The description for the tag name.
+     * @param color       The color for the tag name.
      */
-    TagType(String displayName, String description, TagName.HTML_COLOR color) {
+    TagNameDefiniton(String displayName, String description, TagName.HTML_COLOR color) {
         this.displayName = displayName;
         this.description = description;
         this.color = color;
     }
 
     /**
-     * Gets the display name for a tag type.
+     * Gets the display name for the tag name.
      *
      * @return The display name.
      */
@@ -63,7 +63,7 @@ final class TagType implements Comparable<TagType> {
     }
 
     /**
-     * Gets the description of a tag type.
+     * Gets the description for the tag name.
      *
      * @return The description.
      */
@@ -72,7 +72,7 @@ final class TagType implements Comparable<TagType> {
     }
 
     /**
-     * Gets the color associated with the tag type.
+     * Gets the color for the tag name.
      *
      * @return The color.
      */
@@ -81,21 +81,23 @@ final class TagType implements Comparable<TagType> {
     }
 
     /**
-     * Compares this tag type with the specified tag type for order.
+     * Compares this tag name definition with the specified tag name definition
+     * for order.
      *
-     * @param other The tag type to which to compare this tag type.
+     * @param other The tag name definition to which to compare this tag name
+     *              definition.
      *
      * @return Negative integer, zero, or a positive integer to indicate that
-     *         this tag type is less than, equal to, or greater than the
-     *         specified tag type.
+     *         this tag name definition is less than, equal to, or greater than
+     *         the specified tag name definition.
      */
     @Override
-    public int compareTo(TagType other) {
+    public int compareTo(TagNameDefiniton other) {
         return this.getDisplayName().toLowerCase().compareTo(other.getDisplayName().toLowerCase());
     }
 
     /**
-     * Returns a hash code value for this tag type.
+     * Returns a hash code value for this tag name definition.
      *
      * @return The has code.
      */
@@ -107,7 +109,8 @@ final class TagType implements Comparable<TagType> {
     }
 
     /**
-     * Indicates whether some other object is "equal to" this tag type.
+     * Indicates whether some other object is "equal to" this tag name
+     * definition.
      *
      * @param obj The object to test for equality.
      *
@@ -115,15 +118,15 @@ final class TagType implements Comparable<TagType> {
      */
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof TagType)) {
+        if (!(obj instanceof TagNameDefiniton)) {
             return false;
         }
-        TagType thatTagName = (TagType) obj;
+        TagNameDefiniton thatTagName = (TagNameDefiniton) obj;
         return this.getDisplayName().equals(thatTagName.getDisplayName());
     }
 
     /**
-     * A string representation of this tag type.
+     * A string representation of this tag name definition.
      *
      * @return The display name of the tag type.
      */
@@ -133,43 +136,43 @@ final class TagType implements Comparable<TagType> {
     }
 
     /**
-     * @return A string representation of the tag name in the format that is
-     *         used by the properties file.
+     * @return A string representation of the tag name definition in the format
+     *         that is used by the tags settings file.
      */
     private String toSettingsFormat() {
         return displayName + "," + description + "," + color.name();
     }
 
     /**
-     * Gets the custom tag types for the current user.
+     * Gets tag name definitions from the tag settings file.
      *
-     * @return A set of tag type objects.
+     * @return A set of tag name definition objects.
      */
-    static synchronized Set<TagType> getCustomTagTypes() {
-        Set<TagType> tagTypes = new HashSet<>();
+    static synchronized Set<TagNameDefiniton> getTagNameDefinitions() {
+        Set<TagNameDefiniton> tagNames = new HashSet<>();
         String setting = ModuleSettings.getConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY);
         if (null != setting && !setting.isEmpty()) {
             List<String> tagNameTuples = Arrays.asList(setting.split(";"));
             for (String tagNameTuple : tagNameTuples) {
                 String[] tagNameAttributes = tagNameTuple.split(",");
-                tagTypes.add(new TagType(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.valueOf(tagNameAttributes[2])));
+                tagNames.add(new TagNameDefiniton(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.valueOf(tagNameAttributes[2])));
             }
         }
-        return tagTypes;
+        return tagNames;
     }
 
     /**
-     * Sets the custom tag types for the current user.
+     * Sets the tag name definitions in the tag settings file.
      *
-     * @param tagTypes A set of tag type objects.
+     * @param tagNames A set of tag name definition objects.
      */
-    static synchronized void setCustomTagTypes(Set<TagType> tagTypes) {
+    static synchronized void setTagNameDefinitions(Set<TagNameDefiniton> tagNames) {
         StringBuilder setting = new StringBuilder();
-        for (TagType tagType : tagTypes) {
+        for (TagNameDefiniton tagName : tagNames) {
             if (setting.length() != 0) {
                 setting.append(";");
             }
-            setting.append(tagType.toSettingsFormat());
+            setting.append(tagName.toSettingsFormat());
         }
         ModuleSettings.setConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY, setting.toString());
     }

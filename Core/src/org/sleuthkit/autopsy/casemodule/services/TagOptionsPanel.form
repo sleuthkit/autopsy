@@ -92,10 +92,10 @@
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Component id="tagTypesListLabel" alignment="0" max="32767" attributes="0"/>
                               <Group type="102" alignment="0" attributes="0">
-                                  <Component id="newTagTypeButton" min="-2" max="-2" attributes="0"/>
+                                  <Component id="newTagNameButton" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="deleteTagTypeButton" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace min="0" pref="121" max="32767" attributes="0"/>
+                                  <Component id="deleteTagNameButton" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace min="0" pref="113" max="32767" attributes="0"/>
                               </Group>
                               <Component id="jScrollPane1" alignment="0" max="32767" attributes="0"/>
                           </Group>
@@ -112,8 +112,8 @@
                           <Component id="jScrollPane1" pref="383" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="newTagTypeButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="deleteTagTypeButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="newTagNameButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="deleteTagNameButton" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
@@ -143,35 +143,35 @@
                         <Property name="selectionMode" type="int" value="0"/>
                       </Properties>
                       <AuxValues>
-                        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;TagType&gt;"/>
+                        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;org.sleuthkit.autopsy.casemodule.services.TagNameDefiniton&gt;"/>
                       </AuxValues>
                     </Component>
                   </SubComponents>
                 </Container>
-                <Component class="javax.swing.JButton" name="newTagTypeButton">
+                <Component class="javax.swing.JButton" name="newTagNameButton">
                   <Properties>
                     <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                       <Image iconType="3" name="/org/sleuthkit/autopsy/images/add-tag.png"/>
                     </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                      <ResourceString bundle="org/sleuthkit/autopsy/casemodule/services/Bundle.properties" key="TagOptionsPanel.newTagTypeButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                      <ResourceString bundle="org/sleuthkit/autopsy/casemodule/services/Bundle.properties" key="TagOptionsPanel.newTagNameButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
                   </Properties>
                   <Events>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="newTagTypeButtonActionPerformed"/>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="newTagNameButtonActionPerformed"/>
                   </Events>
                 </Component>
-                <Component class="javax.swing.JButton" name="deleteTagTypeButton">
+                <Component class="javax.swing.JButton" name="deleteTagNameButton">
                   <Properties>
                     <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                       <Image iconType="3" name="/org/sleuthkit/autopsy/images/delete-tag.png"/>
                     </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                      <ResourceString bundle="org/sleuthkit/autopsy/casemodule/services/Bundle.properties" key="TagOptionsPanel.deleteTagTypeButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                      <ResourceString bundle="org/sleuthkit/autopsy/casemodule/services/Bundle.properties" key="TagOptionsPanel.deleteTagNameButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
                   </Properties>
                   <Events>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="deleteTagTypeButtonActionPerformed"/>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="deleteTagNameButtonActionPerformed"/>
                   </Events>
                 </Component>
               </SubComponents>
