@@ -98,9 +98,7 @@ public class GetTagNameDialog extends JDialog {
         // case the user chooses an existing tag name from the tag names table.
         TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
         try {
-            tagNamesMap.putAll(tagsManager.getUserTagNamesMap());
-            tagNamesMap.putAll(tagsManager.getPredefinedTagNamesMap());
-            tagNamesMap.putAll(tagsManager.getTagNamesInUseMap());
+            tagNamesMap.putAll(tagsManager.getDisplayNamesToTagNamesMap());
         } catch (TskCoreException ex) {
             Logger.getLogger(GetTagNameDialog.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
         }

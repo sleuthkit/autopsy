@@ -1,39 +1,35 @@
 /*
-* Autopsy Forensic Browser
-*
-* Copyright 2011-2016 Basis Technology Corp.
-* Contact: carrier <at> sleuthkit <dot> org
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*     http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2011-2016 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.sleuthkit.autopsy.casemodule.services;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
  * A panel to allow the user to create new tag names or to delete tag names that
@@ -43,34 +39,26 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
  */
 final class TagNamesSettingsPanel extends javax.swing.JPanel implements OptionsPanel {
 
-    private static final Logger logger = Logger.getLogger(TagNamesSettingsPanel.class.getName());
-
-    private static final String TAGS_SETTINGS_NAME = "Tags"; //NON-NLS
-    private static final String TAG_NAMES_SETTING_KEY = "TagNames"; //NON-NLS
-
+    private static final long serialVersionUID = 1L;
     private static final String DEFAULT_DESCRIPTION = "";
     private static final String DEFAULT_COLOR_STRING = "NONE";
-
-    private DefaultListModel<UserTagName> tagNamesListModel;
-    private List<UserTagName> tagNames;
+    private final DefaultListModel<TagType> tagTypesListModel;
+    private final Set<TagType> tagTypes;
 
     /**
      * Creates new form TagsManagerOptionsPanel
      */
     TagNamesSettingsPanel() {
+        tagTypesListModel = new DefaultListModel<>();
+        tagTypes = new TreeSet<>(TagType.getCustomTagTypes());
         initComponents();
         customizeComponents();
     }
-    
+
     private void customizeComponents() {
-        tagNamesListModel = new DefaultListModel<>();
-        tagNamesList.setModel(tagNamesListModel);
-        tagNames = new ArrayList<>();
-        tagNamesList.addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                enableButtons();
-            }
+        tagNamesList.setModel(tagTypesListModel);
+        tagNamesList.addListSelectionListener((ListSelectionEvent event) -> {
+            enableButtons();
         });
     }
 
@@ -103,6 +91,12 @@ final class TagNamesSettingsPanel extends javax.swing.JPanel implements OptionsP
 
         org.openide.awt.Mnemonics.setLocalizedText(tagNamesListLabel, org.openide.util.NbBundle.getMessage(TagNamesSettingsPanel.class, "TagNamesSettingsPanel.tagNamesListLabel.text")); // NOI18N
 
+        tagNamesList.setModel(new javax.swing.AbstractListModel<UserTagName>() {
+            String[] strings = { "TagType" };
+            public int getSize() { return strings.length; }
+            public Object getElementAt(int i) { return strings[i]; }
+        });
+        tagNamesList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jScrollPane1.setViewportView(tagNamesList);
 
         newTagNameButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add-tag.png"))); // NOI18N
@@ -200,38 +194,38 @@ final class TagNamesSettingsPanel extends javax.swing.JPanel implements OptionsP
                 .addGap(0, 0, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
-    
+
     private void newTagNameButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newTagNameButtonActionPerformed
         NewUserTagNameDialog dialog = new NewUserTagNameDialog();
         NewUserTagNameDialog.BUTTON_PRESSED result = dialog.getResult();
         if (result == NewUserTagNameDialog.BUTTON_PRESSED.OK) {
             String newTagDisplayName = dialog.getTagName();
-            UserTagName newTagName = new UserTagName(newTagDisplayName, DEFAULT_DESCRIPTION, DEFAULT_COLOR_STRING);
+            TagType newTagType = new TagType(newTagDisplayName, DEFAULT_DESCRIPTION, DEFAULT_COLOR_STRING);
             /*
              * If tag name already exists, don't add the tag name.
              */
-            if (tagNames.contains(newTagName)) {
+            if (tagTypes.contains(newTagType)) {
                 JOptionPane.showMessageDialog(null,
                         NbBundle.getMessage(TagNamesSettingsPanel.class, "TagNamesSettingsPanel.JOptionPane.tagNameAlreadyExists.message"),
                         NbBundle.getMessage(TagNamesSettingsPanel.class, "TagNamesSettingsPanel.JOptionPane.tagNameAlreadyExists.title"),
                         JOptionPane.INFORMATION_MESSAGE);
             } else {
-                tagNames.add(newTagName);
+                tagTypes.add(newTagType);
                 updateTagNamesListModel();
                 /*
                  * Set the selection to the tag name that was just added.
                  */
-                int index = tagNames.indexOf(newTagName);
+                int index = tagTypes.indexOf(newTagType);
                 tagNamesList.setSelectedIndex(index);
                 enableButtons();
                 firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             }
         }
     }//GEN-LAST:event_newTagNameButtonActionPerformed
-    
+
     private void deleteTagNameButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteTagNameButtonActionPerformed
-        UserTagName tagName = tagNamesList.getSelectedValue();
-        tagNames.remove(tagName);
+        TagType tagName = tagNamesList.getSelectedValue();
+        tagTypes.remove(tagName);
         updateTagNamesListModel();
         enableButtons();
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
@@ -254,15 +248,26 @@ final class TagNamesSettingsPanel extends javax.swing.JPanel implements OptionsP
      * Updates the tag names model for the tag names list component.
      */
     private void updateTagNamesListModel() {
-        tagNamesListModel.clear();
-        Set<UserTagName> tagNameSet = new HashSet<>();
-        tagNameSet.addAll(tagNames);
-        tagNames.clear();
-        tagNames.addAll(tagNameSet);
-        Collections.sort(tagNames);
-        for (UserTagName tagName : tagNames) {
-            tagNamesListModel.addElement(tagName);
+        tagTypesListModel.clear();
+        Set<TagType> tagNameSet = new HashSet<>();
+        tagNameSet.addAll(tagTypes);
+        tagTypes.clear();
+        tagTypes.addAll(tagNameSet);
+        Collections.sort(tagTypes);
+        for (TagType tagName : tagTypes) {
+            tagTypesListModel.addElement(tagName);
         }
+    }
+
+    /**
+     * Updates the tag names list component with tag names from the properties
+     * file.
+     */
+    @Override
+    public void load() {
+        tagTypes = TagType.getCustomTagTypes();
+        updateTagNamesListModel();
+        enableButtons();
     }
 
     /**
@@ -274,43 +279,15 @@ final class TagNamesSettingsPanel extends javax.swing.JPanel implements OptionsP
      */
     @Override
     public void store() {
-        StringBuilder setting = new StringBuilder();
-        for (UserTagName tagName : tagNames) {
-            if (setting.length() != 0) {
-                setting.append(";");
-            }
-            setting.append(tagName.toSettingsFormat());
-        }
-        ModuleSettings.setConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY, setting.toString());
-        if (Case.isCaseOpen()) {
-            Case.getCurrentCase().getServices().getTagsManager().storeNewUserTagNames(tagNames);
-        }
+        TagType.setCustomTagTypes(tagTypes);
     }
 
     /**
-     * Updates the tag names list component with tag names from the properties
-     * file.
-     */
-    @Override
-    public void load() {
-        String setting = ModuleSettings.getConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY);
-        tagNames.clear();
-        if (null != setting && !setting.isEmpty()) {
-            List<String> tagNameTuples = Arrays.asList(setting.split(";"));
-            for (String tagNameTuple : tagNameTuples) {
-                String[] tagNameAttributes = tagNameTuple.split(",");
-                tagNames.add(new UserTagName(tagNameAttributes[0], tagNameAttributes[1], tagNameAttributes[2]));
-            }
-        }
-        updateTagNamesListModel();
-        enableButtons();
-    }
-
-    /**
-     * Only enable delete button when there is a tag name selected in the list.
+     * Only enable the delete button when there is a tag type selected in the
+     * tag types JList.
      */
     private void enableButtons() {
-        boolean ruleIsSelected = tagNamesList.getSelectedIndex() != -1;
-        deleteTagNameButton.setEnabled(ruleIsSelected);
+        deleteTagNameButton.setEnabled(tagNamesList.getSelectedIndex() != -1);
     }
+
 }
