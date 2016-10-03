@@ -120,7 +120,7 @@ final public class Accounts implements AutopsyVisitableItem {
      *         based on the state of showRejected.
      */
     private String getRejectedArtifactFilterClause() {
-        return showRejected ? " " : " AND blackboard_artifacts.review_status_id != " + BlackboardArtifact.ReviewStatus.REJECTED.getID(); //NON-NLS
+        return showRejected ? " " : " AND blackboard_artifacts.review_status_id != " + BlackboardArtifact.ReviewStatus.REJECTED.getID() + " "; //NON-NLS
     }
 
     /**
@@ -541,7 +541,26 @@ final public class Accounts implements AutopsyVisitableItem {
             "# {0} - number of children",
             "Accounts.ByFileNode.displayName=By File ({0})"})
         private void updateDisplayName() {
-            setDisplayName(Bundle.Accounts_ByFileNode_displayName(getChildren().getNodesCount(true)));
+            String query
+                    = "SELECT count(*) FROM ( SELECT count(*) AS documents "
+                    + " FROM blackboard_artifacts " //NON-NLS
+                    + " LEFT JOIN blackboard_attributes as solr_attribute ON blackboard_artifacts.artifact_id = solr_attribute.artifact_id " //NON-NLS
+                    + "                                AND solr_attribute.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID.getTypeID() //NON-NLS
+                    + " LEFT JOIN blackboard_attributes as account_type ON blackboard_artifacts.artifact_id = account_type.artifact_id " //NON-NLS
+                    + "                                AND account_type.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID() //NON-NLS
+                    + "                                AND account_type.value_text = '" + Account.Type.CREDIT_CARD.name() + "'" //NON-NLS
+                    + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
+                    + getRejectedArtifactFilterClause()
+                    + " GROUP BY blackboard_artifacts.obj_id, solr_attribute.value_text )";
+            try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
+                    ResultSet rs = results.getResultSet();) {
+                while (rs.next()) {
+                    setDisplayName(Bundle.Accounts_ByFileNode_displayName(rs.getLong("count(*)")));
+                }
+            } catch (TskCoreException | SQLException ex) {
+                LOGGER.log(Level.SEVERE, "Error querying for files with ccn hits.", ex); //NON-NLS
+
+            }
         }
 
         @Override
@@ -643,7 +662,21 @@ final public class Accounts implements AutopsyVisitableItem {
             "# {0} - number of children",
             "Accounts.ByBINNode.displayName=By BIN ({0})"})
         private void updateDisplayName() {
-            setDisplayName(Bundle.Accounts_ByBINNode_displayName(getChildren().getNodesCount(true)));
+            String query
+                    = "SELECT count(distinct SUBSTR(blackboard_attributes.value_text,1,8)) AS BINs " //NON-NLS
+                    + " FROM blackboard_artifacts " //NON-NLS
+                    + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id" //NON-NLS
+                    + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
+                    + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER.getTypeID() //NON-NLS
+                    + getRejectedArtifactFilterClause(); //NON-NLS
+            try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query)) {
+                ResultSet resultSet = results.getResultSet();
+                while (resultSet.next()) {
+                    setDisplayName(Bundle.Accounts_ByBINNode_displayName(resultSet.getLong("BINs")));
+                }
+            } catch (TskCoreException | SQLException ex) {
+                LOGGER.log(Level.SEVERE, "Error querying for BINs.", ex); //NON-NLS
+            }
         }
 
         @Override
@@ -922,8 +955,24 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         private void updateDisplayName() {
+            String query
+                    = "SELECT count(blackboard_artifacts.artifact_id ) AS count" //NON-NLS
+                    + " FROM blackboard_artifacts " //NON-NLS
+                    + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id " //NON-NLS
+                    + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
+                    + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER.getTypeID() //NON-NLS
+                    + "     AND blackboard_attributes.value_text >= \"" + bin.getBINStart() + "\" AND  blackboard_attributes.value_text < \"" + (bin.getBINEnd() + 1) + "\"" //NON-NLS
+                    + getRejectedArtifactFilterClause();
+            try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
+                    ResultSet rs = results.getResultSet();) {
+                while (rs.next()) {
+                    setDisplayName(getBinRangeString() + " (" + rs.getLong("count") + ")"); //NON-NLS
+                }
+            } catch (TskCoreException | SQLException ex) {
+                LOGGER.log(Level.SEVERE, "Error querying for account artifacts.", ex); //NON-NLS
 
-            setDisplayName(getBinRangeString() + " (" + getChildren().getNodesCount(true) + ")"); //NON-NLS
+            }
+
         }
 
         private String getBinRangeString() {
