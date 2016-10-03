@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,6 +45,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 public class GetTagNameDialog extends JDialog {
 
+    private static final long serialVersionUID = 1L;
     private static final String TAG_ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
     private final Map<String, TagName> tagNamesMap = new TreeMap<>();
     private TagName tagName = null;
@@ -71,14 +72,19 @@ public class GetTagNameDialog extends JDialog {
      * @return a TagName instance selected by the user, or null if the user
      *         canceled the dialog.
      */
-    public static TagName doDialog(final Window owner) {
-        return new GetTagNameDialog(owner).tagName;
+    public static TagName doDialog(Window owner) {
+        GetTagNameDialog dialog = new GetTagNameDialog(owner);
+        dialog.display();
+        return dialog.tagName;
     }
 
-    private GetTagNameDialog(final Window owner) {
-        super(owner,
+    private GetTagNameDialog(Window owner) {
+        super(owner, 
                 NbBundle.getMessage(GetTagNameDialog.class, "GetTagNameDialog.createTag"),
                 ModalityType.APPLICATION_MODAL);
+    }
+
+    private void display() {
         setIconImage(ImageUtilities.loadImage(TAG_ICON_PATH));
         initComponents();
 
@@ -88,6 +94,8 @@ public class GetTagNameDialog extends JDialog {
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), cancelName);
         ActionMap actionMap = getRootPane().getActionMap();
         actionMap.put(cancelName, new AbstractAction() {
+            private static final long serialVersionUID = 1L;
+            
             @Override
             public void actionPerformed(ActionEvent e) {
                 cancelButtonActionPerformed(e);
@@ -104,19 +112,20 @@ public class GetTagNameDialog extends JDialog {
         }
 
         // Populate the tag names table.
-        tagsTable.setModel(new TagsTableModel(new ArrayList<String>(tagNamesMap.keySet())));
+        tagsTable.setModel(new TagsTableModel(new ArrayList<>(tagNamesMap.keySet())));
         tagsTable.setTableHeader(null);
         tagsTable.setCellSelectionEnabled(false);
         tagsTable.setFocusable(false);
         tagsTable.setRowHeight(tagsTable.getRowHeight() + 5);
 
         // Center and show the dialog box. 
-        this.setLocationRelativeTo(owner);
-        setVisible(true);
+        this.setLocationRelativeTo(this.getOwner());
+        setVisible(true);        
     }
-
+    
     private class TagsTableModel extends AbstractTableModel {
 
+        private static final long serialVersionUID = 1L;
         private final ArrayList<String> tagDisplayNames = new ArrayList<>();
 
         TagsTableModel(List<String> tagDisplayNames) {

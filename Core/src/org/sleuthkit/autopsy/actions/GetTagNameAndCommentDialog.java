@@ -91,13 +91,18 @@ public class GetTagNameAndCommentDialog extends JDialog {
      *         dialog.
      */
     public static TagNameAndComment doDialog(Window owner) {
-        return new GetTagNameAndCommentDialog(owner).tagNameAndComment;
+        GetTagNameAndCommentDialog dialog = new GetTagNameAndCommentDialog(owner);
+        dialog.display();
+        return dialog.tagNameAndComment;
     }
 
     private GetTagNameAndCommentDialog(Window owner) {
         super(owner,
                 NbBundle.getMessage(GetTagNameAndCommentDialog.class, "GetTagNameAndCommentDialog.createTag"),
                 ModalityType.APPLICATION_MODAL);
+    }
+
+    private void display() {
         initComponents();
 
         // Set up the dialog to close when Esc is pressed.
@@ -106,6 +111,7 @@ public class GetTagNameAndCommentDialog extends JDialog {
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), cancelName);
         ActionMap actionMap = getRootPane().getActionMap();
         actionMap.put(cancelName, new AbstractAction() {
+            private static final long serialVersionUID = 1L;
             @Override
             public void actionPerformed(ActionEvent e) {
                 dispose();
@@ -131,10 +137,10 @@ public class GetTagNameAndCommentDialog extends JDialog {
         }
 
         // Center and show the dialog box. 
-        this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
-        setVisible(true);
+        this.setLocationRelativeTo(this.getOwner());
+        setVisible(true);        
     }
-
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always

@@ -39,6 +39,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
 
+    private static final long serialVersionUID = 1L;
     private static final String NO_COMMENT = "";
 
     AddTagAction(String menuText) {
