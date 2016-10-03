@@ -29,8 +29,9 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.openide.util.NbBundle;
 
-class NewUserTagNameDialog extends javax.swing.JDialog {
+final class NewTagNameDialog extends javax.swing.JDialog {
 
+    private static final long serialVersionUID = 1L;
     private String userTagDisplayName;
     private BUTTON_PRESSED result;
 
@@ -41,9 +42,9 @@ class NewUserTagNameDialog extends javax.swing.JDialog {
     /**
      * Creates a new NewUserTagNameDialog dialog.
      */
-    NewUserTagNameDialog() {
-        super(new JFrame(NbBundle.getMessage(NewUserTagNameDialog.class, "NewUserTagNameDialog.title.text")),
-                NbBundle.getMessage(NewUserTagNameDialog.class, "NewUserTagNameDialog.title.text"), true);
+    NewTagNameDialog() {
+        super(new JFrame(NbBundle.getMessage(NewTagNameDialog.class, "NewUserTagNameDialog.title.text")),
+                NbBundle.getMessage(NewTagNameDialog.class, "NewUserTagNameDialog.title.text"), true);
         initComponents();
         this.display();
     }
@@ -111,15 +112,15 @@ class NewUserTagNameDialog extends javax.swing.JDialog {
             String newTagDisplayName = tagNameTextField.getText().trim();
             if (newTagDisplayName.isEmpty()) {
                 JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(NewUserTagNameDialog.class, "NewUserTagNameDialog.JOptionPane.tagNameEmpty.message"),
-                        NbBundle.getMessage(NewUserTagNameDialog.class, "NewUserTagNameDialog.JOptionPane.tagNameEmpty.title"),
+                        NbBundle.getMessage(NewTagNameDialog.class, "NewUserTagNameDialog.JOptionPane.tagNameEmpty.message"),
+                        NbBundle.getMessage(NewTagNameDialog.class, "NewUserTagNameDialog.JOptionPane.tagNameEmpty.title"),
                         JOptionPane.ERROR_MESSAGE);
                 return;
             }
             if (TagsManager.containsIllegalCharacters(newTagDisplayName)) {
                 JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(NewUserTagNameDialog.class, "NewUserTagNameDialog.JOptionPane.tagNameIllegalCharacters.message"),
-                        NbBundle.getMessage(NewUserTagNameDialog.class, "NewUserTagNameDialog.JOptionPane.tagNameIllegalCharacters.title"),
+                        NbBundle.getMessage(NewTagNameDialog.class, "NewUserTagNameDialog.JOptionPane.tagNameIllegalCharacters.message"),
+                        NbBundle.getMessage(NewTagNameDialog.class, "NewUserTagNameDialog.JOptionPane.tagNameIllegalCharacters.title"),
                         JOptionPane.ERROR_MESSAGE);
                 return;
             }
@@ -175,18 +176,18 @@ class NewUserTagNameDialog extends javax.swing.JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
-        org.openide.awt.Mnemonics.setLocalizedText(newTagNameLabel, org.openide.util.NbBundle.getMessage(NewUserTagNameDialog.class, "NewUserTagNameDialog.newTagNameLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(newTagNameLabel, org.openide.util.NbBundle.getMessage(NewTagNameDialog.class, "NewTagNameDialog.newTagNameLabel.text")); // NOI18N
 
-        tagNameTextField.setText(org.openide.util.NbBundle.getMessage(NewUserTagNameDialog.class, "NewUserTagNameDialog.tagNameTextField.text")); // NOI18N
+        tagNameTextField.setText(org.openide.util.NbBundle.getMessage(NewTagNameDialog.class, "NewTagNameDialog.tagNameTextField.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(NewUserTagNameDialog.class, "NewUserTagNameDialog.cancelButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(NewTagNameDialog.class, "NewTagNameDialog.cancelButton.text")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(NewUserTagNameDialog.class, "NewUserTagNameDialog.okButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(NewTagNameDialog.class, "NewTagNameDialog.okButton.text")); // NOI18N
         okButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
