@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.actions;
 
 import java.awt.event.ActionEvent;
-import java.util.List;
+import java.util.Map;
 import javax.swing.AbstractAction;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -32,10 +32,10 @@ class BookmarkFileAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        List<TagName> tagNames = Case.getCurrentCase().getServices().getTagsManager().getPredefinedTagNames();
-        for (TagName tagName : tagNames) {
-            if (tagName.getDisplayName().equals(BOOKMARK)) {
-                AddContentTagAction.getInstance().addTag(tagName, NO_COMMENT);
+        Map<String, TagName> tagNamesMap = Case.getCurrentCase().getServices().getTagsManager().getPredefinedTagNamesMap();
+        for (Map.Entry<String, TagName> entry : tagNamesMap.entrySet()) {
+            if (entry.getKey().equals(BOOKMARK)) {
+                AddContentTagAction.getInstance().addTag(entry.getValue(), NO_COMMENT);
                 return;
             }
         }
