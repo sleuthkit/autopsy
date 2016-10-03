@@ -312,16 +312,18 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      */
     @Override
     public void setNode(Node selectedNode) {
+        final OutlineView ov = ((OutlineView) this.tableScrollPanel);
+        ov.getOutline().unsetQuickFilter();
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
             boolean hasChildren = false;
-
+            
             if (selectedNode != null) {
                 // @@@ This just did a DB round trip to get the count and the results were not saved...
                 hasChildren = selectedNode.getChildren().getNodesCount() > 0;
             }
-
+            
             Node oldNode = this.em.getRootContext();
             if (oldNode != null) {
                 oldNode.removeNodeListener(dummyNodeListener);
@@ -334,7 +336,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 root.addNodeListener(dummyNodeListener);
                 setupTable(root);
             } else {
-                final OutlineView ov = ((OutlineView) this.tableScrollPanel);
                 Node emptyNode = new AbstractNode(Children.LEAF);
                 em.setRootContext(emptyNode); // make empty node
                 ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
@@ -414,7 +415,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 for (int column = 0; column < ov.getOutline().getModel().getColumnCount(); column++) {
                     int firstColumnPadding = (column == 0) ? 32 : 0;
                     int columnWidthLimit = (column == 0) ? 250 : 350;
-                    int valuesWidth = 0;
+                    int valuesWidth = 100;
 
                     // find the maximum width needed to fit the values for the first 30 rows, at most
                     for (int row = 0; row < Math.min(30, ov.getOutline().getRowCount()); row++) {
@@ -441,7 +442,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             }
         }
     }
-    
+
     /**
      * Store the current column order into a preference file.
      */
