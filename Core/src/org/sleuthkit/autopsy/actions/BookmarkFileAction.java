@@ -19,13 +19,16 @@
 package org.sleuthkit.autopsy.actions;
 
 import java.awt.event.ActionEvent;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import org.openide.util.NbBundle;
+import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -36,19 +39,21 @@ public class BookmarkFileAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Map<String, TagName> tagNamesMap = null;
         try {
-            tagNamesMap = Case.getCurrentCase().getServices().getTagsManager().getDisplayNamesToTagNamesMap();
+            Map<String, TagName> tagNamesMap = Case.getCurrentCase().getServices().getTagsManager().getDisplayNamesToTagNamesMap();
             TagName bookmarkTagName = tagNamesMap.get(BOOKMARK);
-            if (bookmarkTagName == null) {
-                bookmarkTagName = Case.getCurrentCase().getServices().getTagsManager().addTagName(BOOKMARK);
+
+            // if the selection is a BlackboardArtifact wrapped around an
+            // AbstractFile, tag the artifact by default
+            final Collection<BlackboardArtifact> artifacts = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
+            if (!artifacts.isEmpty()) {
+                AddBlackboardArtifactTagAction.getInstance().addTag(bookmarkTagName, NO_COMMENT);
+            } else {
+                AddContentTagAction.getInstance().addTag(bookmarkTagName, NO_COMMENT);
             }
-            AddContentTagAction.getInstance().addTag(bookmarkTagName, NO_COMMENT);
+
         } catch (TskCoreException ex) {
             Logger.getLogger(BookmarkFileAction.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
-        } catch (TagsManager.TagNameAlreadyExistsException ex) {
-            Logger.getLogger(BookmarkFileAction.class.getName()).log(Level.SEVERE, BOOKMARK + " already exists in database.", ex); //NON-NLS
         }
-
     }
 }
