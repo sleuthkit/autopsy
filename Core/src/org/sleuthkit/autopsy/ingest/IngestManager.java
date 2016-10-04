@@ -486,6 +486,8 @@ public class IngestManager {
 
     /**
      * Starts an ingest job that will process a collection of data sources.
+     * This is intended to be used in an auto-ingest context and will fail
+     * if no ingest modules are enabled.
      *
      * @param dataSources The data sources to process.
      * @param settings    The settings for the ingest job.
@@ -499,8 +501,9 @@ public class IngestManager {
             if (job.hasIngestPipeline()) {
                 return this.startIngestJob(job); // Start job
             }
+            return new IngestJobStartResult(null, new IngestManagerException("No ingest pipeline created, likely due to no ingest modules being enabled."), null);
         }
-        return new IngestJobStartResult(null, new IngestManagerException("Job creation is not enabled."), null);
+        return new IngestJobStartResult(null, new IngestManagerException("No case open"), null);
     }
 
     /**

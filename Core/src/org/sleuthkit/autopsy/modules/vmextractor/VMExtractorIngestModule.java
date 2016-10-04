@@ -243,7 +243,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
          * Write the virtual machine file to disk.
          */
         File localFile = Paths.get(outputFolderForThisVM, vmFile.getName()).toFile();
-        ContentUtils.writeToFile(vmFile, localFile);
+        ContentUtils.writeToFile(vmFile, localFile, context::dataSourceIngestIsCancelled);
     }
 
     /**
