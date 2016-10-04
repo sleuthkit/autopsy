@@ -74,9 +74,9 @@ public class AddContentTagAction extends AddTagAction {
          * We don't want VirtualFile and DerivedFile objects to be tagged.
          */
         final Collection<AbstractFile> selectedFiles = new HashSet<>();
-        selectedFiles.addAll(new HashSet<>(Utilities.actionsGlobalContext().lookupAll(FsContent.class)));
-        selectedFiles.addAll(new HashSet<>(Utilities.actionsGlobalContext().lookupAll(LayoutFile.class)));
-        selectedFiles.addAll(new HashSet<>(Utilities.actionsGlobalContext().lookupAll(LocalFile.class)));
+        selectedFiles.addAll(Utilities.actionsGlobalContext().lookupAll(FsContent.class));
+        selectedFiles.addAll(Utilities.actionsGlobalContext().lookupAll(LayoutFile.class));
+        selectedFiles.addAll(Utilities.actionsGlobalContext().lookupAll(LocalFile.class));
 
         new Thread(() -> {
             for (AbstractFile file : selectedFiles) {

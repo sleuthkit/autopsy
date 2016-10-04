@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline;
 
+import java.awt.event.InputEvent;
 import java.beans.PropertyVetoException;
 import java.util.Collections;
 import java.util.List;
@@ -35,6 +36,8 @@ import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import org.controlsfx.control.Notifications;
 import org.joda.time.Interval;
@@ -49,6 +52,7 @@ import org.openide.windows.Mode;
 import org.openide.windows.TopComponent;
 import static org.openide.windows.TopComponent.PROP_UNDOCKING_DISABLED;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.actions.BookmarkFileAction;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -199,6 +203,9 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
         setName(NbBundle.getMessage(TimeLineTopComponent.class, "CTL_TimeLineTopComponent"));
         setToolTipText(NbBundle.getMessage(TimeLineTopComponent.class, "HINT_TimeLineTopComponent"));
         setIcon(WindowManager.getDefault().getMainWindow().getIconImage()); //use the same icon as main application
+
+        getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_B, InputEvent.CTRL_MASK), "addBookmarkTag"); //NON-NLS
+        getActionMap().put("addBookmarkTag", new BookmarkFileAction()); //NON-NLS
 
         this.controller = controller;
 
