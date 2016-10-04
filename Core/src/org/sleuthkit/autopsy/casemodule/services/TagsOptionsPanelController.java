@@ -28,14 +28,14 @@ import org.openide.util.Lookup;
 
 @OptionsPanelController.TopLevelRegistration(
         categoryName = "#OptionsCategory_Name_TagNamesOptions",
-        iconBase = "org/sleuthkit/autopsy/casemodule/services/tags-manager.png",
+        iconBase = "org/sleuthkit/autopsy/casemodule/services/tag-options-panel-icon.png",
         keywords = "#OptionsCategory_TagNames",
         keywordsCategory = "CustomTagNames",
         position = 8
 )
-public final class TagNamesOptionsPanelController extends OptionsPanelController {
+public final class TagsOptionsPanelController extends OptionsPanelController {
 
-    private TagNamesSettingsPanel panel;
+    private TagOptionsPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
     
@@ -106,15 +106,12 @@ public final class TagNamesOptionsPanelController extends OptionsPanelController
         pcs.removePropertyChangeListener(l);
     }
     
-    private TagNamesSettingsPanel getPanel() {
+    private TagOptionsPanel getPanel() {
         if (panel == null) {
-            panel = new TagNamesSettingsPanel();
-            panel.addPropertyChangeListener(new PropertyChangeListener() {
-                @Override
-                public void propertyChange(PropertyChangeEvent evt) {
-                    if (evt.getPropertyName().equals(OptionsPanelController.PROP_CHANGED)) {
-                        changed();
-                    }
+            panel = new TagOptionsPanel();
+            panel.addPropertyChangeListener((PropertyChangeEvent evt) -> {
+                if (evt.getPropertyName().equals(OptionsPanelController.PROP_CHANGED)) {
+                    changed();
                 }
             });
         }
