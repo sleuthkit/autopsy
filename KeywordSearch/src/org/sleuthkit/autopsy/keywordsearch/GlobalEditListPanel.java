@@ -75,7 +75,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
     }
 
     private void customizeComponents() {
-        addWordButton.setToolTipText((NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.addWordToolTip")));
+        newWordButton.setToolTipText((NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.addWordToolTip")));
         exportButton.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.exportToFile"));
         saveListButton.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.saveCurrentWIthNewNameToolTip"));
         deleteWordButton.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.removeSelectedMsg"));
@@ -142,7 +142,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         // items that need an unlocked list w/out ingest running
         boolean isListLocked = ((isListSelected == false) || (currentKeywordList.isLocked()));
         boolean canAddWord = isListSelected && !isIngestRunning && !isListLocked;
-        addWordButton.setEnabled(canAddWord);
+        newWordButton.setEnabled(canAddWord);
         keywordOptionsLabel.setEnabled(canAddWord);
         keywordOptionsSeparator.setEnabled(canAddWord);
         deleteListButton.setEnabled(canAddWord);
@@ -172,7 +172,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         jScrollPane1 = new javax.swing.JScrollPane();
         keywordTable = new javax.swing.JTable();
         addKeywordPanel = new javax.swing.JPanel();
-        addWordButton = new javax.swing.JButton();
+        newWordButton = new javax.swing.JButton();
         deleteWordButton = new javax.swing.JButton();
         ingestMessagesCheckbox = new javax.swing.JCheckBox();
         keywordsLabel = new javax.swing.JLabel();
@@ -197,11 +197,11 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         keywordTable.getTableHeader().setReorderingAllowed(false);
         jScrollPane1.setViewportView(keywordTable);
 
-        addWordButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/new16.png"))); // NOI18N
-        addWordButton.setText(org.openide.util.NbBundle.getMessage(GlobalEditListPanel.class, "KeywordSearchEditListPanel.addWordButton.text")); // NOI18N
-        addWordButton.addActionListener(new java.awt.event.ActionListener() {
+        newWordButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/new16.png"))); // NOI18N
+        newWordButton.setText(org.openide.util.NbBundle.getMessage(GlobalEditListPanel.class, "KeywordSearchEditListPanel.addWordButton.text")); // NOI18N
+        newWordButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                addWordButtonActionPerformed(evt);
+                newWordButtonActionPerformed(evt);
             }
         });
 
@@ -218,7 +218,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         addKeywordPanelLayout.setHorizontalGroup(
             addKeywordPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(addKeywordPanelLayout.createSequentialGroup()
-                .addComponent(addWordButton)
+                .addComponent(newWordButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(deleteWordButton)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -228,7 +228,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
             .addGroup(addKeywordPanelLayout.createSequentialGroup()
                 .addGap(0, 0, 0)
                 .addGroup(addKeywordPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(addWordButton)
+                    .addComponent(newWordButton)
                     .addComponent(deleteWordButton))
                 .addGap(72, 72, 72))
         );
@@ -350,7 +350,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void addWordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addWordButtonActionPerformed
+    private void newWordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newWordButtonActionPerformed
         JCheckBox chRegex = new JCheckBox(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.chRegex.text"));
         chRegex.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.kwReToolTip"));
         JTextField addWordField = new JTextField(25);
@@ -404,7 +404,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         } else {
             return;
         }
-    }//GEN-LAST:event_addWordButtonActionPerformed
+    }//GEN-LAST:event_newWordButtonActionPerformed
 
     private void deleteWordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteWordButtonActionPerformed
         if (KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.removeKwMsg"), NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.deleteWordButtonActionPerformed.delConfirmMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
@@ -480,7 +480,6 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel addKeywordPanel;
-    private javax.swing.JButton addWordButton;
     private javax.swing.JButton deleteListButton;
     private javax.swing.JButton deleteWordButton;
     private javax.swing.JButton exportButton;
@@ -493,6 +492,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
     private javax.swing.JPanel listEditorPanel;
     private javax.swing.JLabel listOptionsLabel;
     private javax.swing.JSeparator listOptionsSeparator;
+    private javax.swing.JButton newWordButton;
     private javax.swing.JButton saveListButton;
     // End of variables declaration//GEN-END:variables
 
@@ -663,6 +663,6 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
      * Set the keyboard focus to new keyword textbox.
      */
     void setFocusOnKeywordTextBox() {
-        addWordButton.requestFocus();
+        newWordButton.requestFocus();
     }
 }
