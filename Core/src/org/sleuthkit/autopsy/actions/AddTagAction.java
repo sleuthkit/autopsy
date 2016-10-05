@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,6 +39,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
 
+    private static final long serialVersionUID = 1L;
     private static final String NO_COMMENT = "";
 
     AddTagAction(String menuText) {
@@ -82,6 +83,8 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
     // to be reworked.
     private class TagMenu extends JMenu {
 
+        private static final long serialVersionUID = 1L;
+
         TagMenu() {
             super(getActionDisplayName());
 
@@ -89,10 +92,7 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
             TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
             Map<String, TagName> tagNamesMap = null;
             try {
-                tagNamesMap = new TreeMap<>();
-                tagNamesMap.putAll(tagsManager.getUserTagNamesMap());
-                tagNamesMap.putAll(tagsManager.getPredefinedTagNamesMap());
-                tagNamesMap.putAll(tagsManager.getTagNamesInUseMap());
+                tagNamesMap = new TreeMap<>(tagsManager.getDisplayNamesToTagNamesMap());
             } catch (TskCoreException ex) {
                 Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
             }
