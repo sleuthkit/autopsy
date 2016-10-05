@@ -50,18 +50,22 @@ import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.nodes.NodeNotFoundException;
+import org.openide.nodes.NodeOp;
 import org.openide.nodes.Sheet;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.CreditCards;
 import org.sleuthkit.autopsy.datamodel.DataModelActionsFactory;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
+import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -1256,6 +1260,33 @@ final public class Accounts implements AutopsyVisitableItem {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+
+            /* get paths for selected nodes to reselect after applying review
+             * status change */
+            List<String[]> selectedPaths = Utilities.actionsGlobalContext().lookupAll(Node.class).stream()
+                    .map(node -> {
+                        String[] createPath;
+                        /*
+                         * If the we are rejecting and not showing rejected
+                         * results, then the selected node, won't exist any
+                         * more, so we select the previous one in stead.
+                         */
+                        if (newStatus == BlackboardArtifact.ReviewStatus.REJECTED && showRejected == false) {
+                            List<Node> siblings = Arrays.asList(node.getParentNode().getChildren().getNodes());
+                            int indexOf = siblings.indexOf(node);
+                            //there is no previous for the first node, so instead we select the next one
+                            Node sibling = indexOf > 0
+                                    ? siblings.get(indexOf - 1)
+                                    : siblings.get(indexOf + 1);
+                            createPath = NodeOp.createPath(sibling, null);
+                        } else {
+                            createPath = NodeOp.createPath(node, null);
+                        }
+                        //for the reselect to work we need to strip off the first part of the path.
+                        return Arrays.copyOfRange(createPath, 1, createPath.length);
+                    }).collect(Collectors.toList());
+
+            //change status of selected artifacts
             final Collection<? extends BlackboardArtifact> artifacts = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class);
             artifacts.forEach(artifact -> {
                 try {
@@ -1264,7 +1295,23 @@ final public class Accounts implements AutopsyVisitableItem {
                     LOGGER.log(Level.SEVERE, "Error changing artifact review status.", ex); //NON-NLS
                 }
             });
+            //post event
             reviewStatusBus.post(new ReviewStatusChangeEvent(artifacts, newStatus));
+
+            final DataResultTopComponent directoryListing = DirectoryTreeTopComponent.findInstance().getDirectoryListing();
+            final Node rootNode = directoryListing.getRootNode();
+
+            //convert paths back to nodes
+            List<Node> toArray = new ArrayList<>();
+            selectedPaths.forEach(path -> {
+                try {
+                    toArray.add(NodeOp.findPath(rootNode, path));
+                } catch (NodeNotFoundException ex) {
+                    //just ingnore paths taht don't exist.  this is expected since we are rejecting
+                }
+            });
+            //select nodes
+            directoryListing.setSelectedNodes(toArray.toArray(new Node[toArray.size()]));
         }
     }
 
