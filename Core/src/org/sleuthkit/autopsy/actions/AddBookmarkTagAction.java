@@ -19,11 +19,14 @@
 package org.sleuthkit.autopsy.actions;
 
 import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
+import javax.swing.KeyStroke;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -32,10 +35,11 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
-public class BookmarkFileAction extends AbstractAction {
+public class AddBookmarkTagAction extends AbstractAction {
 
+    public static final KeyStroke BOOKMARK_SHORTCUT = KeyStroke.getKeyStroke(KeyEvent.VK_B, InputEvent.CTRL_MASK);
     private static final String NO_COMMENT = "";
-    private static final String BOOKMARK = NbBundle.getMessage(BookmarkFileAction.class, "BookmarkFileAction.bookmark.text");
+    private static final String BOOKMARK = NbBundle.getMessage(AddBookmarkTagAction.class, "AddBookmarkTagAction.bookmark.text");
 
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -43,8 +47,12 @@ public class BookmarkFileAction extends AbstractAction {
             Map<String, TagName> tagNamesMap = Case.getCurrentCase().getServices().getTagsManager().getDisplayNamesToTagNamesMap();
             TagName bookmarkTagName = tagNamesMap.get(BOOKMARK);
 
-            // if the selection is a BlackboardArtifact wrapped around an
-            // AbstractFile, tag the artifact by default
+            /*
+             * Both AddContentTagAction.addTag and
+             * AddBlackboardArtifactTagAction.addTag do their own lookup
+             * If the selection is a BlackboardArtifact wrapped around an
+             * AbstractFile, tag the artifact by default.
+             */
             final Collection<BlackboardArtifact> artifacts = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
             if (!artifacts.isEmpty()) {
                 AddBlackboardArtifactTagAction.getInstance().addTag(bookmarkTagName, NO_COMMENT);
@@ -53,7 +61,7 @@ public class BookmarkFileAction extends AbstractAction {
             }
 
         } catch (TskCoreException ex) {
-            Logger.getLogger(BookmarkFileAction.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
+            Logger.getLogger(AddBookmarkTagAction.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
         }
     }
 }

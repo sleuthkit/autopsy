@@ -18,15 +18,12 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import java.util.logging.Level;
 import javax.swing.JComponent;
-import javax.swing.KeyStroke;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.util.NbBundle;
@@ -34,7 +31,7 @@ import org.openide.windows.TopComponent;
 import org.openide.nodes.Node;
 import org.openide.windows.Mode;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.actions.BookmarkFileAction;
+import org.sleuthkit.autopsy.actions.AddBookmarkTagAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -109,8 +106,8 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
 
         setTitle(title); // set the title
         setName(title);
-        getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_B, InputEvent.CTRL_MASK), "addBookmarkTag"); //NON-NLS
-        getActionMap().put("addBookmarkTag", new BookmarkFileAction()); //NON-NLS
+        getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(AddBookmarkTagAction.BOOKMARK_SHORTCUT, "addBookmarkTag"); //NON-NLS
+        getActionMap().put("addBookmarkTag", new AddBookmarkTagAction()); //NON-NLS
 
         putClientProperty(TopComponent.PROP_CLOSING_DISABLED, isMain); // set option to close compoment in GUI
         putClientProperty(TopComponent.PROP_MAXIMIZATION_DISABLED, true);

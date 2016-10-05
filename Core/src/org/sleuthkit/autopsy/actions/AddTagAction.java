@@ -103,10 +103,16 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
 
             // Each tag name in the current set of tags gets its own menu item in
             // the "Quick Tags" sub-menu. Selecting one of these menu items adds
-            // a tag with the associated tag name. 
+            // a tag with the associated tag name.
             if (null != tagNamesMap && !tagNamesMap.isEmpty()) {
                 for (Map.Entry<String, TagName> entry : tagNamesMap.entrySet()) {
-                    JMenuItem tagNameItem = new JMenuItem(entry.getKey());
+                    String tagDisplayName = entry.getKey();
+                    JMenuItem tagNameItem = new JMenuItem(tagDisplayName);
+                    // for the bookmark tag name only, added shortcut label
+                    if (tagDisplayName.equals(NbBundle.getMessage(AddTagAction.class, "AddBookmarkTagAction.bookmark.text"))) {
+                        tagNameItem.setAccelerator(AddBookmarkTagAction.BOOKMARK_SHORTCUT);
+                    }
+
                     tagNameItem.addActionListener((ActionEvent e) -> {
                         getAndAddTag(entry.getKey(), entry.getValue(), NO_COMMENT);
                     });
@@ -144,7 +150,6 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
                 }
             });
             add(tagAndCommentItem);
-
         }
 
         /**
