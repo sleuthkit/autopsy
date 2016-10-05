@@ -705,8 +705,11 @@ final public class Accounts implements AutopsyVisitableItem {
         @Override
         public int hashCode() {
             int hash = 5;
-            hash = 89 * hash + (int) (this.objID ^ (this.objID >>> 32));
-            hash = 89 * hash + Objects.hashCode(this.solrDocumentId);
+            hash = 79 * hash + (int) (this.objID ^ (this.objID >>> 32));
+            hash = 79 * hash + Objects.hashCode(this.solrDocumentId);
+            hash = 79 * hash + Objects.hashCode(this.artifactIDS);
+            hash = 79 * hash + (int) (this.hits ^ (this.hits >>> 32));
+            hash = 79 * hash + Objects.hashCode(this.statuses);
             return hash;
         }
 
@@ -725,7 +728,16 @@ final public class Accounts implements AutopsyVisitableItem {
             if (this.objID != other.objID) {
                 return false;
             }
+            if (this.hits != other.hits) {
+                return false;
+            }
             if (!Objects.equals(this.solrDocumentId, other.solrDocumentId)) {
+                return false;
+            }
+            if (!Objects.equals(this.artifactIDS, other.artifactIDS)) {
+                return false;
+            }
+            if (!Objects.equals(this.statuses, other.statuses)) {
                 return false;
             }
             return true;
@@ -891,6 +903,7 @@ final public class Accounts implements AutopsyVisitableItem {
             @Override
             public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
                 updateKeys();
+                event.artifacts.stream().map(BlackboardArtifact::getArtifactID).forEach(this::refreshKey);
             }
 
             /**
@@ -1243,15 +1256,15 @@ final public class Accounts implements AutopsyVisitableItem {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            final Collection<? extends BlackboardArtifact> lookupAll = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class);
-            lookupAll.forEach(artifact -> {
+            final Collection<? extends BlackboardArtifact> artifacts = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class);
+            artifacts.forEach(artifact -> {
                 try {
                     skCase.setReviewStatus(artifact, newStatus);
                 } catch (TskCoreException ex) {
                     LOGGER.log(Level.SEVERE, "Error changing artifact review status.", ex); //NON-NLS
                 }
             });
-            reviewStatusBus.post(new ReviewStatusChangeEvent(lookupAll, newStatus));
+            reviewStatusBus.post(new ReviewStatusChangeEvent(artifacts, newStatus));
         }
     }
 
