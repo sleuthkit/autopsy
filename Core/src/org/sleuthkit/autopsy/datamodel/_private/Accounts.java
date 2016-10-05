@@ -47,13 +47,11 @@ import javax.annotation.concurrent.Immutable;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.apache.commons.lang3.StringUtils;
-import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.NodeNotFoundException;
 import org.openide.nodes.NodeOp;
 import org.openide.nodes.Sheet;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.openide.util.lookup.Lookups;
@@ -79,7 +77,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * AutopsyVisitableItem for the Accounts section of the tree. All nodes,
- * factories, and data objects related to accounts are inner classes.
+ * factories, and custom key class related to accounts are inner classes.
  */
 final public class Accounts implements AutopsyVisitableItem {
 
@@ -139,31 +137,31 @@ final public class Accounts implements AutopsyVisitableItem {
     }
 
     /**
-     * Base class for factories that are also observers.
+     * Base class for children that are also observers of the reviewStatusBus.
+     * It
      *
      * @param <X> The type of keys used by this factory.
      */
     private abstract class ObservingChildren<X> extends Children.Keys<X> {
 
-        @Override
-        protected Node[] createNodes(X key) {
-            return new Node[]{createNodeForKey(key)};
-        }
-
-        abstract protected Node createNodeForKey(X key);
-
         /**
-         *
+         * Create of keys used by this Children object to represent the child
+         * nodes.
          */
         abstract protected Collection<X> createKeys();
 
         /**
-         * Update the keys for this Children
+         * Refresh the keys for this Children
          */
-        void updateKeys() {
+        void refreshKeys() {
             setKeys(createKeys());
         }
 
+        /**
+         * Handle a ReviewStatusChangeEvent
+         *
+         * @param event the ReviewStatusChangeEvent to handle.
+         */
         @Subscribe
         abstract void handleReviewStatusChange(ReviewStatusChangeEvent event);
 
@@ -176,7 +174,7 @@ final public class Accounts implements AutopsyVisitableItem {
         @Override
         protected void addNotify() {
             super.addNotify();
-            updateKeys();
+            refreshKeys();
             reviewStatusBus.register(ObservingChildren.this);
         }
     }
@@ -188,8 +186,7 @@ final public class Accounts implements AutopsyVisitableItem {
     final public class AccountsRootNode extends DisplayableItemNode {
 
         /**
-         * Creates child nodes for each account type (currently hard coded to
-         * make one for Credit Cards)
+         * Creates child nodes for each account type in the db.
          */
         final private class AccountTypeFactory extends ObservingChildren<String> {
 
@@ -220,7 +217,7 @@ final public class Accounts implements AutopsyVisitableItem {
                             ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
                             if (null != eventData
                                     && eventData.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
-                                updateKeys();
+                                refreshKeys();
                             }
                         } catch (IllegalStateException notUsed) {
                             // Case is closed, do nothing.
@@ -235,7 +232,7 @@ final public class Accounts implements AutopsyVisitableItem {
                          */
                         try {
                             Case.getCurrentCase();
-                            updateKeys();
+                            refreshKeys();
                         } catch (IllegalStateException notUsed) {
                             // Case is closed, do nothing.
                         }
@@ -252,12 +249,9 @@ final public class Accounts implements AutopsyVisitableItem {
             @Subscribe
             @Override
             public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
-                updateKeys();
+                refreshKeys();
             }
 
-            /**
-             *
-             */
             @Override
             protected List<String> createKeys() {
                 List<String> list = new ArrayList<>();
@@ -271,25 +265,25 @@ final public class Accounts implements AutopsyVisitableItem {
                         list.add(accountType);
                     }
                 } catch (TskCoreException | SQLException ex) {
-                    Exceptions.printStackTrace(ex);
+                    LOGGER.log(Level.SEVERE, "Error querying for account_types", ex);
                 }
                 return list;
             }
 
             @Override
-            protected Node createNodeForKey(String key) {
+            protected Node[] createNodes(String key) {
                 try {
                     Account.Type accountType = Account.Type.valueOf(key);
                     switch (accountType) {
                         case CREDIT_CARD:
-                            return new CreditCardNumberAccountTypeNode();
+                            return new Node[]{new CreditCardNumberAccountTypeNode()};
                         default:
-                            return new DefaultAccountTypeNode(key);
+                            return new Node[]{new DefaultAccountTypeNode(key)};
                     }
                 } catch (IllegalArgumentException ex) {
-                    LOGGER.log(Level.WARNING, "Unknown account type: " + key);
+                    LOGGER.log(Level.WARNING, "Unknown account type: {0}", key);
                     //Flesh out what happens with other account types here.
-                    return new DefaultAccountTypeNode(key);
+                    return new Node[]{new DefaultAccountTypeNode(key)};
                 }
             }
 
@@ -307,8 +301,9 @@ final public class Accounts implements AutopsyVisitableItem {
                 IngestManager.getInstance().addIngestModuleEventListener(pcl);
                 Case.addPropertyChangeListener(pcl);
                 super.addNotify();
-                updateKeys();
+                refreshKeys();
             }
+
         }
 
         public AccountsRootNode() {
@@ -330,19 +325,22 @@ final public class Accounts implements AutopsyVisitableItem {
         }
     }
 
+    /**
+     * Default Node class for unknown account types and account types that have
+     * no special behavior.
+     */
     final public class DefaultAccountTypeNode extends DisplayableItemNode {
 
-        final private class DefaultAccountFactory extends ChildFactory.Detachable<Long> {
+        private final String accountTypeName;
 
-            private final String accountTypeName;
+        final private class DefaultAccountFactory extends ObservingChildren<Long> {
 
-            private DefaultAccountFactory(String accountTypeName) {
-                this.accountTypeName = accountTypeName;
+            private DefaultAccountFactory() {
             }
 
             @Override
-            protected boolean createKeys(List<Long> list) {
-
+            protected Collection<Long> createKeys() {
+                List<Long> list = new ArrayList<>();
                 String query
                         = "SELECT blackboard_artifacts.artifact_id " //NON-NLS
                         + " FROM blackboard_artifacts " //NON-NLS
@@ -358,25 +356,30 @@ final public class Accounts implements AutopsyVisitableItem {
                     }
                 } catch (TskCoreException | SQLException ex) {
                     LOGGER.log(Level.SEVERE, "Error querying for account artifacts.", ex); //NON-NLS
-                    return false;
                 }
-                return true;
+                return list;
             }
 
             @Override
-            protected Node createNodeForKey(Long t) {
+            protected Node[] createNodes(Long t) {
                 try {
-                    return new BlackboardArtifactNode(skCase.getBlackboardArtifact(t));
+                    return new Node[]{new BlackboardArtifactNode(skCase.getBlackboardArtifact(t))};
                 } catch (TskCoreException ex) {
                     LOGGER.log(Level.SEVERE, "Error get black board artifact with id " + t, ex);
-                    return null;
+                    return new Node[0];
                 }
+            }
+
+            @Override
+            void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+                refreshKeys();
             }
         }
 
         private DefaultAccountTypeNode(String accountTypeName) {
             super(Children.LEAF);
-            setChildren(Children.create(new DefaultAccountFactory(accountTypeName), true));
+            this.accountTypeName = accountTypeName;
+            setChildren(Children.createLazy(DefaultAccountFactory::new));
             setName(accountTypeName);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/credit-cards.png");   //NON-NLS
         }
@@ -395,14 +398,13 @@ final public class Accounts implements AutopsyVisitableItem {
     /**
      * Enum for the children under the credit card AccountTypeNode.
      */
-    enum CreditCardViewMode {
+    private enum CreditCardViewMode {
         BY_FILE,
         BY_BIN;
     }
 
     /**
-     * Node for the Credit Card account type.
-     *
+     * Node for the Credit Card account type. *
      */
     final public class CreditCardNumberAccountTypeNode extends DisplayableItemNode {
 
@@ -415,7 +417,7 @@ final public class Accounts implements AutopsyVisitableItem {
             @Subscribe
             @Override
             public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
-                updateKeys();
+                refreshKeys();
             }
 
             /**
@@ -428,14 +430,14 @@ final public class Accounts implements AutopsyVisitableItem {
             }
 
             @Override
-            protected Node createNodeForKey(CreditCardViewMode key) {
+            protected Node[] createNodes(CreditCardViewMode key) {
                 switch (key) {
                     case BY_BIN:
-                        return new ByBINNode();
+                        return new Node[]{new ByBINNode()};
                     case BY_FILE:
-                        return new ByFileNode();
+                        return new Node[]{new ByFileNode()};
                     default:
-                        return null;
+                        return new Node[0];
                 }
             }
         }
@@ -472,12 +474,9 @@ final public class Accounts implements AutopsyVisitableItem {
             @Subscribe
             @Override
             public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
-                updateKeys();
+                refreshKeys();
             }
 
-            /**
-             *
-             */
             @Override
             protected List<FileWithCCN> createKeys() {
                 List<FileWithCCN> list = new ArrayList<>();
@@ -515,19 +514,19 @@ final public class Accounts implements AutopsyVisitableItem {
             }
 
             @Override
-            protected Node createNodeForKey(FileWithCCN key) {
+            protected Node[] createNodes(FileWithCCN key) {
                 //add all account artifacts for the file and the file itself to the lookup
                 try {
                     List<Object> lookupContents = new ArrayList<>();
-                    for (long artId : key.artifactIDS) {
+                    for (long artId : key.artifactIDs) {
                         lookupContents.add(skCase.getBlackboardArtifact(artId));
                     }
                     AbstractFile abstractFileById = skCase.getAbstractFileById(key.getObjID());
                     lookupContents.add(abstractFileById);
-                    return new FileWithCCNNode(key, abstractFileById, lookupContents.toArray());
+                    return new Node[]{new FileWithCCNNode(key, abstractFileById, lookupContents.toArray())};
                 } catch (TskCoreException ex) {
                     LOGGER.log(Level.SEVERE, "Error getting content for file with ccn hits.", ex); //NON-NLS
-                    return null;
+                    return new Node[0];
                 }
             }
         }
@@ -597,17 +596,14 @@ final public class Accounts implements AutopsyVisitableItem {
             @Subscribe
             @Override
             public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
-                updateKeys();
+                refreshKeys();
             }
 
-            /**
-             *
-             */
             @Override
             protected List<BinResult> createKeys() {
                 List<BinResult> list = new ArrayList<>();
 
-                RangeMap<Integer, BinResult> ranges = TreeRangeMap.create();
+                RangeMap<Integer, BinResult> binRanges = TreeRangeMap.create();
 
                 String query
                         = "SELECT SUBSTR(blackboard_attributes.value_text,1,8) AS BIN, " //NON-NLS
@@ -621,25 +617,26 @@ final public class Accounts implements AutopsyVisitableItem {
                         + " ORDER BY BIN "; //NON-NLS
                 try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query)) {
                     ResultSet resultSet = results.getResultSet();
+                    //sort all te individual bins in to the ranges
                     while (resultSet.next()) {
                         final Integer bin = Integer.valueOf(resultSet.getString("BIN"));
                         long count = resultSet.getLong("count");
 
                         BINRange binRange = (BINRange) CreditCards.getBINInfo(bin);
-                        BinResult previousResult = ranges.get(bin);
+                        BinResult previousResult = binRanges.get(bin);
 
                         if (previousResult != null) {
-                            ranges.remove(Range.closed(previousResult.getBINStart(), previousResult.getBINEnd()));
+                            binRanges.remove(Range.closed(previousResult.getBINStart(), previousResult.getBINEnd()));
                             count += previousResult.getCount();
                         }
 
                         if (binRange != null) {
-                            ranges.put(Range.closed(binRange.getBINstart(), binRange.getBINend()), new BinResult(count, binRange));
+                            binRanges.put(Range.closed(binRange.getBINstart(), binRange.getBINend()), new BinResult(count, binRange));
                         } else {
-                            ranges.put(Range.closed(bin, bin), new BinResult(count, bin, bin));
+                            binRanges.put(Range.closed(bin, bin), new BinResult(count, bin, bin));
                         }
                     }
-                    ranges.asMapOfRanges().values().forEach(list::add);
+                    binRanges.asMapOfRanges().values().forEach(list::add);
                 } catch (TskCoreException | SQLException ex) {
                     LOGGER.log(Level.SEVERE, "Error querying for BINs.", ex); //NON-NLS
 
@@ -648,8 +645,8 @@ final public class Accounts implements AutopsyVisitableItem {
             }
 
             @Override
-            protected Node createNodeForKey(BinResult key) {
-                return new BINNode(key);
+            protected Node[] createNodes(BinResult key) {
+                return new Node[]{new BINNode(key)};
             }
         }
 
@@ -710,8 +707,8 @@ final public class Accounts implements AutopsyVisitableItem {
         public int hashCode() {
             int hash = 5;
             hash = 79 * hash + (int) (this.objID ^ (this.objID >>> 32));
-            hash = 79 * hash + Objects.hashCode(this.solrDocumentId);
-            hash = 79 * hash + Objects.hashCode(this.artifactIDS);
+            hash = 79 * hash + Objects.hashCode(this.keywordSearchDocID);
+            hash = 79 * hash + Objects.hashCode(this.artifactIDs);
             hash = 79 * hash + (int) (this.hits ^ (this.hits >>> 32));
             hash = 79 * hash + Objects.hashCode(this.statuses);
             return hash;
@@ -735,10 +732,10 @@ final public class Accounts implements AutopsyVisitableItem {
             if (this.hits != other.hits) {
                 return false;
             }
-            if (!Objects.equals(this.solrDocumentId, other.solrDocumentId)) {
+            if (!Objects.equals(this.keywordSearchDocID, other.keywordSearchDocID)) {
                 return false;
             }
-            if (!Objects.equals(this.artifactIDS, other.artifactIDS)) {
+            if (!Objects.equals(this.artifactIDs, other.artifactIDs)) {
                 return false;
             }
             if (!Objects.equals(this.statuses, other.statuses)) {
@@ -748,35 +745,61 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         private final long objID;
-        private final String solrDocumentId;
-        private final List<Long> artifactIDS;
+        private final String keywordSearchDocID;
+        private final List<Long> artifactIDs;
         private final long hits;
         private final Set<BlackboardArtifact.ReviewStatus> statuses;
 
-        private FileWithCCN(long objID, String solrDocID, List<Long> artifactIDS, long hits, Set<BlackboardArtifact.ReviewStatus> statuses) {
+        private FileWithCCN(long objID, String solrDocID, List<Long> artifactIDs, long hits, Set<BlackboardArtifact.ReviewStatus> statuses) {
             this.objID = objID;
-            this.solrDocumentId = solrDocID;
-            this.artifactIDS = artifactIDS;
+            this.keywordSearchDocID = solrDocID;
+            this.artifactIDs = artifactIDs;
             this.hits = hits;
             this.statuses = statuses;
         }
 
+        /**
+         * Get the object ID of the file.
+         *
+         * @return the object ID of the file.
+         */
         public long getObjID() {
             return objID;
         }
 
-        public String getSolrDocmentID() {
-            return solrDocumentId;
+        /**
+         * Get the keyword search docuement id. This is used for unnalocated
+         * files to limit results to one chunk/page
+         *
+         * @return the keyword search document id.
+         */
+        public String getkeywordSearchDocID() {
+            return keywordSearchDocID;
         }
 
-        public List<Long> getArtifactIDS() {
-            return artifactIDS;
+        /**
+         * Get the artifact ids of the account artifacts from this file.
+         *
+         * @return the artifact ids of the account artifacts from this file.
+         */
+        public List<Long> getArtifactIDs() {
+            return artifactIDs;
         }
 
+        /**
+         * Get the number of account artifacts from this file.
+         *
+         * @return the number of account artifacts from this file.
+         */
         public long getHits() {
             return hits;
         }
 
+        /**
+         * Get the status(s) of the account artifacts from this file.
+         *
+         * @return the status(s) of the account artifacts from this file.
+         */
         public Set<BlackboardArtifact.ReviewStatus> getStatuses() {
             return statuses;
         }
@@ -829,9 +852,9 @@ final public class Accounts implements AutopsyVisitableItem {
         private FileWithCCNNode(FileWithCCN key, Content content, Object[] lookupContents) {
             super(Children.LEAF, Lookups.fixed(lookupContents));
             this.fileKey = key;
-            this.fileName = (key.getSolrDocmentID() == null)
+            this.fileName = (key.getkeywordSearchDocID() == null)
                     ? content.getName()
-                    : Bundle.Accounts_FileWithCCNNode_unallocatedSpaceFile_displayName(content.getName(), StringUtils.substringAfter(key.getSolrDocmentID(), "_")); //NON-NLS
+                    : Bundle.Accounts_FileWithCCNNode_unallocatedSpaceFile_displayName(content.getName(), StringUtils.substringAfter(key.getkeywordSearchDocID(), "_")); //NON-NLS
             setName(fileName + key.getObjID());
             setDisplayName(fileName);
         }
@@ -899,14 +922,15 @@ final public class Accounts implements AutopsyVisitableItem {
     final public class BINNode extends DisplayableItemNode {
 
         /**
-         * Creates the nodes for the accounts of a given type
+         * Creates the nodes for the credit card numbers
          */
         final private class CreditCardNumberFactory extends ObservingChildren<Long> {
 
             @Subscribe
             @Override
             public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
-                updateKeys();
+                refreshKeys();
+                //make sure to refresh  the nodes for artifacts that changed statuses.
                 event.artifacts.stream().map(BlackboardArtifact::getArtifactID).forEach(this::refreshKey);
             }
 
@@ -939,17 +963,17 @@ final public class Accounts implements AutopsyVisitableItem {
             }
 
             @Override
-            protected Node createNodeForKey(Long artifactID) {
+            protected Node[] createNodes(Long artifactID) {
                 if (skCase == null) {
-                    return null;
+                    return new Node[0];
                 }
 
                 try {
                     BlackboardArtifact art = skCase.getBlackboardArtifact(artifactID);
-                    return new AccountArtifactNode(art);
+                    return new Node[]{new AccountArtifactNode(art)};
                 } catch (TskCoreException ex) {
                     LOGGER.log(Level.WARNING, "Error creating BlackboardArtifactNode for artifact with ID " + artifactID, ex);   //NON-NLS
-                    return null;
+                    return new Node[0];
                 }
             }
         }
