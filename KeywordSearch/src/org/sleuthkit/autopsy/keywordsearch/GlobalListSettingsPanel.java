@@ -160,6 +160,7 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
 
         mainSplitPane.setBorder(null);
         mainSplitPane.setDividerLocation(275);
+        mainSplitPane.setDividerSize(1);
 
         javax.swing.GroupLayout leftPanelLayout = new javax.swing.GroupLayout(leftPanel);
         leftPanel.setLayout(leftPanelLayout);
@@ -180,7 +181,7 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
         rightPanel.setLayout(rightPanelLayout);
         rightPanelLayout.setHorizontalGroup(
             rightPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 393, Short.MAX_VALUE)
+            .addGap(0, 397, Short.MAX_VALUE)
         );
         rightPanelLayout.setVerticalGroup(
             rightPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
