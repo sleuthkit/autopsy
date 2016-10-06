@@ -50,7 +50,7 @@ class AddRulePanel extends javax.swing.JPanel {
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fc.setMultiSelectionEnabled(false);
         fc.setFileFilter(exeFilter);
-        addListener();
+        addListeners();
     }
 
     /**
@@ -63,13 +63,16 @@ class AddRulePanel extends javax.swing.JPanel {
         this();
         nameTextField.setText(rule.getName());
         exePathTextField.setText(rule.getExePath());
-        addListener();
+        if (rule.getRuleType() == ExternalViewerRule.RuleType.EXT) {
+            extRadioButton.setSelected(true);
+        }
+        addListeners();
     }
 
     /**
      * Allows listeners for when the name or exePath text fields are modified.
      */
-    private void addListener() {
+    private void addListeners() {
         nameTextField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void changedUpdate(DocumentEvent e) {
@@ -107,12 +110,14 @@ class AddRulePanel extends javax.swing.JPanel {
     }
 
     /**
-     * Check if the text fields are empty or not.
+     * Check if the text fields are filled and if a radio button is selected.
      *
-     * @return true if neither of the text fields are empty
+     * @return true if neither of the text fields are empty and a radio button
+     *         is selected
      */
     boolean hasFields() {
-        return !exePathTextField.getText().isEmpty() && !nameTextField.getText().isEmpty();
+        return !exePathTextField.getText().isEmpty() && !nameTextField.getText().isEmpty() &&
+                (mimeRadioButton.isSelected() || extRadioButton.isSelected());
     }
 
     /**
@@ -124,22 +129,6 @@ class AddRulePanel extends javax.swing.JPanel {
      * @return ExternalViewerRule or null
      */
     ExternalViewerRule getRule() {
-        String name = nameTextField.getText();
-        FileTypeDetector detector;
-        try {
-            detector = new FileTypeDetector();
-        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            logger.log(Level.WARNING, "Couldn't create file type detector for file ext mismatch settings.", ex);
-            return null;
-        }
-        // Regex for MIME: ^[-\\w]+/[-\\w]+$
-        if (name.isEmpty() || (!detector.isDetectable(name) && !name.matches("^\\.\\w+$"))) {
-            JOptionPane.showMessageDialog(null,
-                    NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.JOptionPane.invalidExtOrMIME.message"),
-                    NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.JOptionPane.invalidExtOrMIME.title"),
-                    JOptionPane.ERROR_MESSAGE);
-            return null;
-        }
         String exePath = exePathTextField.getText();
         if (exePath.isEmpty()) {
             JOptionPane.showMessageDialog(null,
@@ -148,7 +137,41 @@ class AddRulePanel extends javax.swing.JPanel {
                     JOptionPane.ERROR_MESSAGE);
             return null;
         }
-        return new ExternalViewerRule(name, exePath);
+
+        String name = nameTextField.getText();
+        String buttonActionCommand = buttonGroup.getSelection().getActionCommand();
+        switch (buttonActionCommand) {
+            case "mime": //NON-NLS
+                FileTypeDetector detector;
+                try {
+                    detector = new FileTypeDetector();
+                } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+                    logger.log(Level.WARNING, "Couldn't create file type detector for file ext mismatch settings.", ex);
+                    return null;
+                }
+                if (name.isEmpty() || !detector.isDetectable(name)) {
+                    JOptionPane.showMessageDialog(null,
+                            NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.JOptionPane.invalidMime.message"),
+                            NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.JOptionPane.invalidMime.title"),
+                            JOptionPane.ERROR_MESSAGE);
+                    return null;
+                }
+                return new ExternalViewerRule(name, exePath, ExternalViewerRule.RuleType.MIME);
+            case "ext": //NON-NLS
+                if (name.isEmpty() || !name.matches("^\\.?\\w+$")) {
+                    JOptionPane.showMessageDialog(null,
+                            NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.JOptionPane.invalidExt.message"),
+                            NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.JOptionPane.invalidExt.title"),
+                            JOptionPane.ERROR_MESSAGE);
+                    return null;
+                }
+                if (name.charAt(0) != '.') {
+                    name = "." + name;
+                }
+                return new ExternalViewerRule(name.toLowerCase(), exePath, ExternalViewerRule.RuleType.EXT);
+            default:
+                return null;
+        }
     }
 
     /**
@@ -159,9 +182,13 @@ class AddRulePanel extends javax.swing.JPanel {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        bindingGroup = new org.jdesktop.beansbinding.BindingGroup();
 
+        buttonGroup = new javax.swing.ButtonGroup();
         nameLabel = new javax.swing.JLabel();
         nameTextField = new javax.swing.JTextField();
+        mimeRadioButton = new javax.swing.JRadioButton();
+        extRadioButton = new javax.swing.JRadioButton();
         exePathLabel = new javax.swing.JLabel();
         exePathTextField = new javax.swing.JTextField();
         browseButton = new javax.swing.JButton();
@@ -169,6 +196,19 @@ class AddRulePanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(nameLabel, org.openide.util.NbBundle.getMessage(AddRulePanel.class, "AddRulePanel.nameLabel.text")); // NOI18N
 
         nameTextField.setText(org.openide.util.NbBundle.getMessage(AddRulePanel.class, "AddRulePanel.nameTextField.text")); // NOI18N
+
+        buttonGroup.add(mimeRadioButton);
+        mimeRadioButton.setSelected(true);
+        org.openide.awt.Mnemonics.setLocalizedText(mimeRadioButton, org.openide.util.NbBundle.getMessage(AddRulePanel.class, "AddRulePanel.mimeRadioButton.text")); // NOI18N
+
+        org.jdesktop.beansbinding.Binding binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, mimeRadioButton, org.jdesktop.beansbinding.ELProperty.create("mime"), mimeRadioButton, org.jdesktop.beansbinding.BeanProperty.create("actionCommand"));
+        bindingGroup.addBinding(binding);
+
+        buttonGroup.add(extRadioButton);
+        org.openide.awt.Mnemonics.setLocalizedText(extRadioButton, org.openide.util.NbBundle.getMessage(AddRulePanel.class, "AddRulePanel.extRadioButton.text")); // NOI18N
+
+        binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, extRadioButton, org.jdesktop.beansbinding.ELProperty.create("ext"), extRadioButton, org.jdesktop.beansbinding.BeanProperty.create("actionCommand"));
+        bindingGroup.addBinding(binding);
 
         org.openide.awt.Mnemonics.setLocalizedText(exePathLabel, org.openide.util.NbBundle.getMessage(AddRulePanel.class, "AddRulePanel.exePathLabel.text")); // NOI18N
 
@@ -191,22 +231,29 @@ class AddRulePanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(nameTextField)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(nameLabel)
-                            .addComponent(exePathLabel))
-                        .addGap(0, 80, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
                         .addComponent(exePathTextField)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(browseButton)))
+                        .addComponent(browseButton))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(exePathLabel)
+                        .addGap(0, 80, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(nameLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(mimeRadioButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(extRadioButton)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(nameLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(nameLabel)
+                    .addComponent(mimeRadioButton)
+                    .addComponent(extRadioButton))
+                .addGap(2, 2, 2)
                 .addComponent(nameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(exePathLabel)
@@ -216,6 +263,8 @@ class AddRulePanel extends javax.swing.JPanel {
                     .addComponent(browseButton))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
+
+        bindingGroup.bind();
     }// </editor-fold>//GEN-END:initComponents
 
     private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
@@ -229,9 +278,13 @@ class AddRulePanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton browseButton;
+    private javax.swing.ButtonGroup buttonGroup;
     private javax.swing.JLabel exePathLabel;
     private javax.swing.JTextField exePathTextField;
+    private javax.swing.JRadioButton extRadioButton;
+    private javax.swing.JRadioButton mimeRadioButton;
     private javax.swing.JLabel nameLabel;
     private javax.swing.JTextField nameTextField;
+    private org.jdesktop.beansbinding.BindingGroup bindingGroup;
     // End of variables declaration//GEN-END:variables
 }

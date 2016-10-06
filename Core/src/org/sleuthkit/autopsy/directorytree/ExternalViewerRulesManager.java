@@ -59,7 +59,8 @@ public class ExternalViewerRulesManager {
             List<String> ruleTuples = Arrays.asList(setting.split("\\|"));
             for (String ruleTuple : ruleTuples) {
                 String[] ruleParts = ruleTuple.split(">");
-                userRules.add(new ExternalViewerRule(ruleParts[0], ruleParts[1]));
+                userRules.add(new ExternalViewerRule(ruleParts[0], ruleParts[1],
+                        ExternalViewerRule.RuleType.valueOf(ruleParts[2])));
             }
         }
     }
@@ -77,7 +78,8 @@ public class ExternalViewerRulesManager {
                 setting.append("|");
             }
             setting.append(rule.getName()).append(">");
-            setting.append(rule.getExePath());
+            setting.append(rule.getExePath()).append(">");
+            setting.append(rule.getRuleType().name());
         }
         ModuleSettings.setConfigSetting(RULES_SETTINGS_NAME, RULES_SETTINGS_KEY, setting.toString());
         userRules = new ArrayList<>(rules);

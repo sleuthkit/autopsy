@@ -36,7 +36,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  */
 final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel implements OptionsPanel {
 
-    private static final Logger logger = Logger.getLogger(ExternalViewerGlobalSettingsPanel.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(ExternalViewerGlobalSettingsPanel.class.getName());
     private DefaultListModel<ExternalViewerRule> rulesListModel;
     private java.util.List<ExternalViewerRule> rules;
 
@@ -147,7 +147,6 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
 
         deleteRuleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/delete16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(deleteRuleButton, org.openide.util.NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.deleteRuleButton.text")); // NOI18N
-        deleteRuleButton.setToolTipText(org.openide.util.NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.deleteRuleButton.toolTipText")); // NOI18N
         deleteRuleButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 deleteRuleButtonActionPerformed(evt);
@@ -304,6 +303,13 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
     private void populateExePath() {
         ExternalViewerRule rule = rulesList.getSelectedValue();
         if (rule != null) {
+            if (rule.getRuleType() == ExternalViewerRule.RuleType.MIME) {
+                exePathLabel.setText(NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class,
+                        "ExternalViewerGlobalSettingsPanel.exePathLabel.MIME.text"));
+            } else {
+                exePathLabel.setText(NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class,
+                        "ExternalViewerGlobalSettingsPanel.exePathLabel.EXT.text"));
+            }
             exePathNameLabel.setText(rule.getExePath());
         }
         enableButtons();
@@ -314,7 +320,10 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
      */
     private void clearExePath() {
         rulesList.clearSelection();
-        exePathNameLabel.setText("");
+        exePathLabel.setText(NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class,
+                "ExternalViewerGlobalSettingsPanel.exePathLabel.text"));
+        exePathNameLabel.setText(NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class,
+                "ExternalViewerGlobalSettingsPanel.exePathLabel.empty.text"));
         enableButtons();
     }
 

@@ -28,16 +28,23 @@ class ExternalViewerRule implements Comparable<ExternalViewerRule> {
 
     private final String name;
     private final String exePath;
+    private final RuleType ruleType;
+
+    enum RuleType {
+        MIME, EXT
+    }
 
     /**
      * Creates a new ExternalViewerRule
      *
-     * @param name MIME type or extension
+     * @param name    MIME type or extension
      * @param exePath Absolute path of the exe file
+     * @param type    RuleType of the rule, either MIME or EXT
      */
-    ExternalViewerRule(String name, String exePath) {
+    ExternalViewerRule(String name, String exePath, RuleType type) {
         this.name = name;
         this.exePath = exePath;
+        this.ruleType = type;
     }
 
     String getName() {
@@ -46,6 +53,10 @@ class ExternalViewerRule implements Comparable<ExternalViewerRule> {
 
     String getExePath() {
         return exePath;
+    }
+
+    RuleType getRuleType() {
+        return ruleType;
     }
 
     @Override
