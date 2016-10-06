@@ -74,7 +74,9 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             ss.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
         }
-        // @@@ add more properties here...
+
+        // add tags property to the sheet
+        AbstractAbstractFileNode.addTagProperty(ss, content);
 
         return s;
     }

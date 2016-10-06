@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.FontMetrics;
@@ -41,6 +42,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.TableColumnModelEvent;
 import javax.swing.event.TableColumnModelListener;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.openide.explorer.ExplorerManager;
@@ -55,6 +57,7 @@ import org.openide.nodes.NodeListener;
 import org.openide.nodes.NodeMemberEvent;
 import org.openide.nodes.NodeReorderEvent;
 import org.openide.nodes.Sheet;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
@@ -413,7 +416,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
                 for (int column = 0; column < ov.getOutline().getModel().getColumnCount(); column++) {
                     int firstColumnPadding = (column == 0) ? 32 : 0;
-                    int columnWidthLimit = (column == 0) ? 250 : 350;
+                    int columnWidthLimit = (column == 0) ? 250 : 300;
                     int valuesWidth = 0;
 
                     // find the maximum width needed to fit the values for the first 30 rows, at most
@@ -439,9 +442,44 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                     ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
                 }
             }
+            // Node[] childrenNodes = currentRoot.getChildren().getNodes();
+            final TableCellRenderer DEFAULT_RENDERER = ov.getOutline().getDefaultRenderer(Object.class);
+            final Color TAGGED_COLOR = new Color(230, 235, 240);
+            final Color SELECTED_COLOR = new Color(51, 153, 255);
+            
+            
+            class CustomRenderer extends DefaultTableCellRenderer {
+                private static final long serialVersionUID = 1L;
+                @Override
+                public Component getTableCellRendererComponent(JTable table,
+                        Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+                    Component component = DEFAULT_RENDERER.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
+                    
+                    if (col != 0) {
+                        try {
+                            int tag_col = ov.getOutline().getColumnModel().getColumnIndex("Tags");
+                            Property cellProp = (Property)(table.getModel().getValueAt(row, tag_col));
+                            if (cellProp != null) {
+                                String valueString = cellProp.getValue().toString();//((Property) value).getValue().toString();
+                                if (!valueString.equals("")) {
+                                    component.setBackground(TAGGED_COLOR);
+                                    if (isSelected) {
+                                        component.setBackground(SELECTED_COLOR);
+                                    }
+                                }
+                            }
+                        } catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException ex) {
+                        }
+                        
+                    }
+                    return component;
+                }
+            }
+            ov.getOutline().setDefaultRenderer(Object.class, new CustomRenderer());
+            
         }
     }
-
+    
     /**
      * Store the current column order into a preference file.
      */

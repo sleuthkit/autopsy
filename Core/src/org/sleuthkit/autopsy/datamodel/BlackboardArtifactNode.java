@@ -25,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.swing.Action;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Children;
@@ -40,9 +41,12 @@ import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -209,6 +213,20 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 ss.put(np);
             }
         }
+
+        // add properties for tags
+        try {
+            List<BlackboardArtifactTag> artifactTags = Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact);
+            List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(associated);
+            List<Tag> tags = new ArrayList<>(artifactTags);
+            tags.addAll(contentTags);
+            ss.put(new NodeProperty<>(NbBundle.getMessage(AbstractAbstractFileNode.class, "BlackboardArtifactNode.createSheet.tags.name"),
+                    NbBundle.getMessage(AbstractAbstractFileNode.class, "BlackboardArtifactNode.createSheet.tags.displayName"),
+                        NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to get tags for artifact " + artifact.getDisplayName(), ex);
+        }
+
         final int artifactTypeId = artifact.getArtifactTypeID();
 
         // If mismatch, add props for extension and file type
