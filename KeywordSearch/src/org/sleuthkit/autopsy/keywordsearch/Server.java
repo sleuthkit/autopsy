@@ -49,7 +49,8 @@ import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.TermsResponse;
 import org.apache.solr.client.solrj.SolrRequest;
-import org.apache.solr.client.solrj.impl.HttpSolrClient; // EL HttpSolrServer;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
+import org.apache.solr.client.solrj.impl.HttpSolrClient.Builder;
 import org.apache.solr.common.util.NamedList;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
@@ -63,7 +64,6 @@ import org.apache.solr.client.solrj.response.CoreAdminResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrException;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
 import org.sleuthkit.autopsy.core.UserPreferences;
@@ -184,6 +184,7 @@ public class Server {
 
     // A reference to the locally running Solr instance.
     private final HttpSolrClient localSolrServer;
+    private final Builder builder;
 
     // A reference to the Solr server we are currently connected to for the Case.
     // This could be a local or remote server.
@@ -203,7 +204,8 @@ public class Server {
     Server() {
         initSettings();
 
-        this.localSolrServer = new HttpSolrClient("http://localhost:" + currentSolrServerPort + "/solr"); //NON-NLS
+        this.builder = new Builder("http://localhost:" + currentSolrServerPort + "/solr"); //NON-NLS
+        this.localSolrServer = this.builder.build();
         serverAction = new ServerAction();
         solrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
         javaPath = PlatformUtil.getJavaPath();
@@ -700,7 +702,7 @@ public class Server {
             } else {
                 String host = UserPreferences.getIndexingServerHost();
                 String port = UserPreferences.getIndexingServerPort();
-                currentSolrServer = new HttpSolrClient("http://" + host + ":" + port + "/solr"); //NON-NLS
+                currentSolrServer = new Builder("http://" + host + ":" + port + "/solr").build(); //NON-NLS
             }
             connectToSolrServer(currentSolrServer);
 
@@ -1192,7 +1194,7 @@ public class Server {
             this.name = name;
             this.caseType = caseType;
 
-            this.solrCore = new HttpSolrClient(currentSolrServer.getBaseURL() + "/" + name);
+            this.solrCore = new Builder(currentSolrServer.getBaseURL() + "/" + name).build(); //NON-NLS
 
             //TODO test these settings
             //solrCore.setSoTimeout(1000 * 60);  // socket read timeout, make large enough so can index larger files
