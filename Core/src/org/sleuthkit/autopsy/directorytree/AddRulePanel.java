@@ -142,39 +142,36 @@ class AddRulePanel extends javax.swing.JPanel {
         }
 
         String name = nameTextField.getText();
-        String buttonActionCommand = buttonGroup.getSelection().getActionCommand();
-        switch (buttonActionCommand) {
-            case "mime": //NON-NLS
-                FileTypeDetector detector;
-                try {
-                    detector = new FileTypeDetector();
-                } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-                    logger.log(Level.WARNING, "Couldn't create file type detector for file ext mismatch settings.", ex);
-                    return null;
-                }
-                if (name.isEmpty() || !detector.isDetectable(name)) {
-                    JOptionPane.showMessageDialog(null,
-                            NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.JOptionPane.invalidMime.message"),
-                            NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.JOptionPane.invalidMime.title"),
-                            JOptionPane.ERROR_MESSAGE);
-                    return null;
-                }
-                return new ExternalViewerRule(name, exePath, ExternalViewerRule.RuleType.MIME);
-            case "ext": //NON-NLS
-                if (name.isEmpty() || !name.matches("^\\.?\\w+$")) {
-                    JOptionPane.showMessageDialog(null,
-                            NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.JOptionPane.invalidExt.message"),
-                            NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.JOptionPane.invalidExt.title"),
-                            JOptionPane.ERROR_MESSAGE);
-                    return null;
-                }
-                if (name.charAt(0) != '.') {
-                    name = "." + name;
-                }
-                return new ExternalViewerRule(name.toLowerCase(), exePath, ExternalViewerRule.RuleType.EXT);
-            default:
+        if (mimeRadioButton.isSelected()) {
+            FileTypeDetector detector;
+            try {
+                detector = new FileTypeDetector();
+            } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+                logger.log(Level.WARNING, "Couldn't create file type detector for file ext mismatch settings.", ex);
                 return null;
+            }
+            if (name.isEmpty() || !detector.isDetectable(name)) {
+                JOptionPane.showMessageDialog(null,
+                        NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.JOptionPane.invalidMime.message"),
+                        NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.JOptionPane.invalidMime.title"),
+                        JOptionPane.ERROR_MESSAGE);
+                return null;
+            }
+            return new ExternalViewerRule(name, exePath, ExternalViewerRule.RuleType.MIME);
+        } else if (extRadioButton.isSelected()) {
+            if (name.isEmpty() || !name.matches("^\\.?\\w+$")) {
+                JOptionPane.showMessageDialog(null,
+                        NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.JOptionPane.invalidExt.message"),
+                        NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.JOptionPane.invalidExt.title"),
+                        JOptionPane.ERROR_MESSAGE);
+                return null;
+            }
+            if (name.charAt(0) != '.') {
+                name = "." + name;
+            }
+            return new ExternalViewerRule(name.toLowerCase(), exePath, ExternalViewerRule.RuleType.EXT);
         }
+        return null;
     }
 
     /**
