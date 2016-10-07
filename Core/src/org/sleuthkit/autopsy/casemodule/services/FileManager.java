@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -43,6 +44,7 @@ import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.LocalFilesDataSource;
 import org.sleuthkit.datamodel.TskDataException;
 import org.apache.commons.lang3.StringUtils;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.CarvingResult;
 import org.sleuthkit.datamodel.TskData;
 
@@ -53,6 +55,7 @@ import org.sleuthkit.datamodel.TskData;
  */
 public class FileManager implements Closeable {
 
+    private static final Logger LOGGER = Logger.getLogger(FileManager.class.getName());
     private SleuthkitCase caseDb;
 
     /**
@@ -343,7 +346,7 @@ public class FileManager implements Closeable {
         }
         return caseDb.addCarvedFiles(carvingResult);
     }
-        
+
     /**
      * Interface for receiving a notification for each file or directory added
      * to the case database by a FileManager add files operation.
@@ -427,7 +430,11 @@ public class FileManager implements Closeable {
 
         } catch (TskCoreException ex) {
             if (null != trans) {
-                trans.rollback();
+                try {
+                    trans.rollback();
+                } catch (TskCoreException ex2) {
+                    LOGGER.log(Level.SEVERE, String.format("Failed to rollback transaction after exception: %s", ex.getMessage()), ex2);
+                }
             }
             throw ex;
         }
@@ -506,7 +513,7 @@ public class FileManager implements Closeable {
      * @throws TskCoreException If there is a problem completing a database
      *                          operation.
      */
-    private AbstractFile addLocalFile(CaseDbTransaction trans, VirtualDirectory parentDirectory, java.io.File localFile, 
+    private AbstractFile addLocalFile(CaseDbTransaction trans, VirtualDirectory parentDirectory, java.io.File localFile,
             TskData.EncodingType encodingType, FileAddProgressUpdater progressUpdater) throws TskCoreException {
         if (localFile.isDirectory()) {
             /*
@@ -542,7 +549,7 @@ public class FileManager implements Closeable {
     public synchronized void close() throws IOException {
         caseDb = null;
     }
-        
+
     /**
      * Adds a set of local/logical files and/or directories to the case database
      * as data source.
@@ -624,7 +631,7 @@ public class FileManager implements Closeable {
         }
         return caseDb.addCarvedFiles(filesToAdd);
     }
-    
+
     /**
      * Adds a derived file to the case.
      *
@@ -652,7 +659,7 @@ public class FileManager implements Closeable {
      *
      * @throws TskCoreException if there is a problem adding the file to the
      *                          case database.
-     * 
+     *
      * @Deprecated Use the version with explicit EncodingType instead
      */
     @Deprecated
@@ -663,10 +670,10 @@ public class FileManager implements Closeable {
             boolean isFile,
             AbstractFile parentFile,
             String rederiveDetails, String toolName, String toolVersion, String otherDetails) throws TskCoreException {
-        return addDerivedFile(fileName, localPath, size, ctime, crtime, atime, mtime, isFile, parentFile, 
+        return addDerivedFile(fileName, localPath, size, ctime, crtime, atime, mtime, isFile, parentFile,
                 rederiveDetails, toolName, toolVersion, otherDetails, TskData.EncodingType.NONE);
     }
-    
+
     /**
      * Adds a file or directory of logical/local files data source to the case
      * database, recursively adding the contents of directories.
@@ -686,7 +693,7 @@ public class FileManager implements Closeable {
      *
      * @throws TskCoreException If there is a problem completing a database
      *                          operation.
-     * 
+     *
      * @Deprecated Use the version with explicit EncodingType instead
      */
     @Deprecated
