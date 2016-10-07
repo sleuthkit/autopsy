@@ -229,8 +229,8 @@
                 <binary-origin>release/modules/ext/asm-all-3.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/solr-solrj-4.9.1-javadoc.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/solr-solrj-4.9.1-javadoc.jar</binary-origin>
+                <runtime-relative-path>ext/solr-solrj-6.2.1-javadoc.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/solr-solrj-6.2.1-javadoc.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/poi-3.10-beta2.jar</runtime-relative-path>
@@ -301,8 +301,8 @@
                 <binary-origin>release/modules/ext/org.apache.felix.scr.generator-1.1.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/solr-solrj-4.9.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/solr-solrj-4.9.1.jar</binary-origin>
+                <runtime-relative-path>ext/solr-solrj-6.2.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/solr-solrj-6.2.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/poi-scratchpad-3.10-beta2.jar</runtime-relative-path>
@@ -329,8 +329,8 @@
                 <binary-origin>release/modules/ext/jericho-html-3.3-sources.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/solr-solrj-4.9.1-sources.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/solr-solrj-4.9.1-sources.jar</binary-origin>
+                <runtime-relative-path>ext/solr-solrj-6.2.1-sources.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/solr-solrj-6.2.1-sources.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/juniversalchardet-1.0.3.jar</runtime-relative-path>
