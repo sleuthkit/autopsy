@@ -21,9 +21,11 @@
         <!-- Autopsy -->
         <dependency conf="autopsy->*" org="org.apache.solr" name="solr-solrj" rev="4.9.1"/>
         <dependency conf="autopsy->*" org="commons-lang" name="commons-lang" rev="2.4"/>
+        <dependency conf="autopsy->*" org="commons-validator" name="commons-validator" rev="1.5.1"/>
         <dependency conf="autopsy->*" org="org.apache.tika" name="tika-parsers" rev="1.5"/>
+        
         <!-- metadata-extractor is required by Tika but it depends on version 2.6.2 which suffers
-          from an XMP library issue. -->
+        from an XMP library issue. -->
         <dependency conf="autopsy->*" org="com.drewnoakes" name="metadata-extractor" rev="2.7.2" />
         <!-- icu4j for pdfbox bidirectional text support, needs to be defined explicitely (it is optional) -->
         <dependency conf="autopsy->*" org="com.ibm.icu" name="icu4j" rev="3.8"/>
@@ -39,6 +41,6 @@
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="slf4j-log4j12" rev="1.7.10"/>
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="jcl-over-slf4j" rev="1.7.10"/>
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="jul-to-slf4j" rev="1.7.10"/>
-        
+              
     </dependencies>
 </ivy-module>

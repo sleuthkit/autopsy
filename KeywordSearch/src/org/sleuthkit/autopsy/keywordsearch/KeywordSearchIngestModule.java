@@ -111,6 +111,13 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     };
     private static final Map<Long, Map<Long, IngestStatus>> ingestStatus = new HashMap<>(); //guarded by itself
 
+    /**
+     * Records the ingest status for a given file for a given ingest job. Used
+     * for final statistics at the end of the job.
+     * @param ingestJobId id of ingest job
+     * @param fileId      id of file
+     * @param status      ingest status of the file
+     */
     private static void putIngestStatus(long ingestJobId, long fileId, IngestStatus status) {
         synchronized (ingestStatus) {
             Map<Long, IngestStatus> ingestStatusForJob = ingestStatus.get(ingestJobId);
@@ -118,7 +125,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 ingestStatusForJob = new HashMap<>();
                 ingestStatus.put(ingestJobId, ingestStatusForJob);
             }
-
             ingestStatusForJob.put(fileId, status);
             ingestStatus.put(ingestJobId, ingestStatusForJob);
         }
@@ -550,8 +556,12 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 if (context.fileIngestIsCancelled()) {
                     return;
                 }
+                if (fileType.equals("application/octet-stream")) {
+                    extractStringsAndIndex(aFile);
+                    return;
+                }
                 if (!extractTextAndIndex(aFile, fileType)) {
-                    logger.log(Level.WARNING, "Failed to extract text and ingest, file ''{0}'' (id: {1}).", new Object[]{aFile.getName(), aFile.getId()}); //NON-NLS
+                    logger.log(Level.WARNING, "Text extractor not found for file. Extracting strings only. File: ''{0}'' (id:{1}).", new Object[]{aFile.getName(), aFile.getId()}); //NON-NLS
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
                 } else {
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.TEXT_INGESTED);

@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datamodel;
+package org.sleuthkit.autopsy.datamodel._private;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -25,7 +25,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  * Recent files node support NOTE: As of june '15 we do not display this in the
  * tree. It can be added back when we have filtering in the results area.
  */
-class RecentFiles implements AutopsyVisitableItem {
+public class RecentFiles implements AutopsyVisitableItem {
 
     SleuthkitCase skCase;
 
