@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -61,6 +61,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 //@ServiceProvider(service = DataResultViewer.class)
 final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
+    private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(DataResultViewerThumbnail.class.getName());
     //flag to keep track if images are being loaded
     private int curPage;
@@ -95,7 +96,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
         iconView.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         em.addPropertyChangeListener(new ExplorerManagerNodeSelectionListener());
-        thumbnailSizeComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(
+        thumbnailSizeComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(
                 new String[] {  Bundle.DataResultViewerThumbnail_thumbnailSizeComboBox_small(),
                                 Bundle.DataResultViewerThumbnail_thumbnailSizeComboBox_medium(),
                                 Bundle.DataResultViewerThumbnail_thumbnailSizeComboBox_large() }));
@@ -395,11 +396,8 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
     private void switchPage() {
 
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            }
+        EventQueue.invokeLater(() -> {
+            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         });
 
         //Note the nodes factories are likely creating nodes in EDT anyway, but worker still helps 
@@ -437,7 +435,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                                             ex.getMessage()),
                                     NotifyDescriptor.ERROR_MESSAGE);
                     DialogDisplayer.getDefault().notify(d);
-                    logger.log(Level.SEVERE, "Error making thumbnails: " + ex.getMessage()); //NON-NLS
+                    logger.log(Level.SEVERE, "Error making thumbnails: {0}", ex.getMessage()); //NON-NLS
                 } // catch and ignore if we were cancelled
                 catch (java.util.concurrent.CancellationException ex) {
                 }
@@ -453,6 +451,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             goToPageField.setEnabled(false);
             pageNumLabel.setText("");
             imagesRangeLabel.setText("");
+            thumbnailSizeComboBox.setEnabled(false);
         } else {
             pageNumLabel.setText(
                     NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.pageNumbers.curOfTotal",
@@ -464,7 +463,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             pageNextButton.setEnabled(!(curPage == totalPages));
             pagePrevButton.setEnabled(!(curPage == 1));
             goToPageField.setEnabled(totalPages > 1);
-
+            thumbnailSizeComboBox.setEnabled(true);
         }
 
     }

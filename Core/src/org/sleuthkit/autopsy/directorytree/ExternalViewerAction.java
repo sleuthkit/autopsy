@@ -40,7 +40,7 @@ public class ExternalViewerAction extends AbstractAction {
 
     private final static Logger logger = Logger.getLogger(ExternalViewerAction.class.getName());
     private org.sleuthkit.datamodel.AbstractFile fileObject;
-    final static String[] EXECUTABLE_EXT = {".exe", ".dll", ".com", ".bat", ".msi", ".reg", ".scr"}; //NON-NLS
+    final static String[] EXECUTABLE_EXT = {".exe", ".dll", ".com", ".bat", ".msi", ".reg", ".scr", ".cmd"}; //NON-NLS
 
     public ExternalViewerAction(String title, Node fileNode) {
         super(title);
