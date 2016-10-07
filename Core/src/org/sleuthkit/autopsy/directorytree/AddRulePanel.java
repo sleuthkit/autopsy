@@ -50,7 +50,7 @@ class AddRulePanel extends javax.swing.JPanel {
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fc.setMultiSelectionEnabled(false);
         fc.setFileFilter(exeFilter);
-        addListeners();
+        customize();
     }
 
     /**
@@ -66,13 +66,16 @@ class AddRulePanel extends javax.swing.JPanel {
         if (rule.getRuleType() == ExternalViewerRule.RuleType.EXT) {
             extRadioButton.setSelected(true);
         }
-        addListeners();
+        customize();
     }
 
     /**
      * Allows listeners for when the name or exePath text fields are modified.
+     * Set action commands for the radio buttons.
      */
-    private void addListeners() {
+    private void customize() {
+        mimeRadioButton.setActionCommand("mime");
+        extRadioButton.setActionCommand("ext");
         nameTextField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void changedUpdate(DocumentEvent e) {
@@ -182,7 +185,6 @@ class AddRulePanel extends javax.swing.JPanel {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-        bindingGroup = new org.jdesktop.beansbinding.BindingGroup();
 
         buttonGroup = new javax.swing.ButtonGroup();
         nameLabel = new javax.swing.JLabel();
@@ -201,14 +203,8 @@ class AddRulePanel extends javax.swing.JPanel {
         mimeRadioButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(mimeRadioButton, org.openide.util.NbBundle.getMessage(AddRulePanel.class, "AddRulePanel.mimeRadioButton.text")); // NOI18N
 
-        org.jdesktop.beansbinding.Binding binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, mimeRadioButton, org.jdesktop.beansbinding.ELProperty.create("mime"), mimeRadioButton, org.jdesktop.beansbinding.BeanProperty.create("actionCommand"));
-        bindingGroup.addBinding(binding);
-
         buttonGroup.add(extRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(extRadioButton, org.openide.util.NbBundle.getMessage(AddRulePanel.class, "AddRulePanel.extRadioButton.text")); // NOI18N
-
-        binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, extRadioButton, org.jdesktop.beansbinding.ELProperty.create("ext"), extRadioButton, org.jdesktop.beansbinding.BeanProperty.create("actionCommand"));
-        bindingGroup.addBinding(binding);
 
         org.openide.awt.Mnemonics.setLocalizedText(exePathLabel, org.openide.util.NbBundle.getMessage(AddRulePanel.class, "AddRulePanel.exePathLabel.text")); // NOI18N
 
@@ -263,8 +259,6 @@ class AddRulePanel extends javax.swing.JPanel {
                     .addComponent(browseButton))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
-
-        bindingGroup.bind();
     }// </editor-fold>//GEN-END:initComponents
 
     private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
@@ -285,6 +279,5 @@ class AddRulePanel extends javax.swing.JPanel {
     private javax.swing.JRadioButton mimeRadioButton;
     private javax.swing.JLabel nameLabel;
     private javax.swing.JTextField nameTextField;
-    private org.jdesktop.beansbinding.BindingGroup bindingGroup;
     // End of variables declaration//GEN-END:variables
 }

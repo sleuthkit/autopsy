@@ -93,9 +93,6 @@
           <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="AddRulePanel.mimeRadioButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
-      <BindingProperties>
-        <BindingProperty name="actionCommand" source="mimeRadioButton" sourcePath="mime" target="mimeRadioButton" targetPath="actionCommand" updateStrategy="0" immediately="false"/>
-      </BindingProperties>
     </Component>
     <Component class="javax.swing.JRadioButton" name="extRadioButton">
       <Properties>
@@ -106,9 +103,6 @@
           <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="AddRulePanel.extRadioButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
-      <BindingProperties>
-        <BindingProperty name="actionCommand" source="extRadioButton" sourcePath="ext" target="extRadioButton" targetPath="actionCommand" updateStrategy="0" immediately="false"/>
-      </BindingProperties>
     </Component>
     <Component class="javax.swing.JLabel" name="exePathLabel">
       <Properties>
