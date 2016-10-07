@@ -27,7 +27,6 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
@@ -68,58 +67,40 @@ public class ArtifactStringContent implements StringContent {
                 buffer.append("<tr>"); //NON-NLS
                 buffer.append("</tr>\n"); //NON-NLS
 
-                // cycle through each attribute and display in a row in the table. 
+                // cycle through each attribute and display in a row in the table.
                 for (BlackboardAttribute attr : artifact.getAttributes()) {
 
                     // name column
                     buffer.append("<tr><td>"); //NON-NLS
                     buffer.append(attr.getAttributeType().getDisplayName());
                     buffer.append("</td>"); //NON-NLS
-
+                    
                     // value column
                     buffer.append("<td>"); //NON-NLS
-                    if (attr.getAttributeType().getTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()
-                            || attr.getAttributeType().getTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()
-                            || attr.getAttributeType().getTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID()
-                            || attr.getAttributeType().getTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED.getTypeID()
-                            || attr.getAttributeType().getTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID()
-                            || attr.getAttributeType().getTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID()
-                            || attr.getAttributeType().getTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()
-                            || attr.getAttributeType().getTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()) {
-                        long epoch = attr.getValueLong();
-                        String time = "0000-00-00 00:00:00";
-                        if (epoch != 0) {
-                            dateFormatter.setTimeZone(getTimeZone(artifact));
-                            time = dateFormatter.format(new java.util.Date(epoch * 1000));
-                        }
-                        buffer.append(time);
-                    } else {
-                        switch (attr.getAttributeType().getValueType()) {
-                            case STRING:
-                                String str = attr.getValueString();
-                                str = str.replaceAll(" ", "&nbsp;"); //NON-NLS
-                                str = str.replaceAll("<", "&lt;"); //NON-NLS
-                                str = str.replaceAll(">", "&gt;"); //NON-NLS
-                                str = str.replaceAll("(\r\n|\n)", "<br />"); //NON-NLS
-                                buffer.append(str);
-                                break;
-                            case INTEGER:
-                                buffer.append(attr.getValueInt());
-                                break;
-                            case LONG:
-                                buffer.append(attr.getValueLong());
-                                break;
-                            case DOUBLE:
-                                buffer.append(attr.getValueDouble());
-                                break;
-                            case BYTE:
-                                buffer.append(Arrays.toString(attr.getValueBytes()));
-                                break;
-                            case DATETIME:
-                                buffer.append(attr.getValueLong());
-                                break;
-
-                        }
+                    switch (attr.getAttributeType().getValueType()) {
+                        case STRING:
+                            String str = attr.getValueString();
+                            str = str.replaceAll(" ", "&nbsp;"); //NON-NLS
+                            str = str.replaceAll("<", "&lt;"); //NON-NLS
+                            str = str.replaceAll(">", "&gt;"); //NON-NLS
+                            str = str.replaceAll("(\r\n|\n)", "<br />"); //NON-NLS
+                            buffer.append(str);
+                            break;
+                        case INTEGER:
+                        case LONG:
+                        case DOUBLE:
+                        case BYTE:
+                            buffer.append(attr.getDisplayString());
+                            break;
+                        case DATETIME:
+                            long epoch = attr.getValueLong();
+                            String time = "0000-00-00 00:00:00";
+                            if (epoch != 0) {
+                                dateFormatter.setTimeZone(getTimeZone(artifact));
+                                time = dateFormatter.format(new java.util.Date(epoch * 1000));
+                            }
+                            buffer.append(time);
+                            break;
                     }
                     if (!"".equals(attr.getContext())) {
                         buffer.append(" (");
