@@ -74,7 +74,7 @@ public class ArtifactStringContent implements StringContent {
                     buffer.append("<tr><td>"); //NON-NLS
                     buffer.append(attr.getAttributeType().getDisplayName());
                     buffer.append("</td>"); //NON-NLS
-
+                    
                     // value column
                     buffer.append("<td>"); //NON-NLS
                     switch (attr.getAttributeType().getValueType()) {
@@ -87,10 +87,16 @@ public class ArtifactStringContent implements StringContent {
                             buffer.append(str);
                             break;
                         case INTEGER:
+                            buffer.append(attr.getValueInt());
+                            break;
                         case LONG:
+                            buffer.append(attr.getValueLong());
+                            break;
                         case DOUBLE:
+                            buffer.append(attr.getValueDouble());
+                            break;
                         case BYTE:
-                            buffer.append(attr.getDisplayString());
+                            buffer.append(Arrays.toString(attr.getValueBytes()));
                             break;
                         case DATETIME:
                             long epoch = attr.getValueLong();
