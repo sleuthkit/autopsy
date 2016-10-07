@@ -26,8 +26,17 @@
         <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.8.11.jar" tofile="${basedir}/release/modules/ext/sqlite-jdbc-3.8.11.jar"/>
     </target>
 
+    <target name="download-binlist">
+        <get src="https://raw.githubusercontent.com/binlist/data/master/ranges.csv" 
+             dest="src\org\sleuthkit\autopsy\datamodel" 
+             ignoreerrors="true"
+             verbose="true"/>
+    </target>
+
     <target name="init" depends="basic-init,files-init,build-init,-javac-init">
-        <!-- get additional deps -->
+        <antcall target="download-binlist" />   
+
+        <!-- get additional deps -->   
         <antcall target="getTSKJars" />
     </target>
 </project>

@@ -1,29 +1,42 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2011-2014 Basis Technology Corp.
+ *
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datamodel;
+package org.sleuthkit.autopsy.datamodel._private;
+
+import org.sleuthkit.autopsy.datamodel.DataSources;
+import org.sleuthkit.autopsy.datamodel.DeletedContent;
+import org.sleuthkit.autopsy.datamodel.EmailExtracted;
+import org.sleuthkit.autopsy.datamodel.ExtractedContent;
+import org.sleuthkit.autopsy.datamodel.FileSize;
+import org.sleuthkit.autopsy.datamodel.HashsetHits;
+import org.sleuthkit.autopsy.datamodel.InterestingHits;
+import org.sleuthkit.autopsy.datamodel.KeywordHits;
+import org.sleuthkit.autopsy.datamodel.Reports;
+import org.sleuthkit.autopsy.datamodel.Results;
+import org.sleuthkit.autopsy.datamodel.Tags;
+import org.sleuthkit.autopsy.datamodel.Views;
 
 /**
  * This visitor goes over the AutopsyVisitableItems, which are currently the
  * nodes in the tree that are structural and not nodes that are from
  * Sleuthkit-based data model objects.
  */
-interface AutopsyItemVisitor<T> {
+public interface AutopsyItemVisitor<T> {
 
     T visit(DataSources i);
 
@@ -64,6 +77,8 @@ interface AutopsyItemVisitor<T> {
     T visit(Tags tagsNodeKey);
 
     T visit(Reports reportsItem);
+
+    T visit(Accounts accountsItem);
 
     static abstract public class Default<T> implements AutopsyItemVisitor<T> {
 
@@ -167,6 +182,11 @@ interface AutopsyItemVisitor<T> {
         @Override
         public T visit(Reports reportsItem) {
             return defaultVisit(reportsItem);
+        }
+
+        @Override
+        public T visit(Accounts accountsItem) {
+            return defaultVisit(accountsItem);
         }
     }
 }
