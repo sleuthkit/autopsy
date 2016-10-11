@@ -29,8 +29,11 @@
  */
 package org.sleuthkit.autopsy.examples;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.casemodule.services.Services;
@@ -46,6 +49,9 @@ import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -56,70 +62,107 @@ import org.sleuthkit.datamodel.TskData;
  */
 class SampleDataSourceIngestModule implements DataSourceIngestModule {
 
-    private final boolean skipKnownFiles;
     private IngestJobContext context = null;
+    private static final Logger logger = Logger.getLogger(NbBundle.getMessage(SampleDataSourceIngestModuleFactory.class, "SampleDataSourceIngestModuleFactory.moduleName"));
 
     SampleDataSourceIngestModule(SampleModuleIngestJobSettings settings) {
-        this.skipKnownFiles = settings.skipKnownFiles();
     }
 
     @Override
+    /*
+     Where any setup and configuration is done
+     'context' is an instance of org.sleuthkit.autopsy.ingest.IngestJobContext.
+     See: http://sleuthkit.org/autopsy/docs/api-docs/3.1/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_ingest_job_context.html
+     TODO: Add any setup code that you need here.
+     */
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
+
     }
 
     @Override
+    /*
+     Where the analysis is done.
+     The 'dataSource' object being passed in is of type org.sleuthkit.datamodel.Content.
+     See: http://www.sleuthkit.org/sleuthkit/docs/jni-docs/4.3/interfaceorg_1_1sleuthkit_1_1datamodel_1_1_content.html
+     'progressBar' is of type org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress
+     See: http://sleuthkit.org/autopsy/docs/api-docs/3.1/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_data_source_ingest_module_progress.html
+     TODO: Add your analysis code in here.
+     */
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
 
-        // There are two tasks to do.
-        progressBar.switchToDeterminate(2);
+        progressBar.switchToIndeterminate();
+        /*
+         This will work in 4.0.1 and beyond
+         Use blackboard class to index blackboard artifacts for keyword search
+         Blackboard blackboard = Case.getCurrentCase().getServices().getBlackboard()
+        
+         For our example, we will use FileManager to get all
+         files with the word "test"
+         in the name and then count and read them
+         FileManager API: http://sleuthkit.org/autopsy/docs/api-docs/3.1/classorg_1_1sleuthkit_1_1autopsy_1_1casemodule_1_1services_1_1_file_manager.html
+         */
 
         try {
-            // Get count of files with .doc extension.
+            // Get count of files with test in name.
             FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
-            List<AbstractFile> docFiles = fileManager.findFiles(dataSource, "%.doc");
-
-            long fileCount = 0;
-            for (AbstractFile docFile : docFiles) {
-                if (!skipKnownFiles || docFile.getKnown() != TskData.FileKnown.KNOWN) {
-                    ++fileCount;
-                }
-            }
+            List<AbstractFile> testFiles = fileManager.findFiles(dataSource, "%test%");
+            int numFiles = testFiles.size();
+            logger.log(Level.INFO, "found " + numFiles + " files");
+            progressBar.switchToDeterminate(numFiles);
             progressBar.progress(1);
-
-            // check if we were cancelled
-            if (context.dataSourceIngestIsCancelled()) {
-                return IngestModule.ProcessResult.OK;
-            }
-
-            // Get files by creation time.
-            long currentTime = System.currentTimeMillis() / 1000;
-            long minTime = currentTime - (14 * 24 * 60 * 60); // Go back two weeks.
-            List<AbstractFile> otherFiles = fileManager.findFiles(dataSource, "crtime > " + minTime);
-            for (AbstractFile otherFile : otherFiles) {
-                if (!skipKnownFiles || otherFile.getKnown() != TskData.FileKnown.KNOWN) {
-                    ++fileCount;
+            int fileCount = 0;
+            for (AbstractFile file : testFiles) {
+                // check if we were cancelled
+                if (context.dataSourceIngestIsCancelled()) {
+                    return IngestModule.ProcessResult.OK;
                 }
-            }
-            progressBar.progress(1);
+                logger.log(Level.INFO, "Processing file: " + file.getName());
+                ++fileCount;
+                /*
+                 Make an artifact on the blackboard.  TSK_INTERESTING_FILE_HIT is a generic type of
+                 artfiact.  Refer to the developer docs for other examples.
+                 */
+                try {
+                    BlackboardArtifact art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+                    BlackboardAttribute attr = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME,
+                            NbBundle.getMessage(SampleDataSourceIngestModuleFactory.class, "SampleDataSourceIngestModuleFactory.moduleName"), "Test File");
+                    art.addAttribute(attr);
+                    /*
+                     This will work in 4.0.1 and beyond
+                     try {
+                     //index the artifact for keyword search
+                     blackboard.indexArtifact(art);
+                     }
+                     catch (Blackboard.BlackboardException ex) {
+                     logger.log(Level.SEVERE, "Error indexing artifact " + art.getDisplayName());
+                     }
+                     */
+                } catch (TskCoreException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
+                try {
+                    ReadContentInputStream inputStream = new ReadContentInputStream(file);
+                    byte buffer[] = new byte[1024];
+                    int totLen = 0;
+                    int len = inputStream.read(buffer);
+                    while (len != -1) {
+                        totLen += len;
+                        len = inputStream.read(buffer);
+                    }
 
-            if (context.dataSourceIngestIsCancelled()) {
-                return IngestModule.ProcessResult.OK;
+                } catch (IOException ex) {
+                    logger.log(Level.SEVERE, "Error processing file (id = " + file.getId() + ")", ex);
+                    return IngestModule.ProcessResult.ERROR;
+                }
+                progressBar.progress(fileCount);
             }
-
-            // Post a message to the ingest messages in box.
-            String msgText = String.format("Found %d files", fileCount);
-            IngestMessage message = IngestMessage.createMessage(
-                    IngestMessage.MessageType.DATA,
-                    SampleIngestModuleFactory.getModuleName(),
-                    msgText);
+            IngestMessage message = IngestMessage.createMessage(IngestMessage.MessageType.DATA,
+                    "Sample Data Source Ingest Module", "Found" + fileCount + " files");
             IngestServices.getInstance().postMessage(message);
-
             return IngestModule.ProcessResult.OK;
 
         } catch (TskCoreException ex) {
-            IngestServices ingestServices = IngestServices.getInstance();
-            Logger logger = ingestServices.getLogger(SampleIngestModuleFactory.getModuleName());
             logger.log(Level.SEVERE, "File query failed", ex);
             return IngestModule.ProcessResult.ERROR;
         }

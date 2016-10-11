@@ -31,7 +31,7 @@ package org.sleuthkit.autopsy.examples;
 
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
-import static org.sleuthkit.autopsy.examples.SampleIngestModuleFactory.getModuleName;
+import static org.sleuthkit.autopsy.examples.SampleFileIngestModuleFactory.getModuleName;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
@@ -49,7 +49,7 @@ public class SampleExecutableIngestModuleFactory extends IngestModuleFactoryAdap
     // factory to use the same display name that is provided to the Autopsy
     // ingest framework by the factory.
     static String getModuleName() {
-        return NbBundle.getMessage(SampleIngestModuleFactory.class, "SampleExecutableIngestModuleFactory.moduleName");
+        return NbBundle.getMessage(SampleFileIngestModuleFactory.class, "SampleExecutableIngestModuleFactory.moduleName");
     }
 
     @Override
@@ -59,7 +59,7 @@ public class SampleExecutableIngestModuleFactory extends IngestModuleFactoryAdap
 
     @Override
     public String getModuleDescription() {
-        return NbBundle.getMessage(SampleIngestModuleFactory.class, "SampleExecutableIngestModuleFactory.moduleDescription");
+        return NbBundle.getMessage(SampleFileIngestModuleFactory.class, "SampleExecutableIngestModuleFactory.moduleDescription");
     }
 
     @Override
