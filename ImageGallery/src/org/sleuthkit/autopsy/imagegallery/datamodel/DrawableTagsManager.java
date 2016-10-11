@@ -225,7 +225,7 @@ public class DrawableTagsManager {
                 try {
                     return autopsyTagsManager.addTagName(displayName);
                 } catch (TagsManager.TagNameAlreadyExistsException ex) {
-                    throw new TskCoreException("tagame exists but wasn't found", ex);
+                    throw new TskCoreException("tag name exists but wasn't found", ex);
                 }
             } catch (NullPointerException | IllegalStateException ex) {
                 LOGGER.log(Level.SEVERE, "Case was closed out from underneath", ex); //NON-NLS
