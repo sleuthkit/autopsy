@@ -178,7 +178,7 @@ class TableReportGenerator {
                      * compund name by appending a ":" and the account type.
                      */
                     final String compundDataTypeName = BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getDisplayName() + ": " + accountType;
-                    writeTableForDataType(groupedArtifacts.get(accountType), type, compundDataTypeName, comment);
+                    writeTableForDataType(new ArrayList<>(groupedArtifacts.get(accountType)), type, compundDataTypeName, comment);
                 }
             } else {
                 //all other artifact types are sent to writeTableForDataType directly
