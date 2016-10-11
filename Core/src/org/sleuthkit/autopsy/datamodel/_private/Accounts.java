@@ -1260,7 +1260,7 @@ final public class Accounts implements AutopsyVisitableItem {
 
     private final class ToggleShowRejected extends AbstractAction {
 
-        @NbBundle.Messages("ToggleShowRejected.name=Show Rejected Results")
+        @NbBundle.Messages("ToggleShowRejected.name=Show Rejcted Results")
         ToggleShowRejected() {
             super(Bundle.ToggleShowRejected_name());
         }

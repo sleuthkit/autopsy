@@ -25,7 +25,6 @@ import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
