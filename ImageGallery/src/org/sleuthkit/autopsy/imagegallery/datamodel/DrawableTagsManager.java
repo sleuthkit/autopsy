@@ -22,6 +22,7 @@ import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -91,10 +92,10 @@ public class DrawableTagsManager {
     /**
      * register an object to receive CategoryChangeEvents
      *
-     * @param listner
+     * @param listener
      */
-    public void registerListener(Object listner) {
-        tagsEventBus.register(listner);
+    public void registerListener(Object listener) {
+        tagsEventBus.register(listener);
     }
 
     /**
@@ -217,15 +218,18 @@ public class DrawableTagsManager {
     public TagName getTagName(String displayName) throws TskCoreException {
         synchronized (autopsyTagsManagerLock) {
             try {
-                for (TagName tn : autopsyTagsManager.getAllTagNames()) {
-                    if (displayName.equals(tn.getDisplayName())) {
-                        return tn;
-                    }
+                TagName returnTagName = autopsyTagsManager.getDisplayNamesToTagNamesMap().get(displayName);
+                if (returnTagName != null) {
+                    return returnTagName;
                 }
                 try {
                     return autopsyTagsManager.addTagName(displayName);
                 } catch (TagsManager.TagNameAlreadyExistsException ex) {
-                    throw new TskCoreException("tagame exists but wasn't found", ex);
+                    returnTagName = autopsyTagsManager.getDisplayNamesToTagNamesMap().get(displayName);
+                    if (returnTagName != null) {
+                        return returnTagName;
+                    }
+                    throw new TskCoreException("Tag name exists but wasn't found", ex);
                 }
             } catch (NullPointerException | IllegalStateException ex) {
                 LOGGER.log(Level.SEVERE, "Case was closed out from underneath", ex); //NON-NLS

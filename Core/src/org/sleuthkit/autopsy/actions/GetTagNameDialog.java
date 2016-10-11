@@ -34,6 +34,7 @@ import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
 import javax.swing.table.AbstractTableModel;
+import org.openide.util.Exceptions;
 import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
@@ -317,14 +318,18 @@ public class GetTagNameDialog extends JDialog {
                             JOptionPane.ERROR_MESSAGE);
                     tagName = null;
                 } catch (TagsManager.TagNameAlreadyExistsException ex) {
-                    Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, tagDisplayName + " already exists in database.", ex); //NON-NLS
-                    JOptionPane.showMessageDialog(null,
-                            NbBundle.getMessage(this.getClass(),
-                                    "GetTagNameDialog.tagNameAlreadyDef.msg",
-                                    tagDisplayName),
-                            NbBundle.getMessage(this.getClass(), "GetTagNameDialog.dupTagErr"),
-                            JOptionPane.ERROR_MESSAGE);
-                    tagName = null;
+                    try {
+                        tagName = Case.getCurrentCase().getServices().getTagsManager().getDisplayNamesToTagNamesMap().get(tagDisplayName);
+                    } catch (TskCoreException ex1) {
+                        Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, tagDisplayName + " already exists in database.", ex1); //NON-NLS
+                        JOptionPane.showMessageDialog(null,
+                                NbBundle.getMessage(this.getClass(),
+                                        "GetTagNameDialog.tagNameAlreadyDef.msg",
+                                        tagDisplayName),
+                                NbBundle.getMessage(this.getClass(), "GetTagNameDialog.dupTagErr"),
+                                JOptionPane.ERROR_MESSAGE);
+                        tagName = null;
+                    }
                 }
             } else {
                 dispose();

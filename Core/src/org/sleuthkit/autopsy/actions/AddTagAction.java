@@ -25,6 +25,7 @@ import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -163,7 +164,11 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
                 try {
                     tagName = Case.getCurrentCase().getServices().getTagsManager().addTagName(tagDisplayName);
                 } catch (TagsManager.TagNameAlreadyExistsException ex) {
-                    Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, tagDisplayName + " already exists in database.", ex); //NON-NLS
+                    try {
+                        tagName = Case.getCurrentCase().getServices().getTagsManager().getDisplayNamesToTagNamesMap().get(tagDisplayName);
+                    } catch (TskCoreException ex1) {
+                        Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, tagDisplayName + " already exists in database but wasn't found.", ex1); //NON-NLS
+                    }
                 } catch (TskCoreException ex) {
                     Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, "Error adding " + tagDisplayName + " tag name", ex); //NON-NLS
                 }
