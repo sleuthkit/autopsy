@@ -27,7 +27,7 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
  * Manager for user's external viewer rules, used by the options panel and the
  * ExternalViewerAction. Reads from and writes to a preferences file.
  */
-public class ExternalViewerRulesManager {
+class ExternalViewerRulesManager {
 
     private static final String RULES_SETTINGS_NAME = "ExternalViewerRules"; //NON-NLS
     private static final String RULES_SETTINGS_KEY = "Rules"; //NON-NLS
