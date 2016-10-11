@@ -31,9 +31,9 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 /**
  * Panel found in an AddRuleDialog
  */
-class AddRulePanel extends javax.swing.JPanel {
+class AddExternalViewerRulePanel extends javax.swing.JPanel {
 
-    private static final Logger logger = Logger.getLogger(AddRulePanel.class.getName());
+    private static final Logger logger = Logger.getLogger(AddExternalViewerRulePanel.class.getName());
     private final JFileChooser fc = new JFileChooser();
     private static final GeneralFilter exeFilter = new GeneralFilter(GeneralFilter.EXECUTABLE_EXTS, GeneralFilter.EXECUTABLE_DESC);
 
@@ -44,7 +44,7 @@ class AddRulePanel extends javax.swing.JPanel {
     /**
      * Creates new form AddRulePanel
      */
-    AddRulePanel() {
+    AddExternalViewerRulePanel() {
         initComponents();
         fc.setDragEnabled(false);
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -59,7 +59,7 @@ class AddRulePanel extends javax.swing.JPanel {
      *
      * @param rule to be edited
      */
-    AddRulePanel(ExternalViewerRule rule) {
+    AddExternalViewerRulePanel(ExternalViewerRule rule) {
         this();
         nameTextField.setText(rule.getName());
         exePathTextField.setText(rule.getExePath());
@@ -192,23 +192,23 @@ class AddRulePanel extends javax.swing.JPanel {
         exePathTextField = new javax.swing.JTextField();
         browseButton = new javax.swing.JButton();
 
-        org.openide.awt.Mnemonics.setLocalizedText(nameLabel, org.openide.util.NbBundle.getMessage(AddRulePanel.class, "AddRulePanel.nameLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(nameLabel, org.openide.util.NbBundle.getMessage(AddExternalViewerRulePanel.class, "AddExternalViewerRulePanel.nameLabel.text")); // NOI18N
 
-        nameTextField.setText(org.openide.util.NbBundle.getMessage(AddRulePanel.class, "AddRulePanel.nameTextField.text")); // NOI18N
+        nameTextField.setText(org.openide.util.NbBundle.getMessage(AddExternalViewerRulePanel.class, "AddExternalViewerRulePanel.nameTextField.text")); // NOI18N
 
         buttonGroup.add(mimeRadioButton);
         mimeRadioButton.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(mimeRadioButton, org.openide.util.NbBundle.getMessage(AddRulePanel.class, "AddRulePanel.mimeRadioButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(mimeRadioButton, org.openide.util.NbBundle.getMessage(AddExternalViewerRulePanel.class, "AddExternalViewerRulePanel.mimeRadioButton.text")); // NOI18N
 
         buttonGroup.add(extRadioButton);
-        org.openide.awt.Mnemonics.setLocalizedText(extRadioButton, org.openide.util.NbBundle.getMessage(AddRulePanel.class, "AddRulePanel.extRadioButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(extRadioButton, org.openide.util.NbBundle.getMessage(AddExternalViewerRulePanel.class, "AddExternalViewerRulePanel.extRadioButton.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(exePathLabel, org.openide.util.NbBundle.getMessage(AddRulePanel.class, "AddRulePanel.exePathLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(exePathLabel, org.openide.util.NbBundle.getMessage(AddExternalViewerRulePanel.class, "AddExternalViewerRulePanel.exePathLabel.text")); // NOI18N
 
         exePathTextField.setEditable(false);
-        exePathTextField.setText(org.openide.util.NbBundle.getMessage(AddRulePanel.class, "AddRulePanel.exePathTextField.text")); // NOI18N
+        exePathTextField.setText(org.openide.util.NbBundle.getMessage(AddExternalViewerRulePanel.class, "AddExternalViewerRulePanel.exePathTextField.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(browseButton, org.openide.util.NbBundle.getMessage(AddRulePanel.class, "AddRulePanel.browseButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(browseButton, org.openide.util.NbBundle.getMessage(AddExternalViewerRulePanel.class, "AddExternalViewerRulePanel.browseButton.text")); // NOI18N
         browseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 browseButtonActionPerformed(evt);

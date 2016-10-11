@@ -213,9 +213,9 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
     }// </editor-fold>//GEN-END:initComponents
 
     private void newRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newRuleButtonActionPerformed
-        AddRuleDialog dialog = new AddRuleDialog();
-        AddRuleDialog.BUTTON_PRESSED result = dialog.getResult();
-        if (result == AddRuleDialog.BUTTON_PRESSED.OK) {
+        AddExternalViewerRuleDialog dialog = new AddExternalViewerRuleDialog();
+        AddExternalViewerRuleDialog.BUTTON_PRESSED result = dialog.getResult();
+        if (result == AddExternalViewerRuleDialog.BUTTON_PRESSED.OK) {
             ExternalViewerRule newRule = dialog.getRule();
             // Only allow one association for each MIME type or extension.
             if (rules.contains(newRule)) {
@@ -236,9 +236,9 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
 
     private void editRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editRuleButtonActionPerformed
         int selected = rulesList.getSelectedIndex();
-        AddRuleDialog dialog = new AddRuleDialog(rulesListModel.get(rulesList.getSelectedIndex()));
-        AddRuleDialog.BUTTON_PRESSED result = dialog.getResult();
-        if (result == AddRuleDialog.BUTTON_PRESSED.OK) {
+        AddExternalViewerRuleDialog dialog = new AddExternalViewerRuleDialog(rulesListModel.get(rulesList.getSelectedIndex()));
+        AddExternalViewerRuleDialog.BUTTON_PRESSED result = dialog.getResult();
+        if (result == AddExternalViewerRuleDialog.BUTTON_PRESSED.OK) {
             rules.remove(selected);
             ExternalViewerRule newRule = dialog.getRule();
             // Only allow one association for each MIME type or extension.

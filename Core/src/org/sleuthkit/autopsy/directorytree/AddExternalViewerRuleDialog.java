@@ -35,10 +35,10 @@ import org.openide.util.NbBundle;
 /**
  * A dialog for adding or editing an external viewer rule
  */
-class AddRuleDialog extends JDialog {
+class AddExternalViewerRuleDialog extends JDialog {
 
     private ExternalViewerRule rule;
-    private final AddRulePanel addRulePanel;
+    private final AddExternalViewerRulePanel addRulePanel;
     private BUTTON_PRESSED result;
     private JButton saveButton;
     private JButton closeButton;
@@ -50,10 +50,10 @@ class AddRuleDialog extends JDialog {
     /**
      * Creates a dialog for creating an external viewer rule
      */
-    AddRuleDialog() {
-        super(new JFrame(NbBundle.getMessage(AddRuleDialog.class, "AddRuleDialog.title")),
-                NbBundle.getMessage(AddRuleDialog.class, "AddRuleDialog.title"), true);
-        addRulePanel = new AddRulePanel();
+    AddExternalViewerRuleDialog() {
+        super(new JFrame(NbBundle.getMessage(AddExternalViewerRuleDialog.class, "AddExternalViewerRuleDialog.title")),
+                NbBundle.getMessage(AddExternalViewerRuleDialog.class, "AddExternalViewerRuleDialog.title"), true);
+        addRulePanel = new AddExternalViewerRulePanel();
         this.display();
     }
 
@@ -62,10 +62,10 @@ class AddRuleDialog extends JDialog {
      *
      * @param rule ExternalViewerRule to be edited
      */
-    AddRuleDialog(ExternalViewerRule rule) {
-        super(new JFrame(NbBundle.getMessage(AddRuleDialog.class, "AddRuleDialog.title")),
-                NbBundle.getMessage(AddRuleDialog.class, "AddRuleDialog.title"), true);
-        addRulePanel = new AddRulePanel(rule);
+    AddExternalViewerRuleDialog(ExternalViewerRule rule) {
+        super(new JFrame(NbBundle.getMessage(AddExternalViewerRuleDialog.class, "AddExternalViewerRuleDialog.title")),
+                NbBundle.getMessage(AddExternalViewerRuleDialog.class, "AddExternalViewerRuleDialog.title"), true);
+        addRulePanel = new AddExternalViewerRulePanel(rule);
         this.display();
     }
 
@@ -86,13 +86,13 @@ class AddRuleDialog extends JDialog {
         add(this.addRulePanel, BorderLayout.PAGE_START);
 
         // Add a save button.
-        saveButton = new JButton(NbBundle.getMessage(AddRuleDialog.class, "AddRuleDialog.saveButton.title"));
+        saveButton = new JButton(NbBundle.getMessage(AddExternalViewerRuleDialog.class, "AddExternalViewerRuleDialog.saveButton.title"));
         saveButton.addActionListener((ActionEvent e) -> {
             doButtonAction(true);
         });
 
         // Add a close button.
-        closeButton = new JButton(NbBundle.getMessage(AddRuleDialog.class, "AddRuleDialog.cancelButton.title"));
+        closeButton = new JButton(NbBundle.getMessage(AddExternalViewerRuleDialog.class, "AddExternalViewerRuleDialog.cancelButton.title"));
         closeButton.addActionListener((ActionEvent e) -> {
             doButtonAction(false);
         });
@@ -122,7 +122,7 @@ class AddRuleDialog extends JDialog {
          * AddRulePanel is changed or modified.
          */
         this.addRulePanel.addPropertyChangeListener((PropertyChangeEvent evt) -> {
-            if (evt.getPropertyName().equals(AddRulePanel.EVENT.CHANGED.toString())) {
+            if (evt.getPropertyName().equals(AddExternalViewerRulePanel.EVENT.CHANGED.toString())) {
                 enableSaveButton();
             }
         });
