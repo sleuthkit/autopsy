@@ -43,6 +43,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
+import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
@@ -88,7 +89,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
  * implementations of most of the IngestModuleFactory methods.
  */
 @ServiceProvider(service = IngestModuleFactory.class) // Sample is discarded at runtime 
-public class SampleIngestModuleFactory implements IngestModuleFactory {
+public class SampleFileIngestModuleFactory extends IngestModuleFactoryAdapter {
 
     private static final String VERSION_NUMBER = "1.0.0";
 
@@ -96,7 +97,7 @@ public class SampleIngestModuleFactory implements IngestModuleFactory {
     // factory to use the same display name that is provided to the Autopsy
     // ingest framework by the factory.
     static String getModuleName() {
-        return NbBundle.getMessage(SampleIngestModuleFactory.class, "SampleIngestModuleFactory.moduleName");
+        return NbBundle.getMessage(SampleFileIngestModuleFactory.class, "SampleFileIngestModuleFactory.moduleName");
     }
 
     /**
@@ -121,7 +122,7 @@ public class SampleIngestModuleFactory implements IngestModuleFactory {
      */
     @Override
     public String getModuleDescription() {
-        return NbBundle.getMessage(SampleIngestModuleFactory.class, "SampleIngestModuleFactory.moduleDescription");
+        return NbBundle.getMessage(SampleFileIngestModuleFactory.class, "SampleFileIngestModuleFactory.moduleDescription");
     }
 
     /**
@@ -225,56 +226,6 @@ public class SampleIngestModuleFactory implements IngestModuleFactory {
             throw new IllegalArgumentException("Expected settings argument to be instanceof SampleModuleIngestJobSettings");
         }
         return new SampleIngestModuleIngestJobSettingsPanel((SampleModuleIngestJobSettings) settings);
-    }
-
-    /**
-     * Queries the factory to determine if it is capable of creating data source
-     * ingest modules. If the module family does not include data source ingest
-     * modules, the factory may extend IngestModuleFactoryAdapter to get an
-     * implementation of this method that returns false.
-     *
-     * @return True if the factory can create data source ingest modules.
-     */
-    @Override
-    public boolean isDataSourceIngestModuleFactory() {
-        return true;
-    }
-
-    /**
-     * Creates a data source ingest module instance.
-     * <p>
-     * Autopsy will generally use the factory to several instances of each type
-     * of module for each ingest job it performs. Completing an ingest job
-     * entails processing a single data source (e.g., a disk image) and all of
-     * the files from the data source, including files extracted from archives
-     * and any unallocated space (made to look like a series of files). The data
-     * source is passed through one or more pipelines of data source ingest
-     * modules. The files are passed through one or more pipelines of file
-     * ingest modules.
-     * <p>
-     * The ingest framework may use multiple threads to complete an ingest job,
-     * but it is guaranteed that there will be no more than one module instance
-     * per thread. However, if the module instances must share resources, the
-     * modules are responsible for synchronizing access to the shared resources
-     * and doing reference counting as required to release those resources
-     * correctly. Also, more than one ingest job may be in progress at any given
-     * time. This must also be taken into consideration when sharing resources
-     * between module instances. modules.
-     * <p>
-     * If the module family does not include data source ingest modules, the
-     * factory may extend IngestModuleFactoryAdapter to get an implementation of
-     * this method that throws an UnsupportedOperationException.
-     *
-     * @param settings The settings for the ingest job.
-     *
-     * @return A data source ingest module instance.
-     */
-    @Override
-    public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings settings) {
-        if (!(settings instanceof SampleModuleIngestJobSettings)) {
-            throw new IllegalArgumentException("Expected settings argument to be instanceof SampleModuleIngestJobSettings");
-        }
-        return new SampleDataSourceIngestModule((SampleModuleIngestJobSettings) settings);
     }
 
     /**
