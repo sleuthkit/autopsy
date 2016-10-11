@@ -372,7 +372,7 @@ final class CustomFileTypesManager {
                 return filesSetsSettings.getUserDefinedFileTypes();
             }
         } catch (IOException | ClassNotFoundException ex) {
-            throw new CustomFileTypesException(String.format("Failed to read ssettings from %s", filePath), ex); //NON-NLS
+            throw new CustomFileTypesException(String.format("Failed to read settings from %s", filePath), ex); //NON-NLS
         }
     }
 
