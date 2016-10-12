@@ -22,7 +22,7 @@ import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsChildren.De
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsNode;
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootChildren.FileSizeNode;
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootNode;
-import org.sleuthkit.autopsy.datamodel._private.Accounts;
+import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 
 /**
  * Visitor pattern that goes over all nodes in the directory tree. This includes
