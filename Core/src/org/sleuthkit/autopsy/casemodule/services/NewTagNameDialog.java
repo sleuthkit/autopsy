@@ -43,8 +43,8 @@ final class NewTagNameDialog extends javax.swing.JDialog {
      * Creates a new NewUserTagNameDialog dialog.
      */
     NewTagNameDialog() {
-        super(new JFrame(NbBundle.getMessage(NewTagNameDialog.class, "NewUserTagNameDialog.title.text")),
-                NbBundle.getMessage(NewTagNameDialog.class, "NewUserTagNameDialog.title.text"), true);
+        super(new JFrame(NbBundle.getMessage(NewTagNameDialog.class, "NewTagNameDialog.title.text")),
+                NbBundle.getMessage(NewTagNameDialog.class, "NewTagNameDialog.title.text"), true);
         initComponents();
         this.display();
     }
@@ -112,15 +112,15 @@ final class NewTagNameDialog extends javax.swing.JDialog {
             String newTagDisplayName = tagNameTextField.getText().trim();
             if (newTagDisplayName.isEmpty()) {
                 JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(NewTagNameDialog.class, "NewUserTagNameDialog.JOptionPane.tagNameEmpty.message"),
-                        NbBundle.getMessage(NewTagNameDialog.class, "NewUserTagNameDialog.JOptionPane.tagNameEmpty.title"),
+                        NbBundle.getMessage(NewTagNameDialog.class, "NewTagNameDialog.JOptionPane.tagNameEmpty.message"),
+                        NbBundle.getMessage(NewTagNameDialog.class, "NewTagNameDialog.JOptionPane.tagNameEmpty.title"),
                         JOptionPane.ERROR_MESSAGE);
                 return;
             }
             if (TagsManager.containsIllegalCharacters(newTagDisplayName)) {
                 JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(NewTagNameDialog.class, "NewUserTagNameDialog.JOptionPane.tagNameIllegalCharacters.message"),
-                        NbBundle.getMessage(NewTagNameDialog.class, "NewUserTagNameDialog.JOptionPane.tagNameIllegalCharacters.title"),
+                        NbBundle.getMessage(NewTagNameDialog.class, "NewTagNameDialog.JOptionPane.tagNameIllegalCharacters.message"),
+                        NbBundle.getMessage(NewTagNameDialog.class, "NewTagNameDialog.JOptionPane.tagNameIllegalCharacters.title"),
                         JOptionPane.ERROR_MESSAGE);
                 return;
             }

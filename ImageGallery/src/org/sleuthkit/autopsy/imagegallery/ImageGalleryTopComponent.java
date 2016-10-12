@@ -49,7 +49,7 @@ import org.sleuthkit.autopsy.imagegallery.gui.navpanel.HashHitGroupList;
  * Top component which displays ImageGallery interface.
  *
  * Although ImageGallery doesn't currently use the explorer manager, this
- * Topcomponenet provides one through the getExplorerManager method. However,
+ * TopComponent provides one through the getExplorerManager method. However,
  * this does not seem to function correctly unless a Netbeans provided explorer
  * view is present in the TopComponenet, even if it is invisible/ zero sized
  */

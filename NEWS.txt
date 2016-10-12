@@ -1,4 +1,4 @@
----------------- VERSION 4.1.2  --------------
+---------------- VERSION 4.2.0  --------------
 Improvements:
 - Credit card account search
 - Encoding/decoding of extracted files to avoid anti-virus alerts/quarantine
