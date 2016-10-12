@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2016 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,8 +22,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import javafx.collections.ListChangeListener;
 import javafx.scene.chart.Axis;
-import javafx.scene.chart.NumberAxis;
-import javafx.scene.chart.XYChart;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.StrokeLineCap;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -99,6 +97,7 @@ public final class PrimaryDetailsChartLane extends DetailsChartLane<EventStripe>
         return getXAxis().localToParent(getXForEpochMillis(epochMillis), 0).getX();
     }
 
+    @Override
     void doAdditionalLayout() {
         for (final Map.Entry<EventCluster, Line> entry : projectionMap.entrySet()) {
             final EventCluster cluster = entry.getKey();
