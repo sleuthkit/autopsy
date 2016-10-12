@@ -320,10 +320,10 @@ public class GetTagNameDialog extends JDialog {
                     try {
                         tagName = Case.getCurrentCase().getServices().getTagsManager().getDisplayNamesToTagNamesMap().get(tagDisplayName);
                     } catch (TskCoreException ex1) {
-                        Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, tagDisplayName + " already exists in database.", ex1); //NON-NLS
+                        Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, tagDisplayName + " exists in database but an error occurred in retrieving it.", ex1); //NON-NLS
                         JOptionPane.showMessageDialog(null,
                                 NbBundle.getMessage(this.getClass(),
-                                        "GetTagNameDialog.tagNameAlreadyDef.msg",
+                                        "GetTagNameDialog.tagNameExistsTskCore.msg",
                                         tagDisplayName),
                                 NbBundle.getMessage(this.getClass(), "GetTagNameDialog.dupTagErr"),
                                 JOptionPane.ERROR_MESSAGE);

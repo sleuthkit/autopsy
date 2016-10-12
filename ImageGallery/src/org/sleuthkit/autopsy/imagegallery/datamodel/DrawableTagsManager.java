@@ -22,7 +22,6 @@ import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -229,7 +228,7 @@ public class DrawableTagsManager {
                     if (returnTagName != null) {
                         return returnTagName;
                     }
-                    throw new TskCoreException("Tag name exists but wasn't found", ex);
+                    throw new TskCoreException("Tag name exists but an error occured in retrieving it", ex);
                 }
             } catch (NullPointerException | IllegalStateException ex) {
                 LOGGER.log(Level.SEVERE, "Case was closed out from underneath", ex); //NON-NLS
