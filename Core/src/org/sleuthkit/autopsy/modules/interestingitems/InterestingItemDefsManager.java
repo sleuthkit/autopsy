@@ -294,8 +294,6 @@ final class InterestingItemDefsManager extends Observable {
          * Construct an interesting files set file name rule from the data in an
          * XML element.
          *
-         * @param filePath The path of the definitions file.
-         * @param setName  The name of the files set.
          * @param elem     The file name rule XML element.
          *
          * @return A file name rule, or null if there is an error (the error is

@@ -209,25 +209,16 @@ final class FileIngestPipeline {
             return displayName;
         }
 
-        /**
-         * @inheritDoc
-         */
         @Override
         public void startUp(IngestJobContext context) throws IngestModuleException {
             module.startUp(context);
         }
 
-        /**
-         * @inheritDoc
-         */
         @Override
         public IngestModule.ProcessResult process(AbstractFile file) {
             return module.process(file);
         }
 
-        /**
-         * @inheritDoc
-         */
         @Override
         public void shutDown() {
             module.shutDown();

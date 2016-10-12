@@ -72,8 +72,6 @@ public class XMLUtil {
      * Loads an XML document into a WC3 DOM and validates it using a schema
      * packaged as a class resource.
      *
-     * @param <T>                The name of the class associated with the
-     *                           resource.
      * @param docPath            The full path to the XML document.
      * @param clazz              The class associated with the schema resource.
      * @param schemaResourceName The name of the schema resource.

@@ -241,11 +241,11 @@ public abstract class IntervalSelector<X> extends BorderPane {
     protected abstract String formatSpan(final X date);
 
     /**
-     * parse an x-axis value to a {@link DateTime}
+     * parse an x-axis value to a DateTime
      *
      * @param date a x-axis value of type X
      *
-     * @return a {@link DateTime} corresponding to the given x-axis value
+     * @return a DateTime corresponding to the given x-axis value
      */
     protected abstract DateTime parseDateTime(X date);
 

@@ -95,7 +95,7 @@ public class FileTypeDetector {
      * @return True or false.
      */
     public boolean isDetectable(String mimeType) {
-        return isDetectableAsCustomType(userDefinedFileTypes, mimeType) 
+        return isDetectableAsCustomType(userDefinedFileTypes, mimeType)
                 || isDetectableAsCustomType(autopsyDefinedFileTypes, mimeType)
                 || isDetectableByTika(mimeType);
     }
@@ -104,7 +104,8 @@ public class FileTypeDetector {
      * Determines whether or not a given MIME type is detectable as a
      * user-defined MIME type by this detector.
      *
-     * @param mimeType The MIME type name (e.g., "text/html").
+     * @param customTypes
+     * @param mimeType    The MIME type name (e.g., "text/html").
      *
      * @return True or false.
      */

@@ -1520,8 +1520,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * instead.
      */
     @Deprecated
-    public static String convertTimeZone(String timezoneID) {
-        return TimeZoneUtils.convertToAlphaNumericFormat(timezoneID);
+    public static String convertTimeZone(String timeZoneId) {
+        return TimeZoneUtils.convertToAlphaNumericFormat(timeZoneId);
     }
 
     /**

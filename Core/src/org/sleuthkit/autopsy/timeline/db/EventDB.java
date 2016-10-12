@@ -81,8 +81,8 @@ import org.sqlite.SQLiteJDBCLoader;
 /**
  * Provides access to the Timeline SQLite database.
  *
- * This class borrows a lot of ideas and techniques from {@link  SleuthkitCase}.
- * Creating an abstract base class for SQLite databases, or using a higherlevel
+ * This class borrows a lot of ideas and techniques from SleuthkitCase. Creating
+ * an abstract base class for SQLite databases, or using a higherlevel
  * persistence api may make sense in the future.
  */
 public class EventDB {
@@ -103,7 +103,7 @@ public class EventDB {
      * the given path. If a database does not already exist at that path, one is
      * created.
      *
-     * @param autoCase the Autopsy {@link Case} the is events database is for.
+     * @param autoCase the Autopsy Case the is events database is for.
      *
      * @return a new EventDB or null if there was an error.
      */
@@ -734,7 +734,7 @@ public class EventDB {
 
     /**
      * create the tags table if it doesn't already exist. This is broken out as
-     * a separate method so it can be used by {@link #reInitializeTags() }
+     * a separate method so it can be used by reInitializeTags()
      */
     private void initializeTagsTable() {
         try (Statement stmt = con.createStatement()) {
@@ -1214,6 +1214,7 @@ public class EventDB {
      * @param useSubTypes    use the sub_type column if true, else use the
      *                       base_type column
      * @param descriptionLOD the description level of detail for this event
+     * @param filter
      *
      * @return an AggregateEvent corresponding to the current row in the given
      *         result set
@@ -1316,8 +1317,6 @@ public class EventDB {
 
         /**
          * factory creation method
-         *
-         * @param con the {@link  ava.sql.Connection}
          *
          * @return a LogicalFileTransaction for the given connection
          *

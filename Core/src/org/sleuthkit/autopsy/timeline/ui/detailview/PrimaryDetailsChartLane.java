@@ -32,11 +32,11 @@ import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.ui.ContextMenuProvider;
 
 /**
- * Custom implementation of {@link XYChart} to graph events on a horizontal
+ * Custom implementation of XYChart to graph events on a horizontal
  * timeline.
  *
- * The horizontal {@link DateAxis} controls the tick-marks and the horizontal
- * layout of the nodes representing events. The vertical {@link NumberAxis} does
+ * The horizontal DateAxis controls the tick-marks and the horizontal
+ * layout of the nodes representing events. The vertical NumberAxis does
  * nothing (although a custom implementation could help with the vertical
  * layout?)
  *
