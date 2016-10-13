@@ -1126,13 +1126,17 @@ class ReportHTML implements TableReportModule {
         if (thumbFile.exists() == false) {
             return null;
         }
+        File to = new File(thumbsPath);
+        FileObject from = FileUtil.toFileObject(thumbFile);
+        FileObject dest = FileUtil.toFileObject(to);
         try {
-            File to = new File(thumbsPath);
-            FileObject from = FileUtil.toFileObject(thumbFile);
-            FileObject dest = FileUtil.toFileObject(to);
             FileUtil.copyFile(from, dest, thumbFile.getName(), "");
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Failed to write thumb file to report directory.", ex); //NON-NLS
+        } catch (NullPointerException ex) {
+            logger.log(Level.SEVERE, "NPE generated from FileUtil.copyFile, probably because FileUtil.toFileObject returned null. \n" +
+                    "The File argument for toFileObject was " + thumbFile + " with toString: " + thumbFile.toString() + "\n" +
+                    "The FileObject returned by toFileObject, passed into FileUtil.copyFile, was " + from, ex);
         }
 
         return THUMBS_REL_PATH + thumbFile.getName();
