@@ -150,7 +150,7 @@
       value verbatim (and hence don't support range queries, since the
       lexicographic ordering isn't equal to the numeric ordering)
     -->
-    <fieldType name="pint" class="solr.IntField" omitNorms="true"/>
+    <fieldType name="pint" class="solr.TrieIntField" omitNorms="true"/>
     <fieldType name="plong" class="solr.LongField" omitNorms="true"/>
     <fieldType name="pfloat" class="solr.FloatField" omitNorms="true"/>
     <fieldType name="pdouble" class="solr.DoubleField" omitNorms="true"/>
