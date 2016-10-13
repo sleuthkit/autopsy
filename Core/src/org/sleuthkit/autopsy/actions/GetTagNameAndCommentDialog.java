@@ -252,7 +252,11 @@ public class GetTagNameAndCommentDialog extends JDialog {
             try {
                 tagNameFromCombo = Case.getCurrentCase().getServices().getTagsManager().addTagName(tagDisplayName);
             } catch (TagsManager.TagNameAlreadyExistsException ex) {
-                Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, tagDisplayName + " already exists in database.", ex); //NON-NLS
+                try {
+                    tagNameFromCombo = Case.getCurrentCase().getServices().getTagsManager().getDisplayNamesToTagNamesMap().get(tagDisplayName);
+                } catch (TskCoreException ex1) {
+                    Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, tagDisplayName + " already exists in database but an error occurred in retrieving it.", ex1); //NON-NLS
+                }
             } catch (TskCoreException ex) {
                 Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, "Error adding " + tagDisplayName + " tag name", ex); //NON-NLS
             }

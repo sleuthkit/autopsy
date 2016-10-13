@@ -14,7 +14,7 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.datamodel._private.BINRange;
+import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
 
 public class CreditCards {
 
