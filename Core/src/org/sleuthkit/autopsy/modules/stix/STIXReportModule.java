@@ -172,11 +172,13 @@ public class STIXReportModule implements GeneralReportModule {
                 try {
                     processFile(file.getAbsolutePath(), progressPanel, output);
                 } catch (TskCoreException | JAXBException ex) {
-                    logger.log(Level.SEVERE, String.format("Unable to process STIX file %s", file), ex); //NON-NLS
+                    String errMsg = String.format("Unable to process STIX file %s", file);
+                    logger.log(Level.SEVERE, errMsg, ex); //NON-NLS
                     MessageNotifyUtil.Notify.show("STIXReportModule", //NON-NLS
-                            ex.getLocalizedMessage(),
+                            errMsg,
                             MessageNotifyUtil.MessageType.ERROR);
                     hadErrors = true;
+                    break;
                 }
                 // Clear out the ID maps before loading the next file
                 idToObjectMap = new HashMap<String, ObjectType>();
