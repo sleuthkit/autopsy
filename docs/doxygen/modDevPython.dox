@@ -31,7 +31,7 @@ To install NetBeans' plug-in:
 -# Download NetBeans Python plug-in zip file (http://plugins.netbeans.org/plugin/56795/python4netbeans802).
 -# Unpack the content (.nbm files) of the zip file to the desired location.
 -# In NetBeans go to Tools->Plugins. In Downloaded tab, click on Add Plugins, then choose extracted .nbm files.
--# Setup Jython path from Tools->Python Platforms, click on new, then choose Jython.exe (usually in C:/Program files/Jython2.7/bin/)
+-# Setup Jython path from Tools->Python Platforms, click on new, then choose Jython.exe (usually in C:\\Program files\\Jython2.7\\bin)
 
 To install IntelliJ IDEA + Python plug-in:
 -# Download java JDK depending on platform. Install to desired location (http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html).
@@ -43,9 +43,9 @@ To install IntelliJ IDEA + Python plug-in:
 -# Look for and install Python Community Edition. After the installation, it will ask you restart. Restart IDEA.
 -# In File->Project Structure. In Project tab, Project SDK, click on New and choose IntelliJ Platform Plugin SKD.
 -# It will ask you to configure the JKD first, click OK and navigate to the JDK folder location and click OK.
--# After that it will ask you to choose the IntelliJ Platform Plugin SKD. It will most likely take you to it's locaation automatically. (Usually in C:\Program Files (x86)\JetBrains\IntelliJ IDEA Community Edition 14.1.5)
+-# After that it will ask you to choose the IntelliJ Platform Plugin SKD. It will most likely take you to it's location automatically. (Usually in C:\\Program Files (x86)\\JetBrains\\IntelliJ IDEA Community Edition 14.1.5)
 -# In the drop down menu next to New button, choose IntelliJ IDEA Community Edition.
--# Still in Project STructure, In Libraries tab, click on '+' to add new libraries. Choose desired autopsy modules (usually in C:\Program Files\Autopsy-3.1.3\autopsy\modules if you have executable version).
+-# Still in Project STructure, In Libraries tab, click on '+' to add new libraries. Choose desired autopsy modules (usually in C:\\Program Files\\Autopsy-3.1.3\\autopsy\\modules if you have executable version).
 
 \section mod_dev_py_create Creating a Basic Python Module
 
@@ -73,7 +73,7 @@ That's it. Autopsy will find the module each time it needs it and you can make u
 
 If you need to bring in a library that is not part of the standard Jython distribution, then do the following:
 
--# Copy the library file or folder into the folder that you made in \ref mod_dev_py.  For example, you may copy in folder called 'neededLib' that has a file named mylib.py in it.  The end result be a folder structure such as myModuleFolder/neededLib/mylib.py.
+-# Copy the library file or folder into the folder that you made in \ref mod_dev_py_create_dir.  For example, you may copy in folder called 'neededLib' that has a file named mylib.py in it.  The end result be a folder structure such as myModuleFolder/neededLib/mylib.py.
 -# In your Python code, if you needed a class from mylib, then you'd have a line such as:
 \code{.py}
 from neededLib.mylib import neededClass

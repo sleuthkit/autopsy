@@ -71,7 +71,7 @@ public final class IngestServices {
      * Get a logger that incorporates the display name of an ingest module in
      * messages written to the Autopsy log files.
      *
-     * @param moduleClassName The display name of the ingest module.
+     * @param moduleDisplayName The display name of the ingest module.
      *
      * @return The custom logger for the ingest module.
      */

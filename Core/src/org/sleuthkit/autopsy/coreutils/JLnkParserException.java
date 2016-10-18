@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,18 +18,8 @@
  */
 package org.sleuthkit.autopsy.coreutils;
 
-/**
- *
- * @author jwallace
- */
 public class JLnkParserException extends Exception {
 
-    /**
-     * Constructs an instance of <code>JLnkParserException</code> caused by the
-     * given exception.
-     *
-     * @param msg the detail message.
-     */
     public JLnkParserException(Exception cause) {
         super(cause);
     }

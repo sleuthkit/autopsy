@@ -39,7 +39,7 @@ import org.sleuthkit.autopsy.timeline.zooming.TimeUnits;
 
 /**
  * Bundles up the results of analyzing a time range for the appropriate
- * {@link TimeUnits} to use to visualize it. Partly, this class exists so I
+ * TimeUnits to use to visualize it. Partly, this class exists so I
  * don't have to have more member variables in other places , and partly because
  * I can only return a single value from a function. This might only be a
  * temporary design but is working well for now.
@@ -58,7 +58,7 @@ public class RangeDivisionInfo {
     private final int numberOfBlocks;
 
     /**
-     * a {@link DateTimeFormatter} corresponding to the block size for the tick
+     * a DateTimeFormatter corresponding to the block size for the tick
      * marks on the date axis of the graph
      */
     private final DateTimeFormatter tickFormatter;
@@ -76,7 +76,7 @@ public class RangeDivisionInfo {
     private final long upperBound;
 
     /**
-     * the time range this {@link RangeDivisionInfo} describes
+     * the time range this RangeDivisionInfo describes
      */
     private final Interval timeRange;
     private ImmutableList<Interval> intervals;

@@ -24,7 +24,7 @@ Second, in the source code of the panel, there are two important methods: \c loa
 
 If one wishes to make any additional panels within the original options panel, or panels which the original opens, Autopsy provides the org.sleuthkit.autopsy.corecomponents.OptionsPanel interface to help. This interface requires the \c store() and \c load() functions also be provided in the separate panels, allowing for easier child storing and loading.
 
-Any storing or loading of settings or properties should be done in the \c store() and \c load() methods. The next section, \ref mod_dev_adv_properties, has more details on doing this.
+Any storing or loading of settings or properties should be done in the \c store() and \c load() methods.
 
 
 \subsection mod_dev_adv_events Registering for Events

@@ -51,8 +51,8 @@ import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 /**
  * The FXML controller for the filter ui.
  *
- * This also implements {@link TimeLineView} since it dynamically updates its
- * filters based on the contents of a {@link FilteredEventsModel}
+ * This also implements TimeLineView since it dynamically updates its
+ * filters based on the contents of a FilteredEventsModel
  */
 final public class FilterSetPanel extends BorderPane {
 
