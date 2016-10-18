@@ -134,7 +134,7 @@ class Ingester {
 
         //overwrite id with the chunk id
         params.put(Server.Schema.ID.toString(),
-                Server.getChunkIdString(sourceContent.getId(), fec.getChunkId()));
+                Server.getChunkIdString(sourceContent.getId(), fec.getChunkNumber()));
 
         ingest(bcs, params, size);
     }
