@@ -25,7 +25,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
-import org.sleuthkit.autopsy.datamodel.RecentFiles.RecentFilesFilter;
+import org.sleuthkit.autopsy.datamodel.accounts.RecentFiles.RecentFilesFilter;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**

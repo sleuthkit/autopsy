@@ -71,9 +71,6 @@ public class FileTypeIdIngestModule implements FileIngestModule {
     FileTypeIdIngestModule() {
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         jobId = context.getJobId();
@@ -85,9 +82,6 @@ public class FileTypeIdIngestModule implements FileIngestModule {
         }
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public ProcessResult process(AbstractFile file) {
 
@@ -107,9 +101,6 @@ public class FileTypeIdIngestModule implements FileIngestModule {
         }
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public void shutDown() {
         /**

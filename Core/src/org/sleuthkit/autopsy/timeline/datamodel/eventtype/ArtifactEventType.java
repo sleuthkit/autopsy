@@ -61,13 +61,13 @@ public interface ArtifactEventType extends EventType {
 
     /**
      * given an artifact, pull out the time stamp, and compose the descriptions.
-     * Each implementation of {@link ArtifactEventType} needs to implement
-     * parseAttributesHelper() as hook for {@link buildEventDescription(org.sleuthkit.datamodel.BlackboardArtifact)
+     * Each implementation of ArtifactEventType needs to implement
+     * parseAttributesHelper() as hook for buildEventDescription(org.sleuthkit.datamodel.BlackboardArtifact)
      * to invoke. Most subtypes can use this default implementation.
      *
      * @param artf
      *
-     * @return an {@link AttributeEventDescription} containing the timestamp
+     * @return an AttributeEventDescription containing the timestamp
      *         and description information
      *
      * @throws TskCoreException
@@ -103,7 +103,7 @@ public interface ArtifactEventType extends EventType {
     /**
      * bundles the per event information derived from a BlackBoard Artifact into
      * one object. Primarily used to have a single return value for
-     * {@link ArtifactEventType#buildEventDescription(ArtifactEventType, BlackboardArtifact)}.
+     * ArtifactEventType#buildEventDescription(ArtifactEventType, BlackboardArtifact).
      */
     static class AttributeEventDescription {
 
@@ -142,17 +142,16 @@ public interface ArtifactEventType extends EventType {
     }
 
     /**
-     * Build a {@link AttributeEventDescription} derived from a
-     * {@link BlackboardArtifact}. This is a template method that relies on each
-     * {@link ArtifactEventType}'s implementation of
-     * {@link ArtifactEventType#parseAttributesHelper()} to know how to go from
-     * {@link BlackboardAttribute}s to the event description.
+     * Build a AttributeEventDescription derived from a BlackboardArtifact. This
+     * is a template method that relies on each ArtifactEventType's
+     * implementation of ArtifactEventType#parseAttributesHelper() to know how
+     * to go from BlackboardAttributes to the event description.
      *
-     * @param artf the {@link BlackboardArtifact} to derive the event
-     *             description from
+     * @param type
+     * @param artf the BlackboardArtifact to derive the event description from
      *
-     * @return an {@link AttributeEventDescription} derived from the given
-     *         artifact, if the given artifact has no timestamp
+     * @return an AttributeEventDescription derived from the given artifact, if
+     *         the given artifact has no timestamp
      *
      * @throws TskCoreException is there is a problem accessing the blackboard
      *                          data
@@ -205,5 +204,4 @@ public interface ArtifactEventType extends EventType {
         }
     }
 
-    
 }

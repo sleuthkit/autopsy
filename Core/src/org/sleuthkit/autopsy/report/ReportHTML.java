@@ -254,6 +254,9 @@ class ReportHTML implements TableReportModule {
                 case TSK_REMOTE_DRIVE:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/drive_network.png"); //NON-NLS
                     break;
+                case TSK_ACCOUNT:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/accounts.png"); //NON-NLS
+                    break;
                 default:
                     logger.log(Level.WARNING, "useDataTypeIcon: unhandled artifact type = " + dataType); //NON-NLS
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png"); //NON-NLS
@@ -261,7 +264,17 @@ class ReportHTML implements TableReportModule {
                     iconFilePath = path + File.separator + iconFileName;
                     break;
             }
-        } else {  // no defined artifact found for this dataType 
+        } else if (dataType.startsWith(ARTIFACT_TYPE.TSK_ACCOUNT.getDisplayName())) {
+            /* TSK_ACCOUNT artifacts get separated by their TSK_ACCOUNT_TYPE
+             * attribute, with a synthetic compound dataType name, so they are
+             * not caught by the switch statement above. For now we just give
+             * them all the general account icon, but we could do something else
+             * in the future.
+             */
+            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/accounts.png"); //NON-NLS
+            iconFileName = "accounts.png"; //NON-NLS
+            iconFilePath = path + File.separator + iconFileName;
+        } else {  // no defined artifact found for this dataType
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png"); //NON-NLS
             iconFileName = "star.png"; //NON-NLS
             iconFilePath = path + File.separator + iconFileName;
@@ -1113,13 +1126,17 @@ class ReportHTML implements TableReportModule {
         if (thumbFile.exists() == false) {
             return null;
         }
+        File to = new File(thumbsPath);
+        FileObject from = FileUtil.toFileObject(thumbFile);
+        FileObject dest = FileUtil.toFileObject(to);
         try {
-            File to = new File(thumbsPath);
-            FileObject from = FileUtil.toFileObject(thumbFile);
-            FileObject dest = FileUtil.toFileObject(to);
             FileUtil.copyFile(from, dest, thumbFile.getName(), "");
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Failed to write thumb file to report directory.", ex); //NON-NLS
+        } catch (NullPointerException ex) {
+            logger.log(Level.SEVERE, "NPE generated from FileUtil.copyFile, probably because FileUtil.toFileObject returned null. \n" +
+                    "The File argument for toFileObject was " + thumbFile + " with toString: " + thumbFile.toString() + "\n" +
+                    "The FileObject returned by toFileObject, passed into FileUtil.copyFile, was " + from, ex);
         }
 
         return THUMBS_REL_PATH + thumbFile.getName();

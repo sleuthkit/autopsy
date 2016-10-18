@@ -119,7 +119,16 @@
                     <compile-dependency/>
                     <run-dependency>
                         <release-version>10</release-version>
-                        <specification-version>10.5</specification-version>
+                        <specification-version>10.6</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
+                    <code-name-base>org.sleuthkit.autopsy.corelibs</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <release-version>3</release-version>
+                        <specification-version>1.1</specification-version>
                     </run-dependency>
                 </dependency>
             </module-dependencies>
@@ -309,10 +318,6 @@
                 <binary-origin>release/modules/ext/poi-scratchpad-3.10-beta2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-logging-1.1.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-logging-1.1.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/netcdf-4.2-min.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/netcdf-4.2-min.jar</binary-origin>
             </class-path-extension>
@@ -359,6 +364,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/httpcore-4.3.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/httpcore-4.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-validator-1.5.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-validator-1.5.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-lang-2.4.jar</runtime-relative-path>

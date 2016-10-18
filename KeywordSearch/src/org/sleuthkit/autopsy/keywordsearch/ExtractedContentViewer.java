@@ -24,20 +24,26 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import org.apache.commons.lang.StringUtils;
 import org.openide.nodes.Node;
+import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ContentVisitor;
-import org.sleuthkit.datamodel.Directory;
-import org.sleuthkit.datamodel.TskCoreException;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A content viewer that displays the indexed text associated with a file or an
@@ -47,7 +53,10 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 public class ExtractedContentViewer implements DataContentViewer {
 
     private static final Logger logger = Logger.getLogger(ExtractedContentViewer.class.getName());
+
     private static final long INVALID_DOCUMENT_ID = 0L;
+    private static final BlackboardAttribute.Type TSK_ASSOCIATED_ARTIFACT_TYPE = new BlackboardAttribute.Type(TSK_ASSOCIATED_ARTIFACT);
+
     private ExtractedContentPanel panel;
     private volatile Node currentNode = null;
     private IndexedText currentSource = null;
@@ -67,9 +76,7 @@ public class ExtractedContentViewer implements DataContentViewer {
      */
     @Override
     public void setNode(final Node node) {
-        /*
-         * Clear the viewer.
-         */
+        // Clear the viewer.
         if (node == null) {
             currentNode = null;
             resetComponent();
@@ -86,30 +93,86 @@ public class ExtractedContentViewer implements DataContentViewer {
             currentNode = node;
         }
 
+        Lookup nodeLookup = node.getLookup();
+        Content content = nodeLookup.lookup(Content.class);
+
+
         /*
          * Assemble a collection of all of the indexed text "sources" associated
          * with the node.
          */
+        List<IndexedText> sources = new ArrayList<>();
         IndexedText highlightedHitText = null;
         IndexedText rawContentText = null;
         IndexedText rawArtifactText = null;
-        List<IndexedText> sources = new ArrayList<>();
 
         /*
          * First add the text marked up with HTML to highlight keyword hits that
          * will be present in the selected node's lookup if the node is for a
-         * keyword hit artifact.
+         * keyword hit artifact or account.
          */
-        sources.addAll(node.getLookup().lookupAll(IndexedText.class));
+        sources.addAll(nodeLookup.lookupAll(IndexedText.class));
+
         if (!sources.isEmpty()) {
+            //if the look up had any sources use them and don't make a new one.
             highlightedHitText = sources.get(0);
+        } else if (null != content && solrHasContent(content.getId())) {//if the lookup didn't have any sources, and solr has indexed the content...
+            /*
+             * get all the credit card artifacts and make a AccountsText object
+             * that will highlight them.
+             */
+            String solrDocumentID = String.valueOf(content.getId()); //grab the object id as the solrDocumentID
+            Set<String> accountNumbers = new HashSet<>();
+            try {
+                //if the node had artifacts in the lookup use them, other wise look up all credit card artifacts for the content.
+                Collection<? extends BlackboardArtifact> artifacts = nodeLookup.lookupAll(BlackboardArtifact.class);
+                artifacts = (artifacts == null || artifacts.isEmpty())
+                        ? content.getArtifacts(TSK_ACCOUNT)
+                        : artifacts;
+
+                /*
+                 * For each artifact add the account number to the list of
+                 * accountNumbers to highlight, and use the solrDocumentId
+                 * attribute(in place of the content's object Id) if it exists
+                 *
+                 * NOTE: this assumes all the artifacts will be from the same
+                 * solrDocumentId
+                 */
+                for (BlackboardArtifact artifact : artifacts) {
+                    try {
+                        BlackboardAttribute solrIDAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID));
+                        if (solrIDAttr != null) {
+                            String valueString = solrIDAttr.getValueString();
+                            if (StringUtils.isNotBlank(valueString)) {
+                                solrDocumentID = valueString;
+                            }
+                        }
+
+                        BlackboardAttribute keyWordAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CARD_NUMBER));
+                        if (keyWordAttr != null) {
+                            String valueString = keyWordAttr.getValueString();
+                            if (StringUtils.isNotBlank(valueString)) {
+                                accountNumbers.add(valueString);
+                            }
+                        }
+
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.SEVERE, "Failed to retrieve Blackboard Attributes", ex); //NON-NLS
+                    }
+                }
+                if (accountNumbers.isEmpty() == false) {
+                    highlightedHitText = new AccountsText(solrDocumentID, accountNumbers);
+                    sources.add(highlightedHitText);
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Failed to retrieve Blackboard Artifacts", ex); //NON-NLS
+            }
         }
 
         /*
          * Next, add the "raw" (not highlighted) text, if any, for any content
          * associated with the node.
          */
-        Content content = currentNode.getLookup().lookup(Content.class);
         if (null != content && solrHasContent(content.getId())) {
             rawContentText = new RawText(content, content.getId());
             sources.add(rawContentText);
@@ -119,33 +182,32 @@ public class ExtractedContentViewer implements DataContentViewer {
          * Finally, add the "raw" (not highlighted) text, if any, for any
          * artifact associated with the node.
          */
-        BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
+        BlackboardArtifact artifact = nodeLookup.lookup(BlackboardArtifact.class);
         if (null != artifact) {
             /*
              * For keyword hit artifacts, add the text of the artifact that hit,
              * not the hit artifact; otherwise add the text for the artifact.
              */
-            if (artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
-                rawArtifactText = new RawText(artifact, artifact.getArtifactID());
-                sources.add(rawArtifactText);
-            } else {
+            if (artifact.getArtifactTypeID() == TSK_KEYWORD_HIT.getTypeID() || artifact.getArtifactTypeID() == TSK_ACCOUNT.getTypeID()) {
                 try {
-                    BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
+                    BlackboardAttribute attribute = artifact.getAttribute(TSK_ASSOCIATED_ARTIFACT_TYPE);
                     if (attribute != null) {
                         long artifactId = attribute.getValueLong();
                         BlackboardArtifact associatedArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(artifactId);
                         rawArtifactText = new RawText(associatedArtifact, associatedArtifact.getArtifactID());
                         sources.add(rawArtifactText);
-                    } 
+                    }
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error getting associated artifact attributes", ex); //NON-NLS
                 }
+            } else {
+                rawArtifactText = new RawText(artifact, artifact.getArtifactID());
+                sources.add(rawArtifactText);
             }
+
         }
 
-        /*
-         * Now set the default source to be displayed.
-         */
+        // Now set the default source to be displayed.
         if (null != highlightedHitText) {
             currentSource = highlightedHitText;
         } else if (null != rawContentText) {
@@ -154,15 +216,13 @@ public class ExtractedContentViewer implements DataContentViewer {
             currentSource = rawArtifactText;
         }
 
-        /*
-         * Push the text sources into the panel.
-         */
+        // Push the text sources into the panel.
         for (IndexedText source : sources) {
             int currentPage = source.getCurrentPage();
             if (currentPage == 0 && source.hasNextPage()) {
                 source.nextPage();
-            }            
-        }        
+            }
+        }
         updatePageControls();
         setPanel(sources);
     }
@@ -207,7 +267,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
     @Override
     public void resetComponent() {
-        setPanel(new ArrayList<IndexedText>());
+        setPanel(new ArrayList<>());
         panel.resetDisplay();
         currentNode = null;
         currentSource = null;
@@ -231,6 +291,18 @@ public class ExtractedContentViewer implements DataContentViewer {
         }
 
         /*
+         * Is there a credit card artifact in the lookup
+         */
+        Collection<? extends BlackboardArtifact> artifacts = node.getLookup().lookupAll(BlackboardArtifact.class);
+        if (artifacts != null) {
+            for (BlackboardArtifact art : artifacts) {
+                if (art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
+                    return true;
+                }
+            }
+        }
+
+        /*
          * No highlighted text for a keyword hit, so is there any indexed text
          * at all for this node?
          */
@@ -248,7 +320,8 @@ public class ExtractedContentViewer implements DataContentViewer {
 
         if (art == null) {
             return 4;
-        } else if (art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+        } else if (art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()
+                || art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
             return 6;
         } else {
             return 4;
@@ -264,19 +337,6 @@ public class ExtractedContentViewer implements DataContentViewer {
     private void setPanel(List<IndexedText> sources) {
         if (panel != null) {
             panel.setSources(sources);
-        }
-    }
-
-    private class IsDirVisitor extends ContentVisitor.Default<Boolean> {
-
-        @Override
-        protected Boolean defaultVisit(Content cntnt) {
-            return false;
-        }
-
-        @Override
-        public Boolean visit(Directory d) {
-            return true;
         }
     }
 
@@ -321,8 +381,7 @@ public class ExtractedContentViewer implements DataContentViewer {
             } else {
                 try {
                     // Get the associated artifact attribute and return its value as the ID
-                    BlackboardAttribute blackboardAttribute = artifact.getAttribute(
-                            new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
+                    BlackboardAttribute blackboardAttribute = artifact.getAttribute(TSK_ASSOCIATED_ARTIFACT_TYPE);
                     if (blackboardAttribute != null) {
                         return blackboardAttribute.getValueLong();
                     }

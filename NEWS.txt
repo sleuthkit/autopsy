@@ -1,3 +1,15 @@
+---------------- VERSION 4.2.0  --------------
+Improvements:
+- Credit card account search
+- Encoding/decoding of extracted files to avoid anti-virus alerts/quarantine
+- Options panel for managing custom tag names
+- Options panel for setting external viewer associations
+- Keyboard shortcut for applying Bookmark tags
+- Improved PhotoRec carver ingest module cancellation responsiveness
+- Results content viewer formats dates instead of showing raw seconds since epoch
+- Update to PostgreSQL 9.5
+- Assorted bug fixes and minor enhancements. 
+
 ---------------- VERSION 4.1.1  --------------
 Bug Fixes:
 - Restored ability of Python modules to import standard Python libraries. 

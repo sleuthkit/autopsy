@@ -91,8 +91,6 @@ public class STIXReportModule implements GeneralReportModule {
     }
 
     /**
-     * .
-     *
      * @param baseReportDir path to save the report
      * @param progressPanel panel to update the report's progress
      */
@@ -172,11 +170,13 @@ public class STIXReportModule implements GeneralReportModule {
                 try {
                     processFile(file.getAbsolutePath(), progressPanel, output);
                 } catch (TskCoreException | JAXBException ex) {
-                    logger.log(Level.SEVERE, String.format("Unable to process STIX file %s", file), ex); //NON-NLS
+                    String errMsg = String.format("Unable to process STIX file %s", file);
+                    logger.log(Level.SEVERE, errMsg, ex); //NON-NLS
                     MessageNotifyUtil.Notify.show("STIXReportModule", //NON-NLS
-                            ex.getLocalizedMessage(),
+                            errMsg,
                             MessageNotifyUtil.MessageType.ERROR);
                     hadErrors = true;
+                    break;
                 }
                 // Clear out the ID maps before loading the next file
                 idToObjectMap = new HashMap<String, ObjectType>();
@@ -212,6 +212,7 @@ public class STIXReportModule implements GeneralReportModule {
      *
      * @param stixFile      - Name of the file
      * @param progressPanel - Progress panel (for updating)
+     * @param output
      *
      * @throws JAXBException
      * @throws TskCoreException
@@ -279,6 +280,7 @@ public class STIXReportModule implements GeneralReportModule {
      * artifacts.
      *
      * @param stix STIXPackage
+     * @param output
      */
     private void processIndicators(STIXPackage stix, BufferedWriter output) throws TskCoreException {
         if (stix.getIndicators() != null) {
@@ -363,6 +365,7 @@ public class STIXReportModule implements GeneralReportModule {
      *                  indicator
      * @param resultStr - Full results for this indicator
      * @param found     - true if the indicator was found in datasource(s)
+     * @param output
      */
     private void writeResultsToFile(Indicator ind, String resultStr, boolean found, BufferedWriter output) {
         if (output != null) {
@@ -399,6 +402,7 @@ public class STIXReportModule implements GeneralReportModule {
      * Write the a header for the current file to the output file.
      *
      * @param a_fileName
+     * @param output
      */
     private void printFileHeader(String a_fileName, BufferedWriter output) {
         if (output != null) {
@@ -594,6 +598,7 @@ public class STIXReportModule implements GeneralReportModule {
      *
      * @param obj     The object to evaluate against the datasource(s)
      * @param spacing For formatting the output
+     * @param id
      *
      * @return
      */

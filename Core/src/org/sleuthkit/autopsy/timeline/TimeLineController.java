@@ -109,7 +109,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  * listeners should only be accessed with this object's intrinsic lock held, or
  * on the EDT as indicated.
  * </li>
- * <ul>
+ * </ul>
  */
 @NbBundle.Messages({"Timeline.dialogs.title= Timeline",
     "TimeLinecontroller.updateNowQuestion=Do you want to update the events database now?"})

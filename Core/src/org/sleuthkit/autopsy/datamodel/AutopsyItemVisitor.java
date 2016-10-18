@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2011-2014 Basis Technology Corp.
+ *
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,12 +18,16 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
+import org.sleuthkit.autopsy.datamodel.accounts.FileTypeExtensionFilters;
+import org.sleuthkit.autopsy.datamodel.accounts.RecentFiles;
+
 /**
  * This visitor goes over the AutopsyVisitableItems, which are currently the
  * nodes in the tree that are structural and not nodes that are from
  * Sleuthkit-based data model objects.
  */
-interface AutopsyItemVisitor<T> {
+public interface AutopsyItemVisitor<T> {
 
     T visit(DataSources i);
 
@@ -64,6 +68,8 @@ interface AutopsyItemVisitor<T> {
     T visit(Tags tagsNodeKey);
 
     T visit(Reports reportsItem);
+
+    T visit(Accounts accountsItem);
 
     static abstract public class Default<T> implements AutopsyItemVisitor<T> {
 
@@ -167,6 +173,11 @@ interface AutopsyItemVisitor<T> {
         @Override
         public T visit(Reports reportsItem) {
             return defaultVisit(reportsItem);
+        }
+
+        @Override
+        public T visit(Accounts accountsItem) {
+            return defaultVisit(accountsItem);
         }
     }
 }

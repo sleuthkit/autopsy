@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import org.sleuthkit.autopsy.datamodel.accounts.FileTypeExtensionFilters;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;

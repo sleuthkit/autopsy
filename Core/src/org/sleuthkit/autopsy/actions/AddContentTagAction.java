@@ -29,6 +29,9 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -67,6 +70,8 @@ public class AddContentTagAction extends AddTagAction {
          * collection it returns may contain duplicates. Within this invocation
          * of addTag(), we don't want to tag the same AbstractFile more than
          * once, so we dedupe the AbstractFiles by stuffing them into a HashSet.
+         *
+         * We don't want VirtualFile and DerivedFile objects to be tagged.
          */
         final Collection<AbstractFile> selectedFiles = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
 

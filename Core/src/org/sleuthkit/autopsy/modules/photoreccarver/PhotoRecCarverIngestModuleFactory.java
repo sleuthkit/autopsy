@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.modules.photoreccarver;
 
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
@@ -33,8 +32,8 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 @ServiceProvider(service = IngestModuleFactory.class)
 public class PhotoRecCarverIngestModuleFactory extends IngestModuleFactoryAdapter {
 
-    private static String VERSION = "7.0";
-    
+    private static final String VERSION = "7.0";
+
     /**
      * Gets the ingest module name for use within this package.
      *
@@ -44,43 +43,29 @@ public class PhotoRecCarverIngestModuleFactory extends IngestModuleFactoryAdapte
         return NbBundle.getMessage(PhotoRecCarverIngestModuleFactory.class, "moduleDisplayName.text");
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public String getModuleDisplayName() {
         return PhotoRecCarverIngestModuleFactory.getModuleName();
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public String getModuleDescription() {
         return NbBundle.getMessage(PhotoRecCarverIngestModuleFactory.class, "moduleDescription.text");
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public String getModuleVersionNumber() {
         return VERSION;
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public boolean isFileIngestModuleFactory() {
         return true;
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
         return new PhotoRecCarverFileIngestModule();
     }
+
 }

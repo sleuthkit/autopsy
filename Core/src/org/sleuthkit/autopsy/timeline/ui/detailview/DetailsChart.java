@@ -468,7 +468,7 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
          *
          * @param chartLane           The Chart lane to add the listeners to.
          * @param mouseClickedHandler The MouseClickedHandler to add to chart.
-         * @param chartDragHandler1   The ChartDragHandler to add to the chart
+         * @param chartDragHandler    The ChartDragHandler to add to the chart
          *                            as pressed, released, dragged, and clicked
          *                            handler.
          */
