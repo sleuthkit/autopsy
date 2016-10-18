@@ -271,7 +271,7 @@ class ReportHTML implements TableReportModule {
              * them all the general account icon, but we could do something else
              * in the future.
              */
-            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png"); //NON-NLS
+            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/accounts.png"); //NON-NLS
             iconFileName = "accounts.png"; //NON-NLS
             iconFilePath = path + File.separator + iconFileName;
         } else {  // no defined artifact found for this dataType

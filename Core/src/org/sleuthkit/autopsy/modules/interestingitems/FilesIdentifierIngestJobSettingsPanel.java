@@ -114,9 +114,6 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
         }
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public IngestModuleIngestJobSettings getSettings() {
         List<String> enabledInterestingFilesSets = new ArrayList<>();
@@ -131,9 +128,6 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
         return new FilesIdentifierIngestJobSettings(enabledInterestingFilesSets, disabledInterestingFilesSets);
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public void update(Observable o, Object arg
     ) {
@@ -195,25 +189,16 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
             this.fireTableDataChanged();
         }
 
-        /**
-         * @inheritDoc
-         */
         @Override
         public int getRowCount() {
             return this.filesSetRows.size();
         }
 
-        /**
-         * @inheritDoc
-         */
         @Override
         public int getColumnCount() {
             return 2;
         }
 
-        /**
-         * @inheritDoc
-         */
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             if (columnIndex == 0) {
@@ -223,17 +208,11 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
             }
         }
 
-        /**
-         * @inheritDoc
-         */
         @Override
         public boolean isCellEditable(int rowIndex, int columnIndex) {
             return (columnIndex == 0);
         }
 
-        /**
-         * @inheritDoc
-         */
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
             if (columnIndex == 0) {
@@ -241,9 +220,6 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
             }
         }
 
-        /**
-         * @inheritDoc
-         */
         @Override
         public Class<?> getColumnClass(int c) {
             return getValueAt(0, c).getClass();

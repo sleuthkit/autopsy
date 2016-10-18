@@ -22,8 +22,10 @@ package org.sleuthkit.autopsy.keywordsearch;
 import com.google.common.base.CharMatcher;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
@@ -184,74 +186,92 @@ final class TermComponentQuery implements KeywordSearchQuery {
         BlackboardArtifact newArtifact;
 
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
-        try {
-            //if the keyword hit matched the credit card number keyword/regex...
-            if (keyword.getType() == ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
-                newArtifact = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_ACCOUNT);
-                final BlackboardAttribute attr = new BlackboardAttribute(
-                        new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE),
-                        MODULE_NAME, Account.Type.CREDIT_CARD.name());
-                newArtifact.addAttribute(attr);
+        if (keyword.getType() == ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE, MODULE_NAME, Account.Type.CREDIT_CARD.name()));
 
-                // make account artifact
-                //try to match it against the track 1 regex
-                Matcher matcher = TRACK1_PATTERN.matcher(hit.getSnippet());
-                if (matcher.find()) {
-                    parseTrack1Data(newArtifact, matcher);
-                }
+            Map<BlackboardAttribute.Type, BlackboardAttribute> parsedTrackAttributeMap = new HashMap<>();
 
-                //then try to match it against the track 2 regex
-                matcher = TRACK2_PATTERN.matcher(hit.getSnippet());
-                if (matcher.find()) {
-                    parseTrack2Data(newArtifact, matcher);
-                }
-                if (hit.getContent() instanceof AbstractFile) {
-                    AbstractFile file = (AbstractFile) hit.getContent();
-                    if (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS
-                            || file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) {
-                        newArtifact.addAttribute(new BlackboardAttribute(KEYWORD_SEARCH_DOCUMENT_ID, MODULE_NAME, hit.getSolrDocumentId()));
-                    }
-                }
+            //try to match it against the track 1 regex
+            Matcher matcher = TRACK1_PATTERN.matcher(hit.getSnippet());
+            if (matcher.find()) {
+                parseTrack1Data(parsedTrackAttributeMap, matcher);
+            }
 
-                String ccn = newArtifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CARD_NUMBER)).getValueString();
-                final int bin = Integer.parseInt(ccn.substring(0, 8));
+            //then try to match it against the track 2 regex
+            matcher = TRACK2_PATTERN.matcher(hit.getSnippet());
+            if (matcher.find()) {
+                parseTrack2Data(parsedTrackAttributeMap, matcher);
+            }
 
-                CreditCards.BankIdentificationNumber binInfo = CreditCards.getBINInfo(bin);
+            //if we couldn't parse the CCN abort this artifact
+            final BlackboardAttribute ccnAttribute = parsedTrackAttributeMap.get(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CARD_NUMBER));
+            if (ccnAttribute == null || StringUtils.isBlank(ccnAttribute.getValueString())) {
+                LOGGER.log(Level.SEVERE, "Failed to parse CCN from hit: " + hit.getSnippet());
+                return null;
+            }
 
-                if (binInfo != null) {
-                    binInfo.getScheme().ifPresent(scheme
-                            -> addAttributeSafe(newArtifact, ATTRIBUTE_TYPE.TSK_CARD_SCHEME, scheme));
-                    binInfo.getCardType().ifPresent(cardType
-                            -> addAttributeSafe(newArtifact, ATTRIBUTE_TYPE.TSK_CARD_TYPE, cardType));
-                    binInfo.getBrand().ifPresent(brand
-                            -> addAttributeSafe(newArtifact, ATTRIBUTE_TYPE.TSK_BRAND_NAME, brand));
-                    binInfo.getBankName().ifPresent(bankName
-                            -> addAttributeSafe(newArtifact, ATTRIBUTE_TYPE.TSK_BANK_NAME, bankName));
-                    binInfo.getBankPhoneNumber().ifPresent(phoneNumber
-                            -> addAttributeSafe(newArtifact, ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, phoneNumber));
-                    binInfo.getBankURL().ifPresent(url
-                            -> addAttributeSafe(newArtifact, ATTRIBUTE_TYPE.TSK_URL, url));
-                    binInfo.getCountry().ifPresent(country
-                            -> addAttributeSafe(newArtifact, ATTRIBUTE_TYPE.TSK_COUNTRY, country));
-                    binInfo.getBankCity().ifPresent(city
-                            -> addAttributeSafe(newArtifact, ATTRIBUTE_TYPE.TSK_CITY, city));
-                }
-            } else {
-                //make keyword hit artifact
-                newArtifact = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
+            attributes.addAll(parsedTrackAttributeMap.values());
 
-                //regex match
-                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, termHit));
-                //regex keyword
-                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, keyword.getQuery()));
+            //look up the bank name, schem, etc from the BIN
+            final int bin = Integer.parseInt(ccnAttribute.getValueString().substring(0, 8));
+            CreditCards.BankIdentificationNumber binInfo = CreditCards.getBINInfo(bin);
+            if (binInfo != null) {
+                binInfo.getScheme().ifPresent(scheme
+                        -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_CARD_SCHEME, MODULE_NAME, scheme)));
+                binInfo.getCardType().ifPresent(cardType
+                        -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_CARD_TYPE, MODULE_NAME, cardType)));
+                binInfo.getBrand().ifPresent(brand
+                        -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_BRAND_NAME, MODULE_NAME, brand)));
+                binInfo.getBankName().ifPresent(bankName
+                        -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_BANK_NAME, MODULE_NAME, bankName)));
+                binInfo.getBankPhoneNumber().ifPresent(phoneNumber
+                        -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, MODULE_NAME, phoneNumber)));
+                binInfo.getBankURL().ifPresent(url
+                        -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL, MODULE_NAME, url)));
+                binInfo.getCountry().ifPresent(country
+                        -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNTRY, MODULE_NAME, country)));
+                binInfo.getBankCity().ifPresent(city
+                        -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_CITY, MODULE_NAME, city)));
+            }
 
-                if (StringUtils.isNotEmpty(listName)) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
+            /* if the hit is from unused or unalocated blocks, record the
+             * KEYWORD_SEARCH_DOCUMENT_ID, so we can show just that chunk in the
+             * UI
+             */
+            if (hit.getContent() instanceof AbstractFile) {
+                AbstractFile file = (AbstractFile) hit.getContent();
+                if (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS
+                        || file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) {
+                    attributes.add(new BlackboardAttribute(KEYWORD_SEARCH_DOCUMENT_ID, MODULE_NAME, hit.getSolrDocumentId()));
                 }
             }
-        } catch (TskCoreException e) {
-            LOGGER.log(Level.SEVERE, "Error adding bb artifact for keyword hit", e); //NON-NLS
-            return null;
+
+            // make account artifact
+            try {
+                newArtifact = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_ACCOUNT);
+            } catch (TskCoreException tskCoreException) {
+                LOGGER.log(Level.SEVERE, "Error adding bb artifact for account", tskCoreException); //NON-NLS
+                return null;
+            }
+        } else {
+
+            //regex match
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, termHit));
+            //regex keyword
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, keyword.getQuery()));
+
+            if (StringUtils.isNotEmpty(listName)) {
+                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
+            }
+
+            //make keyword hit artifact
+            try {
+                newArtifact = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
+
+            } catch (TskCoreException tskCoreException) {
+                LOGGER.log(Level.SEVERE, "Error adding bb artifact for keyword hit", tskCoreException); //NON-NLS
+                return null;
+            }
         }
         //preview
         if (snippet != null) {
@@ -271,22 +291,6 @@ final class TermComponentQuery implements KeywordSearchQuery {
         } catch (TskCoreException e) {
             LOGGER.log(Level.SEVERE, "Error adding bb attributes for terms search artifact", e); //NON-NLS
             return null;
-        }
-    }
-
-    /**
-     * Add an attribute of the given type and value to the given artifact,
-     * catching and logging any exceptions.
-     *
-     * @param newArtifact    The artifact to add an attribute to.
-     * @param AtributeType   The type of attribute to add.
-     * @param attributeValue The value of the attribute to add.
-     */
-    static private void addAttributeSafe(BlackboardArtifact newArtifact, ATTRIBUTE_TYPE AtributeType, String attributeValue) {
-        try {
-            newArtifact.addAttribute(new BlackboardAttribute(AtributeType, MODULE_NAME, attributeValue));
-        } catch (IllegalArgumentException | TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Error adding bb attribute to artifact", ex); //NON-NLS
         }
     }
 
@@ -376,44 +380,40 @@ final class TermComponentQuery implements KeywordSearchQuery {
      * value taken from the matcher. If an attribute of the given type already
      * exists on the artifact or if the value is null, no attribute is added.
      *
-     * @param artifact
+     * @param attributeMap
      * @param attrType
      * @param groupName
-     * @param matcher
-     *
-     * @throws IllegalArgumentException
-     * @throws TskCoreException
+     * @param matcher *
      */
-    static private void addAttributeIfNotAlreadyCaptured(BlackboardArtifact artifact, ATTRIBUTE_TYPE attrType, String groupName, Matcher matcher) throws IllegalArgumentException, TskCoreException {
+    static private void addAttributeIfNotAlreadyCaptured(Map<BlackboardAttribute.Type, BlackboardAttribute> attributeMap, ATTRIBUTE_TYPE attrType, String groupName, Matcher matcher) {
         BlackboardAttribute.Type type = new BlackboardAttribute.Type(attrType);
-        if (artifact.getAttribute(type) == null) {
+
+        attributeMap.computeIfAbsent(type, (BlackboardAttribute.Type t) -> {
             String value = matcher.group(groupName);
             if (attrType.equals(ATTRIBUTE_TYPE.TSK_CARD_NUMBER)) {
                 value = CharMatcher.anyOf(" -").removeFrom(value);
             }
             if (StringUtils.isNotBlank(value)) {
-                artifact.addAttribute(new BlackboardAttribute(type, MODULE_NAME, value));
+                return new BlackboardAttribute(attrType, MODULE_NAME, value);
             }
-        }
+            return null;
+        });
     }
 
     /**
      * Parse the track 2 data from a KeywordHit and add it to the given
      * artifact.
      *
-     * @param artifact
+     * @param attributeMAp
      * @param matcher
-     *
-     * @throws IllegalArgumentException
-     * @throws TskCoreException
      */
-    static private void parseTrack2Data(BlackboardArtifact artifact, Matcher matcher) throws IllegalArgumentException, TskCoreException {
+    static private void parseTrack2Data(Map<BlackboardAttribute.Type, BlackboardAttribute> attributeMAp, Matcher matcher) {
         //try to add all the attrributes common to track 1 and 2
-        addAttributeIfNotAlreadyCaptured(artifact, ATTRIBUTE_TYPE.TSK_CARD_NUMBER, "accountNumber", matcher);
-        addAttributeIfNotAlreadyCaptured(artifact, ATTRIBUTE_TYPE.TSK_CARD_EXPIRATION, "expiration", matcher);
-        addAttributeIfNotAlreadyCaptured(artifact, ATTRIBUTE_TYPE.TSK_CARD_SERVICE_CODE, "serviceCode", matcher);
-        addAttributeIfNotAlreadyCaptured(artifact, ATTRIBUTE_TYPE.TSK_CARD_DISCRETIONARY, "discretionary", matcher);
-        addAttributeIfNotAlreadyCaptured(artifact, ATTRIBUTE_TYPE.TSK_CARD_LRC, "LRC", matcher);
+        addAttributeIfNotAlreadyCaptured(attributeMAp, ATTRIBUTE_TYPE.TSK_CARD_NUMBER, "accountNumber", matcher);
+        addAttributeIfNotAlreadyCaptured(attributeMAp, ATTRIBUTE_TYPE.TSK_CARD_EXPIRATION, "expiration", matcher);
+        addAttributeIfNotAlreadyCaptured(attributeMAp, ATTRIBUTE_TYPE.TSK_CARD_SERVICE_CODE, "serviceCode", matcher);
+        addAttributeIfNotAlreadyCaptured(attributeMAp, ATTRIBUTE_TYPE.TSK_CARD_DISCRETIONARY, "discretionary", matcher);
+        addAttributeIfNotAlreadyCaptured(attributeMAp, ATTRIBUTE_TYPE.TSK_CARD_LRC, "LRC", matcher);
 
     }
 
@@ -421,16 +421,13 @@ final class TermComponentQuery implements KeywordSearchQuery {
      * Parse the track 1 data from a KeywordHit and add it to the given
      * artifact.
      *
-     * @param artifact
+     * @param attributeMap
      * @param matcher
-     *
-     * @throws IllegalArgumentException
-     * @throws TskCoreException
      */
-    static private void parseTrack1Data(BlackboardArtifact artifact, Matcher matcher) throws IllegalArgumentException, TskCoreException {
+    static private void parseTrack1Data(Map<BlackboardAttribute.Type, BlackboardAttribute> attributeMap, Matcher matcher) {
         // track 1 has all the fields present in track 2
-        parseTrack2Data(artifact, matcher);
+        parseTrack2Data(attributeMap, matcher);
         //plus it also has the account holders name
-        addAttributeIfNotAlreadyCaptured(artifact, ATTRIBUTE_TYPE.TSK_NAME_PERSON, "name", matcher);
+        addAttributeIfNotAlreadyCaptured(attributeMap, ATTRIBUTE_TYPE.TSK_NAME_PERSON, "name", matcher);
     }
 }

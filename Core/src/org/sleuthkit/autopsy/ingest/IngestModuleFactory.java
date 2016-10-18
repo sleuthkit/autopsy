@@ -49,7 +49,7 @@ package org.sleuthkit.autopsy.ingest;
  * implementations must be marked with the following NetBeans Service provider
  * annotation:
  *
- * @ServiceProvider(service=IngestModuleFactory.class)
+ * <pre>@ServiceProvider(service=IngestModuleFactory.class)</pre>
  * <p>
  * IMPORTANT TIP: If an implementation of IngestModuleFactory does not need to
  * provide implementations of all of the IngestModuleFactory methods, it can
@@ -153,7 +153,7 @@ public interface IngestModuleFactory {
      * implementation of this method that throws an
      * UnsupportedOperationException.
      *
-     * @param setting Per ingest job settings to initialize the panel.
+     * @param settings Per ingest job settings to initialize the panel.
      *
      * @return An ingest job settings panel.
      */

@@ -251,9 +251,6 @@ final class FilesSet implements Serializable {
             return true;
         }
 
-        /**
-         * @inheritDoc
-         */
         @Override
         public String toString() {
             // This override is designed to provide a display name for use with 
@@ -327,9 +324,6 @@ final class FilesSet implements Serializable {
                 this.mimeType = mimeType;
             }
 
-            /**
-             * @inheritDoc
-             */
             @Override
             public boolean passes(AbstractFile file) {
                 return this.mimeType.equals(file.getMIMEType());
@@ -517,9 +511,6 @@ final class FilesSet implements Serializable {
                 this.type = type;
             }
 
-            /**
-             * @inheritDoc
-             */
             @Override
             public boolean passes(AbstractFile file) {
                 switch (this.type) {
@@ -639,9 +630,6 @@ final class FilesSet implements Serializable {
                 return this.textMatcher.textMatches(textToMatch);
             }
 
-            /**
-             * @inheritDoc
-             */
             @Override
             public abstract boolean passes(AbstractFile file);
 
@@ -674,9 +662,6 @@ final class FilesSet implements Serializable {
                 super(path);
             }
 
-            /**
-             * @inheritDoc
-             */
             @Override
             public boolean passes(AbstractFile file) {
                 return this.textMatches(file.getParentPath() + "/");
@@ -719,9 +704,6 @@ final class FilesSet implements Serializable {
                 super(name);
             }
 
-            /**
-             * @inheritDoc
-             */
             @Override
             public boolean passes(AbstractFile file) {
                 return this.textMatches(file.getName());
@@ -760,9 +742,6 @@ final class FilesSet implements Serializable {
                 super(extension.pattern(), false);
             }
 
-            /**
-             * @inheritDoc
-             */
             @Override
             public boolean passes(AbstractFile file) {
                 return this.textMatches(file.getNameExtension());
@@ -795,7 +774,7 @@ final class FilesSet implements Serializable {
             /**
              * Determines whether a string of text is matched.
              *
-             * @param textToMatch The text string.
+             * @param subject The text string.
              *
              * @return True if the text matches, false otherwise.
              */
@@ -821,25 +800,16 @@ final class FilesSet implements Serializable {
                 this.textToMatch = textToMatch;
             }
 
-            /**
-             * @inheritDoc
-             */
             @Override
             public String getTextToMatch() {
                 return this.textToMatch;
             }
 
-            /**
-             * @inheritDoc
-             */
             @Override
             public boolean isRegex() {
                 return false;
             }
 
-            /**
-             * @inheritDoc
-             */
             @Override
             public boolean textMatches(String subject) {
                 return subject.equalsIgnoreCase(textToMatch);
@@ -867,25 +837,16 @@ final class FilesSet implements Serializable {
                 this.pattern = Pattern.compile(Pattern.quote(textToMatch), Pattern.CASE_INSENSITIVE);
             }
 
-            /**
-             * @inheritDoc
-             */
             @Override
             public String getTextToMatch() {
                 return this.textToMatch;
             }
 
-            /**
-             * @inheritDoc
-             */
             @Override
             public boolean isRegex() {
                 return false;
             }
 
-            /**
-             * @inheritDoc
-             */
             @Override
             public boolean textMatches(String subject) {
                 return pattern.matcher(subject).find();
@@ -910,25 +871,16 @@ final class FilesSet implements Serializable {
                 this.regex = regex;
             }
 
-            /**
-             * @inheritDoc
-             */
             @Override
             public String getTextToMatch() {
                 return this.regex.pattern();
             }
 
-            /**
-             * @inheritDoc
-             */
             @Override
             public boolean isRegex() {
                 return true;
             }
 
-            /**
-             * @inheritDoc
-             */
             @Override
             public boolean textMatches(String subject) {
                 // A single match is sufficient.

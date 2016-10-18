@@ -198,7 +198,6 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      * Parse and extract email messages and attachments from an MBox file.
      *
      * @param abstractFile
-     * @param ingestContext
      *
      * @return
      */
@@ -292,7 +291,6 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      *
      * @param emails
      * @param abstractFile
-     * @param ingestContext
      */
     private void processEmails(List<EmailMessage> emails, AbstractFile abstractFile) {
         List<AbstractFile> derivedFiles = new ArrayList<>();

@@ -54,7 +54,7 @@ class KeywordHit {
          * documents. One contains object metadata (chunk #1) and the second and
          * subsequent documents contain chunks of the text.
          */
-        final int separatorIndex = solrDocumentId.indexOf(Server.ID_CHUNK_SEP);
+        final int separatorIndex = solrDocumentId.indexOf(Server.CHUNK_ID_SEPARATOR);
         if (-1 != separatorIndex) {
             this.solrObjectId = Long.parseLong(solrDocumentId.substring(0, separatorIndex));
             this.chunkId = Integer.parseInt(solrDocumentId.substring(separatorIndex + 1));

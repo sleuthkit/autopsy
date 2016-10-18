@@ -706,7 +706,7 @@ final public class ViewFrame extends BorderPane {
      * Show the given List of Nodes in the time range ToolBar. Replaces any
      * Nodes that may have previously been set with the given List of Nodes.
      *
-     * @param newSettingsNodes The Nodes to show in the time range ToolBar.
+     * @param timeNavigationNodes The Nodes to show in the time range ToolBar.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void setTimeNavigationControls(List<Node> timeNavigationNodes) {

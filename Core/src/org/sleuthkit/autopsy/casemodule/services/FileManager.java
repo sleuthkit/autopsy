@@ -268,7 +268,6 @@ public class FileManager implements Closeable {
      * components at the volume level and above are removed for the search.
      *
      * @param dataSource The data source.
-     * @param fileName   The full or partial file name.
      * @param filePath   The file path (path components volume at the volume
      *                   level or above will be removed).
      *
@@ -356,7 +355,7 @@ public class FileManager implements Closeable {
         /**
          * Called after a file or directory is added to the case database.
          *
-         * @param An AbstractFile represeting the added file or directory.
+         * @param newFile AbstractFile representing the added file or directory.
          */
         void fileAdded(AbstractFile newFile);
     }
@@ -499,8 +498,6 @@ public class FileManager implements Closeable {
      * @param trans              A case database transaction.
      * @param parentDirectory    The root virtual direcotry of the data source.
      * @param localFile          The local/logical file or directory.
-     * @param addProgressUpdater notifier to receive progress notifications on
-     *                           folders added, or null if not used
      * @param encodingType       Type of encoding used when storing the file
      *
      * @returns File object of file added or new virtualdirectory for the
@@ -614,8 +611,9 @@ public class FileManager implements Closeable {
      * Adds a collection of carved files to the '$CarvedFiles' virtual directory
      * of a data source, volume or file system.
      *
-     * @param A collection of CarvedFileContainer objects, one per carved file,
-     *          all of which must have the same parent object id.
+     * @param filesToAdd A collection of CarvedFileContainer objects, one per
+     *                   carved file, all of which must have the same parent
+     *                   object id.
      *
      * @return A collection of LayoutFile object representing the carved files.
      *
@@ -660,7 +658,7 @@ public class FileManager implements Closeable {
      * @throws TskCoreException if there is a problem adding the file to the
      *                          case database.
      *
-     * @Deprecated Use the version with explicit EncodingType instead
+     * @deprecated Use the version with explicit EncodingType instead
      */
     @Deprecated
     public synchronized DerivedFile addDerivedFile(String fileName,
@@ -681,7 +679,7 @@ public class FileManager implements Closeable {
      * @param trans              A case database transaction.
      * @param parentDirectory    The root virtual direcotry of the data source.
      * @param localFile          The local/logical file or directory.
-     * @param addProgressUpdater notifier to receive progress notifications on
+     * @param progressUpdater notifier to receive progress notifications on
      *                           folders added, or null if not used
      *
      * @returns File object of file added or new virtualdirectory for the
@@ -694,7 +692,7 @@ public class FileManager implements Closeable {
      * @throws TskCoreException If there is a problem completing a database
      *                          operation.
      *
-     * @Deprecated Use the version with explicit EncodingType instead
+     * @deprecated Use the version with explicit EncodingType instead
      */
     @Deprecated
     private AbstractFile addLocalFile(CaseDbTransaction trans, VirtualDirectory parentDirectory, java.io.File localFile, FileAddProgressUpdater progressUpdater) throws TskCoreException {

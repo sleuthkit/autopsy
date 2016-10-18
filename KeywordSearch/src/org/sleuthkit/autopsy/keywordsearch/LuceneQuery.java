@@ -491,14 +491,14 @@ class LuceneQuery implements KeywordSearchQuery {
 
             // get object id of left doc
             String leftID = left.getFieldValue(idName).toString();
-            int index = leftID.indexOf(Server.ID_CHUNK_SEP);
+            int index = leftID.indexOf(Server.CHUNK_ID_SEPARATOR);
             if (index != -1) {
                 leftID = leftID.substring(0, index);
             }
 
             // get object id of right doc
             String rightID = right.getFieldValue(idName).toString();
-            index = rightID.indexOf(Server.ID_CHUNK_SEP);
+            index = rightID.indexOf(Server.CHUNK_ID_SEPARATOR);
             if (index != -1) {
                 rightID = rightID.substring(0, index);
             }
