@@ -76,6 +76,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData.DbType;
 
 /**
  * AutopsyVisitableItem for the Accounts section of the tree. All nodes,
@@ -484,10 +485,15 @@ final public class Accounts implements AutopsyVisitableItem {
                 List<FileWithCCN> list = new ArrayList<>();
                 String query
                         = "SELECT blackboard_artifacts.obj_id," //NON-NLS
-                        + "      solr_attribute.value_text AS solr_document_id, " //NON-NLS
-                        + "      GROUP_CONCAT(blackboard_artifacts.artifact_id) AS artifact_IDs, " //NON-NLS
-                        + "      COUNT( blackboard_artifacts.artifact_id) AS hits,  " //NON-NLS
-                        + "      GROUP_CONCAT(blackboard_artifacts.review_status_id) AS review_status_ids "
+                        + "      solr_attribute.value_text AS solr_document_id, "; //NON-NLS
+                if(skCase.getDatabaseType().equals(DbType.POSTGRESQL)){
+                    query += "      string_agg(blackboard_artifacts.artifact_id::character varying, ',') AS artifact_IDs, " //NON-NLS
+                           + "      string_agg(blackboard_artifacts.review_status_id::character varying, ',') AS review_status_ids, ";
+                } else {
+                    query += "      GROUP_CONCAT(blackboard_artifacts.artifact_id) AS artifact_IDs, " //NON-NLS
+                           + "      GROUP_CONCAT(blackboard_artifacts.review_status_id) AS review_status_ids, ";
+                }
+                query +=  "      COUNT( blackboard_artifacts.artifact_id) AS hits  " //NON-NLS
                         + " FROM blackboard_artifacts " //NON-NLS
                         + " LEFT JOIN blackboard_attributes as solr_attribute ON blackboard_artifacts.artifact_id = solr_attribute.artifact_id " //NON-NLS
                         + "                                AND solr_attribute.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID.getTypeID() //NON-NLS
@@ -556,11 +562,15 @@ final public class Accounts implements AutopsyVisitableItem {
                     + "                                AND account_type.value_text = '" + Account.Type.CREDIT_CARD.name() + "'" //NON-NLS
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
                     + getRejectedArtifactFilterClause()
-                    + " GROUP BY blackboard_artifacts.obj_id, solr_attribute.value_text )";
+                    + " GROUP BY blackboard_artifacts.obj_id, solr_attribute.value_text ) AS foo";
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
                     ResultSet rs = results.getResultSet();) {
                 while (rs.next()) {
-                    setDisplayName(Bundle.Accounts_ByFileNode_displayName(rs.getLong("count(*)")));
+                    if(skCase.getDatabaseType().equals(DbType.POSTGRESQL)){
+                        setDisplayName(Bundle.Accounts_ByFileNode_displayName(rs.getLong("count")));
+                    } else {
+                        setDisplayName(Bundle.Accounts_ByFileNode_displayName(rs.getLong("count(*)")));
+                    }
                 }
             } catch (TskCoreException | SQLException ex) {
                 LOGGER.log(Level.SEVERE, "Error querying for files with ccn hits.", ex); //NON-NLS
@@ -949,7 +959,7 @@ final public class Accounts implements AutopsyVisitableItem {
                         + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id " //NON-NLS
                         + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
                         + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER.getTypeID() //NON-NLS
-                        + "     AND blackboard_attributes.value_text >= \"" + bin.getBINStart() + "\" AND  blackboard_attributes.value_text < \"" + (bin.getBINEnd() + 1) + "\"" //NON-NLS
+                        + "     AND blackboard_attributes.value_text >= '" + bin.getBINStart() + "' AND  blackboard_attributes.value_text < '" + (bin.getBINEnd() + 1) + "'" //NON-NLS
                         + getRejectedArtifactFilterClause()
                         + " ORDER BY blackboard_attributes.value_text"; //NON-NLS
                 try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
@@ -1004,7 +1014,7 @@ final public class Accounts implements AutopsyVisitableItem {
                     + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id " //NON-NLS
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER.getTypeID() //NON-NLS
-                    + "     AND blackboard_attributes.value_text >= \"" + bin.getBINStart() + "\" AND  blackboard_attributes.value_text < \"" + (bin.getBINEnd() + 1) + "\"" //NON-NLS
+                    + "     AND blackboard_attributes.value_text >= '" + bin.getBINStart() + "' AND  blackboard_attributes.value_text < '" + (bin.getBINEnd() + 1) + "'" //NON-NLS
                     + getRejectedArtifactFilterClause();
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
                     ResultSet rs = results.getResultSet();) {
