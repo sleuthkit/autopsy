@@ -62,13 +62,13 @@ class KeywordSearchQueryDelegator {
                         query.escape();
                     } // literal, substring match
                     else {
-                        query = new TermComponentQuery(keywordList, keyword);
+                        query = new TermsComponentQuery(keywordList, keyword);
                         query.escape();
                         query.setSubstringQuery();
                     }
                 } // regexp
                 else {
-                    query = new TermComponentQuery(keywordList, keyword);
+                    query = new TermsComponentQuery(keywordList, keyword);
                 }
                 queryDelegates.add(query);
             }

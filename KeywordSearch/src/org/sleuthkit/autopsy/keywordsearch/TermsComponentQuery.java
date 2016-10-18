@@ -47,11 +47,14 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * Performs a regular expression query to the SOLR/Lucene instance.
+ * Performs a regular expression query, making use of the Solr terms component.
+ * The terms component is described in the Apache Solr Reference Guide as a
+ * component that "provides access to the indexed terms in a field and the
+ * number of documents that match each term."
  */
-final class TermComponentQuery implements KeywordSearchQuery {
+final class TermsComponentQuery implements KeywordSearchQuery {
 
-    private static final Logger LOGGER = Logger.getLogger(TermComponentQuery.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(TermsComponentQuery.class.getName());
     private static final boolean DEBUG = Version.Type.DEVELOPMENT.equals(Version.getBuildType());
 
     private static final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
@@ -114,7 +117,7 @@ final class TermComponentQuery implements KeywordSearchQuery {
     private boolean isEscaped;
     private final List<KeywordQueryFilter> filters = new ArrayList<>();
 
-    TermComponentQuery(KeywordList keywordList, Keyword keyword) {
+    TermsComponentQuery(KeywordList keywordList, Keyword keyword) {
         this.keyword = keyword;
 
         this.keywordList = keywordList;
@@ -234,7 +237,8 @@ final class TermComponentQuery implements KeywordSearchQuery {
                         -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_CITY, MODULE_NAME, city)));
             }
 
-            /* if the hit is from unused or unalocated blocks, record the
+            /*
+             * if the hit is from unused or unalocated blocks, record the
              * KEYWORD_SEARCH_DOCUMENT_ID, so we can show just that chunk in the
              * UI
              */
