@@ -31,7 +31,7 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 @OptionsPanelController.TopLevelRegistration(categoryName = "#OptionsCategory_Name_Case_Import",
-        iconBase = "org/sleuthkit/autopsy/experimental/images/frame32.gif",
+        iconBase = "org/sleuthkit/autopsy/experimental/images/import32.png",
         position = 4,
         keywords = "#OptionsCategory_Keywords_Case_Import",
         keywordsCategory = "Case Import")

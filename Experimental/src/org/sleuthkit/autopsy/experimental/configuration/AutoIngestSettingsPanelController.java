@@ -30,7 +30,7 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 @OptionsPanelController.TopLevelRegistration(categoryName = "#OptionsCategory_Name_Auto_Ingest",
-        iconBase = "org/sleuthkit/autopsy/experimental/images/frame32.gif",
+        iconBase = "org/sleuthkit/autopsy/experimental/images/autoIngest32.png",
         position = 3,
         keywords = "#OptionsCategory_Keywords_Auto_Ingest_Settings",
         keywordsCategory = "Auto Ingest")
